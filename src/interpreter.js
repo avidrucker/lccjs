@@ -1,142 +1,122 @@
 // interpreter.js
-// LCC.js Interpreter
-// Translated from i1.c by Avital Drucker
+// Adjusted LCC.js Interpreter to match i1.c and run a1test.e
+
+const fs = require('fs');
 
 class Interpreter {
   constructor() {
-    this.mem = new Array(65536).fill(0); // Memory
-    this.r = new Array(8).fill(0); // Registers r0 to r7
-    this.pc = 0; // Program Counter
-    this.ir = 0; // Instruction Register
-    this.n = 0; // Negative flag
-    this.z = 0; // Zero flag
-    this.c = 0; // Carry flag
-    this.v = 0; // Overflow flag
-    this.opcode = 0; // Opcode
-    this.pcoffset9 = 0; // PC offset 9
-    this.imm9 = 0;
-    this.pcoffset11 = 0; // PC offset 11
-    this.imm5 = 0; // Immediate 5
-    this.offset6 = 0; // Offset 6
-    this.eopcode = 0; // Extended opcode
-    this.trapvec = 0; // Trap vector
-    this.code = 0; // Condition code
-    this.sr = 0; // Source register
-    this.dr = 0; // Destination register
-    this.sr1 = 0; // Source register 1
-    this.baser = 0; // Base register
-    this.sr2 = 0; // Source register 2
-    this.bit5 = 0; // Bit 5
-    this.bit11 = 0; // Bit 11
+    this.mem = new Uint16Array(65536); // Memory (16-bit unsigned integers)
+    this.r = new Int16Array(8);        // Registers r0 to r7 (16-bit signed integers)
+    this.pc = 0;                       // Program Counter
+    this.ir = 0;                       // Instruction Register
+    this.n = 0;                        // Negative flag
+    this.z = 0;                        // Zero flag
+    this.c = 0;                        // Carry flag
+    this.v = 0;                        // Overflow flag
     this.running = true;
-    this.output = ''; // Output string
+    this.output = '';                  // Output string
+    this.inputBuffer = '';             // Input buffer for SIN (if needed)
   }
 
-  loadExecutable(executable) {
-    // Load code into memory
-    let code = executable.code;
-    for (let i = 0; i < code.length; i++) {
-      this.mem[i] = code[i];
+  loadExecutableFile(filePath) {
+    const buffer = fs.readFileSync(filePath);
+    let offset = 0;
+
+    // Check file signature
+    const signature = String.fromCharCode(buffer[offset++]);
+    if (signature !== 'o') {
+      throw new Error('Invalid file format: Missing signature');
     }
 
-    // Set PC to start address if provided
-    for (let header of executable.headers) {
-      if (header.type === 'S') {
-        this.pc = header.address;
-        break;
-      }
+    // Skip 'C' header entry
+    const headerEntry = String.fromCharCode(buffer[offset++]);
+    if (headerEntry !== 'C') {
+      throw new Error('Missing C header entry in executable');
     }
+
+    // Read machine code into memory
+    let memIndex = 0;
+    while (offset < buffer.length) {
+      const instruction = buffer.readUInt16LE(offset);
+      offset += 2;
+      this.mem[memIndex++] = instruction;
+    }
+
+    // Set PC to start address (assuming start at 0)
+    this.pc = 0;
   }
 
   run() {
     while (this.running) {
       this.step();
     }
+    // Output the result
+    console.log(this.output);
   }
 
   step() {
     // Fetch instruction
     this.ir = this.mem[this.pc++];
     // Decode instruction
-    this.opcode = (this.ir >> 12) & 0xf;
+    this.opcode = (this.ir >> 12) & 0xF; // Opcode (bits 15-12)
+    this.code = this.dr = this.sr = (this.ir >> 9) & 0x7; // dr/sr (bits 11-9)
+    this.sr1 = this.baser = (this.ir >> 6) & 0x7; // sr1/baser (bits 8-6)
+    this.sr2 = this.ir & 0x7; // sr2 (bits 2-0)
+    this.bit5 = (this.ir >> 5) & 0x1; // bit 5
+    this.bit11 = (this.ir >> 11) & 0x1; // bit 11
+    this.imm5 = this.signExtend(this.ir & 0x1F, 5); // imm5 (bits 4-0)
+    this.pcoffset9 = this.signExtend(this.ir & 0x1FF, 9); // pcoffset9 (bits 8-0)
+    this.pcoffset11 = this.signExtend(this.ir & 0x7FF, 11); // pcoffset11 (bits 10-0)
+    this.offset6 = this.signExtend(this.ir & 0x3F, 6); // offset6 (bits 5-0)
+    this.eopcode = this.ir & 0x1F; // eopcode (bits 4-0)
+    this.trapvec = this.ir & 0xFF; // trap vector (bits 7-0)
 
-    // let pcoffset9 = this.signExtend(this.ir & 0x1ff, 9);
-    let pcoffset9setup = this.ir << 7;                // left justify pcoffset9 field
-    this.pcoffset9 = this.imm9 = pcoffset9setup >> 7;  // sign extend and rt justify
-    let pcoffset11setup = this.ir << 5;               // left justify pcoffset11 field
-    this.pcoffset11 = pcoffset11setup >> 5;       // sign extend and rt justify
-    // let imm5 = this.signExtend(this.ir & 0x1f, 5);
-    let imm5setup = this.ir << 11;                    // left justify imm5 field
-    this.imm5 = imm5setup >> 11;                  // sign extend andd rt justify
-    let offset6setup = this.ir << 10;                 // left justify offset6 field
-    this.offset6 = offset6setup >> 10;            // sign extend and rt justify
-    this.eopcode = this.ir & 0x1f;                // get 5-bit eopcode field "extended op code" used only for push and pop  
-    this.trapvec = this.ir & 0xff;                // get 8-bit trapvec field 
-    this.code = this.dr = this.sr = (this.ir & 0x0e00) >> 9;   // get condition code/dr/sr and rt justify
-
-    this.sr1 = this.baser = (this.ir & 0x01c0) >> 6;   // get sr1/baser and rt justify
-    this.sr2 = this.ir & 0x0007;                  // get third reg field
-    this.bit5 = this.ir & 0x0020;                 // get bit 5
-    this.bit11 = this.ir & 0x0800;                // get bit 11
-
+    // Execute instruction
     switch (this.opcode) {
-      case 0: // BR
+      case 0x0: // BR
         this.executeBR();
         break;
-      case 1: // ADD
+      case 0x1: // ADD
         this.executeADD();
         break;
-      case 2: // LD
+      case 0x2: // LD
         this.executeLD();
         break;
-      case 3: // ST
+      case 0x3: // ST
         this.executeST();
         break;
-      case 4: // BL or BLR
-        this.executeBLorBLR(); // TODO: implement this
+      case 0x4: // BL or BLR
+        this.executeBLorBLR();
         break;
-      case 5: // AND
-        this.executeAND(); // TODO: implement this
+      case 0x5: // AND
+        this.executeAND();
         break;
-      case 6: // LDR
-        this.executeLDR(); // TODO: implement this
+      case 0x6: // LDR
+        this.executeLDR();
         break;
-      case 7: // STR
-        this.executeSTR(); // TODO: implement this
+      case 0x7: // STR
+        this.executeSTR();
         break;
-      case 8: // CMP
-        this.executeCMP(); // TODO: implement this
+      case 0x9: // NOT
+        this.executeNOT();
         break;
-      case 9: // NOT
-        this.executeNOT(); // TODO: implement this
+      case 0xC: // JMP
+        this.executeJMP();
         break;
-      case 10: // PUSH, POP, SRL, SRA, SLL, ROL, ROR, MUL, DIV, REM, OR, XOR, MVR, SEXT
-        this.execute10(); // TODO: implement this
+      case 0xE: // LEA
+        this.executeLEA();
         break;
-      case 11: // SUB
-        this.executeSUB(); // TODO: implement this
-        break;
-      case 12: // JMP
-        this.executeJMP(); // TODO: implement this
-        break;
-      case 13: // MVI
-        this.executeMVI(); // TODO: implement this
-        break;
-      case 14: // LEA
-        this.executeLEA(); // TODO: implement this
-        break;
-      case 15: // TRAP
+      case 0xF: // TRAP
         this.executeTRAP();
         break;
       default:
-        this.error(`Unknown opcode: ${opcode}`);
+        this.error(`Unknown opcode: ${this.opcode}`);
         this.running = false;
     }
   }
 
   executeBR() {
     let conditionMet = false;
-
     switch (this.code) {
       case 0: // brz
         conditionMet = this.z === 1;
@@ -148,7 +128,7 @@ class Interpreter {
         conditionMet = this.n === 1;
         break;
       case 3: // brp
-        conditionMet = this.n === this.z;
+        conditionMet = this.n === 0 && this.z === 0;
         break;
       case 4: // brlt
         conditionMet = this.n !== this.v;
@@ -163,53 +143,81 @@ class Interpreter {
         conditionMet = true;
         break;
     }
-
     if (conditionMet) {
-      this.pc = (this.pc + this.pcoffset9) & 0xffff;
+      this.pc = (this.pc + this.pcoffset9) & 0xFFFF;
     }
   }
 
   executeADD() {
     if (this.bit5 === 0) {
       // Register mode
-      this.r[this.dr] = this.r[this.sr1] + this.r[this.sr2];
-      this.setNZ(this.r[this.dr]);
-      this.setCV(this.r[this.dr], this.r[this.sr1], this.r[this.sr2]);
+      const result = (this.r[this.sr1] + this.r[this.sr2]) & 0xFFFF;
+      this.setNZ(result);
+      this.setCV(result, this.r[this.sr1], this.r[this.sr2]);
+      this.r[this.dr] = result;
     } else {
       // Immediate mode
-      this.r[this.dr] = this.r[this.sr1] + this.imm5;
-      this.setNZ(this.r[this.dr]);
-      this.setCV(this.r[this.dr], this.r[this.sr1], this.imm5);
+      const result = (this.r[this.sr1] + this.imm5) & 0xFFFF;
+      this.setNZ(result);
+      this.setCV(result, this.r[this.sr1], this.imm5);
+      this.r[this.dr] = result;
     }
+  }
+
+  executeAND() {
+    if (this.bit5 !== 0) {
+      this.r[this.dr] = this.r[this.sr1] & this.imm5;
+    } else {
+      this.r[this.dr] = this.r[this.sr1] & this.r[this.sr2];
+    }
+    this.setNZ(this.r[this.dr]);
+  }
+
+  executeNOT() {
+    this.r[this.dr] = (~this.r[this.sr1]) & 0xFFFF;
+    this.setNZ(this.r[this.dr]);
   }
 
   executeLD() {
-    this.r[this.dr] = this.mem[(this.pc + this.pcoffset9) & 0xffff];
+    const address = (this.pc + this.pcoffset9) & 0xFFFF;
+    this.r[this.dr] = this.mem[address];
+    this.setNZ(this.r[this.dr]);
   }
 
   executeST() {
-    this.mem[(this.pc + this.pcoffset9) & 0xffff] = this.r[this.sr];
+    const address = (this.pc + this.pcoffset9) & 0xFFFF;
+    this.mem[address] = this.r[this.sr];
   }
 
-  executeSOUT() {
-    let address = this.r[this.sr];
-    let outputString = '';
-    let charCode;
-    while ((charCode = this.mem[address++]) !== 0) {
-      outputString += String.fromCharCode(charCode);
-    }
-    this.output += outputString;
+  executeLEA() {
+    this.r[this.dr] = (this.pc + this.pcoffset9) & 0xFFFF;
   }
-  
-  executeSIN() {
-    // For simplicity, we'll simulate user input
-    // In a real application, you would prompt the user
-    const simulatedInput = 'UserInput'; // Replace with actual user input mechanism
-    let address = this.r[this.sr];
-    for (let i = 0; i < simulatedInput.length; i++) {
-      this.mem[address++] = simulatedInput.charCodeAt(i);
+
+  executeLDR() {
+    const address = (this.r[this.baser] + this.offset6) & 0xFFFF;
+    this.r[this.dr] = this.mem[address];
+    this.setNZ(this.r[this.dr]);
+  }
+
+  executeSTR() {
+    const address = (this.r[this.baser] + this.offset6) & 0xFFFF;
+    this.mem[address] = this.r[this.sr];
+  }
+
+  executeJMP() {
+    this.pc = (this.r[this.baser] + this.offset6) & 0xFFFF;
+  }
+
+  executeBLorBLR() {
+    if (this.bit11 !== 0) {
+      // BL (Branch and Link)
+      this.r[7] = this.pc;
+      this.pc = (this.pc + this.pcoffset11) & 0xFFFF;
+    } else {
+      // BLR (Branch and Link Register)
+      this.r[7] = this.pc;
+      this.pc = (this.r[this.baser] + this.offset6) & 0xFFFF;
     }
-    this.mem[address] = 0; // Null terminator
   }
 
   executeTRAP() {
@@ -221,15 +229,7 @@ class Interpreter {
         this.output += '\n';
         break;
       case 0x02: // DOUT
-        this.output += this.r[this.sr].toString();
-        break;
-      //// TODO: implement remaining trap vectors
-      case 0x06: // SOUT
-        this.executeSOUT();
-        break;
-      //// TODO: implement remaining trap vectors
-      case 0x0A: // SIN
-        this.executeSIN();
+        this.output += `${this.r[this.sr]}`;
         break;
       default:
         this.error(`Unknown TRAP vector: ${this.trapvec}`);
@@ -238,29 +238,32 @@ class Interpreter {
   }
 
   setNZ(value) {
-    this.n = value < 0 ? 1 : 0;
-    this.z = value === 0 ? 1 : 0;
+    value = value & 0xFFFF; // Ensure 16-bit value
+    this.n = (value & 0x8000) ? 1 : 0;
+    this.z = (value === 0) ? 1 : 0;
   }
 
   setCV(sum, x, y) {
-    this.c = ((x & 0xffff) + (y & 0xffff)) > 0xffff ? 1 : 0;
-    let sx = x >> 15;
-    let sy = y >> 15;
-    let ss = sum >> 15;
+    // Carry flag
+    this.c = ((x + y) & 0x10000) ? 1 : 0;
+    // Overflow flag
+    const sx = (x & 0x8000) >> 15;
+    const sy = (y & 0x8000) >> 15;
+    const ss = (sum & 0x8000) >> 15;
     this.v = (sx === sy && sx !== ss) ? 1 : 0;
   }
 
   signExtend(value, bitCount) {
     if ((value >> (bitCount - 1)) & 1) {
-      value |= (0xffff << bitCount);
+      value |= (~0 << bitCount);
     }
-    return value;
+    return value & 0xFFFF;
   }
 
   error(message) {
     console.error(`Interpreter Error: ${message}`);
+    this.running = false;
   }
 }
 
-// Export the Interpreter class for use in other modules
 module.exports = Interpreter;
