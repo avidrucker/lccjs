@@ -1,2 +1,4 @@
 a1test.a
 a1test.e
+*.e
+*.o
