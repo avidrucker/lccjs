@@ -21,6 +21,9 @@ class Assembler {
     this.inputFileName = ''; // Input file name
     this.outputFileName = ''; // Output file name
     this.outFile = null; // Output file handle
+    this.listing = []; // This will store information about each line, including the location counter (locCtr), machine code words, and the source code line.
+    this.loadPoint = 0;
+    this.programSize = 0;
   }
 
   main() {
@@ -67,8 +70,8 @@ class Assembler {
     this.performPass();
 
     if (this.errorFlag) {
-      console.error('Errors encountered during Pass 1.');
-      this.errors.forEach(error => console.error(error));
+      // console.error('Errors encountered during Pass 1.');
+      // this.errors.forEach(error => console.error(error));
       process.exit(1);
     }
 
@@ -80,8 +83,8 @@ class Assembler {
     this.performPass();
 
     if (this.errorFlag) {
-      console.error('Errors encountered during Pass 2.');
-      this.errors.forEach(error => console.error(error));
+      // console.error('Errors encountered during Pass 2.');
+      // this.errors.forEach(error => console.error(error));
       fs.closeSync(this.outFile);
       process.exit(1);
     }
@@ -98,9 +101,16 @@ class Assembler {
   }
 
   performPass() {
+
+    // At the beginning of Pass 1
+    if (this.pass === 1) {
+      this.loadPoint = this.locCtr;
+    }
+
     for (let line of this.sourceLines) {
       this.lineNum++;
       let originalLine = line;
+      this.currentLine = originalLine; // Store current line for error reporting
       // Remove comments and trim whitespace
       line = line.split(';')[0].trim();
       if (line === '') continue;
@@ -134,6 +144,15 @@ class Assembler {
 
       operands = tokens;
 
+      // Create listing entry
+      const listingEntry = {
+        lineNum: this.lineNum,
+        locCtr: this.locCtr,
+        sourceLine: originalLine,
+        codeWords: []
+      };
+      this.currentListingEntry = listingEntry;
+
       // Handle directives and instructions
       if (mnemonic.startsWith('.')) {
         // Directive
@@ -147,6 +166,16 @@ class Assembler {
         this.error('Program too big');
         return;
       }
+
+      // At the end of processing the line
+      if (this.pass === 2) {
+        this.listing.push(listingEntry);
+      }
+    }
+
+    // At the end of Pass 2
+    if (this.pass === 2) {
+      this.programSize = this.locCtr - this.loadPoint;
     }
   }
 
@@ -194,7 +223,8 @@ class Assembler {
   }
 
   handleDirective(mnemonic, operands) {
-    switch (mnemonic.toLowerCase()) {
+    mnemonic = mnemonic.toLowerCase();
+    switch (mnemonic) {
       case '.zero':
         if (operands.length !== 1) {
           this.error(`Invalid operand count for ${mnemonic}`);
@@ -241,7 +271,8 @@ class Assembler {
     }
 
     let machineWord = null;
-    switch (mnemonic.toLowerCase()) {
+    mnemonic = mnemonic.toLowerCase();
+    switch (mnemonic) {
       case 'br':
       case 'brz':
       case 'brnz':
@@ -254,6 +285,11 @@ class Assembler {
         break;
       case 'add':
         machineWord = this.assembleAdd(operands);
+        break;
+      case 'mov':
+      case 'mvi':
+      case 'mvr':
+        machineWord = this.assembleMOV(mnemonic, operands);
         break;
       case 'ld':
         machineWord = this.assembleLd(operands);
@@ -312,6 +348,10 @@ class Assembler {
     const buffer = Buffer.alloc(2);
     buffer.writeUInt16LE(word, 0);
     fs.writeSync(this.outFile, buffer);
+  
+    if (this.pass === 2 && this.currentListingEntry) {
+      this.currentListingEntry.codeWords.push(word);
+    }
   }
 
   assembleBR(mnemonic, operands) {
@@ -646,7 +686,7 @@ class Assembler {
   }
 
   error(message) {
-    const errorMsg = `Error on line ${this.lineNum}: ${message}`;
+    const errorMsg = `Error on line ${this.lineNum} of ${this.inputFileName}:\n    ${this.currentLine}\n${message}`;
     console.error(errorMsg);
     this.errors.push(errorMsg);
     this.errorFlag = true;
