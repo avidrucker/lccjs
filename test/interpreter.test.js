@@ -1,16 +1,14 @@
-// testInterpreter.js
+// interpreter.test.js
 
 const Interpreter = require('../src/interpreter');
 
-function testA1Test() {
+function testInterpreter() {
   const interpreter = new Interpreter();
 
-  try {
-    interpreter.loadExecutableFile('a1test.e'); // Adjust the path as needed
-    interpreter.run();
-  } catch (error) {
-    console.error('Error running a1test.e:', error);
-  }
+  // Simulate command line arguments
+  process.argv = ['node', 'interpreter.js', 'a1test.e'];
+
+  interpreter.main();
 }
 
-testA1Test();
+testInterpreter();
