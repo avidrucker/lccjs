@@ -56,7 +56,7 @@ class Assembler {
     fs.writeSync(this.outFile, 'oC');
 
     // Perform Pass 1
-    console.log('Starting Pass 1');
+    console.log('Starting assembly pass 1');
     this.pass = 1;
     this.locCtr = 0;
     this.lineNum = 0;
@@ -73,7 +73,7 @@ class Assembler {
     }
 
     // Rewind source lines for Pass 2
-    console.log('Starting Pass 2');
+    console.log('Starting assembly pass 2');
     this.pass = 2;
     this.locCtr = 0;
     this.lineNum = 0;
@@ -88,7 +88,7 @@ class Assembler {
 
     // Close the output file
     fs.closeSync(this.outFile);
-    console.log('Pass 2 completed');
+    // console.log('Pass 2 completed');
   }
 
   constructOutputFileName(inputFileName) {
