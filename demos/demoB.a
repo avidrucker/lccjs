@@ -1,0 +1,13 @@
+    lea r0, ask
+    sout r0
+    sin r0
+    lea r1, hi
+    sout r1
+    sout r0
+    lea r0, period
+    sout r0
+    halt
+
+ask:  .string "What's your name? "
+hi:   .string "Hi, "
+period: .string "."
