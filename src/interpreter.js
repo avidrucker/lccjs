@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // interpreter.js
 // Adjusted LCC.js Interpreter to match i1.c and run a1test.e
 
@@ -18,22 +20,49 @@ class Interpreter {
     this.inputBuffer = '';             // Input buffer for SIN (if needed)
   }
 
-  loadExecutableFile(filePath) {
-    const buffer = fs.readFileSync(filePath);
-    let offset = 0;
+  main() {
+    const args = process.argv.slice(2);
+
+    if (args.length !== 1) {
+      console.error('Usage: interpreter.js <input filename>');
+      process.exit(1);
+    }
+
+    const inputFileName = args[0];
+
+    // Display program name, input file name, and current time
+    const currentTime = new Date().toString();
+    console.log(`FIRSTNAME LASTNAME     interpreter.js ${inputFileName}     ${currentTime}`);
+
+    // Open and read the executable file
+    let buffer;
+    try {
+      buffer = fs.readFileSync(inputFileName);
+    } catch (err) {
+      console.error(`Cannot open input file ${inputFileName}`);
+      process.exit(1);
+    }
 
     // Check file signature
-    const signature = String.fromCharCode(buffer[offset++]);
-    if (signature !== 'o') {
-      throw new Error('Invalid file format: Missing signature');
+    if (buffer[0] !== 'o'.charCodeAt(0) || buffer[1] !== 'C'.charCodeAt(0)) {
+      console.error(`${inputFileName} is not a valid LCC executable file`);
+      process.exit(1);
     }
 
-    // Skip 'C' header entry
-    const headerEntry = String.fromCharCode(buffer[offset++]);
-    if (headerEntry !== 'C') {
-      throw new Error('Missing C header entry in executable');
-    }
+    // Load the executable into memory
+    this.loadExecutableBuffer(buffer.slice(2));
 
+    // Run the interpreter
+    try {
+      this.run();
+    } catch (error) {
+      console.error(`Runtime Error: ${error.message}`);
+      process.exit(1);
+    }
+  }
+
+  loadExecutableBuffer(buffer) {
+    let offset = 0;
     // Read machine code into memory
     let memIndex = 0;
     while (offset < buffer.length) {
@@ -264,6 +293,12 @@ class Interpreter {
     console.error(`Interpreter Error: ${message}`);
     this.running = false;
   }
+}
+
+// Instantiate and run the interpreter if this script is run directly
+if (require.main === module) {
+  const interpreter = new Interpreter();
+  interpreter.main();
 }
 
 module.exports = Interpreter;
