@@ -558,6 +558,51 @@ class Assembler {
     return macword;
   }
 
+  assembleMOV(mnemonic, operands) {
+    if (operands.length !== 2) {
+      this.error(`Invalid operand count for ${mnemonic}`);
+      return null;
+    }
+  
+    let dr = this.getRegister(operands[0]);
+    if (dr === null) return null;
+  
+    if (mnemonic === 'mov') {
+      // Determine if operands[1] is a register or immediate
+      if (this.isRegister(operands[1])) {
+        // Translate to 'mvr dr, sr'
+        let sr = this.getRegister(operands[1]);
+        if (sr === null) return null;
+        // mvr: opcode 0xA000, eopcode 12
+        let macword = 0xA000 | (dr << 9) | (sr << 6) | 0x000C;
+        return macword;
+      } else {
+        // Translate to 'mvi dr, imm9'
+        let imm9 = this.evaluateImmediate(operands[1], -256, 255);
+        if (imm9 === null) return null;
+        // mvi: opcode 0xD000
+        let macword = 0xD000 | (dr << 9) | (imm9 & 0x1FF);
+        return macword;
+      }
+    } else if (mnemonic === 'mvi') {
+      // mvi dr, imm9
+      let imm9 = this.evaluateImmediate(operands[1], -256, 255);
+      if (imm9 === null) return null;
+      let macword = 0xD000 | (dr << 9) | (imm9 & 0x1FF);
+      return macword;
+    } else if (mnemonic === 'mvr') {
+      // mvr dr, sr
+      let sr = this.getRegister(operands[1]);
+      if (sr === null) return null;
+      // Ensure eopcode 12 is set
+      let macword = 0xA000 | (dr << 9) | (sr << 6) | 0x000C;
+      return macword;
+    } else {
+      this.error(`Invalid mnemonic: ${mnemonic}`);
+      return null;
+    }
+  }
+  
   getRegister(regStr) {
     if (!this.isRegister(regStr)) {
       this.error(`Invalid register: ${regStr}`);
