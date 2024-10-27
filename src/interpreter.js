@@ -19,6 +19,9 @@ class Interpreter {
     this.output = '';                  // Output string
     this.inputBuffer = '';             // Input buffer for SIN (if needed)
     this.options = {};                 // Options from lcc.js
+    this.instructionsExecuted = 0;     // for making BST/LST files
+    this.maxStackSize = 0;             // for making BST/LST files
+    this.spInitial = 0;                // for making BST/LST files
   }
 
   main() {
@@ -100,12 +103,15 @@ class Interpreter {
   }
 
   run() {
+    this.spInitial = this.r[6]; // Assuming r6 is the stack pointer
+
     while (this.running) {
       this.step();
     }
+    //// Do not output here, leave it to the caller
     // Output the result
-    console.log("====================================================== Output");
-    console.log(this.output);
+    // console.log("====================================================== Output");
+    // console.log(this.output);
   }
 
   step() {
@@ -120,6 +126,7 @@ class Interpreter {
     this.bit11 = (this.ir >> 11) & 0x1; // bit 11
     this.imm5 = this.signExtend(this.ir & 0x1F, 5); // imm5 (bits 4-0)
     this.pcoffset9 = this.signExtend(this.ir & 0x1FF, 9); // pcoffset9 (bits 8-0)
+    this.imm9 = this.pcoffset9;
     this.pcoffset11 = this.signExtend(this.ir & 0x7FF, 11); // pcoffset11 (bits 10-0)
     this.offset6 = this.signExtend(this.ir & 0x3F, 6); // offset6 (bits 5-0)
     this.eopcode = this.ir & 0x1F; // eopcode (bits 4-0)
@@ -127,45 +134,66 @@ class Interpreter {
 
     // Execute instruction
     switch (this.opcode) {
-      case 0x0: // BR
+      case 0: // BR
         this.executeBR();
         break;
-      case 0x1: // ADD
+      case 1: // ADD
         this.executeADD();
         break;
-      case 0x2: // LD
+      case 2: // LD
         this.executeLD();
         break;
-      case 0x3: // ST
+      case 3: // ST
         this.executeST();
         break;
-      case 0x4: // BL or BLR
+      case 4: // BL or BLR
         this.executeBLorBLR();
         break;
-      case 0x5: // AND
+      case 5: // AND
         this.executeAND();
         break;
-      case 0x6: // LDR
+      case 6: // LDR
         this.executeLDR();
         break;
-      case 0x7: // STR
+      case 7: // STR
         this.executeSTR();
         break;
-      case 0x9: // NOT
+      case 8: // CMP
+        console.log("compare not yet implemented");
+        break;
+      case 9: // NOT
         this.executeNOT();
         break;
-      case 0xC: // JMP
+      case 10: // PUSH, POP, SRL, SRA, SLL, ROL, ROR, MUL, DIV, REM, OR, XOR, MVR, SEXT
+        this.executeCase10();
+        break;
+      case 11: // SUB
+        this.executeSUB();
+        break;
+      case 12: // JMP/RET
         this.executeJMP();
         break;
-      case 0xE: // LEA
+      case 13: // MVI
+        this.executeMVI();
+        break;
+      case 14: // LEA
         this.executeLEA();
         break;
-      case 0xF: // TRAP
+      case 15: // TRAP
         this.executeTRAP();
         break;
       default:
         this.error(`Unknown opcode: ${this.opcode}`);
         this.running = false;
+    }
+
+    this.instructionsExecuted++;
+
+    // Track max stack size
+    let sp = this.r[6];
+    let stackSize = this.spInitial - sp;
+    if (stackSize > this.maxStackSize) {
+      this.maxStackSize = stackSize;
     }
   }
 
@@ -202,6 +230,80 @@ class Interpreter {
     }
   }
 
+  executeCase10() {
+    // ct is a 4-bit shift count field (if omitted at the assembly level, it defaults to 1). 
+    const ct = (this.ir >> 5) & 0xF;
+
+    switch (this.eopcode) {
+      case 0: // PUSH
+        // decrement stack pointer and store value
+        this.r[6] = (this.r[6] - 1) & 0xFFFF;
+        // save source register to memory at address pointed at by stack pointer
+        this.mem[this.r[6]] = this.r[this.sr];
+        break;
+      case 1: // POP
+        // load value from memory at address pointed at by stack pointer to destination
+        this.r[this.dr] = this.mem[this.r[6]];
+        // increment stack pointer (to deallocate stack memory)
+        this.r[6] = (this.r[6] + 1) & 0xFFFF;
+        break;
+      case 2: // SRL ////
+        this.r[this.sr] = this.r[this.sr] >> ct;
+        this.setNZ(this.r[this.sr]);
+        break;
+      case 3: // SRA ////
+        this.r[this.sr] = this.r[this.sr] >> ct;
+        this.setNZ(this.r[this.sr]);
+        break;
+      case 4: // SLL
+        this.r[this.sr] = this.r[this.sr] << ct;
+        this.setNZ(this.r[this.sr]);
+        break;
+      case 5: // ROL
+        this.r[this.sr] = (this.r[this.sr] << ct) | (this.r[this.sr] >> (16 - ct));
+        this.setNZ(this.r[this.sr]);
+        break;
+      case 6: // ROR
+        this.r[this.sr] = (this.r[this.sr] >> ct) | (this.r[this.sr] << (16 - ct));
+        this.setNZ(this.r[this.sr]);
+        break;
+      case 7: // MUL
+        this.r[this.dr] = (this.r[this.dr] * this.r[this.sr1]) & 0xFFFF;
+        this.setNZ(this.r[this.dr]);
+        break;
+      case 8: // DIV
+        if (this.r[this.sr] === 0) {
+          this.error('Division by zero');
+        }
+        this.r[this.dr] = (this.r[this.dr] / this.r[this.sr1]) & 0xFFFF;
+        this.setNZ(this.r[this.dr]);
+        break;
+      case 9: // REM
+        if (this.r[this.sr2] === 0) {
+          this.error('Division by zero');
+        }
+        this.r[this.dr] = (this.r[this.dr] % this.r[this.sr1]) & 0xFFFF;
+        this.setNZ(this.r[this.dr]);
+        break;
+      case 10: // OR
+        this.r[this.dr] = this.r[this.dr] | this.r[this.sr1];
+        this.setNZ(this.r[this.dr]);
+        break;
+      case 11: // XOR
+        this.r[this.dr] = this.r[this.dr] ^ this.r[this.sr1];
+        this.setNZ(this.r[this.dr]);
+        break;
+      case 12: // MVR
+        this.r[this.dr] = this.r[this.sr1];
+        // console.log("evaluate MVR, this.dr: ", this.dr, " this.r[this.dr]: ", this.r[this.dr], " this.sr1: ", this.sr1, " this.r[this.sr1]: ", this.r[this.sr1]);
+        break;
+      case 13: // SEXT
+        this.r[this.dr] = this.signExtend(this.r[this.sr], 16);
+        this.setNZ(this.r[this.dr]);
+        break;
+      }
+  }
+
   executeADD() {
     if (this.bit5 === 0) {
       // Register mode
@@ -212,6 +314,22 @@ class Interpreter {
     } else {
       // Immediate mode
       const result = (this.r[this.sr1] + this.imm5) & 0xFFFF;
+      this.setNZ(result);
+      this.setCV(result, this.r[this.sr1], this.imm5);
+      this.r[this.dr] = result;
+    }
+  }
+
+  executeSUB() {
+    if (this.bit5 === 0) {
+      // Register mode
+      const result = (this.r[this.sr1] - this.r[this.sr2]) & 0xFFFF;
+      this.setNZ(result);
+      this.setCV(result, this.r[this.sr1], this.r[this.sr2]);
+      this.r[this.dr] = result;
+    } else {
+      // Immediate mode
+      const result = (this.r[this.sr1] - this.imm5) & 0xFFFF;
       this.setNZ(result);
       this.setCV(result, this.r[this.sr1], this.imm5);
       this.r[this.dr] = result;
@@ -241,6 +359,12 @@ class Interpreter {
   executeST() {
     const address = (this.pc + this.pcoffset9) & 0xFFFF;
     this.mem[address] = this.r[this.sr];
+  }
+
+  executeMVI() {
+    this.r[this.dr] = this.imm9;
+    this.setNZ(this.r[this.dr]);
+    // console.log("evaluate MVI, this.imm9: ", this.imm9, " this.dr: ", this.dr, " this.r[this.dr]: ", this.r[this.dr]);
   }
 
   executeLEA() {
