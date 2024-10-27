@@ -3,6 +3,7 @@
 // lcc.js
 // LCC.js Main Program
 
+const fs = require('fs');
 const path = require('path');
 const Assembler = require('./assembler');
 const Interpreter = require('./interpreter');
@@ -13,6 +14,9 @@ class LCC {
     this.outputFileName = '';
     this.options = {};
     this.args = [];
+    this.userName = process.env.USER || 'FIRSTNAME LASTNAME';
+    this.assembler = null;
+    this.interpreter = null;
   }
 
   main() {
@@ -142,23 +146,29 @@ class LCC {
 
   assembleFile() {
     const assembler = new Assembler();
-  
+
     // Set input and output file names
     assembler.inputFileName = this.inputFileName;
     assembler.outputFileName = this.outputFileName || this.constructOutputFileName(this.inputFileName);
-  
+
     // Update this.outputFileName to match assembler's output
     this.outputFileName = assembler.outputFileName;
-  
+
+    // Store the assembler instance
+    this.assembler = assembler;
+
     // Run the assembler's main function
     assembler.main();
-  }  
+  }
 
   executeFile() {
     const interpreter = new Interpreter();
 
     // Set options in the interpreter
     interpreter.options = this.options;
+
+    // Store the interpreter instance
+    this.interpreter = interpreter;
 
     // Load the executable file
     interpreter.loadExecutableFile(this.outputFileName);
@@ -167,15 +177,78 @@ class LCC {
     try {
       interpreter.run();
 
-      // Output the interpreter's output
-      //// console.log(interpreter.output);
+      // Generate the BST content
+      const bstContent = this.generateBSTContent();
 
-      //// Write lst and bst files
-      // ... (rest of the code)
+      // Write the BST file
+      const bstFileName = this.constructBSTFileName(this.inputFileName);
+      fs.writeFileSync(bstFileName, bstContent);
+
+      console.log(`bst file = ${bstFileName}`);
+      console.log("====================================================== Output");
+
+      // Output the interpreter's output
+      console.log(interpreter.output);
     } catch (error) {
       console.error(`Error running ${this.outputFileName}: ${error.message}`);
       process.exit(1);
     }
+  }
+
+  constructBSTFileName(inputFileName) {
+    const parsedPath = path.parse(inputFileName);
+    // Remove extension and add '.bst'
+    return path.format({ ...parsedPath, base: undefined, ext: '.bst' });
+  }
+
+  generateBSTContent() {
+    let content = '';
+
+    // Header
+    content += `LCC Assemble/Link/Interpret/Debug Ver 1.0  ${new Date().toString()}\n`;
+    content += `${this.userName}\n\n`;
+
+    content += 'Header\n';
+    content += 'o\nC\n\n';
+
+    content += 'Loc          Code                   Source Code\n';
+
+    if (this.assembler.errorFlag) {
+      // Output errors
+      this.assembler.errors.forEach(error => {
+        content += `${error}\n`;
+      });
+    } else {
+      // Output listing
+      this.assembler.listing.forEach(entry => {
+        const locStr = entry.locCtr.toString(16).padStart(4, '0');
+
+        let codeStr = '';
+        entry.codeWords.forEach(word => {
+          const wordStr = word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim();
+          codeStr += wordStr + ' ';
+        });
+        codeStr = codeStr.trim().padEnd(23);
+
+        const sourceStr = entry.sourceLine.trim();
+
+        content += `${locStr}  ${codeStr}    ${sourceStr}\n`;
+      });
+    }
+
+    // Output section
+    content += '====================================================== Output\n';
+    content += `${this.interpreter.output}\n\n`;
+
+    // Program statistics
+    content += '========================================== Program statistics\n';
+    content += `Input file name       =      ${this.inputFileName}\n`;
+    content += `Instructions executed =    ${this.interpreter.instructionsExecuted.toString(16)} (hex)     ${this.interpreter.instructionsExecuted} (dec)\n`;
+    content += `Program size          =    ${this.assembler.programSize.toString(16)} (hex)     ${this.assembler.programSize} (dec)\n`;
+    content += `Max stack size        =    ${this.interpreter.maxStackSize.toString(16)} (hex)     ${this.interpreter.maxStackSize} (dec)\n`;
+    content += `Load point            =    ${this.assembler.loadPoint.toString(16)} (hex)     ${this.assembler.loadPoint} (dec)\n`;
+
+    return content;
   }
 }
 
