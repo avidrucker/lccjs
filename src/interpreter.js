@@ -18,6 +18,7 @@ class Interpreter {
     this.running = true;
     this.output = '';                  // Output string
     this.inputBuffer = '';             // Input buffer for SIN (if needed)
+    this.options = {};                 // Options from lcc.js
   }
 
   main() {
@@ -61,6 +62,29 @@ class Interpreter {
     }
   }
 
+  // added for lcc.js
+  loadExecutableFile(fileName) {
+    let buffer;
+    try {
+      buffer = fs.readFileSync(fileName);
+    } catch (err) {
+      console.error(`Cannot open input file ${fileName}`);
+      process.exit(1);
+    }
+
+    // Check file signature
+    if (buffer[0] !== 'o'.charCodeAt(0) || buffer[1] !== 'C'.charCodeAt(0)) {
+      console.error(`${fileName} is not a valid LCC executable file`);
+      process.exit(1);
+    }
+
+    ////
+    console.log(`Starting interpretation of ${fileName}`);
+
+    // Load the executable into memory
+    this.loadExecutableBuffer(buffer.slice(2));
+  }
+
   loadExecutableBuffer(buffer) {
     let offset = 0;
     // Read machine code into memory
@@ -80,6 +104,7 @@ class Interpreter {
       this.step();
     }
     // Output the result
+    console.log("====================================================== Output");
     console.log(this.output);
   }
 
