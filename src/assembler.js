@@ -1,29 +1,67 @@
+#!/usr/bin/env node
+
 // assembler.js
 // LCC.js Assembler
+// Adjusted to handle file input/output similar to a1.c
+
+const fs = require('fs');
+const path = require('path');
 
 class Assembler {
   constructor() {
     this.symbolTable = {}; // symbol: address
     this.locCtr = 0; // Location counter
     this.lineNum = 0; // Line number
-    this.machineCode = []; // Array to hold machine code words
     this.sourceLines = []; // Array of source code lines
     this.errorFlag = false; // Error flag
     this.pass = 1; // Current pass (1 or 2)
     this.labels = new Set(); // Set of labels to detect duplicates
     this.errors = []; // Collect errors
+    this.outputBuffer = []; // Buffer to hold machine code words
+    this.inputFileName = ''; // Input file name
+    this.outputFileName = ''; // Output file name
+    this.outFile = null; // Output file handle
   }
 
-  assemble(sourceCode) {
-    // Split source code into lines
-    this.sourceLines = sourceCode.split('\n');
+  main() {
+    const args = process.argv.slice(2);
+    if (args.length !== 1) {
+      console.error('Usage: assembler.js <input filename>');
+      process.exit(1);
+    }
+
+    this.inputFileName = args[0];
+
+    // Read the source code from the input file
+    try {
+      const sourceCode = fs.readFileSync(this.inputFileName, 'utf-8');
+      this.sourceLines = sourceCode.split('\n');
+    } catch (err) {
+      console.error(`Cannot open input file ${this.inputFileName}`);
+      process.exit(1);
+    }
+
+    // Construct the output file name by replacing extension with '.e'
+    this.outputFileName = this.constructOutputFileName(this.inputFileName);
+
+    // Open the output file for writing in binary mode
+    try {
+      this.outFile = fs.openSync(this.outputFileName, 'w');
+    } catch (err) {
+      console.error(`Cannot open output file ${this.outputFileName}`);
+      process.exit(1);
+    }
+
+    // Write the initial header 'oC' to the output file
+    fs.writeSync(this.outFile, 'oC');
+
     // Perform Pass 1
+    console.log('Starting Pass 1');
     this.pass = 1;
     this.locCtr = 0;
     this.lineNum = 0;
     this.errorFlag = false;
     this.symbolTable = {};
-    this.machineCode = [];
     this.labels.clear();
     this.errors = [];
     this.performPass();
@@ -31,23 +69,32 @@ class Assembler {
     if (this.errorFlag) {
       console.error('Errors encountered during Pass 1.');
       this.errors.forEach(error => console.error(error));
-      return null;
+      process.exit(1);
     }
 
-    // Perform Pass 2
+    // Rewind source lines for Pass 2
+    console.log('Starting Pass 2');
     this.pass = 2;
     this.locCtr = 0;
     this.lineNum = 0;
-    this.machineCode = [];
     this.performPass();
 
     if (this.errorFlag) {
       console.error('Errors encountered during Pass 2.');
       this.errors.forEach(error => console.error(error));
-      return null;
+      fs.closeSync(this.outFile);
+      process.exit(1);
     }
 
-    return this.machineCode;
+    // Close the output file
+    fs.closeSync(this.outFile);
+    console.log('Pass 2 completed');
+  }
+
+  constructOutputFileName(inputFileName) {
+    const parsedPath = path.parse(inputFileName);
+    // Remove extension and add '.e'
+    return path.format({ ...parsedPath, base: undefined, ext: '.e' });
   }
 
   performPass() {
@@ -160,7 +207,7 @@ class Assembler {
         }
         if (this.pass === 2) {
           for (let i = 0; i < num; i++) {
-            this.machineCode.push(0);
+            this.writeMachineWord(0);
           }
         }
         this.locCtr += num;
@@ -177,7 +224,7 @@ class Assembler {
             this.error('Data does not fit in 16 bits');
             return;
           }
-          this.machineCode.push(value & 0xFFFF);
+          this.writeMachineWord(value & 0xFFFF);
         }
         this.locCtr += 1;
         break;
@@ -256,9 +303,15 @@ class Assembler {
     }
 
     if (machineWord !== null) {
-      this.machineCode.push(machineWord);
+      this.writeMachineWord(machineWord);
       this.locCtr += 1;
     }
+  }
+
+  writeMachineWord(word) {
+    const buffer = Buffer.alloc(2);
+    buffer.writeUInt16LE(word, 0);
+    fs.writeSync(this.outFile, buffer);
   }
 
   assembleBR(mnemonic, operands) {
@@ -553,6 +606,12 @@ class Assembler {
     this.errors.push(errorMsg);
     this.errorFlag = true;
   }
+}
+
+// Instantiate and run the assembler if this script is run directly
+if (require.main === module) {
+  const assembler = new Assembler();
+  assembler.main();
 }
 
 module.exports = Assembler;
