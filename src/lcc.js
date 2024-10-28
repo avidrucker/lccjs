@@ -19,8 +19,8 @@ class LCC {
     this.interpreter = null;
   }
 
-  main() {
-    const args = process.argv.slice(2);
+  main(args) {
+    args = args || process.argv.slice(2);
 
     if (args.length === 0) {
       this.printHelp();
@@ -146,19 +146,19 @@ class LCC {
 
   assembleFile() {
     const assembler = new Assembler();
-
+  
     // Set input and output file names
     assembler.inputFileName = this.inputFileName;
     assembler.outputFileName = this.outputFileName || this.constructOutputFileName(this.inputFileName);
-
+  
     // Update this.outputFileName to match assembler's output
     this.outputFileName = assembler.outputFileName;
-
+  
     // Store the assembler instance
     this.assembler = assembler;
-
+  
     // Run the assembler's main function
-    assembler.main();
+    assembler.main([this.inputFileName]);
   }
 
   executeFile() {
@@ -254,5 +254,9 @@ class LCC {
   }
 }
 
-const lcc = new LCC();
-lcc.main();
+module.exports = LCC;
+
+if (require.main === module) {
+  const lcc = new LCC();
+  lcc.main();
+}
