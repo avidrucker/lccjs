@@ -108,10 +108,6 @@ class Interpreter {
     while (this.running) {
       this.step();
     }
-    //// Do not output here, leave it to the caller
-    // Output the result
-    // console.log("====================================================== Output");
-    // console.log(this.output);
   }
 
   step() {
@@ -398,16 +394,96 @@ class Interpreter {
     }
   }
 
+  executeSOUT() {
+    let address = this.r[this.sr];
+    let charCode = this.mem[address];
+    while (charCode !== 0) {
+      this.output += String.fromCharCode(charCode);
+      address = (address + 1) & 0xFFFF;
+      charCode = this.mem[address];
+    }
+  }
+  
+  executeSIN() {
+    let address = this.r[this.sr];
+    let input = '';
+    let buffer = Buffer.alloc(1);
+    let fd = process.stdin.fd;
+  
+    while (true) {
+      try {
+        let bytesRead = fs.readSync(fd, buffer, 0, 1, null);
+        if (bytesRead === 0) {
+          // EOF
+          break;
+        }
+        let char = buffer.toString('utf8');
+        if (char === '\n' || char === '\r') {
+          // Stop reading input on newline or carriage return
+          break;
+        }
+        input += char;
+      } catch (err) {
+        if (err.code === 'EAGAIN') {
+          // Resource temporarily unavailable, wait a bit and retry
+          continue;
+        } else {
+          throw err;
+        }
+      }
+    }
+  
+    for (let i = 0; i < input.length; i++) {
+      this.mem[address] = input.charCodeAt(i);
+      address = (address + 1) & 0xFFFF;
+    }
+    // Null-terminate the string
+    this.mem[address] = 0;
+  }
+  
+
   executeTRAP() {
     switch (this.trapvec) {
-      case 0x00: // HALT
+      case 0: // HALT
         this.running = false;
         break;
-      case 0x01: // NL
+      case 1: // NL
         this.output += '\n';
         break;
-      case 0x02: // DOUT
+      case 2: // DOUT
         this.output += `${this.r[this.sr]}`;
+        break;
+      case 3: // UDOUT
+        // print as unsigned decimal
+        this.output += (this.r[this.sr] & 0xFFFF).toString();
+        break;
+      case 4: // HOUT
+        // print as hexadecimal
+        this.output += this.r[this.sr].toString(16).toUpperCase();
+        break;
+      case 5: // AOUT
+        // print as ASCII character
+        this.output += String.fromCharCode(this.r[this.sr] & 0xFF);
+        break;
+      case 6: // SOUT
+        // print string at address
+        this.executeSOUT();
+        break;
+      case 7: // DIN
+        // read in a signed decimal number
+        this.r[this.dr] = parseInt(this.inputBuffer, 10);
+        break;
+      case 8: // HIN
+        // read in a hexadecimal number
+        this.r[this.dr] = parseInt(this.inputBuffer, 16);
+        break;
+      case 9: // AIN
+        // read in a single ASCII character
+        this.r[this.dr] = this.inputBuffer.charCodeAt(0);
+        break;
+      case 10: // SIN
+        // read a line of input from the user
+        this.executeSIN();
         break;
       default:
         this.error(`Unknown TRAP vector: ${this.trapvec}`);
