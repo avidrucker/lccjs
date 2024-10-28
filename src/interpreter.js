@@ -435,6 +435,9 @@ class Interpreter {
       }
     }
   
+    // Echo the input back to buffer output
+    this.output += input + "\n";
+  
     for (let i = 0; i < input.length; i++) {
       this.mem[address] = input.charCodeAt(i);
       address = (address + 1) & 0xFFFF;
@@ -442,7 +445,6 @@ class Interpreter {
     // Null-terminate the string
     this.mem[address] = 0;
   }
-  
 
   executeTRAP() {
     switch (this.trapvec) {
