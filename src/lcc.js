@@ -14,7 +14,7 @@ class LCC {
     this.outputFileName = '';
     this.options = {};
     this.args = [];
-    this.userName = process.env.USER || 'FIRSTNAME LASTNAME';
+    this.userName = 'LASTNAME, FIRSTNAME';
     this.assembler = null;
     this.interpreter = null;
   }
