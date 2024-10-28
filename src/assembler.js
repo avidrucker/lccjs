@@ -104,7 +104,6 @@ class Assembler {
   }
 
   performPass() {
-
     // At the beginning of Pass 1
     if (this.pass === 1) {
       this.loadPoint = this.locCtr;
@@ -190,7 +189,7 @@ class Assembler {
     let currentToken = '';
     let inString = false;
     let stringDelimiter = '';
-  
+
     for (let i = 0; i < line.length; i++) {
       let char = line[i];
       if ((char === '"' || char === "'") && !inString) {
@@ -224,13 +223,13 @@ class Assembler {
         currentToken += char;
       }
     }
-  
+
     if (currentToken !== '') {
       tokens.push(currentToken);
     }
-  
+
     return tokens;
-  }  
+  }
 
   isWhitespace(char) {
     return /\s/.test(char);
@@ -268,7 +267,7 @@ class Assembler {
         if (this.pass === 2) {
           let value = this.evaluateOperand(operands[0]);
           if (value === null) return;
-          if (value > 32767 || value < -32768) {
+          if (value > 65535 || value < -32768) {
             this.error('Data does not fit in 16 bits');
             return;
           }
@@ -276,34 +275,34 @@ class Assembler {
         }
         this.locCtr += 1;
         break;
-        case '.string':
-          if (operands.length !== 1) {
-            this.error(`Invalid operand count for ${mnemonic}`);
-            return;
+      case '.string':
+        if (operands.length !== 1) {
+          this.error(`Invalid operand count for ${mnemonic}`);
+          return;
+        }
+        let strOperand = operands[0];
+        if (!this.isStringLiteral(strOperand)) {
+          this.error(`Invalid string literal: ${strOperand}`);
+          return;
+        }
+        // Extract the string without quotes
+        let strContent = strOperand.slice(1, -1);
+
+        if (this.pass === 1) {
+          // Update location counter: length of string + 1 for null terminator
+          this.locCtr += strContent.length + 1;
+        } else if (this.pass === 2) {
+          // Write each character's ASCII code to output
+          for (let i = 0; i < strContent.length; i++) {
+            let asciiValue = strContent.charCodeAt(i);
+            this.writeMachineWord(asciiValue);
+            this.locCtr += 1; // Increment locCtr after writing each word
           }
-          let strOperand = operands[0];
-          if (!this.isStringLiteral(strOperand)) {
-            this.error(`Invalid string literal: ${strOperand}`);
-            return;
-          }
-          // Extract the string without quotes
-          let strContent = strOperand.slice(1, -1);
-        
-          if (this.pass === 1) {
-            // Update location counter: length of string + 1 for null terminator
-            this.locCtr += strContent.length + 1;
-          } else if (this.pass === 2) {
-            // Write each character's ASCII code to output
-            for (let i = 0; i < strContent.length; i++) {
-              let asciiValue = strContent.charCodeAt(i);
-              this.writeMachineWord(asciiValue);
-              this.locCtr += 1; // Increment locCtr after writing each word
-            }
-            // Write null terminator
-            this.writeMachineWord(0);
-            this.locCtr += 1; // Increment locCtr for null terminator
-          }
-          break;        
+          // Write null terminator
+          this.writeMachineWord(0);
+          this.locCtr += 1; // Increment locCtr for null terminator
+        }
+        break;
       default:
         this.error(`Invalid directive: ${mnemonic}`);
         break;
@@ -349,9 +348,12 @@ class Assembler {
       case 'st':
         machineWord = this.assembleSt(operands);
         break;
+      case 'call':
+      case 'jsr':
       case 'bl':
         machineWord = this.assembleBL(operands);
         break;
+      case 'jsrr':
       case 'blr':
         machineWord = this.assembleBLR(operands);
         break;
@@ -376,6 +378,10 @@ class Assembler {
       case 'lea':
         machineWord = this.assembleLea(operands);
         break;
+      case 'cea':
+        console.log("CEA is not supported yet");
+      // machineWord = this.assembleCEA(operands);
+      // break;
       case 'halt':
         machineWord = 0xF000;
         break;
@@ -385,8 +391,26 @@ class Assembler {
       case 'dout':
         machineWord = this.assembleTrap(operands, 0x0002);
         break;
+      case 'udout':
+        machineWord = this.assembleTrap(operands, 0x0003);
+        break;
+      case 'hout':
+        machineWord = this.assembleTrap(operands, 0x0004);
+        break;
+      case 'aout':
+        machineWord = this.assembleTrap(operands, 0x0005);
+        break;
       case 'sout':
         machineWord = this.assembleTrap(operands, 0x0006); // Trap vector for sout is 6
+        break;
+      case 'din':
+        machineWord = this.assembleTrap(operands, 0x0007); // Trap vector for din is 7
+        break;
+      case 'hin':
+        machineWord = this.assembleTrap(operands, 0x0008); // Trap vector for hin is 8
+        break;
+      case 'ain':
+        machineWord = this.assembleTrap(operands, 0x0009); // Trap vector for ain is 9
         break;
       case 'sin':
         machineWord = this.assembleTrap(operands, 0x000A); // Trap vector for sin is 10
@@ -471,7 +495,7 @@ class Assembler {
     let macword = 0xA000 | (sr << 9);
     return macword;
   }
-  
+
   assemblePOP(operands) {
     if (operands.length !== 1) {
       this.error('Invalid operand count for pop');
@@ -722,14 +746,14 @@ class Assembler {
     let macword = 0xF000 | (sr << 9) | (trapVector & 0xFF);
     return macword;
   }
-  
+
 
   getRegister(regStr) {
     if (!this.isRegister(regStr)) {
       this.error(`Invalid register: ${regStr}`);
       return null;
     }
-    if(regStr === "fp") {
+    if (regStr === "fp") {
       regStr = "r5";
     } else if (regStr === "sp") {
       regStr = "r6";
@@ -740,8 +764,64 @@ class Assembler {
     return parseInt(regStr.substr(1), 10);
   }
 
+  isCharLiteral(str) {
+    return /^'(?:\\.|[^\\])'$/.test(str);
+  }
+
+  parseCharLiteral(str) {
+    // Remove the single quotes
+    let charContent = str.slice(1, -1);
+
+    if (charContent.length === 1) {
+      // Simple character
+      return charContent.charCodeAt(0);
+    } else if (charContent.startsWith('\\')) {
+      // Escape sequence
+      switch (charContent) {
+        case '\\n':
+          return '\n'.charCodeAt(0);
+        case '\\t':
+          return '\t'.charCodeAt(0);
+        case '\\r':
+          return '\r'.charCodeAt(0);
+        case '\\\\':
+          return '\\'.charCodeAt(0);
+        case "\\'":
+          return "'".charCodeAt(0);
+        case '\\"':
+          return '"'.charCodeAt(0);
+        default:
+          this.error(`Invalid escape sequence: ${charContent}`);
+          return null;
+      }
+    } else {
+      this.error(`Invalid character literal: '${charContent}'`);
+      return null;
+    }
+  }
+
   isRegister(regStr) {
     return /^(r[0-7]|fp|sp|lr)$/i.test(regStr);
+  }
+
+  parseNumber(valueStr) {
+    let value;
+
+    // Handle character literals
+    if (this.isCharLiteral(valueStr)) {
+      value = this.parseCharLiteral(valueStr);
+      if (value === null) {
+        return NaN; // Signal an error
+      }
+    } else if (valueStr.startsWith('0x') || valueStr.startsWith('0X')) {
+      value = parseInt(valueStr, 16);
+      // note: the LCC doesn't currently support negative hex numbers
+      // } else if (valueStr.startsWith('-0x') || valueStr.startsWith('-0X')) {
+      //   value = -parseInt(valueStr.substr(3), 16);
+    } else {
+      value = parseInt(valueStr, 10);
+    }
+    return value;
   }
 
   getSymbolAddress(label) {
@@ -754,7 +834,7 @@ class Assembler {
   }
 
   evaluateOperand(operand) {
-    let value = parseInt(operand, 10);
+    let value = this.parseNumber(operand);
     if (!isNaN(value)) {
       return value;
     } else if (this.symbolTable.hasOwnProperty(operand)) {
@@ -766,7 +846,7 @@ class Assembler {
   }
 
   evaluateImmediate(valueStr, min, max) {
-    let value = parseInt(valueStr, 10);
+    let value = this.parseNumber(valueStr);
     if (isNaN(value) || value < min || value > max) {
       this.error(`Immediate value out of range: ${valueStr}`);
       return null;
