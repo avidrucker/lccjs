@@ -180,17 +180,25 @@ class Assembler {
   }
 
   tokenizeLine(line) {
-    // Split line into tokens considering commas and whitespace
     let tokens = [];
     let currentToken = '';
     let inString = false;
-
+    let stringDelimiter = '';
+  
     for (let i = 0; i < line.length; i++) {
       let char = line[i];
-      if (char === '"' || char === "'") {
-        inString = !inString;
+      if ((char === '"' || char === "'") && !inString) {
+        inString = true;
+        stringDelimiter = char;
         currentToken += char;
-      } else if (this.isWhitespace(char) && !inString) {
+      } else if (char === stringDelimiter && inString) {
+        inString = false;
+        currentToken += char;
+        tokens.push(currentToken);
+        currentToken = '';
+      } else if (inString) {
+        currentToken += char;
+      } else if (this.isWhitespace(char)) {
         if (currentToken !== '') {
           tokens.push(currentToken);
           currentToken = '';
@@ -210,16 +218,20 @@ class Assembler {
         currentToken += char;
       }
     }
-
+  
     if (currentToken !== '') {
       tokens.push(currentToken);
     }
-
+  
     return tokens;
-  }
+  }  
 
   isWhitespace(char) {
     return /\s/.test(char);
+  }
+
+  isStringLiteral(str) {
+    return /^"(.*)"$/.test(str) || /^'(.*)'$/.test(str);
   }
 
   handleDirective(mnemonic, operands) {
@@ -257,6 +269,32 @@ class Assembler {
           this.writeMachineWord(value & 0xFFFF);
         }
         this.locCtr += 1;
+        break;
+      case '.string':
+        if (operands.length !== 1) {
+          this.error(`Invalid operand count for ${mnemonic}`);
+          return;
+        }
+        let strOperand = operands[0];
+        if (!this.isStringLiteral(strOperand)) {
+          this.error(`Invalid string literal: ${strOperand}`);
+          return;
+        }
+        // Extract the string without quotes
+        let strContent = strOperand.slice(1, -1);
+
+        if (this.pass === 1) {
+          // Update location counter: length of string + 1 for null terminator
+          this.locCtr += strContent.length + 1;
+        } else if (this.pass === 2) {
+          // Write each character's ASCII code to output
+          for (let i = 0; i < strContent.length; i++) {
+            let asciiValue = strContent.charCodeAt(i);
+            this.writeMachineWord(asciiValue);
+          }
+          // Write null terminator
+          this.writeMachineWord(0);
+        }
         break;
       default:
         this.error(`Invalid directive: ${mnemonic}`);
@@ -331,7 +369,13 @@ class Assembler {
         machineWord = 0xF001;
         break;
       case 'dout':
-        machineWord = this.assembleDout(operands);
+        machineWord = this.assembleTrap(operands, 0x0002);
+        break;
+      case 'sout':
+        machineWord = this.assembleTrap(operands, 0x0006); // Trap vector for sout is 6
+        break;
+      case 'sin':
+        machineWord = this.assembleTrap(operands, 0x000A); // Trap vector for sin is 10
         break;
       default:
         this.error(`Invalid mnemonic or directive: ${mnemonic}`);
@@ -348,7 +392,7 @@ class Assembler {
     const buffer = Buffer.alloc(2);
     buffer.writeUInt16LE(word, 0);
     fs.writeSync(this.outFile, buffer);
-  
+
     if (this.pass === 2 && this.currentListingEntry) {
       this.currentListingEntry.codeWords.push(word);
     }
@@ -585,28 +629,15 @@ class Assembler {
     return macword;
   }
 
-  assembleDout(operands) {
-    let sr = 0; // Default to r0
-    if (operands.length === 1) {
-      sr = this.getRegister(operands[0]);
-      if (sr === null) return null;
-    } else if (operands.length > 1) {
-      this.error('Invalid operand count for dout');
-      return null;
-    }
-    let macword = 0xF002 | (sr << 9);
-    return macword;
-  }
-
   assembleMOV(mnemonic, operands) {
     if (operands.length !== 2) {
       this.error(`Invalid operand count for ${mnemonic}`);
       return null;
     }
-  
+
     let dr = this.getRegister(operands[0]);
     if (dr === null) return null;
-  
+
     if (mnemonic === 'mov') {
       // Determine if operands[1] is a register or immediate
       if (this.isRegister(operands[1])) {
@@ -642,7 +673,21 @@ class Assembler {
       return null;
     }
   }
+
+  assembleTrap(operands, trapVector) {
+    let sr = 0; // Default to r0
+    if (operands.length === 1) {
+      sr = this.getRegister(operands[0]);
+      if (sr === null) return null;
+    } else if (operands.length > 1) {
+      this.error('Invalid operand count for trap instruction');
+      return null;
+    }
+    let macword = 0xF000 | (sr << 9) | (trapVector & 0xFF);
+    return macword;
+  }
   
+
   getRegister(regStr) {
     if (!this.isRegister(regStr)) {
       this.error(`Invalid register: ${regStr}`);
