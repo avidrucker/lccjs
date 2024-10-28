@@ -1,14 +1,14 @@
 // interpreter.test.js
 
 const Interpreter = require('../src/interpreter');
+const path = require('path');
 
 function testInterpreter() {
   const interpreter = new Interpreter();
 
-  // Simulate command line arguments
-  process.argv = ['node', 'interpreter.js', 'a1test.e'];
+  const args = [path.join(__dirname, '../demos/demoA.e')];
 
-  interpreter.main();
+  interpreter.main(args);
 }
 
 testInterpreter();

@@ -2,14 +2,15 @@
 // Simple test script to invoke the assembler
 
 const Assembler = require('../src/assembler');
+const path = require('path');
 
 function testAssembler() {
   const assembler = new Assembler();
   
   // Simulate command line arguments
-  process.argv = ['node', 'assembler.js', 'a1test.a'];
+  const args = [path.join(__dirname, '../demos/demoA.a')];
   
-  assembler.main();
+  assembler.main(args);
 }
 
 testAssembler();
