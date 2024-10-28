@@ -81,7 +81,6 @@ class Interpreter {
       process.exit(1);
     }
 
-    ////
     console.log(`Starting interpretation of ${fileName}`);
 
     // Load the executable into memory
@@ -206,7 +205,7 @@ class Interpreter {
         conditionMet = this.n === 1;
         break;
       case 3: // brp
-        conditionMet = this.n === 0 && this.z === 0;
+        conditionMet = this.n === this.z;
         break;
       case 4: // brlt
         conditionMet = this.n !== this.v;
@@ -251,53 +250,52 @@ class Interpreter {
         this.r[this.sr] = this.r[this.sr] >> ct;
         this.setNZ(this.r[this.sr]);
         break;
-      case 4: // SLL
+      case 4: // SLL ////
         this.r[this.sr] = this.r[this.sr] << ct;
         this.setNZ(this.r[this.sr]);
         break;
-      case 5: // ROL
+      case 5: // ROL ////
         this.r[this.sr] = (this.r[this.sr] << ct) | (this.r[this.sr] >> (16 - ct));
         this.setNZ(this.r[this.sr]);
         break;
-      case 6: // ROR
+      case 6: // ROR ////
         this.r[this.sr] = (this.r[this.sr] >> ct) | (this.r[this.sr] << (16 - ct));
         this.setNZ(this.r[this.sr]);
         break;
-      case 7: // MUL
+      case 7: // MUL ////
         this.r[this.dr] = (this.r[this.dr] * this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
-      case 8: // DIV
+      case 8: // DIV ////
         if (this.r[this.sr] === 0) {
           this.error('Division by zero');
         }
         this.r[this.dr] = (this.r[this.dr] / this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
-      case 9: // REM
+      case 9: // REM ////
         if (this.r[this.sr2] === 0) {
           this.error('Division by zero');
         }
         this.r[this.dr] = (this.r[this.dr] % this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
-      case 10: // OR
+      case 10: // OR ////
         this.r[this.dr] = this.r[this.dr] | this.r[this.sr1];
         this.setNZ(this.r[this.dr]);
         break;
-      case 11: // XOR
+      case 11: // XOR ////
         this.r[this.dr] = this.r[this.dr] ^ this.r[this.sr1];
         this.setNZ(this.r[this.dr]);
         break;
       case 12: // MVR
         this.r[this.dr] = this.r[this.sr1];
-        // console.log("evaluate MVR, this.dr: ", this.dr, " this.r[this.dr]: ", this.r[this.dr], " this.sr1: ", this.sr1, " this.r[this.sr1]: ", this.r[this.sr1]);
         break;
-      case 13: // SEXT
-        this.r[this.dr] = this.signExtend(this.r[this.sr], 16);
+      case 13: // SEXT ////
+        this.r[this.dr] = this.signExtend(this.r[this.sr1], 16);
         this.setNZ(this.r[this.dr]);
         break;
-      }
+    }
   }
 
   executeADD() {
@@ -352,6 +350,7 @@ class Interpreter {
     this.setNZ(this.r[this.dr]);
   }
 
+  ////
   executeST() {
     const address = (this.pc + this.pcoffset9) & 0xFFFF;
     this.mem[address] = this.r[this.sr];
@@ -360,24 +359,26 @@ class Interpreter {
   executeMVI() {
     this.r[this.dr] = this.imm9;
     this.setNZ(this.r[this.dr]);
-    // console.log("evaluate MVI, this.imm9: ", this.imm9, " this.dr: ", this.dr, " this.r[this.dr]: ", this.r[this.dr]);
   }
 
   executeLEA() {
     this.r[this.dr] = (this.pc + this.pcoffset9) & 0xFFFF;
   }
 
+  ////
   executeLDR() {
     const address = (this.r[this.baser] + this.offset6) & 0xFFFF;
     this.r[this.dr] = this.mem[address];
     this.setNZ(this.r[this.dr]);
   }
 
+  ////
   executeSTR() {
     const address = (this.r[this.baser] + this.offset6) & 0xFFFF;
     this.mem[address] = this.r[this.sr];
   }
 
+  ////
   executeJMP() {
     this.pc = (this.r[this.baser] + this.offset6) & 0xFFFF;
   }
@@ -404,14 +405,14 @@ class Interpreter {
       address = (address + 1) & 0xFFFF;
       charCode = this.mem[address];
     }
-  }  
-  
+  }
+
   executeSIN() {
     let address = this.r[this.sr];
     let input = '';
     let buffer = Buffer.alloc(1);
     let fd = process.stdin.fd;
-  
+
     while (true) {
       try {
         let bytesRead = fs.readSync(fd, buffer, 0, 1, null);
@@ -434,10 +435,10 @@ class Interpreter {
         }
       }
     }
-  
+
     // Echo the input back to buffer output
     this.output += input + "\n";
-  
+
     for (let i = 0; i < input.length; i++) {
       this.mem[address] = input.charCodeAt(i);
       address = (address + 1) & 0xFFFF;
