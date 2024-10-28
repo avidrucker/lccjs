@@ -26,14 +26,17 @@ class Assembler {
     this.programSize = 0;
   }
 
-  main() {
-    const args = process.argv.slice(2);
-    if (args.length !== 1) {
-      console.error('Usage: assembler.js <input filename>');
-      process.exit(1);
-    }
+  main(args) {
+    args = args || process.argv.slice(2);
 
-    this.inputFileName = args[0];
+    // Check if inputFileName is already set
+    if (!this.inputFileName) {
+      if (args.length !== 1) {
+        console.error('Usage: assembler.js <input filename>');
+        process.exit(1);
+      }
+      this.inputFileName = args[0];
+    }
 
     // Read the source code from the input file
     try {
@@ -740,10 +743,11 @@ class Assembler {
   }
 }
 
+module.exports = Assembler;
+
 // Instantiate and run the assembler if this script is run directly
 if (require.main === module) {
   const assembler = new Assembler();
   assembler.main();
 }
 
-module.exports = Assembler;

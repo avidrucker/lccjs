@@ -24,8 +24,8 @@ class Interpreter {
     this.spInitial = 0;                // for making BST/LST files
   }
 
-  main() {
-    const args = process.argv.slice(2);
+  main(args) {
+    args = args || process.argv.slice(2);
 
     if (args.length !== 1) {
       console.error('Usage: interpreter.js <input filename>');
@@ -36,7 +36,7 @@ class Interpreter {
 
     // Display program name, input file name, and current time
     const currentTime = new Date().toString();
-    console.log(`FIRSTNAME LASTNAME     interpreter.js ${inputFileName}     ${currentTime}`);
+    console.log(`LASTNAME, FIRSTNAME     interpreter.js ${inputFileName}     ${currentTime}`);
 
     // Open and read the executable file
     let buffer;
