@@ -1,13 +1,32 @@
     lea r0, ask
     sout r0
+    lea r0, buffer1    
     sin r0
     lea r1, hi
     sout r1
+    lea r0, buffer1
     sout r0
-    lea r0, period
+    lea r1, period
+    sout r1
+    nl
+    lea r1, ask2
+    sout r1
+    lea r1, buffer2
+    sin r1
+    lea r2, hi
+    sout r2
     sout r0
+    lea r2, space
+    sout r2
+    sout r1
+    lea r2, period
+    sout r2 
     halt
 
-ask:  .string "What's your name? "
+ask:  .string "What's your first name? "
+ask2: .string "What's your last name? "
 hi:   .string "Hi, "
 period: .string "."
+space: .string " "
+buffer1: .zero 50
+buffer2: .zero 50
