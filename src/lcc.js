@@ -202,6 +202,17 @@ class LCC {
   generateBSTContent() {
     let content = '';
 
+    // Compute the maximum label length
+    let maxLabelLength = 0;
+    this.assembler.listing.forEach(entry => {
+      if (entry.label) {
+        maxLabelLength = Math.max(maxLabelLength, entry.label.length);
+      }
+    });
+
+    // If no labels, default indent for code is 4 spaces
+    let codeIndent = maxLabelLength > 0 ? maxLabelLength + 2 : 4;
+
     // Header
     content += `LCC.js Assemble/Link/Interpret/Debug Ver 0.1  ${new Date().toString()}\n`;
     content += `${this.userName}\n\n`;
@@ -217,10 +228,15 @@ class LCC {
         content += `${error}\n`;
       });
     } else {
+
       // Output listing
       this.assembler.listing.forEach(entry => {
         let locCtr = entry.locCtr;
-        const sourceStr = entry.sourceLine.trim();
+
+        const labelStr = entry.label ? entry.label + ':' : '';
+        const mnemonicAndOperands = entry.mnemonic ? entry.mnemonic + ' ' + entry.operands.join(', ') : '';
+        // Prepare the sourceStr
+        const sourceStr = (labelStr + ' ' + mnemonicAndOperands).trim();
 
         entry.codeWords.forEach((word, index) => {
           const locStr = locCtr.toString(16).padStart(4, '0');
@@ -228,8 +244,20 @@ class LCC {
           const codeStr = wordStr.padEnd(23);
 
           if (index === 0) {
-            content += `${locStr}  ${codeStr}     ${sourceStr}\n`;
+            // For the first word, include the source code
+            // Prepare the label part, padded to codeIndent
+            let labelPart = '';
+            if (entry.label) {
+              labelPart = entry.label + ':';
+              labelPart = labelPart.padEnd(codeIndent);
+            } else {
+              labelPart = ' '.repeat(codeIndent);
+            }
+
+            const lineStr = `${locStr}  ${codeStr}${labelPart}${mnemonicAndOperands}\n`;
+            content += lineStr;
           } else {
+            // For subsequent words, no label or source code
             content += `${locStr}  ${codeStr}\n`;
           }
 
@@ -237,10 +265,11 @@ class LCC {
         });
 
         // Insert a blank line after the 'halt' instruction
-        if (sourceStr.trim().toLowerCase() === 'halt') {
+        if (entry.mnemonic && entry.mnemonic.toLowerCase() === 'halt') {
           content += '\n';
         }
       });
+
     }
 
     // Output section
@@ -249,11 +278,23 @@ class LCC {
 
     // Program statistics
     content += '========================================== Program statistics\n';
-    content += `Input file name       =      ${this.inputFileName}\n`;
-    content += `Instructions executed =   ${this.interpreter.instructionsExecuted.toString(16)} (hex)    ${this.interpreter.instructionsExecuted} (dec)\n`;
-    content += `Program size          =   ${this.assembler.programSize.toString(16)} (hex)   ${this.assembler.programSize} (dec)\n`;
-    content += `Max stack size        =    ${this.interpreter.maxStackSize.toString(16)} (hex)     ${this.interpreter.maxStackSize} (dec)\n`;
-    content += `Load point            =    ${this.assembler.loadPoint.toString(16)} (hex)     ${this.assembler.loadPoint} (dec)\n`;
+
+    // Prepare the statistics
+    const stats = [
+      { label: 'Input file name', value: this.inputFileName },
+      { label: 'Instructions executed', value: `${this.interpreter.instructionsExecuted.toString(16)} (hex)    ${this.interpreter.instructionsExecuted} (dec)` },
+      { label: 'Program size', value: `${this.assembler.programSize.toString(16)} (hex)    ${this.assembler.programSize} (dec)` },
+      { label: 'Max stack size', value: `${this.interpreter.maxStackSize.toString(16)} (hex)    ${this.interpreter.maxStackSize} (dec)` },
+      { label: 'Load point', value: `${this.assembler.loadPoint.toString(16)} (hex)    ${this.assembler.loadPoint} (dec)` }
+    ];
+
+    const maxStatLabelLength = Math.max(...stats.map(s => s.label.length));
+
+    stats.forEach(stat => {
+      const label = stat.label.padEnd(maxStatLabelLength + 4); // Add 4 spaces for padding
+      content += `${label}=   ${stat.value}\n`;
+    });
+
 
     return content;
   }

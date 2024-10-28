@@ -152,7 +152,10 @@ class Assembler {
         lineNum: this.lineNum,
         locCtr: this.locCtr,
         sourceLine: originalLine,
-        codeWords: []
+        codeWords: [],
+        label: label,
+        mnemonic: mnemonic,
+        operands: operands
       };
       this.currentListingEntry = listingEntry;
 
