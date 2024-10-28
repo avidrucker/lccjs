@@ -270,32 +270,34 @@ class Assembler {
         }
         this.locCtr += 1;
         break;
-      case '.string':
-        if (operands.length !== 1) {
-          this.error(`Invalid operand count for ${mnemonic}`);
-          return;
-        }
-        let strOperand = operands[0];
-        if (!this.isStringLiteral(strOperand)) {
-          this.error(`Invalid string literal: ${strOperand}`);
-          return;
-        }
-        // Extract the string without quotes
-        let strContent = strOperand.slice(1, -1);
-
-        if (this.pass === 1) {
-          // Update location counter: length of string + 1 for null terminator
-          this.locCtr += strContent.length + 1;
-        } else if (this.pass === 2) {
-          // Write each character's ASCII code to output
-          for (let i = 0; i < strContent.length; i++) {
-            let asciiValue = strContent.charCodeAt(i);
-            this.writeMachineWord(asciiValue);
+        case '.string':
+          if (operands.length !== 1) {
+            this.error(`Invalid operand count for ${mnemonic}`);
+            return;
           }
-          // Write null terminator
-          this.writeMachineWord(0);
-        }
-        break;
+          let strOperand = operands[0];
+          if (!this.isStringLiteral(strOperand)) {
+            this.error(`Invalid string literal: ${strOperand}`);
+            return;
+          }
+          // Extract the string without quotes
+          let strContent = strOperand.slice(1, -1);
+        
+          if (this.pass === 1) {
+            // Update location counter: length of string + 1 for null terminator
+            this.locCtr += strContent.length + 1;
+          } else if (this.pass === 2) {
+            // Write each character's ASCII code to output
+            for (let i = 0; i < strContent.length; i++) {
+              let asciiValue = strContent.charCodeAt(i);
+              this.writeMachineWord(asciiValue);
+              this.locCtr += 1; // Increment locCtr after writing each word
+            }
+            // Write null terminator
+            this.writeMachineWord(0);
+            this.locCtr += 1; // Increment locCtr for null terminator
+          }
+          break;        
       default:
         this.error(`Invalid directive: ${mnemonic}`);
         break;
