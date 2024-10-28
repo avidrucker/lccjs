@@ -235,6 +235,11 @@ class LCC {
 
           locCtr++; // Increment location counter for each word
         });
+
+        // Insert a blank line after the 'halt' instruction
+        if (sourceStr.trim().toLowerCase() === 'halt') {
+          content += '\n';
+        }
       });
     }
 
