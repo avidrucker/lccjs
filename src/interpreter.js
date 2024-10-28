@@ -231,13 +231,13 @@ class Interpreter {
     const ct = (this.ir >> 5) & 0xF;
 
     switch (this.eopcode) {
-      case 0: // PUSH
+      case 0: // PUSH // mem[--sp] = sr 
         // decrement stack pointer and store value
         this.r[6] = (this.r[6] - 1) & 0xFFFF;
         // save source register to memory at address pointed at by stack pointer
         this.mem[this.r[6]] = this.r[this.sr];
         break;
-      case 1: // POP
+      case 1: // POP // dr = mem[sp++];
         // load value from memory at address pointed at by stack pointer to destination
         this.r[this.dr] = this.mem[this.r[6]];
         // increment stack pointer (to deallocate stack memory)
