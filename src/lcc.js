@@ -14,7 +14,7 @@ class LCC {
     this.outputFileName = '';
     this.options = {};
     this.args = [];
-    this.userName = 'LASTNAME, FIRSTNAME';
+    this.userName = 'LASTNAME, FIRSTNAME'; //// Update with your name
     this.assembler = null;
     this.interpreter = null;
   }
@@ -85,8 +85,8 @@ class LCC {
     console.log('   .lst: time-stamped listing in hex and output from run');
     console.log('   .bst: time-stamped listing in binary and output from run');
     console.log('   .a or other: assembler code');
-    console.log('LCC.js Ver 1.0\n');
-    console.log('Hit Enter to finish');
+    console.log('LCC.js Ver 0.1\n');
+    //// console.log('Hit Enter to finish');
   }
 
   parseArguments(args) {
@@ -181,9 +181,7 @@ class LCC {
 
       interpreter.run();
 
-      // Output the interpreter's output
-      // console.log(interpreter.output);
-      console.log();
+      process.stdout.write("\n");
 
       // Generate the BST content
       const bstContent = this.generateBSTContent();
@@ -205,7 +203,7 @@ class LCC {
     let content = '';
 
     // Header
-    content += `LCC Assemble/Link/Interpret/Debug Ver 1.0  ${new Date().toString()}\n`;
+    content += `LCC.js Assemble/Link/Interpret/Debug Ver 0.1  ${new Date().toString()}\n`;
     content += `${this.userName}\n\n`;
 
     content += 'Header\n';
@@ -221,30 +219,34 @@ class LCC {
     } else {
       // Output listing
       this.assembler.listing.forEach(entry => {
-        const locStr = entry.locCtr.toString(16).padStart(4, '0');
-
-        let codeStr = '';
-        entry.codeWords.forEach(word => {
-          const wordStr = word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim();
-          codeStr += wordStr + ' ';
-        });
-        codeStr = codeStr.trim().padEnd(23);
-
+        let locCtr = entry.locCtr;
         const sourceStr = entry.sourceLine.trim();
 
-        content += `${locStr}  ${codeStr}    ${sourceStr}\n`;
+        entry.codeWords.forEach((word, index) => {
+          const locStr = locCtr.toString(16).padStart(4, '0');
+          const wordStr = word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim();
+          const codeStr = wordStr.padEnd(23);
+
+          if (index === 0) {
+            content += `${locStr}  ${codeStr}     ${sourceStr}\n`;
+          } else {
+            content += `${locStr}  ${codeStr}\n`;
+          }
+
+          locCtr++; // Increment location counter for each word
+        });
       });
     }
 
     // Output section
     content += '====================================================== Output\n';
-    content += `${this.interpreter.output}\n\n`;
+    content += `${this.interpreter.output}\n`;
 
     // Program statistics
     content += '========================================== Program statistics\n';
     content += `Input file name       =      ${this.inputFileName}\n`;
-    content += `Instructions executed =    ${this.interpreter.instructionsExecuted.toString(16)} (hex)     ${this.interpreter.instructionsExecuted} (dec)\n`;
-    content += `Program size          =    ${this.assembler.programSize.toString(16)} (hex)     ${this.assembler.programSize} (dec)\n`;
+    content += `Instructions executed =   ${this.interpreter.instructionsExecuted.toString(16)} (hex)    ${this.interpreter.instructionsExecuted} (dec)\n`;
+    content += `Program size          =   ${this.assembler.programSize.toString(16)} (hex)   ${this.assembler.programSize} (dec)\n`;
     content += `Max stack size        =    ${this.interpreter.maxStackSize.toString(16)} (hex)     ${this.interpreter.maxStackSize} (dec)\n`;
     content += `Load point            =    ${this.assembler.loadPoint.toString(16)} (hex)     ${this.assembler.loadPoint} (dec)\n`;
 
