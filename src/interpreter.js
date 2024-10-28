@@ -398,11 +398,13 @@ class Interpreter {
     let address = this.r[this.sr];
     let charCode = this.mem[address];
     while (charCode !== 0) {
-      this.output += String.fromCharCode(charCode);
+      const char = String.fromCharCode(charCode);
+      process.stdout.write(char);
+      this.output += char;
       address = (address + 1) & 0xFFFF;
       charCode = this.mem[address];
     }
-  }
+  }  
   
   executeSIN() {
     let address = this.r[this.sr];
@@ -448,22 +450,31 @@ class Interpreter {
         this.running = false;
         break;
       case 1: // NL
+        process.stdout.write('\n');
         this.output += '\n';
         break;
       case 2: // DOUT
-        this.output += `${this.r[this.sr]}`;
+        const doutStr = `${this.r[this.sr]}`;
+        process.stdout.write(doutStr);
+        this.output += doutStr;
         break;
       case 3: // UDOUT
         // print as unsigned decimal
-        this.output += (this.r[this.sr] & 0xFFFF).toString();
+        const udoutStr = `${this.r[this.sr] & 0xFFFF}`;
+        process.stdout.write(udoutStr);
+        this.output += udoutStr;
         break;
       case 4: // HOUT
         // print as hexadecimal
-        this.output += this.r[this.sr].toString(16).toUpperCase();
+        const houtStr = this.r[this.sr].toString(16).toUpperCase();
+        process.stdout.write(houtStr);
+        this.output += houtStr;
         break;
       case 5: // AOUT
         // print as ASCII character
-        this.output += String.fromCharCode(this.r[this.sr] & 0xFF);
+        const aoutChar = String.fromCharCode(this.r[this.sr] & 0xFF);
+        process.stdout.write(aoutChar);
+        this.output += aoutChar;
         break;
       case 6: // SOUT
         // print string at address
