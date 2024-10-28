@@ -337,6 +337,12 @@ class Assembler {
       case 'mvr':
         machineWord = this.assembleMOV(mnemonic, operands);
         break;
+      case 'push':
+        machineWord = this.assemblePUSH(operands);
+        break;
+      case 'pop':
+        machineWord = this.assemblePOP(operands);
+        break;
       case 'ld':
         machineWord = this.assembleLd(operands);
         break;
@@ -452,6 +458,28 @@ class Assembler {
       if (imm5 === null) return null;
       macword |= 0x0020 | (imm5 & 0x1F);
     }
+    return macword;
+  }
+
+  assemblePUSH(operands) {
+    if (operands.length !== 1) {
+      this.error('Invalid operand count for push');
+      return null;
+    }
+    let sr = this.getRegister(operands[0]);
+    if (sr === null) return null;
+    let macword = 0xA000 | (sr << 9);
+    return macword;
+  }
+  
+  assemblePOP(operands) {
+    if (operands.length !== 1) {
+      this.error('Invalid operand count for pop');
+      return null;
+    }
+    let dr = this.getRegister(operands[0]);
+    if (dr === null) return null;
+    let macword = (0xA000 | (dr << 9)) & 0x0001;
     return macword;
   }
 
@@ -701,11 +729,19 @@ class Assembler {
       this.error(`Invalid register: ${regStr}`);
       return null;
     }
+    if(regStr === "fp") {
+      regStr = "r5";
+    } else if (regStr === "sp") {
+      regStr = "r6";
+    } else if (regStr === "lr") {
+      regStr = "r7";
+    }
+
     return parseInt(regStr.substr(1), 10);
   }
 
   isRegister(regStr) {
-    return /^r[0-7]$/i.test(regStr);
+    return /^(r[0-7]|fp|sp|lr)$/i.test(regStr);
   }
 
   getSymbolAddress(label) {
