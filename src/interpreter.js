@@ -468,7 +468,7 @@ class Interpreter {
         break;
       case 4: // HOUT
         // print as hexadecimal
-        const houtStr = this.r[this.sr].toString(16).toUpperCase();
+        const houtStr = this.r[this.sr].toString(16).toLowerCase();
         process.stdout.write(houtStr);
         this.output += houtStr;
         break;
