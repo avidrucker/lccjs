@@ -175,20 +175,20 @@ class LCC {
 
     // Run the interpreter
     try {
-      interpreter.run();
-
-      // Generate the BST content
-      const bstContent = this.generateBSTContent();
-
-      // Write the BST file
       const bstFileName = this.constructBSTFileName(this.inputFileName);
-      fs.writeFileSync(bstFileName, bstContent);
-
       console.log(`bst file = ${bstFileName}`);
       console.log("====================================================== Output");
 
+      interpreter.run();
+
       // Output the interpreter's output
-      console.log(interpreter.output);
+      // console.log(interpreter.output);
+      console.log();
+
+      // Generate the BST content
+      const bstContent = this.generateBSTContent();
+      // Write the BST file
+      fs.writeFileSync(bstFileName, bstContent);
     } catch (error) {
       console.error(`Error running ${this.outputFileName}: ${error.message}`);
       process.exit(1);
