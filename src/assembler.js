@@ -330,6 +330,9 @@ class Assembler {
       case 'add':
         machineWord = this.assembleAdd(operands);
         break;
+      case 'sub':
+        machineWord = this.assembleSUB(operands);
+        break;
       case 'mov':
       case 'mvi':
       case 'mvr':
@@ -472,6 +475,28 @@ class Assembler {
     if (dr === null || sr1 === null) return null;
     let sr2orImm5 = operands[2];
     let macword = 0x1000 | (dr << 9) | (sr1 << 6);
+    if (this.isRegister(sr2orImm5)) {
+      let sr2 = this.getRegister(sr2orImm5);
+      if (sr2 === null) return null;
+      macword |= sr2;
+    } else {
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15);
+      if (imm5 === null) return null;
+      macword |= 0x0020 | (imm5 & 0x1F);
+    }
+    return macword;
+  }
+
+  assembleSUB(operands) {
+    if (operands.length !== 3) {
+      this.error('Invalid operand count for sub');
+      return null;
+    }
+    let dr = this.getRegister(operands[0]);
+    let sr1 = this.getRegister(operands[1]);
+    if (dr === null || sr1 === null) return null;
+    let sr2orImm5 = operands[2];
+    let macword = 0xB000 | (dr << 9) | (sr1 << 6);
     if (this.isRegister(sr2orImm5)) {
       let sr2 = this.getRegister(sr2orImm5);
       if (sr2 === null) return null;
