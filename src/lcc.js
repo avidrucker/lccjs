@@ -2,6 +2,7 @@
 
 // lcc.js
 // LCC.js Main Program
+// LCC stands for Low Cost Computer
 
 const fs = require('fs');
 const path = require('path');
