@@ -328,7 +328,7 @@ class Assembler {
         machineWord = this.assembleBR(mnemonic, operands);
         break;
       case 'add':
-        machineWord = this.assembleAdd(operands);
+        machineWord = this.assembleADD(operands);
         break;
       case 'sub':
         machineWord = this.assembleSUB(operands);
@@ -345,10 +345,10 @@ class Assembler {
         machineWord = this.assemblePOP(operands);
         break;
       case 'ld':
-        machineWord = this.assembleLd(operands);
+        machineWord = this.assembleLD(operands);
         break;
       case 'st':
-        machineWord = this.assembleSt(operands);
+        machineWord = this.assembleST(operands);
         break;
       case 'call':
       case 'jsr':
@@ -465,7 +465,7 @@ class Assembler {
     return macword;
   }
 
-  assembleAdd(operands) {
+  assembleADD(operands) {
     if (operands.length !== 3) {
       this.error('Invalid operand count for add');
       return null;
@@ -553,7 +553,7 @@ class Assembler {
     return macword;
   }
 
-  assembleLd(operands) {
+  assembleLD(operands) {
     if (operands.length !== 2) {
       this.error('Invalid operand count for ld');
       return null;
@@ -572,7 +572,7 @@ class Assembler {
     return macword;
   }
 
-  assembleSt(operands) {
+  assembleST(operands) {
     if (operands.length !== 2) {
       this.error('Invalid operand count for st');
       return null;
