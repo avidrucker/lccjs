@@ -46,8 +46,8 @@ class LCC {
         this.executeFile();
         break;
       case '.o':
-        // Linking is not implemented
-        console.error('Linking .o files is not implemented.');
+        // Linking is not yet implemented
+        console.error('Linking .o files is not yet implemented.');
         process.exit(1);
         break;
       case '.a':

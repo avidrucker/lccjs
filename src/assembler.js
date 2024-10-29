@@ -2,7 +2,6 @@
 
 // assembler.js
 // LCC.js Assembler
-// Adjusted to handle file input/output similar to a1.c
 
 const fs = require('fs');
 const path = require('path');

@@ -434,7 +434,6 @@ class Interpreter {
         }
       }
     }
-    //// console.log("input is: ", input);
     return input;
   }
   
@@ -534,13 +533,10 @@ class Interpreter {
         // Read hex number from keyboard into dr
         let hinInput = this.readLineFromStdin();
         let hinValue = parseInt(hinInput, 16);
-        //// console.log("hinValue is: ", hinValue);
         if (isNaN(hinValue)) {
           this.error('Invalid hexadecimal input');
         } else {
-          //// console.log("hinValue & 0xFFFF is: ", hinValue & 0xFFFF);
           this.r[this.dr] = hinValue & 0xFFFF;
-          //// console.log("r[dr] is: ", this.r[this.dr]);
         }
         break;
       case 9: // AIN
