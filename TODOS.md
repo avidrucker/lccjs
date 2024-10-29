@@ -1,12 +1,27 @@
 # TO-DO's
 
+## Core Features
+
 - [x] implement .string, sout, & sin
 - [x] implement blocking input for sin when executing
 - [x] implement sin/sout execution output in bst
 - [x] implement BST creation
+- [ ] implement symbolic debugger
+    - [ ] implement debugger commands
 - [ ] implement LST creation
 - [x] implement name.js module
 - [ ] implement 300 char limit per line & corresponding error in assembler
 - [ ] implement more directives like .start, .org/.orig, .fill (alt to .word), .blkw (alt to .zero), etc.
 - [x] implement dout/udout/hout/aout in interpreter.js
 - [x] implement din/ain/hin in interpreter.js
+- [ ] implement debugging commands s (stack), m (memory), r (registers), bp (break point)
+- [ ] implement flag setting for lcc.js such as -d for debug mode, -s for start address, etc. 
+
+## Extra Features
+
+- [ ] emoji support
+- [ ] RAND support
+- [ ] TIME support
+- [ ] new flags
+  - [ ] infinite loop permission flag
+  - [ ] turn off auto-symbolic debugger flag
