@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const Assembler = require('./assembler');
 const Interpreter = require('./interpreter');
+const nameHandler = require('./name.js');
 
 class LCC {
   constructor() {
@@ -17,6 +18,7 @@ class LCC {
     this.userName = 'LASTNAME, FIRSTNAME'; //// Update with your name
     this.assembler = null;
     this.interpreter = null;
+    this.userName = '';
   }
 
   main(args) {
@@ -35,6 +37,13 @@ class LCC {
     }
 
     this.inputFileName = this.args[0];
+
+    try {
+      this.userName = nameHandler.createNameFile(this.inputFileName);
+    } catch (error) {
+      console.error('Error handling name file:', error.message);
+      process.exit(1);
+    }
 
     const ext = path.extname(this.inputFileName).toLowerCase();
 
