@@ -8,7 +8,7 @@ const fs = require('fs');
 class Interpreter {
   constructor() {
     this.mem = new Uint16Array(65536); // Memory (16-bit unsigned integers)
-    this.r = new Int16Array(8);        // Registers r0 to r7 (16-bit signed integers)
+    this.r = new Uint16Array(8);        // Registers r0 to r7 (16-bit signed integers)
     this.pc = 0;                       // Program Counter
     this.ir = 0;                       // Instruction Register
     this.n = 0;                        // Negative flag
@@ -407,6 +407,38 @@ class Interpreter {
     }
   }
 
+  readLineFromStdin() {
+    let input = '';
+    let buffer = Buffer.alloc(1);
+    let fd = process.stdin.fd;
+  
+    while (true) {
+      try {
+        let bytesRead = fs.readSync(fd, buffer, 0, 1, null);
+        if (bytesRead === 0) {
+          // EOF
+          break;
+        }
+        let char = buffer.toString('utf8');
+        if (char === '\n' || char === '\r') {
+          // Stop reading input on newline or carriage return
+          break;
+        }
+        input += char;
+      } catch (err) {
+        if (err.code === 'EAGAIN') {
+          // Resource temporarily unavailable, wait a bit and retry
+          continue;
+        } else {
+          throw err;
+        }
+      }
+    }
+    //// console.log("input is: ", input);
+    return input;
+  }
+  
+
   executeSIN() {
     let address = this.r[this.sr];
     let input = '';
@@ -456,8 +488,13 @@ class Interpreter {
         process.stdout.write('\n');
         this.output += '\n';
         break;
-      case 2: // DOUT
-        const doutStr = `${this.r[this.sr]}`;
+      case 2:// DOUT
+        let value = this.r[this.sr];
+        // Convert unsigned 16-bit to signed 16-bit
+        if (value & 0x8000) {
+            value -= 0x10000;
+        }
+        const doutStr = `${value}`;
         process.stdout.write(doutStr);
         this.output += doutStr;
         break;
@@ -484,16 +521,75 @@ class Interpreter {
         this.executeSOUT();
         break;
       case 7: // DIN
-        // read in a signed decimal number
-        this.r[this.dr] = parseInt(this.inputBuffer, 10);
+        // read in a signed decimal number from keyboard into dr
+        let dinInput = this.readLineFromStdin();
+        let dinValue = parseInt(dinInput, 10);
+        if (isNaN(dinValue)) {
+          this.error('Invalid decimal input');
+        } else {
+          this.r[this.dr] = dinValue & 0xFFFF;
+        }
         break;
       case 8: // HIN
-        // read in a hexadecimal number
-        this.r[this.dr] = parseInt(this.inputBuffer, 16);
+        // Read hex number from keyboard into dr
+        let hinInput = this.readLineFromStdin();
+        let hinValue = parseInt(hinInput, 16);
+        //// console.log("hinValue is: ", hinValue);
+        if (isNaN(hinValue)) {
+          this.error('Invalid hexadecimal input');
+        } else {
+          //// console.log("hinValue & 0xFFFF is: ", hinValue & 0xFFFF);
+          this.r[this.dr] = hinValue & 0xFFFF;
+          //// console.log("r[dr] is: ", this.r[this.dr]);
+        }
         break;
       case 9: // AIN
-        // read in a single ASCII character
-        this.r[this.dr] = this.inputBuffer.charCodeAt(0);
+        // read in a single ASCII character from keyboard into dr
+        let ainBuffer = Buffer.alloc(1);
+        let fd = process.stdin.fd;
+        let ainBytesRead = 0;
+        
+        // Keep trying to read until we get a character
+        while (ainBytesRead === 0) {
+          try {
+            ainBytesRead = fs.readSync(fd, ainBuffer, 0, 1, null);
+          } catch (err) {
+            if (err.code === 'EAGAIN') {
+              // If resource is temporarily unavailable, just continue trying
+              continue;
+            } else {
+              // For any other error, throw it
+              throw err;
+            }
+          }
+        }
+        
+        // If we got here, we successfully read a character
+        let ainChar = ainBuffer.toString('utf8');
+        this.r[this.dr] = ainChar.charCodeAt(0);
+        
+        // Echo the character back to the output
+        this.output += ainChar;
+
+        // Clear the input buffer by reading until newline or carriage return
+        let clearBuffer = Buffer.alloc(1);
+        while (true) {
+          try {
+            let bytesRead = fs.readSync(fd, clearBuffer, 0, 1, null);
+            if (bytesRead === 0) break; // EOF
+            let char = clearBuffer.toString('utf8');
+            if (char === '\n' || char === '\r') {
+              this.output += '\n'; // Add newline to output
+              break;
+            }
+          } catch (err) {
+            if (err.code === 'EAGAIN') {
+              continue;
+            } else {
+              throw err;
+            }
+          }
+        }
         break;
       case 10: // SIN
         // read a line of input from the user
