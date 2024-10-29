@@ -223,7 +223,7 @@ class LCC {
     let codeIndent = maxLabelLength > 0 ? maxLabelLength + 2 : 4;
 
     // Header
-    content += `LCC.js Assemble/Link/Interpret/Debug Ver 0.1  ${new Date().toString()}\n`;
+    content += `LCC.js Assemble/Link/Interpret/Debug Ver 0.1  ${new Date().toLocaleString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}\n`;
     content += `${this.userName}\n\n`;
 
     content += 'Header\n';
