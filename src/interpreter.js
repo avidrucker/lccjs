@@ -184,6 +184,16 @@ class Interpreter {
 
     this.instructionsExecuted++;
 
+    // Check if the instruction limit has been reached
+    // Note: This is a safety feature to prevent infinite loops
+    // 2nd Note: This matches exactly the # of instructions 
+    // permitted to run by from the lcc before entering the debugger
+    if (this.instructionsExecuted >= 500000) {
+      console.error("Possible infinite loop");
+      this.running = false;
+      return; // Exit the step method early
+    }
+
     // Track max stack size
     let sp = this.r[6];
     let stackSize = this.spInitial - sp;
