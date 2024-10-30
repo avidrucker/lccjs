@@ -93,7 +93,6 @@ class Assembler {
 
     // Close the output file
     fs.closeSync(this.outFile);
-    // console.log('Pass 2 completed');
   }
 
   constructOutputFileName(inputFileName) {
@@ -318,8 +317,11 @@ class Assembler {
     mnemonic = mnemonic.toLowerCase();
     switch (mnemonic) {
       case 'br':
+      case 'bral':
       case 'brz':
+      case 'bre':
       case 'brnz':
+      case 'brne':
       case 'brn':
       case 'brp':
       case 'brlt':
@@ -332,6 +334,9 @@ class Assembler {
         break;
       case 'sub':
         machineWord = this.assembleSUB(operands);
+        break;
+      case 'cmp':
+        machineWord = this.assembleCMP(operands);
         break;
       case 'mov':
       case 'mvi':
@@ -438,22 +443,58 @@ class Assembler {
     }
   }
 
+  // cmp    1000  000  sr1 000 sr2   nzcv sr1 - sr2 (set flags) 
+  // cmp    1000  000  sr1 1  imm5   nzcv sr1 - imm5 (set flags) 
+  assembleCMP(operands) {
+    if (operands.length !== 2) {
+      this.error('Invalid operand count for cmp');
+      return null;
+    }
+
+    // console.log("assembling for cmp...");
+    // console.log("operands: ", operands);
+
+    let sr1 = this.getRegister(operands[0]);
+    if (sr1 === null) return null;
+    let sr2orImm5 = operands[1];
+    if (sr2orImm5 === null) return null;
+    let macword = 0x8000;
+
+    if(!this.isRegister(sr2orImm5)) {
+      // compare with immediate
+      // console.log("cmp immediate value is: ", this.evaluateImmediate(sr2orImm5, -16, 15));
+      macword = macword | (sr1 << 6) | (sr2orImm5 & 0x1F) | 0x0020;
+    } else {
+      // compare with register
+      // console.log("cmp register value is: ", sr2orImm5);
+      let sr2 = this.getRegister(sr2orImm5);
+      if (sr2 === null) return null;
+      macword = macword | (sr1 << 6) | (sr2 & 0x3);
+    }
+    // console.log("cmp macword is: ", macword.toString(16));
+    return macword;
+  }
+
   assembleBR(mnemonic, operands) {
     if (operands.length !== 1) {
       this.error(`Invalid operand count for ${mnemonic}`);
       return null;
     }
     let codes = {
-      'br': 0x0E00,
-      'brz': 0x0000,
-      'brnz': 0x0200,
-      'brn': 0x0400,
-      'brp': 0x0600,
-      'brlt': 0x0800,
-      'brgt': 0x0A00,
-      'brc': 0x0C00,
+      'brz': 0,
+      'bre': 0,
+      'brnz': 1,
+      'brne': 1,
+      'brn': 2,
+      'brp': 3,
+      'brlt': 4,
+      'brgt': 5,
+      'brc': 6,
+      'brb': 6,
+      'br': 7,
+      'bral': 7
     };
-    let macword = codes[mnemonic.toLowerCase()];
+    let macword = (codes[mnemonic.toLowerCase()] << 9) & 0xffff;
     let address = this.getSymbolAddress(operands[0]);
     if (address === null) return null;
     let pcoffset9 = address - this.locCtr - 1;

@@ -154,7 +154,7 @@ class Interpreter {
         this.executeSTR();
         break;
       case 8: // CMP
-        console.log("compare not yet implemented");
+        this.executeCMP();
         break;
       case 9: // NOT
         this.executeNOT();
@@ -192,13 +192,29 @@ class Interpreter {
     }
   }
 
+  executeCMP() {
+    if (this.bit5 === 0) {
+      // console.log('CMP: Register mode');
+      // Register mode
+      const result = (this.r[this.sr1] - this.r[this.sr2]) & 0xFFFF;
+      this.setNZ(result);
+      this.setCV(result, this.r[this.sr1], this.r[this.sr2]);
+    } else {
+      // console.log('CMP: Immediate mode');
+      // Immediate mode
+      const result = (this.r[this.sr1] - this.imm5) & 0xFFFF;
+      this.setNZ(result);
+      this.setCV(result, this.r[this.sr1], this.imm5);
+    }
+  }
+
   executeBR() {
     let conditionMet = false;
     switch (this.code) {
-      case 0: // brz
+      case 0: // brz/bre
         conditionMet = this.z === 1;
         break;
-      case 1: // brnz
+      case 1: // brnz/brne
         conditionMet = this.z === 0;
         break;
       case 2: // brn
@@ -213,10 +229,10 @@ class Interpreter {
       case 5: // brgt
         conditionMet = this.n === this.v && this.z === 0;
         break;
-      case 6: // brc
+      case 6: // brc/brb
         conditionMet = this.c === 1;
         break;
-      case 7: // br (always)
+      case 7: // br/bral
         conditionMet = true;
         break;
     }
