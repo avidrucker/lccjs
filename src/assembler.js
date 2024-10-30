@@ -240,6 +240,8 @@ class Assembler {
   handleDirective(mnemonic, operands) {
     mnemonic = mnemonic.toLowerCase();
     switch (mnemonic) {
+      case '.blkw':
+      case '.space':
       case '.zero':
         if (operands.length !== 1) {
           this.error(`Invalid operand count for ${mnemonic}`);
@@ -257,6 +259,7 @@ class Assembler {
         }
         this.locCtr += num;
         break;
+      case '.fill':
       case '.word':
         if (operands.length !== 1) {
           this.error(`Invalid operand count for ${mnemonic}`);
@@ -273,6 +276,8 @@ class Assembler {
         }
         this.locCtr += 1;
         break;
+      case '.stringz':
+      case '.asciz':
       case '.string':
         if (operands.length !== 1) {
           this.error(`Invalid operand count for ${mnemonic}`);
