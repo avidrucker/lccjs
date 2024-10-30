@@ -247,8 +247,13 @@ class LCC {
         const mnemonicAndOperands = entry.mnemonic ? entry.mnemonic + ' ' + entry.operands.join(', ') : '';
         // Prepare the sourceStr
         const sourceStr = (labelStr + ' ' + mnemonicAndOperands).trim();
+        // console.log("sourceStr:", sourceStr);
 
         entry.codeWords.forEach((word, index) => {
+          // console.log("index:", index);
+          // console.log("locCtr:", locCtr);
+          // console.log("word: ", word.toString(16));
+
           const locStr = locCtr.toString(16).padStart(4, '0');
           const wordStr = word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim();
           const codeStr = wordStr.padEnd(23);
