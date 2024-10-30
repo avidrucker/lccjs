@@ -10,6 +10,7 @@
     - [ ] implement debugger commands
 - [ ] implement LST creation
 - [x] implement name.js module
+- [x] infinite loop detection
 - [ ] implement 300 char limit per line & corresponding error in assembler
 - [ ] implement more directives like `.start`, `.org/.orig`, `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
 - [x] implement dout/udout/hout/aout in interpreter.js
@@ -21,10 +22,12 @@
 - [ ] implement flag setting for lcc.js such as `-d` for debug mode, `-L` for load point, `-r` switch ti display registers at program end, `-m` switch to display memory to be displayed at program end, etc. 
 - [ ] piping of an Assembly file's output into a text file
 - [ ] implement `cea` mnemonic
+- [x] implement `cmp` mnemonic
 
 ## Test
 
-- [ ] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
+- [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
+- [x] `cmp` and `br` test
 
 ## Extra Features
 
