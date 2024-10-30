@@ -19,7 +19,7 @@
   - [ ] stack draw function
   - [ ] memory draw function
   - [ ] registers draw function
-- [ ] implement flag setting for lcc.js such as `-d` for debug mode, `-L` for load point, `-r` switch ti display registers at program end, `-m` switch to display memory to be displayed at program end, etc. 
+- [ ] implement flag setting for lcc.js such as `-d` for debug mode, `-L` for load point, `-r` switch to display registers at program end, `-m` switch to display memory to be displayed at program end, etc. 
 - [ ] piping of an Assembly file's output into a text file
 - [ ] implement `cea` mnemonic
 - [x] implement `cmp` mnemonic
