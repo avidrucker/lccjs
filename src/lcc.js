@@ -185,8 +185,10 @@ class LCC {
 
     // Run the interpreter
     try {
-      const bstFileName = this.constructBSTFileName(this.inputFileName);
+      const bstFileName = this.constructBSTLSTFileName(this.inputFileName, true);
+      const lstFileName = this.constructBSTLSTFileName(this.inputFileName, false);
       console.log(`bst file = ${bstFileName}`);
+      console.log(`lst file = ${lstFileName}`);
       console.log("====================================================== Output");
 
       interpreter.run();
@@ -194,22 +196,24 @@ class LCC {
       process.stdout.write("\n");
 
       // Generate the BST content
-      const bstContent = this.generateBSTContent();
-      // Write the BST file
+      const bstContent = this.generateBSTLSTContent(true);
+      const lstContent = this.generateBSTLSTContent(false);
+      // Write the BST & LST files
       fs.writeFileSync(bstFileName, bstContent);
+      fs.writeFileSync(lstFileName, lstContent);
     } catch (error) {
       console.error(`Error running ${this.outputFileName}: ${error.message}`);
       process.exit(1);
     }
   }
 
-  constructBSTFileName(inputFileName) {
+  constructBSTLSTFileName(inputFileName, isBST) {
     const parsedPath = path.parse(inputFileName);
     // Remove extension and add '.bst'
-    return path.format({ ...parsedPath, base: undefined, ext: '.bst' });
+    return path.format({ ...parsedPath, base: undefined, ext: isBST ? '.bst' : '.lst' });
   }
 
-  generateBSTContent() {
+  generateBSTLSTContent(isBST) {
     let content = '';
 
     // Compute the maximum label length
@@ -228,7 +232,15 @@ class LCC {
     content += `${this.userName}\n\n`;
 
     content += 'Header\n';
-    content += 'o\nC\n\n';
+    content += 'o\n'
+    
+    if(this.headerLines && this.headerLines.length > 0) {
+      for(let i = 0; i < this.headerLines.length; i++) {
+        content += `${this.headerLines[i]}\n`;
+      }
+    }
+
+    content +='C\n\n';
 
     content += 'Loc          Code                   Source Code\n';
 
@@ -255,7 +267,9 @@ class LCC {
           // console.log("word: ", word.toString(16));
 
           const locStr = locCtr.toString(16).padStart(4, '0');
-          const wordStr = word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim();
+          const wordStr = isBST ?
+            word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim() :
+            word.toString(16).padStart(4, '0');
           const codeStr = wordStr.padEnd(23);
 
           if (index === 0) {
