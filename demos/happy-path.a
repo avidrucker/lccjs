@@ -1,0 +1,395 @@
+            .start startup
+            .org 256 ; set the origin to 256
+            ; .orig 0x3000 ; set the origin to 0x3000
+
+; startup code
+startup:    bl main
+            halt
+
+; function f
+f:          push lr
+            push fp
+            mov fp, sp
+
+            ; ldr load register
+            ldr r0, fp, 2 ; load first argument
+            ldr r1, fp, 3 ; load second argument
+            add r0, r0, r1 ; add the two arguments
+            dout r0 ; print the result
+            nl
+
+            mov sp, fp
+            pop fp
+            pop lr
+            ret
+
+; main function
+main:       push lr
+            push fp
+            mov fp, sp 
+
+            ; all the branch mnemonic suffixes
+            br @L0
+            bral @L0
+            brz @L0
+            bre @L0
+            brnz @L0
+            brne @L0
+            brn @L0
+            brp @L0
+            brlt @L0 
+            brgt @L0
+            brc @L0
+            brb @L0
+
+            ; all the branch mnemonic suffixes w/ integer offset
+            ; br @L0 + 5
+            ; bral @L0-5
+            ; brz @L0+5
+            ; bre @L0 + 5
+            ; brnz @L0 - 5
+            ; brne @L0 + 5
+            ; brn @L0 + 5
+            ; brp @L0 + 5
+            ; brlt @L0 + 5
+            ; brgt @L0 + 5
+            ; brc @L0 + 5
+            ; brb @L0 + 5
+
+            ; all the branch mnemonic suffixes w/ hex offset to a label
+            ; br @L0 + 0x0005
+            ; bral @L0 + 0x0005
+            ; brz @L0 + 0x0005
+            ; bre @L0 + 0x0005
+            ; brnz @L0 + 0x0005
+            ; brne @L0 - 0x0005
+            ; brn @L0 + 0x0005
+            ; brp @L0+0x0005
+            ; brlt @L0 + 0x0005
+            ; brgt @L0 + 0x0005
+            ; brc @L0 + 0x0005
+            ; brb @L0 + 0x0005
+
+            ; branch to pc address
+            ; br *
+            ; bral *
+            ; brz *
+            ; bre *
+            ; brnz *
+            ; brne *
+            ; brn *
+            ; brp *
+            ; brlt *
+            ; brgt *
+            ; brc *
+            ; brb *
+
+            ; integer offset to pc address
+            ; br *+5
+            ; bral *+5
+            ; brz *+5
+            ; bre *+5
+            ; brnz *+5
+            ; brne *+5
+            ; brn *+5
+            ; brp * + 5
+            ; brlt *+5
+            ; brgt *+5
+            ; brc *+5
+            ; brb *+5
+
+            ; hex offset to pc address
+            ; br *+0x0005
+            ; bral *+0x0005
+            ; brz *+0x0005
+            ; bre *+0x0005
+            ; brnz *+0x0005
+            ; brne *+0x0005
+            ; brn *+0x0005
+            ; brp * + 0x0005
+            ; brlt *+0x0005
+            ; brgt *+0x0005
+            ; brc *+0x0005
+            ; brb *+0x0005
+
+@L0:        ; Appenx B first page mnemonics
+            add r0, r1, r2 ; add register
+            add r0, r1, 10 ; add immediate
+            ld r0, x ; load
+            ld r0, x+1 ; load with offset
+            st r0, x ; store
+            st r0, y+1 ; store with offset
+
+            ; call f w/ args 7, 5 ala f(7,5)
+            mov r0, 5
+            push r0
+            mov r0, 7
+            push r0
+            bl f
+            add sp, sp, 2 ; deallocate stack memory for the 2 arguments
+
+            ; reset x and y to their initial values of 25 and 49
+            mov r0, 25
+            st r0, x ; store 25 in x
+            mov r0, 49
+            st r0, y ; store 49 in y
+
+            ; call f w/ args 25, 49 ala f(25,49)
+            ld r0, y
+            push r0
+            ld r0, x
+            push r0
+            call f
+            add sp, sp, 2
+
+            ; jsr f w/ args 3, 4 ala f(3,4)
+            mov r0, 4
+            push r0
+            mov r0, 3
+            push r0
+            jsr f
+            add sp, sp, 2
+
+            ; jump over the next 4 instructions
+            ; br *+5
+            
+            ; branch and link register
+            ; mov r0, 1
+            ; blr r0, 0
+
+            ; jsrr which stands for jump and save return register (?)
+            ; mov r0, 0
+            ; jsrr r0, 1
+
+            and r0, r1, r2 ; and register
+            and r0, r1, 10 ; and immediate
+
+            ; create local scope variable 'a' and set it to 5 w/o using push
+            mov r0, 5
+            sub sp, sp, 1 ; decrement stack pointer to allocate 1 word of memory
+            str r0, fp, -1 ; store register
+
+            cmp r0, r1 ; compare register
+            cmp r0, 10 ; compare immediate
+
+            not r0, r1 ; logical not
+
+            ; push and pop
+            mov r0, 10
+            push r0 ; push register w/ value 10 onto the stack
+            pop r1 ; pop value 10 off the stack into another register
+            dout r1 ; should output 10
+            nl
+
+            ; srl
+            mov r0, 4
+            srl r0, 1 ; shift right logical
+            srl r0 ; shift right logical w/ default arg of 1
+            dout r0 ; should output 1
+            nl
+
+            ; sra
+            mov r0, 8
+            sra r0, 1 ; shift right arithmetic
+            sra r0 ; shift right arithmetic w/ default arg of 1
+            dout r0 ; should output 2
+            nl
+
+            ; sll
+            mov r0, 4
+            sll r0, 1 ; shift left logical
+            sll r0 ; shift left logical w/ default arg of 1
+            dout r0 ; should output 16
+            nl
+
+            ; rol
+            mov r0, 2
+            rol r0, 1 ; rotate left
+            rol r0 ; rotate left w/ default arg of 1
+            dout r0 ; should output 8
+            nl
+
+            ; ror
+            mov r0, 8
+            ror r0, 1 ; rotate right
+            ror r0 ; rotate right w/ default arg of 1
+            dout r0 ; should output 2
+            nl
+
+            ; mul
+            mov r0, 4
+            mov r1, 5
+            mul r0, r1 ; multiply register
+            dout r0 ; should output 20
+            nl
+
+            ; div
+            mov r0, 21
+            mov r1, 3
+            div r0, r1 ; divide register
+            dout r0 ; should output 7
+            nl
+
+            ; rem
+            mov r0, 33
+            mov r1, 10
+            rem r0, r1 ; remainder register
+            dout r0 ; should output 3
+            nl
+
+            ; or
+            mov r0, 1
+            mov r1, 4
+            or r0, r1 ; logical or
+            dout r0 ; should output 5
+            nl
+
+            ; xor
+            mov r0, 4
+            mov r1, 5
+            xor r0, r1 ; logical xor
+            dout r0 ; should output 1
+            nl
+
+            ; mvr
+            mov r0, 5
+            mvr r1, r0 ; move register
+            dout r1 ; should output 5
+            nl
+
+            ; sext
+            ; mov r0, 0 ; it seems to not matter what is in r0
+            ; mov r1, 0 ; TODO: find out how sext is used in a LCC Assembly code context
+            ; sext r0, r1 ; sign extend
+            ; dout r0
+            ; nl
+
+            ; sub register
+            mov r0, 10
+            mov r1, 5
+            sub r0, r0, r1 ; subtract register
+            
+            ; sub immediate
+            mov r0, 10
+            sub r0, r0, 1 ; subtract immediate
+
+
+            br @L1 ; skip over the jmp mnemonics
+            ; all the jump mnemonic suffixes
+            jmp r0
+            jmp r0, 5
+            ; TODO: report/inquire about the following mnemonics
+            ;       pg. 276 of Appendix B states "same mnemonic 
+            ;       suffixes and code use on jmp instruction" as
+            ;       with the branch instructions, but the following
+            ;       mnemonics result in an error when assembled w/
+            ;       "Invalid operation"
+            ; jmpz r0
+            ; jmpe r0
+            ; jmpnz r0
+            ; jmpne r0
+            ; jmpn r0
+            ; jmpp r0
+            ; jmplt r0
+            ; jmpgt r0
+            ; jmpc r0
+            ; jmpb r0
+            ; jmpal r0
+
+@L1:        ; mvi
+            mvi r0, 5 ; move immediate, same as `mov r0, 5`
+            
+            ; lea
+            lea r0, e ; load effective address
+            sout r0 ; should output "Hello"
+            nl
+            lea r0, a1
+            sout r0 ; should output "a string in double quotes"
+            nl
+            lea r0, a2
+            sout ; should output "A\nmulti-line\nstring"
+            nl
+
+            ; cea compute effective address
+            ; "Similar to lea, but to load the address of a dynamic local
+            ; variable. Assembled to the add instruction, with sr1 as fp."
+            ; my best guess is that this is useful for accessing local variables
+            ; TODO: validate and verify correct usage of cea in context
+            cea r0, 0; compute effective address, same as `add r0, fp, 0`
+            dout r0
+            nl
+
+            ; all trap mnemonics
+            ; halt is already used in the startup code
+            ; nl is used throughout the code to print newline characters
+            ; dout is used to print the signed base-10 integer value of a register
+            mov r0, -5
+            dout ; should output -5
+            nl
+            ; udout is used to print the unsigned base-10 integer value of a register
+            udout ; should output 65531
+            nl
+            ; hout is used to print the hexadecimal value of a register
+            mov r0, 85
+            ; aout is used to print the ASCII character value of a register
+            aout ; should output 'U'
+            nl
+            ; sout is used to print the string which is stored starting at a given register
+            ; see above for usage of sout
+
+            br @L2 ; skip over input and debugger instructions
+            ; din, hin, ain, sin are used to read values from the console
+            ; din is used to read a signed base-10 integer value from the console into a register
+            ; hin is used to read a hexadecimal value from the console into a register
+            ; ain is used to read an ASCII character from the console into a register
+            ; sin is used to read a string from the console into memory starting at a given register
+            din r0
+            hin r0
+            ain r0
+            sin r0
+
+            ; debugging instructions
+            ; m displays all memory in use
+            ; r displays all registers
+            ; s displays the stack
+            ; bp sets a breakpoint which will activate the debugger
+            ; m 
+            ; r 
+            ; s
+            ; bp
+
+@L2:
+            mov sp, fp
+            pop fp
+            pop lr
+            ret ; return to the caller
+
+; labels and "dot" directives
+x:          .word 25 ; an integer
+y:          .word -49 ; a negative integer
+z:          .word 0
+
+x1:         .word 0x1234 ; hexadecimal number
+y1:         .word 0xcdef ; another hex number
+
+z1:         .word '%' ; a percent sign char 
+z2:         .word '\'' ; an escaped single quote char
+
+a:          .fill 'a' ; .fill is the same as .word
+b:          .zero 3
+c:          .space 5 ; .space is the same as .zero
+d:          .blkw 7 ; .blkw is the same as .zero
+e:          .string "Hello" ; a string
+f1:         .stringz "World" ; .stringz is the same as .string
+g:          .asciz "!" ; asciz is the same as .string
+
+a1:         .string "\"a string in double quotes\"" ; an escaped string
+; b1:         .word * ; a label that points to the current address
+; c1:         .word x+1 ; a label that points to the address of x+1
+; d1:         .word x+0x0001 ; a label that points to the address of x+1
+; e1:         .word *+5 ; a label that points to the address 5 lines of code after the current address
+; f2:         .word *-5 ; a label that points to the address 5 lines of code before the current address
+; g1:         .word ' ' ; a space char
+
+a2:         .string "A\nmulti-line\nstring" ; a multi-line string
+; b2:         .word *+0x0005 ; a label that points to the address 5 lines of code after the current address
