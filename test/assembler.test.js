@@ -58,18 +58,6 @@ function compareHexDumps(file1, file2) {
   }
 }
 
-function cleanup(files) {
-  files.forEach(file => {
-    if (fs.existsSync(file)) {
-      try {
-        fs.unlinkSync(file);
-      } catch (err) {
-        console.warn(`Failed to clean up ${file}:`, err);
-      }
-    }
-  });
-}
-
 function runDockerLCC(inputFile, containerName) {
   try {
     // Get absolute path of the input file
@@ -191,6 +179,8 @@ function testAssembler() {
     
     // Compare hex dumps
     const testResult = compareHexDumps(assemblerOutput, lccOutput);
+    
+    //// TODO: delete created test files in Docker container and locally
     
     // Exit with appropriate status code
     process.exit(testResult ? 0 : 1);
