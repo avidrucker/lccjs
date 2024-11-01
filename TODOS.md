@@ -8,11 +8,11 @@
 - [x] implement BST creation
 - [ ] implement symbolic debugger
     - [ ] implement debugger commands
-- [ ] implement LST creation
+- [x] implement LST creation
 - [x] implement name.js module
 - [x] infinite loop detection
 - [ ] implement 300 char limit per line & corresponding error in assembler
-- [ ] implement more directives like `.start`, `.org/.orig`, `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
+- [x] implement more directives like `.start`, `.org/.orig`, `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
 - [x] implement dout/udout/hout/aout in interpreter.js
 - [x] implement din/ain/hin in interpreter.js
 - [ ] implement debugging commands s (stack), m (memory), r (registers), bp (break point)
@@ -23,6 +23,8 @@
 - [ ] piping of an Assembly file's output into a text file
 - [ ] implement `cea` mnemonic
 - [x] implement `cmp` mnemonic
+- [ ] include comments in BST/LST files
+- [ ] include all headers (S, etc.) in BST/LST files
 
 ## Test
 
