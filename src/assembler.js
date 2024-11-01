@@ -113,16 +113,13 @@ class Assembler {
     // Write the initial header 'o' to the output file
     fs.writeSync(this.outFile, 'o');
   
-    // Write the 'S' entry if start address is specified
-    if (this.startAddress !== null) {
-      // Ensure startAddress is within 16 bits
-      const startAddr = this.startAddress & 0xFFFF;
-  
+    // Only write 'S' and start address if a .start directive was found
+    if (this.startLabel !== null && this.startAddress !== null) {
+      console.log(`Start label: ${this.startLabel}, Start address: ${this.startAddress}`);
       // Create a buffer for 'S' and the two-byte start address
       const startAddrBuffer = Buffer.alloc(3);
-      startAddrBuffer.write('S', 0, 'ascii');           // Write 'S'
-      startAddrBuffer.writeUInt16LE(startAddr, 1);      // Write start address in little endian
-  
+      startAddrBuffer.write('S', 0, 'ascii');        // write S    
+      startAddrBuffer.writeUInt16LE(this.startAddress, 1);    // write address in little endian 
       fs.writeSync(this.outFile, startAddrBuffer);
     }
   
@@ -333,6 +330,7 @@ class Assembler {
           return;
         }
         this.startLabel = operands[0];
+        // Note: startAddress will be resolved after Pass 2 when all symbols are known
         break;
       case '.blkw':
       case '.space':
@@ -667,7 +665,7 @@ class Assembler {
     }
     let dr = this.getRegister(operands[0]);
     if (dr === null) return null;
-    let macword = (0xA000 | (dr << 9)) & 0x0001;
+    let macword = (0xA000 | (dr << 9)) | 0x0001;
     return macword;
   }
 
