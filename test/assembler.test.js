@@ -59,24 +59,26 @@ function compareHexDumps(file1, file2) {
 }
 
 function runDockerLCC(inputFile, containerName) {
+  
+  // Get absolute path of the input file
+  const absoluteInputPath = path.resolve(inputFile);
+  const inputDir = path.dirname(absoluteInputPath);
+  const inputFileName = path.basename(inputFile, '.a');
+  const lccInputFile = path.join(inputDir, `${inputFileName}1.a`);
+  const lccOutputFile = path.join(inputDir, `${inputFileName}1.e`);
+  const lccDockerOutputFile = `/home/${inputFileName}1.e`;
+  const assemblerOutput = path.join(inputDir, `${inputFileName}.e`);
+
+  // Enhanced debugging logs
+  // console.log('Input file details:');
+  // console.log('Absolute input path:', absoluteInputPath);
+  // console.log('Input directory:', inputDir);
+  // console.log('Input filename:', inputFileName);
+  // console.log('LCC input file:', lccInputFile);
+  // console.log('LCC output file:', lccOutputFile);
+  // console.log('LCC Docker output file:', lccDockerOutputFile);
+  
   try {
-    // Get absolute path of the input file
-    const absoluteInputPath = path.resolve(inputFile);
-    const inputDir = path.dirname(absoluteInputPath);
-    const inputFileName = path.basename(inputFile, '.a');
-    const lccInputFile = path.join(inputDir, `${inputFileName}1.a`);
-    const lccOutputFile = path.join(inputDir, `${inputFileName}1.e`);
-    const lccDockerOutputFile = `/home/${inputFileName}1.e`;
-
-    // Enhanced debugging logs
-    console.log('Input file details:');
-    console.log('Absolute input path:', absoluteInputPath);
-    console.log('Input directory:', inputDir);
-    console.log('Input filename:', inputFileName);
-    console.log('LCC input file:', lccInputFile);
-    console.log('LCC output file:', lccOutputFile);
-    console.log('LCC Docker output file:', lccDockerOutputFile);
-
     // Copy the input file
     fs.copyFileSync(inputFile, lccInputFile);
 
@@ -85,16 +87,16 @@ function runDockerLCC(inputFile, containerName) {
     fs.writeFileSync(nameFile, 'Billy, Bob J');
 
     // Copy files to Docker container
-    console.log('Copying input file and name file to Docker container...');
-    execSync(`docker cp ${lccInputFile} ${containerName}:/home/`, { stdio: 'inherit' });
-    execSync(`docker cp ${nameFile} ${containerName}:/home/`, { stdio: 'inherit' });
+    // console.log('Copying input file and name file to Docker container...');
+    execSync(`docker cp ${lccInputFile} ${containerName}:/home/`, { stdio: 'ignore' }); // was { stdio: 'inherit' }
+    execSync(`docker cp ${nameFile} ${containerName}:/home/`, { stdio: 'ignore' }); // was { stdio: 'inherit' }
 
     // Verify files were copied to Docker
-    console.log('Verifying files in Docker container:');
-    execSync(`docker exec ${containerName} ls -l /home/`, { stdio: 'inherit' });
+    // console.log('Verifying files in Docker container:');
+    execSync(`docker exec ${containerName} ls -l /home/`, { stdio: 'ignore' }); // was { stdio: 'inherit' }
 
     // Compile in Docker with better error handling
-    console.log('Running LCC compilation in Docker...');
+    // console.log('Running LCC compilation in Docker...');
     const lccPaths = [
       // '/usr/local/bin/lcc',
       // '/usr/bin/lcc',
@@ -107,21 +109,21 @@ function runDockerLCC(inputFile, containerName) {
     
     for (const lccPath of lccPaths) {
       try {
-        console.log(`\nTrying LCC path: ${lccPath}`);
+        // console.log(`\nTrying LCC path: ${lccPath}`);
         // Change working directory to /home and use relative paths
         const compileCommand = `cd /home && ${lccPath} ${inputFileName}1.a`;
-        console.log('Executing command:', compileCommand);
+        // console.log('Executing command:', compileCommand);
         
         execSync(`docker exec ${containerName} sh -c "${compileCommand}"`, {
-          stdio: 'inherit'
+          stdio: 'ignore' // was stdio: 'inherit'
         });
         
         // Verify the output file exists in Docker
         try {
           execSync(`docker exec ${containerName} ls -l ${lccDockerOutputFile}`, {
-            stdio: 'inherit'
+            stdio: 'ignore' // was stdio: 'inherit'
           });
-          console.log('Output file successfully generated in Docker');
+          // console.log('Output file successfully generated in Docker');
           compilationSuccessful = true;
           break;
         } catch (verifyError) {
@@ -139,16 +141,16 @@ function runDockerLCC(inputFile, containerName) {
     }
 
     // Copy output from Docker back to local filesystem
-    console.log('\nCopying output file from Docker...');
+    // console.log('\nCopying output file from Docker...');
     execSync(`docker cp ${containerName}:${lccDockerOutputFile} ${lccOutputFile}`, {
-      stdio: 'inherit'
+      stdio: 'ignore' // was stdio: 'inherit'
     });
 
     // Verify the local output file exists
     if (!fs.existsSync(lccOutputFile)) {
       throw new Error(`Failed to copy output file from Docker. ${lccOutputFile} does not exist.`);
     }
-    console.log('Successfully copied output file from Docker');
+    // console.log('Successfully copied output file from Docker');
 
     return lccOutputFile;
   } catch (error) {
@@ -168,7 +170,13 @@ function testAssembler() {
   
   // Paths for files
   const assemblerOutput = path.join(inputDir, `${inputFileName}.e`);
-  
+  const lccDockerOutputFile = `/home/${inputFileName}1.e`;
+  const lccOutputFile = path.join(inputDir, `${inputFileName}1.e`);
+  const lccDockerOutputBST = `/home/${inputFileName}1.bst`;
+  const lccDockerOutputLST = `/home/${inputFileName}1.lst`;
+
+  let testResult = false;
+
   try {
     // Run assembler.js
     const assembler = new Assembler();
@@ -178,15 +186,42 @@ function testAssembler() {
     const lccOutput = runDockerLCC(inputFile, containerName);
     
     // Compare hex dumps
-    const testResult = compareHexDumps(assemblerOutput, lccOutput);
+    testResult = compareHexDumps(assemblerOutput, lccOutput);
     
     //// TODO: delete created test files in Docker container and locally
-    
-    // Exit with appropriate status code
-    process.exit(testResult ? 0 : 1);
   } catch (error) {
     console.error('Test failed:', error);
     process.exit(1);
+  } finally {
+
+    // Cleanup: delete created test files in Docker container and locally
+    console.log('Cleaning up test files...');
+    // console.log('Removing files from Docker container and local filesystem...');
+    // console.log("containerName: ", containerName);
+    // console.log("inputFileName: ", inputFileName);
+    // console.log("lccDockerOutputFile: ", lccDockerOutputFile);
+    const cleanupCommands = [
+      `docker exec ${containerName} rm -f /home/${inputFileName}1.a`,
+      `docker exec ${containerName} rm -f ${lccDockerOutputFile}`,
+      `docker exec ${containerName} rm -f ${lccDockerOutputBST}`,
+      `docker exec ${containerName} rm -f ${lccDockerOutputLST}`,
+      `docker exec ${containerName} rm -f /home/name.nnn`,
+      // `rm -f ${lccInputFile}`,
+      `rm -f ${lccOutputFile}`,
+      `rm -f ${assemblerOutput}`
+      // `rm -f ${nameFile}`
+    ];
+    
+    cleanupCommands.forEach(cmd => {
+      try {
+        execSync(cmd);
+      } catch (cleanupError) {
+        console.error('Cleanup error:', cleanupError.message);
+      }
+    });
+
+    // Exit with appropriate status code
+    process.exit(testResult ? 0 : 1);
   }
 }
 
