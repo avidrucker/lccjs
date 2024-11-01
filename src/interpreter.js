@@ -48,13 +48,14 @@ class Interpreter {
     }
 
     // Check file signature
-    if (buffer[0] !== 'o'.charCodeAt(0) || buffer[1] !== 'C'.charCodeAt(0)) {
-      console.error(`${inputFileName} is not a valid LCC executable file`);
+    if (buffer[0] !== 'o'.charCodeAt(0)) {
+      console.error(`${inputFileName} is not a valid LCC executable file: missing 'o' signature`);
       process.exit(1);
     }
 
+
     // Load the executable into memory
-    this.loadExecutableBuffer(buffer.slice(2));
+    this.loadExecutableBuffer(buffer);
 
     // Run the interpreter
     try {
@@ -65,8 +66,11 @@ class Interpreter {
     }
   }
 
-  // added for lcc.js
+  // for use in lcc.js
+  // makes sure that the file is a valid executable file by checking 
+  // for the "o" file signature and "C" header termination character
   loadExecutableFile(fileName) {
+    // console.log("loading executable file...");
     let buffer;
     try {
       buffer = fs.readFileSync(fileName);
@@ -75,31 +79,103 @@ class Interpreter {
       process.exit(1);
     }
 
-    // Check file signature
-    if (buffer[0] !== 'o'.charCodeAt(0) || buffer[1] !== 'C'.charCodeAt(0)) {
+    ////
+    // Check file signature: look for "o" followed by "C" anywhere in the buffer
+    let foundO = false;
+    let foundC = false;
+
+    for (let offset = 0; offset < buffer.length; offset++) {
+      const char = String.fromCharCode(buffer[offset]);
+
+      // Look for the starting "o"
+      if (!foundO && char === 'o') {
+        foundO = true;
+      } 
+      // Once "o" is found, look for the "C" as the end of the header
+      else if (foundO && char === 'C') {
+        foundC = true;
+        break;
+      }
+    }
+
+    // If either "o" or "C" was not found in the expected order, throw an error
+    if (!foundO || !foundC) {
+      // console.log("INVALID EXECUTABLE FILE");
       console.error(`${fileName} is not a valid LCC executable file`);
       process.exit(1);
     }
+    ////
 
-    console.log(`Starting interpretation of ${fileName}`);
+    // console.log(`Starting interpretation of ${fileName}`);
 
     // Load the executable into memory
-    this.loadExecutableBuffer(buffer.slice(2));
+    this.loadExecutableBuffer(buffer);
   }
 
+  // extracts header entries and loads machine code into memory
   loadExecutableBuffer(buffer) {
+    // console.log("loading executable buffer...");
+    // console.log("buffer: ", buffer);
     let offset = 0;
-    // Read machine code into memory
+  
+    // Read file signature
+    if (buffer[offset++] !== 'o'.charCodeAt(0)) {
+      console.error(`${fileName} is not a valid LCC executable file: missing 'o' signature`);
+      this.error('Invalid file signature: missing "o"');
+      return;
+    }
+  
+    let startAddress = 0; // Default start address
+    let headerEndFound = false;
+  
+    // Read header entries until 'C' is encountered
+    while (offset < buffer.length) {
+      const entryChar = String.fromCharCode(buffer[offset++]);
+  
+      if (entryChar === 'C') {
+        // console.log("C found");
+        // Start of code
+        headerEndFound = true;
+        break;
+      } else if (entryChar === 'S') {
+        // console.log("S found");
+        // Start address entry: read two bytes as little endian
+        if (offset + 1 >= buffer.length) {
+          this.error('Incomplete start address in header');
+          return;
+        }
+        startAddress = buffer.readUInt16LE(offset);
+        // console.log(`Start address: 0x${startAddress.toString(16).padStart(4, '0')}`);
+        offset += 2;
+      } else {
+        // Handle other possible header entries or skip unknown entries
+        this.error(`Unknown header entry: '${entryChar}'`);
+        return;
+      }
+    }
+  
+    // Check if we found the code start marker 'C'
+    if (!headerEndFound) {
+      this.error('Invalid file format: missing "C" code start marker');
+      return;
+    }
+  
+    // Read machine code into memory starting at address 0
     let memIndex = 0;
     while (offset < buffer.length) {
+      if (offset + 1 >= buffer.length) {
+        this.error('Incomplete machine code instruction');
+        return;
+      }
       const instruction = buffer.readUInt16LE(offset);
       offset += 2;
       this.mem[memIndex++] = instruction;
     }
-
-    // Set PC to start address (assuming start at 0)
-    this.pc = 0;
+  
+    // Set PC to start address
+    this.pc = startAddress;
   }
+  
 
   run() {
     this.spInitial = this.r[6]; // Assuming r6 is the stack pointer
@@ -421,11 +497,12 @@ class Interpreter {
     }
   }
 
-  executeSOUT() {
+  executeSOUT() { 
     let address = this.r[this.sr];
     let charCode = this.mem[address];
     while (charCode !== 0) {
       const char = String.fromCharCode(charCode);
+      // console.log("char: ", char);
       process.stdout.write(char);
       this.output += char;
       address = (address + 1) & 0xFFFF;
