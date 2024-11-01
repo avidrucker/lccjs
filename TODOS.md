@@ -33,7 +33,7 @@
 - [x] `cmp` and `br` test
 
 ## Fix
-- [ ] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not
+- [ ] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
 
 ## Extra Features
 
