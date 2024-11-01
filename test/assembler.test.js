@@ -58,6 +58,7 @@ function runDockerLCC(inputFile, containerName) {
     const inputFileName = path.basename(inputFile, '.a');
     const lccInputFile = path.join(inputDir, `${inputFileName}1.a`);
     const lccOutputFile = path.join(inputDir, `${inputFileName}1.e`);
+    const lccDockerOutputFile = `/home/${inputFileName}1.e`;
 
     // Enhanced debugging logs
     console.log('Input file details:');
@@ -66,6 +67,7 @@ function runDockerLCC(inputFile, containerName) {
     console.log('Input filename:', inputFileName);
     console.log('LCC input file:', lccInputFile);
     console.log('LCC output file:', lccOutputFile);
+    console.log('LCC Docker output file:', lccDockerOutputFile);
 
     // Copy the input file
     fs.copyFileSync(inputFile, lccInputFile);
@@ -79,55 +81,68 @@ function runDockerLCC(inputFile, containerName) {
     execSync(`docker cp ${lccInputFile} ${containerName}:/home/`, { stdio: 'inherit' });
     execSync(`docker cp ${nameFile} ${containerName}:/home/`, { stdio: 'inherit' });
 
-    // Debugging: Check LCC installation and PATH
-    console.log('Checking LCC installation...');
-    
-    // Preferred LCC paths in order of precedence
+    // Verify files were copied to Docker
+    console.log('Verifying files in Docker container:');
+    execSync(`docker exec ${containerName} ls -l /home/`, { stdio: 'inherit' });
+
+    // Compile in Docker with better error handling
+    console.log('Running LCC compilation in Docker...');
     const lccPaths = [
-      '/usr/local/bin/lcc',
-      '/usr/bin/lcc',
-      'lcc',  // system PATH
-      '/cuh/cuh63/lnx/lcc',  // Explicitly specified preferred path
+      // '/usr/local/bin/lcc',
+      // '/usr/bin/lcc',
+      // 'lcc',
+      '/cuh/cuh63/lnx/lcc',
     ];
 
-    let lccPath = null;
-    let lccError = null;
-
-    // More robust LCC path checking and execution
-    for (const potentialPath of lccPaths) {
+    let compilationSuccessful = false;
+    let compilationError = '';
+    
+    for (const lccPath of lccPaths) {
       try {
-        // Verify path and executable status
-        const checkCommand = `docker exec ${containerName} sh -c "ls -l '${potentialPath}' && [ -x '${potentialPath}' ] && echo 'Executable found' || echo 'Not executable'"`; 
-        const pathCheck = execSync(checkCommand, { stdio: 'pipe' }).toString().trim();
-        console.log('Path check result:', pathCheck);
-
-        // Try multiple command variations
-        const commandVariations = [
-          // `${potentialPath} ./home/${path.basename(lccInputFile)}`,
-          // `"${potentialPath} ./home/${path.basename(lccInputFile)}"`,
-          // `"${potentialPath}" "./home/${path.basename(lccInputFile)}"`,
-          // `${potentialPath} "./home/${path.basename(lccInputFile)}"`,
-          `sh -c ${potentialPath} ./home/${path.basename(lccInputFile)}`
-        ];
-
-        for (const variation of commandVariations) {
-          console.log('Trying command variation:', variation);
-          try {
-            execSync(`docker exec ${containerName} sh -c ${variation}`, 
-              { stdio: 'inherit' });
-            
-            lccPath = potentialPath;
-            return lccOutputFile;
-          } catch (variantError) {
-            console.log(`Variant failed: ${variation}`, variantError.message);
-          }
+        console.log(`\nTrying LCC path: ${lccPath}`);
+        // Change working directory to /home and use relative paths
+        const compileCommand = `cd /home && ${lccPath} ${inputFileName}1.a`;
+        console.log('Executing command:', compileCommand);
+        
+        execSync(`docker exec ${containerName} sh -c "${compileCommand}"`, {
+          stdio: 'inherit'
+        });
+        
+        // Verify the output file exists in Docker
+        try {
+          execSync(`docker exec ${containerName} ls -l ${lccDockerOutputFile}`, {
+            stdio: 'inherit'
+          });
+          console.log('Output file successfully generated in Docker');
+          compilationSuccessful = true;
+          break;
+        } catch (verifyError) {
+          console.log('Output file not found after compilation');
+          compilationError = `Output file verification failed: ${verifyError.message}`;
         }
       } catch (err) {
-        console.log(`Failed to use LCC at ${potentialPath}:`, err.message);
+        console.log(`Failed with LCC path ${lccPath}:`, err.message);
+        compilationError = err.message;
       }
     }
 
-    throw new Error('No working LCC command found');
+    if (!compilationSuccessful) {
+      throw new Error(`No working LCC command found. Last error: ${compilationError}`);
+    }
+
+    // Copy output from Docker back to local filesystem
+    console.log('\nCopying output file from Docker...');
+    execSync(`docker cp ${containerName}:${lccDockerOutputFile} ${lccOutputFile}`, {
+      stdio: 'inherit'
+    });
+
+    // Verify the local output file exists
+    if (!fs.existsSync(lccOutputFile)) {
+      throw new Error(`Failed to copy output file from Docker. ${lccOutputFile} does not exist.`);
+    }
+    console.log('Successfully copied output file from Docker');
+
+    return lccOutputFile;
   } catch (error) {
     console.error('Comprehensive LCC execution failure:', error);
     throw error;
