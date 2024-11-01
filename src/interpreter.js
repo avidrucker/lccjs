@@ -106,7 +106,7 @@ class Interpreter {
     }
     ////
 
-    // console.log(`Starting interpretation of ${fileName}`);
+    console.log(`Starting interpretation of ${fileName}`);
 
     // Load the executable into memory
     this.loadExecutableBuffer(buffer);
