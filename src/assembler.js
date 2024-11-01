@@ -23,6 +23,8 @@ class Assembler {
     this.listing = []; // This will store information about each line, including the location counter (locCtr), machine code words, and the source code line.
     this.loadPoint = 0;
     this.programSize = 0;
+    this.startLabel = null;     // Label specified in .start directive
+    this.startAddress = null;   // Resolved address of the start label
   }
 
   main(args) {
@@ -48,17 +50,6 @@ class Assembler {
 
     // Construct the output file name by replacing extension with '.e'
     this.outputFileName = this.constructOutputFileName(this.inputFileName);
-
-    // Open the output file for writing in binary mode
-    try {
-      this.outFile = fs.openSync(this.outputFileName, 'w');
-    } catch (err) {
-      console.error(`Cannot open output file ${this.outputFileName}`);
-      process.exit(1);
-    }
-
-    // Write the initial header 'oC' to the output file
-    fs.writeSync(this.outFile, 'oC');
 
     // Perform Pass 1
     console.log('Starting assembly pass 1');
@@ -91,9 +82,64 @@ class Assembler {
       process.exit(1);
     }
 
+    // **Resolve the start label to an address**
+    if (this.startLabel !== null) {
+      if (this.symbolTable.hasOwnProperty(this.startLabel)) {
+        this.startAddress = this.symbolTable[this.startLabel];
+      } else {
+        this.error(`Undefined start label: ${this.startLabel}`);
+        process.exit(1);
+      }
+    } else {
+      // If no .start directive, default start address is 0
+      this.startAddress = 0;
+    }
+
+    // // Close the output file
+    // fs.closeSync(this.outFile);
+    // **Write the output file after Pass 2**
+    this.writeOutputFile();
+  }
+
+  writeOutputFile() {
+    // Open the output file for writing
+    try {
+      this.outFile = fs.openSync(this.outputFileName, 'w');
+    } catch (err) {
+      console.error(`Cannot open output file ${this.outputFileName}`);
+      process.exit(1);
+    }
+  
+    // Write the initial header 'o' to the output file
+    fs.writeSync(this.outFile, 'o');
+  
+    // Write the 'S' entry if start address is specified
+    if (this.startAddress !== null) {
+      // Ensure startAddress is within 16 bits
+      const startAddr = this.startAddress & 0xFFFF;
+  
+      // Create a buffer for 'S' and the two-byte start address
+      const startAddrBuffer = Buffer.alloc(3);
+      startAddrBuffer.write('S', 0, 'ascii');           // Write 'S'
+      startAddrBuffer.writeUInt16LE(startAddr, 1);      // Write start address in little endian
+  
+      fs.writeSync(this.outFile, startAddrBuffer);
+    }
+  
+    // Write the code start marker 'C'
+    fs.writeSync(this.outFile, 'C');
+  
+    // Write machine code words
+    const codeBuffer = Buffer.alloc(this.outputBuffer.length * 2);
+    for (let i = 0; i < this.outputBuffer.length; i++) {
+      codeBuffer.writeUInt16LE(this.outputBuffer[i], i * 2);
+    }
+    fs.writeSync(this.outFile, codeBuffer);
+  
     // Close the output file
     fs.closeSync(this.outFile);
   }
+  
 
   constructOutputFileName(inputFileName) {
     const parsedPath = path.parse(inputFileName);
@@ -105,6 +151,10 @@ class Assembler {
     // At the beginning of Pass 1
     if (this.pass === 1) {
       this.loadPoint = this.locCtr;
+    }
+
+    if (this.pass === 2) {
+      this.outputBuffer = [];
     }
 
     for (let line of this.sourceLines) {
@@ -240,6 +290,13 @@ class Assembler {
   handleDirective(mnemonic, operands) {
     mnemonic = mnemonic.toLowerCase();
     switch (mnemonic) {
+      case '.start':
+        if (operands.length !== 1) {
+          this.error(`Invalid operand count for ${mnemonic}`);
+          return;
+        }
+        this.startLabel = operands[0];
+        break;
       case '.blkw':
       case '.space':
       case '.zero':
@@ -439,12 +496,11 @@ class Assembler {
   }
 
   writeMachineWord(word) {
-    const buffer = Buffer.alloc(2);
-    buffer.writeUInt16LE(word, 0);
-    fs.writeSync(this.outFile, buffer);
-
-    if (this.pass === 2 && this.currentListingEntry) {
-      this.currentListingEntry.codeWords.push(word);
+    if (this.pass === 2) {
+      this.outputBuffer.push(word & 0xFFFF); // Ensure 16-bit word
+      if (this.currentListingEntry) {
+        this.currentListingEntry.codeWords.push(word & 0xFFFF);
+      }
     }
   }
 
