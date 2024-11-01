@@ -34,6 +34,7 @@
 
 ## Fix
 - [ ] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
+- [ ] interpreter.js output does not yet add an extra newline like lcc.js does. interpreter.js should however print an extra newline to the stdout after the program has finished executing
 
 ## Extra Features
 
