@@ -25,11 +25,15 @@
 - [x] implement `cmp` mnemonic
 - [ ] include comments in BST/LST files
 - [ ] include all headers (S, etc.) in BST/LST files
+- [ ] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
 
 ## Test
 
 - [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
 - [x] `cmp` and `br` test
+
+## Fix
+- [ ] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not
 
 ## Extra Features
 
