@@ -287,6 +287,43 @@ class Assembler {
     return /^"(.*)"$/.test(str) || /^'(.*)'$/.test(str);
   }
 
+  parseString(str) {
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === '\\') {
+        i++; // Move to the next character to check the escape sequence
+        if (i >= str.length) {
+          this.error('Invalid escape sequence at end of string');
+          return null;
+        }
+        switch (str[i]) {
+          case 'n':
+            result += '\n';
+            break;
+          case 't':
+            result += '\t';
+            break;
+          case '\\':
+            result += '\\';
+            break;
+          case '"':
+            result += '"';
+            break;
+          case 'r':
+            result += '\r';
+            break;
+          // Add more escape sequences as needed
+          default:
+            this.error(`Unknown escape sequence: \\${str[i]}`);
+            return null;
+        }
+      } else {
+        result += str[i];
+      }
+    }
+    return result;
+  }
+
   handleDirective(mnemonic, operands) {
     mnemonic = mnemonic.toLowerCase();
     switch (mnemonic) {
@@ -347,6 +384,7 @@ class Assembler {
         }
         // Extract the string without quotes
         let strContent = strOperand.slice(1, -1);
+        strContent = this.parseString(strContent);
 
         if (this.pass === 1) {
           // Update location counter: length of string + 1 for null terminator
