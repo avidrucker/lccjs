@@ -16,6 +16,14 @@ const { execSync } = require('child_process');
 
 function compareHexDumps(file1, file2) {
   try {
+    // Check file sizes first
+    const stat1 = fs.statSync(file1);
+    const stat2 = fs.statSync(file2);
+    
+    if (stat1.size > 1024 * 1024 || stat2.size > 1024 * 1024) {
+      throw new Error('File size exceeds 1MB limit - possible infinite loop in assembly output');
+    }
+
     // Generate hex dumps using xxd
     const hexDump1 = execSync(`xxd -p ${file1}`).toString().trim();
     const hexDump2 = execSync(`xxd -p ${file2}`).toString().trim();
@@ -48,6 +56,18 @@ function compareHexDumps(file1, file2) {
     console.error('Error comparing hex dumps:', error);
     return false;
   }
+}
+
+function cleanup(files) {
+  files.forEach(file => {
+    if (fs.existsSync(file)) {
+      try {
+        fs.unlinkSync(file);
+      } catch (err) {
+        console.warn(`Failed to clean up ${file}:`, err);
+      }
+    }
+  });
 }
 
 function runDockerLCC(inputFile, containerName) {
