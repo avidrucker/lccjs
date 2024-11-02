@@ -14,13 +14,29 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
+const ignoreOrInherit = 'inherit'; // or inherit, used for development 
+const execSyncOptions = {
+  stdio: ignoreOrInherit,
+  timeout: 5000, // Timeout in milliseconds
+  maxBuffer: 1024 * 1024 // 1MB buffer limit
+};
+
+const MAX_FILE_SIZE = 1024 * 1024; // 1MB
+
+function isFileSizeValid(filePath) {
+  try {
+    const stat = fs.statSync(filePath);
+    return stat.size <= MAX_FILE_SIZE;
+  } catch (error) {
+    console.error(`Error accessing file ${filePath}:`, error);
+    return false;
+  }
+}
+
 function compareHexDumps(file1, file2) {
   try {
     // Check file sizes first
-    const stat1 = fs.statSync(file1);
-    const stat2 = fs.statSync(file2);
-    
-    if (stat1.size > 1024 * 1024 || stat2.size > 1024 * 1024) {
+    if (!isFileSizeValid(file1) || !isFileSizeValid(file2)) {
       throw new Error('File size exceeds 1MB limit - possible infinite loop in assembly output');
     }
 
@@ -58,8 +74,25 @@ function compareHexDumps(file1, file2) {
   }
 }
 
+function containerExists(containerName) {
+  try {
+    execSync(`docker inspect ${containerName}`, execSyncOptions);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+function isContainerRunning(containerName) {
+  try {
+    const output = execSync(`docker inspect -f '{{.State.Running}}' ${containerName}`, execSyncOptions).toString().trim();
+    return output === 'true';
+  } catch (err) {
+    return false;
+  }
+}
+
 function runDockerLCC(inputFile, containerName) {
-  
   // Get absolute path of the input file
   const absoluteInputPath = path.resolve(inputFile);
   const inputDir = path.dirname(absoluteInputPath);
@@ -86,14 +119,15 @@ function runDockerLCC(inputFile, containerName) {
     const nameFile = path.join(inputDir, 'name.nnn');
     fs.writeFileSync(nameFile, 'Billy, Bob J');
 
+    
     // Copy files to Docker container
     // console.log('Copying input file and name file to Docker container...');
-    execSync(`docker cp ${lccInputFile} ${containerName}:/home/`, { stdio: 'ignore' }); // was { stdio: 'inherit' }
-    execSync(`docker cp ${nameFile} ${containerName}:/home/`, { stdio: 'ignore' }); // was { stdio: 'inherit' }
+    execSync(`docker cp ${lccInputFile} ${containerName}:/home/`, execSyncOptions); // was { stdio: 'inherit' }
+    execSync(`docker cp ${nameFile} ${containerName}:/home/`, execSyncOptions); // was { stdio: 'inherit' }
 
     // Verify files were copied to Docker
     // console.log('Verifying files in Docker container:');
-    execSync(`docker exec ${containerName} ls -l /home/`, { stdio: 'ignore' }); // was { stdio: 'inherit' }
+    execSync(`docker exec ${containerName} ls -l /home/`, execSyncOptions); // was { stdio: 'inherit' }
 
     // Compile in Docker with better error handling
     // console.log('Running LCC compilation in Docker...');
@@ -102,6 +136,7 @@ function runDockerLCC(inputFile, containerName) {
       // '/usr/bin/lcc',
       // 'lcc',
       '/cuh/cuh63/lnx/lcc',
+      // Add other possible paths if necessary
     ];
 
     let compilationSuccessful = false;
@@ -111,18 +146,16 @@ function runDockerLCC(inputFile, containerName) {
       try {
         // console.log(`\nTrying LCC path: ${lccPath}`);
         // Change working directory to /home and use relative paths
-        const compileCommand = `cd /home && ${lccPath} ${inputFileName}1.a`;
+        // Note: The -o option specifies the output filename and prevents 
+        // the lcc from executing the assembled code.
+        const compileCommand = `cd /home && ${lccPath} ${inputFileName}1.a -o ${inputFileName}1.e`;
         // console.log('Executing command:', compileCommand);
         
-        execSync(`docker exec ${containerName} sh -c "${compileCommand}"`, {
-          stdio: 'ignore' // was stdio: 'inherit'
-        });
+        execSync(`docker exec ${containerName} sh -c "${compileCommand}"`, execSyncOptions);
         
         // Verify the output file exists in Docker
         try {
-          execSync(`docker exec ${containerName} ls -l ${lccDockerOutputFile}`, {
-            stdio: 'ignore' // was stdio: 'inherit'
-          });
+          execSync(`docker exec ${containerName} ls -l ${lccDockerOutputFile}`, execSyncOptions);
           // console.log('Output file successfully generated in Docker');
           compilationSuccessful = true;
           break;
@@ -142,9 +175,7 @@ function runDockerLCC(inputFile, containerName) {
 
     // Copy output from Docker back to local filesystem
     // console.log('\nCopying output file from Docker...');
-    execSync(`docker cp ${containerName}:${lccDockerOutputFile} ${lccOutputFile}`, {
-      stdio: 'ignore' // was stdio: 'inherit'
-    });
+    execSync(`docker cp ${containerName}:${lccDockerOutputFile} ${lccOutputFile}`, execSyncOptions);
 
     // Verify the local output file exists
     if (!fs.existsSync(lccOutputFile)) {
@@ -159,15 +190,15 @@ function runDockerLCC(inputFile, containerName) {
   }
 }
 
-function testAssembler() {
+async function testAssembler() {
   // Default to demoA.a if no argument is provided
   const inputFile = process.argv[2] || path.join(__dirname, '../demos/demoA.a');
   const containerName = process.argv[3] || 'mycontainer';
-  
+
   // Derive filenames
   const inputFileName = path.basename(inputFile, '.a');
   const inputDir = path.dirname(inputFile);
-  
+
   // Paths for files
   const assemblerOutput = path.join(inputDir, `${inputFileName}.e`);
   const lccDockerOutputFile = `/home/${inputFileName}1.e`;
@@ -176,51 +207,84 @@ function testAssembler() {
   const lccDockerOutputLST = `/home/${inputFileName}1.lst`;
 
   let testResult = false;
+  let containerStarted = false; // Keep track if we started the container
 
   try {
+    // Check if Docker container exists
+    if (containerExists(containerName)) {
+      console.log(`Docker container ${containerName} exists.`);
+      // If container exists but not running, start it
+      if (!isContainerRunning(containerName)) {
+        console.log(`Starting Docker container ${containerName}...`);
+        execSync(`docker start ${containerName}`, execSyncOptions);
+        containerStarted = true;
+      } else {
+        console.log(`Docker container ${containerName} is already running.`);
+      }
+    } else {
+      // Container does not exist, create and start it
+      console.log(`Creating and starting Docker container ${containerName}...`);
+      execSync(`docker run --name ${containerName} --memory="512m" --cpus="1" -d ubuntu`, execSyncOptions);
+      // Replace 'lcc-docker-image' with the actual image name that has lcc installed
+      containerStarted = true;
+    }
+
     // Run assembler.js
     const assembler = new Assembler();
     assembler.main([inputFile]);
-    
+
+    // Check assembler output file size
+    if (!isFileSizeValid(assemblerOutput)) {
+      throw new Error('Assembler output file size exceeds limit - possible assembler error');
+    }
+
     // Run LCC in Docker
     const lccOutput = runDockerLCC(inputFile, containerName);
-    
+
+    // Check LCC output file size
+    if (!isFileSizeValid(lccOutput)) {
+      throw new Error('LCC output file size exceeds limit - possible LCC error');
+    }
+
     // Compare hex dumps
     testResult = compareHexDumps(assemblerOutput, lccOutput);
-    
-    //// TODO: delete created test files in Docker container and locally
+
   } catch (error) {
     console.error('Test failed:', error);
-    process.exit(1);
+    process.exitCode = 1;
   } finally {
-
     // Cleanup: delete created test files in Docker container and locally
     console.log('Cleaning up test files...');
-    // console.log('Removing files from Docker container and local filesystem...');
-    // console.log("containerName: ", containerName);
-    // console.log("inputFileName: ", inputFileName);
-    // console.log("lccDockerOutputFile: ", lccDockerOutputFile);
-    // console.log("assemblerOutput: ", assemblerOutput);
-    // console.log("lccOutputFile: ", lccOutputFile);
+
     const cleanupCommands = [
       `docker exec ${containerName} rm -f /home/${inputFileName}1.a`,
       `docker exec ${containerName} rm -f ${lccDockerOutputFile}`,
       `docker exec ${containerName} rm -f ${lccDockerOutputBST}`,
       `docker exec ${containerName} rm -f ${lccDockerOutputLST}`,
       `docker exec ${containerName} rm -f /home/name.nnn`,
-      `rm -f demos/${inputFileName}1.a`,
+      `rm -f ${inputDir}/${inputFileName}1.a`,
+      `rm -f ${inputDir}/name.nnn`,
       `rm -f ${lccOutputFile}`,
       `rm -f ${assemblerOutput}`
-      // `rm -f ${nameFile}`
     ];
-    
+
     cleanupCommands.forEach(cmd => {
       try {
-        execSync(cmd);
+        execSync(cmd, execSyncOptions);
       } catch (cleanupError) {
         console.error('Cleanup error:', cleanupError.message);
       }
     });
+
+    // Stop the Docker container if we started it
+    if (containerStarted) {
+      try {
+        console.log(`Stopping Docker container ${containerName}...`);
+        execSync(`docker kill ${containerName}`, execSyncOptions);
+      } catch (err) {
+        console.error('Error stopping Docker container:', err.message);
+      }
+    }
 
     // Exit with appropriate status code
     process.exit(testResult ? 0 : 1);
