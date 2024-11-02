@@ -200,13 +200,15 @@ function testAssembler() {
     // console.log("containerName: ", containerName);
     // console.log("inputFileName: ", inputFileName);
     // console.log("lccDockerOutputFile: ", lccDockerOutputFile);
+    // console.log("assemblerOutput: ", assemblerOutput);
+    // console.log("lccOutputFile: ", lccOutputFile);
     const cleanupCommands = [
       `docker exec ${containerName} rm -f /home/${inputFileName}1.a`,
       `docker exec ${containerName} rm -f ${lccDockerOutputFile}`,
       `docker exec ${containerName} rm -f ${lccDockerOutputBST}`,
       `docker exec ${containerName} rm -f ${lccDockerOutputLST}`,
       `docker exec ${containerName} rm -f /home/name.nnn`,
-      // `rm -f ${lccInputFile}`,
+      `rm -f demos/${inputFileName}1.a`,
       `rm -f ${lccOutputFile}`,
       `rm -f ${assemblerOutput}`
       // `rm -f ${nameFile}`
