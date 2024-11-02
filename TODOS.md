@@ -26,6 +26,8 @@
 - [ ] include comments in BST/LST files
 - [ ] include all headers (S, etc.) in BST/LST files
 - [ ] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
+- [ ] use lcc locally to test if the lcc exists on local machine
+- [ ] write script to install ubuntu docker image with lcc to run tests on when lcc does not exist on local machine
 
 ## Test
 
