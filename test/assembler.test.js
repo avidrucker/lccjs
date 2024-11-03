@@ -21,6 +21,8 @@ const execSyncOptions = {
   maxBuffer: 1024 * 1024 // 1MB buffer limit
 };
 
+let userInputs;
+
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB
 
 function isFileSizeValid(filePath) {
@@ -50,22 +52,22 @@ function compareHexDumps(file1, file2) {
       return true;
     } else {
       console.log('❌ Hex dumps differ. Test FAILED.');
-      
+
       // Find and log the differences
       const diff1 = hexDump1.split('');
       const diff2 = hexDump2.split('');
-      
+
       console.log('Differences found:');
       for (let i = 0; i < Math.min(diff1.length, diff2.length); i++) {
         if (diff1[i] !== diff2[i]) {
           console.log(`Position ${i}: ${diff1[i]} !== ${diff2[i]}`);
         }
       }
-      
+
       if (diff1.length !== diff2.length) {
         console.log(`Length mismatch: File 1 length = ${diff1.length}, File 2 length = ${diff2.length}`);
       }
-      
+
       return false;
     }
   } catch (error) {
@@ -110,7 +112,7 @@ function runDockerLCC(inputFile, containerName) {
   // console.log('LCC input file:', lccInputFile);
   // console.log('LCC output file:', lccOutputFile);
   // console.log('LCC Docker output file:', lccDockerOutputFile);
-  
+
   try {
     // Copy the input file
     fs.copyFileSync(inputFile, lccInputFile);
@@ -119,7 +121,7 @@ function runDockerLCC(inputFile, containerName) {
     const nameFile = path.join(inputDir, 'name.nnn');
     fs.writeFileSync(nameFile, 'Billy, Bob J');
 
-    
+
     // Copy files to Docker container
     // console.log('Copying input file and name file to Docker container...');
     execSync(`docker cp ${lccInputFile} ${containerName}:/home/`, execSyncOptions); // was { stdio: 'inherit' }
@@ -141,18 +143,32 @@ function runDockerLCC(inputFile, containerName) {
 
     let compilationSuccessful = false;
     let compilationError = '';
-    
+
     for (const lccPath of lccPaths) {
       try {
         // console.log(`\nTrying LCC path: ${lccPath}`);
         // Change working directory to /home and use relative paths
-        // Note: The -o option specifies the output filename and prevents 
-        // the lcc from executing the assembled code.
-        const compileCommand = `cd /home && ${lccPath} ${inputFileName}1.a -o ${inputFileName}1.e`;
-        // console.log('Executing command:', compileCommand);
-        
+        // Note: The -o option in lcc specifies the output filename but 
+        // DOES NOT prevent the lcc from executing the assembled code.
+        let compileCommand = '';
+
+        if (userInputs.length === 0) {
+          // No inputs: run command directly without any stdin
+          compileCommand = `cd /home && ${lccPath} ${inputFileName}1.a`;
+        } else if (userInputs.length === 1) {
+          // One input: single echo without sleep
+          compileCommand = `cd /home && echo '${userInputs[0]}' | ${lccPath} ${inputFileName}1.a`;
+        } else {
+          // Multiple inputs: echo-sleep chain with 1-second intervals
+          const echoSleepChain = userInputs
+            .map(input => `echo '${input}'`)
+            .join('; sleep 1; ');
+
+          compileCommand = `cd /home && (${echoSleepChain}) | ${lccPath} ${inputFileName}1.a`;
+        }
+
         execSync(`docker exec ${containerName} sh -c "${compileCommand}"`, execSyncOptions);
-        
+
         // Verify the output file exists in Docker
         try {
           execSync(`docker exec ${containerName} ls -l ${lccDockerOutputFile}`, execSyncOptions);
@@ -191,9 +207,16 @@ function runDockerLCC(inputFile, containerName) {
 }
 
 async function testAssembler() {
+  // Collect command-line arguments
+  const args = process.argv.slice(2);
+
   // Default to demoA.a if no argument is provided
-  const inputFile = process.argv[2] || path.join(__dirname, '../demos/demoA.a');
-  const containerName = process.argv[3] || 'mycontainer';
+  const inputFile = args[0] || path.join(__dirname, '../demos/demoA.a');
+
+  // Collect user inputs (arguments after the assembly file)
+  userInputs = args.slice(1);
+
+  const containerName = 'mycontainer';
 
   // Derive filenames
   const inputFileName = path.basename(inputFile, '.a');
