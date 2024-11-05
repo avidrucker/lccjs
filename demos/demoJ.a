@@ -1,18 +1,18 @@
-            mov r1, 'a'
-outerloop:  ld r2, lastchar
-            cmp r1, r2
-            bre postoloop
-            mov r0, 0
-innerloop:  cmp r0, -1
-            bre postiloop
-            aout r1
-            hout r0
-            nl
-            add r0, r0, 1
-            br innerloop
-postiloop:  add r1, r1, 1
-            br outerloop
-postoloop:  halt
+;             mov r1, 'a'
+; outerloop:  ld r2, lastchar
+;             cmp r1, r2
+;             bre postoloop
+;             mov r0, 0
+; innerloop:  cmp r0, -1
+;             bre postiloop
+;             aout r1
+;             hout r0
+;             nl
+;             add r0, r0, 1
+;             br innerloop
+; postiloop:  add r1, r1, 1
+;             br outerloop
+; postoloop:  halt
 
-lastchar: .word 'c'
+; lastchar: .word 'b'
             
