@@ -22,6 +22,7 @@ class Interpreter {
     this.instructionsExecuted = 0;     // for making BST/LST files
     this.maxStackSize = 0;             // for making BST/LST files
     this.spInitial = 0;                // for making BST/LST files
+    this.memMax = 0; // Keep track of the highest memory address used
   }
 
   main(args) {
@@ -53,13 +54,13 @@ class Interpreter {
       process.exit(1);
     }
 
-
     // Load the executable into memory
     this.loadExecutableBuffer(buffer);
 
     // Run the interpreter
     try {
       this.run();
+      console.log(); ////
     } catch (error) {
       console.error(`Runtime Error: ${error.message}`);
       process.exit(1);
@@ -171,6 +172,8 @@ class Interpreter {
       offset += 2;
       this.mem[memIndex++] = instruction;
     }
+
+    this.memMax = memIndex - 1; // Last memory address used
   
     // Set PC to start address
     this.pc = startAddress;
@@ -452,10 +455,10 @@ class Interpreter {
     this.setNZ(this.r[this.dr]);
   }
 
-  ////
   executeST() {
     const address = (this.pc + this.pcoffset9) & 0xFFFF;
     this.mem[address] = this.r[this.sr];
+    if (address > this.memMax) this.memMax = address;
   }
 
   executeMVI() {
@@ -581,6 +584,15 @@ class Interpreter {
     this.mem[address] = 0;
   }
 
+  executeM() {
+    for (let addr = 0; addr <= this.memMax; addr++) {
+      const content = this.mem[addr];
+      const line = `${addr.toString(16).padStart(4, '0')}: ${content.toString(16).padStart(4, '0')}`;
+      console.log(line);
+      this.output += line + '\n';
+    }
+  }
+
   executeTRAP() {
     switch (this.trapvec) {
       case 0: // HALT
@@ -693,6 +705,9 @@ class Interpreter {
       case 10: // SIN
         // read a line of input from the user
         this.executeSIN();
+        break;
+      case 11: // m
+        this.executeM();
         break;
       default:
         this.error(`Unknown TRAP vector: ${this.trapvec}`);
