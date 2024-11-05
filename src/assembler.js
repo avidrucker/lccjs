@@ -520,6 +520,17 @@ class Assembler {
       case 'sin':
         machineWord = this.assembleTrap(operands, 0x000A); // Trap vector for sin is 10
         break;
+      case 'm':
+        machineWord = this.assembleTrap(operands, 0x000B); // Trap vector for m is 11
+        break;
+      case 'r':
+        machineWord = this.assembleTrap(operands, 0x000C); // Trap vector for r is 12
+        break;
+      case 's':
+        machineWord = this.assembleTrap(operands, 0x000D); // Trap vector for s is 13
+        break;
+      case 'bp':
+        machineWord = this.assembleTrap(operands, 0x000E); // Trap vector for bp is 14
       default:
         this.error(`Invalid mnemonic or directive: ${mnemonic}`);
         return;
