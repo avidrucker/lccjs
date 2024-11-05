@@ -14,7 +14,7 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-const ignoreOrInherit = 'inherit'; // or inherit, used for development 
+const ignoreOrInherit = 'ignore'; // or inherit, used for development 
 const execSyncOptions = {
   stdio: ignoreOrInherit,
   timeout: 5000, // Timeout in milliseconds
@@ -239,7 +239,7 @@ async function testAssembler() {
       // If container exists but not running, start it
       if (!isContainerRunning(containerName)) {
         console.log(`Starting Docker container ${containerName}...`);
-        execSync(`docker start ${containerName}`, execSyncOptions);
+        execSync(`docker start ${containerName}`, {...execSyncOptions, timeout: 10000});
         containerStarted = true;
       } else {
         console.log(`Docker container ${containerName} is already running.`);
