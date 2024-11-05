@@ -47,6 +47,7 @@
 - [x] assembler.test.js should delete all extra files created during testing, but currently does not delete all extra files generated locally
 - [x] there appears to be an infinite write loop glitch when running assembler.test.js on demoB.a, ideally there will be a way to cap infinite writes and max memory usage with a graceful failure and notification to the user that the test failed due to (near/potentially)infinite writes - the issue was that demoB.a was being interpretted by lcc, and the terminal process was waiting for intput infinitely
 - [ ] once symbolic debugger is implemented, detection of infinite loops should lead to symbolic debugger being called and the user being notified that an infinite loop was detected without terminating program execution
+- [ ] refactor assembleMOV to simplify and DRY up logic
 
 ## Extra Features
 
