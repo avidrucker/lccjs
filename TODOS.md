@@ -6,6 +6,7 @@
 - [x] implement blocking input for sin when executing
 - [x] implement sin/sout execution output in bst
 - [x] implement BST creation
+- [ ] implement linker
 - [ ] implement symbolic debugger
     - [ ] implement debugger commands
 - [x] implement LST creation
@@ -17,7 +18,7 @@
 - [x] implement din/ain/hin in interpreter.js
 - [ ] implement debugging commands s (stack), m (memory), r (registers), bp (break point)
   - [ ] stack draw function
-  - [ ] memory draw function
+  - [x] memory draw function
   - [ ] registers draw function
 - [ ] implement flag setting for lcc.js such as `-d` for debug mode, `-L` for load point, `-r` switch to display registers at program end, `-m` switch to display memory to be displayed at program end, etc. 
 - [ ] piping of an Assembly file's output into a text file
@@ -25,20 +26,22 @@
 - [x] implement `cmp` mnemonic
 - [ ] include comments in BST/LST files
 - [ ] include all headers (S, etc.) in BST/LST files
-- [ ] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
-- [ ] use lcc locally to test if the lcc exists on local machine
-- [ ] write script to install ubuntu docker image with lcc to run tests on when lcc does not exist on local machine
 
 ## Test
 
 - [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
 - [x] `cmp` and `br` test
+- [x] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
+- [ ] use lcc locally to test if the lcc exists on local machine
+- [ ] write script to install ubuntu docker image with lcc to run tests on when lcc does not exist on local machine
+- [ ] test the stdout output of executing a program given a .a/.e file and specific inputs by comparing the .lst/.bst outputs of interpreter.js and the lcc
 
 ## Fix
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
-- [ ] interpreter.js output does not yet add an extra newline like lcc.js does. interpreter.js should however print an extra newline to the stdout after the program has finished executing
+- [x] interpreter.js output does not yet add an extra newline like lcc.js does. interpreter.js should however print an extra newline to the stdout after the program has finished executing
 - [x] assembler.test.js should delete all extra files created during testing, but currently does not delete all extra files generated locally
 - [x] there appears to be an infinite write loop glitch when running assembler.test.js on demoB.a, ideally there will be a way to cap infinite writes and max memory usage with a graceful failure and notification to the user that the test failed due to (near/potentially)infinite writes - the issue was that demoB.a was being interpretted by lcc, and the terminal process was waiting for intput infinitely
+- [ ] once symbolic debugger is implemented, detection of infinite loops should lead to symbolic debugger being called and the user being notified that an infinite loop was detected without terminating program execution
 
 ## Extra Features
 
