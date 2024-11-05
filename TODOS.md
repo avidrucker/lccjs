@@ -35,6 +35,8 @@
 - [ ] use lcc locally to test if the lcc exists on local machine
 - [ ] write script to install ubuntu docker image with lcc to run tests on when lcc does not exist on local machine
 - [ ] test the stdout output of executing a program given a .a/.e file and specific inputs by comparing the .lst/.bst outputs of interpreter.js and the lcc
+- [ ] implement test battery to run all tests one after the other, regardless of whether one or more tests fail, and to log the results of each test at the very end (currently the battery of tests stop when a single test fails)
+- [ ] move the docker startup and shutdown to battery of tests
 
 ## Fix
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
