@@ -484,9 +484,8 @@ class Assembler {
         machineWord = this.assembleLea(operands);
         break;
       case 'cea':
-        console.log("CEA is not supported yet");
-      // machineWord = this.assembleCEA(operands);
-      // break;
+        machineWord = this.assembleCEA(operands);
+        break;
       case 'halt':
         machineWord = 0xF000;
         break;
@@ -634,6 +633,17 @@ class Assembler {
       macword |= 0x0020 | (imm5 & 0x1F);
     }
     return macword;
+  }
+
+  assembleCEA(operands) {
+    if (operands.length !== 2) {
+      this.error('Invalid operand count for cea');
+      return null;
+    }
+    let drOp = operands[0];
+    let imm5op = operands[1];
+
+    return this.assembleADD([drOp, 'fp', imm5op]);
   }
 
   assembleSUB(operands) {
