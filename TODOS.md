@@ -41,6 +41,10 @@
 - [x] move the docker startup and shutdown out of the test files and into a separate file that is called by the test files
 - [ ] move the name.nnn file existence check and creation out of the test files and into a separate file that is called by the test files, such that, for the test suite code, the name.nnn file is created only once, rather than once for each test, to cut down on unnecessary repeated file creations and deletions
 - [ ] implement an initial smokescreen test that simply attempts to run the lcc via the `lcc -h` command, and, if it fails, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.
+- [ ] fix issue where interpreter.test.js runs expecting a .lst file to be created when, in fact, the .lst file is not created by the interpreter.js file, but by the lcc.js file
+  - [ ] change the interpreter.test.js to simply run the files and check for the expected output in the stdout, and to simulate the expected inputs, rather than checking for the existence of a .lst file
+  - [ ] migrate the majority of what is currently interpreter.test.js to a new file called lcc.test.js, which will test the lcc.js file and its output, and will check for the existence of the .lst file
+- [ ] create an lccBattery.test.js which will call lcc.js on a list of specified .a files, and will compare the contents of each .lst file to the expected output, and will log the results of each test at the very end 
 
 ## Fix
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
