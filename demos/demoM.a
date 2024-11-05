@@ -1,0 +1,14 @@
+; program that tests the s command
+        mov r0, 5
+        push r0
+        mov r0, 10
+        push r0
+        s
+        nl
+
+        pop r0
+        pop r0
+        s
+        nl
+
+        halt
