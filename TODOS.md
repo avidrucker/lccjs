@@ -34,9 +34,12 @@
 - [x] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
 - [ ] use lcc locally to test if the lcc exists on local machine
 - [ ] write script to install ubuntu docker image with lcc to run tests on when lcc does not exist on local machine
+  - [ ] create docker image with lcc 63 installed, host it on dockerhub so that it can be pulled down for testing purposes
+- [ ] write docker checks for (1) to see if docker is installed on the current machine and (2) to see if docker is currently running, so the tests fail gracefully and give helpful outputs such as "error: docker is not installed" or "error: docker is not running"
 - [ ] test the stdout output of executing a program given a .a/.e file and specific inputs by comparing the .lst/.bst outputs of interpreter.js and the lcc
-- [ ] implement test battery to run all tests one after the other, regardless of whether one or more tests fail, and to log the results of each test at the very end (currently the battery of tests stop when a single test fails)
-- [ ] move the docker startup and shutdown to battery of tests
+- [x] implement test battery to run all tests one after the other, regardless of whether one or more tests fail, and to log the results of each test at the very end (currently the battery of tests stop when a single test fails)
+- [x] move the docker startup and shutdown out of the test files and into a separate file that is called by the test files
+- [ ] move the name.nnn file existence check and creation out of the test files and into a separate file that is called by the test files, such that, for the test suite code, the name.nnn file is created only once, rather than once for each test, to cut down on unnecessary repeated file creations and deletions
 
 ## Fix
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
