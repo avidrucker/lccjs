@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
 // interpreter.js
-// Adjusted LCC.js Interpreter to match i1.c and run a1test.e
 
 const fs = require('fs');
+const path = require('path');
+const { generateBSTLSTContent } = require('./genStats.js');
 
 class Interpreter {
   constructor() {
     this.mem = new Uint16Array(65536); // Memory (16-bit unsigned integers)
-    this.r = new Uint16Array(8);        // Registers r0 to r7 (16-bit signed integers)
+    this.r = new Uint16Array(8);       // Registers r0 to r7 (16-bit signed integers)
     this.pc = 0;                       // Program Counter
     this.ir = 0;                       // Instruction Register
     this.n = 0;                        // Negative flag
@@ -19,25 +20,28 @@ class Interpreter {
     this.output = '';                  // Output string
     this.inputBuffer = '';             // Input buffer for SIN (if needed)
     this.options = {};                 // Options from lcc.js
-    this.instructionsExecuted = 0;     // for making BST/LST files
-    this.maxStackSize = 0;             // for making BST/LST files
-    this.spInitial = 0;                // for making BST/LST files
-    this.memMax = 0; // Keep track of the highest memory address used
+    this.instructionsExecuted = 0;     // For program statistics
+    this.maxStackSize = 0;             // For program statistics
+    this.spInitial = 0;                // For tracking stack size
+    this.memMax = 0;                   // Keep track of the highest memory address used
+    this.inputFileName = '';           // Name of the input file
+    this.generateStats = false;        // Whether to generate .lst and .bst files
+    this.userName = 'LASTNAME, FIRSTNAME'; // Update with your name
   }
 
   main(args) {
     args = args || process.argv.slice(2);
 
     if (args.length !== 1) {
-      console.error('Usage: interpreter.js <input filename>');
+      console.error('Usage: node interpreter.js <input filename>');
       process.exit(1);
     }
 
     const inputFileName = args[0];
+    this.inputFileName = inputFileName; // Set inputFileName
 
     // Display program name, input file name, and current time
-    const currentTime = new Date().toString();
-    console.log(`LASTNAME, FIRSTNAME     interpreter.js ${inputFileName}     ${currentTime}`);
+    console.log(`Starting interpretation of ${inputFileName}`);
 
     // Open and read the executable file
     let buffer;
@@ -57,14 +61,167 @@ class Interpreter {
     // Load the executable into memory
     this.loadExecutableBuffer(buffer);
 
+    // Prepare .lst and .bst file names
+    const lstFileName = inputFileName.replace(/\.e$/, '.lst');
+    const bstFileName = inputFileName.replace(/\.e$/, '.bst');
+    console.log(`lst file = ${lstFileName}`);
+    console.log(`bst file = ${bstFileName}`);
+    console.log('====================================================== Output');
+
     // Run the interpreter
     try {
       this.run();
-      console.log(); ////
+      console.log(); // Ensure cursor moves to the next line
     } catch (error) {
       console.error(`Runtime Error: ${error.message}`);
       process.exit(1);
     }
+
+    // Generate .lst and .bst files if required
+    if (this.generateStats) {
+      const lstContent = generateBSTLSTContent({
+        isBST: false,
+        interpreter: this,
+        assembler: null,
+        includeSourceCode: false,
+        userName: this.userName,
+        inputFileName: this.inputFileName,
+      });
+
+      const bstContent = generateBSTLSTContent({
+        isBST: true,
+        interpreter: this,
+        assembler: null,
+        includeSourceCode: false,
+        userName: this.userName,
+        inputFileName: this.inputFileName,
+      });
+
+      // Write the .lst and .bst files
+      fs.writeFileSync(lstFileName, lstContent);
+      fs.writeFileSync(bstFileName, bstContent);
+    }
+  }
+
+  constructBSTLSTFileName(inputFileName, isBST) {
+    const parsedPath = path.parse(inputFileName);
+    // Remove extension and add '.bst'
+    return path.format({ ...parsedPath, base: undefined, ext: isBST ? '.bst' : '.lst' });
+  }
+
+  generateBSTLSTContent(isBST) {
+    let content = '';
+
+    // Compute the maximum label length
+    let maxLabelLength = 0;
+    this.assembler.listing.forEach(entry => {
+      if (entry.label) {
+        maxLabelLength = Math.max(maxLabelLength, entry.label.length);
+      }
+    });
+
+    // If no labels, default indent for code is 4 spaces
+    let codeIndent = maxLabelLength > 0 ? maxLabelLength + 2 : 4;
+
+    // Header
+    content += `LCC.js Assemble/Link/Interpret/Debug Ver 0.1  ${new Date().toLocaleString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}\n`;
+    content += `${this.userName}\n\n`;
+
+    content += 'Header\n';
+    content += 'o\n'
+    
+    if(this.headerLines && this.headerLines.length > 0) {
+      for(let i = 0; i < this.headerLines.length; i++) {
+        content += `${this.headerLines[i]}\n`;
+      }
+    }
+
+    content +='C\n\n';
+
+    content += 'Loc          Code                   Source Code\n';
+
+    if (this.assembler.errorFlag) {
+      // Output errors
+      this.assembler.errors.forEach(error => {
+        content += `${error}\n`;
+      });
+    } else {
+
+      // Output listing
+      this.assembler.listing.forEach(entry => {
+        let locCtr = entry.locCtr;
+
+        const labelStr = entry.label ? entry.label + ':' : '';
+        const mnemonicAndOperands = entry.mnemonic ? entry.mnemonic + ' ' + entry.operands.join(', ') : '';
+        // Prepare the sourceStr
+        const sourceStr = (labelStr + ' ' + mnemonicAndOperands).trim();
+        // console.log("sourceStr:", sourceStr);
+
+        entry.codeWords.forEach((word, index) => {
+          // console.log("index:", index);
+          // console.log("locCtr:", locCtr);
+          // console.log("word: ", word.toString(16));
+
+          const locStr = locCtr.toString(16).padStart(4, '0');
+          const wordStr = isBST ?
+            word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim() :
+            word.toString(16).padStart(4, '0');
+          const codeStr = wordStr.padEnd(23);
+
+          if (index === 0) {
+            // For the first word, include the source code
+            // Prepare the label part, padded to codeIndent
+            let labelPart = '';
+            if (entry.label) {
+              labelPart = entry.label + ':';
+              labelPart = labelPart.padEnd(codeIndent);
+            } else {
+              labelPart = ' '.repeat(codeIndent);
+            }
+
+            const lineStr = `${locStr}  ${codeStr}${labelPart}${mnemonicAndOperands}\n`;
+            content += lineStr;
+          } else {
+            // For subsequent words, no label or source code
+            content += `${locStr}  ${codeStr}\n`;
+          }
+
+          locCtr++; // Increment location counter for each word
+        });
+
+        // Insert a blank line after the 'halt' instruction
+        if (entry.mnemonic && entry.mnemonic.toLowerCase() === 'halt') {
+          content += '\n';
+        }
+      });
+
+    }
+
+    // Output section
+    content += '====================================================== Output\n';
+    content += `${this.interpreter.output}\n`;
+
+    // Program statistics
+    content += '========================================== Program statistics\n';
+
+    // Prepare the statistics
+    const stats = [
+      { label: 'Input file name', value: this.inputFileName },
+      { label: 'Instructions executed', value: `${this.interpreter.instructionsExecuted.toString(16)} (hex)    ${this.interpreter.instructionsExecuted} (dec)` },
+      { label: 'Program size', value: `${this.assembler.programSize.toString(16)} (hex)    ${this.assembler.programSize} (dec)` },
+      { label: 'Max stack size', value: `${this.interpreter.maxStackSize.toString(16)} (hex)    ${this.interpreter.maxStackSize} (dec)` },
+      { label: 'Load point', value: `${this.assembler.loadPoint.toString(16)} (hex)    ${this.assembler.loadPoint} (dec)` }
+    ];
+
+    const maxStatLabelLength = Math.max(...stats.map(s => s.label.length));
+
+    stats.forEach(stat => {
+      const label = stat.label.padEnd(maxStatLabelLength + 4); // Add 4 spaces for padding
+      content += `${label}=   ${stat.value}\n`;
+    });
+
+
+    return content;
   }
 
   // for use in lcc.js
@@ -747,6 +904,7 @@ class Interpreter {
 // Instantiate and run the interpreter if this script is run directly
 if (require.main === module) {
   const interpreter = new Interpreter();
+  interpreter.generateStats = true; // Set to generate .lst and .bst files
   interpreter.main();
 }
 

@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 
 // lcc.js
-// LCC.js Main Program
-// LCC stands for Low Cost Computer
 
 const fs = require('fs');
 const path = require('path');
 const Assembler = require('./assembler');
 const Interpreter = require('./interpreter');
 const nameHandler = require('./name.js');
+const { generateBSTLSTContent } = require('./genStats.js');
 
 class LCC {
   constructor() {
@@ -16,10 +15,9 @@ class LCC {
     this.outputFileName = '';
     this.options = {};
     this.args = [];
-    this.userName = 'LASTNAME, FIRSTNAME'; //// Update with your name
     this.assembler = null;
     this.interpreter = null;
-    this.userName = '';
+    this.userName = 'LASTNAME, FIRSTNAME'; // Update with your name
   }
 
   main(args) {
@@ -53,7 +51,8 @@ class LCC {
       case '.bin':
       case '.e':
         // Execute and output .lst, .bst files
-        this.executeFile();
+        this.outputFileName = this.inputFileName;
+        this.executeFile(false); // includeSourceCode = false
         break;
       case '.o':
         // Linking is not yet implemented
@@ -64,7 +63,7 @@ class LCC {
       default:
         // Assemble and output .e, .lst, .bst files
         this.assembleFile();
-        this.executeFile();
+        this.executeFile(true); // includeSourceCode = true
         break;
     }
   }
@@ -82,8 +81,8 @@ class LCC {
     console.log('   -d:   debug, -m mem display at end, -r: reg display at end');
     console.log('   -f:   full line display, -x: 4 digit hout, -h: help');
     console.log('What lcc.js does depends on the extension in the input file name:');
-    console.log('   .hex: execute and output .e, .lst, .bst files');
-    console.log('   .bin: execute and output .e, .lst, .bst files');
+    console.log('   .hex: execute and output .lst, .bst files');
+    console.log('   .bin: execute and output .lst, .bst files');
     console.log('   .e:   execute and output .lst, .bst files');
     console.log('   .o:   link files and output executable file');
     console.log('   .a or other: assemble and output .e or .o, .lst, .bst files');
@@ -95,8 +94,7 @@ class LCC {
     console.log('   .lst: time-stamped listing in hex and output from run');
     console.log('   .bst: time-stamped listing in binary and output from run');
     console.log('   .a or other: assembler code');
-    console.log('LCC.js Ver 0.1\n');
-    //// console.log('Hit Enter to finish');
+    console.log('LCC.js Ver 6.3\n');
   }
 
   parseArguments(args) {
@@ -156,22 +154,22 @@ class LCC {
 
   assembleFile() {
     const assembler = new Assembler();
-  
+
     // Set input and output file names
     assembler.inputFileName = this.inputFileName;
     assembler.outputFileName = this.outputFileName || this.constructOutputFileName(this.inputFileName);
-  
+
     // Update this.outputFileName to match assembler's output
     this.outputFileName = assembler.outputFileName;
-  
+
     // Store the assembler instance
     this.assembler = assembler;
-  
+
     // Run the assembler's main function
     assembler.main([this.inputFileName]);
   }
 
-  executeFile() {
+  executeFile(includeSourceCode) {
     const interpreter = new Interpreter();
 
     // Set options in the interpreter
@@ -185,147 +183,43 @@ class LCC {
 
     // Run the interpreter
     try {
-      const bstFileName = this.constructBSTLSTFileName(this.inputFileName, true);
-      const lstFileName = this.constructBSTLSTFileName(this.inputFileName, false);
-      console.log(`bst file = ${bstFileName}`);
-      console.log(`lst file = ${lstFileName}`);
-      console.log("====================================================== Output");
-
       interpreter.run();
-
-      process.stdout.write("\n");
-
-      // Generate the BST content
-      const bstContent = this.generateBSTLSTContent(true);
-      const lstContent = this.generateBSTLSTContent(false);
-      // Write the BST & LST files
-      fs.writeFileSync(bstFileName, bstContent);
-      fs.writeFileSync(lstFileName, lstContent);
+      console.log(); // Ensure cursor moves to the next line
     } catch (error) {
       console.error(`Error running ${this.outputFileName}: ${error.message}`);
       process.exit(1);
     }
-  }
 
-  constructBSTLSTFileName(inputFileName, isBST) {
-    const parsedPath = path.parse(inputFileName);
-    // Remove extension and add '.bst'
-    return path.format({ ...parsedPath, base: undefined, ext: isBST ? '.bst' : '.lst' });
-  }
+    // After execution, generate .lst and .bst files
+    const lstFileName = this.outputFileName.replace(/\.e$/, '.lst');
+    const bstFileName = this.outputFileName.replace(/\.e$/, '.bst');
 
-  generateBSTLSTContent(isBST) {
-    let content = '';
+    console.log(`lst file = ${lstFileName}`);
+    console.log(`bst file = ${bstFileName}`);
+    console.log('====================================================== Output');
 
-    // Compute the maximum label length
-    let maxLabelLength = 0;
-    this.assembler.listing.forEach(entry => {
-      if (entry.label) {
-        maxLabelLength = Math.max(maxLabelLength, entry.label.length);
-      }
+    // Generate .lst and .bst files using genStats.js
+    const lstContent = generateBSTLSTContent({
+      isBST: false,
+      interpreter: interpreter,
+      assembler: includeSourceCode ? this.assembler : null,
+      includeSourceCode: includeSourceCode,
+      userName: this.userName,
+      inputFileName: this.inputFileName,
     });
 
-    // If no labels, default indent for code is 4 spaces
-    let codeIndent = maxLabelLength > 0 ? maxLabelLength + 2 : 4;
-
-    // Header
-    content += `LCC.js Assemble/Link/Interpret/Debug Ver 0.1  ${new Date().toLocaleString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}\n`;
-    content += `${this.userName}\n\n`;
-
-    content += 'Header\n';
-    content += 'o\n'
-    
-    if(this.headerLines && this.headerLines.length > 0) {
-      for(let i = 0; i < this.headerLines.length; i++) {
-        content += `${this.headerLines[i]}\n`;
-      }
-    }
-
-    content +='C\n\n';
-
-    content += 'Loc          Code                   Source Code\n';
-
-    if (this.assembler.errorFlag) {
-      // Output errors
-      this.assembler.errors.forEach(error => {
-        content += `${error}\n`;
-      });
-    } else {
-
-      // Output listing
-      this.assembler.listing.forEach(entry => {
-        let locCtr = entry.locCtr;
-
-        const labelStr = entry.label ? entry.label + ':' : '';
-        const mnemonicAndOperands = entry.mnemonic ? entry.mnemonic + ' ' + entry.operands.join(', ') : '';
-        // Prepare the sourceStr
-        const sourceStr = (labelStr + ' ' + mnemonicAndOperands).trim();
-        // console.log("sourceStr:", sourceStr);
-
-        entry.codeWords.forEach((word, index) => {
-          // console.log("index:", index);
-          // console.log("locCtr:", locCtr);
-          // console.log("word: ", word.toString(16));
-
-          const locStr = locCtr.toString(16).padStart(4, '0');
-          const wordStr = isBST ?
-            word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim() :
-            word.toString(16).padStart(4, '0');
-          const codeStr = wordStr.padEnd(23);
-
-          if (index === 0) {
-            // For the first word, include the source code
-            // Prepare the label part, padded to codeIndent
-            let labelPart = '';
-            if (entry.label) {
-              labelPart = entry.label + ':';
-              labelPart = labelPart.padEnd(codeIndent);
-            } else {
-              labelPart = ' '.repeat(codeIndent);
-            }
-
-            const lineStr = `${locStr}  ${codeStr}${labelPart}${mnemonicAndOperands}\n`;
-            content += lineStr;
-          } else {
-            // For subsequent words, no label or source code
-            content += `${locStr}  ${codeStr}\n`;
-          }
-
-          locCtr++; // Increment location counter for each word
-        });
-
-        // Insert a blank line after the 'halt' instruction
-        if (entry.mnemonic && entry.mnemonic.toLowerCase() === 'halt') {
-          content += '\n';
-        }
-      });
-
-    }
-
-    // Output section
-    content += '====================================================== Output\n';
-    content += `${this.interpreter.output}\n`;
-
-    // Program statistics
-    content += '========================================== Program statistics\n';
-
-    // Prepare the statistics
-    const stats = [
-      { label: 'Input file name', value: this.inputFileName },
-      { label: 'Instructions executed', value: `${this.interpreter.instructionsExecuted.toString(16)} (hex)    ${this.interpreter.instructionsExecuted} (dec)` },
-      { label: 'Program size', value: `${this.assembler.programSize.toString(16)} (hex)    ${this.assembler.programSize} (dec)` },
-      { label: 'Max stack size', value: `${this.interpreter.maxStackSize.toString(16)} (hex)    ${this.interpreter.maxStackSize} (dec)` },
-      { label: 'Load point', value: `${this.assembler.loadPoint.toString(16)} (hex)    ${this.assembler.loadPoint} (dec)` }
-    ];
-
-    const maxStatLabelLength = Math.max(...stats.map(s => s.label.length));
-
-    stats.forEach(stat => {
-      const label = stat.label.padEnd(maxStatLabelLength + 4); // Add 4 spaces for padding
-      content += `${label}=   ${stat.value}\n`;
+    const bstContent = generateBSTLSTContent({
+      isBST: true,
+      interpreter: interpreter,
+      assembler: includeSourceCode ? this.assembler : null,
+      includeSourceCode: includeSourceCode,
+      userName: this.userName,
+      inputFileName: this.inputFileName,
     });
 
-
-    return content;
+    // Write the .lst and .bst files
+    fs.writeFileSync(lstFileName, lstContent);
+    fs.writeFileSync(bstFileName, bstContent);
   }
 }
 
