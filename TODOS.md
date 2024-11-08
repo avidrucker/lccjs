@@ -51,6 +51,7 @@
 - [x] interpreter.js output does not yet add an extra newline like lcc.js does. interpreter.js should however print an extra newline to the stdout after the program has finished executing
 - [x] assembler.test.js should delete all extra files created during testing, but currently does not delete all extra files generated locally
 - [x] there appears to be an infinite write loop glitch when running assembler.test.js on demoB.a, ideally there will be a way to cap infinite writes and max memory usage with a graceful failure and notification to the user that the test failed due to (near/potentially)infinite writes - the issue was that demoB.a was being interpretted by lcc, and the terminal process was waiting for intput infinitely
+- [x] fix issue where interpreter.js needs there to be a name.nnn file but is currently running without one - move the logic to check for a name.nnn file from lcc.js to name.js and let interpreter.js call it so that, both interpreter.js when called directly can check for the name.nnn file, and lcc.js, by running interpreter.js as it already does, will automatically also make the same check via interpreter.js
 - [ ] once symbolic debugger is implemented, detection of infinite loops should lead to symbolic debugger being called and the user being notified that an infinite loop was detected without terminating program execution
 - [ ] refactor assembleMOV to simplify and DRY up logic
 
