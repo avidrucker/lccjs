@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { generateBSTLSTContent } = require('./genStats.js');
+const nameHandler = require('./name.js');
 
 class Interpreter {
   constructor() {
@@ -26,7 +27,7 @@ class Interpreter {
     this.memMax = 0;                   // Keep track of the highest memory address used
     this.inputFileName = '';           // Name of the input file
     this.generateStats = false;        // Whether to generate .lst and .bst files
-    this.userName = 'LASTNAME, FIRSTNAME'; // Update with your name
+    // this.userName = 'LASTNAME, FIRSTNAME'; // Update with your name
   }
 
   main(args) {
@@ -40,7 +41,15 @@ class Interpreter {
     const inputFileName = args[0];
     this.inputFileName = inputFileName; // Set inputFileName
 
-    // Display program name, input file name, and current time
+    // Get the userName using nameHandler
+    try {
+      this.userName = nameHandler.createNameFile(this.inputFileName);
+    } catch (error) {
+      console.error('Error handling name file:', error.message);
+      process.exit(1);
+    }
+    
+    // this prints out when called by interpreter.js
     console.log(`Starting interpretation of ${inputFileName}`);
 
     // Open and read the executable file
@@ -262,8 +271,8 @@ class Interpreter {
       console.error(`${fileName} is not a valid LCC executable file`);
       process.exit(1);
     }
-    ////
 
+    // this prints out when called by lcc.js
     console.log(`Starting interpretation of ${fileName}`);
 
     // Load the executable into memory
