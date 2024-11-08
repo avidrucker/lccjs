@@ -17,7 +17,7 @@ class LCC {
     this.args = [];
     this.assembler = null;
     this.interpreter = null;
-    this.userName = 'LASTNAME, FIRSTNAME'; // Update with your name
+    // this.userName = 'LASTNAME, FIRSTNAME'; // Update with your name
   }
 
   main(args) {
@@ -181,6 +181,14 @@ class LCC {
     // Load the executable file
     interpreter.loadExecutableFile(this.outputFileName);
 
+    // After execution, generate .lst and .bst files
+    const lstFileName = this.outputFileName.replace(/\.e$/, '.lst');
+    const bstFileName = this.outputFileName.replace(/\.e$/, '.bst');
+
+    console.log(`lst file = ${lstFileName}`);
+    console.log(`bst file = ${bstFileName}`);
+    console.log('====================================================== Output');
+
     // Run the interpreter
     try {
       interpreter.run();
@@ -189,14 +197,6 @@ class LCC {
       console.error(`Error running ${this.outputFileName}: ${error.message}`);
       process.exit(1);
     }
-
-    // After execution, generate .lst and .bst files
-    const lstFileName = this.outputFileName.replace(/\.e$/, '.lst');
-    const bstFileName = this.outputFileName.replace(/\.e$/, '.bst');
-
-    console.log(`lst file = ${lstFileName}`);
-    console.log(`bst file = ${bstFileName}`);
-    console.log('====================================================== Output');
 
     // Generate .lst and .bst files using genStats.js
     const lstContent = generateBSTLSTContent({
