@@ -204,7 +204,7 @@ class LCC {
       interpreter: interpreter,
       assembler: includeSourceCode ? this.assembler : null,
       includeSourceCode: includeSourceCode,
-      userName: this.userName,
+      userName: interpreter.userName,
       inputFileName: this.inputFileName,
     });
 
@@ -213,7 +213,7 @@ class LCC {
       interpreter: interpreter,
       assembler: includeSourceCode ? this.assembler : null,
       includeSourceCode: includeSourceCode,
-      userName: this.userName,
+      userName: interpreter.userName,
       inputFileName: this.inputFileName,
     });
 
