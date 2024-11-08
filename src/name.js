@@ -1,17 +1,13 @@
 // name.js
 // LCC.js Namer
 
-// This program's code is triggered by LCC.js to run when 
-// a name.nnn file is not detected in the current folder
-// and LCC.js has been executed.
-// Once a name.nnn file exists, then LCC.js can read
-// the name inside directly to use for its .bst and .lst
-// file outputs.
-
-// Upon running LCC.js, if no name.nnn file is found in
-// the target file's current directory, this program asks
-// the user for their name in the format 
-// "LastName, FirstName MiddleInitial"
+// This program's purpose is to check for a name.nnn file.
+// If it exists, it reads the name from the file to use.
+// If name.nnn does not exist, this program prompts the 
+// user for their name, creates the name.nnn file, and
+// saves the name inside of it.
+// This program asks t he user for their name in the 
+// format "LastName, FirstName MiddleInitial"
 
 const fs = require('fs');
 const path = require('path');
@@ -62,13 +58,8 @@ function createNameFile(inputPath) {
   process.stdout.write(prompt);
   const name = readLineFromStdin();
 
-  //// The lcc does not validate that names are properly formatted
-  // Validate name format
-  // const nameParts = name.split(',').map(part => part.trim());
-  // if (nameParts.length !== 2) {
-  //   console.error('Invalid name format. Please use: LastName, FirstName MiddleInitial');
-  //   process.exit(1);
-  // }
+  // Note: The lcc does not validate that names are properly formatted,
+  // but it should make sure that the name is not empty.
 
   // Write to name.nnn file
   fs.writeFileSync(nameFile, name + "\n");
