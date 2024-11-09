@@ -94,7 +94,7 @@ class LCC {
     console.log('   .lst: time-stamped listing in hex and output from run');
     console.log('   .bst: time-stamped listing in binary and output from run');
     console.log('   .a or other: assembler code');
-    console.log('LCC.js Ver 6.3\n');
+    console.log('lcc.js Ver 0.1\n');
   }
 
   parseArguments(args) {
