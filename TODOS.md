@@ -54,6 +54,8 @@
 - [x] fix issue where interpreter.js needs there to be a name.nnn file but is currently running without one - move the logic to check for a name.nnn file from lcc.js to name.js and let interpreter.js call it so that, both interpreter.js when called directly can check for the name.nnn file, and lcc.js, by running interpreter.js as it already does, will automatically also make the same check via interpreter.js
 - [ ] once symbolic debugger is implemented, detection of infinite loops should lead to symbolic debugger being called and the user being notified that an infinite loop was detected without terminating program execution
 - [ ] refactor assembleMOV to simplify and DRY up logic
+- [x] abort lcc.js assembly and execution if name input is not supplied when asked for
+- [x] abort interpreter.js execution if name input is not supplied when asked for
 
 ## Extra Features
 
