@@ -60,6 +60,10 @@ function createNameFile(inputPath) {
 
   // Note: The lcc does not validate that names are properly formatted,
   // but it should make sure that the name is not empty.
+  if(name.trim() === '') {
+    console.error('Name cannot be empty');
+    process.exit(1);
+  }
 
   // Write to name.nnn file
   fs.writeFileSync(nameFile, name + "\n");
