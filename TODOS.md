@@ -29,6 +29,7 @@
 
 ## Test
 
+- [ ] implement assembly of .bin files
 - [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
 - [x] `cmp` and `br` test
 - [x] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
@@ -61,7 +62,12 @@
 
 - [ ] emoji support
 - [ ] RAND support
-- [ ] TIME support
+- [ ] TIME support (seconds & milliseconds)
 - [ ] new flags
   - [ ] infinite loop permission flag
   - [ ] turn off auto-symbolic debugger flag
+- [ ] ability to detect single character press inputs ("KEYDOWN", "KEYUP", etc.) rather than requiring the user to press enter after each input
+- [ ] deassembler (takes a .e file and outputs a .a file)
+- [ ] website that allows users to upload .a files, run & see the output of the program, and download the .e file
+- [ ] ability to include lcc.js extension modules via a comment in the .a file, which makes clear that a given program is an lcc.js+ extension program rather than a standard lcc.js program
+- [ ] ability to get terminal dimensions and adjust the output of the program to fit the terminal window
