@@ -42,8 +42,8 @@
 - [x] move the docker startup and shutdown out of the test files and into a separate file that is called by the test files
 - [ ] move the name.nnn file existence check and creation out of the test files and into a separate file that is called by the test files, such that, for the test suite code, the name.nnn file is created only once, rather than once for each test, to cut down on unnecessary repeated file creations and deletions
 - [ ] implement an initial smokescreen test that simply attempts to run the lcc via the `lcc -h` command, and, if it fails, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.
-- [ ] fix issue where interpreter.test.js runs expecting a .lst file to be created when, in fact, the .lst file is not created by the interpreter.js file, but by the lcc.js file
-  - [ ] change the interpreter.test.js to simply run the files and check for the expected output in the stdout, and to simulate the expected inputs, rather than checking for the existence of a .lst file
+- ~~fix issue where interpreter.test.js runs expecting a .lst file to be created when, in fact, the .lst file is not created by the interpreter.js file, but by the lcc.js file~~ (interpreter.js should create a .lst file after all)
+  - ~~change the interpreter.test.js to simply run the files and check for the expected output in the stdout, and to simulate the expected inputs, rather than checking for the existence of a .lst file~~
   - [ ] migrate the majority of what is currently interpreter.test.js to lcc.test.js, which will test running lcc.js on a given file (supplied as an argument), and will check for the existence of the generated .lst file as well comparing the contents to make sure that they match
 - [ ] create an lccBattery.test.js which will call lcc.js on a list of specified .a files, and will compare the contents of each .lst file to the expected output (created by running the files with the number 1 appended to the end of their file names remotely in a dockerized container), and will log the results of each test at the very end 
 
@@ -71,3 +71,11 @@
 - [ ] website that allows users to upload .a files, run & see the output of the program, and download the .e file
 - [ ] ability to include lcc.js extension modules via a comment in the .a file, which makes clear that a given program is an lcc.js+ extension program rather than a standard lcc.js program
 - [ ] ability to get terminal dimensions and adjust the output of the program to fit the terminal window
+- [ ] ability to make file system operations
+- [ ] ability to parse text files
+- [ ] ability to make fetch/http requests
+- [ ] ability to make socket connections
+- [ ] ability to make database connections
+- [ ] ability to make system calls
+- [ ] `gptin` and `gptout` instructions (sends/recieves program, program state, user input, gpt output via the api for some sort of response)
+- [ ] custom user defined instructions/directives that override the default instructions/directives (`charout` instead of `aout`, numout instead of dout, etc.)
