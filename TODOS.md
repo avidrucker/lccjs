@@ -6,22 +6,37 @@
 - [x] implement blocking input for sin when executing
 - [x] implement sin/sout execution output in bst
 - [x] implement BST creation
-- [ ] implement linker
-- [ ] implement symbolic debugger
+- [ ] implement all case 10 mnemonic commands (MUL/DIV/ROL/etc.)
+- [ ] implement assembly of .bin files
+- [ ] implement assembly of .hex files
+- [ ] implement command line arguments for lcc.js (-d (symbolic debugger mode), -m (memory dump at end), -r (register dump at end), -t (instruction trace on), -f, -x, -o, -h, -l<loadpt>) "As a programmer, I can use command-line options to control the assembler and interpreter's behavior."
+- [ ] implement linker: "As a programmer, I can link multiple object files (.o files) into a single executable, so that I can build larger programs from separate modules."
+  - [ ] implement linker directives: "As a programmer, I can use .global and .extern directives to define and reference global and external symbols, so that I can share symbols between modules."
+    - [ ] .extern
+    - [ ] .global
+    - [ ] .org/.orig
+- [ ] implement offsets
+  - [ ] label offsets
+    - [ ] implement decimal (base 10) offsets
+    - [ ] implement hexadecimal (base 16) offsets
+- [ ] implement usage of * instead of a label to indicate the current memory address
+- [ ] implement catching of division by zero where, when division by zero is detected, attempting to interpret the program will result in an error message being printed to the console ("Floating point exception"), the program will not be executed, and the .lst/.bst files will not be created. note: assembly will still create the .e file.
+- [ ] implement symbolic debugger "As a programmer, I can use the debugger to step through my program, set breakpoints, watchpoints, and inspect memory and registers, so that I can debug my code."
     - [ ] implement debugger commands
+    - [ ] implement bp (breakpoint) instruction
 - [x] implement LST creation
 - [x] implement name.js module
 - [x] infinite loop detection
 - [ ] implement 300 char limit per line & corresponding error in assembler
 - [x] implement more directives like `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
-  - [ ] implement `.start` directive
-  - [ ] implement `.org/.orig` directive
+  - [ ] implement `.start` directive: "As a programmer, I can specify the entry point of my program via the .start directive, so that I can control where my program begins execution."
+  - [ ] implement `.org/.orig` directive: "As a programmer, I can specify load points via the .orig directive, so that I can control where my code is loaded in memory."
 - [x] implement dout/udout/hout/aout in interpreter.js
 - [x] implement din/ain/hin in interpreter.js
 - [ ] implement debugging commands s (stack), m (memory), r (registers), bp (break point)
-  - [ ] stack draw function
+  - [x] stack draw function
   - [x] memory draw function
-  - [o] registers draw function
+  - [x] registers draw function
 - [ ] implement flag setting for lcc.js such as `-d` for debug mode, `-L` for load point, `-r` switch to display registers at program end, `-m` switch to display memory to be displayed at program end, etc. 
 - [ ] piping of an Assembly file's output into a text file
 - [ ] implement `cea` mnemonic
@@ -40,15 +55,17 @@
 - [ ] write script to install ubuntu docker image with lcc to run tests on when lcc does not exist on local machine
   - [ ] create docker image with lcc 63 installed, host it on dockerhub so that it can be pulled down for testing purposes
 - [ ] write docker checks for (1) to see if docker is installed on the current machine and (2) to see if docker is currently running, so the tests fail gracefully and give helpful outputs such as "error: docker is not installed" or "error: docker is not running"
-- [ ] test the stdout output of executing a program given a .a/.e file and specific inputs by comparing the .lst/.bst outputs of interpreter.js and the lcc
+- [ ] test the stdout output of executing a program given a .e/.a file and specific inputs by comparing the .lst/.bst outputs of interpreter.js and the lcc, respectively
+  - [ ] test .lst output of interpreter.js against .lst output of LCC when running on a .e file
+  - [ ] test .lst output of lcc.js against .lst output of LCC when running on a .a file
 - [x] implement test battery to run all tests one after the other, regardless of whether one or more tests fail, and to log the results of each test at the very end (currently the battery of tests stop when a single test fails)
 - [x] move the docker startup and shutdown out of the test files and into a separate file that is called by the test files
 - [ ] move the name.nnn file existence check and creation out of the test files and into a separate file that is called by the test files, such that, for the test suite code, the name.nnn file is created only once, rather than once for each test, to cut down on unnecessary repeated file creations and deletions
-- [ ] implement an initial smokescreen test that simply attempts to run the lcc via the `lcc -h` command, and, if it fails, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.
+- [ ] **implement an initial smokescreen test that simply attempts to run the lcc via the `lcc -h` command, and, if it fails, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.**
 - ~~fix issue where interpreter.test.js runs expecting a .lst file to be created when, in fact, the .lst file is not created by the interpreter.js file, but by the lcc.js file~~ (interpreter.js should create a .lst file after all)
   - ~~change the interpreter.test.js to simply run the files and check for the expected output in the stdout, and to simulate the expected inputs, rather than checking for the existence of a .lst file~~
-  - [ ] migrate the majority of what is currently interpreter.test.js to lcc.test.js, which will test running lcc.js on a given file (supplied as an argument), and will check for the existence of the generated .lst file as well comparing the contents to make sure that they match
-- [ ] create an lccBattery.test.js which will call lcc.js on a list of specified .a files, and will compare the contents of each .lst file to the expected output (created by running the files with the number 1 appended to the end of their file names remotely in a dockerized container), and will log the results of each test at the very end 
+  - [x] migrate the majority of what is currently interpreter.test.js to lcc.test.js, which will test running lcc.js on a given file (supplied as an argument), and will check for the existence of the generated .lst file as well comparing the contents to make sure that they match
+- [x] create an lccBattery.test.js which will call lcc.js on a list of specified .a files, and will compare the contents of each .lst file to the expected output (created by running the files with the number 1 appended to the end of their file names remotely in a dockerized container), and will log the results of each test at the very end 
 
 ## Fix
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
@@ -60,6 +77,10 @@
 - [ ] refactor assembleMOV to simplify and DRY up logic
 - [x] abort lcc.js assembly and execution if name input is not supplied when asked for
 - [x] abort interpreter.js execution if name input is not supplied when asked for
+- [x] fix issue where lcc appeared to be generated inconsistent newlines in .lst files (the issue was how the name.nnn file was being generated, it did indeed need to be terminated with a \n newline character)
+
+## Extended Features
+- [ ] hex viewer to inspect .e files
 
 ## Extra Features
 
