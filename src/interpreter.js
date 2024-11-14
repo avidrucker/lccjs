@@ -23,6 +23,7 @@ class Interpreter {
     this.options = {};                 // Options from lcc.js
     this.instructionsExecuted = 0;     // For program statistics
     this.maxStackSize = 0;             // For program statistics
+    this.loadPoint = 0;                // For program statistics
     this.spInitial = 0;                // For tracking stack size
     this.memMax = 0;                   // Keep track of the highest memory address used
     this.inputFileName = '';           // Name of the input file
