@@ -97,6 +97,10 @@ function generateBSTLSTContent(options) {
       label: 'Max stack size',
       value: `${interpreter.maxStackSize.toString(16)} (hex)     ${interpreter.maxStackSize} (dec)`,
     },
+    {
+      label: 'Load point',
+      value: `${interpreter.loadPoint.toString(16)} (hex)     ${interpreter.loadPoint} (dec)`,
+    }
   ];
 
   const maxStatLabelLength = Math.max(...stats.map((s) => s.label.length));
