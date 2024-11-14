@@ -760,6 +760,32 @@ class Interpreter {
     }
   }
 
+  executeR() {
+    const pcStr = this.pc.toString(16).padStart(4, '0');
+    const irStr = this.ir.toString(16).padStart(4, '0');
+    const nzcvStr = `${this.n}${this.z}${this.c}${this.v}`.padStart(4, '0');
+    let output = `pc = ${pcStr}  ir = ${irStr}  NZCV = ${nzcvStr}\n`;
+    // First line: r0 to r3
+    for (let i = 0; i <= 3; i++) {
+        const regStr = this.r[i].toString(16).padStart(4, '0');
+        output += `r${i} = ${regStr}  `;
+    }
+    output += '\n';
+    // Second line: r4, fp, sp, lr
+    const r4Str = this.r[4].toString(16).padStart(4, '0');
+    const fpStr = this.r[5].toString(16).padStart(4, '0');
+    const spStr = this.r[6].toString(16).padStart(4, '0');
+    const lrStr = this.r[7].toString(16).padStart(4, '0');
+    output += `r4 = ${r4Str}  fp = ${fpStr}  sp = ${spStr}  lr = ${lrStr}  \n`;
+    console.log(output);
+    this.output += output;
+  }
+
+  executeS() {
+    console.log("TODO: implement S instruction");
+    this.error("s instruction not yet implemented");
+  }
+
   executeTRAP() {
     switch (this.trapvec) {
       case 0: // HALT
@@ -875,6 +901,12 @@ class Interpreter {
         break;
       case 11: // m
         this.executeM();
+        break;
+      case 12: // r
+        this.executeR();
+        break;
+      case 13: // s
+        this.executeS();
         break;
       default:
         this.error(`Unknown TRAP vector: ${this.trapvec}`);
