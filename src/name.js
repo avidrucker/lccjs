@@ -66,7 +66,7 @@ function createNameFile(inputPath) {
   }
 
   // Write to name.nnn file
-  fs.writeFileSync(nameFile, name);
+  fs.writeFileSync(nameFile, name + "\n", { encoding: 'utf8' });
   return name;
 }
 

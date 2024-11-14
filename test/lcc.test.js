@@ -47,8 +47,8 @@ function compareLstFiles(file1, file2) {
     content2 = content2.filter(line => !linesToSkipRegex.test(line));
 
     // Remove empty lines
-    content1 = content1.filter(line => line !== '');
-    content2 = content2.filter(line => line !== '');
+    // content1 = content1.filter(line => line !== '');
+    // content2 = content2.filter(line => line !== '');
 
     // Replace multiple spaces with a single space within lines
     content1 = content1.map(line => line.replace(/\s+/g, ' '));
@@ -126,7 +126,7 @@ async function testLCC() {
 
     // Create the name.nnn file with specified contents
     const nameFile = path.join(inputDir, 'name.nnn');
-    fs.writeFileSync(nameFile, 'Billy, Bob J', { encoding: 'utf8' });
+    fs.writeFileSync(nameFile, 'Billy, Bob J\n', { encoding: 'utf8' });
 
     // Run lcc.js on the .a file
     const lcc = new LCC();
