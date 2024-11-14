@@ -13,7 +13,9 @@
 - [x] implement name.js module
 - [x] infinite loop detection
 - [ ] implement 300 char limit per line & corresponding error in assembler
-- [x] implement more directives like `.start`, `.org/.orig`, `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
+- [x] implement more directives like `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
+  - [ ] implement `.start` directive
+  - [ ] implement `.org/.orig` directive
 - [x] implement dout/udout/hout/aout in interpreter.js
 - [x] implement din/ain/hin in interpreter.js
 - [ ] implement debugging commands s (stack), m (memory), r (registers), bp (break point)
