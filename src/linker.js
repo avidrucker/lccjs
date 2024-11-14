@@ -1,6 +1,5 @@
 // linker.js
 // LCC.js Linker
-// Translated from l.c by Avital Drucker
 
 class Linker {
     constructor() {
