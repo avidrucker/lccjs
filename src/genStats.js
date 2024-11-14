@@ -6,7 +6,7 @@ const path = require('path');
 function generateBSTLSTContent(options) {
   const {
     isBST,
-    interpreter,
+    interpreter, // May be undefined
     assembler,
     includeSourceCode,
     userName,
@@ -30,6 +30,12 @@ function generateBSTLSTContent(options) {
 
   content += 'Header\n';
   content += 'o\n';
+
+  // Include 'S' header if start label is present
+  if (assembler.startLabel !== null && assembler.startAddress !== null) {
+    content += `S     ${assembler.startAddress.toString(16).padStart(4, '0')}\n`;
+  }
+
   content += 'C\n\n';
 
   if (includeSourceCode && assembler) {
@@ -48,12 +54,12 @@ function generateBSTLSTContent(options) {
         let lineStr = `${locStr}  ${wordStr.padEnd(10)}`;
 
         if (index === 0) {
-          const labelStr = entry.label ? `${entry.label}: ` : '';
+          const labelStr = entry.label ? `${entry.label}: ` : '     ';
           const mnemonicAndOperands = entry.mnemonic
             ? `${entry.mnemonic} ${entry.operands.join(', ')}`
             : '';
           const sourceStr = `${labelStr}${mnemonicAndOperands}`.trim();
-          lineStr += `  ${sourceStr}`;
+          lineStr += ` ${sourceStr}`;
         }
 
         content += `${lineStr}\n`;
@@ -65,8 +71,8 @@ function generateBSTLSTContent(options) {
     content += 'Loc   Code\n';
 
     // Output code without source code
-    for (let addr = 0; addr <= interpreter.memMax; addr++) {
-      const word = interpreter.mem[addr];
+    for (let addr = 0; addr < assembler.outputBuffer.length; addr++) {
+      const word = assembler.outputBuffer[addr];
       const locStr = addr.toString(16).padStart(4, '0');
       const wordStr = isBST
         ? word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim()
@@ -75,40 +81,65 @@ function generateBSTLSTContent(options) {
     }
   }
 
-  // Output section
-  content += '====================================================== Output\n';
-  content += `${interpreter.output}\n`;
+  // If interpreter is provided, output the Output section
+  if (interpreter) {
+    // Output section
+    content += '====================================================== Output\n';
+    content += `${interpreter.output}\n`;
 
-  // Program statistics
-  content += '========================================== Program statistics\n';
+    // Program statistics
+    content += '========================================== Program statistics\n';
 
-  // Prepare the statistics
-  const stats = [
-    { label: 'Input file name', value: inputFileName },
-    {
-      label: 'Instructions executed',
-      value: `${interpreter.instructionsExecuted.toString(16)} (hex)     ${interpreter.instructionsExecuted} (dec)`,
-    },
-    {
-      label: 'Program size',
-      value: `${interpreter.memMax + 1} (hex)     ${interpreter.memMax + 1} (dec)`,
-    },
-    {
-      label: 'Max stack size',
-      value: `${interpreter.maxStackSize.toString(16)} (hex)     ${interpreter.maxStackSize} (dec)`,
-    },
-    {
-      label: 'Load point',
-      value: `${interpreter.loadPoint.toString(16)} (hex)     ${interpreter.loadPoint} (dec)`,
-    }
-  ];
+    // Prepare the statistics
+    const stats = [
+      { label: 'Input file name', value: inputFileName },
+      {
+        label: 'Instructions executed',
+        value: `${interpreter.instructionsExecuted.toString(16)} (hex)     ${interpreter.instructionsExecuted} (dec)`,
+      },
+      {
+        label: 'Program size',
+        value: `${(interpreter.memMax + 1).toString(16)} (hex)     ${interpreter.memMax + 1} (dec)`,
+      },
+      {
+        label: 'Max stack size',
+        value: `${interpreter.maxStackSize.toString(16)} (hex)     ${interpreter.maxStackSize} (dec)`,
+      },
+      {
+        label: 'Load point',
+        value: `${interpreter.loadPoint.toString(16)} (hex)     ${interpreter.loadPoint} (dec)`,
+      }
+    ];
 
-  const maxStatLabelLength = Math.max(...stats.map((s) => s.label.length));
+    const maxStatLabelLength = Math.max(...stats.map((s) => s.label.length));
 
-  stats.forEach((stat) => {
-    const label = stat.label.padEnd(maxStatLabelLength + 4); // Add 4 spaces for padding
-    content += `${label}=   ${stat.value}\n`;
-  });
+    stats.forEach((stat) => {
+      const label = stat.label.padEnd(maxStatLabelLength + 4); // Add 4 spaces for padding
+      content += `${label}=   ${stat.value}\n`;
+    });
+  } else {
+    // If interpreter is not provided, output limited statistics
+    content += '========================================== Program statistics\n';
+
+    const stats = [
+      { label: 'Input file name', value: inputFileName },
+      {
+        label: 'Program size',
+        value: `${(assembler.programSize).toString(16)} (hex)     ${assembler.programSize} (dec)`,
+      },
+      {
+        label: 'Load point',
+        value: `${(assembler.loadPoint).toString(16)} (hex)     ${assembler.loadPoint} (dec)`,
+      }
+    ];
+
+    const maxStatLabelLength = Math.max(...stats.map((s) => s.label.length));
+
+    stats.forEach((stat) => {
+      const label = stat.label.padEnd(maxStatLabelLength + 4); // Add 4 spaces for padding
+      content += `${label}=   ${stat.value}\n`;
+    });
+  }
 
   return content;
 }
