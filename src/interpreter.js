@@ -7,6 +7,8 @@ const path = require('path');
 const { generateBSTLSTContent } = require('./genStats.js');
 const nameHandler = require('./name.js');
 
+const MAX_MEMORY = 65536; // 2^16
+
 class Interpreter {
   constructor() {
     this.mem = new Uint16Array(65536); // Memory (16-bit unsigned integers)
@@ -442,7 +444,7 @@ class Interpreter {
 
     // Track max stack size
     let sp = this.r[6];
-    let stackSize = this.spInitial - sp;
+    let stackSize = sp === 0 ? 0 : MAX_MEMORY - sp;
     if (stackSize > this.maxStackSize) {
       this.maxStackSize = stackSize;
     }
@@ -782,9 +784,33 @@ class Interpreter {
   }
 
   executeS() {
-    console.log("TODO: implement S instruction");
-    this.error("s instruction not yet implemented");
+    let sp = this.r[6];
+    let fp = this.r[5];
+  
+    if (sp === this.spInitial) {
+      console.log("Stack empty");
+      this.output += "Stack empty";
+      return;
+    } else {
+      console.log("Stack:");
+      this.output += "Stack:\n";
+  
+      for (let addr = sp; addr < MAX_MEMORY; addr++) {
+        let value = this.mem[addr];
+        let addrStr = addr.toString(16).padStart(4, '0');
+        let valueStr = value.toString(16).padStart(4, '0');
+        let line = `${addrStr}: ${valueStr}`;
+        if (addr === fp) {
+          line += ' <--- fp';
+        }
+        console.log(line);
+        this.output += line + '\n';
+      }
+      // Add a newline at the end to match the sample output
+      this.output += '\n';
+    }
   }
+  
 
   executeTRAP() {
     switch (this.trapvec) {
