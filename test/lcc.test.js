@@ -124,9 +124,10 @@ async function testLCC() {
     // Redirect console.log to capture outputs
     const originalConsoleLog = console.log;
     let lccOutput = '';
-    console.log = function (message) {
+    console.log = function (...args) {
+      const message = args.join(' ');
       lccOutput += message + '\n';
-      originalConsoleLog(message);
+      originalConsoleLog.apply(console, args);
     };
 
     originalConsoleLog('Running lcc.js...');
