@@ -31,6 +31,13 @@ class Assembler {
     this.globalLabels = new Set(); // Set of global labels to be exported
     this.externLabels = new Set(); // Set of external labels to be imported
     this.externalReferences = []; // Array to store external references
+    this.adjustmentEntries = []; // Array to store adjustment entries
+  }
+
+  handleAdjustmentEntry(address) {
+    if (!this.adjustmentEntries.includes(address)) {
+      this.adjustmentEntries.push(address);
+    }
   }
 
   main(args) {
@@ -176,44 +183,75 @@ class Assembler {
     // Write the initial header 'o' to the output file
     fs.writeSync(this.outFile, 'o');
   
-    // Only write 'S' and start address if a .start directive was found
+    // Collect all header entries
+    let headerEntries = [];
+  
+    // Add 'S' entry if present
     if (this.startLabel !== null && this.startAddress !== null) {
-      //// console.log(`Start label: ${this.startLabel}, Start address: ${this.startAddress}`);
-      // Create a buffer for 'S' and the two-byte start address
-      const startAddrBuffer = Buffer.alloc(3);
-      startAddrBuffer.write('S', 0, 'ascii');        // write S    
-      startAddrBuffer.writeUInt16LE(this.startAddress, 1);    // write address in little endian 
-      fs.writeSync(this.outFile, startAddrBuffer);
+      headerEntries.push({ type: 'S', address: this.startAddress });
     }
-
-    // If object module, write header entries
-    if (this.isObjectModule) {
-      // Write global labels as 'G' entries
-      for (let label of this.globalLabels) {
-        const address = this.symbolTable[label];
-        const buffer = Buffer.alloc(3 + label.length + 1); // 'G', 2 bytes address, label, null terminator
-        buffer.write('G', 0, 'ascii');
-        buffer.writeUInt16LE(address, 1);
-        buffer.write(label, 3, 'ascii');
-        buffer.writeUInt8(0, 3 + label.length); // Null terminator
-        fs.writeSync(this.outFile, buffer);
+  
+    // Collect 'G' entries
+    for (let label of this.globalLabels) {
+      const address = this.symbolTable[label];
+      headerEntries.push({ type: 'G', address: address, label: label });
+    }
+  
+    // Collect external references ('E', 'e', 'V')
+    for (let ref of this.externalReferences) {
+      headerEntries.push({ type: ref.type, address: ref.address, label: ref.label });
+    }
+  
+    // Collect 'A' entries
+    for (let address of this.adjustmentEntries) {
+      headerEntries.push({ type: 'A', address: address });
+    }
+  
+    // Now sort the header entries by address
+    headerEntries.sort((a, b) => a.address - b.address);
+  
+    // Write the header entries
+    for (let entry of headerEntries) {
+      switch (entry.type) {
+        case 'S': {
+          const buffer = Buffer.alloc(3);
+          buffer.write('S', 0, 'ascii');
+          buffer.writeUInt16LE(entry.address, 1);
+          fs.writeSync(this.outFile, buffer);
+          break;
+        }
+        case 'G': {
+          const buffer = Buffer.alloc(3 + entry.label.length + 1);
+          buffer.write('G', 0, 'ascii');
+          buffer.writeUInt16LE(entry.address, 1);
+          buffer.write(entry.label, 3, 'ascii');
+          buffer.writeUInt8(0, 3 + entry.label.length);
+          fs.writeSync(this.outFile, buffer);
+          break;
+        }
+        case 'E':
+        case 'e':
+        case 'V': {
+          const buffer = Buffer.alloc(3 + entry.label.length + 1);
+          buffer.write(entry.type, 0, 'ascii');
+          buffer.writeUInt16LE(entry.address, 1);
+          buffer.write(entry.label, 3, 'ascii');
+          buffer.writeUInt8(0, 3 + entry.label.length);
+          fs.writeSync(this.outFile, buffer);
+          break;
+        }
+        case 'A': {
+          const buffer = Buffer.alloc(3);
+          buffer.write('A', 0, 'ascii');
+          buffer.writeUInt16LE(entry.address, 1);
+          fs.writeSync(this.outFile, buffer);
+          break;
+        }
+        default:
+          // Should not reach here
+          this.error("invalid header entry error");
+          break;
       }
-
-      // Write external labels as 'E', 'e', or 'V' entries
-      for (let ref of this.externalReferences) {
-        const label = ref.label;
-        const address = ref.address;
-        const entryType = ref.type; // 'E', 'e', or 'V'
-        const buffer = Buffer.alloc(3 + label.length + 1);
-        buffer.write(entryType, 0, 'ascii');
-        buffer.writeUInt16LE(address, 1);
-        buffer.write(label, 3, 'ascii');
-        buffer.writeUInt8(0, 3 + label.length); // Null terminator
-        fs.writeSync(this.outFile, buffer);
-      }
-
-      // Write 'A' entries for local labels (if needed)
-      // For simplicity, we'll assume no 'A' entries at this point
     }
   
     // Write the code start marker 'C'
@@ -228,7 +266,7 @@ class Assembler {
   
     // Close the output file
     fs.closeSync(this.outFile);
-  }
+  }  
 
   constructOutputFileName(inputFileName, extension) {
     const parsedPath = path.parse(inputFileName);
@@ -431,10 +469,14 @@ class Assembler {
         }
         this.isObjectModule = true; // Set flag to produce .o file
         let globalLabel = operands[0];
-        // Add global label to symbol table for future reference
-        this.symbolTable[globalLabel] = this.locCtr;
-        // Add to global labels set
-        this.globalLabels.add(globalLabel);
+      
+        if (this.pass === 1) {
+          // Record the address of the global label
+          if (!this.symbolTable.hasOwnProperty(globalLabel)) {
+            this.symbolTable[globalLabel] = this.locCtr;
+          }
+          this.globalLabels.add(globalLabel);
+        }
         break;
       case '.extern':
         if (operands.length !== 1) {
@@ -473,6 +515,13 @@ class Assembler {
         if (this.pass === 2) {
           let value = this.evaluateOperand(operands[0], 'V'); // Pass 'V' as usageType
           if (value === null) return;
+      
+          // Check if operand is a local symbol
+          if (this.symbolTable.hasOwnProperty(operands[0])) {
+            // Record that this word needs an 'A' entry
+            this.handleAdjustmentEntry(this.locCtr);
+          }
+      
           if (value > 65535 || value < -32768) {
             this.error('Data does not fit in 16 bits');
             return;
@@ -835,10 +884,19 @@ class Assembler {
     if (dr === null) return null;
     let address = this.getSymbolAddress(label, 'e'); // Pass 'e' as usageType
     if (address === null) return null;
-    let pcoffset9 = address - this.locCtr - 1;
-    if (pcoffset9 < -256 || pcoffset9 > 255) {
-      this.error('pcoffset9 out of range for ld');
-      return null;
+    
+    let isExternal = this.externLabels.has(label);
+    let pcoffset9;
+  
+    if (isExternal) {
+      pcoffset9 = 0; // Placeholder offset
+      // Do NOT add an 'A' entry here
+    } else {
+      pcoffset9 = address - this.locCtr - 1;
+      if (pcoffset9 < -256 || pcoffset9 > 255) {
+        this.error('pcoffset9 out of range for ld');
+        return null;
+      }
     }
     let macword = 0x2000 | (dr << 9) | (pcoffset9 & 0x1FF);
     return macword;
@@ -890,10 +948,19 @@ class Assembler {
     let label = operands[0];
     let address = this.getSymbolAddress(label, 'E'); // Pass 'E' as usageType
     if (address === null) return null;
-    let pcoffset11 = address - this.locCtr - 1;
-    if (pcoffset11 < -1024 || pcoffset11 > 1023) {
-      this.error('pcoffset11 out of range for bl');
-      return null;
+    
+    let isExternal = this.externLabels.has(label);
+    let pcoffset11;
+  
+    if (isExternal) {
+      pcoffset11 = 0; // Placeholder offset
+      // Do NOT add an 'A' entry here
+    } else {
+      pcoffset11 = address - this.locCtr - 1;
+      if (pcoffset11 < -1024 || pcoffset11 > 1023) {
+        this.error('pcoffset11 out of range for bl');
+        return null;
+      }
     }
     let macword = 0x4800 | (pcoffset11 & 0x07FF);
     return macword;
