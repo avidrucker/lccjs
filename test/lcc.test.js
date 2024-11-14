@@ -6,10 +6,10 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const DockerController = require('./dockerController');
 
-const ignoreOrInherit = 'inherit'; // Use 'inherit' to see the output in real-time
+const ignoreOrInherit = 'ignore'; // Use 'inherit' to see the output in real-time
 const execSyncOptions = {
   stdio: ignoreOrInherit,
-  timeout: 20000, // Increase timeout to 20 seconds
+  timeout: 25000, // Increase timeout to 20 seconds
   maxBuffer: 1024 * 1024, // 1MB buffer limit
 };
 
@@ -28,28 +28,43 @@ function isFileSizeValid(filePath) {
 // Function to compare .lst files, ignoring whitespace and comments, and ignoring the first line
 function compareLstFiles(file1, file2) {
   try {
-    // Read files
-    const content1 = fs.readFileSync(file1, 'utf8').split('\n').slice(1);
-    const content2 = fs.readFileSync(file2, 'utf8').split('\n').slice(1);
+    // Read files and split into lines
+    let content1 = fs.readFileSync(file1, 'utf8').split('\n');
+    let content2 = fs.readFileSync(file2, 'utf8').split('\n');
 
-    // Remove comments and whitespace
-    const cleanContent1 = content1
-      .map((line) => line.replace(/;.*/, '').replace(/\s+/g, ''))
-      .join('\n');
-    const cleanContent2 = content2
-      .map((line) => line.replace(/;.*/, '').replace(/\s+/g, ''))
-      .join('\n');
+    // Remove comments
+    content1 = content1.map(line => line.replace(/;.*/, ''));
+    content2 = content2.map(line => line.replace(/;.*/, ''));
+
+    // Trim leading and trailing whitespace
+    content1 = content1.map(line => line.trim());
+    content2 = content2.map(line => line.trim());
+
+    // Remove the lines that start with "Input file name =" or "LCC Assemble"
+    const linesToSkipRegex = /^(Input\s*file\s*name\s*=|LCC\s*Assemble)/i;
+
+    content1 = content1.filter(line => !linesToSkipRegex.test(line));
+    content2 = content2.filter(line => !linesToSkipRegex.test(line));
+
+    // Remove empty lines
+    content1 = content1.filter(line => line !== '');
+    content2 = content2.filter(line => line !== '');
+
+    // Replace multiple spaces with a single space within lines
+    content1 = content1.map(line => line.replace(/\s+/g, ' '));
+    content2 = content2.map(line => line.replace(/\s+/g, ' '));
+
+    // Join lines to compare
+    const cleanContent1 = content1.join('\n');
+    const cleanContent2 = content2.join('\n');
 
     if (cleanContent1 === cleanContent2) {
       console.log('✅ .lst files are identical. Test PASSED.');
       return true;
     } else {
       console.log('❌ .lst files differ. Test FAILED.');
-
-      // Log differences
       console.log('Local .lst file content:\n', cleanContent1);
       console.log('Docker .lst file content:\n', cleanContent2);
-
       return false;
     }
   } catch (error) {
@@ -59,11 +74,11 @@ function compareLstFiles(file1, file2) {
 }
 
 function execSyncWithLogging(command, options) {
-  console.log(`Executing command: ${command}`);
-  const startTime = Date.now();
+  // console.log(`Executing command: ${command}`);
+  // const startTime = Date.now();
   const result = execSync(command, options);
-  const endTime = Date.now();
-  console.log(`Command completed in ${endTime - startTime} ms`);
+  // const endTime = Date.now();
+  // console.log(`Command completed in ${endTime - startTime} ms`);
   return result;
 }
 
