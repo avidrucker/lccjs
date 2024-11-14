@@ -9,3 +9,7 @@ ex0306.a
 demos/*1.a
 demos/ptest.a
 demos/ptest.o
+demos/m1.a
+demos/m2.a
+demos/startup.a
+
