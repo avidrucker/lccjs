@@ -109,6 +109,10 @@ async function testLCC() {
       console.log(`Docker container ${containerName} is already running.`);
     }
 
+    // Create the name.nnn file with specified contents
+    const nameFile = path.join(inputDir, 'name.nnn');
+    fs.writeFileSync(nameFile, 'Billy, Bob J', { encoding: 'utf8' });
+
     // Run lcc.js on the .a file
     const lcc = new LCC();
 
@@ -140,10 +144,6 @@ async function testLCC() {
 
     // Copy the .a file to Docker container, renaming it appropriately
     fs.copyFileSync(inputFile, lccInputFile);
-
-    // Create the name.nnn file with specified contents
-    const nameFile = path.join(inputDir, 'name.nnn');
-    fs.writeFileSync(nameFile, 'Billy, Bob J');
 
     // Copy files to Docker container
     execSyncWithLogging(`docker cp ${lccInputFile} ${containerName}:/home/`, execSyncOptions);
