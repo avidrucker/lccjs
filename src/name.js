@@ -66,7 +66,7 @@ function createNameFile(inputPath) {
   }
 
   // Write to name.nnn file
-  fs.writeFileSync(nameFile, name + "\n");
+  fs.writeFileSync(nameFile, name);
   return name;
 }
 
