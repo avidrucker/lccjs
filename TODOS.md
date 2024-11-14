@@ -26,6 +26,7 @@
 - [x] implement `cmp` mnemonic
 - [ ] include comments in BST/LST files
 - [ ] include all headers (S, etc.) in BST/LST files
+- [ ] implement loadPoint in interpreter.js to allow for loading of a program at a specific memory address via the S header in the .e file
 
 ## Test
 
