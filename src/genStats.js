@@ -16,7 +16,7 @@ function generateBSTLSTContent(options) {
   let content = '';
 
   // Header
-  content += `LCC Assemble/Link/Interpret/Debug Ver 6.3  ${new Date().toLocaleString('en-US', {
+  content += `LCC Assemble/Link/Interpret/Debug Ver 0.1  ${new Date().toLocaleString('en-US', {
     weekday: 'short',
     year: 'numeric',
     month: 'short',
