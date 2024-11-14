@@ -45,9 +45,13 @@
 - [ ] include all headers (S, etc.) in BST/LST files
 - [ ] implement loadPoint in interpreter.js to allow for loading of a program at a specific memory address via the S header in the .e file
 
+
 ## Test
 
-- [ ] implement assembly of .bin files
+- [ ] test assembly of .bin files
+- [ ] test detection of division by zero
+- [ ] test creation of .o files from multiple passed .a files
+- [ ] test creation of .e file from multiple passed .o files
 - [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
 - [x] `cmp` and `br` test
 - [x] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
