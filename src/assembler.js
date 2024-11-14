@@ -25,6 +25,9 @@ class Assembler {
     this.programSize = 0;
     this.startLabel = null;     // Label specified in .start directive
     this.startAddress = null;   // Resolved address of the start label
+    this.isObjectModule = false; // Flag to indicate if the code is to be made into a .o object file
+    this.globalLabels = new Set(); // Set of global labels to be exported
+    this.externLabels = new Set(); // Set of external labels to be imported
   }
 
   main(args) {
@@ -49,7 +52,7 @@ class Assembler {
     }
 
     // Construct the output file name by replacing extension with '.e'
-    this.outputFileName = this.constructOutputFileName(this.inputFileName);
+    this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
 
     // Perform Pass 1
     console.log('Starting assembly pass 1');
@@ -74,6 +77,12 @@ class Assembler {
     this.locCtr = 0;
     this.lineNum = 0;
     this.performPass();
+
+    // After Pass 2
+    if (this.isObjectModule) {
+      // Change output extension to .o
+      this.outputFileName = this.constructOutputFileName(this.inputFileName, '.o');
+    }
 
     if (this.errorFlag) {
       // console.error('Errors encountered during Pass 2.');
@@ -115,12 +124,42 @@ class Assembler {
   
     // Only write 'S' and start address if a .start directive was found
     if (this.startLabel !== null && this.startAddress !== null) {
-      console.log(`Start label: ${this.startLabel}, Start address: ${this.startAddress}`);
+      //// console.log(`Start label: ${this.startLabel}, Start address: ${this.startAddress}`);
       // Create a buffer for 'S' and the two-byte start address
       const startAddrBuffer = Buffer.alloc(3);
       startAddrBuffer.write('S', 0, 'ascii');        // write S    
       startAddrBuffer.writeUInt16LE(this.startAddress, 1);    // write address in little endian 
       fs.writeSync(this.outFile, startAddrBuffer);
+    }
+
+    // If object module, write header entries
+    if (this.isObjectModule) {
+      // Write global labels as 'G' entries
+      for (let label of this.globalLabels) {
+        const address = this.symbolTable[label];
+        const buffer = Buffer.alloc(3 + label.length + 1); // 'G', 2 bytes address, label, null terminator
+        buffer.write('G', 0, 'ascii');
+        buffer.writeUInt16LE(address, 1);
+        buffer.write(label, 3, 'ascii');
+        buffer.writeUInt8(0, 3 + label.length); // Null terminator
+        fs.writeSync(this.outFile, buffer);
+      }
+
+      // Write external labels as 'E' entries
+      for (let label of this.externLabels) {
+        // For simplicity, we'll treat all external references as 'E' entries (11-bit addresses)
+        // In practice, you may need to determine whether to use 'E', 'e', or 'V' based on usage
+        const address = this.externalReferences[label] || 0; // Placeholder address
+        const buffer = Buffer.alloc(3 + label.length + 1); // 'E', 2 bytes address, label, null terminator
+        buffer.write('E', 0, 'ascii');
+        buffer.writeUInt16LE(address, 1);
+        buffer.write(label, 3, 'ascii');
+        buffer.writeUInt8(0, 3 + label.length); // Null terminator
+        fs.writeSync(this.outFile, buffer);
+      }
+
+      // Write 'A' entries for local labels (if needed)
+      // For simplicity, we'll assume no 'A' entries at this point
     }
   
     // Write the code start marker 'C'
@@ -136,12 +175,11 @@ class Assembler {
     // Close the output file
     fs.closeSync(this.outFile);
   }
-  
 
-  constructOutputFileName(inputFileName) {
+  constructOutputFileName(inputFileName, extension) {
     const parsedPath = path.parse(inputFileName);
-    // Remove extension and add '.e'
-    return path.format({ ...parsedPath, base: undefined, ext: '.e' });
+    // Remove extension and add the specified extension
+    return path.format({ ...parsedPath, base: undefined, ext: extension });
   }
 
   performPass() {
@@ -331,6 +369,27 @@ class Assembler {
         }
         this.startLabel = operands[0];
         // Note: startAddress will be resolved after Pass 2 when all symbols are known
+        break;
+      case '.global':
+        if (operands.length !== 1) {
+          this.error(`Invalid operand count for ${mnemonic}`);
+          return;
+        }
+        this.isObjectModule = true; // Set flag to produce .o file
+        let globalLabel = operands[0];
+        // Add global label to symbol table for future reference
+        this.symbolTable[globalLabel] = this.locCtr;
+        // Add to global labels set
+        this.globalLabels.add(globalLabel);
+        break;
+      case '.extern':
+        if (operands.length !== 1) {
+          this.error(`Invalid operand count for ${mnemonic}`);
+          return;
+        }
+        this.isObjectModule = true; // Set flag to produce .o file
+        let externLabel = operands[0];
+        this.externLabels.add(externLabel);
         break;
       case '.blkw':
       case '.space':
