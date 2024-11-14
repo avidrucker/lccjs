@@ -5,6 +5,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const { generateBSTLSTContent } = require('./genStats.js');
+const nameHandler = require('./name.js');
 
 class Assembler {
   constructor() {
@@ -28,6 +30,7 @@ class Assembler {
     this.isObjectModule = false; // Flag to indicate if the code is to be made into a .o object file
     this.globalLabels = new Set(); // Set of global labels to be exported
     this.externLabels = new Set(); // Set of external labels to be imported
+    this.externalReferences = []; // Array to store external references
   }
 
   main(args) {
@@ -86,8 +89,10 @@ class Assembler {
 
     if (this.errorFlag) {
       // console.error('Errors encountered during Pass 2.');
-      // this.errors.forEach(error => console.error(error));
-      fs.closeSync(this.outFile);
+      // Close the output file only if it's open
+      if (this.outFile !== null) {
+        fs.closeSync(this.outFile);
+      }
       process.exit(1);
     }
 
@@ -108,6 +113,55 @@ class Assembler {
     // fs.closeSync(this.outFile);
     // **Write the output file after Pass 2**
     this.writeOutputFile();
+
+    // After writing the output file, handle additional outputs
+    if (this.isObjectModule) {
+
+      //// TODO: makes sure there is a name.nnn file in the same
+      ////       directory, if not, generate one
+
+      // Get the userName using nameHandler
+      try {
+        this.userName = nameHandler.createNameFile(this.inputFileName);
+      } catch (error) {
+        console.error('Error handling name file:', error.message);
+        process.exit(1);
+      }
+
+      console.log(`Output file ${this.outputFileName} needs linking`);
+    
+      // Generate .lst and .bst files
+      const lstFileName = this.constructOutputFileName(this.inputFileName, '.lst');
+      const bstFileName = this.constructOutputFileName(this.inputFileName, '.bst');
+
+      // Generate content for .lst file
+      const lstContent = generateBSTLSTContent({
+        isBST: false,
+        assembler: this,
+        includeSourceCode: true,
+        userName: this.userName, 
+        inputFileName: this.inputFileName,
+      });
+
+      // Generate content for .bst file
+      const bstContent = generateBSTLSTContent({
+        isBST: true,
+        assembler: this,
+        includeSourceCode: true,
+        userName: this.userName, 
+        inputFileName: this.inputFileName,
+      });
+
+      // Write the .lst file
+      fs.writeFileSync(lstFileName, lstContent, 'utf-8');
+
+      // Write the .bst file
+      fs.writeFileSync(bstFileName, bstContent, 'utf-8');
+
+      console.log(`lst file = ${lstFileName}`);
+      console.log(`bst file = ${bstFileName}`);
+}
+
   }
 
   writeOutputFile() {
@@ -145,13 +199,13 @@ class Assembler {
         fs.writeSync(this.outFile, buffer);
       }
 
-      // Write external labels as 'E' entries
-      for (let label of this.externLabels) {
-        // For simplicity, we'll treat all external references as 'E' entries (11-bit addresses)
-        // In practice, you may need to determine whether to use 'E', 'e', or 'V' based on usage
-        const address = this.externalReferences[label] || 0; // Placeholder address
-        const buffer = Buffer.alloc(3 + label.length + 1); // 'E', 2 bytes address, label, null terminator
-        buffer.write('E', 0, 'ascii');
+      // Write external labels as 'E', 'e', or 'V' entries
+      for (let ref of this.externalReferences) {
+        const label = ref.label;
+        const address = ref.address;
+        const entryType = ref.type; // 'E', 'e', or 'V'
+        const buffer = Buffer.alloc(3 + label.length + 1);
+        buffer.write(entryType, 0, 'ascii');
         buffer.writeUInt16LE(address, 1);
         buffer.write(label, 3, 'ascii');
         buffer.writeUInt8(0, 3 + label.length); // Null terminator
@@ -417,7 +471,7 @@ class Assembler {
           return;
         }
         if (this.pass === 2) {
-          let value = this.evaluateOperand(operands[0]);
+          let value = this.evaluateOperand(operands[0], 'V'); // Pass 'V' as usageType
           if (value === null) return;
           if (value > 65535 || value < -32768) {
             this.error('Data does not fit in 16 bits');
@@ -779,7 +833,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let label = operands[1];
     if (dr === null) return null;
-    let address = this.getSymbolAddress(label);
+    let address = this.getSymbolAddress(label, 'e'); // Pass 'e' as usageType
     if (address === null) return null;
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -788,7 +842,7 @@ class Assembler {
     }
     let macword = 0x2000 | (dr << 9) | (pcoffset9 & 0x1FF);
     return macword;
-  }
+  }  
 
   assembleST(operands) {
     if (operands.length !== 2) {
@@ -833,7 +887,8 @@ class Assembler {
       this.error('Invalid operand count for bl');
       return null;
     }
-    let address = this.getSymbolAddress(operands[0]);
+    let label = operands[0];
+    let address = this.getSymbolAddress(label, 'E'); // Pass 'E' as usageType
     if (address === null) return null;
     let pcoffset11 = address - this.locCtr - 1;
     if (pcoffset11 < -1024 || pcoffset11 > 1023) {
@@ -842,7 +897,7 @@ class Assembler {
     }
     let macword = 0x4800 | (pcoffset11 & 0x07FF);
     return macword;
-  }
+  }  
 
   assembleBLR(operands) {
     if (operands.length < 1 || operands.length > 2) {
@@ -1066,26 +1121,47 @@ class Assembler {
     return value;
   }
 
-  getSymbolAddress(label) {
+  handleExternalReference(label, usageType) {
+    // Check if we've already created an entry for this label and usage type
+    if (!this.externalReferences.some(ref => ref.label === label && ref.type === usageType)) {
+      this.externalReferences.push({
+        label: label,
+        type: usageType,
+        address: this.locCtr // Store the current location counter
+      });
+    }
+  }  
+
+  getSymbolAddress(label, usageType) {
     if (this.symbolTable.hasOwnProperty(label)) {
       return this.symbolTable[label];
+    } else if (this.externLabels.has(label)) {
+      // External symbol: generate appropriate header entry
+      this.handleExternalReference(label, usageType);
+      // Return placeholder address (0) for now
+      return 0;
     } else {
       this.error(`Undefined symbol: ${label}`);
       return null;
     }
-  }
+  }  
 
-  evaluateOperand(operand) {
+  evaluateOperand(operand, usageType) {
     let value = this.parseNumber(operand);
     if (!isNaN(value)) {
       return value;
     } else if (this.symbolTable.hasOwnProperty(operand)) {
       return this.symbolTable[operand];
+    } else if (this.externLabels.has(operand)) {
+      // External operand: generate appropriate header entry
+      this.handleExternalReference(operand, usageType);
+      // Return placeholder address (0) for now
+      return 0;
     } else {
       this.error(`Undefined operand: ${operand}`);
       return null;
     }
-  }
+  }  
 
   evaluateImmediate(valueStr, min, max) {
     let value = this.parseNumber(valueStr);
