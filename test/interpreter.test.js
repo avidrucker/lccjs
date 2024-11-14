@@ -9,7 +9,7 @@ const DockerController = require('./dockerController');
 const ignoreOrInherit = 'inherit'; // Use 'inherit' to see the output in real-time
 const execSyncOptions = {
   stdio: ignoreOrInherit,
-  timeout: 20000, // Increase timeout to 20 seconds
+  timeout: 25000, // Increase timeout to 25 seconds
   maxBuffer: 1024 * 1024, // 1MB buffer limit
 };
 
