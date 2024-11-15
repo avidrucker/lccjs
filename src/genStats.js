@@ -1,14 +1,10 @@
 // genStats.js
 
-const fs = require('fs');
-const path = require('path');
-
 function generateBSTLSTContent(options) {
   const {
     isBST,
     interpreter, // May be undefined
-    assembler,
-    includeSourceCode,
+    assembler, // May be undefined
     userName,
     inputFileName,
   } = options;
@@ -16,7 +12,7 @@ function generateBSTLSTContent(options) {
   let content = '';
 
   // Header
-  content += `LCC Assemble/Link/Interpret/Debug Ver 0.1  ${new Date().toLocaleString('en-US', {
+  content += `LCC.js Assemble/Link/Interpret/Debug Ver 0.1  ${new Date().toLocaleString('en-US', {
     weekday: 'short',
     year: 'numeric',
     month: 'short',
@@ -31,17 +27,24 @@ function generateBSTLSTContent(options) {
   content += 'Header\n';
   content += 'o\n';
 
-  // Include 'S' header if start label is present
-  if (assembler.startLabel !== null && assembler.startAddress !== null) {
-    content += `S     ${assembler.startAddress.toString(16).padStart(4, '0')}\n`;
+  // Only if headerLines exist
+  if (assembler && assembler.headerLines && assembler.headerLines.length > 0) {
+    for (let i = 0; i < assembler.headerLines.length; i++) {
+      content += `${assembler.headerLines[i]}\n`;
+    }
+  } else if (interpreter && interpreter.headerLines && interpreter.headerLines.length > 0) {
+    for (let i = 0; i < interpreter.headerLines.length; i++) {
+      content += `${interpreter.headerLines[i]}\n`;
+    }
   }
 
   content += 'C\n\n';
 
-  if (includeSourceCode && assembler) {
+  // Output code
+  if (assembler && assembler.listing) {
     content += 'Loc   Code           Source Code\n';
 
-    // Output listing with source code
+    // Output code with source code from assembler
     assembler.listing.forEach((entry) => {
       let locCtr = entry.locCtr;
 
@@ -54,7 +57,7 @@ function generateBSTLSTContent(options) {
         let lineStr = `${locStr}  ${wordStr.padEnd(10)}`;
 
         if (index === 0) {
-          const labelStr = entry.label ? `${entry.label}: ` : '     ';
+          const labelStr = entry.label ? `${entry.label}: ` : '';
           const mnemonicAndOperands = entry.mnemonic
             ? `${entry.mnemonic} ${entry.operands.join(', ')}`
             : '';
@@ -67,13 +70,13 @@ function generateBSTLSTContent(options) {
         locCtr++; // Increment location counter
       });
     });
-  } else {
+  } else if (interpreter && interpreter.mem) {
     content += 'Loc   Code\n';
 
-    // Output code without source code
-    for (let addr = 0; addr < assembler.outputBuffer.length; addr++) {
-      const word = assembler.outputBuffer[addr];
+    // Output code from interpreter's memory
+    for (let addr = 0; addr <= interpreter.memMax; addr++) {
       const locStr = addr.toString(16).padStart(4, '0');
+      const word = interpreter.mem[addr];
       const wordStr = isBST
         ? word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim()
         : word.toString(16).padStart(4, '0');
@@ -81,13 +84,11 @@ function generateBSTLSTContent(options) {
     }
   }
 
-  // If interpreter is provided, output the Output section
+  // Output Output section and Program statistics if interpreter is provided
   if (interpreter) {
-    // Output section
     content += '====================================================== Output\n';
     content += `${interpreter.output}\n`;
 
-    // Program statistics
     content += '========================================== Program statistics\n';
 
     // Prepare the statistics
@@ -95,41 +96,19 @@ function generateBSTLSTContent(options) {
       { label: 'Input file name', value: inputFileName },
       {
         label: 'Instructions executed',
-        value: `${interpreter.instructionsExecuted.toString(16)} (hex)     ${interpreter.instructionsExecuted} (dec)`,
+        value: `${interpreter.instructionsExecuted.toString(16)} (hex)    ${interpreter.instructionsExecuted} (dec)`,
       },
       {
         label: 'Program size',
-        value: `${(interpreter.memMax + 1).toString(16)} (hex)     ${interpreter.memMax + 1} (dec)`,
+        value: `${(interpreter.memMax + 1).toString(16)} (hex)    ${interpreter.memMax + 1} (dec)`,
       },
       {
         label: 'Max stack size',
-        value: `${interpreter.maxStackSize.toString(16)} (hex)     ${interpreter.maxStackSize} (dec)`,
+        value: `${interpreter.maxStackSize.toString(16)} (hex)    ${interpreter.maxStackSize} (dec)`,
       },
       {
         label: 'Load point',
-        value: `${interpreter.loadPoint.toString(16)} (hex)     ${interpreter.loadPoint} (dec)`,
-      }
-    ];
-
-    const maxStatLabelLength = Math.max(...stats.map((s) => s.label.length));
-
-    stats.forEach((stat) => {
-      const label = stat.label.padEnd(maxStatLabelLength + 4); // Add 4 spaces for padding
-      content += `${label}=   ${stat.value}\n`;
-    });
-  } else {
-    // If interpreter is not provided, output limited statistics
-    content += '========================================== Program statistics\n';
-
-    const stats = [
-      { label: 'Input file name', value: inputFileName },
-      {
-        label: 'Program size',
-        value: `${(assembler.programSize).toString(16)} (hex)     ${assembler.programSize} (dec)`,
-      },
-      {
-        label: 'Load point',
-        value: `${(assembler.loadPoint).toString(16)} (hex)     ${assembler.loadPoint} (dec)`,
+        value: `${interpreter.loadPoint.toString(16)} (hex)    ${interpreter.loadPoint} (dec)`,
       }
     ];
 
