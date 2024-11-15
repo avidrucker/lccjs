@@ -2,6 +2,8 @@
 
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
+const { execSync } = require('child_process');
 const DockerController = require('./dockerController');
 
 const argsForAllTests = [
@@ -21,14 +23,33 @@ const argsForAllTests = [
   // Add more test cases as needed
 ];
 
+const ignoreOrInherit = 'ignore'; // Use 'inherit' to see the output in real-time
+const execSyncOptions = {
+  stdio: ignoreOrInherit,
+  timeout: 25000, // Increase timeout to 20 seconds
+  maxBuffer: 1024 * 1024, // 1MB buffer limit
+};
+
+function execSyncWithLogging(command, options) {
+  // console.log(`Executing command: ${command}`);
+  // const startTime = Date.now();
+  const result = execSync(command, options);
+  // const endTime = Date.now();
+  // console.log(`Command completed in ${endTime - startTime} ms`);
+  return result;
+}
+
 function runTest(args) {
   return new Promise((resolve, reject) => {
     console.log(`\nRunning test: ${args.join(' ')}`);
 
+    // Clone the environment variables and set SKIP_SETUP to 'true'
+    const env = Object.assign({}, process.env, { SKIP_SETUP: 'true' });
+
     const testProcess = spawn(args[0], args.slice(1), {
       stdio: 'inherit',
       cwd: process.cwd(),
-      env: process.env,
+      env: env,
     });
 
     testProcess.on('close', (code) => {
@@ -49,6 +70,14 @@ function runTest(args) {
 }
 
 async function runAllTests() {
+
+  // Collect command-line arguments
+  const argsLocal = process.argv.slice(2);
+  // Default to demoA.a if no argument is provided
+  const inputFile = argsLocal[0] || path.join(__dirname, '../demos/demoA.e');
+
+  const inputDir = path.dirname(inputFile);
+
   const containerName = 'mycontainer';
   const dockerController = new DockerController(containerName);
   const testResults = []; // To collect test results
@@ -60,6 +89,13 @@ async function runAllTests() {
     console.error('Error starting Docker container:', err);
     process.exit(1);
   }
+
+  // Create the name.nnn file with specified contents
+  const nameFile = path.join(inputDir, 'name.nnn');
+  fs.writeFileSync(nameFile, 'Billy, Bob J\n', { encoding: 'utf8' });
+
+  // Copy name file to Docker container
+  execSyncWithLogging(`docker cp ${nameFile} ${containerName}:/home/`, execSyncOptions);
 
   let testNumber = 1;
   const totalTests = argsForAllTests.length;
@@ -87,6 +123,10 @@ async function runAllTests() {
       testNumber++;
     }
   }
+
+  // Clean up the name.nnn files
+  execSyncWithLogging(`rm -f ${inputDir}/name.nnn`, execSyncOptions);
+  execSyncWithLogging(`docker exec ${containerName} rm -f /home/name.nnn`, execSyncOptions);
 
   // Stop the Docker container after all tests
   try {
