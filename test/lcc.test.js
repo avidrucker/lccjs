@@ -41,7 +41,7 @@ function compareLstFiles(file1, file2) {
     content2 = content2.map(line => line.trim());
 
     // Remove the lines that start with "Input file name =" or "LCC Assemble"
-    const linesToSkipRegex = /^(Input\s*file\s*name\s*=|LCC\s*Assemble)/i;
+    const linesToSkipRegex = /^(Input\s*file\s*name\s*=|LCC\s*Assemble|LCC.js\s*Assemble)/i;
 
     content1 = content1.filter(line => !linesToSkipRegex.test(line));
     content2 = content2.filter(line => !linesToSkipRegex.test(line));
