@@ -105,7 +105,7 @@ class Linker {
     for (let filename of filenames) {
       this.readObjectModule(filename);
       if (this.errorFlag) {
-        console.error('Errors encountered during linking.');
+        console.error('Errors encountered during linking: reading object module.');
         return null;
       }
     }
@@ -114,7 +114,7 @@ class Linker {
     for (let module of this.objectModules) {
       this.processModule(module);
       if (this.errorFlag) {
-        console.error('Errors encountered during linking.');
+        console.error('Errors encountered during linking: processing module');
         return null;
       }
     }
@@ -283,6 +283,7 @@ class Linker {
     fs.writeSync(outFile, codeBuffer);
 
     fs.closeSync(outFile);
+    console.log("TEMP: finished writing executable file");
   }
 
   error(message) {
