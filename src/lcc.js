@@ -203,7 +203,6 @@ class LCC {
       isBST: false,
       interpreter: interpreter,
       assembler: includeSourceCode ? this.assembler : null,
-      includeSourceCode: includeSourceCode,
       userName: this.userName,
       inputFileName: this.inputFileName,
     });
@@ -212,7 +211,6 @@ class LCC {
       isBST: true,
       interpreter: interpreter,
       assembler: includeSourceCode ? this.assembler : null,
-      includeSourceCode: includeSourceCode,
       userName: this.userName,
       inputFileName: this.inputFileName,
     });
