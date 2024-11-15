@@ -30,7 +30,7 @@ class Interpreter {
     this.memMax = 0;                   // Keep track of the highest memory address used
     this.inputFileName = '';           // Name of the input file
     this.generateStats = false;        // Whether to generate .lst and .bst files
-    // this.userName = 'LASTNAME, FIRSTNAME'; // Update with your name
+    this.headerLines = [];
   }
 
   main(args) {
@@ -95,7 +95,6 @@ class Interpreter {
         isBST: false,
         interpreter: this,
         assembler: null,
-        includeSourceCode: false,
         userName: this.userName,
         inputFileName: this.inputFileName,
       });
@@ -104,7 +103,6 @@ class Interpreter {
         isBST: true,
         interpreter: this,
         assembler: null,
-        includeSourceCode: false,
         userName: this.userName,
         inputFileName: this.inputFileName,
       });
@@ -284,16 +282,15 @@ class Interpreter {
 
   // extracts header entries and loads machine code into memory
   loadExecutableBuffer(buffer) {
-    // console.log("loading executable buffer...");
-    // console.log("buffer: ", buffer);
     let offset = 0;
   
     // Read file signature
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      console.error(`${fileName} is not a valid LCC executable file: missing 'o' signature`);
       this.error('Invalid file signature: missing "o"');
       return;
     }
+
+    // Do not store the 'o' signature in headerLines
   
     let startAddress = 0; // Default start address
     let headerEndFound = false;
@@ -303,52 +300,65 @@ class Interpreter {
       const entryChar = String.fromCharCode(buffer[offset++]);
   
       if (entryChar === 'C') {
-        // console.log("C found");
         // Start of code
         headerEndFound = true;
+        // Do not store 'C' in headerLines
         break;
       } else if (entryChar === 'S') {
-        // console.log("S found");
         // Start address entry: read two bytes as little endian
         if (offset + 1 >= buffer.length) {
           this.error('Incomplete start address in header');
           return;
         }
         startAddress = buffer.readUInt16LE(offset);
-        // console.log(`Start address: 0x${startAddress.toString(16).padStart(4, '0')}`);
         offset += 2;
+        this.headerLines.push(`S ${startAddress.toString(16).padStart(4, '0')}`);
+      } else if (entryChar === 'G') {
+        // Skip 'G' entry: Read address and label
+        if (offset + 1 >= buffer.length) {
+          this.error('Incomplete G entry in header');
+          return;
+        }
+        const address = buffer.readUInt16LE(offset);
+      offset += 2;
+      let label = '';
+      while (offset < buffer.length) {
+        const charCode = buffer[offset++];
+        if (charCode === 0) break;
+        label += String.fromCharCode(charCode);
+      }
+      this.headerLines.push(`G ${address.toString(16).padStart(4, '0')} ${label}`);
+      } else if (entryChar === 'A') {
+        // Skip 'A' entry: Read address
+        if (offset + 1 >= buffer.length) {
+          this.error('Incomplete A entry in header');
+          return;
+        }
+        const address = buffer.readUInt16LE(offset);
+        offset += 2;
+        this.headerLines.push(`A ${address.toString(16).padStart(4, '0')}`);
       } else {
-        // Handle other possible header entries or skip unknown entries
+        // Skip unknown entries or handle as needed
         this.error(`Unknown header entry: '${entryChar}'`);
         return;
       }
     }
   
-    // Check if we found the code start marker 'C'
-    if (!headerEndFound) {
-      this.error('Invalid file format: missing "C" code start marker');
-      return;
-    }
-  
     // Read machine code into memory starting at address 0
     let memIndex = 0;
-    while (offset < buffer.length) {
-      if (offset + 1 >= buffer.length) {
-        this.error('Incomplete machine code instruction');
-        return;
-      }
+    while (offset + 1 < buffer.length) {
       const instruction = buffer.readUInt16LE(offset);
       offset += 2;
       this.mem[memIndex++] = instruction;
     }
 
     this.memMax = memIndex - 1; // Last memory address used
-  
+
     // Set PC to start address
     this.pc = startAddress;
+    this.loadPoint = startAddress; // Store the load point for stats
   }
   
-
   run() {
     this.spInitial = this.r[6]; // Assuming r6 is the stack pointer
 
