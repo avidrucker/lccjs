@@ -856,89 +856,84 @@ class Interpreter {
         this.executeSOUT();
         break;
       case 7: // DIN
-        // read in a signed decimal number from keyboard into dr
-        let dinInput = this.readLineFromStdin();
-        let dinValue = parseInt(dinInput, 10);
-        if (isNaN(dinValue)) {
-          this.error('Invalid decimal input');
-        } else {
-          this.r[this.dr] = dinValue & 0xFFFF;
+        // Read in a signed decimal number from keyboard into dr
+        while (true) {
+          let dinInput = this.readLineFromStdin();
+      
+          if (dinInput.trim() === '') {
+            // Input is empty or whitespace, ignore and prompt again
+            continue;
+          }
+      
+          let dinValue = parseInt(dinInput, 10);
+          if (isNaN(dinValue)) {
+            const errorMsg = 'Invalid dec constant. Re-enter:';
+            process.stdout.write(errorMsg);
+            this.output += errorMsg;
+            continue;
+          } else {
+            this.r[this.dr] = dinValue & 0xFFFF;
+            break;
+          }
         }
-        break;
+        break;      
       case 8: // HIN
         // Read hex number from keyboard into dr
-        let hinInput = this.readLineFromStdin();
-        let hinValue = parseInt(hinInput, 16);
-        if (isNaN(hinValue)) {
-          this.error('Invalid hexadecimal input');
-        } else {
-          this.r[this.dr] = hinValue & 0xFFFF;
+        while (true) {
+          let hinInput = this.readLineFromStdin();
+      
+          if (hinInput.trim() === '') {
+            // Input is empty or whitespace, ignore and prompt again
+            continue;
+          }
+      
+          let hinValue = parseInt(hinInput, 16);
+          if (isNaN(hinValue)) {
+            const errorMsg = 'Invalid hex constant. Re-enter:';
+            process.stdout.write(errorMsg);
+            this.output += errorMsg;
+            continue;
+          } else {
+            this.r[this.dr] = hinValue & 0xFFFF;
+            break;
+          }
         }
-        break;
+        break;      
       case 9: // AIN
         // Read in a single ASCII character from keyboard into dr
         let ainChar = '';
         if (this.inputBuffer && this.inputBuffer.length > 0) {
           ainChar = this.inputBuffer.charAt(0);
           this.inputBuffer = this.inputBuffer.slice(1);
-          // Consume the rest of the line including the newline character
-          const newlineIndex = this.inputBuffer.indexOf('\n');
-          if (newlineIndex !== -1) {
-            this.inputBuffer = this.inputBuffer.slice(newlineIndex + 1);
-          } else {
-            this.inputBuffer = '';
-          }
         } else {
-          // Original code for reading from stdin
+          // Read one character from stdin
           let ainBuffer = Buffer.alloc(1);
           let fd = process.stdin.fd;
           let ainBytesRead = 0;
-  
+      
           // Keep trying to read until we get a character
           while (ainBytesRead === 0) {
             try {
               ainBytesRead = fs.readSync(fd, ainBuffer, 0, 1, null);
             } catch (err) {
               if (err.code === 'EAGAIN') {
-                // If resource is temporarily unavailable, just continue trying
                 continue;
               } else {
-                // For any other error, throw it
                 throw err;
               }
             }
           }
-  
+      
           // If we got here, we successfully read a character
           ainChar = ainBuffer.toString('utf8');
-  
-          // Clear the input buffer by reading until newline or carriage return
-          let clearBuffer = Buffer.alloc(1);
-          while (true) {
-            try {
-              let bytesRead = fs.readSync(fd, clearBuffer, 0, 1, null);
-              if (bytesRead === 0) break; // EOF
-              let char = clearBuffer.toString('utf8');
-              if (char === '\n' || char === '\r') {
-                this.output += '\n'; // Add newline to output
-                break;
-              }
-            } catch (err) {
-              if (err.code === 'EAGAIN') {
-                continue;
-              } else {
-                throw err;
-              }
-            }
-          }
         }
-  
+      
         this.r[this.dr] = ainChar.charCodeAt(0);
-  
+      
         // Echo the character back to the output
         this.output += ainChar;
-  
-        break;
+      
+        break;      
       case 10: // SIN
         // read a line of input from the user
         this.executeSIN();
