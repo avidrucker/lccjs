@@ -881,12 +881,19 @@ class Interpreter {
         if (this.inputBuffer && this.inputBuffer.length > 0) {
           ainChar = this.inputBuffer.charAt(0);
           this.inputBuffer = this.inputBuffer.slice(1);
+          // Consume the rest of the line including the newline character
+          const newlineIndex = this.inputBuffer.indexOf('\n');
+          if (newlineIndex !== -1) {
+            this.inputBuffer = this.inputBuffer.slice(newlineIndex + 1);
+          } else {
+            this.inputBuffer = '';
+          }
         } else {
           // Original code for reading from stdin
           let ainBuffer = Buffer.alloc(1);
           let fd = process.stdin.fd;
           let ainBytesRead = 0;
-      
+  
           // Keep trying to read until we get a character
           while (ainBytesRead === 0) {
             try {
@@ -901,17 +908,37 @@ class Interpreter {
               }
             }
           }
-      
+  
           // If we got here, we successfully read a character
           ainChar = ainBuffer.toString('utf8');
+  
+          // Clear the input buffer by reading until newline or carriage return
+          let clearBuffer = Buffer.alloc(1);
+          while (true) {
+            try {
+              let bytesRead = fs.readSync(fd, clearBuffer, 0, 1, null);
+              if (bytesRead === 0) break; // EOF
+              let char = clearBuffer.toString('utf8');
+              if (char === '\n' || char === '\r') {
+                this.output += '\n'; // Add newline to output
+                break;
+              }
+            } catch (err) {
+              if (err.code === 'EAGAIN') {
+                continue;
+              } else {
+                throw err;
+              }
+            }
+          }
         }
-      
+  
         this.r[this.dr] = ainChar.charCodeAt(0);
-      
+  
         // Echo the character back to the output
         this.output += ainChar;
-      
-        break;      
+  
+        break;
       case 10: // SIN
         // read a line of input from the user
         this.executeSIN();
