@@ -168,12 +168,8 @@ class Interpreter {
         const mnemonicAndOperands = entry.mnemonic ? entry.mnemonic + ' ' + entry.operands.join(', ') : '';
         // Prepare the sourceStr
         const sourceStr = (labelStr + ' ' + mnemonicAndOperands).trim();
-        // console.log("sourceStr:", sourceStr);
 
         entry.codeWords.forEach((word, index) => {
-          // console.log("index:", index);
-          // console.log("locCtr:", locCtr);
-          // console.log("word: ", word.toString(16));
 
           const locStr = locCtr.toString(16).padStart(4, '0');
           const wordStr = isBST ?
@@ -241,7 +237,6 @@ class Interpreter {
   // makes sure that the file is a valid executable file by checking 
   // for the "o" file signature and "C" header termination character
   loadExecutableFile(fileName) {
-    // console.log("loading executable file...");
     let buffer;
     try {
       buffer = fs.readFileSync(fileName);
@@ -250,7 +245,6 @@ class Interpreter {
       process.exit(1);
     }
 
-    ////
     // Check file signature: look for "o" followed by "C" anywhere in the buffer
     let foundO = false;
     let foundC = false;
@@ -271,7 +265,6 @@ class Interpreter {
 
     // If either "o" or "C" was not found in the expected order, throw an error
     if (!foundO || !foundC) {
-      // console.log("INVALID EXECUTABLE FILE");
       console.error(`${fileName} is not a valid LCC executable file`);
       process.exit(1);
     }
@@ -465,13 +458,11 @@ class Interpreter {
 
   executeCMP() {
     if (this.bit5 === 0) {
-      // console.log('CMP: Register mode');
       // Register mode
       const result = (this.r[this.sr1] - this.r[this.sr2]) & 0xFFFF;
       this.setNZ(result);
       this.setCV(result, this.r[this.sr1], this.r[this.sr2]);
     } else {
-      // console.log('CMP: Immediate mode');
       // Immediate mode
       const result = (this.r[this.sr1] - this.imm5) & 0xFFFF;
       this.setNZ(result);
@@ -687,9 +678,7 @@ class Interpreter {
     let charCode = this.mem[address];
     while (charCode !== 0) {
       const char = String.fromCharCode(charCode);
-      // console.log("char: ", char);
-      process.stdout.write(char);
-      this.output += char;
+      this.writeOutput(char);
       address = (address + 1) & 0xFFFF;
       charCode = this.mem[address];
     }
@@ -707,13 +696,16 @@ class Interpreter {
         inputLine = this.inputBuffer;
         this.inputBuffer = '';
       }
-      return inputLine;
+      // Echo the simulated input back to output and stdout
+      ///// this.writeOutput(inputLine + '\n');
+      this.writeOutput(inputLine);
+      return { inputLine, isSimulated: true };
     } else {
       // Original code for reading from stdin
       let input = '';
       let buffer = Buffer.alloc(1);
       let fd = process.stdin.fd;
-
+  
       while (true) {
         try {
           let bytesRead = fs.readSync(fd, buffer, 0, 1, null);
@@ -736,16 +728,45 @@ class Interpreter {
           }
         }
       }
-      return input;
+      return { inputLine: input, isSimulated: false };
     }
-  } 
+  }
+
+  readCharFromStdin() {
+    if (this.inputBuffer && this.inputBuffer.length > 0) {
+      let ainChar = this.inputBuffer.charAt(0);
+      this.inputBuffer = this.inputBuffer.slice(1);
+      // Echo the simulated input back to output and stdout
+      this.writeOutput(ainChar + "\n");
+      return { char: ainChar, isSimulated: true };
+    } else {
+      // Read one character from stdin
+      let ainBuffer = Buffer.alloc(1);
+      let fd = process.stdin.fd;
+      let ainBytesRead = 0;
+  
+      // Keep trying to read until we get a character
+      while (ainBytesRead === 0) {
+        try {
+          ainBytesRead = fs.readSync(fd, ainBuffer, 0, 1, null);
+        } catch (err) {
+          if (err.code === 'EAGAIN') {
+            continue;
+          } else {
+            throw err;
+          }
+        }
+      }
+  
+      // If we got here, we successfully read a character
+      let ainChar = ainBuffer.toString('utf8');
+      return { char: ainChar, isSimulated: false };
+    }
+  }  
 
   executeSIN() {
     let address = this.r[this.sr];
-    let input = this.readLineFromStdin();
-  
-    // Echo the input back to buffer output
-    this.output += input + "\n";
+    let { inputLine: input, isSimulated } = this.readLineFromStdin();
   
     for (let i = 0; i < input.length; i++) {
       this.mem[address] = input.charCodeAt(i);
@@ -753,14 +774,18 @@ class Interpreter {
     }
     // Null-terminate the string
     this.mem[address] = 0;
+
+    // add newline here if input is simulated
+    if (isSimulated) {
+      this.writeOutput("\n");
+    }
   }  
 
   executeM() {
     for (let addr = 0; addr <= this.memMax; addr++) {
       const content = this.mem[addr];
       const line = `${addr.toString(16).padStart(4, '0')}: ${content.toString(16).padStart(4, '0')}`;
-      console.log(line);
-      this.output += line + '\n';
+      this.writeOutput(line + '\n');
     }
   }
 
@@ -781,8 +806,7 @@ class Interpreter {
     const spStr = this.r[6].toString(16).padStart(4, '0');
     const lrStr = this.r[7].toString(16).padStart(4, '0');
     output += `r4 = ${r4Str}  fp = ${fpStr}  sp = ${spStr}  lr = ${lrStr}  \n`;
-    console.log(output);
-    this.output += output;
+    this.writeOutput(output);
   }
 
   executeS() {
@@ -790,12 +814,10 @@ class Interpreter {
     let fp = this.r[5];
   
     if (sp === this.spInitial) {
-      console.log("Stack empty");
-      this.output += "Stack empty";
+      this.writeOutput('Stack empty');
       return;
     } else {
-      console.log("Stack:");
-      this.output += "Stack:\n";
+      this.writeOutput("Stack:\n");
   
       for (let addr = sp; addr < MAX_MEMORY; addr++) {
         let value = this.mem[addr];
@@ -805,14 +827,17 @@ class Interpreter {
         if (addr === fp) {
           line += ' <--- fp';
         }
-        console.log(line);
-        this.output += line + '\n';
+        this.writeOutput(line + '\n');
       }
       // Add a newline at the end to match the sample output
-      this.output += '\n';
+      this.writeOutput('\n');
     }
   }
   
+  writeOutput(message) {
+    process.stdout.write(message);
+    this.output += message;
+  }
 
   executeTRAP() {
     switch (this.trapvec) {
@@ -820,8 +845,7 @@ class Interpreter {
         this.running = false;
         break;
       case 1: // NL
-        process.stdout.write('\n');
-        this.output += '\n';
+        this.writeOutput('\n');
         break;
       case 2:// DOUT
         let value = this.r[this.sr];
@@ -830,110 +854,80 @@ class Interpreter {
             value -= 0x10000;
         }
         const doutStr = `${value}`;
-        process.stdout.write(doutStr);
-        this.output += doutStr;
+        this.writeOutput(doutStr);
         break;
       case 3: // UDOUT
         // print as unsigned decimal
         const udoutStr = `${this.r[this.sr] & 0xFFFF}`;
-        process.stdout.write(udoutStr);
-        this.output += udoutStr;
+        this.writeOutput(udoutStr);
         break;
       case 4: // HOUT
         // print as hexadecimal
         const houtStr = this.r[this.sr].toString(16).toLowerCase();
-        process.stdout.write(houtStr);
-        this.output += houtStr;
+        this.writeOutput(houtStr);
         break;
       case 5: // AOUT
         // print as ASCII character
         const aoutChar = String.fromCharCode(this.r[this.sr] & 0xFF);
-        process.stdout.write(aoutChar);
-        this.output += aoutChar;
+        this.writeOutput(aoutChar);
         break;
       case 6: // SOUT
         // print string at address
         this.executeSOUT();
         break;
       case 7: // DIN
-        // Read in a signed decimal number from keyboard into dr
         while (true) {
-          let dinInput = this.readLineFromStdin();
+          let { inputLine: dinInput, isSimulated } = this.readLineFromStdin();
       
           if (dinInput.trim() === '') {
-            // Input is empty or whitespace, ignore and prompt again
             continue;
           }
       
           let dinValue = parseInt(dinInput, 10);
           if (isNaN(dinValue)) {
-            const errorMsg = 'Invalid dec constant. Re-enter:';
-            process.stdout.write(errorMsg);
-            this.output += errorMsg;
+            const errorMsg = 'Invalid dec constant. Re-enter:\n';
+            this.writeOutput(errorMsg);
             continue;
           } else {
             this.r[this.dr] = dinValue & 0xFFFF;
+            // No need to echo input here; already handled in readLineFromStdin()
+            //// unless input is simulated
+            if (isSimulated) {
+              this.writeOutput("\n");
+            }
             break;
           }
         }
         break;      
       case 8: // HIN
-        // Read hex number from keyboard into dr
         while (true) {
-          let hinInput = this.readLineFromStdin();
+          let { inputLine: hinInput, isSimulated } = this.readLineFromStdin();
       
           if (hinInput.trim() === '') {
-            // Input is empty or whitespace, ignore and prompt again
             continue;
           }
       
           let hinValue = parseInt(hinInput, 16);
           if (isNaN(hinValue)) {
-            const errorMsg = 'Invalid hex constant. Re-enter:';
-            process.stdout.write(errorMsg);
-            this.output += errorMsg;
+            const errorMsg = 'Invalid hex constant. Re-enter:\n';
+            this.writeOutput(errorMsg);
             continue;
           } else {
             this.r[this.dr] = hinValue & 0xFFFF;
+            // No need to echo input here; already handled in readLineFromStdin()
+            //// unless input is simulated
+            if (isSimulated) {
+              this.writeOutput("\n");
+            }
             break;
           }
         }
-        break;      
+        break;            
       case 9: // AIN
-        // Read in a single ASCII character from keyboard into dr
-        let ainChar = '';
-        if (this.inputBuffer && this.inputBuffer.length > 0) {
-          ainChar = this.inputBuffer.charAt(0);
-          this.inputBuffer = this.inputBuffer.slice(1);
-        } else {
-          // Read one character from stdin
-          let ainBuffer = Buffer.alloc(1);
-          let fd = process.stdin.fd;
-          let ainBytesRead = 0;
-      
-          // Keep trying to read until we get a character
-          while (ainBytesRead === 0) {
-            try {
-              ainBytesRead = fs.readSync(fd, ainBuffer, 0, 1, null);
-            } catch (err) {
-              if (err.code === 'EAGAIN') {
-                continue;
-              } else {
-                throw err;
-              }
-            }
-          }
-      
-          // If we got here, we successfully read a character
-          ainChar = ainBuffer.toString('utf8');
-        }
-      
+        let { char: ainChar, isSimulated } = this.readCharFromStdin();
         this.r[this.dr] = ainChar.charCodeAt(0);
-      
-        // Echo the character back to the output
-        this.output += ainChar;
-      
-        break;      
+        // No need to echo input here; already handled in readCharFromStdin()
+        break;
       case 10: // SIN
         // read a line of input from the user
         this.executeSIN();

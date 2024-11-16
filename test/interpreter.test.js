@@ -169,8 +169,10 @@ async function testInterpreter() {
       console.log('Skipping name.nnn file creation and Docker copy because SKIP_SETUP is true.');
     }
 
-    // Redirect console.log to capture outputs
+    // Redirect console.log and process.stdout.write to capture outputs
     const originalConsoleLog = console.log;
+    const originalProcessStdoutWrite = process.stdout.write;
+
     let interpreterOutput = '';
     console.log = function (...args) {
       const message = args.join(' ');
@@ -178,16 +180,19 @@ async function testInterpreter() {
       originalConsoleLog.apply(console, args);
     };
 
-    originalConsoleLog('Running interpreter...');
+    process.stdout.write = function (chunk, encoding, callback) {
+      interpreterOutput += chunk;
+      return originalProcessStdoutWrite.call(process.stdout, chunk, encoding, callback);
+    };
+
+    // originalConsoleLog('Running interpreter...');
     interpreter.generateStats = true;
     interpreter.main([inputFile]);
-    originalConsoleLog('Interpreter finished.');
+    // originalConsoleLog('Interpreter finished.');
 
-    // Restore console.log
+    // Restore console.log and process.stdout.write
     console.log = originalConsoleLog;
-
-    // Write interpreter output to .lst file
-    // fs.writeFileSync(interpreterOutputLst, interpreterOutput);
+    process.stdout.write = originalProcessStdoutWrite;
 
     // Copy the .e file to docker container, renaming it appropriately
     fs.copyFileSync(inputFile, lccInputFile);
