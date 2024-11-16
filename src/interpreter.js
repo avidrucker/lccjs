@@ -73,6 +73,9 @@ class Interpreter {
     // Load the executable into memory
     this.loadExecutableBuffer(buffer);
 
+    // Capture the initial memory state
+    this.initialMem = this.mem.slice(); // Makes a copy of the memory array
+
     // Prepare .lst and .bst file names
     const lstFileName = inputFileName.replace(/\.e$/, '.lst');
     const bstFileName = inputFileName.replace(/\.e$/, '.bst');

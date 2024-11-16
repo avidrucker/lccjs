@@ -76,7 +76,7 @@ function generateBSTLSTContent(options) {
     // Output code from interpreter's memory
     for (let addr = 0; addr <= interpreter.memMax; addr++) {
       const locStr = addr.toString(16).padStart(4, '0');
-      const word = interpreter.mem[addr];
+      const word = interpreter.initialMem[addr];
       const wordStr = isBST
         ? word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim()
         : word.toString(16).padStart(4, '0');
