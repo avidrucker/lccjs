@@ -1,4 +1,7 @@
 ; program that tests the s command
+; and also compares .lst/.bst file
+; generation with empty lines at
+; the end of the file
 startup:  s
           nl
           
@@ -31,3 +34,5 @@ main:     push lr
           pop fp
           pop lr
           ret
+
+
