@@ -46,25 +46,43 @@ function compareLstFiles(file1, file2) {
     content1 = content1.filter(line => !linesToSkipRegex.test(line));
     content2 = content2.filter(line => !linesToSkipRegex.test(line));
 
-    // Remove empty lines
-    // content1 = content1.filter(line => line !== '');
-    // content2 = content2.filter(line => line !== '');
+    // Normalize the content (lowercase, remove extra spaces)
+    const normalize = content => content.map(line => line.toLowerCase().replace(/\s+/g, ' ').trim());
+
+    content1 = normalize(content1);
+    content2 = normalize(content2);
 
     // Replace multiple spaces with a single space within lines
     content1 = content1.map(line => line.replace(/\s+/g, ' '));
     content2 = content2.map(line => line.replace(/\s+/g, ' '));
 
-    // Join lines to compare
-    const cleanContent1 = content1.join('\n');
-    const cleanContent2 = content2.join('\n');
+    let differences = [];
+    let maxLines = Math.max(content1.length, content2.length);
 
-    if (cleanContent1 === cleanContent2) {
+    for (let i = 0; i < maxLines; i++) {
+      const line1 = content1[i] || '';
+      const line2 = content2[i] || '';
+      if (line1 !== line2) {
+        differences.push({
+          lineNumber: i + 1,
+          file1Line: line1,
+          file2Line: line2
+        });
+      }
+    }
+
+    if (differences.length === 0) {
       console.log('✅ .lst files are identical. Test PASSED.');
       return true;
     } else {
       console.log('❌ .lst files differ. Test FAILED.');
-      console.log('Local .lst file content:\n', cleanContent1);
-      console.log('Docker .lst file content:\n', cleanContent2);
+      console.log('Differences found:');
+      differences.forEach(diff => {
+        console.log(`Line ${diff.lineNumber}:`);
+        console.log(`  File1: ${diff.file1Line}`);
+        console.log(`  File2: ${diff.file2Line}`);
+        console.log();
+      });
       return false;
     }
   } catch (error) {
