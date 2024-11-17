@@ -83,7 +83,7 @@ function execSyncWithLogging(command, options) {
 }
 
 async function testLCC() {
-  // Collect command-line arguments
+  // Collect command-line arguments, excluding the first two (node and script path)
   const args = process.argv.slice(2);
 
   // Default to demoA.a if no argument is provided
@@ -134,6 +134,7 @@ async function testLCC() {
     // Set up simulated user inputs
     if (userInputs.length > 0) {
       lcc.inputBuffer = userInputs.join('\n') + '\n';
+      console.log('Simulated inputBuffer:', JSON.stringify(lcc.inputBuffer));
     }
 
     // Redirect console.log to capture outputs
