@@ -288,13 +288,37 @@ class Assembler {
       this.lineNum++;
       let originalLine = line;
       this.currentLine = originalLine; // Store current line for error reporting
+      
+      // Create listing entry
+      const listingEntry = {
+        lineNum: this.lineNum,
+        locCtr: this.locCtr,
+        sourceLine: originalLine,
+        codeWords: [],
+        label: null,
+        mnemonic: null,
+        operands: []
+      };
+      this.currentListingEntry = listingEntry;
+      
       // Remove comments and trim whitespace
       line = line.split(';')[0].trim();
-      if (line === '') continue;
+      if (line === '') {
+        // Empty line after removing comments
+        if (this.pass === 2) {
+          this.listing.push(listingEntry);
+        }
+        continue;
+      }
 
       // Tokenize the line
       let tokens = this.tokenizeLine(line);
-      if (tokens.length === 0) continue;
+      if (tokens.length === 0) {
+        if (this.pass === 2) {
+          this.listing.push(listingEntry);
+        }
+        continue;
+      }
 
       let label = null;
       let mnemonic = null;
@@ -316,22 +340,18 @@ class Assembler {
       if (tokens.length > 0) {
         mnemonic = tokens.shift().toLowerCase();
       } else {
+        if (this.pass === 2) {
+          this.listing.push(listingEntry);
+        }
         continue; // No mnemonic, skip line
       }
 
       operands = tokens;
 
-      // Create listing entry
-      const listingEntry = {
-        lineNum: this.lineNum,
-        locCtr: this.locCtr,
-        sourceLine: originalLine,
-        codeWords: [],
-        label: label,
-        mnemonic: mnemonic,
-        operands: operands
-      };
-      this.currentListingEntry = listingEntry;
+      // Update listingEntry
+      listingEntry.label = label;
+      listingEntry.mnemonic = mnemonic;
+      listingEntry.operands = operands;
 
       // Handle directives and instructions
       if (mnemonic.startsWith('.')) {

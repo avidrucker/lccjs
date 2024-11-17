@@ -43,32 +43,35 @@ function generateBSTLSTContent(options) {
   // Output code
   if (assembler && assembler.listing) {
     content += 'Loc   Code           Source Code\n';
-
-    // Output code with source code from assembler
+  
     assembler.listing.forEach((entry) => {
-      let locCtr = entry.locCtr;
-
-      entry.codeWords.forEach((word, index) => {
-        const locStr = locCtr.toString(16).padStart(4, '0');
-        const wordStr = isBST
-          ? word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim()
-          : word.toString(16).padStart(4, '0');
-
-        let lineStr = `${locStr}  ${wordStr.padEnd(10)}`;
-
-        if (index === 0) {
-          const labelStr = entry.label ? `${entry.label}: ` : '';
-          const mnemonicAndOperands = entry.mnemonic
-            ? `${entry.mnemonic} ${entry.operands.join(', ')}`
-            : '';
-          const sourceStr = `${labelStr}${mnemonicAndOperands}`.trim();
-          lineStr += ` ${sourceStr}`;
-        }
-
+      const locStr = entry.locCtr !== null ? entry.locCtr.toString(16).padStart(4, '0') : '    ';
+      const codeWords = entry.codeWords;
+  
+      if (codeWords.length > 0) {
+        let locCtr = entry.locCtr;
+  
+        codeWords.forEach((word, index) => {
+          const wordStr = isBST
+            ? word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim()
+            : word.toString(16).padStart(4, '0');
+  
+          let lineStr = `${locCtr.toString(16).padStart(4, '0')}  ${wordStr.padEnd(10)}`;
+  
+          if (index === 0) {
+            // Include source code
+            lineStr += ` ${entry.sourceLine}`;
+          }
+  
+          content += `${lineStr}\n`;
+  
+          locCtr++;
+        });
+      } else {
+        // No code words, do not include the source line
+        let lineStr = `                    ${entry.sourceLine}`;
         content += `${lineStr}\n`;
-
-        locCtr++; // Increment location counter
-      });
+      }
     });
   } else if (interpreter && interpreter.mem) {
     content += 'Loc   Code\n';
