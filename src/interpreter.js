@@ -667,6 +667,9 @@ class Interpreter {
     // add newline here if input is simulated
     if (isSimulated) {
       this.writeOutput("\n");
+    } else //// else, add input to the output buffer w/ newline delimeter
+    {
+      this.output += input + "\n";
     }
   }  
 
@@ -782,6 +785,9 @@ class Interpreter {
             //// unless input is simulated
             if (isSimulated) {
               this.writeOutput("\n");
+            } else {
+              // add input to the output buffer w/ newline delimeter
+              this.output += dinInput + "\n";
             }
             break;
           }
@@ -806,6 +812,8 @@ class Interpreter {
             //// unless input is simulated
             if (isSimulated) {
               this.writeOutput("\n");
+            } else {
+              this.output += hinInput + "\n";
             }
             break;
           }
