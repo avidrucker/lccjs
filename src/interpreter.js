@@ -859,7 +859,8 @@ class Interpreter {
   }
 
   error(message) {
-    console.error(`Interpreter Error: ${message}`);
+    // console.error(`Interpreter Error: ${message}`);
+    console.error(`${message}`);
     this.running = false;
   }
 }
