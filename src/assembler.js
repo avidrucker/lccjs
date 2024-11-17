@@ -376,6 +376,14 @@ class Assembler {
     // At the end of Pass 2
     if (this.pass === 2) {
       this.programSize = this.locCtr - this.loadPoint;
+
+      //// possible bug/strange lcc behavior:
+      //// remove a single empty line from the listing
+      //// if it is the last line
+      // console.log("last line of file is: '", this.listing[this.listing.length - 1], "'");
+      if(this.listing[this.listing.length - 1].sourceLine.trim() === '') {
+        this.listing.pop();
+      }
     }
   }
 
