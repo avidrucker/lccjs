@@ -13,7 +13,7 @@ const argsForAllTests = [
   ['node', './test/interpreter.test.js', './demos/demoD.e', 'testing interpreter with demoD.e'],
   ['node', './test/interpreter.test.js', './demos/demoE.e', 'testing interpreter with demoE.e'],
   ['node', './test/interpreter.test.js', './demos/demoF.e', 'testing interpreter with demoF.e'],
-  ['node', './test/interpreter.test.js', './demos/demoG.e', '-5', 'ff', 'g', 'testing interpreter with demoG.e'],
+  ['node', './test/interpreter.test.js', './demos/demoG.e', 'g', '-5', 'ff', 'testing interpreter with demoG.e'],
   ['node', './test/interpreter.test.js', './demos/demoH.e', 'testing interpreter with demoH.e'],
   ['node', './test/interpreter.test.js', './demos/demoI.e', 'testing interpreter with demoI.e'],
   // ['node', './test/interpreter.test.js', './demos/demoJ.e', 'testing interpreter with demoJ.e'], // Disabled if necessary
