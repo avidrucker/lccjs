@@ -17,7 +17,7 @@ class LCC {
     this.args = [];
     this.assembler = null;
     this.interpreter = null;
-    // this.userName = 'LASTNAME, FIRSTNAME'; // Update with your name
+    this.inputBuffer = '';
   }
 
   main(args) {
@@ -174,6 +174,11 @@ class LCC {
 
     // Set options in the interpreter
     interpreter.options = this.options;
+
+    // Pass inputBuffer to interpreter
+    if (this.inputBuffer) {
+      interpreter.inputBuffer = this.inputBuffer;
+    }
 
     // Store the interpreter instance
     this.interpreter = interpreter;
