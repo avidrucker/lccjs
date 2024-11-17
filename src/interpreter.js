@@ -680,7 +680,8 @@ class Interpreter {
 
   executeR() {
     const pcStr = this.pc.toString(16).padStart(4, '0');
-    const irStr = this.ir.toString(16).padStart(4, '0');
+    // Fetch the instruction prior to the TRAP instruction
+    const irValue = this.mem[(this.pc - 2) & 0xFFFF];
     const nzcvStr = `${this.n}${this.z}${this.c}${this.v}`.padStart(4, '0');
     let output = `pc = ${pcStr}  ir = ${irStr}  NZCV = ${nzcvStr}\n`;
     // First line: r0 to r3
