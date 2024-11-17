@@ -609,6 +609,9 @@ class Assembler {
       case 'pop':
         machineWord = this.assemblePOP(operands);
         break;
+      case 'div':
+        machineWord = this.assembleDIV(operands);
+        break;
       case 'ld':
         machineWord = this.assembleLD(operands);
         break;
@@ -849,6 +852,18 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     if (dr === null) return null;
     let macword = (0xA000 | (dr << 9)) | 0x0001;
+    return macword;
+  }
+
+  assembleDIV(operands) {
+    if (operands.length !== 2) {
+      this.error('Invalid operand count for div');
+      return null;
+    }
+    let dr = this.getRegister(operands[0]);
+    let sr1 = this.getRegister(operands[1]);
+    if (dr === null || sr1 === null) return null;
+    let macword = 0xa008 | (dr << 9) | (sr1 << 6);
     return macword;
   }
 
