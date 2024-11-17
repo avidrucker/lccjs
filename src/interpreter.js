@@ -704,7 +704,7 @@ class Interpreter {
     let fp = this.r[5];
   
     if (sp === this.spInitial) {
-      this.writeOutput('Stack empty');
+      this.writeOutput('Stack empty\n');
       return;
     } else {
       this.writeOutput("Stack:\n");
@@ -719,8 +719,6 @@ class Interpreter {
         }
         this.writeOutput(line + '\n');
       }
-      // Add a newline at the end to match the sample output
-      this.writeOutput('\n');
     }
   }
   
