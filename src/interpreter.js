@@ -434,15 +434,15 @@ class Interpreter {
         this.setNZ(this.r[this.dr]);
         break;
       case 8: // DIV ////
-        if (this.r[this.sr] === 0) {
-          this.error('Division by zero');
+        if (this.r[this.sr1] === 0) {
+          this.error('Floating point exception');
         }
         this.r[this.dr] = (this.r[this.dr] / this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
       case 9: // REM ////
-        if (this.r[this.sr2] === 0) {
-          this.error('Division by zero');
+        if (this.r[this.sr1] === 0) {
+          this.error('Floating point exception');
         }
         this.r[this.dr] = (this.r[this.dr] % this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
