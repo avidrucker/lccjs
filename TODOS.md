@@ -69,7 +69,16 @@
 - ~~fix issue where interpreter.test.js runs expecting a .lst file to be created when, in fact, the .lst file is not created by the interpreter.js file, but by the lcc.js file~~ (interpreter.js should create a .lst file after all)
   - ~~change the interpreter.test.js to simply run the files and check for the expected output in the stdout, and to simulate the expected inputs, rather than checking for the existence of a .lst file~~
   - [x] migrate the majority of what is currently interpreter.test.js to lcc.test.js, which will test running lcc.js on a given file (supplied as an argument), and will check for the existence of the generated .lst file as well comparing the contents to make sure that they match
-- [x] create an lccBattery.test.js which will call lcc.js on a list of specified .a files, and will compare the contents of each .lst file to the expected output (created by running the files with the number 1 appended to the end of their file names remotely in a dockerized container), and will log the results of each test at the very end 
+- [x] create an lccBattery.test.js which will call lcc.js on a list of specified .a files, and will compare the contents of each .lst file to the expected output (created by running the files with the number 1 appended to the end of their file names remotely in a dockerized container), and will log the results of each test at the very end
+- [ ] test for duplicate labels
+- [ ] test for correct usage of division
+- [ ] test for line that is too long (300+ chars)
+- [ ] test for a1test.a
+- [ ] test for escaped strings, escaped chars
+- [ ] test for colon terminated labels that have spaces preceding them on a line
+- [ ] test for invalid mnemonic detection
+- [ ] test for bad register detection
+- [ ] test for bad immediate detection
 
 ## Fix
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
