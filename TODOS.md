@@ -7,13 +7,24 @@
 - [x] implement sin/sout execution output in bst
 - [x] implement BST creation
 - [ ] implement all case 10 mnemonic commands (MUL/DIV/ROL/etc.)
+  - [ ] implement `srl` mnemonic
+  - [ ] implement `sra` mnemonic
+  - [ ] implement `sll` mnemonic
+  - [ ] implement `rol` mnemonic
+  - [ ] implement `ror` mnemonic
+  - [ ] implement `mul` mnemonic
+  - [ ] implement `div` mnemonic
+  - [ ] implement `rem` mnemonic
+  - [ ] implement `or` mnenmonic
+  - [ ] implement `xor` mnemonic
+  - [ ] implement `sext` mnemonic
 - [ ] implement assembly of .bin files
 - [ ] implement assembly of .hex files
 - [ ] implement command line arguments for lcc.js (-d (symbolic debugger mode), -m (memory dump at end), -r (register dump at end), -t (instruction trace on), -f, -x, -o, -h, -l<loadpt>) "As a programmer, I can use command-line options to control the assembler and interpreter's behavior."
-- [ ] implement linker: "As a programmer, I can link multiple object files (.o files) into a single executable, so that I can build larger programs from separate modules."
-  - [ ] implement linker directives: "As a programmer, I can use .global and .extern directives to define and reference global and external symbols, so that I can share symbols between modules."
-    - [ ] .extern
-    - [ ] .global
+- [x] implement linker: "As a programmer, I can link multiple object files (.o files) into a single executable, so that I can build larger programs from separate modules."
+  - [x] implement linker directives: "As a programmer, I can use .global and .extern directives to define and reference global and external symbols, so that I can share symbols between modules."
+    - [x] .extern
+    - [x] .global
     - [ ] .org/.orig
 - [ ] implement offsets
   - [ ] label offsets
@@ -38,16 +49,18 @@
   - [x] memory draw function
   - [x] registers draw function
 - [ ] implement flag setting for lcc.js such as `-d` for debug mode, `-L` for load point, `-r` switch to display registers at program end, `-m` switch to display memory to be displayed at program end, etc. 
+  - [ ] implement -L flag
+    - [ ] implement loadPoint in interpreter.js to allow for loading of a program at a specific memory address via the S header in the .e file
 - [ ] piping of an Assembly file's output into a text file
 - [ ] implement `cea` mnemonic
 - [x] implement `cmp` mnemonic
-- [ ] include comments in BST/LST files
-- [ ] include all headers (S, etc.) in BST/LST files
-- [ ] implement loadPoint in interpreter.js to allow for loading of a program at a specific memory address via the S header in the .e file
+- [x] include comments in BST/LST files (when assembling and interpretting all at once via lcc.js)
+- [x] include all headers (S, etc.) in BST/LST files
 
 
 ## Test
 
+- [ ] test .start directive usage
 - [ ] test assembly of .bin files
 - [ ] test detection of division by zero
 - [ ] test creation of .o files from multiple passed .a files
@@ -66,7 +79,7 @@
   - [ ] test .lst output of lcc.js against .lst output of LCC when running on a .a file
 - [x] implement test battery to run all tests one after the other, regardless of whether one or more tests fail, and to log the results of each test at the very end (currently the battery of tests stop when a single test fails)
 - [x] move the docker startup and shutdown out of the test files and into a separate file that is called by the test files
-- [ ] move the name.nnn file existence check and creation out of the test files and into a separate file that is called by the test files, such that, for the test suite code, the name.nnn file is created only once, rather than once for each test, to cut down on unnecessary repeated file creations and deletions
+- [x] move the name.nnn file existence check and creation out of the test files and into a separate file that is called by the test files, such that, for the test suite code, the name.nnn file is created only once, rather than once for each test, to cut down on unnecessary repeated file creations and deletions
 - [ ] **implement an initial smokescreen test that simply attempts to run the lcc via the `lcc -h` command, and, if it fails, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.**
 - ~~fix issue where interpreter.test.js runs expecting a .lst file to be created when, in fact, the .lst file is not created by the interpreter.js file, but by the lcc.js file~~ (interpreter.js should create a .lst file after all)
   - ~~change the interpreter.test.js to simply run the files and check for the expected output in the stdout, and to simulate the expected inputs, rather than checking for the existence of a .lst file~~
