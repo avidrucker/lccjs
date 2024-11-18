@@ -77,7 +77,7 @@ function generateBSTLSTContent(options) {
     content += 'Loc   Code\n';
 
     // Output code from interpreter's memory
-    for (let addr = 0; addr <= interpreter.memMax; addr++) {
+    for (let addr = interpreter.loadPoint; addr <= interpreter.memMax; addr++) {
       const locStr = addr.toString(16).padStart(4, '0');
       const word = interpreter.initialMem[addr];
       const wordStr = isBST
