@@ -25,7 +25,7 @@ class Interpreter {
     this.options = {};                 // Options from lcc.js
     this.instructionsExecuted = 0;     // For program statistics
     this.maxStackSize = 0;             // For program statistics
-    this.loadPoint = 0;                // For program statistics
+    this.loadPoint = 0;                // Default load point is 0
     this.spInitial = 0;                // For tracking stack size
     this.memMax = 0;                   // Keep track of the highest memory address used
     this.inputFileName = '';           // Name of the input file
@@ -95,20 +95,20 @@ class Interpreter {
     }
 
     // this prints out when called by interpreter.js
-    console.log(`Starting interpretation of ${inputFileName}`);
+    console.log(`Starting interpretation of ${this.inputFileName}`);
 
     // Open and read the executable file
     let buffer;
     try {
-      buffer = fs.readFileSync(inputFileName);
+      buffer = fs.readFileSync(this.inputFileName);
     } catch (err) {
-      console.error(`Cannot open input file ${inputFileName}`);
+      console.error(`Cannot open input file ${this.inputFileName}`);
       process.exit(1);
     }
 
     // Check file signature
     if (buffer[0] !== 'o'.charCodeAt(0)) {
-      console.error(`${inputFileName} is not a valid LCC executable file: missing 'o' signature`);
+      console.error(`${this.inputFileName} is not a valid LCC executable file: missing 'o' signature`);
       process.exit(1);
     }
 
@@ -119,8 +119,8 @@ class Interpreter {
     this.initialMem = this.mem.slice(); // Makes a copy of the memory array
 
     // Prepare .lst and .bst file names
-    const lstFileName = inputFileName.replace(/\.e$/, '.lst');
-    const bstFileName = inputFileName.replace(/\.e$/, '.bst');
+    const lstFileName = this.inputFileName.replace(/\.e$/, '.lst');
+    const bstFileName = this.inputFileName.replace(/\.e$/, '.bst');
     console.log(`lst file = ${lstFileName}`);
     console.log(`bst file = ${bstFileName}`);
     console.log('====================================================== Output');
@@ -268,9 +268,9 @@ class Interpreter {
         return;
       }
     }
-  
-    // Read machine code into memory starting at address 0
-    let memIndex = 0;
+
+    // Read machine code into memory starting at this.loadPoint
+    let memIndex = this.loadPoint; // Start loading at loadPoint
     while (offset + 1 < buffer.length) {
       const instruction = buffer.readUInt16LE(offset);
       offset += 2;
@@ -279,9 +279,8 @@ class Interpreter {
 
     this.memMax = memIndex - 1; // Last memory address used
 
-    // Set PC to start address
-    this.pc = startAddress;
-    this.loadPoint = startAddress; // Store the load point for stats
+    // Set PC to loadPoint + startAddress
+    this.pc = (this.loadPoint + startAddress) & 0xFFFF;
   }
 
   run() {
