@@ -1,5 +1,5 @@
-a1test.a
-a1test.e
+test/a1test*
+test/a2test*
 *.e
 *.o
 *.bst
