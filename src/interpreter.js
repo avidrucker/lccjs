@@ -36,13 +36,55 @@ class Interpreter {
   main(args) {
     args = args || process.argv.slice(2);
 
-    if (args.length !== 1) {
-      console.error('Usage: node interpreter.js <input filename>');
+    if (args.length < 1) {
+      console.error('Usage: node interpreter.js <input filename> [options]');
       process.exit(1);
     }
 
-    const inputFileName = args[0];
-    this.inputFileName = inputFileName; // Set inputFileName
+    // Parse arguments
+    let i = 0;
+    while (i < args.length) {
+      let arg = args[i];
+      if (arg.startsWith('-')) {
+        // Option
+        if (arg.startsWith('-L')) {
+          // Load point option
+          let loadPointStr = arg.substring(2);
+          if (loadPointStr === '') {
+            // Load point value is in the next argument
+            i++;
+            if (i >= args.length) {
+              console.error('Error: -L option requires a value');
+              process.exit(1);
+            }
+            loadPointStr = args[i];
+          }
+          // Parse load point value (hexadecimal)
+          this.loadPoint = parseInt(loadPointStr, 16);
+          if (isNaN(this.loadPoint)) {
+            console.error(`Invalid load point value: ${loadPointStr}`);
+            process.exit(1);
+          }
+        } else {
+          console.error(`Unknown option: ${arg}`);
+          process.exit(1);
+        }
+      } else {
+        // Assume it's the input file name
+        if (!this.inputFileName) {
+          this.inputFileName = arg;
+        } else {
+          console.error(`Unexpected argument: ${arg}`);
+          process.exit(1);
+        }
+      }
+      i++;
+    }
+
+    if (!this.inputFileName) {
+      console.error('No input file specified.');
+      process.exit(1);
+    }
 
     // Get the userName using nameHandler
     try {
