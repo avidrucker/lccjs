@@ -52,6 +52,8 @@
 - [ ] test detection of division by zero
 - [ ] test creation of .o files from multiple passed .a files
 - [ ] test creation of .e file from multiple passed .o files
+- [ ] add linker testing
+  - [ ] test .org/.orig, .extern, and .global
 - [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
 - [x] `cmp` and `br` test
 - [x] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
