@@ -93,7 +93,7 @@ class Interpreter {
       console.error('Error handling name file:', error.message);
       process.exit(1);
     }
-    
+
     // this prints out when called by interpreter.js
     console.log(`Starting interpretation of ${inputFileName}`);
 
@@ -186,7 +186,7 @@ class Interpreter {
       // Look for the starting "o"
       if (!foundO && char === 'o') {
         foundO = true;
-      } 
+      }
       // Once "o" is found, look for the "C" as the end of the header
       else if (foundO && char === 'C') {
         foundC = true;
@@ -210,7 +210,7 @@ class Interpreter {
   // extracts header entries and loads machine code into memory
   loadExecutableBuffer(buffer) {
     let offset = 0;
-  
+
     // Read file signature
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
       this.error('Invalid file signature: missing "o"');
@@ -218,17 +218,15 @@ class Interpreter {
     }
 
     // Do not store the 'o' signature in headerLines
-  
+
     let startAddress = 0; // Default start address
-    let headerEndFound = false;
-  
+
     // Read header entries until 'C' is encountered
     while (offset < buffer.length) {
       const entryChar = String.fromCharCode(buffer[offset++]);
-  
+
       if (entryChar === 'C') {
         // Start of code
-        headerEndFound = true;
         // Do not store 'C' in headerLines
         break;
       } else if (entryChar === 'S') {
@@ -247,14 +245,14 @@ class Interpreter {
           return;
         }
         const address = buffer.readUInt16LE(offset);
-      offset += 2;
-      let label = '';
-      while (offset < buffer.length) {
-        const charCode = buffer[offset++];
-        if (charCode === 0) break;
-        label += String.fromCharCode(charCode);
-      }
-      this.headerLines.push(`G ${address.toString(16).padStart(4, '0')} ${label}`);
+        offset += 2;
+        let label = '';
+        while (offset < buffer.length) {
+          const charCode = buffer[offset++];
+          if (charCode === 0) break;
+          label += String.fromCharCode(charCode);
+        }
+        this.headerLines.push(`G ${address.toString(16).padStart(4, '0')} ${label}`);
       } else if (entryChar === 'A') {
         // Skip 'A' entry: Read address
         if (offset + 1 >= buffer.length) {
@@ -285,7 +283,7 @@ class Interpreter {
     this.pc = startAddress;
     this.loadPoint = startAddress; // Store the load point for stats
   }
-  
+
   run() {
     this.spInitial = this.r[6]; // Assuming r6 is the stack pointer
 
@@ -604,7 +602,7 @@ class Interpreter {
     }
   }
 
-  executeSOUT() { 
+  executeSOUT() {
     let address = this.r[this.sr];
     let charCode = this.mem[address];
     while (charCode !== 0) {
@@ -636,7 +634,7 @@ class Interpreter {
       let input = '';
       let buffer = Buffer.alloc(1);
       let fd = process.stdin.fd;
-  
+
       while (true) {
         try {
           let bytesRead = fs.readSync(fd, buffer, 0, 1, null);
@@ -675,7 +673,7 @@ class Interpreter {
       let ainBuffer = Buffer.alloc(1);
       let fd = process.stdin.fd;
       let ainBytesRead = 0;
-  
+
       // Keep trying to read until we get a character
       while (ainBytesRead === 0) {
         try {
@@ -688,17 +686,17 @@ class Interpreter {
           }
         }
       }
-  
+
       // If we got here, we successfully read a character
       let ainChar = ainBuffer.toString('utf8');
       return { char: ainChar, isSimulated: false };
     }
-  }  
+  }
 
   executeSIN() {
     let address = this.r[this.sr];
     let { inputLine: input, isSimulated } = this.readLineFromStdin();
-  
+
     for (let i = 0; i < input.length; i++) {
       this.mem[address] = input.charCodeAt(i);
       address = (address + 1) & 0xFFFF;
@@ -713,7 +711,7 @@ class Interpreter {
     {
       this.output += input + "\n";
     }
-  }  
+  }
 
   executeM() {
     for (let addr = 0; addr <= this.memMax; addr++) {
@@ -731,8 +729,8 @@ class Interpreter {
     let output = `pc = ${pcStr}  ir = ${irStr}  NZCV = ${nzcvStr}\n`;
     // First line: r0 to r3
     for (let i = 0; i <= 3; i++) {
-        const regStr = this.r[i].toString(16).padStart(4, '0');
-        output += `r${i} = ${regStr}  `;
+      const regStr = this.r[i].toString(16).padStart(4, '0');
+      output += `r${i} = ${regStr}  `;
     }
     output += '\n';
     // Second line: r4, fp, sp, lr
@@ -747,13 +745,13 @@ class Interpreter {
   executeS() {
     let sp = this.r[6];
     let fp = this.r[5];
-  
+
     if (sp === this.spInitial) {
       this.writeOutput('Stack empty\n');
       return;
     } else {
       this.writeOutput("Stack:\n");
-  
+
       for (let addr = sp; addr < MAX_MEMORY; addr++) {
         let value = this.mem[addr];
         let addrStr = addr.toString(16).padStart(4, '0');
@@ -766,7 +764,7 @@ class Interpreter {
       }
     }
   }
-  
+
   writeOutput(message) {
     process.stdout.write(message);
     this.output += message;
@@ -784,7 +782,7 @@ class Interpreter {
         let value = this.r[this.sr];
         // Convert unsigned 16-bit to signed 16-bit
         if (value & 0x8000) {
-            value -= 0x10000;
+          value -= 0x10000;
         }
         const doutStr = `${value}`;
         this.writeOutput(doutStr);
@@ -811,11 +809,11 @@ class Interpreter {
       case 7: // DIN
         while (true) {
           let { inputLine: dinInput, isSimulated } = this.readLineFromStdin();
-      
+
           if (dinInput.trim() === '') {
             continue;
           }
-      
+
           let dinValue = parseInt(dinInput, 10);
           if (isNaN(dinValue)) {
             const errorMsg = 'Invalid dec constant. Re-enter:\n';
@@ -834,15 +832,15 @@ class Interpreter {
             break;
           }
         }
-        break;      
+        break;
       case 8: // HIN
         while (true) {
           let { inputLine: hinInput, isSimulated } = this.readLineFromStdin();
-      
+
           if (hinInput.trim() === '') {
             continue;
           }
-      
+
           let hinValue = parseInt(hinInput, 16);
           if (isNaN(hinValue)) {
             const errorMsg = 'Invalid hex constant. Re-enter:\n';
@@ -860,7 +858,7 @@ class Interpreter {
             break;
           }
         }
-        break;            
+        break;
       case 9: // AIN
         let { char: ainChar, isSimulated } = this.readCharFromStdin();
         this.r[this.dr] = ainChar.charCodeAt(0);
