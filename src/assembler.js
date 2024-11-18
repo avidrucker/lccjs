@@ -274,6 +274,13 @@ class Assembler {
     return path.format({ ...parsedPath, base: undefined, ext: extension });
   }
 
+  /*
+  * performPass currently handles multiple responsibilities:
+  * - Reading lines from the source file.
+  * - Tokenizing each line.
+  * - Handling labels, directives, and instructions.
+  * - Updating the location counter.
+  */
   performPass() {
     // At the beginning of Pass 1
     if (this.pass === 1) {
