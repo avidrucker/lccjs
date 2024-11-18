@@ -20,6 +20,8 @@ const argsForAllTests = [
   ['node', './test/interpreter.test.js', './demos/demoK.e', 'testing interpreter with demoK.e'],
   ['node', './test/interpreter.test.js', './demos/demoL.e', 'testing interpreter with demoL.e'],
   ['node', './test/interpreter.test.js', './demos/demoM.e', 'testing interpreter with demoM.e'],
+  // ['node', './test/interpreter.test.js', './demos/demoN.e', 'testing interpreter with demoN.e'],
+  ['node', './test/interpreter.test.js', './demos/demoO.e', 'cheese', 'testing interpreter with demoO.e']
   // Add more test cases as needed
 ];
 
