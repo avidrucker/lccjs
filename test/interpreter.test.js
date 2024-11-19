@@ -127,7 +127,7 @@ async function testInterpreter() {
   const inputDir = path.dirname(inputFile);
 
   // Paths for files
-  const interpreterOutputLst = path.join(inputDir, `${inputFileName}.lst`);
+  const interpreterJsOutputLst = path.join(inputDir, `${inputFileName}.lst`);
   const lccDockerOutputLst = `/home/${inputFileName}1.lst`;
   const lccOutputLst = path.join(inputDir, `${inputFileName}1.lst`);
   const lccDockerInputFile = `/home/${inputFileName}1.e`;
@@ -220,13 +220,13 @@ async function testInterpreter() {
     // Copy the .lst file back from Docker
     execSyncWithLogging(`docker cp ${containerName}:${lccDockerOutputLst} ${lccOutputLst}`, execSyncOptions);
 
-    if (!fs.existsSync(interpreterOutputLst)) {
-      console.error(`Interpreter .lst file not found at ${interpreterOutputLst}`);
+    if (!fs.existsSync(interpreterJsOutputLst)) {
+      console.error(`Interpreter .lst file not found at ${interpreterJsOutputLst}`);
       process.exit(1);
     }
 
     // Compare the .lst files
-    testResult = compareLstFiles(interpreterOutputLst, lccOutputLst);
+    testResult = compareLstFiles(interpreterJsOutputLst, lccOutputLst);
 
   } catch (error) {
     console.error('Test failed:', error);
@@ -240,7 +240,7 @@ async function testInterpreter() {
       `docker exec ${containerName} rm -f ${lccDockerOutputLst}`,
       `rm -f ${lccInputFile}`,
       `rm -f ${lccOutputLst}`,
-      `rm -f ${interpreterOutputLst}`,
+      `rm -f ${interpreterJsOutputLst}`,
     ];
     
     if (!skipSetup) {

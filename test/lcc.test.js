@@ -124,7 +124,7 @@ async function testLCC() {
   const inputDir = path.dirname(inputFile);
 
   // Paths for files
-  const lccOutputLst = path.join(inputDir, `${inputFileName}.lst`);
+  const lccJsOutputLst = path.join(inputDir, `${inputFileName}.lst`);
   const lccDockerOutputLst = `/home/${inputFileName}1.lst`;
   const lccDockerInputFile = `/home/${inputFileName}1.a`;
   const lccInputFile = path.join(inputDir, `${inputFileName}1.a`);
@@ -172,8 +172,8 @@ async function testLCC() {
     console.log = originalConsoleLog;
 
     // Check if .lst file was created
-    if (!fs.existsSync(lccOutputLst)) {
-      console.error(`.lst file ${lccOutputLst} was not created.`);
+    if (!fs.existsSync(lccJsOutputLst)) {
+      console.error(`.lst file ${lccJsOutputLst} was not created.`);
       process.exit(1);
     }
 
@@ -206,7 +206,7 @@ async function testLCC() {
     execSyncWithLogging(`docker cp ${containerName}:${lccDockerOutputLst} ${lccOutputLst1}`, execSyncOptions);
 
     // Compare the .lst files
-    testResult = compareLstFiles(lccOutputLst, lccOutputLst1);
+    testResult = compareLstFiles(lccJsOutputLst, lccOutputLst1);
   } catch (error) {
     console.error('Test failed:', error);
     process.exitCode = 1;
