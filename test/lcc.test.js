@@ -1,6 +1,6 @@
 // lcc.test.js
 
-const LCC = require('../src/lcc');
+const LCC = require('../src/core/lcc');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');

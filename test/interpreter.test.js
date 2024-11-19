@@ -1,6 +1,6 @@
 // interpreter.test.js
 
-const Interpreter = require('../src/interpreter');
+const Interpreter = require('../src/core/interpreter');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');

@@ -2,7 +2,7 @@
 // how to run from project root directory:
 // node ./test/assembler.test.js ./demos/demoA.a
 
-const Assembler = require('../src/assembler');
+const Assembler = require('../src/core/assembler');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
