@@ -4,8 +4,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const { generateBSTLSTContent } = require('./genStats.js');
-const nameHandler = require('./name.js');
+const { generateBSTLSTContent } = require('../utils/genStats.js');
+const nameHandler = require('../utils/name.js');
 
 const MAX_MEMORY = 65536; // 2^16
 

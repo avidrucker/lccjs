@@ -6,12 +6,13 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const nameHandler = require('./name.js');
 
 function assembleFile(filePath) {
   return new Promise((resolve, reject) => {
     console.log(`Assembling file: ${filePath}`);
 
-    const assemblerProcess = spawn('node', ['./src/assembler.js', filePath], {
+    const assemblerProcess = spawn('node', ['./src/core/assembler.js', filePath], {
       stdio: 'inherit',
       cwd: process.cwd(),
       env: process.env,
@@ -57,6 +58,10 @@ async function assembleAll(directory) {
     }
 
     console.log(`Found ${assemblyFiles.length} .a files in directory ${dirPath}.`);
+
+    // Create the name.nnn file with specified contents
+    const nameFile = path.join(dirPath, 'name.nnn');
+    fs.writeFileSync(nameFile, 'Billy, Bob J\n', { encoding: 'utf8' });
 
     // Assemble each file sequentially
     for (const file of assemblyFiles) {
