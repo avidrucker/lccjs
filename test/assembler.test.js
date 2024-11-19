@@ -10,7 +10,7 @@ const DockerController = require('./dockerController');
 
 const ignoreOrInherit = 'ignore'; // Use 'inherit' to see the output in real-time
 const execSyncOptions = {
-  stdio: ignoreOrInherit,
+  stdio: ignoreOrInherit, // ignoreOrInherit, 'pipe' for verbose error logging
   timeout: 20000, // Increase timeout to 20 seconds
   maxBuffer: 1024 * 1024, // 1MB buffer limit
 };
@@ -71,12 +71,24 @@ function compareHexDumps(file1, file2) {
 }
 
 function execSyncWithLogging(command, options) {
-  console.log(`Executing command: ${command}`);
+  // console.log(`Executing command: ${command}`);
   const startTime = Date.now();
-  const result = execSync(command, options);
-  const endTime = Date.now();
-  console.log(`Command completed in ${endTime - startTime} ms`);
-  return result;
+  try {
+    const result = execSync(command, options);
+    const endTime = Date.now();
+    // console.log(`Command completed in ${endTime - startTime} ms`);
+    return result;
+  } catch (error) {
+    const endTime = Date.now();
+    // console.log(`Command failed in ${endTime - startTime} ms`);
+    if (error.stdout) {
+      console.log(`stdout:\n'${error.stdout.toString()}'`);
+    }
+    if (error.stderr) {
+      console.log(`stderr:\n'${error.stderr.toString()}'`);
+    }
+    throw error;
+  }
 }
 
 async function testAssembler() {
@@ -237,8 +249,16 @@ function runDockerLCC(inputFile, containerName) {
           compilationError = `Output file verification failed: ${verifyError.message}`;
         }
       } catch (err) {
-        console.log(`Failed with LCC path ${lccPath}:`, err.message);
-        compilationError = err.message;
+        console.log(`LCC compilation exited with code ${err.status}. Continuing since we're only interested in the .e file.`);
+        // Proceed even if there's an error, as long as the .e file exists
+        try {
+          execSyncWithLogging(`docker exec ${containerName} ls -l ${lccDockerOutputFile}`, execSyncOptions);
+          compilationSuccessful = true;
+          break;
+        } catch (verifyError) {
+          console.log('Output file not found after compilation');
+          compilationError = `Output file verification failed: ${verifyError.message}`;
+        }
       }
     }
 
