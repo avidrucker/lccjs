@@ -1,5 +1,17 @@
 # TO-DO's
 
+## Project QoL, Documentation, and Maintenance
+- [ ] update README.md to include a more detailed description of the project (including linker.js), its various goals, and its current status (progress, test suite coverage, etc.)
+- [ ] add comments inside of the code to indicate what hasn't been tested yet
+- [ ] make a list of known assembler errors and how to trigger them to make into assembler tests
+- [ ] make a list of known interpreter errors and how to trigger them to make into interpreter tests
+- [ ] make a list of known linker errors and how to trigger them to make into linker tests
+- [ ] make a list of known namer errors and how to trigger them
+- [ ] relocate name.js, genStats.js, picture.js, and other non-core files to a separate directory called "utils"
+- [ ] refactor macwords into constants at the top of the file
+- [ ] refactor mnemonics into constants at the top of the file
+- [ ] refactor names of lst file outputs to be more descriptive in lcc and interpreter tests
+
 ## Core Features
 
 - [x] implement .string, sout, & sin
@@ -60,6 +72,11 @@
 
 ## Test
 
+- [ ] improve tests for lcc.js and interpreter.js to include a meaningful comment that describes the test
+  - [ ] lcc.test.js
+  - [ ] interpreter.test.js
+- [ ] improve test outputs that more accurately describe what the failure was and where it occurred
+  - [ ] assembler.test.js
 - [ ] test .start directive usage
 - [ ] test assembly of .bin files
 - [ ] test detection of division by zero
@@ -80,7 +97,7 @@
 - [x] implement test battery to run all tests one after the other, regardless of whether one or more tests fail, and to log the results of each test at the very end (currently the battery of tests stop when a single test fails)
 - [x] move the docker startup and shutdown out of the test files and into a separate file that is called by the test files
 - [x] move the name.nnn file existence check and creation out of the test files and into a separate file that is called by the test files, such that, for the test suite code, the name.nnn file is created only once, rather than once for each test, to cut down on unnecessary repeated file creations and deletions
-- [ ] **implement an initial smokescreen test that simply attempts to run the lcc via the `lcc -h` command, and, if it fails, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.**
+- [ ] **implement an initial smoke test that simply attempts to run the lcc via the `lcc -h` command, and, if it fails, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.**
 - ~~fix issue where interpreter.test.js runs expecting a .lst file to be created when, in fact, the .lst file is not created by the interpreter.js file, but by the lcc.js file~~ (interpreter.js should create a .lst file after all)
   - ~~change the interpreter.test.js to simply run the files and check for the expected output in the stdout, and to simulate the expected inputs, rather than checking for the existence of a .lst file~~
   - [x] migrate the majority of what is currently interpreter.test.js to lcc.test.js, which will test running lcc.js on a given file (supplied as an argument), and will check for the existence of the generated .lst file as well comparing the contents to make sure that they match
