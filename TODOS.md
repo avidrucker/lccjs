@@ -1,16 +1,21 @@
 # TO-DO's
 
 ## Project QoL, Documentation, and Maintenance
+- [x] put assembleAll.js into utils folder
+- [x] add creation of name.nnn to assembleAll.js before calling assembler.js
 - [ ] update README.md to include a more detailed description of the project (including linker.js), its various goals, and its current status (progress, test suite coverage, etc.)
 - [ ] add comments inside of the code to indicate what hasn't been tested yet
 - [ ] make a list of known assembler errors and how to trigger them to make into assembler tests
 - [ ] make a list of known interpreter errors and how to trigger them to make into interpreter tests
+  - division by zero "Floating point exception" (demoN.a)
+  - infinite loop detection (no demo yet)
 - [ ] make a list of known linker errors and how to trigger them to make into linker tests
 - [ ] make a list of known namer errors and how to trigger them
-- [ ] relocate name.js, genStats.js, picture.js, and other non-core files to a separate directory called "utils"
+  - no name input given (no demo yet)
+- [x] relocate name.js, genStats.js, picture.js, and other non-core files to a separate directory called "utils"
 - [ ] refactor macwords into constants at the top of the file
 - [ ] refactor mnemonics into constants at the top of the file
-- [ ] refactor names of lst file outputs to be more descriptive in lcc and interpreter tests
+- [x] refactor names of lst file outputs to be more descriptive in lcc and interpreter tests
 
 ## Core Features
 
@@ -37,13 +42,12 @@
   - [x] implement linker directives: "As a programmer, I can use .global and .extern directives to define and reference global and external symbols, so that I can share symbols between modules."
     - [x] .extern
     - [x] .global
-    - [ ] .org/.orig
 - [ ] implement offsets
   - [ ] label offsets
     - [ ] implement decimal (base 10) offsets
     - [ ] implement hexadecimal (base 16) offsets
 - [ ] implement usage of * instead of a label to indicate the current memory address
-- [ ] implement catching of division by zero where, when division by zero is detected, attempting to interpret the program will result in an error message being printed to the console ("Floating point exception"), the program will not be executed, and the .lst/.bst files will not be created. note: assembly will still create the .e file.
+- [ ] implement catching of division by zero where, when division by zero is detected, attempting to interpret the program will result in an error message being printed to the console ("Floating point exception"), the program will not be executed, and the .lst/.bst files will not be created. note: assembly will still create the .e file. 2nd note: it appears that the lcc makes blank .lst/.bst files when errors such as division by zero are detected
 - [ ] implement symbolic debugger "As a programmer, I can use the debugger to step through my program, set breakpoints, watchpoints, and inspect memory and registers, so that I can debug my code."
     - [ ] implement debugger commands
     - [ ] implement bp (breakpoint) instruction
@@ -53,10 +57,10 @@
 - [ ] implement 300 char limit per line & corresponding error in assembler
 - [x] implement more directives like `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
   - [ ] implement `.start` directive: "As a programmer, I can specify the entry point of my program via the .start directive, so that I can control where my program begins execution."
-  - [ ] implement `.org/.orig` directive: "As a programmer, I can specify load points via the .orig directive, so that I can control where my code is loaded in memory."
+  - [ ] implement `.org/.orig` directive: "The .org directive sets the location counter during the assembly process to a greater value. For example, if at the address 5 in an assembly language program, we have the directive .org 15, the location is reset to 15. The locations 5 to 14 are padded with zeros. Thus, in this example, it has the same effect as .zero 10"
 - [x] implement dout/udout/hout/aout in interpreter.js
 - [x] implement din/ain/hin in interpreter.js
-- [ ] implement debugging commands s (stack), m (memory), r (registers), bp (break point)
+- [x] implement debugging commands s (stack), m (memory), r (registers)
   - [x] stack draw function
   - [x] memory draw function
   - [x] registers draw function
