@@ -76,12 +76,13 @@
 
 ## Test
 
-- [ ] improve tests for lcc.js and interpreter.js to include a meaningful comment that describes the test
-  - [ ] lcc.test.js
-  - [ ] interpreter.test.js
+- [o] improve tests for lcc.js and interpreter.js to include a meaningful comment that describes the test
+  - [o] lcc.test.js
+  - [o] interpreter.test.js
 - [ ] improve test outputs that more accurately describe what the failure was and where it occurred
   - [ ] assembler.test.js
-- [ ] test .start directive usage
+  - [x] make sure that assembler.test.js continues to run (and check .e hex dumps) even if the LCC fails to interpret a program
+- [x] test .start directive usage (demoN.a)
 - [ ] test assembly of .bin files
 - [ ] test detection of division by zero
 - [ ] test creation of .o files from multiple passed .a files
