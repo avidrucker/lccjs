@@ -28,8 +28,9 @@ const argsForAllTests = [
   ['node', './test/assembler.test.js', './demos/demoK.a', 'testing m command'],
   ['node', './test/assembler.test.js', './demos/demoL.a', 'testing r command'],
   ['node', './test/assembler.test.js', './demos/demoM.a', 'testing s command'],
-  ['node', './test/assembler.test.js', './demos/demoN.a', 'testing division by zero'],
-  ['node', './test/assembler.test.js', './demos/demoO.a', 'cheese', 'testing IO and LST generation']
+  ['node', './test/assembler.test.js', './demos/demoN.a', 'assembling div'],
+  ['node', './test/assembler.test.js', './demos/demoO.a', 'cheese', 'testing IO and LST generation'],
+  ['node', './test/assembler.test.js', './demos/demoP.a', 'assembling .start'],
   // Add more test cases as needed
 ];
 

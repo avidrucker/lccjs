@@ -16,10 +16,11 @@ const argsForAllTests = [
   ['node', './test/interpreter.test.js', './demos/demoG.e', 'g', '-5', 'ff', 'testing interpreter with demoG.e'],
   ['node', './test/interpreter.test.js', './demos/demoH.e', 'testing interpreter with demoH.e'],
   ['node', './test/interpreter.test.js', './demos/demoI.e', 'testing interpreter with demoI.e'],
-  // ['node', './test/interpreter.test.js', './demos/demoJ.e', 'testing interpreter with demoJ.e'], // Disabled if necessary
+  // ['node', './test/interpreter.test.js', './demos/demoJ.e', 'testing interpreter with demoJ.e'], // infinite loop detection test
   ['node', './test/interpreter.test.js', './demos/demoK.e', 'testing interpreter with demoK.e'],
   ['node', './test/interpreter.test.js', './demos/demoL.e', 'testing interpreter with demoL.e'],
   ['node', './test/interpreter.test.js', './demos/demoM.e', 'testing interpreter with demoM.e'],
+  // TODO: add test to intentionally check for interpreter failure
   // ['node', './test/interpreter.test.js', './demos/demoN.e', 'testing interpreter with demoN.e'],
   ['node', './test/interpreter.test.js', './demos/demoO.e', 'cheese', 'testing interpreter with demoO.e'],
   ['node', './test/interpreter.test.js', './demos/demoP.e', 'testing interpreter with demoP.e'],

@@ -7,7 +7,7 @@ const { execSync } = require('child_process');
 const DockerController = require('./dockerController');
 
 const argsForAllTests = [
-  ['node', './test/lcc.test.js', './demos/demoA.a', 'testing lcc.js with demoA.a'],
+  ['node', './test/lcc.test.js', './demos/demoA.a', 'assemble/interpret mov, dout, nl, and halt'],
   ['node', './test/lcc.test.js', './demos/demoB.a', 'input1', 'input2', 'testing lcc.js with demoB.a'],
   ['node', './test/lcc.test.js', './demos/demoC.a', 'testing lcc.js with demoC.a'],
   ['node', './test/lcc.test.js', './demos/demoD.a', 'testing lcc.js with demoD.a'],
