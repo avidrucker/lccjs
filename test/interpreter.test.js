@@ -6,7 +6,7 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const DockerController = require('./dockerController');
 
-const ignoreOrInherit = 'inherit'; // Use 'inherit' to see the output in real-time
+const ignoreOrInherit = 'ignore'; // Use 'inherit' to see the output in real-time
 const execSyncOptions = {
   stdio: ignoreOrInherit,
   timeout: 25000, // Increase timeout to 25 seconds

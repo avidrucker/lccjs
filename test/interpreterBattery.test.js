@@ -7,8 +7,8 @@ const { execSync } = require('child_process');
 const DockerController = require('./dockerController');
 
 const argsForAllTests = [
-  ['node', './test/interpreter.test.js', './demos/demoA.e', 'testing interpreter with demoA.e'],
-  ['node', './test/interpreter.test.js', './demos/demoB.e', 'input1', 'input2', 'testing interpreter with demoB.e'],
+  ['node', './test/interpreter.test.js', './demos/demoA.e', 'interpreting mov, dout, nl, and halt'],
+  ['node', './test/interpreter.test.js', './demos/demoB.e', 'input1', 'input2', 'interpreting the simulated input of 2 user inputs'],
   ['node', './test/interpreter.test.js', './demos/demoC.e', 'testing interpreter with demoC.e'],
   ['node', './test/interpreter.test.js', './demos/demoD.e', 'testing interpreter with demoD.e'],
   ['node', './test/interpreter.test.js', './demos/demoE.e', 'testing interpreter with demoE.e'],
@@ -21,7 +21,8 @@ const argsForAllTests = [
   ['node', './test/interpreter.test.js', './demos/demoL.e', 'testing interpreter with demoL.e'],
   ['node', './test/interpreter.test.js', './demos/demoM.e', 'testing interpreter with demoM.e'],
   // ['node', './test/interpreter.test.js', './demos/demoN.e', 'testing interpreter with demoN.e'],
-  ['node', './test/interpreter.test.js', './demos/demoO.e', 'cheese', 'testing interpreter with demoO.e']
+  ['node', './test/interpreter.test.js', './demos/demoO.e', 'cheese', 'testing interpreter with demoO.e'],
+  ['node', './test/interpreter.test.js', './demos/demoP.e', 'testing interpreter with demoP.e'],
   // Add more test cases as needed
 ];
 
@@ -49,7 +50,7 @@ function runTest(args) {
     const env = Object.assign({}, process.env, { SKIP_SETUP: 'true' });
 
     const testProcess = spawn(args[0], args.slice(1), {
-      stdio: 'inherit',
+      stdio: 'ignore', // was 'inherit'
       cwd: process.cwd(),
       env: env,
     });
