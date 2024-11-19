@@ -103,7 +103,7 @@ function generateBSTLSTContent(options) {
       },
       {
         label: 'Program size',
-        value: `${(interpreter.memMax + 1).toString(16)} (hex)    ${interpreter.memMax + 1} (dec)`,
+        value: `${(interpreter.memMax - interpreter.loadPoint + 1).toString(16)} (hex)    ${interpreter.memMax + 1} (dec)`,
       },
       {
         label: 'Max stack size',
