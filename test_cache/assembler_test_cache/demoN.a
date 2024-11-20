@@ -1,0 +1,7 @@
+; demo program that tests the detection of division by zero
+    mov r0, 3
+    mov r1, 0
+    div r0, r1
+    dout r0
+    nl
+    halt
