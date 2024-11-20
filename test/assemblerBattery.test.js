@@ -4,6 +4,7 @@
 
 const { spawn } = require('child_process');
 const path = require('path');
+const { isCacheValid } = require('./testCacheHandler');
 const DockerController = require('./dockerController');
 
 // Note: Simulated user input is provided for some tests. 
@@ -34,22 +35,24 @@ const argsForAllTests = [
   // Add more test cases as needed
 ];
 
-function runTest(args) {
+function runTest(cmd, script, inputFile, userInputs, skipCache) {
   return new Promise((resolve, reject) => {
-    console.log(`Running '${args.join(' ')}'`);
+    const args = [script, inputFile, ...userInputs];
+    if (skipCache) {
+      args.push('--skip-cache');
+    }
+    console.log(`Running '${[cmd, ...args].join(' ')}'`);
 
-    const testProcess = spawn(args[0], args.slice(1), {
-      stdio: 'ignore', // was inherit
+    const testProcess = spawn(cmd, args, {
+      stdio: 'inherit',
       cwd: process.cwd(),
       env: process.env,
     });
 
     testProcess.on('close', (code) => {
       if (code === 0) {
-        console.log(`Test passed with exit code ${code}`);
         resolve();
       } else {
-        console.error(`Test failed with exit code ${code}`);
         reject(new Error(`Test failed with exit code ${code}`));
       }
     });
@@ -66,53 +69,66 @@ async function runAllTests() {
   const dockerController = new DockerController(containerName);
   const testResults = []; // To collect test results
 
-  // Start the container at the beginning
-  try {
-    dockerController.startContainer();
-  } catch (err) {
-    console.error('Error starting Docker container:', err);
-    process.exit(1);
-  }
+  let testsNeedingDocker = [];
 
-  let testNumber = 1;
-  const totalTests = argsForAllTests.length;
-
+  // First, check cache for all tests
   for (const testArgs of argsForAllTests) {
     const testComment = testArgs[testArgs.length - 1];
-    try {
-      const testArgsWithoutComment = testArgs.slice(0, testArgs.length - 1);
-      console.log(`\nTest ${testNumber}: ${testComment}`);
-      await runTest(testArgsWithoutComment);
+    const testArgsWithoutComment = testArgs.slice(0, testArgs.length - 1);
+    const [cmd, script, inputFile, ...userInputs] = testArgsWithoutComment;
 
-      // Record test result as pass
-      const testName = path.basename(testArgs[2], '.a');
-      testResults.push({ name: testName, status: 'Pass', comment: testComment });
-    } catch (err) {
-      console.error(`Error in test ${testArgs[2]}: ${err.message}`);
+    const inputFileName = path.basename(inputFile, '.a');
 
-      // Record test result as fail
-      const testName = path.basename(testArgs[2], '.a');
-      testResults.push({ name: testName, status: 'Fail', comment: testComment });
+    const isValidCache = isCacheValid(inputFile);
 
-      // Uncomment the following line if you want to stop execution on the first failure
-      // process.exit(1);
-    } finally {
-      testNumber++;
+    if (isValidCache) {
+      console.log(`Cache is valid for ${inputFileName}. Marking test as passed.`);
+      testResults.push({ name: inputFileName, status: 'Pass', comment: testComment });
+    } else {
+      console.log(`Cache is invalid or missing for ${inputFileName}. Test needs to be run.`);
+      testsNeedingDocker.push({ cmd, script, inputFile, userInputs, comment: testComment });
     }
   }
 
-  // Stop the Docker container after all tests
-  try {
-    dockerController.stopContainer();
-  } catch (err) {
-    console.error('Error stopping Docker container:', err);
+  if (testsNeedingDocker.length > 0) {
+    // Start the Docker container
+    try {
+      dockerController.startContainer();
+    } catch (err) {
+      console.error('Error starting Docker container:', err);
+      process.exit(1);
+    }
+
+    for (const test of testsNeedingDocker) {
+      const { cmd, script, inputFile, userInputs, comment } = test;
+      const testName = path.basename(inputFile, '.a');
+      console.log(`\nRunning test for ${testName}: ${comment}`);
+      try {
+        await runTest(cmd, script, inputFile, userInputs, true); // Pass skipCache=true
+        // Record test result as pass
+        testResults.push({ name: testName, status: 'Pass', comment });
+      } catch (err) {
+        console.error(`Error in test ${testName}: ${err.message}`);
+        // Record test result as fail
+        testResults.push({ name: testName, status: 'Fail', comment });
+      }
+    }
+
+    // Stop the Docker container
+    try {
+      dockerController.stopContainer();
+    } catch (err) {
+      console.error('Error stopping Docker container:', err);
+    }
   }
 
-  // Print test results
+  // Output test results sorted alphabetically
+  testResults.sort((a, b) => a.name.localeCompare(b.name));
+
   console.log('\nTest Results');
   for (const result of testResults) {
-    const statusEmoji = result.status === 'Pass' ? '✅' : '❌';
-    console.log(`${result.name}: ${result.status} ${statusEmoji} ${result.comment}`);
+    const statusEmoji = result.status === 'Pass' ? '✅' : result.status === 'Fail' ? '❌' : '❓';
+    console.log(`${result.name}: ${result.status} ${statusEmoji} - ${result.comment}`);
   }
 
   console.log('\nAll tests completed.');
