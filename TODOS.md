@@ -76,6 +76,8 @@
 
 ## Test
 
+- [ ] **write test inputs and outputs to cache so that tests can be run without needing to run the lcc in Docker**
+- [ ] enable interpreter.js tests to expect (and handle gracefully) interpreter failures such as on infinite loops, division by zero, etc., and to confirm that either the program errored out or that the resulting .lst file is empty
 - [o] improve tests for lcc.js and interpreter.js to include a meaningful comment that describes the test
   - [o] lcc.test.js
   - [o] interpreter.test.js
