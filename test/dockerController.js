@@ -21,6 +21,15 @@ class DockerController {
     return result;
   }
 
+  isDockerAvailable() {
+    try {
+      execSync('docker info', { stdio: 'ignore' });
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   containerExists() {
     try {
       execSync(`docker inspect ${this.containerName}`, { stdio: 'ignore' });
