@@ -1,9 +1,13 @@
 test/a1test*
 test/a2test*
-*.e
+test/*.e
+demos/*.e
+src/*.e
 *.o
 *.bst
-*.lst
+test/*.lst
+demos/*.lst
+src/*.lst
 name.nnn
 ex0306.a
 demos/*1.a
