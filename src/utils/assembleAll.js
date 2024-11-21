@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 
-// assembleAll.js
+// /src/utils/assembleAll.js
 // Usage: node assembleAll.js ./path/to/directory/
 
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const nameHandler = require('./name.js');
 
 function assembleFile(filePath) {
   return new Promise((resolve, reject) => {
