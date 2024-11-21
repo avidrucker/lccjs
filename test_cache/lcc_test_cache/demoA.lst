@@ -1,0 +1,22 @@
+LCC.js Assemble/Link/Interpret/Debug Ver 0.1  Thu, Nov 21, 2024, 14:14:11
+Billy, Bob J
+
+Header
+o
+C
+
+Loc   Code           Source Code
+                    ; demoA.a: simple program assembly/execution and test input/output caching
+0000  d005           mov r0, 5
+0001  f002           dout r0
+0002  f001           nl
+0003  f000           halt
+====================================================== Output
+5
+
+========================================== Program statistics
+Input file name          =   ./demos/demoA.a
+Instructions executed    =   4 (hex)    4 (dec)
+Program size             =   4 (hex)    4 (dec)
+Max stack size           =   0 (hex)    0 (dec)
+Load point               =   0 (hex)    0 (dec)
