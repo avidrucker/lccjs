@@ -154,7 +154,7 @@ async function runAllTests() {
       const nameFile = path.join(__dirname, '../demos/name.nnn');
       fs.writeFileSync(nameFile, 'Billy, Bob J\n', { encoding: 'utf8' });
       try {
-        execSync(`docker cp ${nameFile} ${containerName}:/home/`, { stdio: 'inherit' });
+        execSync(`docker cp ${nameFile} ${containerName}:/home/`, execSyncOptions);
       } catch (err) {
         console.error('Error copying name.nnn to Docker container:', err);
         // Mark tests as "Not Run"
@@ -189,7 +189,7 @@ async function runAllTests() {
       // Clean up name.nnn files
       try {
         fs.unlinkSync(nameFile);
-        execSync(`docker exec ${containerName} rm -f /home/name.nnn`, { stdio: 'inherit' });
+        execSync(`docker exec ${containerName} rm -f /home/name.nnn`, execSyncOptions);
       } catch (err) {
         console.error('Error cleaning up name.nnn files:', err);
       }
