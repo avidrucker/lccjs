@@ -106,34 +106,51 @@ async function runAllTests() {
   }
 
   if (testsNeedingDocker.length > 0) {
-    // Start the Docker container
-    try {
-      dockerController.startContainer();
-    } catch (err) {
-      console.error('Error starting Docker container:', err);
-      process.exit(1);
-    }
+    // Check if Docker is available
+    const dockerAvailable = dockerController.isDockerAvailable();
 
-    for (const test of testsNeedingDocker) {
-      const { cmd, script, inputFile, userInputs, comment } = test;
-      const testName = path.basename(inputFile, '.a');
-      console.log(`\nRunning test for ${testName}: ${comment}`);
-      try {
-        await runTest(cmd, script, inputFile, userInputs, true); // Pass skipCache=true
-        // Record test result as pass
-        testResults.push({ name: testName, status: 'Pass', comment });
-      } catch (err) {
-        console.error(`Error in test ${testName}: ${err.message}`);
-        // Record test result as fail
-        testResults.push({ name: testName, status: 'Fail', comment });
+    if (!dockerAvailable) {
+      console.error('Docker is not available. Cannot run tests that require Docker.');
+      // Mark tests that need Docker as "Not Run"
+      for (const test of testsNeedingDocker) {
+        const testName = path.basename(test.inputFile, '.a');
+        testResults.push({ name: testName, status: 'Not Run', comment: test.comment });
       }
-    }
+    } else {
+      // Start the Docker container
+      try {
+        dockerController.startContainer();
+      } catch (err) {
+        console.error('Error starting Docker container:', err);
+        // Mark tests as "Not Run"
+        for (const test of testsNeedingDocker) {
+          const testName = path.basename(test.inputFile, '.a');
+          testResults.push({ name: testName, status: 'Not Run', comment: test.comment });
+        }
+        // Optionally, exit or continue based on your preference
+      }
 
-    // Stop the Docker container
-    try {
-      dockerController.stopContainer();
-    } catch (err) {
-      console.error('Error stopping Docker container:', err);
+      for (const test of testsNeedingDocker) {
+        const { cmd, script, inputFile, userInputs, comment } = test;
+        const testName = path.basename(inputFile, '.a');
+        console.log(`\nRunning test for ${testName}: ${comment}`);
+        try {
+          await runTest(cmd, script, inputFile, userInputs, true); // Pass skipCache=true
+          // Record test result as pass
+          testResults.push({ name: testName, status: 'Pass', comment });
+        } catch (err) {
+          console.error(`Error in test ${testName}: ${err.message}`);
+          // Record test result as fail
+          testResults.push({ name: testName, status: 'Fail', comment });
+        }
+      }
+
+      // Stop the Docker container
+      try {
+        dockerController.stopContainer();
+      } catch (err) {
+        console.error('Error stopping Docker container:', err);
+      }
     }
   }
 
@@ -142,7 +159,16 @@ async function runAllTests() {
 
   console.log('\nTest Results');
   for (const result of testResults) {
-    const statusEmoji = result.status === 'Pass' ? '✅' : result.status === 'Fail' ? '❌' : '❓';
+    let statusEmoji;
+    if (result.status === 'Pass') {
+      statusEmoji = '✅';
+    } else if (result.status === 'Fail') {
+      statusEmoji = '❌';
+    } else if (result.status === 'Not Run') {
+      statusEmoji = '❓';
+    } else {
+      statusEmoji = '❗️';
+    }
     console.log(`${result.name}: ${result.status} ${statusEmoji} - ${result.comment}`);
   }
 
