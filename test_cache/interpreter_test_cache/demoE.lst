@@ -1,0 +1,31 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Thu Nov 21 17:56:28 2024
+Billy, Bob J
+
+Header
+o
+C
+
+Loc   Code
+0000  4801
+0001  f000
+0002  ae00
+0003  aa00
+0004  ab8c
+0005  2007
+0006  1022
+0007  f002
+0008  f001
+0009  ad4c
+000a  aa01
+000b  ae01
+000c  c1c0
+000d  0005
+====================================================== Output
+7
+
+========================================== Program statistics
+Input file name       =      demoE1.e
+Instructions executed =    d (hex)    13 (dec)
+Program size          =    e (hex)    14 (dec)
+Max stack size        =    2 (hex)     2 (dec)
+Load point            =    0 (hex)     0 (dec)
