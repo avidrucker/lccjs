@@ -15,17 +15,6 @@ const execSyncOptions = {
 };
 
 let userInputs;
-const MAX_FILE_SIZE = 1024 * 1024; // 1MB
-
-function isFileSizeValid(filePath) {
-  try {
-    const stat = fs.statSync(filePath);
-    return stat.size <= MAX_FILE_SIZE;
-  } catch (error) {
-    console.error(`Error accessing file ${filePath}:`, error);
-    return false;
-  }
-}
 
 // Function to compare .lst files, ignoring whitespace and comments, and ignoring the first line
 function compareLstFiles(file1, file2) {
