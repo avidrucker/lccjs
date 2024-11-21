@@ -3,17 +3,33 @@
 const fs = require('fs');
 const path = require('path');
 
-const CACHE_DIR = path.join(__dirname, '../test_cache');
-
-// Ensure the cache directory exists
-if (!fs.existsSync(CACHE_DIR)) {
-  fs.mkdirSync(CACHE_DIR);
+function ensureDirectoryExists(directoryPath) {
+  if (!fs.existsSync(directoryPath)) {
+    fs.mkdirSync(directoryPath, { recursive: true });
+  }
 }
 
-function isCacheValid(inputFilePath) {
-  const inputFileName = path.basename(inputFilePath, '.a');
-  const cachedInputFile = path.join(CACHE_DIR, `${inputFileName}.a`);
-  const cachedOutputFile = path.join(CACHE_DIR, `${inputFileName}.e`);
+function getCachedFilePaths(inputFilePath, options = {}) {
+  const {
+    cacheDir = path.join(__dirname, '../test_cache'),
+    inputExt = path.extname(inputFilePath),
+    outputExt = '.e', // Default output extension
+  } = options;
+
+  ensureDirectoryExists(cacheDir);
+
+  const inputFileName = path.basename(inputFilePath, inputExt);
+  const cachedInputFile = path.join(cacheDir, `${inputFileName}${inputExt}`);
+  const cachedOutputFile = path.join(cacheDir, `${inputFileName}${outputExt}`);
+
+  return {
+    cachedInputFile,
+    cachedOutputFile,
+  };
+}
+
+function isCacheValid(inputFilePath, options = {}) {
+  const { cachedInputFile, cachedOutputFile } = getCachedFilePaths(inputFilePath, options);
 
   if (!fs.existsSync(cachedInputFile) || !fs.existsSync(cachedOutputFile)) {
     return false;
@@ -25,10 +41,8 @@ function isCacheValid(inputFilePath) {
   return currentInputContent.equals(cachedInputContent);
 }
 
-function updateCache(inputFilePath, outputFilePath) {
-  const inputFileName = path.basename(inputFilePath, '.a');
-  const cachedInputFile = path.join(CACHE_DIR, `${inputFileName}.a`);
-  const cachedOutputFile = path.join(CACHE_DIR, `${inputFileName}.e`);
+function updateCache(inputFilePath, outputFilePath, options = {}) {
+  const { cachedInputFile, cachedOutputFile } = getCachedFilePaths(inputFilePath, options);
 
   fs.copyFileSync(inputFilePath, cachedInputFile);
   fs.copyFileSync(outputFilePath, cachedOutputFile);
@@ -37,5 +51,5 @@ function updateCache(inputFilePath, outputFilePath) {
 module.exports = {
   isCacheValid,
   updateCache,
-  CACHE_DIR,
+  getCachedFilePaths,
 };
