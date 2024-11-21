@@ -235,6 +235,13 @@ async function testInterpreter() {
     }
 
     if (!skipSetup) {
+      // **Check if Docker is available**
+      if (!dockerController.isDockerAvailable()) {
+        console.error('Docker is not available. Cannot run test that requires Docker.');
+        console.error('Test could not be run because Docker was not available.');
+        process.exit(2); // Exit code 2 indicates Docker is unavailable
+      }
+
       // Check if Docker container is running
       if (!dockerController.isContainerRunning()) {
         // Start the container

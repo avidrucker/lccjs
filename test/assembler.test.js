@@ -173,6 +173,13 @@ async function testAssembler() {
       console.log('Skipping cache checking as per --skip-cache argument.');
     }
 
+    // **Check if Docker is available**
+    if (!dockerController.isDockerAvailable()) {
+      console.error('Docker is not available. Cannot run test that requires Docker.');
+      console.error('Test could not be run because Docker was not available.');
+      process.exit(2); // Use exit code 2 to indicate Docker is unavailable
+    }
+
     // Proceed to run Docker and perform the test
     // Start Docker container if not running
     if (!dockerController.isContainerRunning()) {
