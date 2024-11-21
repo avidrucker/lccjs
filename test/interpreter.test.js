@@ -1,20 +1,20 @@
 // interpreter.test.js
 
 const Interpreter = require('../src/core/interpreter');
+const Assembler = require('../src/core/assembler'); // Import the assembler
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 const DockerController = require('./dockerController');
+const { isCacheValid, updateCache, getCachedFilePaths } = require('./testCacheHandler');
 
-const ignoreOrInherit = 'ignore'; // Use 'inherit' to see the output in real-time
 const execSyncOptions = {
-  stdio: ignoreOrInherit,
+  stdio: 'ignore', // Change to 'inherit' or 'pipe' to see the output
   timeout: 25000, // Increase timeout to 25 seconds
   maxBuffer: 1024 * 1024, // 1MB buffer limit
 };
 
 let userInputs;
-const skipSetup = process.env.SKIP_SETUP === 'true';
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB
 
 function isFileSizeValid(filePath) {
@@ -94,23 +94,50 @@ function compareLstFiles(file1, file2) {
 }
 
 function execSyncWithLogging(command, options) {
-  console.log(`Executing command: ${command}`);
+  // console.log(`Executing command: ${command}`);
   const startTime = Date.now();
   const result = execSync(command, options);
   const endTime = Date.now();
-  console.log(`Command completed in ${endTime - startTime} ms`);
+  // console.log(`Command completed in ${endTime - startTime} ms`);
   return result;
+}
+
+// Define cache directory and options
+const INTERPRETER_CACHE_DIR = path.join(__dirname, '../test_cache/interpreter_test_cache');
+const cacheOptions = {
+  cacheDir: INTERPRETER_CACHE_DIR,
+  inputExt: '.e',
+  outputExt: '.lst',
+};
+
+// Ensure the cache directory exists
+if (!fs.existsSync(INTERPRETER_CACHE_DIR)) {
+  fs.mkdirSync(INTERPRETER_CACHE_DIR, { recursive: true });
 }
 
 async function testInterpreter() {
   // Collect command-line arguments
   const args = process.argv.slice(2);
 
+  // Check for --skip-cache
+  let skipCache = false;
+  const skipCacheIndex = args.indexOf('--skip-cache');
+  if (skipCacheIndex !== -1) {
+    skipCache = true;
+    args.splice(skipCacheIndex, 1); // Remove '--skip-cache' from args
+  }
+
   // Default to demoA.e if no argument is provided
-  const inputFile = args[0] || path.join(__dirname, '../demos/demoA.e');
+  const inputFileArgIndex = args.findIndex(arg => !arg.startsWith('-'));
+  if (inputFileArgIndex === -1) {
+    console.error('No input file specified.');
+    process.exit(1);
+  }
+
+  const inputFile = args[inputFileArgIndex];
 
   // Collect user inputs (arguments after the executable file)
-  userInputs = args.slice(1);
+  userInputs = args.slice(inputFileArgIndex + 1);
 
   const containerName = 'mycontainer';
   const dockerController = new DockerController(containerName);
@@ -118,8 +145,33 @@ async function testInterpreter() {
 
   // Check if the .e file exists
   if (!fs.existsSync(inputFile)) {
-    console.error(`Executable file ${inputFile} does not exist.`);
-    process.exit(1);
+    console.log(`Executable file ${inputFile} does not exist.`);
+    if (process.env.SKIP_ASSEMBLY === 'true') {
+      console.error('SKIP_ASSEMBLY is set. Cannot assemble .a file.');
+      process.exit(1);
+    } else {
+      // Try to assemble the corresponding .a file
+      const inputFileName = path.basename(inputFile, '.e');
+      const inputDir = path.dirname(inputFile);
+      const assemblyFile = path.join(inputDir, `${inputFileName}.a`);
+      if (fs.existsSync(assemblyFile)) {
+        console.log(`Assembling ${assemblyFile} into ${inputFile}...`);
+        try {
+          const assembler = new Assembler();
+          assembler.main([assemblyFile]);
+          if (!fs.existsSync(inputFile)) {
+            console.error(`Failed to assemble ${assemblyFile} into ${inputFile}.`);
+            process.exit(1);
+          }
+        } catch (err) {
+          console.error(`Error assembling ${assemblyFile}:`, err);
+          process.exit(1);
+        }
+      } else {
+        console.error(`Assembly file ${assemblyFile} does not exist.`);
+        process.exit(1);
+      }
+    }
   }
 
   // Derive filenames
@@ -134,8 +186,65 @@ async function testInterpreter() {
   const lccInputFile = path.join(inputDir, `${inputFileName}1.e`);
 
   let testResult = false;
+  const skipSetup = process.env.SKIP_SETUP === 'true';
 
   try {
+
+    const nameFile = path.join(inputDir, 'name.nnn');
+    fs.writeFileSync(nameFile, 'Billy, Bob J\n');
+
+    if (!skipCache) {
+      // Perform cache checking
+      const cacheValid = isCacheValid(inputFile, cacheOptions);
+  
+      if (cacheValid) {
+        console.log('Cache exists and inputs are identical. Using cached output for comparison.');
+  
+        // Run interpreter.js on the .e file
+        const interpreter = new Interpreter();
+  
+        // Set up simulated user inputs
+        if (userInputs.length > 0) {
+          interpreter.inputBuffer = userInputs.join('\n') + '\n';
+          console.log('Simulated inputBuffer:', JSON.stringify(interpreter.inputBuffer));
+        }
+  
+        // Redirect console.log and process.stdout.write to capture outputs
+        const originalConsoleLog = console.log;
+        const originalProcessStdoutWrite = process.stdout.write;
+  
+        let interpreterOutput = '';
+        console.log = function (...args) {
+          const message = args.join(' ');
+          interpreterOutput += message + '\n';
+          originalConsoleLog.apply(console, args);
+        };
+  
+        process.stdout.write = function (chunk, encoding, callback) {
+          interpreterOutput += chunk;
+          return originalProcessStdoutWrite.call(process.stdout, chunk, encoding, callback);
+        };
+  
+        // Run interpreter
+        interpreter.generateStats = true;
+        interpreter.main([inputFile]);
+  
+        // Restore console.log and process.stdout.write
+        console.log = originalConsoleLog;
+        process.stdout.write = originalProcessStdoutWrite;
+  
+        // Compare the .lst file generated by interpreter with the cached .lst file
+        const { cachedOutputFile } = getCachedFilePaths(inputFile, cacheOptions);
+        testResult = compareLstFiles(interpreterJsOutputLst, cachedOutputFile);
+  
+        // We do not update the cache here because it's already valid.
+
+        process.exit(testResult ? 0 : 1);
+      }
+    } else {
+      console.log('Skipping cache checking as per --skip-cache argument.');
+    }
+
     if (!skipSetup) {
       // Check if Docker container is running
       if (!dockerController.isContainerRunning()) {
@@ -158,15 +267,12 @@ async function testInterpreter() {
       console.log('Simulated inputBuffer:', JSON.stringify(interpreter.inputBuffer));
     }
 
+    // Use process.env.SKIP_SETUP to control name.nnn creation
     if (!skipSetup) {
-      // Create the name.nnn file with specified contents
-      const nameFile = path.join(inputDir, 'name.nnn');
-      fs.writeFileSync(nameFile, 'Billy, Bob J\n');
-    
       // Copy name.nnn to Docker container
       execSyncWithLogging(`docker cp ${nameFile} ${containerName}:/home/`, execSyncOptions);
     } else {
-      console.log('Skipping name.nnn file creation and Docker copy because SKIP_SETUP is true.');
+      console.log('Skipping Docker name.nnn file copy because SKIP_SETUP is true.');
     }
 
     // Redirect console.log and process.stdout.write to capture outputs
@@ -197,7 +303,7 @@ async function testInterpreter() {
     // Copy the .e file to docker container, renaming it appropriately
     fs.copyFileSync(inputFile, lccInputFile);
 
-    // Copy file to Docker container
+    // Copy file to Docker container // TODO: clarify which file is being copied
     execSyncWithLogging(`docker cp ${lccInputFile} ${containerName}:/home/`, execSyncOptions);
 
     // Run lcc in Docker to generate .lst file
@@ -215,6 +321,7 @@ async function testInterpreter() {
       runCommand = `cd /home && (${echoSleepChain}) | /cuh/cuh63/lnx/lcc ${inputFileName}1.e`;
     }
 
+    // Run the command in Docker // TODO: clarify what command is being run
     execSyncWithLogging(`docker exec ${containerName} sh -c "${runCommand}"`, execSyncOptions);
 
     // Copy the .lst file back from Docker
@@ -228,6 +335,11 @@ async function testInterpreter() {
     // Compare the .lst files
     testResult = compareLstFiles(interpreterJsOutputLst, lccOutputLst);
 
+    if (testResult) {
+      // Update cache: copy input and output files to cache
+      updateCache(inputFile, lccOutputLst, cacheOptions);
+    }
+
   } catch (error) {
     console.error('Test failed:', error);
     process.exitCode = 1;
@@ -236,18 +348,22 @@ async function testInterpreter() {
     console.log('Cleaning up test files...');
 
     const cleanupCommands = [
-      `docker exec ${containerName} rm -f ${lccDockerInputFile}`,
-      `docker exec ${containerName} rm -f ${lccDockerOutputLst}`,
       `rm -f ${lccInputFile}`,
       `rm -f ${lccOutputLst}`,
       `rm -f ${interpreterJsOutputLst}`,
     ];
+
+    if(containerStartedByTest) {
+      cleanupCommands.push(
+        `docker exec ${containerName} rm -f ${lccDockerInputFile}`,
+        `docker exec ${containerName} rm -f ${lccDockerOutputLst}`);
+    }
     
     if (!skipSetup) {
-      cleanupCommands.push(
-        `docker exec ${containerName} rm -f /home/name.nnn`,
-        `rm -f ${inputDir}/name.nnn`
-      );
+      cleanupCommands.push(`rm -f ${inputDir}/name.nnn`);
+      if(containerStartedByTest) {
+        cleanupCommands.push(`docker exec ${containerName} rm -f /home/name.nnn`);
+      }
     }
 
     cleanupCommands.forEach((cmd) => {
