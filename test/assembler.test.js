@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 const DockerController = require('./dockerController');
-const { isCacheValid, updateCache, CACHE_DIR } = require('./testCacheHandler');
+const { isCacheValid, updateCache, getCachedFilePaths } = require('./testCacheHandler');
 
 const execSyncOptions = {
   stdio: 'pipe',
@@ -92,6 +92,22 @@ function execSyncWithLogging(command, options) {
   }
 }
 
+// Define cache directory and options
+const ASSEMBLER_CACHE_DIR = path.join(__dirname, '../test_cache/assembler_test_cache');
+const cacheOptions = {
+  cacheDir: ASSEMBLER_CACHE_DIR,
+  inputExt: '.a',
+  outputExt: '.e',
+};
+
+// Ensure the cache directory exists
+if (!fs.existsSync(ASSEMBLER_CACHE_DIR)) {
+  fs.mkdirSync(ASSEMBLER_CACHE_DIR, { recursive: true });
+  console.log("Created cache directory:", ASSEMBLER_CACHE_DIR);
+} else {
+  console.log("Using cache directory:", ASSEMBLER_CACHE_DIR);
+}
+
 async function testAssembler() {
   // Collect command-line arguments
   const args = process.argv.slice(2);
@@ -130,12 +146,12 @@ async function testAssembler() {
   const lccOutputFile = path.join(inputDir, `${inputFileName}1.e`);
 
   let testResult = false;
-  let dockerCleanupNecessary = false;
+  // let dockerCleanupNecessary = false;
 
   try {
     if (!skipCache) {
       // Perform cache checking
-      const cacheValid = isCacheValid(inputFile);
+      const cacheValid = isCacheValid(inputFile, cacheOptions);
 
       if (cacheValid) {
         console.log('Cache exists and inputs are identical. Using cached output for comparison.');
@@ -149,7 +165,7 @@ async function testAssembler() {
           throw new Error('Assembler output file size exceeds limit - possible assembler error');
         }
 
-        const cachedOutputFile = path.join(CACHE_DIR, `${inputFileName}.e`);
+        const { cachedOutputFile } = getCachedFilePaths(inputFile, cacheOptions);
         testResult = compareHexDumps(assemblerOutput, cachedOutputFile);
         process.exit(testResult ? 0 : 1);
       }
@@ -161,6 +177,7 @@ async function testAssembler() {
     // Start Docker container if not running
     if (!dockerController.isContainerRunning()) {
       dockerController.startContainer();
+      dockerCleanupNecessary = true;
     }
 
     // Run assembler.js
@@ -169,7 +186,6 @@ async function testAssembler() {
 
     // Run LCC in Docker
     const lccOutput = runDockerLCC(inputFile, containerName);
-    dockerCleanupNecessary = true;
 
     // Check LCC output file size
     if (!isFileSizeValid(lccOutput)) {
@@ -184,7 +200,7 @@ async function testAssembler() {
     testResult = compareHexDumps(assemblerOutput, lccOutput);
 
     // Update cache: copy input and output files to cache
-    updateCache(inputFile, lccOutput);
+    updateCache(inputFile, lccOutput, cacheOptions);
 
     process.exit(testResult ? 0 : 1);
 

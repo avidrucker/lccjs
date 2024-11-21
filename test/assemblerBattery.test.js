@@ -4,8 +4,22 @@
 
 const { spawn } = require('child_process');
 const path = require('path');
-const { isCacheValid } = require('./testCacheHandler');
+const fs = require('fs');
+const { isCacheValid, getCachedFilePaths } = require('./testCacheHandler');
 const DockerController = require('./dockerController');
+
+// Define cache directory and options
+const ASSEMBLER_CACHE_DIR = path.join(__dirname, '../test_cache/assembler_test_cache');
+const cacheOptions = {
+  cacheDir: ASSEMBLER_CACHE_DIR,
+  inputExt: '.a',
+  outputExt: '.e',
+};
+
+// Ensure the cache directory exists
+if (!fs.existsSync(ASSEMBLER_CACHE_DIR)) {
+  fs.mkdirSync(ASSEMBLER_CACHE_DIR, { recursive: true });
+}
 
 // Note: Simulated user input is provided for some tests. 
 // The input is provided as command line arguments,
@@ -79,7 +93,8 @@ async function runAllTests() {
 
     const inputFileName = path.basename(inputFile, '.a');
 
-    const isValidCache = isCacheValid(inputFile);
+    // Use the same cache options as assembler.test.js
+    const isValidCache = isCacheValid(inputFile, cacheOptions);
 
     if (isValidCache) {
       console.log(`Cache is valid for ${inputFileName}. Marking test as passed.`);
