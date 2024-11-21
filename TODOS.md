@@ -16,6 +16,7 @@
 - [ ] refactor macwords into constants at the top of the file
 - [ ] refactor mnemonics into constants at the top of the file
 - [x] refactor names of lst file outputs to be more descriptive in lcc and interpreter tests
+- [ ] refactor tests to have all file comparison functions come from a single module compareFiles.js which has a hex dump comparison, .lst file comparison, and general file comparison function which can be used by all tests and also by testCacheHandler.js
 
 ## Core Features
 
