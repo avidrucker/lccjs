@@ -33,7 +33,7 @@
   - [ ] implement `sll` mnemonic
   - [ ] implement `rol` mnemonic
   - [ ] implement `ror` mnemonic
-  - [ ] implement `mul` mnemonic
+  - [ ] **implement `mul` mnemonic** (docs simpleCalc.a)
   - [ ] implement `div` mnemonic (demos demoN.a, ...)
   - [ ] implement `rem` mnemonic
   - [ ] implement `or` mnenmonic
