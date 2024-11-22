@@ -1,0 +1,76 @@
+; Simple Calculator Program
+
+; Main program
+startup:    bl main
+            halt
+
+; Function 'main'
+main:       push lr
+            push fp
+            mov fp, sp
+
+            ; Prompt for first number
+            lea r0, prompt_num1
+            sout r0
+            din r0         ; Read first number into r0
+
+            ; Prompt for operation
+            lea r1, prompt_op
+            sout r1
+            ain r1         ; consume the newline char
+            ain r1         ; Read operation into r1
+
+            ; Prompt for second number
+            lea r2, prompt_num2
+            sout r2
+            din r2         ; Read second number into r2
+
+            ; Perform calculation
+            mov r3, 43 ; '+'
+            cmp r1, r3    ; Compare operation to '+'
+            brne check_sub
+            add r0, r0, r2 ; Add r2 to r0, save into r0
+            br prnt_rslt
+        
+check_sub:  mov r3, 45 ; '-'
+            cmp r1, r3
+            brne check_mul
+            sub r0, r0, r2 ; Subtract r2 from r0, save into r0
+            br prnt_rslt
+        
+check_mul:  mov r3, 42 ; '*'
+            cmp r1, r3
+            brne check_div
+            ; Multiply r0 * r2, save into r0
+            mul r0, r2
+            br prnt_rslt
+        
+check_div:  mov r3, 47 ; '/'
+            cmp r1, r3
+            brne invalid_op
+            ; Divide r0 / r2, save into r0
+            div r0, r2
+            br prnt_rslt
+        
+invalid_op: lea r0, error_msg
+            sout r0
+            br func_end
+
+        
+prnt_rslt:  lea r1, result_msg
+            sout r1
+            dout r0
+            nl
+
+        
+func_end:   mov sp, fp
+            pop fp
+            pop lr
+            ret
+
+; Data
+prompt_num1: .string "Enter first number: "
+prompt_op:   .string "Enter operation (+, -, *, /): "
+prompt_num2: .string "Enter second number: "
+result_msg:  .string "Result: "
+error_msg:   .string "Invalid operation."
