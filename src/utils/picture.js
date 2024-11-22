@@ -38,9 +38,9 @@ function readNullTerminatedString(buffer, offset) {
 }
 
 // Output header
-const userName = 'YOUR NAME HERE'; // Replace with your actual name
-const date = new Date().toString();
-console.log(`${userName}    picture.js ${fileName}   ${date}\n`);
+// const userName = 'YOUR NAME HERE'; // Replace with your actual name
+// const date = new Date().toString();
+// console.log(`${userName}    picture.js ${fileName}   ${date}\n`);
 
 console.log('Header:');
 if (offset >= fileSize) {
@@ -126,5 +126,5 @@ for (let i = 0; i < codeWords.length; i++) {
     }
 }
 if (codeLine.trim() !== '') {
-    console.log(codeLine.trim());
+    console.log(codeLine);
 }
