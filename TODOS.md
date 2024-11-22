@@ -6,6 +6,8 @@
 - [ ] update README.md to include a more detailed description of the project (including linker.js), its various goals, and its current status (progress, test suite coverage, etc.)
 - [ ] add comments inside of the code to indicate what hasn't been tested yet
 - [ ] make a list of known assembler errors and how to trigger them to make into assembler tests
+  - [ ] reference to a label that does not exist (no demo yet)
+  - [ ] duplicate label declarations (no demo yet)
 - [ ] make a list of known interpreter errors and how to trigger them to make into interpreter tests
   - division by zero "Floating point exception" (demoN.a)
   - infinite loop detection (no demo yet)
@@ -20,6 +22,7 @@
 
 ## Core Features
 
+- [ ] implement linking behavior by lcc.js to create a .e file from .o files by calling linker.js
 - [x] implement .string, sout, & sin
 - [x] implement blocking input for sin when executing
 - [x] implement sin/sout execution output in bst
@@ -31,7 +34,7 @@
   - [ ] implement `rol` mnemonic
   - [ ] implement `ror` mnemonic
   - [ ] implement `mul` mnemonic
-  - [ ] implement `div` mnemonic
+  - [ ] implement `div` mnemonic (demos demoN.a, ...)
   - [ ] implement `rem` mnemonic
   - [ ] implement `or` mnenmonic
   - [ ] implement `xor` mnemonic
@@ -43,7 +46,7 @@
   - [x] implement linker directives: "As a programmer, I can use .global and .extern directives to define and reference global and external symbols, so that I can share symbols between modules."
     - [x] .extern
     - [x] .global
-- [ ] implement offsets
+- [ ] implement offsets (no demo yet)
   - [ ] label offsets
     - [ ] implement decimal (base 10) offsets
     - [ ] implement hexadecimal (base 16) offsets
@@ -55,9 +58,9 @@
 - [x] implement LST creation
 - [x] implement name.js module
 - [x] infinite loop detection
-- [ ] implement 300 char limit per line & corresponding error in assembler
+- [ ] implement 300 char limit per line & corresponding error in assembler (no demo yet)
 - [x] implement more directives like `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
-  - [ ] implement `.start` directive: "As a programmer, I can specify the entry point of my program via the .start directive, so that I can control where my program begins execution."
+  - [x] implement `.start` directive: "As a programmer, I can specify the entry point of my program via the .start directive, so that I can control where my program begins execution."
   - [ ] implement `.org/.orig` directive: "The .org directive sets the location counter during the assembly process to a greater value. For example, if at the address 5 in an assembly language program, we have the directive .org 15, the location is reset to 15. The locations 5 to 14 are padded with zeros. Thus, in this example, it has the same effect as .zero 10"
 - [x] implement dout/udout/hout/aout in interpreter.js
 - [x] implement din/ain/hin in interpreter.js
@@ -69,39 +72,50 @@
   - [ ] implement -L flag
     - [ ] implement loadPoint in interpreter.js to allow for loading of a program at a specific memory address via the S header in the .e file
 - [ ] piping of an Assembly file's output into a text file
-- [ ] implement `cea` mnemonic
+- [ ] implement `cea` mnemonic (no demo yet)
 - [x] implement `cmp` mnemonic
 - [x] include comments in BST/LST files (when assembling and interpretting all at once via lcc.js)
 - [x] include all headers (S, etc.) in BST/LST files
-
+- [x] give "help" message when lcc.js is run without any arguments
+- [ ] implicit r0 for the out commands when not specified (no demo yet)
+- [ ] implicit 0 for offset6 when not specified (no demo yet)
 
 ## Test
 
-- [ ] **write test inputs and outputs to cache so that tests can be run without needing to run the lcc in Docker**
+- [o] **write test inputs and outputs to cache so that tests can be run without needing to run the lcc in Docker**
+  - [x] assembler.test.js
+  - [x] assemblerBattery.test.js
+  - [x] interpreter.test.js
+  - [x] interpreterBattery.test.js
+  - [x] lcc.test.js
+  - [ ] lccBattery.test.js
+  - [ ] linker.test.js
+  - [ ] linkerBattery.test.js
 - [ ] enable interpreter.js tests to expect (and handle gracefully) interpreter failures such as on infinite loops, division by zero, etc., and to confirm that either the program errored out or that the resulting .lst file is empty
-- [o] improve tests for lcc.js and interpreter.js to include a meaningful comment that describes the test
-  - [o] lcc.test.js
-  - [o] interpreter.test.js
+- [o] improve test suites to include a meaningful comment that describes each test
+  - [o] lccBattery.test.js
+  - [o] assemblerBattery.test.js 
+  - [o] interpreterBattery.test.js
 - [ ] improve test outputs that more accurately describe what the failure was and where it occurred
   - [ ] assembler.test.js
   - [x] make sure that assembler.test.js continues to run (and check .e hex dumps) even if the LCC fails to interpret a program
 - [x] test .start directive usage (demoN.a)
 - [ ] test assembly of .bin files
-- [ ] test detection of division by zero
-- [ ] test creation of .o files from multiple passed .a files
-- [ ] test creation of .e file from multiple passed .o files
+- [ ] (interpreter) test detection of division by zero
+- [ ] (assembler) test creation of .o files from multiple passed .a files
 - [ ] add linker testing
+  - [ ] test creation of .e file from multiple passed .o files
   - [ ] test .org/.orig, .extern, and .global
 - [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
 - [x] `cmp` and `br` test
 - [x] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
-- [ ] use lcc locally to test if the lcc exists on local machine
+- [ ] use lcc locally to test if the lcc exists on local machine, if lcc exists locally, use it instead of Docker lcc
 - [ ] write script to install ubuntu docker image with lcc to run tests on when lcc does not exist on local machine
   - [ ] create docker image with lcc 63 installed, host it on dockerhub so that it can be pulled down for testing purposes
 - [ ] write docker checks for (1) to see if docker is installed on the current machine and (2) to see if docker is currently running, so the tests fail gracefully and give helpful outputs such as "error: docker is not installed" or "error: docker is not running"
-- [ ] test the stdout output of executing a program given a .e/.a file and specific inputs by comparing the .lst/.bst outputs of interpreter.js and the lcc, respectively
-  - [ ] test .lst output of interpreter.js against .lst output of LCC when running on a .e file
-  - [ ] test .lst output of lcc.js against .lst output of LCC when running on a .a file
+- [x] test executing a program given a .e/.a file and specific inputs by comparing the .lst/.bst outputs of interpreter.js and the lcc, respectively
+  - [x] test .lst output of interpreter.js against .lst output of LCC when running on a .e file
+  - [x] test .lst output of lcc.js against .lst output of LCC when running on a .a file
 - [x] implement test battery to run all tests one after the other, regardless of whether one or more tests fail, and to log the results of each test at the very end (currently the battery of tests stop when a single test fails)
 - [x] move the docker startup and shutdown out of the test files and into a separate file that is called by the test files
 - [x] move the name.nnn file existence check and creation out of the test files and into a separate file that is called by the test files, such that, for the test suite code, the name.nnn file is created only once, rather than once for each test, to cut down on unnecessary repeated file creations and deletions
@@ -133,7 +147,13 @@
 - [x] fix issue where lcc appeared to be generated inconsistent newlines in .lst files (the issue was how the name.nnn file was being generated, it did indeed need to be terminated with a \n newline character)
 
 ## Extended Features
-- [ ] hex viewer to inspect .e files
+- [o] (picture.js) hex viewer to inspect .e and .o files
+  - [x] basic hex picture viewer
+  - [ ] ability to view ascii representation of hex dump 
+- [x] give basic "help" message when program is run without any arguments
+  - [x] assembler.js
+  - [x] interpreter.js
+  - [x] linker.js
 
 ## Extra Features
 
@@ -156,3 +176,10 @@
 - [ ] ability to make system calls
 - [ ] `gptin` and `gptout` instructions (sends/recieves program, program state, user input, gpt output via the api for some sort of response)
 - [ ] custom user defined instructions/directives that override the default instructions/directives (`charout` instead of `aout`, numout instead of dout, etc.)
+
+## Project Onboarding Ideas
+
+- [ ] **Interactive Tutorial**: Create a step-by-step tutorial where newcomers can write and run their first assembly program using LCC.js.
+- [ ] **Code Comments**: Ensure the codebase is well-commented to help others understand the logic.
+- [ ] **Video Walkthrough**: Consider recording a video explaining the project and demonstrating its use.
+- [ ] **Issue Tracker**: Use GitHub issues to highlight tasks and bugs that need attention, labeling them as "good first issue" where appropriate.
