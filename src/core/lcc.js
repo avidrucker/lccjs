@@ -75,7 +75,6 @@ class LCC {
   }
 
   printHelp() {
-    console.log('Enter command line arguments or hit Enter to quit\n');
     console.log('Usage: lcc.js <infile>');
     console.log('Optional args: -d -m -r -t -f -x -l<hex loadpt> -o <outfile> -h');
     console.log('   -d:   debug, -m mem display at end, -r: reg display at end');
@@ -86,6 +85,7 @@ class LCC {
     console.log('   .e:   execute and output .lst, .bst files');
     console.log('   .o:   link files and output executable file');
     console.log('   .a or other: assemble and output .e or .o, .lst, .bst files');
+    console.log('         if a .e file is created, it will also be executed');
     console.log('File types:');
     console.log('   .hex: machine code in ascii hex');
     console.log('   .bin: machine code in ascii binary');
