@@ -1,0 +1,272 @@
+```
+; demoA.a: simple program assembly/execution and test input/output caching
+    mov r0, 5 ; moves the value 5 into register 0
+    dout r0 ; prints out the value stored in register 0
+    nl ; prints out a new line char '\n'
+    halt ; stops program execution, this is necessary otherwise the program will loop infinitely
+```
+
+```
+; demoB.a: example program to test string input and output
+    lea r0, ask ; saves the effective address of the string at label 'ask' into register 0
+    sout r0 ; prints out the string located at the address stored in register 0
+    lea r0, buffer1    
+    sin r0
+    lea r1, hi
+    sout r1
+    lea r0, buffer1
+    sout r0
+    lea r1, period
+    sout r1
+    nl
+    lea r1, ask2
+    sout r1
+    lea r1, buffer2
+    sin r1
+    lea r2, hi
+    sout r2
+    sout r0
+    lea r2, space
+    sout r2
+    sout r1
+    lea r2, period
+    sout r2 
+    halt
+
+; below are labels which store the address of pieces of memory
+; such as the location of the first char in a string (.string)
+; or the location of a start of a block of empty memory (.zero)
+ask:  .string "What's your first name? "
+ask2: .string "What's your last name? "
+hi:   .string "Hi, "
+period: .string "."
+; note: strings in LCC assembly are null (0) terminated, so the
+; 'space' labeled string is actually 2 chars: ' ' and \0 (null)
+space: .string " "
+; each buffer below is 10 blocks of "empty" (0 value) memory
+; hence the directive name ".zero"
+buffer1: .zero 10
+buffer2: .zero 10
+```
+
+```
+; demoC.a: a program which demonstrates (1) using the .word directive
+; to store a data value, (2) the ld 'load' command to put that
+; data into a register, and (3) the add immediate command to add
+; registers and numbers together where the 1st register is the
+; "destination register", the next register is "source register 1",
+; and the next operand can be either a 2nd register or an "immediate 5"
+; which means a 5 bit encoded decimal or hexadecimal number
+    ld r0, x
+    add r0, r0, 2
+    dout r0
+    nl
+    halt
+
+x:  .word 5
+```
+
+```
+; demoD.a: a program which demonstrates that, while both mvr
+; (move register) and mvi (move immediate) are valid commands,
+; it is more convenient in LCC assembly to use the mov
+; pseudo-command which can take either two registers or a 
+; register and an immediate 9 (9 bit) number
+    mov r0, 5
+    add r0, r0, 2
+    dout r0
+    nl
+    mov r1, r0
+    add r1, r1, 3
+    dout r1
+    nl
+    mvi r2, 2
+    dout r2
+    nl
+    mvr r3, r2
+    add r3, r3, 1
+    dout r3
+    nl
+    dout
+    nl
+    halt
+```
+
+```
+; demoE.a: a program with a startup sequence
+; and "proper" main function. this function
+; pushes two named registers (lr=link register,
+; fp=frame pointer) to the stack, a part of memory
+; that can have data pushed onto and popped off.
+; after pushing these two register values onto the
+; stack, it saves the current top of stack into
+; the frame pointer, which creates a "stack frame"
+; from/with which the function can call arguments,
+; store/access local dynamic variables, and call
+; more functions without losing the "call stack".
+; when the function is done with its work, it
+; has a closing sequence that has the stack pointer
+; restored to its original value, and the old frame
+; pointer and link registers restored before
+; returning to the callee (in this case, startup)
+startup:    bl main
+            halt
+
+main:       push lr
+            push fp
+            mov fp, sp
+
+            ld r0, x
+            add r0, r0, 2
+            dout r0
+            nl
+
+            mov sp, fp
+            pop fp
+            pop lr
+            ret
+
+x:          .word 5
+```
+
+```
+; demoF.a: a program that simply prints outs a bunch
+; of chars and numbers (hex, decimal signed, and decimal
+; unsigned), and demonstrates that everything is simply
+; binary "under the hood" (e.g. chars are just ascii #'s)
+    mov r0, 'B'
+    aout r0
+    nl
+    mov r0, 65
+    dout r0
+    nl
+    aout r0
+    nl
+    mov r0, 0xff
+    hout r0
+    nl
+    mov r0, -15
+    udout r0
+    nl
+    dout r0
+    nl
+    ld r0, x
+    dout r0
+    nl
+    udout r0
+    nl
+    hout r0
+    nl
+    add r0, r0, 1
+    dout r0
+    nl
+    udout r0
+    nl
+    halt
+
+x:  .word 0xffff
+```
+
+```
+; demoG.a: another program demonstrating
+; reading in chars and numbers from the 
+; keyboard into memory, and printing
+; out the inputted chars and numbers
+; along with helpful strings prompts and
+; messages
+    lea r0, prompt3
+    sout r0
+    ain r0
+    lea r1, reply
+    sout r1
+    aout r0
+    nl
+
+    lea r0, prompt1
+    sout r0
+    din r0
+    lea r1, reply
+    sout r1
+    dout r0
+    lea r1, signed
+    sout r1
+    nl
+    lea r1, reply
+    sout r1
+    udout r0
+    lea r1, unsigned
+    sout r1
+    nl
+
+    lea r0, prompt2
+    sout r0
+    hin r0
+    lea r1, reply
+    sout r1
+    hout r0
+
+    halt
+
+prompt1: .string "Enter a negative number: "
+prompt2: .string "Enter a hex number: "
+prompt3: .string "Enter a single character: "
+reply: .string "You entered: "
+signed: .string " signed"
+unsigned: .string " unsigned"
+```
+
+```
+; demoH.a: using negative numbers and
+; performing subtractions with `sub`
+    ld r0, x
+    dout r0
+    nl
+    mov r1, -5
+    dout r1
+    nl
+    mov r2, 10
+    add r2, r2, -12
+    dout r2
+    nl
+    mov r3, 5
+    sub r3, r3, 8
+    dout r3
+    halt
+
+x: .word -100
+```
+
+```
+; demoI.a: our first loop, which
+; prints from 10 to 1 and halts.
+; it uses cmp "compare", bre
+; "branch if equal", and br 
+; "branch always", along with
+; labels, to provide the looping
+; and if/else behavior 
+          mov r0, 10
+start:    cmp r0, 0
+          bre end
+          dout r0
+          nl
+          sub r0, r0, 1
+          br start
+end:      halt
+```
+
+```
+; demoN.a: a program that tests the 
+; detection of division by zero.
+; this program will assemble without
+; error, but it will not execute or
+; generate valid lst/bst files, due
+; to the "Floating point exception" 
+; that arises when it attempts to do
+; division by zero
+    mov r0, 3
+    mov r1, 0
+    div r0, r1
+    dout r0
+    nl
+    halt
+```
