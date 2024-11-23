@@ -8,6 +8,12 @@ const fs = require('fs');
 // Register names
 const registerNames = ['r0', 'r1', 'r2', 'r3', 'r4', 'fp', 'sp', 'lr'];
 
+// Global variables for label tracking
+const codeLabels = {};
+const dataLabels = {};
+let codeLabelCounter = 1;
+let dataLabelCounter = 1;
+
 // Main disassembler function
 function disassemble(fileName) {
     // Read the file into a buffer
@@ -37,7 +43,7 @@ function disassemble(fileName) {
         } else if (entryType === 'S') {
             startAddress = buffer.readUInt16LE(offset);
             offset += 2;
-        } else if (entryType === 'G' || entryType === 'E' || entryType === 'V') {
+        } else if (['G', 'E', 'V'].includes(entryType)) {
             // Skip address and null-terminated string
             offset += 2; // Skip address
             while (buffer[offset++] !== 0); // Skip null-terminated string
@@ -51,273 +57,83 @@ function disassemble(fileName) {
 
     // Now offset points to the code section
     const instructions = [];
+    const dataAddresses = new Set();
     const branchTargets = new Set();
-    const dataTargets = new Set();
 
     // First pass: Read instructions and identify branch and data targets
     let pc = startAddress;
-    while (offset + 1 <= fileSize) {
-        const word = buffer.readUInt16LE(offset);
-        offset += 2;
+    let bufferOffset = offset;
 
-        const instruction = {
-            address: pc,
-            word,
-        };
-        instructions.push(instruction);
+    while (bufferOffset + 1 <= fileSize) {
+        const word = buffer.readUInt16LE(bufferOffset);
 
-        // Decode opcode
         const opcode = (word >> 12) & 0xF;
 
-        // Identify branch and data targets
+        // If we have already identified this address as data, stop interpreting as code
+        if (dataAddresses.has(pc)) {
+            break;
+        }
+
+        // Mark this address as code
+        instructions.push({ address: pc, word });
+
+        // Identify branch targets and data references
         if (opcode === 0x0) { // BR
             const pcoffset9 = signExtend(word & 0x1FF, 9);
             const targetAddress = (pc + 1 + pcoffset9) & 0xFFFF;
             branchTargets.add(targetAddress);
-            instruction.targetAddress = targetAddress;
-        } else if (opcode === 0x4) { // BL or BLR
+        } else if (opcode === 0x4) { // BL, BLR
             const bit11 = (word >> 11) & 0x1;
             if (bit11 === 1) { // BL
                 const pcoffset11 = signExtend(word & 0x7FF, 11);
                 const targetAddress = (pc + 1 + pcoffset11) & 0xFFFF;
                 branchTargets.add(targetAddress);
-                instruction.targetAddress = targetAddress;
             }
-        } else if (opcode === 0x2 || opcode === 0x3 || opcode === 0xE) { // LD, ST, LEA
+        } else if ([0x2, 0x3, 0xE].includes(opcode)) { // LD, ST, LEA
             const pcoffset9 = signExtend(word & 0x1FF, 9);
-            const targetAddress = (pc + 1 + pcoffset9) & 0xFFFF;
-            dataTargets.add(targetAddress);
-            instruction.dataAddress = targetAddress;
+            const dataAddress = (pc + 1 + pcoffset9) & 0xFFFF;
+            dataAddresses.add(dataAddress);
         }
 
+        bufferOffset += 2;
         pc++;
     }
 
-    // Assign labels to branch and data targets
-    const addressToLabel = {};
-    const addressToDataLabel = {};
-    let labelCounter = 1;
-    let dataLabelCounter = 1;
+    // Assign code labels
     branchTargets.forEach(address => {
-        addressToLabel[address] = `@L${labelCounter++}`;
+        codeLabels[address] = `@L${codeLabelCounter++}`;
     });
-    dataTargets.forEach(address => {
-        addressToDataLabel[address] = `@D${dataLabelCounter++}`;
+
+    // Assign data labels
+    dataAddresses.forEach(address => {
+        dataLabels[address] = `@D${dataLabelCounter++}`;
     });
 
     // Second pass: Disassemble instructions
     const disassembledLines = [];
-    instructions.forEach(instruction => {
+    let i = 0;
+    while (i < instructions.length) {
+        const instruction = instructions[i];
+        const { address, word } = instruction;
+
         // Insert label if this address is a branch target
-        if (addressToLabel[instruction.address]) {
-            disassembledLines.push(`${addressToLabel[instruction.address]}:`);
+        if (codeLabels[address]) {
+            disassembledLines.push(`${codeLabels[address]}:`);
         }
 
-        // Insert data label if this address is a data target
-        if (addressToDataLabel[instruction.address]) {
-            disassembledLines.push(`${addressToDataLabel[instruction.address]}:`);
+        // Check if this address is a data address
+        if (dataLabels[address]) {
+            // We've reached data, stop disassembling instructions
+            break;
         }
 
-        // Check if this address is in dataTargets
-        if (dataTargets.has(instruction.address)) {
-            // This is data
-            const dataValue = signExtend(instruction.word, 16);
-            disassembledLines.push(`    .word ${dataValue}`);
-            return; // Skip disassembling as instruction
-        }
-
-        let mnemonic = '';
-        let operands = '';
-
-        // Decode instruction
-        const { word } = instruction;
-        const opcode = (word >> 12) & 0xF;
-
-        switch (opcode) {
-            case 0x0: // BR
-                {
-                    const cc = (word >> 9) & 0x7;
-                    const pcoffset9 = signExtend(word & 0x1FF, 9);
-                    const targetAddress = (instruction.address + 1 + pcoffset9) & 0xFFFF;
-                    const label = addressToLabel[targetAddress] || `@Addr${targetAddress}`;
-                    mnemonic = getBranchCC(cc);
-                    operands = `${label}`;
-                }
-                break;
-            case 0x1: // ADD
-                {
-                    const dr = (word >> 9) & 0x7;
-                    const sr1 = (word >> 6) & 0x7;
-                    const mode = (word >> 5) & 0x1;
-                    if (mode === 0) {
-                        const sr2 = word & 0x7;
-                        operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${registerNames[sr2]}`;
-                    } else {
-                        const imm5 = signExtend(word & 0x1F, 5);
-                        operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${imm5}`;
-                    }
-                    mnemonic = 'add';
-                }
-                break;
-            case 0x2: // LD
-                {
-                    const dr = (word >> 9) & 0x7;
-                    const pcoffset9 = signExtend(word & 0x1FF, 9);
-                    const targetAddress = (instruction.address + 1 + pcoffset9) & 0xFFFF;
-                    const label = addressToDataLabel[targetAddress] || `@Addr${targetAddress}`;
-                    mnemonic = 'ld';
-                    operands = `${registerNames[dr]}, ${label}`;
-                }
-                break;
-            case 0x3: // ST
-                {
-                    const sr = (word >> 9) & 0x7;
-                    const pcoffset9 = signExtend(word & 0x1FF, 9);
-                    const targetAddress = (instruction.address + 1 + pcoffset9) & 0xFFFF;
-                    const label = addressToDataLabel[targetAddress] || `@Addr${targetAddress}`;
-                    mnemonic = 'st';
-                    operands = `${registerNames[sr]}, ${label}`;
-                }
-                break;
-            case 0x4: // BL or BLR
-                {
-                    const bit11 = (word >> 11) & 0x1;
-                    if (bit11 === 1) { // BL
-                        const pcoffset11 = signExtend(word & 0x7FF, 11);
-                        const targetAddress = (instruction.address + 1 + pcoffset11) & 0xFFFF;
-                        const label = addressToLabel[targetAddress] || `@Addr${targetAddress}`;
-                        mnemonic = 'bl';
-                        operands = `${label}`;
-                    } else {
-                        // BLR or JSRR
-                        const baseR = (word >> 6) & 0x7;
-                        const offset6 = signExtend(word & 0x3F, 6);
-                        mnemonic = 'blr';
-                        operands = `${registerNames[baseR]}`;
-                        if (offset6 !== 0) {
-                            operands += `, ${offset6}`;
-                        }
-                    }
-                }
-                break;
-            case 0x5: // AND
-                {
-                    const dr = (word >> 9) & 0x7;
-                    const sr1 = (word >> 6) & 0x7;
-                    const mode = (word >> 5) & 0x1;
-                    if (mode === 0) {
-                        const sr2 = word & 0x7;
-                        operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${registerNames[sr2]}`;
-                    } else {
-                        const imm5 = signExtend(word & 0x1F, 5);
-                        operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${imm5}`;
-                    }
-                    mnemonic = 'and';
-                }
-                break;
-            case 0x8: // CMP
-                {
-                    const sr1 = (word >> 6) & 0x7;
-                    const mode = (word >> 5) & 0x1;
-                    if (mode === 0) {
-                        const sr2 = word & 0x7;
-                        operands = `${registerNames[sr1]}, ${registerNames[sr2]}`;
-                    } else {
-                        const imm5 = signExtend(word & 0x1F, 5);
-                        operands = `${registerNames[sr1]}, ${imm5}`;
-                    }
-                    mnemonic = 'cmp';
-                }
-                break;
-            case 0xB: // SUB
-                {
-                    const dr = (word >> 9) & 0x7;
-                    const sr1 = (word >> 6) & 0x7;
-                    const mode = (word >> 5) & 0x1;
-                    if (mode === 0) {
-                        const sr2 = word & 0x7;
-                        operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${registerNames[sr2]}`;
-                    } else {
-                        const imm5 = signExtend(word & 0x1F, 5);
-                        operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${imm5}`;
-                    }
-                    mnemonic = 'sub';
-                }
-                break;
-            case 0xC: // JMP or RET
-                {
-                    const baseR = (word >> 6) & 0x7;
-                    const offset6 = signExtend(word & 0x3F, 6);
-                    if (baseR === 7 && offset6 === 0) { // RET
-                        mnemonic = 'ret';
-                        operands = '';
-                    } else {
-                        mnemonic = 'jmp';
-                        operands = `${registerNames[baseR]}`;
-                        if (offset6 !== 0) {
-                            operands += `, ${offset6}`;
-                        }
-                    }
-                }
-                break;
-            case 0xD: // MVI
-                {
-                    const dr = (word >> 9) & 0x7;
-                    const imm9 = signExtend(word & 0x1FF, 9);
-                    mnemonic = 'mvi';
-                    operands = `${registerNames[dr]}, ${imm9}`;
-                }
-                break;
-            case 0xA: // MISC (PUSH, POP, MVR)
-                {
-                    const sr_dr = (word >> 9) & 0x7;
-                    const eopcode = word & 0x3F; // bits 5-0
-                    switch (eopcode) {
-                        case 0x00: // PUSH
-                            mnemonic = 'push';
-                            operands = `${registerNames[sr_dr]}`;
-                            break;
-                        case 0x01: // POP
-                            mnemonic = 'pop';
-                            operands = `${registerNames[sr_dr]}`;
-                            break;
-                        case 0x0C: // MVR
-                            const sr1 = (word >> 6) & 0x7;
-                            mnemonic = 'mvr';
-                            operands = `${registerNames[sr_dr]}, ${registerNames[sr1]}`;
-                            break;
-                        default:
-                            mnemonic = '???';
-                            operands = '';
-                    }
-                }
-                break;
-            case 0xF: // TRAP
-                {
-                    const trapvect8 = word & 0xFF;
-                    const dr_sr = (word >> 9) & 0x7;
-                    const trapInfo = getTrapInfo(trapvect8);
-                    if (trapInfo) {
-                        mnemonic = trapInfo.mnemonic;
-                        operands = trapInfo.needsRegister ? `${registerNames[dr_sr]}` : '';
-                    } else {
-                        mnemonic = `trap`;
-                        operands = `${trapvect8}`;
-                    }
-                }
-                break;
-            default:
-                mnemonic = '???';
-                operands = '';
-        }
-
-        // Output the line with indentation
-        let line = `    ${mnemonic}`;
-        if (operands) {
-            line += ` ${operands}`;
-        }
+        const line = disassembleInstruction(address, word);
         disassembledLines.push(line);
-    });
+        i++;
+    }
+
+    // Process data sections
+    processDataSections(buffer, bufferOffset, pc, fileSize, disassembledLines);
 
     // Output the disassembled code
     disassembledLines.forEach(line => console.log(line));
@@ -326,10 +142,11 @@ function disassemble(fileName) {
 // Utility functions
 function signExtend(value, bitCount) {
     const signBit = 1 << (bitCount - 1);
-    if (value & signBit) {
-        value -= 1 << bitCount;
-    }
-    return value;
+    return (value & (signBit - 1)) - (value & signBit);
+}
+
+function isPrintableASCII(word) {
+    return word >= 32 && word <= 126;
 }
 
 function getBranchCC(cc) {
@@ -365,6 +182,310 @@ function getTrapInfo(trapvect8) {
         0x0E: { mnemonic: 'bp', needsRegister: false },
     };
     return trapMap[trapvect8];
+}
+
+function disassembleInstruction(address, word) {
+    const opcode = (word >> 12) & 0xF;
+    let mnemonic = '???';
+    let operands = '';
+
+    switch (opcode) {
+        case 0x0: // BR
+            {
+                const cc = (word >> 9) & 0x7;
+                const pcoffset9 = signExtend(word & 0x1FF, 9);
+                const targetAddress = (address + 1 + pcoffset9) & 0xFFFF;
+                const label = codeLabels[targetAddress] || `@Addr${targetAddress}`;
+                mnemonic = getBranchCC(cc);
+                operands = `${label}`;
+            }
+            break;
+        case 0x1: // ADD
+            {
+                const dr = (word >> 9) & 0x7;
+                const sr1 = (word >> 6) & 0x7;
+                const mode = (word >> 5) & 0x1;
+                if (mode === 0) {
+                    const sr2 = word & 0x7;
+                    operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${registerNames[sr2]}`;
+                } else {
+                    const imm5 = signExtend(word & 0x1F, 5);
+                    operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${imm5}`;
+                }
+                mnemonic = 'add';
+            }
+            break;
+        case 0x2: // LD
+            {
+                const dr = (word >> 9) & 0x7;
+                const pcoffset9 = signExtend(word & 0x1FF, 9);
+                const dataAddress = (address + 1 + pcoffset9) & 0xFFFF;
+                const label = dataLabels[dataAddress] || assignDataLabel(dataAddress);
+                mnemonic = 'ld';
+                operands = `${registerNames[dr]}, ${label}`;
+            }
+            break;
+        case 0x3: // ST
+            {
+                const sr = (word >> 9) & 0x7;
+                const pcoffset9 = signExtend(word & 0x1FF, 9);
+                const dataAddress = (address + 1 + pcoffset9) & 0xFFFF;
+                const label = dataLabels[dataAddress] || assignDataLabel(dataAddress);
+                mnemonic = 'st';
+                operands = `${registerNames[sr]}, ${label}`;
+            }
+            break;
+        case 0x4: // BL or BLR
+            {
+                const bit11 = (word >> 11) & 0x1;
+                if (bit11 === 1) { // BL
+                    const pcoffset11 = signExtend(word & 0x7FF, 11);
+                    const targetAddress = (address + 1 + pcoffset11) & 0xFFFF;
+                    const label = codeLabels[targetAddress] || assignCodeLabel(targetAddress);
+                    mnemonic = 'bl';
+                    operands = `${label}`;
+                } else {
+                    // BLR or JSRR
+                    const baseR = (word >> 6) & 0x7;
+                    const offset6 = signExtend(word & 0x3F, 6);
+                    mnemonic = 'blr';
+                    operands = `${registerNames[baseR]}`;
+                    if (offset6 !== 0) {
+                        operands += `, ${offset6}`;
+                    }
+                }
+            }
+            break;
+        case 0x5: // AND
+            {
+                const dr = (word >> 9) & 0x7;
+                const sr1 = (word >> 6) & 0x7;
+                const mode = (word >> 5) & 0x1;
+                if (mode === 0) {
+                    const sr2 = word & 0x7;
+                    operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${registerNames[sr2]}`;
+                } else {
+                    const imm5 = signExtend(word & 0x1F, 5);
+                    operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${imm5}`;
+                }
+                mnemonic = 'and';
+            }
+            break;
+        case 0x8: // CMP
+            {
+                const sr1 = (word >> 6) & 0x7;
+                const mode = (word >> 5) & 0x1;
+                if (mode === 0) {
+                    const sr2 = word & 0x7;
+                    operands = `${registerNames[sr1]}, ${registerNames[sr2]}`;
+                } else {
+                    const imm5 = signExtend(word & 0x1F, 5);
+                    operands = `${registerNames[sr1]}, ${imm5}`;
+                }
+                mnemonic = 'cmp';
+            }
+            break;
+        case 0xB: // SUB
+            {
+                const dr = (word >> 9) & 0x7;
+                const sr1 = (word >> 6) & 0x7;
+                const mode = (word >> 5) & 0x1;
+                if (mode === 0) {
+                    const sr2 = word & 0x7;
+                    operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${registerNames[sr2]}`;
+                } else {
+                    const imm5 = signExtend(word & 0x1F, 5);
+                    operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${imm5}`;
+                }
+                mnemonic = 'sub';
+            }
+            break;
+        case 0xC: // JMP or RET
+            {
+                const baseR = (word >> 6) & 0x7;
+                const offset6 = signExtend(word & 0x3F, 6);
+                if (baseR === 7 && offset6 === 0) { // RET
+                    mnemonic = 'ret';
+                    operands = '';
+                } else {
+                    mnemonic = 'jmp';
+                    operands = `${registerNames[baseR]}`;
+                    if (offset6 !== 0) {
+                        operands += `, ${offset6}`;
+                    }
+                }
+            }
+            break;
+        case 0xD: // MVI
+            {
+                const dr = (word >> 9) & 0x7;
+                const imm9 = signExtend(word & 0x1FF, 9);
+                mnemonic = 'mvi';
+                operands = `${registerNames[dr]}, ${imm9}`;
+            }
+            break;
+        case 0xE: // LEA
+            {
+                const dr = (word >> 9) & 0x7;
+                const pcoffset9 = signExtend(word & 0x1FF, 9);
+                const dataAddress = (address + 1 + pcoffset9) & 0xFFFF;
+                const label = dataLabels[dataAddress] || assignDataLabel(dataAddress);
+                mnemonic = 'lea';
+                operands = `${registerNames[dr]}, ${label}`;
+            }
+            break;
+        case 0xA: // MISC (PUSH, POP, MVR)
+            {
+                const sr_dr = (word >> 9) & 0x7;
+                const eopcode = word & 0x3F; // bits 5-0
+                switch (eopcode) {
+                    case 0x00: // PUSH
+                        mnemonic = 'push';
+                        operands = `${registerNames[sr_dr]}`;
+                        break;
+                    case 0x01: // POP
+                        mnemonic = 'pop';
+                        operands = `${registerNames[sr_dr]}`;
+                        break;
+                    case 0x0C: // MVR
+                        const sr1 = (word >> 6) & 0x7;
+                        mnemonic = 'mvr';
+                        operands = `${registerNames[sr_dr]}, ${registerNames[sr1]}`;
+                        break;
+                    default:
+                        mnemonic = '???';
+                        operands = '';
+                }
+            }
+            break;
+        case 0xF: // TRAP
+            {
+                const trapvect8 = word & 0xFF;
+                const dr_sr = (word >> 9) & 0x7;
+                const trapInfo = getTrapInfo(trapvect8);
+                if (trapInfo) {
+                    mnemonic = trapInfo.mnemonic;
+                    operands = trapInfo.needsRegister ? `${registerNames[dr_sr]}` : '';
+                } else {
+                    mnemonic = `trap`;
+                    operands = `${trapvect8}`;
+                }
+            }
+            break;
+        default:
+            mnemonic = '???';
+            operands = '';
+    }
+
+    return `    ${mnemonic}${operands ? ' ' + operands : ''}`;
+}
+
+function assignDataLabel(address) {
+    if (!dataLabels[address]) {
+        dataLabels[address] = `@D${dataLabelCounter++}`;
+    }
+    return dataLabels[address];
+}
+
+function assignCodeLabel(address) {
+    if (!codeLabels[address]) {
+        codeLabels[address] = `@L${codeLabelCounter++}`;
+    }
+    return codeLabels[address];
+}
+
+function processDataSections(buffer, offset, pc, fileSize, disassembledLines) {
+    // Collect all data label addresses and sort them
+    const dataLabelAddresses = Object.keys(dataLabels).map(addr => parseInt(addr)).sort((a, b) => a - b);
+
+    let currentIndex = 0;
+    while (offset + 1 <= fileSize) {
+        const address = pc;
+
+        // If current address matches a data label, use it
+        let label = dataLabels[address];
+        if (!label) {
+            label = assignDataLabel(address);
+        }
+        disassembledLines.push(`${label}:`);
+
+        let nextDataLabelAddress = dataLabelAddresses.find(addr => addr > address);
+        let dataEndAddress = nextDataLabelAddress !== undefined ? nextDataLabelAddress : Infinity;
+
+        // Start processing data from current address until next data label or end of data
+        let tempOffset = offset;
+        let tempPc = pc;
+        let dataProcessed = false;
+
+        // Check for strings
+        let isString = true;
+        const chars = [];
+        while (tempOffset + 1 <= fileSize && tempPc < dataEndAddress) {
+            const word = buffer.readUInt16LE(tempOffset);
+            if (word === 0) {
+                // Null terminator
+                chars.push(0);
+                tempOffset += 2;
+                tempPc++;
+                break;
+            } else if (isPrintableASCII(word)) {
+                chars.push(word);
+                tempOffset += 2;
+                tempPc++;
+            } else {
+                isString = false;
+                break;
+            }
+        }
+
+        if (isString && chars.length > 1 && chars[chars.length - 1] === 0) {
+            // It's a string
+            const strContent = chars.slice(0, -1).map(c => String.fromCharCode(c)).join('');
+            disassembledLines.push(`    .string "${strContent.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`);
+            // console.log(`DEBUG: Found string at address ${address}, length ${chars.length - 1}, content "${strContent}"`);
+            offset = tempOffset;
+            pc = tempPc;
+            dataProcessed = true;
+            continue;
+        }
+
+        // Check for zeros up to next data label or end of data
+        let zeroCount = 0;
+        tempOffset = offset;
+        tempPc = pc;
+        while (tempOffset + 1 <= fileSize && tempPc < dataEndAddress) {
+            const word = buffer.readUInt16LE(tempOffset);
+            if (word === 0) {
+                zeroCount++;
+                tempOffset += 2;
+                tempPc++;
+            } else {
+                break;
+            }
+        }
+
+        if (zeroCount > 0) {
+            // It's zeros
+            disassembledLines.push(`    .zero ${zeroCount}`);
+            // console.log(`DEBUG: Found zeros at address ${address}, count ${zeroCount}`);
+            offset = tempOffset;
+            pc = tempPc;
+            dataProcessed = true;
+            continue;
+        }
+
+        // Else, treat as words up to next data label or end of data
+        tempOffset = offset;
+        tempPc = pc;
+        while (tempOffset + 1 <= fileSize && tempPc < dataEndAddress) {
+            const word = buffer.readUInt16LE(tempOffset);
+            disassembledLines.push(`    .word ${signExtend(word, 16)}`);
+            tempOffset += 2;
+            tempPc++;
+        }
+        offset = tempOffset;
+        pc = tempPc;
+    }
 }
 
 // Entry point
