@@ -4,27 +4,6 @@
 // LCC.js Disassembler
 
 const fs = require('fs');
-const path = require('path');
-
-// Instruction mapping
-const instructionSet = {
-    0x0: 'br',
-    0x1: 'add',
-    0x2: 'ld',
-    0x3: 'st',
-    0x4: 'bl',
-    0x5: 'and',
-    0x6: 'ldr',
-    0x7: 'str',
-    0x8: 'cmp',
-    0x9: 'not',
-    0xA: 'misc',
-    0xB: 'sub',
-    0xC: 'jmp',
-    0xD: 'mvi',
-    0xE: 'lea',
-    0xF: 'trap',
-};
 
 // Register names
 const registerNames = ['r0', 'r1', 'r2', 'r3', 'r4', 'fp', 'sp', 'lr'];
@@ -58,14 +37,19 @@ function disassemble(fileName) {
         } else if (entryType === 'S') {
             startAddress = buffer.readUInt16LE(offset);
             offset += 2;
+        } else if (entryType === 'G' || entryType === 'E' || entryType === 'V') {
+            // Skip address and null-terminated string
+            offset += 2; // Skip address
+            while (buffer[offset++] !== 0); // Skip null-terminated string
+        } else if (entryType === 'A') {
+            offset += 2; // Skip address
         } else {
-            // Skip other entries (G, A, etc.)
-            while (buffer[offset++] !== 0); // Skip null-terminated strings
+            console.error(`Unknown header entry type: ${entryType}`);
+            process.exit(1);
         }
     }
 
     // Now offset points to the code section
-    const codeStart = offset;
     const instructions = [];
     const branchTargets = new Set();
 
@@ -84,20 +68,23 @@ function disassemble(fileName) {
         // Decode opcode
         const opcode = (word >> 12) & 0xF;
 
-        // If the instruction is a branch, calculate the target address
-        if (opcode === 0x0 || opcode === 0x4 || opcode === 0xC) {
-            let pcoffset = 0;
-            if (opcode === 0x0) { // BR
-                pcoffset = signExtend(word & 0x1FF, 9);
-            } else if (opcode === 0x4) { // BL
-                if (((word >> 11) & 0x1) === 1) { // BL
-                    pcoffset = signExtend(word & 0x7FF, 11);
-                }
-            } else if (opcode === 0xC) { // JMP
-                // For JMP, we need to handle differently
+        // Identify branch targets
+        if (opcode === 0x0) { // BR
+            const pcoffset9 = signExtend(word & 0x1FF, 9);
+            const targetAddress = (pc + 1 + pcoffset9) & 0xFFFF;
+            branchTargets.add(targetAddress);
+            instruction.targetAddress = targetAddress;
+        } else if (opcode === 0x4) { // BL
+            const bit11 = (word >> 11) & 0x1;
+            if (bit11 === 1) { // BL
+                const pcoffset11 = signExtend(word & 0x7FF, 11);
+                const targetAddress = (pc + 1 + pcoffset11) & 0xFFFF;
+                branchTargets.add(targetAddress);
+                instruction.targetAddress = targetAddress;
             }
-
-            const targetAddress = (pc + 1 + pcoffset) & 0xFFFF;
+        } else if ([0x2, 0x3, 0xE].includes(opcode)) { // LD, ST, LEA
+            const pcoffset9 = signExtend(word & 0x1FF, 9);
+            const targetAddress = (pc + 1 + pcoffset9) & 0xFFFF;
             branchTargets.add(targetAddress);
             instruction.targetAddress = targetAddress;
         }
@@ -115,30 +102,27 @@ function disassemble(fileName) {
     // Second pass: Disassemble instructions
     const disassembledLines = [];
     instructions.forEach(instruction => {
-        let line = '';
-
         // Insert label if this address is a branch target
         if (addressToLabel[instruction.address]) {
-            line += `${addressToLabel[instruction.address]}:\n`;
+            disassembledLines.push(`${addressToLabel[instruction.address]}:`);
         }
+
+        let mnemonic = '';
+        let operands = '';
 
         // Decode instruction
         const { word } = instruction;
         const opcode = (word >> 12) & 0xF;
-        const mnemonic = instructionSet[opcode] || 'unknown';
-
-        // Decode operands based on instruction type
-        let operands = '';
 
         switch (opcode) {
             case 0x0: // BR
                 {
                     const cc = (word >> 9) & 0x7;
                     const pcoffset9 = signExtend(word & 0x1FF, 9);
-                    const targetAddress = instruction.targetAddress;
-                    const label = addressToLabel[targetAddress];
-                    const ccMnemonic = getBranchCC(cc);
-                    operands = `${ccMnemonic} ${label}`;
+                    const targetAddress = (instruction.address + 1 + pcoffset9) & 0xFFFF;
+                    const label = addressToLabel[targetAddress] || `@Addr${targetAddress}`;
+                    mnemonic = getBranchCC(cc);
+                    operands = `${label}`;
                 }
                 break;
             case 0x1: // ADD
@@ -153,25 +137,106 @@ function disassemble(fileName) {
                         const imm5 = signExtend(word & 0x1F, 5);
                         operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${imm5}`;
                     }
+                    mnemonic = 'add';
                 }
                 break;
-            // Handle other opcodes similarly...
+            case 0x2: // LD
+                {
+                    const dr = (word >> 9) & 0x7;
+                    const pcoffset9 = signExtend(word & 0x1FF, 9);
+                    const targetAddress = (instruction.address + 1 + pcoffset9) & 0xFFFF;
+                    const label = addressToLabel[targetAddress] || `@Addr${targetAddress}`;
+                    mnemonic = 'ld';
+                    operands = `${registerNames[dr]}, ${label}`;
+                }
+                break;
+            case 0x3: // ST
+                {
+                    const sr = (word >> 9) & 0x7;
+                    const pcoffset9 = signExtend(word & 0x1FF, 9);
+                    const targetAddress = (instruction.address + 1 + pcoffset9) & 0xFFFF;
+                    const label = addressToLabel[targetAddress] || `@Addr${targetAddress}`;
+                    mnemonic = 'st';
+                    operands = `${registerNames[sr]}, ${label}`;
+                }
+                break;
+            case 0x5: // AND
+                {
+                    const dr = (word >> 9) & 0x7;
+                    const sr1 = (word >> 6) & 0x7;
+                    const mode = (word >> 5) & 0x1;
+                    if (mode === 0) {
+                        const sr2 = word & 0x7;
+                        operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${registerNames[sr2]}`;
+                    } else {
+                        const imm5 = signExtend(word & 0x1F, 5);
+                        operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${imm5}`;
+                    }
+                    mnemonic = 'and';
+                }
+                break;
+            case 0x8: // CMP
+                {
+                    const sr1 = (word >> 6) & 0x7;
+                    const mode = (word >> 5) & 0x1;
+                    if (mode === 0) {
+                        const sr2 = word & 0x7;
+                        operands = `${registerNames[sr1]}, ${registerNames[sr2]}`;
+                    } else {
+                        const imm5 = signExtend(word & 0x1F, 5);
+                        operands = `${registerNames[sr1]}, ${imm5}`;
+                    }
+                    mnemonic = 'cmp';
+                }
+                break;
+            case 0xB: // SUB
+                {
+                    const dr = (word >> 9) & 0x7;
+                    const sr1 = (word >> 6) & 0x7;
+                    const mode = (word >> 5) & 0x1;
+                    if (mode === 0) {
+                        const sr2 = word & 0x7;
+                        operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${registerNames[sr2]}`;
+                    } else {
+                        const imm5 = signExtend(word & 0x1F, 5);
+                        operands = `${registerNames[dr]}, ${registerNames[sr1]}, ${imm5}`;
+                    }
+                    mnemonic = 'sub';
+                }
+                break;
+            case 0xD: // MVI
+                {
+                    const dr = (word >> 9) & 0x7;
+                    const imm9 = signExtend(word & 0x1FF, 9);
+                    mnemonic = 'mvi';
+                    operands = `${registerNames[dr]}, ${imm9}`;
+                }
+                break;
             case 0xF: // TRAP
                 {
                     const trapvect8 = word & 0xFF;
                     const sr = (word >> 9) & 0x7;
-                    const trapMnemonic = getTrapMnemonic(trapvect8);
-                    operands = `${trapMnemonic} ${registerNames[sr]}`;
-                    line += operands;
-                    disassembledLines.push(line);
-                    return;
+                    const trapInfo = getTrapInfo(trapvect8);
+                    if (trapInfo) {
+                        mnemonic = trapInfo.mnemonic;
+                        operands = trapInfo.needsRegister ? `${registerNames[sr]}` : '';
+                    } else {
+                        mnemonic = `trap`;
+                        operands = `${trapvect8}`;
+                    }
                 }
+                break;
             default:
-                // console.log(`Unknown opcode: ${opcode}`);
-                operands = '...'; // For unimplemented opcodes
+                // For unimplemented or unknown opcodes, output as .word directive
+                mnemonic = '.word';
+                operands = `0x${word.toString(16).padStart(4, '0')}`;
         }
 
-        line += `    ${mnemonic} ${operands}`;
+        // Output the line with indentation
+        let line = `    ${mnemonic}`;
+        if (operands) {
+            line += ` ${operands}`;
+        }
         disassembledLines.push(line);
     });
 
@@ -202,25 +267,25 @@ function getBranchCC(cc) {
     return ccMap[cc] || 'br';
 }
 
-function getTrapMnemonic(trapvect8) {
+function getTrapInfo(trapvect8) {
     const trapMap = {
-        0x00: 'halt',
-        0x01: 'nl',
-        0x02: 'dout',
-        0x03: 'udout',
-        0x04: 'hout',
-        0x05: 'aout',
-        0x06: 'sout',
-        0x07: 'din',
-        0x08: 'hin',
-        0x09: 'ain',
-        0x0A: 'sin',
-        0x0B: 'm',
-        0x0C: 'r',
-        0x0D: 's',
-        0x0E: 'bp',
+        0x00: { mnemonic: 'halt', needsRegister: false },
+        0x01: { mnemonic: 'nl', needsRegister: false },
+        0x02: { mnemonic: 'dout', needsRegister: true },
+        0x03: { mnemonic: 'udout', needsRegister: true },
+        0x04: { mnemonic: 'hout', needsRegister: true },
+        0x05: { mnemonic: 'aout', needsRegister: true },
+        0x06: { mnemonic: 'sout', needsRegister: true },
+        0x07: { mnemonic: 'din', needsRegister: true },
+        0x08: { mnemonic: 'hin', needsRegister: true },
+        0x09: { mnemonic: 'ain', needsRegister: true },
+        0x0A: { mnemonic: 'sin', needsRegister: true },
+        0x0B: { mnemonic: 'm', needsRegister: false },
+        0x0C: { mnemonic: 'r', needsRegister: false },
+        0x0D: { mnemonic: 's', needsRegister: false },
+        0x0E: { mnemonic: 'bp', needsRegister: false },
     };
-    return trapMap[trapvect8] || `trap ${trapvect8}`;
+    return trapMap[trapvect8];
 }
 
 // Entry point
