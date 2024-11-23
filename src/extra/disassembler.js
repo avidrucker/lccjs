@@ -52,10 +52,11 @@ function disassemble(fileName) {
     // Now offset points to the code section
     const instructions = [];
     const branchTargets = new Set();
+    const dataTargets = new Set();
 
-    // First pass: Read instructions and identify branch targets
+    // First pass: Read instructions and identify branch and data targets
     let pc = startAddress;
-    while (offset + 1 < fileSize) {
+    while (offset + 1 <= fileSize) {
         const word = buffer.readUInt16LE(offset);
         offset += 2;
 
@@ -68,13 +69,13 @@ function disassemble(fileName) {
         // Decode opcode
         const opcode = (word >> 12) & 0xF;
 
-        // Identify branch targets
+        // Identify branch and data targets
         if (opcode === 0x0) { // BR
             const pcoffset9 = signExtend(word & 0x1FF, 9);
             const targetAddress = (pc + 1 + pcoffset9) & 0xFFFF;
             branchTargets.add(targetAddress);
             instruction.targetAddress = targetAddress;
-        } else if (opcode === 0x4) { // BL
+        } else if (opcode === 0x4) { // BL or BLR
             const bit11 = (word >> 11) & 0x1;
             if (bit11 === 1) { // BL
                 const pcoffset11 = signExtend(word & 0x7FF, 11);
@@ -82,21 +83,26 @@ function disassemble(fileName) {
                 branchTargets.add(targetAddress);
                 instruction.targetAddress = targetAddress;
             }
-        } else if ([0x2, 0x3, 0xE].includes(opcode)) { // LD, ST, LEA
+        } else if (opcode === 0x2 || opcode === 0x3 || opcode === 0xE) { // LD, ST, LEA
             const pcoffset9 = signExtend(word & 0x1FF, 9);
             const targetAddress = (pc + 1 + pcoffset9) & 0xFFFF;
-            branchTargets.add(targetAddress);
-            instruction.targetAddress = targetAddress;
+            dataTargets.add(targetAddress);
+            instruction.dataAddress = targetAddress;
         }
 
         pc++;
     }
 
-    // Assign labels to branch targets
+    // Assign labels to branch and data targets
     const addressToLabel = {};
+    const addressToDataLabel = {};
     let labelCounter = 1;
+    let dataLabelCounter = 1;
     branchTargets.forEach(address => {
         addressToLabel[address] = `@L${labelCounter++}`;
+    });
+    dataTargets.forEach(address => {
+        addressToDataLabel[address] = `@D${dataLabelCounter++}`;
     });
 
     // Second pass: Disassemble instructions
@@ -105,6 +111,19 @@ function disassemble(fileName) {
         // Insert label if this address is a branch target
         if (addressToLabel[instruction.address]) {
             disassembledLines.push(`${addressToLabel[instruction.address]}:`);
+        }
+
+        // Insert data label if this address is a data target
+        if (addressToDataLabel[instruction.address]) {
+            disassembledLines.push(`${addressToDataLabel[instruction.address]}:`);
+        }
+
+        // Check if this address is in dataTargets
+        if (dataTargets.has(instruction.address)) {
+            // This is data
+            const dataValue = signExtend(instruction.word, 16);
+            disassembledLines.push(`    .word ${dataValue}`);
+            return; // Skip disassembling as instruction
         }
 
         let mnemonic = '';
@@ -145,7 +164,7 @@ function disassemble(fileName) {
                     const dr = (word >> 9) & 0x7;
                     const pcoffset9 = signExtend(word & 0x1FF, 9);
                     const targetAddress = (instruction.address + 1 + pcoffset9) & 0xFFFF;
-                    const label = addressToLabel[targetAddress] || `@Addr${targetAddress}`;
+                    const label = addressToDataLabel[targetAddress] || `@Addr${targetAddress}`;
                     mnemonic = 'ld';
                     operands = `${registerNames[dr]}, ${label}`;
                 }
@@ -155,9 +174,30 @@ function disassemble(fileName) {
                     const sr = (word >> 9) & 0x7;
                     const pcoffset9 = signExtend(word & 0x1FF, 9);
                     const targetAddress = (instruction.address + 1 + pcoffset9) & 0xFFFF;
-                    const label = addressToLabel[targetAddress] || `@Addr${targetAddress}`;
+                    const label = addressToDataLabel[targetAddress] || `@Addr${targetAddress}`;
                     mnemonic = 'st';
                     operands = `${registerNames[sr]}, ${label}`;
+                }
+                break;
+            case 0x4: // BL or BLR
+                {
+                    const bit11 = (word >> 11) & 0x1;
+                    if (bit11 === 1) { // BL
+                        const pcoffset11 = signExtend(word & 0x7FF, 11);
+                        const targetAddress = (instruction.address + 1 + pcoffset11) & 0xFFFF;
+                        const label = addressToLabel[targetAddress] || `@Addr${targetAddress}`;
+                        mnemonic = 'bl';
+                        operands = `${label}`;
+                    } else {
+                        // BLR or JSRR
+                        const baseR = (word >> 6) & 0x7;
+                        const offset6 = signExtend(word & 0x3F, 6);
+                        mnemonic = 'blr';
+                        operands = `${registerNames[baseR]}`;
+                        if (offset6 !== 0) {
+                            operands += `, ${offset6}`;
+                        }
+                    }
                 }
                 break;
             case 0x5: // AND
@@ -204,6 +244,22 @@ function disassemble(fileName) {
                     mnemonic = 'sub';
                 }
                 break;
+            case 0xC: // JMP or RET
+                {
+                    const baseR = (word >> 6) & 0x7;
+                    const offset6 = signExtend(word & 0x3F, 6);
+                    if (baseR === 7 && offset6 === 0) { // RET
+                        mnemonic = 'ret';
+                        operands = '';
+                    } else {
+                        mnemonic = 'jmp';
+                        operands = `${registerNames[baseR]}`;
+                        if (offset6 !== 0) {
+                            operands += `, ${offset6}`;
+                        }
+                    }
+                }
+                break;
             case 0xD: // MVI
                 {
                     const dr = (word >> 9) & 0x7;
@@ -212,14 +268,38 @@ function disassemble(fileName) {
                     operands = `${registerNames[dr]}, ${imm9}`;
                 }
                 break;
+            case 0xA: // MISC (PUSH, POP, MVR)
+                {
+                    const sr_dr = (word >> 9) & 0x7;
+                    const eopcode = word & 0x3F; // bits 5-0
+                    switch (eopcode) {
+                        case 0x00: // PUSH
+                            mnemonic = 'push';
+                            operands = `${registerNames[sr_dr]}`;
+                            break;
+                        case 0x01: // POP
+                            mnemonic = 'pop';
+                            operands = `${registerNames[sr_dr]}`;
+                            break;
+                        case 0x0C: // MVR
+                            const sr1 = (word >> 6) & 0x7;
+                            mnemonic = 'mvr';
+                            operands = `${registerNames[sr_dr]}, ${registerNames[sr1]}`;
+                            break;
+                        default:
+                            mnemonic = '???';
+                            operands = '';
+                    }
+                }
+                break;
             case 0xF: // TRAP
                 {
                     const trapvect8 = word & 0xFF;
-                    const sr = (word >> 9) & 0x7;
+                    const dr_sr = (word >> 9) & 0x7;
                     const trapInfo = getTrapInfo(trapvect8);
                     if (trapInfo) {
                         mnemonic = trapInfo.mnemonic;
-                        operands = trapInfo.needsRegister ? `${registerNames[sr]}` : '';
+                        operands = trapInfo.needsRegister ? `${registerNames[dr_sr]}` : '';
                     } else {
                         mnemonic = `trap`;
                         operands = `${trapvect8}`;
@@ -227,9 +307,8 @@ function disassemble(fileName) {
                 }
                 break;
             default:
-                // For unimplemented or unknown opcodes, output as .word directive
-                mnemonic = '.word';
-                operands = `0x${word.toString(16).padStart(4, '0')}`;
+                mnemonic = '???';
+                operands = '';
         }
 
         // Output the line with indentation
