@@ -133,6 +133,7 @@
 - [ ] test for invalid mnemonic detection
 - [ ] test for bad register detection
 - [ ] test for bad immediate detection
+- [ ] write test suite for disassembler
 
 ## Fix
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
@@ -145,11 +146,12 @@
 - [x] abort lcc.js assembly and execution if name input is not supplied when asked for
 - [x] abort interpreter.js execution if name input is not supplied when asked for
 - [x] fix issue where lcc appeared to be generated inconsistent newlines in .lst files (the issue was how the name.nnn file was being generated, it did indeed need to be terminated with a \n newline character)
+- [ ] fix issue where disassembler.js does not handle demoP correctly (not handling the .start directive yet, nor treating code as code, and the string data as string data)
 
 ## Extended Features
-- [o] (picture.js) hex viewer to inspect .e and .o files
+- [x] (picture.js) hex viewer to inspect .e and .o files
   - [x] basic hex picture viewer
-  - [ ] ability to view ascii representation of hex dump 
+  - [x] ability to view ascii representation of hex dump 
 - [x] give basic "help" message when program is run without any arguments
   - [x] assembler.js
   - [x] interpreter.js
@@ -164,7 +166,12 @@
   - [ ] infinite loop permission flag
   - [ ] turn off auto-symbolic debugger flag
 - [ ] ability to detect single character press inputs ("KEYDOWN", "KEYUP", etc.) rather than requiring the user to press enter after each input
-- [ ] deassembler (takes a .e file and outputs a .a file)
+- [o] deassembler/disassembler (takes a .e file and outputs a .a file)
+  - [ ] majority of instructions (mov, ld, add, sub, lea) disassembly
+  - [ ] div instruction disassembly
+  - [ ] .start directive disassembly
+  - [ ] e heading .extern disassembly
+  - [ ] G heading .global disassembly
 - [ ] website that allows users to upload .a files, run & see the output of the program, and download the .e file
 - [ ] ability to include lcc.js extension modules via a comment in the .a file, which makes clear that a given program is an lcc.js+ extension program rather than a standard lcc.js program
 - [ ] ability to get terminal dimensions and adjust the output of the program to fit the terminal window
