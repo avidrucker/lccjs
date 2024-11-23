@@ -116,18 +116,13 @@ function disassemble(fileName) {
         const instruction = instructions[i];
         const { address, word } = instruction;
 
-        // Insert label if this address is a branch target
-        if (codeLabels[address]) {
-            disassembledLines.push(`${codeLabels[address]}:`);
-        }
-
         // Check if this address is a data address
         if (dataLabels[address]) {
             // We've reached data, stop disassembling instructions
             break;
         }
 
-        const line = disassembleInstruction(address, word);
+        const line = disassembleInstruction(address, word, codeLabels);
         disassembledLines.push(line);
         i++;
     }
@@ -184,7 +179,8 @@ function getTrapInfo(trapvect8) {
     return trapMap[trapvect8];
 }
 
-function disassembleInstruction(address, word) {
+function disassembleInstruction(address, word, codeLabels) {
+    const label = codeLabels[address] ? `${codeLabels[address]}: ` : '';
     const opcode = (word >> 12) & 0xF;
     let mnemonic = '???';
     let operands = '';
@@ -195,9 +191,9 @@ function disassembleInstruction(address, word) {
                 const cc = (word >> 9) & 0x7;
                 const pcoffset9 = signExtend(word & 0x1FF, 9);
                 const targetAddress = (address + 1 + pcoffset9) & 0xFFFF;
-                const label = codeLabels[targetAddress] || `@Addr${targetAddress}`;
+                const labelTarget = codeLabels[targetAddress] || `@Addr${targetAddress}`;
                 mnemonic = getBranchCC(cc);
-                operands = `${label}`;
+                operands = `${labelTarget}`;
             }
             break;
         case 0x1: // ADD
@@ -220,9 +216,9 @@ function disassembleInstruction(address, word) {
                 const dr = (word >> 9) & 0x7;
                 const pcoffset9 = signExtend(word & 0x1FF, 9);
                 const dataAddress = (address + 1 + pcoffset9) & 0xFFFF;
-                const label = dataLabels[dataAddress] || assignDataLabel(dataAddress);
+                const labelData = dataLabels[dataAddress] || assignDataLabel(dataAddress);
                 mnemonic = 'ld';
-                operands = `${registerNames[dr]}, ${label}`;
+                operands = `${registerNames[dr]}, ${labelData}`;
             }
             break;
         case 0x3: // ST
@@ -230,9 +226,9 @@ function disassembleInstruction(address, word) {
                 const sr = (word >> 9) & 0x7;
                 const pcoffset9 = signExtend(word & 0x1FF, 9);
                 const dataAddress = (address + 1 + pcoffset9) & 0xFFFF;
-                const label = dataLabels[dataAddress] || assignDataLabel(dataAddress);
+                const labelData = dataLabels[dataAddress] || assignDataLabel(dataAddress);
                 mnemonic = 'st';
-                operands = `${registerNames[sr]}, ${label}`;
+                operands = `${registerNames[sr]}, ${labelData}`;
             }
             break;
         case 0x4: // BL or BLR
@@ -241,9 +237,9 @@ function disassembleInstruction(address, word) {
                 if (bit11 === 1) { // BL
                     const pcoffset11 = signExtend(word & 0x7FF, 11);
                     const targetAddress = (address + 1 + pcoffset11) & 0xFFFF;
-                    const label = codeLabels[targetAddress] || assignCodeLabel(targetAddress);
+                    const labelTarget = codeLabels[targetAddress] || assignCodeLabel(targetAddress);
                     mnemonic = 'bl';
-                    operands = `${label}`;
+                    operands = `${labelTarget}`;
                 } else {
                     // BLR or JSRR
                     const baseR = (word >> 6) & 0x7;
@@ -329,9 +325,9 @@ function disassembleInstruction(address, word) {
                 const dr = (word >> 9) & 0x7;
                 const pcoffset9 = signExtend(word & 0x1FF, 9);
                 const dataAddress = (address + 1 + pcoffset9) & 0xFFFF;
-                const label = dataLabels[dataAddress] || assignDataLabel(dataAddress);
+                const labelData = dataLabels[dataAddress] || assignDataLabel(dataAddress);
                 mnemonic = 'lea';
-                operands = `${registerNames[dr]}, ${label}`;
+                operands = `${registerNames[dr]}, ${labelData}`;
             }
             break;
         case 0xA: // MISC (PUSH, POP, MVR)
@@ -377,7 +373,7 @@ function disassembleInstruction(address, word) {
             operands = '';
     }
 
-    return `    ${mnemonic}${operands ? ' ' + operands : ''}`;
+    return `${label.padEnd(5)} ${mnemonic}${operands ? ' ' + operands : ''}`;
 }
 
 function assignDataLabel(address) {
@@ -407,7 +403,6 @@ function processDataSections(buffer, offset, pc, fileSize, disassembledLines) {
         if (!label) {
             label = assignDataLabel(address);
         }
-        disassembledLines.push(`${label}:`);
 
         let nextDataLabelAddress = dataLabelAddresses.find(addr => addr > address);
         let dataEndAddress = nextDataLabelAddress !== undefined ? nextDataLabelAddress : Infinity;
@@ -415,7 +410,6 @@ function processDataSections(buffer, offset, pc, fileSize, disassembledLines) {
         // Start processing data from current address until next data label or end of data
         let tempOffset = offset;
         let tempPc = pc;
-        let dataProcessed = false;
 
         // Check for strings
         let isString = true;
@@ -441,11 +435,10 @@ function processDataSections(buffer, offset, pc, fileSize, disassembledLines) {
         if (isString && chars.length > 1 && chars[chars.length - 1] === 0) {
             // It's a string
             const strContent = chars.slice(0, -1).map(c => String.fromCharCode(c)).join('');
-            disassembledLines.push(`    .string "${strContent.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`);
-            // console.log(`DEBUG: Found string at address ${address}, length ${chars.length - 1}, content "${strContent}"`);
+            const line = `${label}:`.padEnd(5) + ` .string "${strContent.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+            disassembledLines.push(line);
             offset = tempOffset;
             pc = tempPc;
-            dataProcessed = true;
             continue;
         }
 
@@ -466,22 +459,24 @@ function processDataSections(buffer, offset, pc, fileSize, disassembledLines) {
 
         if (zeroCount > 0) {
             // It's zeros
-            disassembledLines.push(`    .zero ${zeroCount}`);
-            // console.log(`DEBUG: Found zeros at address ${address}, count ${zeroCount}`);
+            const line = `${label}:`.padEnd(5) + ` .zero ${zeroCount}`;
+            disassembledLines.push(line);
             offset = tempOffset;
             pc = tempPc;
-            dataProcessed = true;
             continue;
         }
 
         // Else, treat as words up to next data label or end of data
         tempOffset = offset;
         tempPc = pc;
+        let firstLine = true;
         while (tempOffset + 1 <= fileSize && tempPc < dataEndAddress) {
             const word = buffer.readUInt16LE(tempOffset);
-            disassembledLines.push(`    .word ${signExtend(word, 16)}`);
+            const lineLabel = firstLine ? `${label}:` : '';
+            disassembledLines.push(`${lineLabel}`.padEnd(5) + ` .word ${signExtend(word, 16)}`);
             tempOffset += 2;
             tempPc++;
+            firstLine = false;
         }
         offset = tempOffset;
         pc = tempPc;
