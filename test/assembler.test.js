@@ -41,6 +41,10 @@ function compareHexDumps(file1, file2) {
     const hexDump1 = execSync(`xxd -p ${file1}`).toString().trim();
     const hexDump2 = execSync(`xxd -p ${file2}`).toString().trim();
 
+    // console.log('Hex dump 1:', hexDump1);
+    // console.log('----------------');
+    // console.log('Hex dump 2:', hexDump2);
+
     // Compare hex dumps
     if (hexDump1 === hexDump2) {
       console.log('✅ Hex dumps are identical. Test PASSED.');
@@ -166,6 +170,7 @@ async function testAssembler() {
         }
 
         const { cachedOutputFile } = getCachedFilePaths(inputFile, cacheOptions);
+        console.log(`comparing ${assemblerOutput} and ${cachedOutputFile}...`); ////
         testResult = compareHexDumps(assemblerOutput, cachedOutputFile);
         process.exit(testResult ? 0 : 1);
       }
@@ -206,6 +211,7 @@ async function testAssembler() {
 
     testResult = compareHexDumps(assemblerOutput, lccOutput);
 
+    console.log(`updating cache for ${inputFile} with new ${lccOutputFile}`); ////
     // Update cache: copy input and output files to cache
     updateCache(inputFile, lccOutput, cacheOptions);
 
