@@ -45,16 +45,18 @@ while (offset < fileSize) {
         asciiChars.push(isPrintableASCII(byte) ? String.fromCharCode(byte) : '.');
     }
 
-    // Format hex output
+    // Format hex output without swapping bytes
     const hexParts = [];
     for (let i = 0; i < lineBytes.length; i += 2) {
         if (i + 1 < lineBytes.length) {
-            const word = (lineBytes[i + 1] << 8) | lineBytes[i];
-            hexParts.push(word.toString(16).padStart(4, '0').toUpperCase());
+            const byte1 = lineBytes[i];
+            const byte2 = lineBytes[i + 1];
+            // Combine bytes as they appear in the file (big-endian)
+            hexParts.push(byte1.toString(16).padStart(2, '0').toUpperCase() + byte2.toString(16).padStart(2, '0').toUpperCase());
         } else {
-            // If we have an odd number of bytes, pad the last byte
-            const word = lineBytes[i];
-            hexParts.push(word.toString(16).padStart(2, '0').toUpperCase() + '  ');
+            // If we have an odd number of bytes, output the last byte
+            const byte = lineBytes[i];
+            hexParts.push(byte.toString(16).padStart(2, '0').toUpperCase());
         }
     }
 
@@ -64,6 +66,10 @@ while (offset < fileSize) {
     // Join ASCII characters
     const asciiString = asciiChars.join('');
 
+    // Calculate padding to align ASCII output
+    const totalHexWidth = 39; // Maximum width of hex string (for 16 bytes)
+    const padding = ' '.repeat(totalHexWidth - hexString.length);
+
     // Output the line
-    console.log(`${hexString.padEnd(38)}    ${asciiString}`);
+    console.log(`${hexString}${padding}    ${asciiString}`);
 }
