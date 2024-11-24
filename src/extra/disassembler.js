@@ -34,7 +34,7 @@ function disassemble(fileName) {
         process.exit(1);
     }
 
-    let startAddress = 0;
+    let startAddress = null;
     // Skip header entries (S, G, etc.) until 'C' is encountered
     while (offset < fileSize) {
         const entryType = String.fromCharCode(buffer[offset++]);
@@ -61,7 +61,7 @@ function disassemble(fileName) {
     const branchTargets = new Set();
 
     // First pass: Read instructions and identify branch and data targets
-    let pc = startAddress;
+    let pc = 0; // PC starts from 0
     let bufferOffset = offset;
 
     while (bufferOffset + 1 <= fileSize) {
@@ -101,16 +101,33 @@ function disassemble(fileName) {
 
     // Assign code labels
     branchTargets.forEach(address => {
-        codeLabels[address] = `@L${codeLabelCounter++}`;
+        if (!codeLabels[address]) {
+            codeLabels[address] = `@L${codeLabelCounter++}`;
+        }
     });
+
+    // Ensure start address has a label if it exists
+    let startLabel = null;
+    if (startAddress !== null) {
+        if (!codeLabels[startAddress]) {
+            codeLabels[startAddress] = `@L${codeLabelCounter++}`;
+        }
+        startLabel = codeLabels[startAddress];
+    }
 
     // Assign data labels
     dataAddresses.forEach(address => {
-        dataLabels[address] = `@D${dataLabelCounter++}`;
+        if (!dataLabels[address]) {
+            dataLabels[address] = `@D${dataLabelCounter++}`;
+        }
     });
 
     // Second pass: Disassemble instructions
     const disassembledLines = [];
+    if (startLabel) {
+        disassembledLines.push(`    .start ${startLabel}`);
+    }
+
     let i = 0;
     while (i < instructions.length) {
         const instruction = instructions[i];
@@ -191,7 +208,7 @@ function disassembleInstruction(address, word, codeLabels) {
                 const cc = (word >> 9) & 0x7;
                 const pcoffset9 = signExtend(word & 0x1FF, 9);
                 const targetAddress = (address + 1 + pcoffset9) & 0xFFFF;
-                const labelTarget = codeLabels[targetAddress] || `@Addr${targetAddress}`;
+                const labelTarget = codeLabels[targetAddress] || assignCodeLabel(targetAddress);
                 mnemonic = getBranchCC(cc);
                 operands = `${labelTarget}`;
             }
@@ -373,7 +390,7 @@ function disassembleInstruction(address, word, codeLabels) {
             operands = '';
     }
 
-    return `${label.padEnd(5)} ${mnemonic}${operands ? ' ' + operands : ''}`;
+    return `${label.padEnd(8)}${mnemonic}${operands ? ' ' + operands : ''}`;
 }
 
 function assignDataLabel(address) {
@@ -422,8 +439,10 @@ function processDataSections(buffer, offset, pc, fileSize, disassembledLines) {
                 tempOffset += 2;
                 tempPc++;
                 break;
-            } else if (isPrintableASCII(word)) {
-                chars.push(word);
+            } else if (isPrintableASCII(word & 0xFF) && isPrintableASCII((word >> 8) & 0xFF)) {
+                // Since each word is 2 bytes, check both bytes for printable ASCII
+                chars.push(word & 0xFF);
+                chars.push((word >> 8) & 0xFF);
                 tempOffset += 2;
                 tempPc++;
             } else {
@@ -432,10 +451,10 @@ function processDataSections(buffer, offset, pc, fileSize, disassembledLines) {
             }
         }
 
-        if (isString && chars.length > 1 && chars[chars.length - 1] === 0) {
+        if (isString && chars.length > 0 && chars[chars.length - 1] === 0) {
             // It's a string
             const strContent = chars.slice(0, -1).map(c => String.fromCharCode(c)).join('');
-            const line = `${label}:`.padEnd(5) + ` .string "${strContent.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+            const line = `${label}:`.padEnd(8) + `.string "${strContent.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
             disassembledLines.push(line);
             offset = tempOffset;
             pc = tempPc;
@@ -459,7 +478,7 @@ function processDataSections(buffer, offset, pc, fileSize, disassembledLines) {
 
         if (zeroCount > 0) {
             // It's zeros
-            const line = `${label}:`.padEnd(5) + ` .zero ${zeroCount}`;
+            const line = `${label}:`.padEnd(8) + `.zero ${zeroCount * 2}`; // Multiply by 2 for bytes
             disassembledLines.push(line);
             offset = tempOffset;
             pc = tempPc;
@@ -473,7 +492,7 @@ function processDataSections(buffer, offset, pc, fileSize, disassembledLines) {
         while (tempOffset + 1 <= fileSize && tempPc < dataEndAddress) {
             const word = buffer.readUInt16LE(tempOffset);
             const lineLabel = firstLine ? `${label}:` : '';
-            disassembledLines.push(`${lineLabel}`.padEnd(5) + ` .word ${signExtend(word, 16)}`);
+            disassembledLines.push(`${lineLabel.padEnd(8)}.word ${word}`);
             tempOffset += 2;
             tempPc++;
             firstLine = false;
