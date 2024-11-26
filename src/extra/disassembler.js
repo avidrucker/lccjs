@@ -132,7 +132,7 @@ function disassemble(fileName) {
     if (startAddress !== null) {
         // Assign @L1 to startAddress
         assignLabel(startAddress, 'code');
-        disassembledCode.push(`    .start ${labels[startAddress]}`);
+        disassembledCode.push(''.padEnd(7) + `.start ${labels[startAddress]}`);
         queue.push(startAddress);
     } else {
         // No start address; begin at address 0
@@ -665,9 +665,9 @@ function outputDisassembledCode() {
         let line = '';
 
         if (entry.label) {
-            line += `${entry.label}: `;
+            line += `${entry.label}:`.padEnd(7);
         } else {
-            line += '      ';
+            line += ''.padEnd(7);
         }
 
         if (entry.mnemonic === '.string') {
