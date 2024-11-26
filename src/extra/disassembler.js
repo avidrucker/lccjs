@@ -1,20 +1,44 @@
 #!/usr/bin/env node
 
 // disassembler.js
-// LCC.js Disassembler
+// LCC.js Disassembler - Execution Order Processing with WIP Disassembly
 
 const fs = require('fs');
 
 // Register names
 const registerNames = ['r0', 'r1', 'r2', 'r3', 'r4', 'fp', 'sp', 'lr'];
 
-// Global variables for label tracking
-const codeLabels = {};
-const dataLabels = {};
+// Label Counters
 let codeLabelCounter = 1;
 let dataLabelCounter = 1;
 
-// Main disassembler function
+// Label Mapping
+const labels = {}; // address -> label (e.g., {0: '@L1', 3: '@D1'})
+
+// Processed Addresses
+const processedAddresses = new Set();
+
+// Disassembled Code Lines
+const disassembledCode = [];
+
+let nextAddress = -1;
+
+// WIP Disassembly Data Structure
+let WIPDisassembly = {}; // address -> {macword, label, opcode, operands, mnemonic, value}
+
+// Link Register Stack (to handle nested BL/RET)
+const linkRegisterStack = [];
+
+// Machine Words Array
+let machineWords = [];
+
+// Queue for Addresses to Process
+const queue = [];
+
+// Start Address (if provided)
+let startAddress = null;
+
+// Main Disassembler Function
 function disassemble(fileName) {
     // Read the file into a buffer
     let buffer;
@@ -28,159 +52,160 @@ function disassemble(fileName) {
     let offset = 0;
     const fileSize = buffer.length;
 
-    // Parse header
+    // Parse Header
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
         console.error('Invalid file signature');
         process.exit(1);
     }
 
-    let startAddress = 0;
-    // Skip header entries (S, G, etc.) until 'C' is encountered
+    // Read header entries until 'C' is encountered
     while (offset < fileSize) {
         const entryType = String.fromCharCode(buffer[offset++]);
         if (entryType === 'C') {
             break;
         } else if (entryType === 'S') {
+            // Read next 2 bytes as start address (little endian)
+            if (offset + 1 >= fileSize) {
+                console.error('Unexpected end of file while reading start address');
+                process.exit(1);
+            }
             startAddress = buffer.readUInt16LE(offset);
+            console.log("Start Address detected:", startAddress);
             offset += 2;
         } else if (['G', 'E', 'V'].includes(entryType)) {
-            // Skip address and null-terminated string
+            // Skip address (2 bytes) and null-terminated string
             offset += 2; // Skip address
-            while (buffer[offset++] !== 0); // Skip null-terminated string
+            while (offset < fileSize && buffer[offset++] !== 0);
         } else if (entryType === 'A') {
-            offset += 2; // Skip address
+            // Skip address (2 bytes)
+            offset += 2;
         } else {
             console.error(`Unknown header entry type: ${entryType}`);
             process.exit(1);
         }
     }
 
-    // Now offset points to the code section
-    const instructions = [];
-    const dataAddresses = new Set();
-    const branchTargets = new Set();
+    // Read Machine Words (16-bit, little endian)
+    while (offset + 1 < fileSize) {
+        const word = buffer.readUInt16LE(offset);
+        machineWords.push(word);
+        offset += 2;
+    }
 
-    // First pass: Read instructions and identify branch and data targets
-    let pc = startAddress;
-    let bufferOffset = offset;
+    // Initialize WIP Disassembly
+    for (let i = 0; i < machineWords.length; i++) {
+        WIPDisassembly[i] = {
+            macword: machineWords[i].toString(16).padStart(4, '0').toUpperCase(),
+        };
+    }
 
-    while (bufferOffset + 1 <= fileSize) {
-        const word = buffer.readUInt16LE(bufferOffset);
+    // Initialize Processing Queue and Labels
+    if (startAddress !== null) {
+        // Assign @L1 to startAddress
+        assignLabel(startAddress, 'code');
+        disassembledCode.push(`    .start ${labels[startAddress]}`);
+        queue.push(startAddress);
+    } else {
+        // No start address; begin at address 0
+        // assignLabel(0, 'code');
+        // disassembledCode.push(`    .start ${labels[0]}`);
+        queue.push(0);
+    }
 
+    // Process the code in execution order
+    while (queue.length > 0) {
+        const currentAddress = queue.shift();
+
+        if (processedAddresses.has(currentAddress)) {
+            continue; // Skip already processed addresses
+        }
+
+        processedAddresses.add(currentAddress);
+
+        // Fetch Machine Word
+        const word = machineWords[currentAddress];
+        if (word === undefined) {
+            console.warn(`Warning: No machine word found at address ${currentAddress}`);
+            continue;
+        }
+
+        // Check if the address is a data label
+        if (labels[currentAddress] && labels[currentAddress].startsWith('@D')) {
+            // Process data
+            processData(currentAddress);
+            //// printWIPDisassembly();
+            continue; // No need to process further
+        }
+
+        // Disassemble Instruction
+        const { mnemonic, operands } = disassembleInstruction(currentAddress, word);
+
+        // Update WIP Disassembly
+        WIPDisassembly[currentAddress].opcode = mnemonic;
+        WIPDisassembly[currentAddress].operands = operands;
+
+        // Add Label if Exists
+        if (labels[currentAddress]) {
+            WIPDisassembly[currentAddress].label = labels[currentAddress];
+        }
+
+        // Handle Instruction Types
         const opcode = (word >> 12) & 0xF;
+        //// console.log(`Processing machine word at address ${currentAddress} with opcode ${opcode.toString(16)}`);
 
-        // If we have already identified this address as data, stop interpreting as code
-        if (dataAddresses.has(pc)) {
-            break;
+        switch (opcode) {
+            case 0x4: // BL or BLR
+                handleBL(currentAddress, word);
+                break;
+            case 0x2: // LD
+            case 0x3: // ST
+            case 0xE: // LEA
+                handleDataInstruction(currentAddress, word);
+                break;
+            case 0xC: // JMP or RET
+                handleJMPRET(currentAddress, word);
+                break;
+            case 0xF: // TRAP
+                const trapvect8 = word & 0xFF;
+                if (trapvect8 === 0x00) { // halt
+                    // Update WIP Disassembly
+                    WIPDisassembly[currentAddress].opcode = 'halt';
+                    //// printWIPDisassembly();
+                    return outputDisassembledCode();
+                } else {
+                    enqueueNextAddress(currentAddress);
+                }
+                break;
+            default:
+                enqueueNextAddress(currentAddress);
+                break;
         }
 
-        // Mark this address as code
-        instructions.push({ address: pc, word });
-
-        // Identify branch targets and data references
-        if (opcode === 0x0) { // BR
-            const pcoffset9 = signExtend(word & 0x1FF, 9);
-            const targetAddress = (pc + 1 + pcoffset9) & 0xFFFF;
-            branchTargets.add(targetAddress);
-        } else if (opcode === 0x4) { // BL, BLR
-            const bit11 = (word >> 11) & 0x1;
-            if (bit11 === 1) { // BL
-                const pcoffset11 = signExtend(word & 0x7FF, 11);
-                const targetAddress = (pc + 1 + pcoffset11) & 0xFFFF;
-                branchTargets.add(targetAddress);
-            }
-        } else if ([0x2, 0x3, 0xE].includes(opcode)) { // LD, ST, LEA
-            const pcoffset9 = signExtend(word & 0x1FF, 9);
-            const dataAddress = (pc + 1 + pcoffset9) & 0xFFFF;
-            dataAddresses.add(dataAddress);
-        }
-
-        bufferOffset += 2;
-        pc++;
+        // Print WIP Disassembly after each instruction
+        //// printWIPDisassembly();
     }
 
-    // Assign code labels
-    branchTargets.forEach(address => {
-        codeLabels[address] = `@L${codeLabelCounter++}`;
-    });
+    // Output the Disassembled Code
+    outputDisassembledCode();
+}
 
-    // Assign data labels
-    dataAddresses.forEach(address => {
-        dataLabels[address] = `@D${dataLabelCounter++}`;
-    });
-
-    // Second pass: Disassemble instructions
-    const disassembledLines = [];
-    let i = 0;
-    while (i < instructions.length) {
-        const instruction = instructions[i];
-        const { address, word } = instruction;
-
-        // Check if this address is a data address
-        if (dataLabels[address]) {
-            // We've reached data, stop disassembling instructions
-            break;
-        }
-
-        const line = disassembleInstruction(address, word, codeLabels);
-        disassembledLines.push(line);
-        i++;
+// Assigns a label to an address based on its type ('code' or 'data')
+function assignLabel(address, type) {
+    if (labels[address]) {
+        return labels[address]; // Label already assigned
     }
-
-    // Process data sections
-    processDataSections(buffer, bufferOffset, pc, fileSize, disassembledLines);
-
-    // Output the disassembled code
-    disassembledLines.forEach(line => console.log(line));
+    if (type === 'code') {
+        labels[address] = `@L${codeLabelCounter++}`;
+    } else if (type === 'data') {
+        labels[address] = `@D${dataLabelCounter++}`;
+    }
+    // Update WIP Disassembly with the label
+    WIPDisassembly[address].label = labels[address];
+    return labels[address];
 }
 
-// Utility functions
-function signExtend(value, bitCount) {
-    const signBit = 1 << (bitCount - 1);
-    return (value & (signBit - 1)) - (value & signBit);
-}
-
-function isPrintableASCII(word) {
-    return word >= 32 && word <= 126;
-}
-
-function getBranchCC(cc) {
-    const ccMap = {
-        0: 'brz',
-        1: 'brnz',
-        2: 'brn',
-        3: 'brp',
-        4: 'brlt',
-        5: 'brgt',
-        6: 'brc',
-        7: 'br',
-    };
-    return ccMap[cc] || 'br';
-}
-
-function getTrapInfo(trapvect8) {
-    const trapMap = {
-        0x00: { mnemonic: 'halt', needsRegister: false },
-        0x01: { mnemonic: 'nl', needsRegister: false },
-        0x02: { mnemonic: 'dout', needsRegister: true },
-        0x03: { mnemonic: 'udout', needsRegister: true },
-        0x04: { mnemonic: 'hout', needsRegister: true },
-        0x05: { mnemonic: 'aout', needsRegister: true },
-        0x06: { mnemonic: 'sout', needsRegister: true },
-        0x07: { mnemonic: 'din', needsRegister: true },
-        0x08: { mnemonic: 'hin', needsRegister: true },
-        0x09: { mnemonic: 'ain', needsRegister: true },
-        0x0A: { mnemonic: 'sin', needsRegister: true },
-        0x0B: { mnemonic: 'm', needsRegister: false },
-        0x0C: { mnemonic: 'r', needsRegister: false },
-        0x0D: { mnemonic: 's', needsRegister: false },
-        0x0E: { mnemonic: 'bp', needsRegister: false },
-    };
-    return trapMap[trapvect8];
-}
-
-function disassembleInstruction(address, word, codeLabels) {
-    const label = codeLabels[address] ? `${codeLabels[address]}: ` : '';
+// Disassembles a single machine word into its mnemonic and operands
+function disassembleInstruction(address, word) {
     const opcode = (word >> 12) & 0xF;
     let mnemonic = '???';
     let operands = '';
@@ -191,9 +216,8 @@ function disassembleInstruction(address, word, codeLabels) {
                 const cc = (word >> 9) & 0x7;
                 const pcoffset9 = signExtend(word & 0x1FF, 9);
                 const targetAddress = (address + 1 + pcoffset9) & 0xFFFF;
-                const labelTarget = codeLabels[targetAddress] || `@Addr${targetAddress}`;
-                mnemonic = getBranchCC(cc);
-                operands = `${labelTarget}`;
+                mnemonic = getBranchMnemonic(cc);
+                operands = `${getOrAssignCodeLabel(targetAddress)}`;
             }
             break;
         case 0x1: // ADD
@@ -216,9 +240,9 @@ function disassembleInstruction(address, word, codeLabels) {
                 const dr = (word >> 9) & 0x7;
                 const pcoffset9 = signExtend(word & 0x1FF, 9);
                 const dataAddress = (address + 1 + pcoffset9) & 0xFFFF;
-                const labelData = dataLabels[dataAddress] || assignDataLabel(dataAddress);
+                const dataLabel = getOrAssignDataLabel(dataAddress);
+                operands = `${registerNames[dr]}, ${dataLabel}`;
                 mnemonic = 'ld';
-                operands = `${registerNames[dr]}, ${labelData}`;
             }
             break;
         case 0x3: // ST
@@ -226,9 +250,9 @@ function disassembleInstruction(address, word, codeLabels) {
                 const sr = (word >> 9) & 0x7;
                 const pcoffset9 = signExtend(word & 0x1FF, 9);
                 const dataAddress = (address + 1 + pcoffset9) & 0xFFFF;
-                const labelData = dataLabels[dataAddress] || assignDataLabel(dataAddress);
+                const dataLabel = getOrAssignDataLabel(dataAddress);
+                operands = `${registerNames[sr]}, ${dataLabel}`;
                 mnemonic = 'st';
-                operands = `${registerNames[sr]}, ${labelData}`;
             }
             break;
         case 0x4: // BL or BLR
@@ -237,11 +261,10 @@ function disassembleInstruction(address, word, codeLabels) {
                 if (bit11 === 1) { // BL
                     const pcoffset11 = signExtend(word & 0x7FF, 11);
                     const targetAddress = (address + 1 + pcoffset11) & 0xFFFF;
-                    const labelTarget = codeLabels[targetAddress] || assignCodeLabel(targetAddress);
+                    const targetLabel = getOrAssignCodeLabel(targetAddress);
                     mnemonic = 'bl';
-                    operands = `${labelTarget}`;
-                } else {
-                    // BLR or JSRR
+                    operands = `${targetLabel}`;
+                } else { // BLR or JSRR
                     const baseR = (word >> 6) & 0x7;
                     const offset6 = signExtend(word & 0x3F, 6);
                     mnemonic = 'blr';
@@ -303,7 +326,7 @@ function disassembleInstruction(address, word, codeLabels) {
                 if (baseR === 7 && offset6 === 0) { // RET
                     mnemonic = 'ret';
                     operands = '';
-                } else {
+                } else { // JMP
                     mnemonic = 'jmp';
                     operands = `${registerNames[baseR]}`;
                     if (offset6 !== 0) {
@@ -316,8 +339,8 @@ function disassembleInstruction(address, word, codeLabels) {
             {
                 const dr = (word >> 9) & 0x7;
                 const imm9 = signExtend(word & 0x1FF, 9);
-                mnemonic = 'mvi';
                 operands = `${registerNames[dr]}, ${imm9}`;
+                mnemonic = 'mvi';
             }
             break;
         case 0xE: // LEA
@@ -325,9 +348,9 @@ function disassembleInstruction(address, word, codeLabels) {
                 const dr = (word >> 9) & 0x7;
                 const pcoffset9 = signExtend(word & 0x1FF, 9);
                 const dataAddress = (address + 1 + pcoffset9) & 0xFFFF;
-                const labelData = dataLabels[dataAddress] || assignDataLabel(dataAddress);
+                const dataLabel = getOrAssignDataLabel(dataAddress);
+                operands = `${registerNames[dr]}, ${dataLabel}`;
                 mnemonic = 'lea';
-                operands = `${registerNames[dr]}, ${labelData}`;
             }
             break;
         case 0xA: // MISC (PUSH, POP, MVR)
@@ -373,117 +396,268 @@ function disassembleInstruction(address, word, codeLabels) {
             operands = '';
     }
 
-    return `${label.padEnd(5)} ${mnemonic}${operands ? ' ' + operands : ''}`;
+    return { mnemonic, operands };
 }
 
-function assignDataLabel(address) {
-    if (!dataLabels[address]) {
-        dataLabels[address] = `@D${dataLabelCounter++}`;
+// Handles BL (Branch and Link) Instructions
+function handleBL(currentAddress, word) {
+    const pcoffset11 = signExtend(word & 0x7FF, 11);
+    const targetAddress = (currentAddress + 1 + pcoffset11) & 0xFFFF;
+    // Save link register (address of next instruction)
+    const linkAddress = currentAddress + 1;
+    linkRegisterStack.push(linkAddress);
+    console.log(`Link register saved: ${linkAddress}`);
+    // Enqueue target address
+    queue.unshift(targetAddress);
+        // Enqueue next instruction after BL instruction at end of queue
+    enqueueNextAddress(currentAddress);
+}
+
+// Handles LD, ST, LEA Instructions
+function handleDataInstruction(currentAddress, word) {
+    nextAddress = currentAddress + 1;
+    const opcode = (word >> 12) & 0xF;
+    let pcoffset9;
+    if ([0x2, 0x3, 0xE].includes(opcode)) { // LD, ST, LEA
+        pcoffset9 = signExtend(word & 0x1FF, 9);
+    } else {
+        return; // Not a data instruction
     }
-    return dataLabels[address];
+    const dataAddress = (currentAddress + 1 + pcoffset9) & 0xFFFF;
+    const dataLabel = getOrAssignDataLabel(dataAddress);
+    // Enqueue data address for processing
+    queue.unshift(nextAddress);
+    queue.unshift(dataAddress); //////
 }
 
-function assignCodeLabel(address) {
-    if (!codeLabels[address]) {
-        codeLabels[address] = `@L${codeLabelCounter++}`;
+// Handles JMP and RET Instructions
+function handleJMPRET(currentAddress, word) {
+    const baseR = (word >> 6) & 0x7;
+    const offset6 = signExtend(word & 0x3F, 6);
+
+    if (baseR === 7 && offset6 === 0) { // RET
+        if (linkRegisterStack.length === 0) {
+            console.warn(`Warning: RET encountered at ${currentAddress} with empty link register stack`);
+            return;
+        }
+        const returnAddress = linkRegisterStack.pop();
+        console.log(`Returning to address: ${returnAddress}`);
+        queue.unshift(returnAddress);
+    } else { // JMP
+        // Handle JMP as needed
+        // For simplicity, we can enqueue the next address
+        enqueueNextAddress(currentAddress);
     }
-    return codeLabels[address];
 }
 
-function processDataSections(buffer, offset, pc, fileSize, disassembledLines) {
-    // Collect all data label addresses and sort them
-    const dataLabelAddresses = Object.keys(dataLabels).map(addr => parseInt(addr)).sort((a, b) => a - b);
+// Assigns or Retrieves a Code Label for a Given Address
+function getOrAssignCodeLabel(address) {
+    if (labels[address]) {
+        return labels[address];
+    }
+    const label = assignLabel(address, 'code');
+    // Do not enqueue here; we'll handle it in the instruction processing
+    return label;
+}
 
-    let currentIndex = 0;
-    while (offset + 1 <= fileSize) {
-        const address = pc;
+// Assigns or Retrieves a Data Label for a Given Address
+function getOrAssignDataLabel(address) {
+    if (labels[address]) {
+        return labels[address];
+    }
+    const label = assignLabel(address, 'data');
+    // Do not enqueue here; we'll handle it in the instruction processing
+    return label;
+}
 
-        // If current address matches a data label, use it
-        let label = dataLabels[address];
-        if (!label) {
-            label = assignDataLabel(address);
+// Enqueues the Next Sequential Address for Processing
+function enqueueNextAddress(currentAddress) {
+    const nextAddress = currentAddress + 1;
+    if (nextAddress < machineWords.length) {
+        queue.push(nextAddress);
+    }
+}
+
+// Processes Data Sections (e.g., Strings)
+function processData(address) {
+    console.log("processing data at address", address);
+    let str = '';
+    let currentAddress = address;
+    let word;
+
+    // get next label address if it exists
+    let nextLabelAddress = null;
+    for (let i = currentAddress + 1; i < machineWords.length; i++) {
+        if (labels[i]) {
+            nextLabelAddress = i;
+            console.log("next label address found at", nextLabelAddress);
+            break;
+        }
+    }
+    if(nextLabelAddress === null) {
+        console.log("no next label address found currently");
+        nextLabelAddress = Infinity;
+    }
+
+    while (currentAddress < machineWords.length && currentAddress < nextLabelAddress) {
+        word = machineWords[currentAddress];
+        console.log("processing word at address", currentAddress, "with value", word.toString(16).padStart(4, '0').toUpperCase());
+
+        const lowByte = word & 0xFF;
+
+        if (lowByte === 0) {
+            // Null terminator
+            console.log("null terminator found at address", currentAddress);
+            currentAddress++;
+            break;
         }
 
-        let nextDataLabelAddress = dataLabelAddresses.find(addr => addr > address);
-        let dataEndAddress = nextDataLabelAddress !== undefined ? nextDataLabelAddress : Infinity;
+        if (isPrintableASCII(lowByte)) {
+            console.log("next char: ", String.fromCharCode(lowByte));
+            str += String.fromCharCode(lowByte);
+        } else if (lowByte === 10) {
+            str += '\\n';
+        } else if (lowByte === 13) {
+            str += '\\r';
+        } else if (lowByte === 9) {
+            str += '\\t';
+        } else {
+            // Non-printable character; represent as hex
+            str += `\\x${lowByte.toString(16).padStart(2, '0')}`;
+        }
 
-        // Start processing data from current address until next data label or end of data
-        let tempOffset = offset;
-        let tempPc = pc;
+        processedAddresses.add(currentAddress);
 
-        // Check for strings
-        let isString = true;
-        const chars = [];
-        while (tempOffset + 1 <= fileSize && tempPc < dataEndAddress) {
-            const word = buffer.readUInt16LE(tempOffset);
-            if (word === 0) {
-                // Null terminator
-                chars.push(0);
-                tempOffset += 2;
-                tempPc++;
-                break;
-            } else if (isPrintableASCII(word)) {
-                chars.push(word);
-                tempOffset += 2;
-                tempPc++;
-            } else {
-                isString = false;
-                break;
+        currentAddress++;
+    }
+
+    // Mark the final address if not already processed
+    if (!processedAddresses.has(currentAddress)) {
+        processedAddresses.add(currentAddress);
+    } else {
+        console.log("already processed line at address", currentAddress);
+    }
+
+    // Update the starting address with the full string
+    WIPDisassembly[address].mnemonic = '.string';
+    WIPDisassembly[address].value = `${str}`;
+}
+
+// Outputs the Final Disassembled Code
+function outputDisassembledCode() {
+    // Construct the final disassembled code from WIPDisassembly
+    const finalDisassembly = [];
+
+    for (let addr in WIPDisassembly) {
+        const entry = WIPDisassembly[addr];
+        let line = '';
+
+        if (entry.label) {
+            line += `${entry.label}: `;
+        } else {
+            line += '      ';
+        }
+
+        if (entry.mnemonic === '.string') {
+            line += `.string ${JSON.stringify(entry.value)}`;
+        } else if (entry.opcode) {
+            line += `${entry.opcode}`;
+            if (entry.operands) {
+                line += ` ${entry.operands}`;
             }
         }
 
-        if (isString && chars.length > 1 && chars[chars.length - 1] === 0) {
-            // It's a string
-            const strContent = chars.slice(0, -1).map(c => String.fromCharCode(c)).join('');
-            const line = `${label}:`.padEnd(5) + ` .string "${strContent.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
-            disassembledLines.push(line);
-            offset = tempOffset;
-            pc = tempPc;
-            continue;
+        if (line.trim() !== '') {
+            finalDisassembly.push(line);
         }
+    }
 
-        // Check for zeros up to next data label or end of data
-        let zeroCount = 0;
-        tempOffset = offset;
-        tempPc = pc;
-        while (tempOffset + 1 <= fileSize && tempPc < dataEndAddress) {
-            const word = buffer.readUInt16LE(tempOffset);
-            if (word === 0) {
-                zeroCount++;
-                tempOffset += 2;
-                tempPc++;
-            } else {
-                break;
-            }
-        }
+    // Prepend the .start line
+    if(startAddress !== null) { ////
+        finalDisassembly.unshift(disassembledCode[0]);
+    }
+    console.log('\nFinal Disassembled Code:');
+    finalDisassembly.forEach(line => console.log(line));
+}
 
-        if (zeroCount > 0) {
-            // It's zeros
-            const line = `${label}:`.padEnd(5) + ` .zero ${zeroCount}`;
-            disassembledLines.push(line);
-            offset = tempOffset;
-            pc = tempPc;
-            continue;
-        }
+// Prints the current state of WIP Disassembly
+function printWIPDisassembly() {
+    console.log('\nCurrent WIP Disassembly:');
+    for (let addr in WIPDisassembly) {
+        const entry = WIPDisassembly[addr];
+        let line = `${addr}: { macword: "${entry.macword}"`;
 
-        // Else, treat as words up to next data label or end of data
-        tempOffset = offset;
-        tempPc = pc;
-        let firstLine = true;
-        while (tempOffset + 1 <= fileSize && tempPc < dataEndAddress) {
-            const word = buffer.readUInt16LE(tempOffset);
-            const lineLabel = firstLine ? `${label}:` : '';
-            disassembledLines.push(`${lineLabel}`.padEnd(5) + ` .word ${signExtend(word, 16)}`);
-            tempOffset += 2;
-            tempPc++;
-            firstLine = false;
+        if (entry.label) {
+            line += `, label: "${entry.label}"`;
         }
-        offset = tempOffset;
-        pc = tempPc;
+        if (entry.opcode) {
+            line += `, opcode: "${entry.opcode}"`;
+        }
+        if (entry.operands) {
+            line += `, operands: "${entry.operands}"`;
+        }
+        if (entry.mnemonic) {
+            line += `, mnemonic: "${entry.mnemonic}"`;
+        }
+        if (entry.value) {
+            line += `, value: ${entry.value}`;
+        }
+        line += ' }';
+        console.log(line);
     }
 }
 
-// Entry point
+// Utility Functions
+
+// Sign-extends a value based on the bit count
+function signExtend(value, bitCount) {
+    const signBit = 1 << (bitCount - 1);
+    return (value & (signBit - 1)) - (value & signBit);
+}
+
+// Retrieves the mnemonic for a given branch condition code
+function getBranchMnemonic(cc) {
+    const ccMap = {
+        0: 'brz',  // Branch if Zero
+        1: 'brnz', // Branch if Not Zero
+        2: 'brn',  // Branch if Negative
+        3: 'brp',  // Branch if Positive
+        4: 'brlt', // Branch if Less Than
+        5: 'brgt', // Branch if Greater Than
+        6: 'brc',  // Branch if Carry
+        7: 'br',   // Unconditional Branch
+    };
+    return ccMap[cc] || 'br';
+}
+
+// Retrieves Trap Information Based on Trap Vector
+function getTrapInfo(trapvect8) {
+    const trapMap = {
+        0x00: { mnemonic: 'halt', needsRegister: false },
+        0x01: { mnemonic: 'nl', needsRegister: false },
+        0x02: { mnemonic: 'dout', needsRegister: true },
+        0x03: { mnemonic: 'udout', needsRegister: true },
+        0x04: { mnemonic: 'hout', needsRegister: true },
+        0x05: { mnemonic: 'aout', needsRegister: true },
+        0x06: { mnemonic: 'sout', needsRegister: true },
+        0x07: { mnemonic: 'din', needsRegister: true },
+        0x08: { mnemonic: 'hin', needsRegister: true },
+        0x09: { mnemonic: 'ain', needsRegister: true },
+        0x0A: { mnemonic: 'sin', needsRegister: true },
+        0x0B: { mnemonic: 'm', needsRegister: false },
+        0x0C: { mnemonic: 'r', needsRegister: false },
+        0x0D: { mnemonic: 's', needsRegister: false },
+        0x0E: { mnemonic: 'bp', needsRegister: false },
+    };
+    return trapMap[trapvect8];
+}
+
+// Determines if a machine word represents a printable ASCII character
+function isPrintableASCII(byte) {
+    return ((byte >= 32 && byte <= 126) || byte === 10); // Printable ASCII range
+}
+
+// Main Execution Entry Point
 if (require.main === module) {
     if (process.argv.length !== 3) {
         console.error('Usage: node disassembler.js <filename>');
