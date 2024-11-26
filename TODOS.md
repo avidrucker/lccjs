@@ -134,6 +134,9 @@
 - [ ] test for bad register detection
 - [ ] test for bad immediate detection
 - [ ] write test suite for disassembler
+- [ ] test for implicit (abbreviated) r0 (register zero) usage with out instructions
+- [ ] create new folder for invalid code examples
+  - [ ] move all invalid code examples to the new folder (demoJ.a (Possible infinite loop) and demoN.a (Floating point exception))
 
 ## Fix
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
