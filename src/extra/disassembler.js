@@ -38,6 +38,35 @@ const queue = [];
 // Start Address (if provided)
 let startAddress = null;
 
+function adjustZeroDirectives() {
+    // Get all addresses in WIPDisassembly, sorted
+    const addresses = Object.keys(WIPDisassembly).map(Number).sort((a, b) => a - b);
+
+    // Collect all label addresses
+    const labelAddresses = Object.keys(labels).map(Number).sort((a, b) => a - b);
+
+    // For each address with a `.zero` directive
+    for (let addr of addresses) {
+        const entry = WIPDisassembly[addr];
+        if (entry.mnemonic === '.zero') {
+            let zeroStart = addr;
+            let zeroCount = entry.count;
+
+            // Check for labels within the zero range (excluding the starting address)
+            for (let labelAddr of labelAddresses) {
+                if (labelAddr > zeroStart && labelAddr < zeroStart + zeroCount) {
+                    // Adjust zeroCount to stop before the label
+                    let adjustedCount = labelAddr - zeroStart;
+                    // console.log(`Adjusting .zero at address ${zeroStart} from count ${zeroCount} to ${adjustedCount} due to label at ${labelAddr}`);
+                    entry.count = adjustedCount;
+                    zeroCount = adjustedCount;
+                    break; // Assuming no overlapping labels within zero range
+                }
+            }
+        }
+    }
+}
+
 // Main Disassembler Function
 function disassemble(fileName) {
     // Read the file into a buffer
@@ -107,8 +136,6 @@ function disassemble(fileName) {
         queue.push(startAddress);
     } else {
         // No start address; begin at address 0
-        // assignLabel(0, 'code');
-        // disassembledCode.push(`    .start ${labels[0]}`);
         queue.push(0);
     }
 
@@ -116,9 +143,10 @@ function disassemble(fileName) {
     while (queue.length > 0) {
         const currentAddress = queue.shift();
 
-        if (processedAddresses.has(currentAddress)) {
-            continue; // Skip already processed addresses
-        }
+        //////
+        // if (processedAddresses.has(currentAddress)) {
+        //     continue; // Skip already processed addresses
+        // }
 
         processedAddresses.add(currentAddress);
 
@@ -151,7 +179,6 @@ function disassemble(fileName) {
 
         // Handle Instruction Types
         const opcode = (word >> 12) & 0xF;
-        //// console.log(`Processing machine word at address ${currentAddress} with opcode ${opcode.toString(16)}`);
 
         switch (opcode) {
             case 0x4: // BL or BLR
@@ -170,11 +197,11 @@ function disassemble(fileName) {
                 if (trapvect8 === 0x00) { // halt
                     // Update WIP Disassembly
                     WIPDisassembly[currentAddress].opcode = 'halt';
-                    // console.log("halt encountered at address", currentAddress);
                 } 
                 enqueueNextAddress(currentAddress);
                 break;
             default:
+                // console.log("Enqueuing next address after processing:", currentAddress);
                 enqueueNextAddress(currentAddress);
                 break;
         }
@@ -183,8 +210,11 @@ function disassemble(fileName) {
         //// printWIPDisassembly();
     }
 
+    // const sortedArray = Array.from(processedAddresses).sort((a, b) => a - b);
+    // console.log("processedAddresses:", sortedArray);
     printWIPDisassembly(); //// TODO: turn off when not debugging
     // Output the Disassembled Code
+    adjustZeroDirectives();
     outputDisassembledCode();
 }
 
@@ -405,10 +435,10 @@ function handleBL(currentAddress, word) {
     // Save link register (address of next instruction)
     const linkAddress = currentAddress + 1;
     linkRegisterStack.push(linkAddress);
-    console.log(`Link register saved: ${linkAddress}`);
+    // console.log(`Link register saved: ${linkAddress}`);
     // Enqueue target address
     queue.unshift(targetAddress);
-        // Enqueue next instruction after BL instruction at end of queue
+    // Enqueue next instruction after BL instruction at end of queue
     enqueueNextAddress(currentAddress);
 }
 
@@ -423,10 +453,11 @@ function handleDataInstruction(currentAddress, word) {
         return; // Not a data instruction
     }
     const dataAddress = (currentAddress + 1 + pcoffset9) & 0xFFFF;
-    const dataLabel = getOrAssignDataLabel(dataAddress);
-    // Enqueue data address for processing
-    queue.unshift(nextAddress);
-    queue.unshift(dataAddress); //////
+    // Always enqueue dataAddress for processing
+    queue.unshift(dataAddress);
+
+    // Enqueue next instruction address if not already processed
+    queue.push(nextAddress);
 }
 
 // Handles JMP and RET Instructions
@@ -440,7 +471,7 @@ function handleJMPRET(currentAddress, word) {
             return;
         }
         const returnAddress = linkRegisterStack.pop();
-        console.log(`Returning to address: ${returnAddress}`);
+        // console.log(`Returning to address: ${returnAddress}`);
         queue.unshift(returnAddress);
     } else { // JMP
         // Handle JMP as needed
@@ -469,17 +500,19 @@ function getOrAssignDataLabel(address) {
     return label;
 }
 
-// Enqueues the Next Sequential Address for Processing
-function enqueueNextAddress(currentAddress) {
-    const nextAddress = currentAddress + 1;
-    if (nextAddress < machineWords.length) {
+function enqueueNextAddress(currentAddr) {
+    const nextAddress = currentAddr + 1;
+    if (nextAddress < machineWords.length && !processedAddresses.has(nextAddress)) {
         queue.push(nextAddress);
     }
 }
 
+function toSigned16Bit(value) {
+    return (value & 0x8000) ? value - 0x10000 : value;
+}
+
 // Processes Data Sections (e.g., Strings)
 function processData(address) {
-    console.log("processing data at address", address);
     let currentAddress = address;
     let word;
 
@@ -490,13 +523,9 @@ function processData(address) {
     let zeroStartAddress = null; // Starting address of zeros
     let justFinishedString = false; // Flag to skip null terminator
 
-    // Get all label addresses
-    // let labelAddresses = Object.keys(labels).map(Number).sort((a, b) => a - b);
-
     while (currentAddress < machineWords.length) {
         // Check if we have reached a new label (excluding the starting address)
         if (labels[currentAddress] && currentAddress !== address) {
-            console.log("Encountered label at", currentAddress);
             // Save any pending zeros
             if (zeroCount > 0) {
                 dataEntries.push({ type: '.zero', count: zeroCount, address: zeroStartAddress });
@@ -508,7 +537,6 @@ function processData(address) {
         }
 
         word = machineWords[currentAddress];
-        // console.log("processing word at address", currentAddress, "with value", word.toString(16).padStart(4, '0').toUpperCase());
 
         const lowByte = word & 0xFF;
 
@@ -520,6 +548,7 @@ function processData(address) {
                 str = '';
                 strStartAddress = null;
                 justFinishedString = true;
+                break;
             } else if (justFinishedString) {
                 // Skip the null terminator
                 justFinishedString = false;
@@ -528,13 +557,13 @@ function processData(address) {
                 // Start counting zeros
                 if (zeroCount === 0) {
                     zeroStartAddress = currentAddress;
+                    console.log(`>>> Starting zeros at address ${zeroStartAddress}`);
                 }
                 zeroCount++;
                 console.log("increased zeroCount to:", zeroCount);
             }
         } else {
             // Non-zero encountered
-            justFinishedString = false;
             if (zeroCount > 0) {
                 // Save the zero entries
                 dataEntries.push({ type: '.zero', count: zeroCount, address: zeroStartAddress });
@@ -570,12 +599,13 @@ function processData(address) {
                     str = '';
                     strStartAddress = null;
                 }
-                dataEntries.push({ type: '.word', value: word, address: currentAddress });
+                // Save the word, treating it as a signed 16 bit value
+                console.log("saving word:", toSigned16Bit(word)); //////
+                dataEntries.push({ type: '.word', value: toSigned16Bit(word), address: currentAddress });
             }
         }
 
-        processedAddresses.add(currentAddress);
-
+        //// processedAddresses.add(currentAddress);
         currentAddress++;
     }
 
@@ -586,10 +616,17 @@ function processData(address) {
         strStartAddress = null;
     }
     if (zeroCount > 0) {
-        dataEntries.push({ type: '.zero', count: zeroCount + 1, address: zeroStartAddress - 1 });
+        dataEntries.push({ type: '.zero', count: zeroCount, address: zeroStartAddress });
         zeroCount = 0;
         zeroStartAddress = null;
     }
+
+    // console.log("=====================");
+    // console.log('Data Entries:');
+    // dataEntries.forEach(entry => {
+    //     console.log(`Type: ${entry.type}, Address: ${entry.address}, Count: ${entry.count || ''}, Value: ${entry.value || ''}`);
+    // });
+    // console.log("=====================");
 
     // Update WIPDisassembly with the data entries
     dataEntries.forEach(entry => {
@@ -609,17 +646,17 @@ function processData(address) {
         if (entry.type === '.zero') {
             entryLength = entry.count;
         } else if (entry.type === '.string') {
-            entryLength = entry.value.length;
+            entryLength = entry.value.length + 1;
         }
         for (let i = 0; i < entryLength; i++) {
             processedAddresses.add(entry.address + i);
         }
     });
 
-    // Enqueue the next address to process (if any)
-    if (currentAddress < machineWords.length && !processedAddresses.has(currentAddress)) {
-        queue.push(currentAddress);
-    }
+    //// Enqueue the next address to process (if any)
+    // if (currentAddress < machineWords.length && !processedAddresses.has(currentAddress)) {
+    //     queue.push(currentAddress);
+    // }
 }
 
 // Outputs the Final Disassembled Code
@@ -651,6 +688,9 @@ function outputDisassembledCode() {
             if (entry.operands) {
                 line += ` ${entry.operands}`;
             }
+        } else if (entry.label) {
+            // Ensure labels with no mnemonic or opcode are output with a placeholder
+            line += '; Empty label';
         }
 
         if (line.trim() !== '') {
@@ -687,7 +727,11 @@ function printWIPDisassembly() {
             line += `, mnemonic: "${entry.mnemonic}"`;
         }
         if (entry.value) {
-            line += `, value: ${entry.value}`;
+            if(entry.mnemonic === '.string') {
+                line += `, value: ${JSON.stringify(entry.value)}`;
+            } else {
+                line += `, value: ${entry.value}`;
+            }
         }
         if (entry.count) {
             line += `, count: ${entry.count}`;
