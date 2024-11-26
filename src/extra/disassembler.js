@@ -102,6 +102,9 @@ function disassemble(fileName) {
             console.log("Start Address detected:", startAddress);
             offset += 2;
         } else if (['G', 'E', 'V'].includes(entryType)) {
+            //// TODO: fix above to handle G and A entries, and not handle E or V entries
+            // where G entries are in the form `G <address> <null-terminated string>`
+            // and A entries are in the form `A <address>`
             // Skip address (2 bytes) and null-terminated string
             offset += 2; // Skip address
             while (offset < fileSize && buffer[offset++] !== 0);
