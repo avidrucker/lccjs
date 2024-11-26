@@ -508,7 +508,6 @@ function processData(address) {
         if (lowByte === 0) {
             // Null terminator
             console.log("null terminator found at address", currentAddress);
-            currentAddress++;
             break;
         }
 
