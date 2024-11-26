@@ -560,7 +560,6 @@ function processData(address) {
                     console.log(`>>> Starting zeros at address ${zeroStartAddress}`);
                 }
                 zeroCount++;
-                console.log("increased zeroCount to:", zeroCount);
             }
         } else {
             // Non-zero encountered
@@ -600,7 +599,6 @@ function processData(address) {
                     strStartAddress = null;
                 }
                 // Save the word, treating it as a signed 16 bit value
-                console.log("saving word:", toSigned16Bit(word)); //////
                 dataEntries.push({ type: '.word', value: toSigned16Bit(word), address: currentAddress });
             }
         }
@@ -652,11 +650,6 @@ function processData(address) {
             processedAddresses.add(entry.address + i);
         }
     });
-
-    //// Enqueue the next address to process (if any)
-    // if (currentAddress < machineWords.length && !processedAddresses.has(currentAddress)) {
-    //     queue.push(currentAddress);
-    // }
 }
 
 // Outputs the Final Disassembled Code
