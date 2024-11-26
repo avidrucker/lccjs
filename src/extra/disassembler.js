@@ -170,11 +170,9 @@ function disassemble(fileName) {
                 if (trapvect8 === 0x00) { // halt
                     // Update WIP Disassembly
                     WIPDisassembly[currentAddress].opcode = 'halt';
-                    //// printWIPDisassembly();
-                    return outputDisassembledCode();
-                } else {
-                    enqueueNextAddress(currentAddress);
-                }
+                    // console.log("halt encountered at address", currentAddress);
+                } 
+                enqueueNextAddress(currentAddress);
                 break;
             default:
                 enqueueNextAddress(currentAddress);
@@ -185,6 +183,7 @@ function disassemble(fileName) {
         //// printWIPDisassembly();
     }
 
+    printWIPDisassembly(); //// TODO: turn off when not debugging
     // Output the Disassembled Code
     outputDisassembledCode();
 }
@@ -481,48 +480,98 @@ function enqueueNextAddress(currentAddress) {
 // Processes Data Sections (e.g., Strings)
 function processData(address) {
     console.log("processing data at address", address);
-    let str = '';
     let currentAddress = address;
     let word;
 
-    // get next label address if it exists
-    let nextLabelAddress = null;
-    for (let i = currentAddress + 1; i < machineWords.length; i++) {
-        if (labels[i]) {
-            nextLabelAddress = i;
-            console.log("next label address found at", nextLabelAddress);
+    let dataEntries = []; // Array to hold data entries
+    let str = ''; // String accumulator
+    let zeroCount = 0; // Counter for zeros
+    let strStartAddress = null; // Starting address of a string
+    let zeroStartAddress = null; // Starting address of zeros
+    let justFinishedString = false; // Flag to skip null terminator
+
+    // Get all label addresses
+    // let labelAddresses = Object.keys(labels).map(Number).sort((a, b) => a - b);
+
+    while (currentAddress < machineWords.length) {
+        // Check if we have reached a new label (excluding the starting address)
+        if (labels[currentAddress] && currentAddress !== address) {
+            console.log("Encountered label at", currentAddress);
+            // Save any pending zeros
+            if (zeroCount > 0) {
+                dataEntries.push({ type: '.zero', count: zeroCount, address: zeroStartAddress });
+                zeroCount = 0;
+                zeroStartAddress = null;
+            }
+            // Break the loop to process data starting from the new label separately
             break;
         }
-    }
-    if(nextLabelAddress === null) {
-        console.log("no next label address found currently");
-        nextLabelAddress = Infinity;
-    }
 
-    while (currentAddress < machineWords.length && currentAddress < nextLabelAddress) {
         word = machineWords[currentAddress];
-        console.log("processing word at address", currentAddress, "with value", word.toString(16).padStart(4, '0').toUpperCase());
+        // console.log("processing word at address", currentAddress, "with value", word.toString(16).padStart(4, '0').toUpperCase());
 
         const lowByte = word & 0xFF;
 
         if (lowByte === 0) {
-            // Null terminator
-            console.log("null terminator found at address", currentAddress);
-            break;
-        }
-
-        if (isPrintableASCII(lowByte)) {
-            console.log("next char: ", String.fromCharCode(lowByte));
-            str += String.fromCharCode(lowByte);
-        } else if (lowByte === 10) {
-            str += '\\n';
-        } else if (lowByte === 13) {
-            str += '\\r';
-        } else if (lowByte === 9) {
-            str += '\\t';
+            // Zero encountered
+            if (str.length > 0) {
+                // Save the string
+                dataEntries.push({ type: '.string', value: str, address: strStartAddress });
+                str = '';
+                strStartAddress = null;
+                justFinishedString = true;
+            } else if (justFinishedString) {
+                // Skip the null terminator
+                justFinishedString = false;
+                // Do not start counting zeros yet
+            } else {
+                // Start counting zeros
+                if (zeroCount === 0) {
+                    zeroStartAddress = currentAddress;
+                }
+                zeroCount++;
+                console.log("increased zeroCount to:", zeroCount);
+            }
         } else {
-            // Non-printable character; represent as hex
-            str += `\\x${lowByte.toString(16).padStart(2, '0')}`;
+            // Non-zero encountered
+            justFinishedString = false;
+            if (zeroCount > 0) {
+                // Save the zero entries
+                dataEntries.push({ type: '.zero', count: zeroCount, address: zeroStartAddress });
+                zeroCount = 0;
+                zeroStartAddress = null;
+            }
+
+            if (isPrintableASCII(lowByte)) {
+                if (strStartAddress === null) {
+                    strStartAddress = currentAddress;
+                }
+                str += String.fromCharCode(lowByte);
+            } else if (lowByte === 10) {
+                if (strStartAddress === null) {
+                    strStartAddress = currentAddress;
+                }
+                str += '\\n';
+            } else if (lowByte === 13) {
+                if (strStartAddress === null) {
+                    strStartAddress = currentAddress;
+                }
+                str += '\\r';
+            } else if (lowByte === 9) {
+                if (strStartAddress === null) {
+                    strStartAddress = currentAddress;
+                }
+                str += '\\t';
+            } else {
+                // Non-printable character; save as .word
+                if (str.length > 0) {
+                    // Save the string
+                    dataEntries.push({ type: '.string', value: str, address: strStartAddress });
+                    str = '';
+                    strStartAddress = null;
+                }
+                dataEntries.push({ type: '.word', value: word, address: currentAddress });
+            }
         }
 
         processedAddresses.add(currentAddress);
@@ -530,16 +579,47 @@ function processData(address) {
         currentAddress++;
     }
 
-    // Mark the final address if not already processed
-    if (!processedAddresses.has(currentAddress)) {
-        processedAddresses.add(currentAddress);
-    } else {
-        console.log("already processed line at address", currentAddress);
+    // After the loop, save any pending data entries
+    if (str.length > 0) {
+        dataEntries.push({ type: '.string', value: str, address: strStartAddress });
+        str = '';
+        strStartAddress = null;
+    }
+    if (zeroCount > 0) {
+        dataEntries.push({ type: '.zero', count: zeroCount + 1, address: zeroStartAddress - 1 });
+        zeroCount = 0;
+        zeroStartAddress = null;
     }
 
-    // Update the starting address with the full string
-    WIPDisassembly[address].mnemonic = '.string';
-    WIPDisassembly[address].value = `${str}`;
+    // Update WIPDisassembly with the data entries
+    dataEntries.forEach(entry => {
+        if (entry.type === '.string') {
+            WIPDisassembly[entry.address].mnemonic = '.string';
+            WIPDisassembly[entry.address].value = entry.value;
+        } else if (entry.type === '.zero') {
+            WIPDisassembly[entry.address].mnemonic = '.zero';
+            WIPDisassembly[entry.address].count = entry.count;
+        } else if (entry.type === '.word') {
+            WIPDisassembly[entry.address].mnemonic = '.word';
+            WIPDisassembly[entry.address].value = entry.value;
+        }
+
+        // Mark addresses covered by the data entry as processed
+        let entryLength = 1;
+        if (entry.type === '.zero') {
+            entryLength = entry.count;
+        } else if (entry.type === '.string') {
+            entryLength = entry.value.length;
+        }
+        for (let i = 0; i < entryLength; i++) {
+            processedAddresses.add(entry.address + i);
+        }
+    });
+
+    // Enqueue the next address to process (if any)
+    if (currentAddress < machineWords.length && !processedAddresses.has(currentAddress)) {
+        queue.push(currentAddress);
+    }
 }
 
 // Outputs the Final Disassembled Code
@@ -547,7 +627,10 @@ function outputDisassembledCode() {
     // Construct the final disassembled code from WIPDisassembly
     const finalDisassembly = [];
 
-    for (let addr in WIPDisassembly) {
+    // Convert WIPDisassembly keys to numbers and sort them
+    const addresses = Object.keys(WIPDisassembly).map(Number).sort((a, b) => a - b);
+
+    for (let addr of addresses) {
         const entry = WIPDisassembly[addr];
         let line = '';
 
@@ -559,6 +642,10 @@ function outputDisassembledCode() {
 
         if (entry.mnemonic === '.string') {
             line += `.string ${JSON.stringify(entry.value)}`;
+        } else if (entry.mnemonic === '.zero') {
+            line += `.zero ${entry.count}`;
+        } else if (entry.mnemonic === '.word') {
+            line += `.word ${entry.value}`;
         } else if (entry.opcode) {
             line += `${entry.opcode}`;
             if (entry.operands) {
@@ -572,7 +659,7 @@ function outputDisassembledCode() {
     }
 
     // Prepend the .start line
-    if(startAddress !== null) { ////
+    if (startAddress !== null) {
         finalDisassembly.unshift(disassembledCode[0]);
     }
     console.log('\nFinal Disassembled Code:');
@@ -582,7 +669,8 @@ function outputDisassembledCode() {
 // Prints the current state of WIP Disassembly
 function printWIPDisassembly() {
     console.log('\nCurrent WIP Disassembly:');
-    for (let addr in WIPDisassembly) {
+    const addresses = Object.keys(WIPDisassembly).map(Number).sort((a, b) => a - b);
+    for (let addr of addresses) {
         const entry = WIPDisassembly[addr];
         let line = `${addr}: { macword: "${entry.macword}"`;
 
@@ -600,6 +688,9 @@ function printWIPDisassembly() {
         }
         if (entry.value) {
             line += `, value: ${entry.value}`;
+        }
+        if (entry.count) {
+            line += `, count: ${entry.count}`;
         }
         line += ' }';
         console.log(line);
