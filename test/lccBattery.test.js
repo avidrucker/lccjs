@@ -5,6 +5,15 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 const DockerController = require('./dockerController');
+const { isCacheValid } = require('./testCacheHandler');
+
+// Define cache directory and options
+const LCC_CACHE_DIR = path.join(__dirname, '../test_cache/lcc_test_cache');
+const cacheOptions = {
+  cacheDir: LCC_CACHE_DIR,
+  inputExt: '.a',
+  outputExt: '.lst',
+};
 
 const argsForAllTests = [
   ['node', './test/lcc.test.js', './demos/demoA.a', 'assemble/interpret mov, dout, nl, and halt'],
@@ -21,7 +30,8 @@ const argsForAllTests = [
   ['node', './test/lcc.test.js', './demos/demoL.a', 'testing lcc.js with demoL.a'],
   ['node', './test/lcc.test.js', './demos/demoM.a', 'testing lcc.js with demoM.a'],
   // ['node', './test/lcc.test.js', './demos/demoN.a', 'testing lcc.js with demoN.a'],
-  ['node', './test/lcc.test.js', './demos/demoO.a', 'cheese', 'testing lcc.js with demoO.a']
+  ['node', './test/lcc.test.js', './demos/demoO.a', 'cheese', 'testing lcc.js with demoO.a'],
+  ['node', './test/lcc.test.js', './demos/demoP.a', 'testing lcc.js with demoP.a'],
   // Add more test cases as needed
 ];
 
@@ -41,14 +51,21 @@ function execSyncWithLogging(command, options) {
   return result;
 }
 
-function runTest(args) {
+function runTest(cmd, script, inputFile, userInputs, skipCache, skipSetup) {
   return new Promise((resolve, reject) => {
-    console.log(`\nRunning test: ${args.join(' ')}`);
+    const args = [script, inputFile, ...userInputs];
+    if (skipCache) {
+      args.push('--skip-cache');
+    }
+    console.log(`Running '${[cmd, ...args].join(' ')}'`);
 
-    // Clone the environment variables and set SKIP_SETUP to 'true'
-    const env = Object.assign({}, process.env, { SKIP_SETUP: 'true' });
+    // Set SKIP_SETUP to 'true' if skipSetup is true
+    const env = Object.assign({}, process.env);
+    if (skipSetup) {
+      env.SKIP_SETUP = 'true';
+    }
 
-    const testProcess = spawn(args[0], args.slice(1), {
+    const testProcess = spawn(cmd, args, {
       stdio: 'inherit',
       cwd: process.cwd(),
       env: env,
@@ -56,10 +73,8 @@ function runTest(args) {
 
     testProcess.on('close', (code) => {
       if (code === 0) {
-        console.log(`Test passed with exit code ${code}`);
         resolve();
       } else {
-        console.error(`Test failed with exit code ${code}`);
         reject(new Error(`Test failed with exit code ${code}`));
       }
     });
@@ -73,77 +88,153 @@ function runTest(args) {
 
 async function runAllTests() {
 
-  // Collect command-line arguments
   const argsLocal = process.argv.slice(2);
-  // Default to demoA.a if no argument is provided
-  const inputFile = argsLocal[0] || path.join(__dirname, '../demos/demoA.e');
-
-  const inputDir = path.dirname(inputFile);
+  let skipCache = false;
+  if (argsLocal.includes('--skip-cache')) {
+    skipCache = true;
+  }
 
   const containerName = 'mycontainer';
   const dockerController = new DockerController(containerName);
   const testResults = []; // To collect test results
 
-  // Start the container at the beginning
-  try {
-    dockerController.startContainer();
-  } catch (err) {
-    console.error('Error starting Docker container:', err);
-    process.exit(1);
-  }
+  let testsNeedingDocker = [];
+  let testsCanRunLocally = [];
 
-  // Create the name.nnn file with specified contents
-  const nameFile = path.join(inputDir, 'name.nnn');
-  fs.writeFileSync(nameFile, 'Billy, Bob J\n', { encoding: 'utf8' });
-
-  // Copy name file to Docker container
-  execSyncWithLogging(`docker cp ${nameFile} ${containerName}:/home/`, execSyncOptions);
-
-  let testNumber = 1;
-
+  // Check cache for all tests
   for (const testArgs of argsForAllTests) {
-    try {
-      const testComment = testArgs[testArgs.length - 1];
-      const testArgsWithoutComment = testArgs.slice(0, testArgs.length - 1);
-      console.log(`\nRunning test ${testNumber}: ${testComment}`);
-      await runTest(testArgsWithoutComment);
+    const testComment = testArgs[testArgs.length - 1];
+    const testArgsWithoutComment = testArgs.slice(0, testArgs.length - 1);
+    const [cmd, script, inputFile, ...userInputs] = testArgsWithoutComment;
 
-      // Record test result as pass
-      const testName = path.basename(testArgs[2], '.a');
-      testResults.push({ name: testName, status: 'Pass' });
-    } catch (err) {
-      console.error(`Error in test ${testArgs[2]}: ${err.message}`);
+    const inputFileName = path.basename(inputFile, '.a');
 
-      // Record test result as fail
-      const testName = path.basename(testArgs[2], '.a');
-      testResults.push({ name: testName, status: 'Fail' });
+    // Check cache validity
+    const isValidCache = isCacheValid(inputFile, cacheOptions);
 
-      //// Uncomment the following line if you want to stop execution on the first failure
-      process.exit(1);
-    } finally {
-      testNumber++;
+    if (!skipCache && isValidCache) {
+      console.log(`Cache is valid for ${inputFileName}. Test can be run locally.`);
+      testsCanRunLocally.push({ cmd, script, inputFile, userInputs, comment: testComment });
+    } else {
+      console.log(`Cache is invalid or missing for ${inputFileName}. Test needs to be run with Docker.`);
+      testsNeedingDocker.push({ cmd, script, inputFile, userInputs, comment: testComment });
     }
   }
 
-  // Clean up the name.nnn files
-  execSyncWithLogging(`rm -f ${inputDir}/name.nnn`, execSyncOptions);
-  execSyncWithLogging(`docker exec ${containerName} rm -f /home/name.nnn`, execSyncOptions);
+  // Create the name.nnn file with specified contents
+  const nameFile = path.join(__dirname, '../demos/name.nnn');
+  fs.writeFileSync(nameFile, 'Billy, Bob J\n', { encoding: 'utf8' });
 
-  // Stop the Docker container after all tests
-  try {
-    dockerController.stopContainer();
-  } catch (err) {
-    console.error('Error stopping Docker container:', err);
+  // First, run tests that can be run locally
+  for (const test of testsCanRunLocally) {
+    const { cmd, script, inputFile, userInputs, comment } = test;
+    const testName = path.basename(inputFile, '.a');
+    console.log(`\nRunning test for ${testName}: ${comment}`);
+    try {
+      await runTest(cmd, script, inputFile, userInputs, skipCache = false, skipSetup = true);
+      // Record test result as pass
+      testResults.push({ name: testName, status: 'Pass', comment });
+    } catch (err) {
+      console.error(`Error in test ${testName}: ${err.message}`);
+      // Record test result as fail
+      testResults.push({ name: testName, status: 'Fail', comment });
+    }
   }
 
-  // Print test results
+  ////////////////////////////
+  // Proceed to run tests needing Docker if any
+  if (testsNeedingDocker.length > 0) {
+    // Check if Docker is available
+    const dockerAvailable = dockerController.isDockerAvailable();
+
+    if (!dockerAvailable) {
+      console.error('Docker is not available. Cannot run tests that require Docker.');
+      // Mark tests that need Docker as "Not Run"
+      for (const test of testsNeedingDocker) {
+        const testName = path.basename(test.inputFile, '.a');
+        testResults.push({ name: testName, status: 'Not Run', comment: test.comment });
+      }
+    } else {
+      // Start the Docker container
+      try {
+        dockerController.startContainer();
+      } catch (err) {
+        console.error('Error starting Docker container:', err);
+        // Mark tests as "Not Run"
+        for (const test of testsNeedingDocker) {
+          const testName = path.basename(test.inputFile, '.a');
+          testResults.push({ name: testName, status: 'Not Run', comment: test.comment });
+        }
+      }
+
+      // Copy name file to Docker container
+      try {
+        execSync(`docker cp ${nameFile} ${containerName}:/home/`, execSyncOptions);
+      } catch (err) {
+        console.error('Error copying name.nnn to Docker container:', err);
+        // Mark tests as "Not Run"
+        for (const test of testsNeedingDocker) {
+          const testName = path.basename(test.inputFile, '.e');
+          testResults.push({ name: testName, status: 'Not Run', comment: test.comment });
+        }
+        // Clean up and stop Docker
+        try {
+          dockerController.stopContainer();
+        } catch (stopErr) {
+          console.error('Error stopping Docker container:', stopErr);
+        }
+        // Proceed to output results
+      }
+
+      // Run tests needing Docker
+      for (const test of testsNeedingDocker) {
+        const { cmd, script, inputFile, userInputs, comment } = test;
+        const testName = path.basename(inputFile, '.a');
+        console.log(`\nRunning test for ${testName}: ${comment}`);
+        try {
+          await runTest(cmd, script, inputFile, userInputs, skipCache = false, skipSetup = false);
+          // Record test result as pass
+          testResults.push({ name: testName, status: 'Pass', comment });
+        } catch (err) {
+          console.error(`Error in test ${testName}: ${err.message}`);
+          // Record test result as fail
+          testResults.push({ name: testName, status: 'Fail', comment });
+        }
+      }
+
+      // Clean up and stop Docker
+      execSyncWithLogging(`rm -f ${inputDir}/name.nnn`, execSyncOptions);
+      execSyncWithLogging(`docker exec ${containerName} rm -f /home/name.nnn`, execSyncOptions);
+
+      // Stop the Docker container after all tests
+      try {
+        dockerController.stopContainer();
+      } catch (err) {
+        console.error('Error stopping Docker container:', err);
+      }
+    }
+  }
+
+  // Output test results sorted alphabetically
+  testResults.sort((a, b) => a.name.localeCompare(b.name));
+
   console.log('\nTest Results');
   for (const result of testResults) {
-    const statusEmoji = result.status === 'Pass' ? '✅' : '❌';
-    console.log(`${result.name}: ${result.status} ${statusEmoji}`);
+    let statusEmoji;
+    if (result.status === 'Pass') {
+      statusEmoji = '✅';
+    } else if (result.status === 'Fail') {
+      statusEmoji = '❌';
+    } else if (result.status === 'Not Run') {
+      statusEmoji = '❓';
+    } else {
+      statusEmoji = '❓';
+    }
+    console.log(`${result.name}: ${result.status} ${statusEmoji} - ${result.comment}`);
   }
 
   console.log('\nAll tests completed.');
+
 }
 
 runAllTests();
