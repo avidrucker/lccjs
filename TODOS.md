@@ -112,7 +112,7 @@
 - [ ] use lcc locally to test if the lcc exists on local machine, if lcc exists locally, use it instead of Docker lcc
 - [ ] write script to install ubuntu docker image with lcc to run tests on when lcc does not exist on local machine
   - [ ] create docker image with lcc 63 installed, host it on dockerhub so that it can be pulled down for testing purposes
-- [ ] write docker checks for (1) to see if docker is installed on the current machine and (2) to see if docker is currently running, so the tests fail gracefully and give helpful outputs such as "error: docker is not installed" or "error: docker is not running"
+- [x] write docker checks for (1) to see if docker is installed on the current machine and (2) to see if docker is currently running, so the tests fail gracefully and give helpful outputs such as "error: docker is not installed" or "error: docker is not running"
 - [x] test executing a program given a .e/.a file and specific inputs by comparing the .lst/.bst outputs of interpreter.js and the lcc, respectively
   - [x] test .lst output of interpreter.js against .lst output of LCC when running on a .e file
   - [x] test .lst output of lcc.js against .lst output of LCC when running on a .a file
@@ -134,6 +134,9 @@
 - [ ] test for bad register detection
 - [ ] test for bad immediate detection
 - [ ] write test suite for disassembler
+- [ ] test for implicit (abbreviated) r0 (register zero) usage with out instructions
+- [ ] create new folder for invalid code examples
+  - [ ] move all invalid code examples to the new folder (demoJ.a (Possible infinite loop) and demoN.a (Floating point exception))
 
 ## Fix
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
@@ -146,7 +149,9 @@
 - [x] abort lcc.js assembly and execution if name input is not supplied when asked for
 - [x] abort interpreter.js execution if name input is not supplied when asked for
 - [x] fix issue where lcc appeared to be generated inconsistent newlines in .lst files (the issue was how the name.nnn file was being generated, it did indeed need to be terminated with a \n newline character)
-- [ ] fix issue where disassembler.js does not handle demoP correctly (not handling the .start directive yet, nor treating code as code, and the string data as string data)
+- [x] fix issue where disassembler.js does not handle demoP correctly (not handling the .start directive yet, nor treating code as code, and the string data as string data)
+- [ ] fix disassembler.js to handle G and A header entries, and to ignore E and V entries
+- [x] fix hexDisplay.js to display hex as is without flipping the bytes
 
 ## Extended Features
 - [x] (picture.js) hex viewer to inspect .e and .o files
@@ -169,7 +174,7 @@
 - [o] deassembler/disassembler (takes a .e file and outputs a .a file)
   - [ ] majority of instructions (mov, ld, add, sub, lea) disassembly
   - [ ] div instruction disassembly
-  - [ ] .start directive disassembly
+  - [x] .start directive disassembly
   - [ ] e heading .extern disassembly
   - [ ] G heading .global disassembly
 - [ ] website that allows users to upload .a files, run & see the output of the program, and download the .e file

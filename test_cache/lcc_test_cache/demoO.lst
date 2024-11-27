@@ -1,0 +1,81 @@
+LCC.js Assemble/Link/Interpret/Debug Ver 0.1  Tue, Nov 26, 2024, 18:05:25
+Billy, Bob J
+
+Header
+o
+C
+
+Loc   Code           Source Code
+                    ; program that tests IO and LST generation thoroughly
+0000  e009                   lea r0, prompt
+0001  f006                   sout r0
+0002  e012                   lea r0, buffer
+0003  f00a                   sin r0
+0004  e20c                   lea r1, hi
+0005  f206                   sout r1
+0006  f006                   sout r0
+0007  f001                   nl
+0008  f00b                   m
+0009  f000                   halt
+000a  004e       prompt:     .string "Name: "
+000b  0061      
+000c  006d      
+000d  0065      
+000e  003a      
+000f  0020      
+0010  0000      
+0011  0048       hi:         .string "Hi "
+0012  0069      
+0013  0020      
+0014  0000      
+0015  0000       buffer:     .zero 10
+0016  0000      
+0017  0000      
+0018  0000      
+0019  0000      
+001a  0000      
+001b  0000      
+001c  0000      
+001d  0000      
+001e  0000      
+====================================================== Output
+Name: cheese
+Hi cheese
+0000: e009
+0001: f006
+0002: e012
+0003: f00a
+0004: e20c
+0005: f206
+0006: f006
+0007: f001
+0008: f00b
+0009: f000
+000a: 004e
+000b: 0061
+000c: 006d
+000d: 0065
+000e: 003a
+000f: 0020
+0010: 0000
+0011: 0048
+0012: 0069
+0013: 0020
+0014: 0000
+0015: 0063
+0016: 0068
+0017: 0065
+0018: 0065
+0019: 0073
+001a: 0065
+001b: 0000
+001c: 0000
+001d: 0000
+001e: 0000
+
+========================================== Program statistics
+Input file name          =   ./demos/demoO.a
+Instructions executed    =   a (hex)    10 (dec)
+Program size             =   1f (hex)    31 (dec)
+Max stack size           =   0 (hex)    0 (dec)
+Load point               =   0 (hex)    0 (dec)

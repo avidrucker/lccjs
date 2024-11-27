@@ -10,30 +10,122 @@ const nameHandler = require('../utils/name.js');
 
 class Assembler {
   constructor() {
-    this.symbolTable = {}; // symbol: address
-    this.locCtr = 0; // Location counter
-    this.lineNum = 0; // Line number
-    this.sourceLines = []; // Array of source code lines
-    this.errorFlag = false; // Error flag
-    this.pass = 1; // Current pass (1 or 2)
-    this.labels = new Set(); // Set of labels to detect duplicates
-    this.errors = []; // Collect errors
-    this.outputBuffer = []; // Buffer to hold machine code words
-    this.inputFileName = ''; // Input file name
-    this.outputFileName = ''; // Output file name
-    this.outFile = null; // Output file handle
-    this.listing = []; // This will store information about each line, including the location counter (locCtr), machine code words, and the source code line.
+    /**
+     * Symbol table: symbol to address mapping
+     */
+    this.symbolTable = {}; 
+
+    /**
+     * Location counter
+     */
+    this.locCtr = 0;
+
+    /**
+     * Line number
+     */
+    this.lineNum = 0;
+
+    /**
+     * Array of source code lines
+     */
+    this.sourceLines = []; 
+
+    /**
+     * Error flag
+     */
+    this.errorFlag = false; 
+
+    /**
+     * Current pass (1 or 2)
+     */
+    this.pass = 1; 
+
+    /**
+     * Set of labels to detect duplicates
+     */
+    this.labels = new Set(); 
+
+    /**
+     * Collect errors
+     */
+    this.errors = []; 
+
+    /**
+     * Buffer to hold machine code words
+     */
+    this.outputBuffer = []; 
+
+    /**
+     * Input file name
+     */
+    this.inputFileName = ''; 
+
+    /**
+     * Output file name
+     */
+    this.outputFileName = ''; 
+
+    /**
+     * Output file handle
+     */
+    this.outFile = null; 
+
+    /**
+     * This will store information about each line, including the location counter (locCtr), machine code words, and the source code line.
+     */
+    this.listing = []; 
+
+    /**
+     * Load point
+     */
     this.loadPoint = 0;
+
+    /**
+     * Program size
+     */
     this.programSize = 0;
-    this.startLabel = null;     // Label specified in .start directive
-    this.startAddress = null;   // Resolved address of the start label
-    this.isObjectModule = false; // Flag to indicate if the code is to be made into a .o object file
-    this.globalLabels = new Set(); // Set of global labels to be exported
-    this.externLabels = new Set(); // Set of external labels to be imported
-    this.externalReferences = []; // Array to store external references
-    this.adjustmentEntries = []; // Array to store adjustment entries
+
+    /**
+     * Label specified in .start directive
+     */
+    this.startLabel = null;     
+
+    /**
+     * Resolved address of the start label
+     */
+    this.startAddress = null;   
+
+    /**
+     * Flag to indicate if the code is to be made into a .o object file
+     */
+    this.isObjectModule = false; 
+
+    /**
+     * Set of global labels to be exported
+     */
+    this.globalLabels = new Set(); 
+
+    /**
+     * Set of external labels to be imported
+     */
+    this.externLabels = new Set(); 
+
+    /**
+     * Array to store external references
+     */
+    this.externalReferences = []; 
+
+    /**
+     * Array to store adjustment entries
+     */
+    this.adjustmentEntries = [];
   }
 
+  /**
+   * Adds the given address to the adjustmentEntries array if it is not already included.
+   *
+   * @param {number} address - The address to be added to the adjustmentEntries array.
+   */
   handleAdjustmentEntry(address) {
     if (!this.adjustmentEntries.includes(address)) {
       this.adjustmentEntries.push(address);
