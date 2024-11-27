@@ -1,4 +1,6 @@
 ; program that tests the m command
+; demonstrates that disassembly of programs
+; with unused labels outputs unlabeled data
         m
         nl
 
