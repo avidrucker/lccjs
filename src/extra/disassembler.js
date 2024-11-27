@@ -200,8 +200,9 @@ function disassemble(fileName) {
                 if (trapvect8 === 0x00) { // halt
                     // Update WIP Disassembly
                     WIPDisassembly[currentAddress].opcode = 'halt';
-                } 
-                enqueueNextAddress(currentAddress);
+                } else {
+                    enqueueNextAddress(currentAddress);
+                }
                 break;
             default:
                 // console.log("Enqueuing next address after processing:", currentAddress);
