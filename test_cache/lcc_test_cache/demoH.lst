@@ -1,0 +1,35 @@
+LCC.js Assemble/Link/Interpret/Debug Ver 0.1  Tue, Nov 26, 2024, 17:39:34
+Billy, Bob J
+
+Header
+o
+C
+
+Loc   Code           Source Code
+0000  200d           ld r0, x
+0001  f002           dout r0
+0002  f001           nl
+0003  d3fb           mov r1, -5
+0004  f202           dout r1
+0005  f001           nl
+0006  d40a           mov r2, 10
+0007  14b4           add r2, r2, -12
+0008  f402           dout r2
+0009  f001           nl
+000a  d605           mov r3, 5
+000b  b6e8           sub r3, r3, 8
+000c  f602           dout r3
+000d  f000           halt
+                    
+000e  ff9c       x: .word -100
+====================================================== Output
+-100
+-5
+-2
+-3
+========================================== Program statistics
+Input file name          =   ./demos/demoH.a
+Instructions executed    =   e (hex)    14 (dec)
+Program size             =   f (hex)    15 (dec)
+Max stack size           =   0 (hex)    0 (dec)
+Load point               =   0 (hex)    0 (dec)
