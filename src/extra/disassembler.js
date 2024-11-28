@@ -334,7 +334,6 @@ class Disassembler {
                 break;
             case 0xF: // TRAP
                 ({ mnemonic, operands } = this.disassembleTRAP(word));
-                //// console.log("disassembleInstruction: mnemonic: ", mnemonic, " operands: ", operands);
                 break;
             default:
                 mnemonic = '???';
@@ -624,12 +623,10 @@ class Disassembler {
     // Disassembles TRAP instruction
     disassembleTRAP(word) {
         const trapvect8 = word & 0xFF;
-        //// console.log(">>> trapvect8 is: ", trapvect8);
         const dr_sr = (word >> 9) & 0x7;
         const trapInfo = this.getTrapInfo(trapvect8);
         let mnemonic;
         let operands;
-        //// console.log("<<< trap info is: ", trapInfo);
         if (trapInfo) {
             mnemonic = trapInfo.mnemonic;
             operands = trapInfo.needsRegister ? `${this.registerNames[dr_sr]}` : '';
