@@ -172,11 +172,11 @@
   - [ ] turn off auto-symbolic debugger flag
 - [ ] ability to detect single character press inputs ("KEYDOWN", "KEYUP", etc.) rather than requiring the user to press enter after each input
 - [o] deassembler/disassembler (takes a .e file and outputs a .a file)
-  - [ ] majority of instructions (mov, ld, add, sub, lea) disassembly
-  - [ ] div instruction disassembly
+  - [x] majority of instructions (mov, ld, add, sub, lea) disassembly
+  - [x] div instruction disassembly
   - [x] .start directive disassembly
-  - [ ] e heading .extern disassembly
-  - [ ] G heading .global disassembly
+  - [ ] A heading (?) disassembly
+  - [ ] G heading .global (?) disassembly
 - [ ] website that allows users to upload .a files, run & see the output of the program, and download the .e file
 - [ ] ability to include lcc.js extension modules via a comment in the .a file, which makes clear that a given program is an lcc.js+ extension program rather than a standard lcc.js program
 - [ ] ability to get terminal dimensions and adjust the output of the program to fit the terminal window
