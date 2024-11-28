@@ -3,7 +3,7 @@
 ## Project QoL, Documentation, and Maintenance
 - [x] put assembleAll.js into utils folder
 - [x] add creation of name.nnn to assembleAll.js before calling assembler.js
-- [ ] update README.md to include a more detailed description of the project (including linker.js), its various goals, and its current status (progress, test suite coverage, etc.)
+- [x] update README.md to include a more detailed description of the project (including linker.js), its various goals, and its current status (progress, test suite coverage, etc.)
 - [ ] add comments inside of the code to indicate what hasn't been tested yet
 - [ ] make a list of known assembler errors and how to trigger them to make into assembler tests
   - [ ] reference to a label that does not exist (no demo yet)
@@ -22,12 +22,12 @@
 
 ## Core Features
 
-- [ ] implement linking behavior by lcc.js to create a .e file from .o files by calling linker.js
+- [x] implement linking behavior by lcc.js to create a .e file from .o files by calling linker.js
 - [x] implement .string, sout, & sin
 - [x] implement blocking input for sin when executing
 - [x] implement sin/sout execution output in bst
 - [x] implement BST creation
-- [ ] implement all case 10 mnemonic commands (MUL/DIV/ROL/etc.)
+- [ ] implement asssembly AND interpretation all case 10 mnemonic commands (MUL/DIV/ROL/etc.)
   - [ ] implement `srl` mnemonic
   - [ ] implement `sra` mnemonic
   - [ ] implement `sll` mnemonic
@@ -88,7 +88,7 @@
   - [x] interpreter.test.js
   - [x] interpreterBattery.test.js
   - [x] lcc.test.js
-  - [ ] lccBattery.test.js
+  - [x] lccBattery.test.js
   - [ ] linker.test.js
   - [ ] linkerBattery.test.js
 - [ ] enable interpreter.js tests to expect (and handle gracefully) interpreter failures such as on infinite loops, division by zero, etc., and to confirm that either the program errored out or that the resulting .lst file is empty
@@ -102,7 +102,7 @@
 - [x] test .start directive usage (demoN.a)
 - [ ] test assembly of .bin files
 - [ ] (interpreter) test detection of division by zero
-- [ ] (assembler) test creation of .o files from multiple passed .a files
+- [ ] (assembler) test creation of .o files from passed .a files
 - [ ] add linker testing
   - [ ] test creation of .e file from multiple passed .o files
   - [ ] test .org/.orig, .extern, and .global
