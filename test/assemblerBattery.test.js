@@ -46,6 +46,7 @@ const argsForAllTests = [
   ['node', './test/assembler.test.js', './demos/demoN.a', 'assembling div'],
   ['node', './test/assembler.test.js', './demos/demoO.a', 'cheese', 'testing IO and LST generation'],
   ['node', './test/assembler.test.js', './demos/demoP.a', 'assembling .start'],
+  ['node', './test/assembler.test.js', './demos/demoQ.a', 'assembling label args to .word directives']
   // Add more test cases as needed
 ];
 

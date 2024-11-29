@@ -37,6 +37,7 @@ const argsForAllTests = [
   // ['node', './test/interpreter.test.js', './demos/demoN.e', 'testing interpreter with demoN.e'],
   ['node', './test/interpreter.test.js', './demos/demoO.e', 'cheese', 'testing interpreter with demoO.e'],
   ['node', './test/interpreter.test.js', './demos/demoP.e', 'testing interpreter with demoP.e'],
+  ['node', './test/interpreter.test.js', './demos/demoQ.e', 'interpreting label args to .word directives'],
   // Add more test cases as needed
 ];
 
