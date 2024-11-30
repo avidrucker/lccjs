@@ -204,7 +204,9 @@ async function runAllTests() {
       }
 
       // Clean up and stop Docker
-      execSyncWithLogging(`rm -f ${inputDir}/name.nnn`, execSyncOptions);
+      // Remove name.nnn from local and Docker container
+      // console.log(`Deleting local name.nnn file from '${nameFile}'`);
+      execSyncWithLogging(`rm -f ${nameFile}`, execSyncOptions);
       execSyncWithLogging(`docker exec ${containerName} rm -f /home/name.nnn`, execSyncOptions);
 
       // Stop the Docker container after all tests
