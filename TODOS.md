@@ -82,6 +82,7 @@
 
 ## Test
 
+- [ ] consider and test whether or not interpreter.test.js consistently updates the assembled .e file from the original .a file before comparing .e file hex dumps to check for valid/invalid cache state
 - [o] **write test inputs and outputs to cache so that tests can be run without needing to run the lcc in Docker**
   - [x] assembler.test.js
   - [x] assemblerBattery.test.js
