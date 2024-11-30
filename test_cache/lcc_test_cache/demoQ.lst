@@ -1,0 +1,26 @@
+LCC.js Assemble/Link/Interpret/Debug Ver 0.1  Fri, Nov 29, 2024, 20:04:52
+Billy, Bob J
+
+Header
+o
+A 0003
+C
+
+Loc   Code           Source Code
+                    ; demoQ.a tests using labels as operands to .word
+                    ; directives. The program should output 10.
+                    ; Also, what would happen if we were to run
+                    ; this program using a load point of 0x3000?
+0000  2002           ld r0, x  ; 0
+0001  f002           dout r0   ; 1
+0002  f000           halt      ; 2
+0003  0004       x:  .word y   ; 3
+0004  000a       y:  .word 10  ; 4
+====================================================== Output
+4
+========================================== Program statistics
+Input file name          =   ./demos/demoQ.a
+Instructions executed    =   3 (hex)    3 (dec)
+Program size             =   5 (hex)    5 (dec)
+Max stack size           =   0 (hex)    0 (dec)
+Load point               =   0 (hex)    0 (dec)

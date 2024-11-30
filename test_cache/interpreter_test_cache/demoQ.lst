@@ -1,0 +1,22 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Sat Nov 30 02:39:06 2024
+Billy, Bob J
+
+Header
+o
+A     0003
+C
+
+Loc   Code
+0000  2002
+0001  f002
+0002  f000
+0003  0004
+0004  000a
+====================================================== Output
+4
+========================================== Program statistics
+Input file name       =      demoQ1.e
+Instructions executed =    3 (hex)     3 (dec)
+Program size          =    5 (hex)     5 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)
