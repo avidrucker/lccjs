@@ -29,26 +29,34 @@ const initialCacheOptions = {
 ensureDirectoryExists(LINKER_CACHE_DIR);
 
 async function assembleWithDockerLCC(aFile, oFile, containerName) {
+    const aFileName = path.basename(aFile);
+    const oFileName = path.basename(oFile);
     try {
-        const aFileName = path.basename(aFile);
-        const oFileName = path.basename(oFile);
-
         // Copy the .a file into Docker
         execSyncWithLogging(`docker cp ${aFile} ${containerName}:/home/${aFileName}`, execSyncOptions);
 
         // Assemble using LCC inside Docker
         const assembleCommand = `cd /home && /cuh/cuh63/lnx/lcc ${aFileName}`;
-        console.log(`Assembling ${aFileName} into ${oFileName} using Docker LCC...`);
+        console.log(`Assembling ${aFileName} into ${oFileName} using Docker LCC with assemble command ${assembleCommand}...`);
         execSyncWithLogging(`docker exec ${containerName} sh -c "${assembleCommand}"`, execSyncOptions);
 
+        // console.log("copying .o file back normally ...");
         // Copy the resulting .o file back
         execSyncWithLogging(`docker cp ${containerName}:/home/${oFileName} ${oFile}`, execSyncOptions);
+        // console.log("... copied .o file back.");
 
         // Clean up inside Docker
         execSyncWithLogging(`docker exec ${containerName} rm -f /home/${aFileName} /home/${oFileName}`, execSyncOptions);
     } catch (error) {
         // very important here, if the .o file was created, we can continue
         // regardless if the exit code was non-zero
+
+        // console.log("copying .o file back in the error case ...");
+        // Copy the resulting .o file back
+        execSyncWithLogging(`docker cp ${containerName}:/home/${oFileName} ${oFile}`, execSyncOptions);
+        // console.log("... copied .o file back.");
+
+        console.log("Checking for oFile: ", oFileName, " at oFile: ", oFile);
         if (fs.existsSync(oFile)) {
             console.warn(`Warning: LCC returned a non-zero exit code (${error.status}) but the .o file was created.`);
         } else {
@@ -193,6 +201,13 @@ async function testLinker() {
                 } else {
                     console.log(`Docker container ${containerName} is already running.`);
                 }
+
+                // Create the name file
+                const nameFile = path.join(__dirname, 'name.nnn');
+                fs.writeFileSync(nameFile, 'Billy, Bob J\n');
+                // Send the file to /home in container
+                execSyncWithLogging(`docker cp ${nameFile} ${containerName}:/home/`, execSyncOptions);
+
             } else {
                 console.log('Skipping Docker container setup because SKIP_SETUP is true.');
             }
