@@ -1,0 +1,16 @@
+          .extern sub
+          .global i
+          .global j
+          .global main
+main:     push lr
+          push fp
+          mov fp, sp
+
+          bl sub
+
+          mov sp, fp
+          pop fp
+          pop lr
+          ret
+i:        .word 5   ; .word equivalent to .fill
+j:        .word 7
