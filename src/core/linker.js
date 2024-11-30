@@ -2,6 +2,7 @@
 // LCC.js Linker
 
 const fs = require('fs');
+const path = require('path');
 
 class Linker {
   constructor() {
@@ -16,6 +17,8 @@ class Linker {
     this.gotStart = false;
     this.errorFlag = false;
     this.objectModules = []; // List of object modules to process
+    this.inputFiles = []; // List of input files
+    this.outputFileName = null; // Output file name
   }
 
   // Method to read object modules from files
@@ -100,7 +103,10 @@ class Linker {
     this.objectModules.push(module);
   }
 
-  link(filenames) {
+  link(filenames, outputFileName) {
+    this.inputFiles = filenames; // Save input files
+    this.outputFileName = outputFileName; // Save output filename
+    
     // Read all object modules
     for (let filename of filenames) {
       this.readObjectModule(filename);
@@ -229,13 +235,19 @@ class Linker {
 
   createExecutable() {
     // Write executable file
-    const outfileName = 'link.e';
+    let outfileName = this.outputFileName;
+    if (!outfileName) {
+      // Default output file name: link.e
+      outfileName = 'link.e';
+    }
+
+    console.log(`Creating executable file ${outfileName}`);
+
+    // Write executable file
     const outFile = fs.openSync(outfileName, 'w');
 
     // Write file signature
     fs.writeSync(outFile, 'o');
-
-    console.log(`Creating executable file ${outfileName}`);
 
     // Write 'S' entry if we have a start address
     if (this.gotStart) {
@@ -283,7 +295,6 @@ class Linker {
     fs.writeSync(outFile, codeBuffer);
 
     fs.closeSync(outFile);
-    console.log("TEMP: finished writing executable file");
   }
 
   error(message) {
@@ -296,12 +307,35 @@ if (require.main === module) {
   // Collect command-line arguments
   const args = process.argv.slice(2);
   if (args.length < 1) {
-    console.error('Usage: node linker.js <object module 1> <object module 2> ...');
+    console.error('Usage: node linker.js [-o outputfile.e] <object module 1> <object module 2> ...');
+    process.exit(1);
+  }
+
+  let outputFileName = null;
+  const inputFiles = [];
+
+  let i = 0;
+  while (i < args.length) {
+    if (args[i] === '-o') {
+      if (i + 1 >= args.length) {
+        console.error('Error: -o flag requires an output file name');
+        process.exit(1);
+      }
+      outputFileName = args[i + 1];
+      i += 2;
+    } else {
+      inputFiles.push(args[i]);
+      i++;
+    }
+  }
+
+  if (inputFiles.length === 0) {
+    console.error('Error: No input object modules specified');
     process.exit(1);
   }
 
   const linker = new Linker();
-  linker.link(args);
+  linker.link(inputFiles, outputFileName);
 }
 
 module.exports = Linker;
