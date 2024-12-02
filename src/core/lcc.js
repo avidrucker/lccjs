@@ -49,6 +49,8 @@ class LCC {
     switch (ext) {
       case '.hex':
       case '.bin':
+        console.log('Hex and bin files are not yet supported.');
+        break;
       case '.e':
         // Execute and output .lst, .bst files
         this.outputFileName = this.inputFileName;
