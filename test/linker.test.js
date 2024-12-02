@@ -1,4 +1,27 @@
 // linker.test.js
+// TODO: write example here of how to run linker.test.js (see linkerBattery.test.js for example)
+
+/*
+Summary of Behavior and Objectives
+- Purpose: To test the custom Linker by comparing its output with the output of the standard LCC linker running inside a Docker container.
+- Behavior:
+- Input Handling: Accepts multiple object .o files (or assembly .a files) and an optional output file name.
+- Cache Checking:
+  - Checks the validity of .a, .o, and .e files against the cache.
+  - Determines if reassembly or relinking is needed based on file changes.
+- Assembly and Linking Process:
+  - Assembles .a files into .o files using the LCC assembler inside Docker if necessary.
+  - Runs the custom Linker to produce the executable .e file.
+  - Runs the LCC linker inside Docker to produce the expected .e file.
+- Comparison:
+  - Compares the hex dumps of the custom Linker's output and the LCC linker's output.
+  - Reports any differences found.
+- Cache Update: Updates the cache with new outputs as needed.
+- Docker Management:
+  - Manages Docker container setup and teardown.
+  - Handles copying files and necessary resources into the container.
+- Cleanup: Cleans up temporary files created during the test.
+*/
 
 const Linker = require('../src/core/linker');
 const path = require('path');

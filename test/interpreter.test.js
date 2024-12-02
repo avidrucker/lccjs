@@ -1,4 +1,26 @@
 // interpreter.test.js
+// TODO: how to run this test (see test/interpreterBattery.test.js for example)
+
+/*
+Summary of Behavior and Objectives
+- Purpose: To test the custom Interpreter by comparing its output with the output of the standard LCC interpreter running inside a Docker container.
+- Behavior:
+  - Input Handling: Accepts an executable .e file and optional user inputs.
+  - Assembly Attempt: If the .e file doesn't exist and SKIP_ASSEMBLY is not set, it attempts to assemble the corresponding .a file.
+  - Cache Checking: Checks for a valid cache to avoid reinterpreting unchanged files.
+  - Interpretation Process:
+    - Runs the custom Interpreter on the input file, capturing its output into a .lst file.
+    - Runs the LCC interpreter inside Docker to produce the expected .lst output.
+  - Comparison:
+    - Compares the .lst files while ignoring whitespace, comments, and specific header lines.
+    - Reports any differences found.
+  - Cache Update: Updates the cache with the new output from the LCC interpreter if necessary.
+  - Docker Management:
+    - Manages Docker container setup and teardown.
+    - Copies necessary files and handles name.nnn as required.
+  - Cleanup: Cleans up temporary files created during the test.
+*/
+
 
 const Interpreter = require('../src/core/interpreter');
 const Assembler = require('../src/core/assembler'); // Import the assembler

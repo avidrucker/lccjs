@@ -2,6 +2,26 @@
 // how to run from project root directory:
 // node ./test/assembler.test.js ./demos/demoA.a
 
+/*
+Assembler Test (assembler.test.js)
+Summary of Behavior and Objectives
+- Purpose: To test the custom Assembler implementation by comparing its output with the output of the standard LCC assembler running inside a Docker container.
+- Behavior:
+  - Input Handling: Accepts an assembly .a file and optional user inputs.
+  - Cache Checking: Checks if a valid cache exists for the input file to avoid unnecessary reassembly.
+  - Assembly Process:
+    - If the cache is invalid or --skip-cache is specified, it runs the custom Assembler on the input file to produce an executable .e file.
+    - It runs the standard LCC assembler inside Docker to produce the expected .e file.
+  - Comparison:
+    - Compares the hex dumps of the two .e files using xxd.
+    - Reports any differences found between the outputs.
+  - Cache Update: Updates the cache with the new output from the LCC assembler if differences are found or the cache is invalid.
+  - Docker Management:
+    - Manages Docker container setup and teardown using DockerController.
+    - Copies necessary files into and out of the Docker container.
+  - Cleanup: Cleans up any temporary files created during the test, both locally and inside the Docker container.
+*/
+
 const Assembler = require('../src/core/assembler');
 const path = require('path');
 const fs = require('fs');
