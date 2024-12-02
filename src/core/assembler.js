@@ -850,9 +850,6 @@ class Assembler {
       return null;
     }
 
-    // console.log("assembling for cmp...");
-    // console.log("operands: ", operands);
-
     let sr1 = this.getRegister(operands[0]);
     if (sr1 === null) return null;
     let sr2orImm5 = operands[1];
@@ -861,16 +858,13 @@ class Assembler {
 
     if(!this.isRegister(sr2orImm5)) {
       // compare with immediate
-      // console.log("cmp immediate value is: ", this.evaluateImmediate(sr2orImm5, -16, 15));
       macword = macword | (sr1 << 6) | (sr2orImm5 & 0x1F) | 0x0020;
     } else {
       // compare with register
-      // console.log("cmp register value is: ", sr2orImm5);
       let sr2 = this.getRegister(sr2orImm5);
       if (sr2 === null) return null;
       macword = macword | (sr1 << 6) | (sr2 & 0x3);
     }
-    // console.log("cmp macword is: ", macword.toString(16));
     return macword;
   }
 
