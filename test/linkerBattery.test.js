@@ -1,7 +1,7 @@
 // linkerBattery.test.js
 
 /*
-* Objects:
+* Objectives:
 * - Runs multiple linker tests.
 * - Manages Docker setup, teardown, and necessary file operations (name.nnn).
 * - Checks caches before running tests.
