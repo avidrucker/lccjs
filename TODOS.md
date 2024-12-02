@@ -5,13 +5,20 @@
 - [x] add creation of name.nnn to assembleAll.js before calling assembler.js
 - [x] update README.md to include a more detailed description of the project (including linker.js), its various goals, and its current status (progress, test suite coverage, etc.)
 - [ ] add comments inside of the code to indicate what hasn't been tested yet
-- [ ] make a list of known assembler errors and how to trigger them to make into assembler tests
+- [ ] make a list of **known assembler errors** and how to trigger them to make into assembler tests
   - [ ] reference to a label that does not exist (no demo yet)
   - [ ] duplicate label declarations (no demo yet)
+  - [ ] invalid mnemonics, registers, immediates, etc. (no demo yet)
+  - [ ] line that is too long (300+ chars) (no demo yet)
+  - [ ] invalid char usage in a label (no demo yet)
+  - [ ] improperly terminated string
+  - [ ] only supplying a + or - sign without a number following it
 - [ ] make a list of known interpreter errors and how to trigger them to make into interpreter tests
   - division by zero "Floating point exception" (demoN.a)
   - infinite loop detection (no demo yet)
 - [ ] make a list of known linker errors and how to trigger them to make into linker tests
+  - [ ] undefined external symbols
+  - [ ] duplicate global symbols
 - [ ] make a list of known namer errors and how to trigger them
   - no name input given (no demo yet)
 - [x] relocate name.js, genStats.js, picture.js, and other non-core files to a separate directory called "utils"
@@ -19,22 +26,27 @@
 - [ ] refactor mnemonics into constants at the top of the file
 - [x] refactor names of lst file outputs to be more descriptive in lcc and interpreter tests
 - [ ] refactor tests to have all file comparison functions come from a single module compareFiles.js which has a hex dump comparison, .lst file comparison, and general file comparison function which can be used by all tests and also by testCacheHandler.js
+- [ ] single test runner script that runs all test suites in order, and logs the results of each test suite at the end
+- [ ] set up test hook which will run the test runner script and make sure every test passes before allowing a series of commits to be pushed to the repository
+- [ ] refactor to have file comparison code in one place 'compareFiles.js'
 
 ## Core Features
 
+- [ ] implement lcc.js calling linker.js when lcc.js is called with multiple .o file inputs
 - [x] implement linking behavior by lcc.js to create a .e file from .o files by calling linker.js
 - [x] implement .string, sout, & sin
 - [x] implement blocking input for sin when executing
 - [x] implement sin/sout execution output in bst
 - [x] implement BST creation
-- [ ] implement asssembly AND interpretation all case 10 mnemonic commands (MUL/DIV/ROL/etc.)
-  - [ ] implement `srl` mnemonic
-  - [ ] implement `sra` mnemonic
-  - [ ] implement `sll` mnemonic
+- [o] implement asssembly AND interpretation all case 10 mnemonic commands (MUL/DIV/ROL/etc.)
+  - [x] implement `srl` mnemonic
+  - [x] implement `sra` mnemonic
+  - [x] implement `sll` mnemonic
   - [ ] implement `rol` mnemonic
   - [ ] implement `ror` mnemonic
   - [ ] **implement `mul` mnemonic** (docs simpleCalc.a)
-  - [ ] implement `div` mnemonic (demos demoN.a, ...)
+  - [x] implement `div` mnemonic (demos demoN.a, ...)
+    - [x] division by zero detection and handling
   - [ ] implement `rem` mnemonic
   - [ ] implement `or` mnenmonic
   - [ ] implement `xor` mnemonic
@@ -82,22 +94,23 @@
 
 ## Test
 
-- [ ] replace startup.a, m1.a, m2.a with different demos
+- [x] replace startup.a, m1.a, m2.a with different demos
 - [ ] consider and test whether or not interpreter.test.js consistently updates the assembled .e file from the original .a file before comparing .e file hex dumps to check for valid/invalid cache state
-- [o] **write test inputs and outputs to cache so that tests can be run without needing to run the lcc in Docker**
+- [x] **write test inputs and outputs to cache so that tests can be run without needing to run the lcc in Docker**
   - [x] assembler.test.js
   - [x] assemblerBattery.test.js
   - [x] interpreter.test.js
   - [x] interpreterBattery.test.js
   - [x] lcc.test.js
   - [x] lccBattery.test.js
-  - [ ] linker.test.js
-  - [ ] linkerBattery.test.js
+  - [x] linker.test.js
+  - [x] linkerBattery.test.js
 - [ ] enable interpreter.js tests to expect (and handle gracefully) interpreter failures such as on infinite loops, division by zero, etc., and to confirm that either the program errored out or that the resulting .lst file is empty
 - [o] improve test suites to include a meaningful comment that describes each test
   - [o] lccBattery.test.js
   - [o] assemblerBattery.test.js 
   - [o] interpreterBattery.test.js
+  - [ ] linkerBattery.test.js
 - [ ] improve test outputs that more accurately describe what the failure was and where it occurred
   - [ ] assembler.test.js
   - [x] make sure that assembler.test.js continues to run (and check .e hex dumps) even if the LCC fails to interpret a program
@@ -139,6 +152,7 @@
 - [ ] test for implicit (abbreviated) r0 (register zero) usage with out instructions
 - [ ] create new folder for invalid code examples
   - [ ] move all invalid code examples to the new folder (demoJ.a (Possible infinite loop) and demoN.a (Floating point exception))
+- [ ] implement disassembler.test.js to test disassembler.js
 
 ## Fix
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
@@ -166,6 +180,8 @@
 
 ## Extra Features
 
+- [ ] docs and examples for all mnemonics
+- [ ] manual for lcc.js
 - [ ] emoji support
 - [ ] RAND support
 - [ ] TIME support (seconds & milliseconds)
@@ -197,3 +213,8 @@
 - [ ] **Code Comments**: Ensure the codebase is well-commented to help others understand the logic.
 - [ ] **Video Walkthrough**: Consider recording a video explaining the project and demonstrating its use.
 - [ ] **Issue Tracker**: Use GitHub issues to highlight tasks and bugs that need attention, labeling them as "good first issue" where appropriate.
+
+## Things to Investigate in LCC
+
+- [ ] Negative number arguments to .zero directive, what happens?
+- [ ] What machine code does * turn into when assembled?
