@@ -35,6 +35,9 @@ const argsForAllTests = [
   ['node', './test/lcc.test.js', './demos/demoQ.a', 'assemble/interpret label args to .word directives'],
   ['node', './test/lcc.test.js', './demos/demoR.a', 'assemble/interpret srl, sra, sll'],
   ['node', './test/lcc.test.js', './demos/demoS.a', 'assemble/interpret rol, ror'],
+  ['node', './test/lcc.test.js', './demos/demoT.a', 'assemble/interpret and, or, xor'],
+  ['node', './test/lcc.test.js', './demos/demoU.a', 'assemble/interpret sext'],
+  ['node', './test/lcc.test.js', './demos/demoV.a', 'assemble/interpret mul, div, rem'],
   // Add more test cases as needed
 ];
 

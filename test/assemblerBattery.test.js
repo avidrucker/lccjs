@@ -49,6 +49,9 @@ const argsForAllTests = [
   ['node', './test/assembler.test.js', './demos/demoQ.a', 'assembling label args to .word directives'],
   ['node', './test/assembler.test.js', './demos/demoR.a', 'assembling srl, sra, sll'],
   ['node', './test/assembler.test.js', './demos/demoS.a', 'assembling rol, ror'],
+  ['node', './test/assembler.test.js', './demos/demoT.a', 'assembling and, or, xor'],
+  ['node', './test/assembler.test.js', './demos/demoU.a', 'assembling sext'],
+  ['node', './test/assembler.test.js', './demos/demoV.a', 'assembling mul, div, rem']
   // Add more test cases as needed
 ];
 
@@ -149,7 +152,7 @@ async function runAllTests() {
           const testName = path.basename(test.inputFile, '.a');
           testResults.push({ name: testName, status: 'Not Run', comment: test.comment });
         }
-        // Optionally, exit or continue based on your preference
+        // Optionally, exit or continue
       }
 
       for (const test of testsNeedingDocker) {
