@@ -107,9 +107,9 @@
   - [x] linkerBattery.test.js
 - [ ] enable interpreter.js tests to expect (and handle gracefully) interpreter failures such as on infinite loops, division by zero, etc., and to confirm that either the program errored out or that the resulting .lst file is empty
 - [o] improve test suites to include a meaningful comment that describes each test
-  - [o] lccBattery.test.js
-  - [o] assemblerBattery.test.js 
-  - [o] interpreterBattery.test.js
+  - [x] lccBattery.test.js
+  - [x] assemblerBattery.test.js 
+  - [x] interpreterBattery.test.js
   - [ ] linkerBattery.test.js
 - [ ] improve test outputs that more accurately describe what the failure was and where it occurred
   - [ ] assembler.test.js

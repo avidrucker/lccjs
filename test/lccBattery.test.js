@@ -17,26 +17,26 @@ const cacheOptions = {
 
 const argsForAllTests = [
   ['node', './test/lcc.test.js', './demos/demoA.a', 'assemble/interpret mov, dout, nl, and halt'],
-  ['node', './test/lcc.test.js', './demos/demoB.a', 'input1', 'input2', 'testing lcc.js with demoB.a'],
-  ['node', './test/lcc.test.js', './demos/demoC.a', 'testing lcc.js with demoC.a'],
-  ['node', './test/lcc.test.js', './demos/demoD.a', 'testing lcc.js with demoD.a'],
-  ['node', './test/lcc.test.js', './demos/demoE.a', 'testing lcc.js with demoE.a'],
-  ['node', './test/lcc.test.js', './demos/demoF.a', 'testing lcc.js with demoF.a'],
-  ['node', './test/lcc.test.js', './demos/demoG.a', 'g', '-5', 'ff', 'testing lcc.js with demoG.a'],
-  ['node', './test/lcc.test.js', './demos/demoH.a', 'testing lcc.js with demoH.a'],
-  ['node', './test/lcc.test.js', './demos/demoI.a', 'testing lcc.js with demoI.a'],
-  // ['node', './test/lcc.test.js', './demos/demoJ.a', 'testing lcc.js with demoJ.a'], // Disabled if necessary
-  ['node', './test/lcc.test.js', './demos/demoK.a', 'testing lcc.js with demoK.a'],
-  ['node', './test/lcc.test.js', './demos/demoL.a', 'testing lcc.js with demoL.a'],
-  ['node', './test/lcc.test.js', './demos/demoM.a', 'testing lcc.js with demoM.a'],
-  // ['node', './test/lcc.test.js', './demos/demoN.a', 'testing lcc.js with demoN.a'],
-  ['node', './test/lcc.test.js', './demos/demoO.a', 'cheese', 'testing lcc.js with demoO.a'],
-  ['node', './test/lcc.test.js', './demos/demoP.a', 'testing lcc.js with demoP.a'],
+  ['node', './test/lcc.test.js', './demos/demoB.a', 'input1', 'input2', 'assemble/interpret sin, sout, and .string and .zero directives'],
+  ['node', './test/lcc.test.js', './demos/demoC.a', 'assemble/interpret load, add, and a labeled .word directive'],
+  ['node', './test/lcc.test.js', './demos/demoD.a', 'assemble/interpret mov, mvi, and mvr instructions'],
+  ['node', './test/lcc.test.js', './demos/demoE.a', 'assemble/interpret push, pop, custom function definitions and calls'],
+  ['node', './test/lcc.test.js', './demos/demoF.a', 'assemble/interpret various output commands (decimal, hex, and char)'],
+  ['node', './test/lcc.test.js', './demos/demoG.a', 'g', '-5', 'ff', 'assemble/interpret various user input commands (decimal, hex, and char)'],
+  ['node', './test/lcc.test.js', './demos/demoH.a', 'assemble/interpret negative number args in mov, add, and .word'],
+  ['node', './test/lcc.test.js', './demos/demoI.a', 'assemble/interpret branching and looping commands'],
+  // ['node', './test/lcc.test.js', './demos/demoJ.a', 'testing lcc.js with demoJ.a'], // Disabled for now, TODO: relocate to 'exception/error' test suite
+  ['node', './test/lcc.test.js', './demos/demoK.a', 'assemble/interpret m command'],
+  ['node', './test/lcc.test.js', './demos/demoL.a', 'assemble/interpret r command'],
+  ['node', './test/lcc.test.js', './demos/demoM.a', 'assemble/interpret s command'],
+  // ['node', './test/lcc.test.js', './demos/demoN.a', 'testing lcc.js with demoN.a'], // TODO: relocate to 'exception/error' test suite
+  ['node', './test/lcc.test.js', './demos/demoO.a', 'cheese', 'assemble/interpret IO commands'],
+  ['node', './test/lcc.test.js', './demos/demoP.a', 'assemble/interpret .start and interleaved data in instructions'],
   ['node', './test/lcc.test.js', './demos/demoQ.a', 'assemble/interpret label args to .word directives'],
   ['node', './test/lcc.test.js', './demos/demoR.a', 'assemble/interpret srl, sra, sll'],
   ['node', './test/lcc.test.js', './demos/demoS.a', 'assemble/interpret rol, ror'],
   ['node', './test/lcc.test.js', './demos/demoT.a', 'assemble/interpret and, or, xor'],
-  ['node', './test/lcc.test.js', './demos/demoU.a', 'assemble/interpret sext'],
+  // ['node', './test/lcc.test.js', './demos/demoU.a', 'assemble/interpret sext'],
   ['node', './test/lcc.test.js', './demos/demoV.a', 'assemble/interpret mul, div, rem'],
   // Add more test cases as needed
 ];

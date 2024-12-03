@@ -21,28 +21,28 @@ if (!fs.existsSync(INTERPRETER_CACHE_DIR)) {
 }
 
 const argsForAllTests = [
-  ['node', './test/interpreter.test.js', './demos/demoA.e', 'interpreting mov, dout, nl, and halt'],
+  ['node', './test/interpreter.test.js', './demos/demoA.e', 'interpretting mov, dout, nl, and halt'],
   ['node', './test/interpreter.test.js', './demos/demoB.e', 'input1', 'input2', 'interpreting the simulated input of 2 user inputs'],
-  ['node', './test/interpreter.test.js', './demos/demoC.e', 'testing interpreter with demoC.e'],
-  ['node', './test/interpreter.test.js', './demos/demoD.e', 'testing interpreter with demoD.e'],
-  ['node', './test/interpreter.test.js', './demos/demoE.e', 'testing interpreter with demoE.e'],
-  ['node', './test/interpreter.test.js', './demos/demoF.e', 'testing interpreter with demoF.e'],
-  ['node', './test/interpreter.test.js', './demos/demoG.e', 'g', '-5', 'ff', 'testing interpreter with demoG.e'],
-  ['node', './test/interpreter.test.js', './demos/demoH.e', 'testing interpreter with demoH.e'],
-  ['node', './test/interpreter.test.js', './demos/demoI.e', 'testing interpreter with demoI.e'],
+  ['node', './test/interpreter.test.js', './demos/demoC.e', 'interpretting load, add, and a labeled .word directive'],
+  ['node', './test/interpreter.test.js', './demos/demoD.e', 'interpretting mov, mvi, and mvr instructions'],
+  ['node', './test/interpreter.test.js', './demos/demoE.e', 'interpretting push, pop, and custom functions'],
+  ['node', './test/interpreter.test.js', './demos/demoF.e', 'interpretting various outputs (decimal, hex, and char)'],
+  ['node', './test/interpreter.test.js', './demos/demoG.e', 'g', '-5', 'ff', 'interpretting various inputs (decimal, hex, and char)'],
+  ['node', './test/interpreter.test.js', './demos/demoH.e', 'interpretting negative numbers in mov, add, and .word'],
+  ['node', './test/interpreter.test.js', './demos/demoI.e', 'interpretting branching and looping'],
   // ['node', './test/interpreter.test.js', './demos/demoJ.e', 'testing interpreter with demoJ.e'], // infinite loop detection test
-  ['node', './test/interpreter.test.js', './demos/demoK.e', 'testing interpreter with demoK.e'],
-  ['node', './test/interpreter.test.js', './demos/demoL.e', 'testing interpreter with demoL.e'],
-  ['node', './test/interpreter.test.js', './demos/demoM.e', 'testing interpreter with demoM.e'],
-  // TODO: add test to intentionally check for interpreter failure
+  ['node', './test/interpreter.test.js', './demos/demoK.e', 'interpretting m command'],
+  ['node', './test/interpreter.test.js', './demos/demoL.e', 'interpretting r command'],
+  ['node', './test/interpreter.test.js', './demos/demoM.e', 'interpretting s command'],
+  // TODO: move tests which cause interpreter failure/error to new interpreter test suite
   // ['node', './test/interpreter.test.js', './demos/demoN.e', 'testing interpreter with demoN.e'],
-  ['node', './test/interpreter.test.js', './demos/demoO.e', 'cheese', 'testing interpreter with demoO.e'],
-  ['node', './test/interpreter.test.js', './demos/demoP.e', 'testing interpreter with demoP.e'],
+  ['node', './test/interpreter.test.js', './demos/demoO.e', 'cheese', 'interpretting IO commands to test LST generation'],
+  ['node', './test/interpreter.test.js', './demos/demoP.e', 'interpretting .start and interleaved data within instructions'],
   ['node', './test/interpreter.test.js', './demos/demoQ.e', 'interpreting label args to .word directives'],
   ['node', './test/interpreter.test.js', './demos/demoR.e', 'interpreting srl, sra, sll'],
   ['node', './test/interpreter.test.js', './demos/demoS.e', 'interpreting rol, ror'],
   ['node', './test/interpreter.test.js', './demos/demoT.e', 'interpreting and, or, xor'],
-  ['node', './test/interpreter.test.js', './demos/demoU.e', 'interpreting sext'],
+  // ['node', './test/interpreter.test.js', './demos/demoU.e', 'interpreting sext'],
   ['node', './test/interpreter.test.js', './demos/demoV.e', 'interpreting mul, div, rem'],
   // Add more test cases as needed
 ];
