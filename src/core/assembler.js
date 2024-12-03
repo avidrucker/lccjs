@@ -760,6 +760,16 @@ class Assembler {
       case 'rem':
         machineWord = this.assembleREM(operands);
         break;
+      case 'or':
+        machineWord = this.assembleOR(operands);
+        break;
+      case 'xor':
+        machineWord = this.assembleXOR(operands);
+        break;
+      // mvr case is handled in the mov function
+      case 'sext':
+        machineWord = this.assembleSEXT(operands);
+        break;
       case 'ld':
         machineWord = this.assembleLD(operands);
         break;
@@ -1044,6 +1054,42 @@ class Assembler {
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) return null;
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x0009;
+    return macword;
+  }
+
+  assembleOR(operands) {
+    if (operands.length !== 2) {
+      this.error('Invalid operand count for or');
+      return null;
+    }
+    let dr = this.getRegister(operands[0]);
+    let sr1 = this.getRegister(operands[1]);
+    if (dr === null || sr1 === null) return null;
+    let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000A;
+    return macword;
+  }
+
+  assembleXOR(operands) {
+    if (operands.length !== 2) {
+      this.error('Invalid operand count for xor');
+      return null;
+    }
+    let dr = this.getRegister(operands[0]);
+    let sr1 = this.getRegister(operands[1]);
+    if (dr === null || sr1 === null) return null;
+    let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000B;
+    return macword;
+  }
+
+  assembleSEXT(operands) {
+    if (operands.length !== 2) {
+      this.error('Invalid operand count for sext');
+      return null;
+    }
+    let dr = this.getRegister(operands[0]);
+    let sr = this.getRegister(operands[1]);
+    if (dr === null || sr === null) return null;
+    let macword = 0xA000 | (dr << 9) | (sr << 6) | 0x000D;
     return macword;
   }
 
