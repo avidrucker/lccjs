@@ -745,6 +745,12 @@ class Assembler {
       case 'sll':
         machineWord = this.assembleSLL(operands);
         break;
+      case 'rol':
+        machineWord = this.assembleROL(operands);
+        break;
+      case 'ror':
+        machineWord = this.assembleROR(operands);
+        break;
       case 'div':
         machineWord = this.assembleDIV(operands);
         break;
@@ -994,6 +1000,34 @@ class Assembler {
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) return null;
     let macword = 0xa008 | (dr << 9) | (sr1 << 6);
+    return macword;
+  }
+
+  assembleROL(operands) {
+    if (!(operands.length === 2 || operands.length === 1)) {
+      this.error('Invalid operand count for rol');
+      return null;
+    }
+    let sr = this.getRegister(operands[0]);
+    if (sr === null) return null;
+    let ct = null;
+    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15);
+    if (ct === null) ct = 1;
+    let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0005;
+    return macword;
+  }
+
+  assembleROR(operands) {
+    if (!(operands.length === 2 || operands.length === 1)) {
+      this.error('Invalid operand count for ror');
+      return null;
+    }
+    let sr = this.getRegister(operands[0]);
+    if (sr === null) return null;
+    let ct = null;
+    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15);
+    if (ct === null) ct = 1;
+    let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0006;
     return macword;
   }
 
