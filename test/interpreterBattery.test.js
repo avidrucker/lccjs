@@ -6,6 +6,7 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const { isCacheValid } = require('./testCacheHandler');
 const DockerController = require('./dockerController');
+const Assembler = require('../src/core/assembler');
 
 const INTERPRETER_CACHE_DIR = path.join(__dirname, '../test_cache/interpreter_test_cache');
 const cacheOptions = {
@@ -50,13 +51,30 @@ const execSyncOptions = {
   maxBuffer: 1024 * 1024, // 1MB buffer limit
 };
 
-function execSyncWithLogging(command, options) {
-  // console.log(`Executing command: ${command}`);
-  // const startTime = Date.now();
-  const result = execSync(command, options);
-  // const endTime = Date.now();
-  // console.log(`Command completed in ${endTime - startTime} ms`);
-  return result;
+async function assembleIfNeeded(eFile) {
+  const eFilePath = path.resolve(eFile);
+  const eFileName = path.basename(eFilePath, '.e');
+  const eFileDir = path.dirname(eFilePath);
+  const aFilePath = path.join(eFileDir, `${eFileName}.a`);
+
+  // Check if .e file exists
+  if (!fs.existsSync(eFilePath)) {
+    console.log(`Executable file ${eFilePath} does not exist. Attempting to assemble ${aFilePath}...`);
+    if (fs.existsSync(aFilePath)) {
+      try {
+        const assembler = new Assembler();
+        assembler.main([aFilePath]);
+        if (!fs.existsSync(eFilePath)) {
+          throw new Error(`Failed to assemble ${aFilePath} into ${eFilePath}.`);
+        }
+      } catch (err) {
+        console.error(`Error assembling ${aFilePath}:`, err);
+        throw err;
+      }
+    } else {
+      throw new Error(`Assembly file ${aFilePath} does not exist.`);
+    }
+  }
 }
 
 function runTest(cmd, script, inputFile, userInputs, skipCache) {
@@ -67,8 +85,9 @@ function runTest(cmd, script, inputFile, userInputs, skipCache) {
     }
     console.log(`Running '${[cmd, ...args].join(' ')}'`);
 
-    // Set SKIP_SETUP and SKIP_ASSEMBLY to 'true'
-    const env = Object.assign({}, process.env, { SKIP_SETUP: 'true', SKIP_ASSEMBLY: 'true' });
+    // Set SKIP_SETUP to 'true' (we manage Docker in the battery)
+    const env = Object.assign({}, process.env, { SKIP_SETUP: 'true' });
+    // Note: Do not set SKIP_ASSEMBLY, so that interpreter.test.js can assemble if needed
 
     const testProcess = spawn(cmd, args, {
       stdio: 'inherit',
@@ -107,6 +126,7 @@ async function runAllTests() {
   const testResults = []; // To collect test results
 
   let testsNeedingDocker = [];
+  let testsNotNeedingDocker = [];
 
   // Check cache for all tests
   for (const testArgs of argsForAllTests) {
@@ -116,15 +136,48 @@ async function runAllTests() {
 
     const inputFileName = path.basename(inputFile, '.e');
 
+    const originalProcessExit = process.exit;
+    process.exit = (code) => {
+      throw new Error(`Assembler called process.exit with code ${code}`);
+    };
+    // Assemble .a file into .e file if needed
+    try {
+      await assembleIfNeeded(inputFile);
+    } catch (err) {
+      console.error(`Error assembling for test ${inputFileName}:`, err.message);
+      testResults.push({ name: inputFileName, status: 'Fail', comment: testComment });
+      continue; // Skip to next test
+    }
+    // restore process.exit
+    process.exit = originalProcessExit;
+
     // Check cache validity
     const isValidCache = isCacheValid(inputFile, cacheOptions);
 
     if (!skipCache && isValidCache) {
-      console.log(`Cache is valid for ${inputFileName}. Marking test as passed.`);
-      testResults.push({ name: inputFileName, status: 'Pass', comment: testComment });
+      console.log(`Cache is valid for ${inputFileName}. Marking test as not needing Docker to run.`);
+      testsNotNeedingDocker.push({ cmd, script, inputFile, userInputs, comment: testComment });
     } else {
       console.log(`Cache is invalid or missing for ${inputFileName}. Test needs to be run.`);
       testsNeedingDocker.push({ cmd, script, inputFile, userInputs, comment: testComment });
+    }
+  }
+
+  // Run tests that do not need Docker
+  if (testsNotNeedingDocker.length > 0) {
+    for (const test of testsNotNeedingDocker) {
+      const { cmd, script, inputFile, userInputs, comment } = test;
+      const testName = path.basename(inputFile, '.e');
+      console.log(`\nRunning test for ${testName}: ${comment}`);
+      try {
+        await runTest(cmd, script, inputFile, userInputs, skipCache);
+        // Record test result as pass
+        testResults.push({ name: testName, status: 'Pass', comment });
+      } catch (err) {
+        console.error(`Error in test ${testName}: ${err.message}`);
+        // Record test result as fail
+        testResults.push({ name: testName, status: 'Fail', comment });
+      }
     }
   }
 
