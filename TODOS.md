@@ -155,6 +155,7 @@
 - [ ] implement disassembler.test.js to test disassembler.js
 
 ## Fix
+- [ ] fix bug where in interpreterBattery.test.js Docker is running repeatedly despite there being no need to run Docker repeatedly for the same test which should be caching the results of the test (see demoU in particular)
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
 - [x] interpreter.js output does not yet add an extra newline like lcc.js does. interpreter.js should however print an extra newline to the stdout after the program has finished executing
 - [x] assembler.test.js should delete all extra files created during testing, but currently does not delete all extra files generated locally
