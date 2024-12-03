@@ -48,6 +48,7 @@ const argsForAllTests = [
   ['node', './test/assembler.test.js', './demos/demoP.a', 'assembling .start'],
   ['node', './test/assembler.test.js', './demos/demoQ.a', 'assembling label args to .word directives'],
   ['node', './test/assembler.test.js', './demos/demoR.a', 'assembling srl, sra, sll'],
+  ['node', './test/assembler.test.js', './demos/demoS.a', 'assembling rol, ror'],
   // Add more test cases as needed
 ];
 
@@ -86,6 +87,7 @@ async function runAllTests() {
   const testResults = []; // To collect test results
 
   let testsNeedingDocker = [];
+  let testsNotNeedingDocker = [];
 
   // First, check cache for all tests
   for (const testArgs of argsForAllTests) {
@@ -99,11 +101,29 @@ async function runAllTests() {
     const isValidCache = isCacheValid(inputFile, cacheOptions);
 
     if (isValidCache) {
-      console.log(`Cache is valid for ${inputFileName}. Marking test as passed.`);
-      testResults.push({ name: inputFileName, status: 'Pass', comment: testComment });
+      console.log(`Cache is valid for ${inputFileName}. Docker not needed for testing. Batching for local test running.`);
+      testsNotNeedingDocker.push({ cmd, script, inputFile, userInputs, comment: testComment });
     } else {
       console.log(`Cache is invalid or missing for ${inputFileName}. Test needs to be run.`);
       testsNeedingDocker.push({ cmd, script, inputFile, userInputs, comment: testComment });
+    }
+  }
+
+  // Run tests that do not need Docker
+  if (testsNotNeedingDocker.length > 0) {
+    for (const test of testsNotNeedingDocker) {
+      const { cmd, script, inputFile, userInputs, comment } = test;
+      const testName = path.basename(inputFile, '.a');
+      console.log(`\nRunning test for ${testName}: ${comment}`);
+      try {
+        await runTest(cmd, script, inputFile, userInputs, false); // Pass skipCache=false
+        // Record test result as pass
+        testResults.push({ name: testName, status: 'Pass', comment });
+      } catch (err) {
+        console.error(`Error in test ${testName}: ${err.message}`);
+        // Record test result as fail
+        testResults.push({ name: testName, status: 'Fail', comment });
+      }
     }
   }
 

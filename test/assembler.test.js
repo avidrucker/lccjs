@@ -40,6 +40,10 @@ let dockerCleanupNecessary = false;
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB
 
+function isFileExists(filePath) {
+  return fs.existsSync(filePath);
+}
+
 function isFileSizeValid(filePath) {
   try {
     const stat = fs.statSync(filePath);
@@ -51,6 +55,16 @@ function isFileSizeValid(filePath) {
 }
 
 function compareHexDumps(file1, file2) {
+  if(!isFileExists(file1)) {
+    console.error('Input file does not exist:', file1);
+    return;
+  }
+
+  if(!isFileExists(file2)) {
+    console.error('Input file does not exist:', file2);
+    return;
+  }
+
   try {
     // Check file sizes first
     if (!isFileSizeValid(file1) || !isFileSizeValid(file2)) {
@@ -60,10 +74,6 @@ function compareHexDumps(file1, file2) {
     // Generate hex dumps using xxd
     const hexDump1 = execSync(`xxd -p ${file1}`).toString().trim();
     const hexDump2 = execSync(`xxd -p ${file2}`).toString().trim();
-
-    // console.log('Hex dump 1:', hexDump1);
-    // console.log('----------------');
-    // console.log('Hex dump 2:', hexDump2);
 
     // Compare hex dumps
     if (hexDump1 === hexDump2) {
@@ -97,14 +107,14 @@ function compareHexDumps(file1, file2) {
 
 function execSyncWithLogging(command, options) {
   // console.log(`Executing command: ${command}`);
-  const startTime = Date.now();
+  // const startTime = Date.now();
   try {
     const result = execSync(command, options);
-    const endTime = Date.now();
+    // const endTime = Date.now();
     // console.log(`Command completed in ${endTime - startTime} ms`);
     return result;
   } catch (error) {
-    const endTime = Date.now();
+    // const endTime = Date.now();
     // console.log(`Command failed in ${endTime - startTime} ms`);
     if (error.stdout) {
       console.log(`stdout:\n'${error.stdout.toString()}'`);
@@ -146,7 +156,7 @@ async function testAssembler() {
   }
 
   // Default to demoA.a if no argument is provided
-  const inputFileArgIndex = args.findIndex(arg => !arg.startsWith('-'));
+  const inputFileArgIndex = args.findIndex((arg) => !arg.startsWith('-'));
   if (inputFileArgIndex === -1) {
     console.error('No input file specified.');
     process.exit(1);
@@ -155,7 +165,7 @@ async function testAssembler() {
   const inputFile = args[inputFileArgIndex];
 
   // Collect user inputs (arguments after the assembly file)
-  userInputs = args.slice(inputFileArgIndex + 1);
+  const userInputs = args.slice(inputFileArgIndex + 1);
 
   const containerName = 'mycontainer';
   const dockerController = new DockerController(containerName);
@@ -170,208 +180,172 @@ async function testAssembler() {
   const lccOutputFile = path.join(inputDir, `${inputFileName}1.e`);
 
   let testResult = false;
-  // let dockerCleanupNecessary = false;
+  let assemblerErrorOccurred = false;
+  let assemblerErrorMessage = '';
+  let lccOutput;
+  let dockerCleanupNecessary = false;
+
+  // Override process.exit
+  const originalProcessExit = process.exit;
+  process.exit = (code) => {
+    throw new Error(`Assembler called process.exit with code ${code}`);
+  };
 
   try {
-    if (!skipCache) {
-      // Perform cache checking
-      const cacheValid = isCacheValid(inputFile, cacheOptions);
+    // Always run the assembler
+    try {
+      const assembler = new Assembler();
+      assembler.main([inputFile]);
+    } catch (error) {
+      assemblerErrorOccurred = true;
+      assemblerErrorMessage = error.message;
+      console.error('Assembler error:', assemblerErrorMessage);
+    }
 
-      if (cacheValid) {
-        console.log('Cache exists and inputs are identical. Using cached output for comparison.');
+    if (!isFileExists(assemblerOutput) || !isFileSizeValid(assemblerOutput)) {
+      console.error('Assembler output file is missing or invalid.');
+      testResult = false;
+    }
 
-        // Run assembler.js
-        const assembler = new Assembler();
-        assembler.main([inputFile]);
-
-        // Compare assembler output .e file with cached output .e file
-        if (!isFileSizeValid(assemblerOutput)) {
-          throw new Error('Assembler output file size exceeds limit - possible assembler error');
-        }
-
-        const { cachedOutputFile } = getCachedFilePaths(inputFile, cacheOptions);
-        console.log(`comparing ${assemblerOutput} and ${cachedOutputFile}...`); ////
+    // If cache is valid and not skipped, compare with cached output
+    if (!skipCache && isCacheValid(inputFile, { cacheDir: path.join(__dirname, '../test_cache/assembler_test_cache'), inputExt: '.a', outputExt: '.e' })) {
+      console.log('Cache exists and inputs are identical. Using cached output for comparison.');
+      const { cachedOutputFile } = getCachedFilePaths(inputFile, { cacheDir: path.join(__dirname, '../test_cache/assembler_test_cache'), inputExt: '.a', outputExt: '.e' });
+      if(isFileExists(assemblerOutput) && isFileSizeValid(assemblerOutput)) {
+        console.log("Comparing hex dumps of assembler output and cached output...");
         testResult = compareHexDumps(assemblerOutput, cachedOutputFile);
-        process.exit(testResult ? 0 : 1);
+      } else {
+        console.log('Assembler output file is missing or invalid.');
+        testResult = false;
       }
     } else {
-      console.log('Skipping cache checking as per --skip-cache argument.');
+      console.log('Cache is missing or invalid...');
+
+      // Check if Docker is available
+      if (!dockerController.isDockerAvailable()) {
+        console.error('Docker is not available. Cannot run test that requires Docker.');
+        // Cannot proceed without Docker when cache is invalid
+        testResult = false;
+        return process.exit(2);
+      }
+
+      // Start Docker container if necessary
+      if (!dockerController.isContainerRunning()) {
+        dockerController.startContainer();
+        dockerCleanupNecessary = true;
+      }
+
+      // Run LCC in Docker
+      lccOutput = runDockerLCC(inputFile, containerName, userInputs);
+
+      // Compare outputs
+      if (isFileExists(assemblerOutput) && isFileSizeValid(assemblerOutput)) {
+        testResult = compareHexDumps(assemblerOutput, lccOutput);
+      } else {
+        console.error('Assembler output file is missing or invalid.');
+        testResult = false;
+      }
+
+      // Update cache
+      if (lccOutput) {
+        console.log(`Updating cache for ${inputFile} with new ${lccOutputFile}`);
+        updateCache(inputFile, lccOutput, { cacheDir: path.join(__dirname, '../test_cache/assembler_test_cache'), inputExt: '.a', outputExt: '.e' });
+      }
     }
-
-    // **Check if Docker is available**
-    if (!dockerController.isDockerAvailable()) {
-      console.error('Docker is not available. Cannot run test that requires Docker.');
-      console.error('Test could not be run because Docker was not available.');
-      process.exit(2); // Use exit code 2 to indicate Docker is unavailable
-    }
-
-    // Proceed to run Docker and perform the test
-    // Start Docker container if not running
-    if (!dockerController.isContainerRunning()) {
-      dockerController.startContainer();
-      dockerCleanupNecessary = true;
-    }
-
-    // Run assembler.js
-    const assembler = new Assembler();
-    assembler.main([inputFile]);
-
-    // Run LCC in Docker
-    const lccOutput = runDockerLCC(inputFile, containerName);
-
-    // Check LCC output file size
-    if (!isFileSizeValid(lccOutput)) {
-      throw new Error('LCC output file size exceeds limit - possible LCC error');
-    }
-
-    // Compare assembler output .e file with LCC output
-    if (!isFileSizeValid(assemblerOutput)) {
-      throw new Error('Assembler output file size exceeds limit - possible assembler error');
-    }
-
-    testResult = compareHexDumps(assemblerOutput, lccOutput);
-
-    console.log(`updating cache for ${inputFile} with new ${lccOutputFile}`); ////
-    // Update cache: copy input and output files to cache
-    updateCache(inputFile, lccOutput, cacheOptions);
-
-    process.exit(testResult ? 0 : 1);
-
   } catch (error) {
     console.error('Test failed:', error);
-    process.exit(1);
+    testResult = false;
   } finally {
-    // Cleanup: delete created test files in Docker container and locally
-    console.log('Cleaning up test files...');
+    // Restore original process.exit
+    process.exit = originalProcessExit;
 
-    let cleanupCommands = [];
-    if (dockerCleanupNecessary) {
-      cleanupCommands = [
-        `docker exec ${containerName} rm -f /home/${inputFileName}1.a`,
-        `docker exec ${containerName} rm -f ${lccDockerOutputFile}`,
-        `docker exec ${containerName} rm -f /home/name.nnn`,
-        `rm -f ${inputDir}/${inputFileName}1.a`,
-        `rm -f ${inputDir}/name.nnn`,
-        `rm -f ${lccOutputFile}`,
-        `rm -f ${assemblerOutput}`,
-      ];
+    // Cleanup
+    cleanupFiles(inputDir, inputFileName, assemblerOutput, lccOutputFile, dockerController, containerName, lccDockerOutputFile, dockerCleanupNecessary);
+
+    // Report test result
+    if (assemblerErrorOccurred) {
+      console.error('Assembler failed with errors. Test marked as FAILED.');
+      console.error('Assembler errors were:');
+      console.error(assemblerErrorMessage);
+      process.exit(1);
     } else {
-      cleanupCommands = [
-        `rm -f ${inputDir}/${inputFileName}1.a`,
-        `rm -f ${inputDir}/name.nnn`,
-        `rm -f ${lccOutputFile}`,
-        `rm -f ${assemblerOutput}`,
-      ];
-    }
-
-    cleanupCommands.forEach((cmd) => {
-      try {
-        execSyncWithLogging(cmd, execSyncOptions);
-      } catch (cleanupError) {
-        // Ignore cleanup errors
-      }
-    });
-
-    // Stop the Docker container if we started it
-    if (dockerCleanupNecessary && dockerController.isContainerRunning()) {
-      try {
-        dockerController.stopContainer();
-      } catch (err) {
-        console.error('Error stopping Docker container:', err.message);
-      }
+      process.exit(testResult ? 0 : 1);
     }
   }
 }
 
-function runDockerLCC(inputFile, containerName) {
-  // Get absolute path of the input file
+function runDockerLCC(inputFile, containerName, userInputs) {
   const absoluteInputPath = path.resolve(inputFile);
   const inputDir = path.dirname(absoluteInputPath);
   const inputFileName = path.basename(inputFile, '.a');
   const lccInputFile = path.join(inputDir, `${inputFileName}1.a`);
   const lccOutputFile = path.join(inputDir, `${inputFileName}1.e`);
   const lccDockerOutputFile = `/home/${inputFileName}1.e`;
-  const assemblerOutput = path.join(inputDir, `${inputFileName}.e`);
 
-  try {
-    // Copy the input file
-    fs.copyFileSync(inputFile, lccInputFile);
+  // Copy the input file
+  fs.copyFileSync(inputFile, lccInputFile);
 
-    // Create the name.nnn file with specified contents
-    const nameFile = path.join(inputDir, 'name.nnn');
-    fs.writeFileSync(nameFile, 'Billy, Bob J');
+  // Create the name.nnn file with specified contents
+  const nameFile = path.join(inputDir, 'name.nnn');
+  fs.writeFileSync(nameFile, 'Billy, Bob J');
 
-    // Copy files to Docker container
-    execSyncWithLogging(`docker cp ${lccInputFile} ${containerName}:/home/`, execSyncOptions);
-    execSyncWithLogging(`docker cp ${nameFile} ${containerName}:/home/`, execSyncOptions);
+  // Copy files to Docker container
+  execSyncWithLogging(`docker cp ${lccInputFile} ${containerName}:/home/`, execSyncOptions);
+  execSyncWithLogging(`docker cp ${nameFile} ${containerName}:/home/`, execSyncOptions);
 
-    // Verify files were copied to Docker
-    execSyncWithLogging(`docker exec ${containerName} ls -l /home/`, execSyncOptions);
+  // Compile in Docker
+  let compileCommand = `cd /home && /cuh/cuh63/lnx/lcc ${inputFileName}1.a`;
+  if (userInputs.length > 0) {
+    const echoInputs = userInputs.map((input) => `echo '${input}'`).join(' && ');
+    compileCommand = `cd /home && (${echoInputs}) | /cuh/cuh63/lnx/lcc ${inputFileName}1.a`;
+  }
 
-    // Compile in Docker with better error handling
-    const lccPaths = ['/cuh/cuh63/lnx/lcc'];
+  execSyncWithLogging(`docker exec ${containerName} sh -c "${compileCommand}"`, execSyncOptions);
 
-    let compilationSuccessful = false;
-    let compilationError = '';
+  // Copy output from Docker back to local filesystem
+  execSyncWithLogging(`docker cp ${containerName}:${lccDockerOutputFile} ${lccOutputFile}`, execSyncOptions);
 
-    for (const lccPath of lccPaths) {
-      try {
-        let compileCommand = '';
+  // Verify the local output file exists
+  if (!fs.existsSync(lccOutputFile)) {
+    throw new Error(`Failed to copy output file from Docker. ${lccOutputFile} does not exist.`);
+  }
 
-        if (userInputs.length === 0) {
-          // No inputs: run command directly without any stdin
-          compileCommand = `cd /home && ${lccPath} ${inputFileName}1.a`;
-        } else if (userInputs.length === 1) {
-          // One input: single echo without sleep
-          compileCommand = `cd /home && echo '${userInputs[0]}' | ${lccPath} ${inputFileName}1.a`;
-        } else {
-          // Multiple inputs: echo-sleep chain with 1-second intervals
-          const echoSleepChain = userInputs.map((input) => `echo '${input}'`).join('; sleep 1; ');
+  return lccOutputFile;
+}
 
-          compileCommand = `cd /home && (${echoSleepChain}) | ${lccPath} ${inputFileName}1.a`;
-        }
+function cleanupFiles(inputDir, inputFileName, assemblerOutput, lccOutputFile, dockerController, containerName, lccDockerOutputFile, dockerCleanupNecessary) {
+  console.log('Cleaning up test files...');
 
-        execSyncWithLogging(`docker exec ${containerName} sh -c "${compileCommand}"`, execSyncOptions);
+  const cleanupCommands = [
+    `rm -f ${inputDir}/${inputFileName}1.a`,
+    `rm -f ${inputDir}/name.nnn`,
+    `rm -f ${lccOutputFile}`,
+    `rm -f ${assemblerOutput}`,
+  ];
 
-        // Verify the output file exists in Docker
-        try {
-          execSyncWithLogging(`docker exec ${containerName} ls -l ${lccDockerOutputFile}`, execSyncOptions);
-          compilationSuccessful = true;
-          break;
-        } catch (verifyError) {
-          console.log('Output file not found after compilation');
-          compilationError = `Output file verification failed: ${verifyError.message}`;
-        }
-      } catch (err) {
-        console.log(`LCC compilation exited with code ${err.status}. Continuing since we're only interested in the .e file.`);
-        // Proceed even if there's an error, as long as the .e file exists
-        try {
-          execSyncWithLogging(`docker exec ${containerName} ls -l ${lccDockerOutputFile}`, execSyncOptions);
-          compilationSuccessful = true;
-          break;
-        } catch (verifyError) {
-          console.log('Output file not found after compilation');
-          compilationError = `Output file verification failed: ${verifyError.message}`;
-        }
-      }
+  if (dockerCleanupNecessary) {
+    cleanupCommands.push(
+      `docker exec ${containerName} rm -f /home/${inputFileName}1.a`,
+      `docker exec ${containerName} rm -f ${lccDockerOutputFile}`,
+      `docker exec ${containerName} rm -f /home/name.nnn`
+    );
+  }
+
+  cleanupCommands.forEach((cmd) => {
+    try {
+      execSyncWithLogging(cmd, execSyncOptions);
+    } catch (cleanupError) {
+      // Ignore cleanup errors
     }
+  });
 
-    if (!compilationSuccessful) {
-      throw new Error(`No working LCC command found. Last error: ${compilationError}`);
+  // Stop the Docker container if we started it
+  if (dockerCleanupNecessary && dockerController.isContainerRunning()) {
+    try {
+      dockerController.stopContainer();
+    } catch (err) {
+      console.error('Error stopping Docker container:', err.message);
     }
-
-    // Copy output from Docker back to local filesystem
-    execSyncWithLogging(`docker cp ${containerName}:${lccDockerOutputFile} ${lccOutputFile}`, execSyncOptions);
-
-    // Verify the local output file exists
-    if (!fs.existsSync(lccOutputFile)) {
-      throw new Error(`Failed to copy output file from Docker. ${lccOutputFile} does not exist.`);
-    }
-
-    return lccOutputFile;
-  } catch (error) {
-    console.error('Comprehensive LCC execution failure:', error);
-    throw error;
   }
 }
 
