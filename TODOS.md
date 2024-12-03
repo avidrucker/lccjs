@@ -185,6 +185,12 @@
 - [ ] emoji support
 - [ ] RAND support
 - [ ] TIME support (seconds & milliseconds)
+- [ ] terminal graphics rendering support, similar to GBA or NES graphics rendering
+  - [ ] ability to draw pixels
+  - [ ] ability to draw lines
+  - [ ] ability to draw rectangles
+  - [ ] ability to render sprites
+  - [ ] ability to use and slice tilesets
 - [ ] new flags
   - [ ] infinite loop permission flag
   - [ ] turn off auto-symbolic debugger flag
