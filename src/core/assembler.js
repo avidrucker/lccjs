@@ -751,8 +751,14 @@ class Assembler {
       case 'ror':
         machineWord = this.assembleROR(operands);
         break;
+      case 'mul':
+        machineWord = this.assembleMUL(operands);
+        break;
       case 'div':
         machineWord = this.assembleDIV(operands);
+        break;
+      case 'rem':
+        machineWord = this.assembleREM(operands);
         break;
       case 'ld':
         machineWord = this.assembleLD(operands);
@@ -1014,6 +1020,30 @@ class Assembler {
     if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15);
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0005;
+    return macword;
+  }
+
+  assembleMUL(operands) {
+    if (operands.length !== 2) {
+      this.error('Invalid operand count for mul');
+      return null;
+    }
+    let dr = this.getRegister(operands[0]);
+    let sr1 = this.getRegister(operands[1]);
+    if (dr === null || sr1 === null) return null;
+    let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x0007;
+    return macword;
+  }
+
+  assembleREM(operands) {
+    if (operands.length !== 2) {
+      this.error('Invalid operand count for rem');
+      return null;
+    }
+    let dr = this.getRegister(operands[0]);
+    let sr1 = this.getRegister(operands[1]);
+    if (dr === null || sr1 === null) return null;
+    let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x0009;
     return macword;
   }
 
