@@ -1,0 +1,99 @@
+LCC.js Assemble/Link/Interpret/Debug Ver 0.1  Mon, Dec 2, 2024, 22:12:16
+Billy, Bob J
+
+Header
+o
+C
+
+Loc   Code           Source Code
+                    ; demoT.a: Demonstrating bitwise operations and, or, xor
+                    ;
+                    ; This program shows how to use bitwise operations for masking and modifying bits.
+                    ; We use dout and hout to display the results.
+                    
+                            ; Initialize r0 with a value
+0000  d0aa               mov r0, 0xAA    ; r0 = 0x00AA
+                    
+                            ; Use AND to clear bits (masking)
+0001  d2f0               mov r1, 0xF0    ; Mask to keep only the upper 4 bits
+0002  5401               and r2, r0, r1  ; r2 = r0 & r1
+0003  f404               hout r2         ; Output: 00A0
+0004  f001               nl
+                    
+                            ; Use OR to set bits
+0005  d20f               mov r1, 0xF     ; Mask to set lower 4 bits
+0006  a04a               or r0, r1       ; r0 = r0 | r1
+0007  f004               hout r0         ; Output: 00AF
+0008  f001               nl
+                    
+                            ; Use XOR to toggle bits
+0009  d2ff               mov r1, 0xFF    ; Mask to toggle all bits
+000a  a04b               xor r0, r1      ; r0 = r0 ^ r1
+000b  f004               hout r0         ; Output: 50  
+000c  f001               nl
+                    
+                            ; Practical example: Checking if bit 3 is set (bit indexing from 0)
+                            ; Let's check if bit 3 (from LSB) is set in r0
+000d  d208               mov r1, 0x8     ; Mask for bit 3
+000e  5401               and r2, r0, r1
+000f  80a0               cmp r2, 0
+0010  0003               bre bit_not_set
+0011  e606               lea r3, msg_set
+0012  f606               sout r3         ; Output: "Bit 3 is set"
+0013  0e02               br end_msg
+                    bit_not_set:
+0014  e610               lea r3, msg_not_set
+0015  f606               sout r3         ; Output: "Bit 3 is not set"
+                    end_msg:
+0016  f001               nl
+                    
+0017  f000               halt
+                    
+0018  0042       msg_set:     .string "Bit 3 is set"
+0019  0069      
+001a  0074      
+001b  0020      
+001c  0033      
+001d  0020      
+001e  0069      
+001f  0073      
+0020  0020      
+0021  0073      
+0022  0065      
+0023  0074      
+0024  0000      
+0025  0042       msg_not_set: .string "Bit 3 is not set"
+0026  0069      
+0027  0074      
+0028  0020      
+0029  0033      
+002a  0020      
+002b  0069      
+002c  0073      
+002d  0020      
+002e  006e      
+002f  006f      
+0030  0074      
+0031  0020      
+0032  0073      
+0033  0065      
+0034  0074      
+0035  0000      
+                    
+                    ; Practical applications:
+                    ; - **AND** is used for masking bits to clear or check specific bits.
+                    ; - **OR** is used for setting specific bits without altering others.
+                    ; - **XOR** is used for toggling bits and is fundamental in encryption algorithms.
+                    ; - Bit manipulation is crucial in low-level programming, embedded systems, and optimization tasks.
+====================================================== Output
+a0
+af
+50
+Bit 3 is not set
+
+========================================== Program statistics
+Input file name          =   ./demos/demoT.a
+Instructions executed    =   15 (hex)    21 (dec)
+Program size             =   36 (hex)    54 (dec)
+Max stack size           =   0 (hex)    0 (dec)
+Load point               =   0 (hex)    0 (dec)
