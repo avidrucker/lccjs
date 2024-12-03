@@ -469,44 +469,46 @@ class Interpreter {
         this.r[this.sr] = (this.r[this.sr] << ct) & 0xFFFF; // Logical shift left (mask to 16 bits)
         this.setNZ(this.r[this.sr]); // Update flags
         break;
-      case 5: // ROL ////
+      case 5: // ROL
+        this.c = (this.r[this.sr] >> (16 - ct)) & 1;
         this.r[this.sr] = (this.r[this.sr] << ct) | (this.r[this.sr] >> (16 - ct));
         this.setNZ(this.r[this.sr]);
         break;
-      case 6: // ROR ////
+      case 6: // ROR
+        this.c = (this.r[this.sr] >> (ct - 1)) & 1;
         this.r[this.sr] = (this.r[this.sr] >> ct) | (this.r[this.sr] << (16 - ct));
         this.setNZ(this.r[this.sr]);
         break;
-      case 7: // MUL ////
+      case 7: // MUL
         this.r[this.dr] = (this.r[this.dr] * this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
-      case 8: // DIV ////
+      case 8: // DIV
         if (this.r[this.sr1] === 0) {
           this.error('Floating point exception');
         }
         this.r[this.dr] = (this.r[this.dr] / this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
-      case 9: // REM ////
+      case 9: // REM
         if (this.r[this.sr1] === 0) {
           this.error('Floating point exception');
         }
         this.r[this.dr] = (this.r[this.dr] % this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
-      case 10: // OR ////
+      case 10: // OR
         this.r[this.dr] = this.r[this.dr] | this.r[this.sr1];
         this.setNZ(this.r[this.dr]);
         break;
-      case 11: // XOR ////
+      case 11: // XOR
         this.r[this.dr] = this.r[this.dr] ^ this.r[this.sr1];
         this.setNZ(this.r[this.dr]);
         break;
       case 12: // MVR
         this.r[this.dr] = this.r[this.sr1];
         break;
-      case 13: // SEXT ////
+      case 13: // SEXT
         this.r[this.dr] = this.signExtend(this.r[this.sr1], 16);
         this.setNZ(this.r[this.dr]);
         break;
