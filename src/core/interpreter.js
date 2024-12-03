@@ -509,7 +509,7 @@ class Interpreter {
         this.r[this.dr] = this.r[this.sr1];
         break;
       case 13: // SEXT
-        this.r[this.dr] = this.signExtend(this.r[this.sr1], 16);
+        this.r[this.dr] = this.signExtend(this.r[this.dr], this.r[this.sr1]);
         this.setNZ(this.r[this.dr]);
         break;
     }
@@ -909,11 +909,15 @@ class Interpreter {
     this.v = (sx === sy && sx !== ss) ? 1 : 0;
   }
 
-  signExtend(value, bitCount) {
-    if ((value >> (bitCount - 1)) & 1) {
-      value |= (~0 << bitCount);
+  signExtend(value, bitWidth) {
+    const signBit = 1 << (bitWidth - 1);
+    const mask = (1 << bitWidth) - 1;
+    value = value & mask; // Mask the value to the specified bit width
+    if (value & signBit) {
+        // Negative number, extend the sign bits
+        value |= ~mask;
     }
-    return value & 0xFFFF;
+    return value;
   }
 
   error(message) {
