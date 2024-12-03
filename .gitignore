@@ -15,3 +15,4 @@ ex0306.a
 demos/demo*1.a
 demos/ptest.a
 demos/ptest.o
+.vscode/*
