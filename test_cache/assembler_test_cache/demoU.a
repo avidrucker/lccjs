@@ -1,37 +1,28 @@
 ; demoU.a: Demonstrating the sext instruction
 ;
 ; This program shows how sign extension works.
-
-        ; Initialize r0 with an 8-bit negative number (e.g., -1 in 8 bits)
-        mov r0, 0xFF     ; r0 = 255 (binary 0000 0000 1111 1111)
-        ; We interpret r0 as an 8-bit signed number (-1)
-
-        ; Use sext to sign-extend r0 from 8 bits to 16 bits
-        ; Assume sr specifies the bit position to extend from (7 for 8 bits)
-        mov r1, 7          ; r1 = 7 (bit position)
-        sext r0, r1        ; r0 = sign-extend r0 from bit 7
-
-        ; After sext, r0 should be 0xFFFF (binary 1111 1111 1111 1111), which is -1
-        dout r0            ; Output: -1
+        mov r0, 0xFF     
+        dout r0
+        nl
+        mov r1, 3
+        sext r0, r1
+        dout r0
         nl
 
-        ; Now initialize r0 with a positive 8-bit number (e.g., 127)
-        mov r0, 0x7F     ; r0 = 127 (binary 0000 0000 0111 1111)
-        ; Sign-extend r0 from 8 bits
-        sext r0, r1        ; r0 = sign-extend r0 from bit 7
-
-        ; After sext, r0 should remain 0x007F (127)
-        dout r0            ; Output: 127
+        mov r0, 0x11
+        mov r1, 5
+        dout r0
+        nl
+        sext r0, r1
+        dout r0
         nl
 
-        ; Initialize r0 with a 12-bit negative number (e.g., -2048 in 12 bits)
-        ld r0, x     ; r0 = 2048 (binary 0000 1000 0000 0000)
-        ; We interpret r0 as -2048 in 12 bits
-        mov r1, 11         ; r1 = 11 (bit position)
-        sext r0, r1        ; r0 = sign-extend r0 from bit 11
-
-        ; After sext, r0 should be 0xF800 (-2048 in 16 bits)
-        dout r0            ; Output: -2048
+        ld r0, x
+        dout r0
+        nl
+        mov r1, 8
+        sext r0, r1
+        dout r0
         nl
 
         halt
