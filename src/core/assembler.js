@@ -1400,7 +1400,7 @@ If offset6 is omitted in an assembly language instruction, it defaults to 0.*/
         return macword;
       } else {
         // Translate to 'mvi dr, imm9'
-        let imm9 = this.evaluateImmediate(operands[1], -256, 255);
+        let imm9 = this.evaluateImmediateNaive(operands[1]); // this.evaluateImmediate(operands[1], -256, 255);
         if (imm9 === null) return null;
         // mvi: opcode 0xD000
         let macword = 0xD000 | (dr << 9) | (imm9 & 0x1FF);
@@ -1408,7 +1408,7 @@ If offset6 is omitted in an assembly language instruction, it defaults to 0.*/
       }
     } else if (mnemonic === 'mvi') {
       // mvi dr, imm9
-      let imm9 = this.evaluateImmediate(operands[1], -256, 255);
+      let imm9 =  this.evaluateImmediateNaive(operands[1]); // this.evaluateImmediate(operands[1], -256, 255);
       if (imm9 === null) return null;
       let macword = 0xD000 | (dr << 9) | (imm9 & 0x1FF);
       return macword;
@@ -1564,6 +1564,17 @@ If offset6 is omitted in an assembly language instruction, it defaults to 0.*/
       return null;
     }
     return value;
+  }
+
+  // function which simply returns the value if it is a number
+  // capped at 16 bits
+  evaluateImmediateNaive(valueStr) {
+    let value = this.parseNumber(valueStr);
+    if (isNaN(value)) {
+      this.error(`Not a valid number: ${valueStr}`);
+      return null;
+    }
+    return value & 0xFFFF;
   }
 
   error(message) {
