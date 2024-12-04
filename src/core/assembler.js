@@ -889,7 +889,8 @@ class Assembler {
 
     if(!this.isRegister(sr2orImm5)) {
       // compare with immediate
-      macword = macword | (sr1 << 6) | (sr2orImm5 & 0x1F) | 0x0020;
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15);
+      macword = macword | (sr1 << 6) | (imm5 & 0x1F) | 0x0020;
     } else {
       // compare with register
       let sr2 = this.getRegister(sr2orImm5);
