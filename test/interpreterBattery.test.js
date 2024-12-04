@@ -44,6 +44,8 @@ const argsForAllTests = [
   ['node', './test/interpreter.test.js', './demos/demoT.e', 'interpreting and, or, xor'],
   // ['node', './test/interpreter.test.js', './demos/demoU.e', 'interpreting sext'],
   ['node', './test/interpreter.test.js', './demos/demoV.e', 'interpreting mul, div, rem'],
+  ['node', './test/interpreter.test.js', './demos/demoW.e', 'interpreting cmp, branch instructions'],
+  ['node', './test/interpreter.test.js', './demos/demoX.e', 'interpreting hex, cea, implicit r0 args'],
   // Add more test cases as needed
 ];
 

@@ -38,6 +38,8 @@ const argsForAllTests = [
   ['node', './test/lcc.test.js', './demos/demoT.a', 'assemble/interpret and, or, xor'],
   // ['node', './test/lcc.test.js', './demos/demoU.a', 'assemble/interpret sext'],
   ['node', './test/lcc.test.js', './demos/demoV.a', 'assemble/interpret mul, div, rem'],
+  ['node', './test/lcc.test.js', './demos/demoW.a', 'assemble/interpret cmp, branch instructions'],
+  ['node', './test/lcc.test.js', './demos/demoX.a', 'assemble/interpret hex, cea, implicit r0 args'],
   // Add more test cases as needed
 ];
 

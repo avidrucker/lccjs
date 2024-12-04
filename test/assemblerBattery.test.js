@@ -51,7 +51,9 @@ const argsForAllTests = [
   ['node', './test/assembler.test.js', './demos/demoS.a', 'assembling rol, ror'],
   ['node', './test/assembler.test.js', './demos/demoT.a', 'assembling and, or, xor'],
   ['node', './test/assembler.test.js', './demos/demoU.a', 'assembling sext'],
-  ['node', './test/assembler.test.js', './demos/demoV.a', 'assembling mul, div, rem']
+  ['node', './test/assembler.test.js', './demos/demoV.a', 'assembling mul, div, rem'],
+  ['node', './test/assembler.test.js', './demos/demoW.a', 'assembling cmp, branch instructions'],
+  ['node', './test/assembler.test.js', './demos/demoX.a', 'assembling hex, cea, implicit r0 args'],
   // Add more test cases as needed
 ];
 
