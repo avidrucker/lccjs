@@ -212,8 +212,10 @@
 - [ ] ability to make socket connections
 - [ ] ability to make database connections
 - [ ] ability to make system calls
-- [ ] `gptin` and `gptout` instructions (sends/recieves program, program state, user input, gpt output via the api for some sort of response)
-- [ ] custom user defined instructions/directives that override the default instructions/directives (`charout` instead of `aout`, numout instead of dout, etc.)
+- [ ] implement new custom instructions
+  - [ ] `bout` and `bin` (binary out and binary in) instructions
+  - [ ] `gptin` and `gptout` instructions (sends/recieves program, program state, user input, gpt output via the api for some sort of response)
+  - [ ] custom user defined instructions/directives that override the default instructions/directives (`charout` instead of `aout`, numout instead of dout, etc.)
 
 ## Project Onboarding Ideas
 
