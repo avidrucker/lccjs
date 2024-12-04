@@ -1,0 +1,32 @@
+; demoX.a uses hex arguments, implicit r0 for out commands, and cea
+startup:        bl main
+                halt
+
+main:           push lr 
+                push fp
+                mov fp, sp ; comment 
+
+                cea r0, 0x0 ; compute effective address, same as `add r0, fp, 0x0`
+                hout r0
+                nl
+                mov r0, 0xf
+                hout r0
+                nl
+                mov r0, 0x00ff
+                hout ; same as `hout r0`
+                nl
+                mov r0, 0xff00
+                add r0, r0, 0xf
+                hout r0
+                nl
+                dout ; same as `dout r0`
+                nl 
+                ld r0, x 
+                hout r0
+
+                mov sp, fp
+                pop fp ; comment
+                pop lr
+                ret
+
+x:             .word 0xffff
