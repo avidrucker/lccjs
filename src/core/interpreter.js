@@ -384,17 +384,27 @@ class Interpreter {
     }
   }
 
+  // cmp    1000  000  sr1 000 sr2   nzcv sr1 - sr2 (set flags) 
+  // cmp    1000  000  sr1 1  imm5   nzcv sr1 - imm5 (set flags) 
   executeCMP() {
     if (this.bit5 === 0) {
-      // Register mode
-      const result = (this.r[this.sr1] - this.r[this.sr2]) & 0xFFFF;
-      this.setNZ(result);
-      this.setCV(result, this.r[this.sr1], this.r[this.sr2]);
+        // Register mode
+        const x = this.toSigned16(this.r[this.sr1]);
+        const y = this.toSigned16(this.r[this.sr2]);
+        const negY = -y;
+        const sum = x + negY;
+        const result = sum & 0xFFFF;
+        this.setNZ(result);
+        this.setCV(sum, x, negY);
     } else {
-      // Immediate mode
-      const result = (this.r[this.sr1] - this.imm5) & 0xFFFF;
-      this.setNZ(result);
-      this.setCV(result, this.r[this.sr1], this.imm5);
+        // Immediate mode
+        const x = this.toSigned16(this.r[this.sr1]);
+        const y = this.toSigned16(this.imm5);
+        const negY = -y;
+        const sum = x + negY;
+        const result = sum & 0xFFFF;
+        this.setNZ(result);
+        this.setCV(sum, x, negY);
     }
   }
 
@@ -533,17 +543,25 @@ class Interpreter {
 
   executeSUB() {
     if (this.bit5 === 0) {
-      // Register mode
-      const result = (this.r[this.sr1] - this.r[this.sr2]) & 0xFFFF;
-      this.setNZ(result);
-      this.setCV(result, this.r[this.sr1], this.r[this.sr2]);
-      this.r[this.dr] = result;
+        // Register mode
+        const x = this.toSigned16(this.r[this.sr1]);
+        const y = this.toSigned16(this.r[this.sr2]);
+        const negY = -y;
+        const sum = x + negY;
+        const result = sum & 0xFFFF;
+        this.setNZ(result);
+        this.setCV(sum, x, negY);
+        this.r[this.dr] = result;
     } else {
-      // Immediate mode
-      const result = (this.r[this.sr1] - this.imm5) & 0xFFFF;
-      this.setNZ(result);
-      this.setCV(result, this.r[this.sr1], this.imm5);
-      this.r[this.dr] = result;
+        // Immediate mode
+        const x = this.toSigned16(this.r[this.sr1]);
+        const y = this.toSigned16(this.imm5);
+        const negY = -y;
+        const sum = x + negY;
+        const result = sum & 0xFFFF;
+        this.setNZ(result);
+        this.setCV(sum, x, negY);
+        this.r[this.dr] = result;
     }
   }
 
@@ -893,20 +911,58 @@ class Interpreter {
     }
   }
 
+  toSigned16(value) {
+    value &= 0xFFFF; // Ensure 16-bit value
+    if (value & 0x8000) {
+        return value - 0x10000; // Convert to negative value
+    } else {
+        return value;
+    }
+  }
+
   setNZ(value) {
-    value = value & 0xFFFF; // Ensure 16-bit value
-    this.n = (value & 0x8000) ? 1 : 0;
-    this.z = (value === 0) ? 1 : 0;
+    value = this.toSigned16(value);
+    if (value < 0) {
+        this.n = 1;
+        this.z = 0;
+    } else if (value === 0) {
+        this.n = 0;
+        this.z = 1;
+    } else {
+        this.n = 0;
+        this.z = 0;
+    }
   }
 
   setCV(sum, x, y) {
-    // Carry flag
-    this.c = ((x + y) & 0x10000) ? 1 : 0;
-    // Overflow flag
-    const sx = (x & 0x8000) >> 15;
-    const sy = (y & 0x8000) >> 15;
-    const ss = (sum & 0x8000) >> 15;
-    this.v = (sx === sy && sx !== ss) ? 1 : 0;
+    // Convert values to signed 16-bit integers
+    sum = this.toSigned16(sum);
+    x = this.toSigned16(x);
+    y = this.toSigned16(y);
+
+    // Initialize flags
+    this.c = 0;
+    this.v = 0;
+
+    // Carry flag logic
+    if (x >= 0 && y >= 0) {
+        this.c = 0;
+    } else if (x < 0 && y < 0) {
+        this.c = 1;
+    } else if (sum >= 0) {
+        this.c = 1;
+    } else {
+        this.c = 0;
+    }
+
+    // Overflow flag logic
+    if ((x < 0 && y >= 0) || (x >= 0 && y < 0)) {
+        this.v = 0;
+    } else if ((sum < 0 && x >= 0) || (sum >= 0 && x < 0)) {
+        this.v = 1;
+    } else {
+        this.v = 0;
+    }
   }
 
   signExtend(value, bitWidth) {
