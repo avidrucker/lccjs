@@ -205,6 +205,8 @@ class Interpreter {
 
     // Load the executable into memory
     this.loadExecutableBuffer(buffer);
+
+    this.initialMem = this.mem.slice(); // Makes a copy of the memory array
   }
 
   // extracts header entries and loads machine code into memory
