@@ -31,6 +31,7 @@ if (!fs.existsSync(LINKER_CACHE_DIR)) {
 const argsForAllTests = [
     ['node', './test/linker.test.js', './demos/startup.o', './demos/m1.o', './demos/m2.o', 'textbook example'],
     ['node', './test/linker.test.js', './demos/s1.o', './demos/s2.o', 'custom example1'],
+    ['node', './test/linker.test.js', './demos/start.o', './demos/r1.o', './demos/r2.o', 'custom example2'],
     // Add more test cases as needed
 ];
 
