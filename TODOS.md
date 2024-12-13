@@ -42,15 +42,19 @@
   - [x] implement `srl` mnemonic
   - [x] implement `sra` mnemonic
   - [x] implement `sll` mnemonic
-  - [ ] implement `rol` mnemonic
-  - [ ] implement `ror` mnemonic
-  - [ ] **implement `mul` mnemonic** (docs simpleCalc.a)
+  - [x] implement `rol` mnemonic
+  - [x] implement `ror` mnemonic
+  - [x] **implement `mul` mnemonic** (docs simpleCalc.a)
   - [x] implement `div` mnemonic (demos demoN.a, ...)
     - [x] division by zero detection and handling
-  - [ ] implement `rem` mnemonic
-  - [ ] implement `or` mnenmonic
-  - [ ] implement `xor` mnemonic
-  - [ ] implement `sext` mnemonic
+  - [x] implement `rem` mnemonic
+  - [x] implement `or` mnenmonic
+  - [x] implement `xor` mnemonic
+  - [o] implement `sext` mnemonic correctly
+    - [ ] figure out the correct behavior of `sext`
+      - [ ] test with positive numbers
+      - [ ] test with negative numbers
+      - [ ] ask for clarification from original author of LCC
 - [ ] implement assembly of .bin files
 - [ ] implement assembly of .hex files
 - [ ] implement command line arguments for lcc.js (-d (symbolic debugger mode), -m (memory dump at end), -r (register dump at end), -t (instruction trace on), -f, -x, -o, -h, -l<loadpt>) "As a programmer, I can use command-line options to control the assembler and interpreter's behavior."
