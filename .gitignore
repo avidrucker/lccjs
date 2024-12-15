@@ -16,3 +16,4 @@ demos/demo*1.a
 demos/ptest.a
 demos/ptest.o
 .vscode/*
+test/*.bin
