@@ -1150,35 +1150,6 @@ class Assembler {
     return macword;
   }
 
-  /*| srl | 1010  sr   ct   00010 | nzc | sr >> ct (0 inserted on left, c=last out) |
-| sra | 1010  sr   ct   00011 | nzc | sr >> ct (sign bit replicated, c=last out) |
-| sll | 1010  sr   ct   00100 | nzc | sr << ct (0 inserted on right, c=last out) |
-| rol | 1010  sr   ct   00101 | nzc | sr << ct (rotate: bit 15 → bit 0, c=last out) |
-| ror | 1010  sr   ct   00110 | nzc | sr << ct (rotate: bit 0 → bit 15, c=last out) |
-| mul | 1010  dr   sr 0 00111 | nz | dr = dr * sr |
-| div | 1010  dr   sr 0 01000 | nz | dr = dr / sr |
-| rem | 1010  dr   sr 0 01001 | nz | dr = dr % sr |
-| or | 1010  dr   sr 0 01010 | nz | dr = dr \| sr (bitwise OR) |
-| xor | 1010  dr   sr 0 01011 | nz | dr = dr ^ sr (bitwise exclusive OR) |
-| mvr | 1010  dr   sr 0 01100 | | dr = sr |
-| sext | 1010  dr   sr 0 01101 | nz | dr sign extended  (sr specifies field to extend) |
-| sub | 1011  dr   sr1 000 sr2 | nzcv | dr = sr1 - sr2 |
-| sub | 1011  dr   sr1 1  imm5 | nzcv | dr = sr1 - imm5 |
-| jmp | 1100  000  baser offset6 | | pc = baser + offset6 |
-| ret | 1100  000  111   offset6 | | pc = lr + offset6 |
-| mvi | 1101  dr   imm9 | | dr = imm9 |
-| lea | 1110  dr   pcoffset9 | | dr = pc + pcoffset9 |
-
-mov dr, imm9 is a pseudo-instruction translated to the machine instruction corresponding to mvi dr, imm9.   
-mov dr, sr is a pseudo-instruction translated to the machine instruction corresponding to mvr dr, sr.  
-dr, sr, sr1, sr2, baser are 3-bit register fields.  
-cc is the 3-bit condition code field in the branch instructions.  
-ct is a 4-bit shift count field (if omitted at the assembly level, it defaults to 1).  
-pcoffset9, pcoffset11, imm5, imm9, offset6 are signed number fields of the indicated length.  
-If offset6 is omitted in an assembly language instruction, it defaults to 0.*/
-
-
-
   assembleAND(operands) {
     if (operands.length !== 3) {
       this.error('Invalid operand count for and');
