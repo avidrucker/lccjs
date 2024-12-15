@@ -1,6 +1,7 @@
 # TO-DO's
 
 ## Project QoL, Documentation, and Maintenance
+- [ ] update this TODOS.md file to be more clear, concise, easy to read, etc.
 - [x] put assembleAll.js into utils folder
 - [x] add creation of name.nnn to assembleAll.js before calling assembler.js
 - [x] update README.md to include a more detailed description of the project (including linker.js), its various goals, and its current status (progress, test suite coverage, etc.)
@@ -102,11 +103,11 @@
 
 ## Test
 
-- [ ] fix linkerBattery.test.js so that, even if the input caches match, the local tests are still run and compared against the cached results
-- [ ] modify all tests (both at individual test case level and test suite level) to, if Docker is already running, to not close Docker after case/suite finishes - i.e., only close Docker if Docker wasn't already running before the test started. The rationale is that, if one is working in the Docker container elsewhere, it is annoying to have to restart and reattach, and also, it is more efficient to have Docker running already and not have to start and stop it repeatedly
-- [x] replace startup.a, m1.a, m2.a with different demos
+- [ ] **fix linkerBattery.test.js so that, even if the input caches match, the local tests are still run and compared against the cached results**
+- [ ] **modify all tests (both at individual test case level and test suite level) to, if Docker is already running, to not close Docker after case/suite finishes - i.e., only close Docker if Docker wasn't already running before the test started. The rationale is that, if one is working in the Docker container elsewhere, it is annoying to have to restart and reattach, and also, it is more efficient to have Docker running already and not have to start and stop it repeatedly**
+- [x] supplement startup.a, m1.a, m2.a with different demos
 - [ ] consider and test whether or not interpreter.test.js consistently updates the assembled .e file from the original .a file before comparing .e file hex dumps to check for valid/invalid cache state
-- [x] **write test inputs and outputs to cache so that tests can be run without needing to run the lcc in Docker**
+- [x] write test inputs and outputs to cache so that tests can be run without needing to run the lcc in Docker
   - [x] assembler.test.js
   - [x] assemblerBattery.test.js
   - [x] interpreter.test.js
@@ -128,9 +129,11 @@
 - [ ] test assembly of .bin files
 - [ ] (interpreter) test detection of division by zero
 - [ ] (assembler) test creation of .o files from passed .a files
-- [ ] add linker testing
-  - [ ] test creation of .e file from multiple passed .o files
-  - [ ] test .org/.orig, .extern, and .global
+- [x] add linker testing
+  - [x] test creation of .e file from multiple passed .o files
+  - [x] test .extern, and .global
+- [ ] test .org/.orig directive usage
+  - [ ] research to find out what exactly the .org/.orig directive does and why
 - [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
 - [x] `cmp` and `br` test
 - [x] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
@@ -152,7 +155,8 @@
 - [ ] test for duplicate labels
 - [ ] test for correct usage of division
 - [ ] test for line that is too long (300+ chars)
-- [ ] test for a1test.a
+- [x] test informally with a1test.a
+- [ ] test for invalid char usage in a label (non-accepted symbols, starting with a number, etc.)
 - [ ] test for escaped strings, escaped chars
 - [ ] test for colon terminated labels that have spaces preceding them on a line
 - [ ] test for invalid mnemonic detection
@@ -213,7 +217,8 @@
   - [x] .start directive disassembly
   - [ ] A heading (?) disassembly
   - [ ] G heading .global (?) disassembly
-- [ ] website that allows users to upload .a files, run & see the output of the program, and download the .e file
+  - [ ] replaced auto-generated labels with named labels from header
+- [ ] website that allows users to upload .a files, run & see the output of the program, and download the .e file, .bst file, etc.
 - [ ] ability to include lcc.js extension modules via a comment in the .a file, which makes clear that a given program is an lcc.js+ extension program rather than a standard lcc.js program
 - [ ] ability to get terminal dimensions and adjust the output of the program to fit the terminal window
 - [ ] ability to make file system operations
@@ -229,8 +234,8 @@
 
 ## Project Onboarding Ideas
 
-- [ ] **Interactive Tutorial**: Create a step-by-step tutorial where newcomers can write and run their first assembly program using LCC.js.
-- [ ] **Code Comments**: Ensure the codebase is well-commented to help others understand the logic.
+- [x] **LCC Tutorial**: Create a step-by-step tutorial where newcomers can write and run their first assembly program using LCC.js.
+- [o] **Code Comments**: Ensure the codebase is well-commented to help others understand the logic.
 - [ ] **Video Walkthrough**: Consider recording a video explaining the project and demonstrating its use.
 - [ ] **Issue Tracker**: Use GitHub issues to highlight tasks and bugs that need attention, labeling them as "good first issue" where appropriate.
 
