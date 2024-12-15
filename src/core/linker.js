@@ -28,7 +28,7 @@ class Linker {
 
     // Check file signature
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      this.error(`File ${filename} is not a valid object file`);
+      error(`${filename} not a linkable file`); // invalid .o object file
       return;
     }
 
@@ -62,6 +62,7 @@ class Linker {
         case 'e':
         case 'V': {
           if (offset + 1 >= buffer.length) {
+            // Incomplete entry
             this.error(`Invalid ${entryType} entry`);
             return;
           }
@@ -105,33 +106,38 @@ class Linker {
 
   link(filenames, outputFileName) {
     this.inputFiles = filenames; // Save input files
-    this.outputFileName = outputFileName; // Save output filename
+    this.outputFileName = outputFileName || 'link.e'; // Save output filename
     
     // Read all object modules
     for (let filename of filenames) {
       this.readObjectModule(filename);
       if (this.errorFlag) {
-        console.error('Errors encountered during linking: reading object module.');
+        // If invalid file or read error encountered, stop immediately
+        // console.error('Errors encountered during linking: reading object module.');
         return null;
       }
+      console.log(`Linking ${filename}`);
     }
 
     // Process each module
     for (let module of this.objectModules) {
       this.processModule(module);
       if (this.errorFlag) {
-        console.error('Errors encountered during linking: processing module');
+        // console.error('Errors encountered during linking: processing module');
         return null;
       }
     }
 
     // Adjust external references
     this.adjustExternalReferences();
+    if (this.errorFlag) return;
 
     // Adjust local references
     this.adjustLocalReferences();
+    if (this.errorFlag) return;
 
     // Create executable
+    console.log(`Creating executable file ${this.outputFileName}`);
     this.createExecutable();
   }
 
@@ -197,7 +203,7 @@ class Linker {
     // Adjust ETable (11-bit addresses)
     for (let ref of this.ETable) {
       if (!this.GTable.hasOwnProperty(ref.label)) {
-        this.error(`Undefined external reference: ${ref.label}`);
+        this.error(`${ref.label} is an undefined external reference`);
         return;
       }
       let Gaddr = this.GTable[ref.label];
@@ -208,7 +214,7 @@ class Linker {
     // Adjust eTable (9-bit addresses)
     for (let ref of this.eTable) {
       if (!this.GTable.hasOwnProperty(ref.label)) {
-        this.error(`Undefined external reference: ${ref.label}`);
+        this.error(`${ref.label} is an undefined external reference`);
         return;
       }
       let Gaddr = this.GTable[ref.label];
@@ -219,7 +225,7 @@ class Linker {
     // Adjust VTable (full addresses)
     for (let ref of this.VTable) {
       if (!this.GTable.hasOwnProperty(ref.label)) {
-        this.error(`Undefined external reference: ${ref.label}`);
+        this.error(`${ref.label} is an undefined external reference`);
         return;
       }
       let Gaddr = this.GTable[ref.label];
@@ -236,12 +242,6 @@ class Linker {
   createExecutable() {
     // Write executable file
     let outfileName = this.outputFileName;
-    if (!outfileName) {
-      // Default output file name: link.e
-      outfileName = 'link.e';
-    }
-
-    console.log(`Creating executable file ${outfileName}`);
 
     // Write executable file
     const outFile = fs.openSync(outfileName, 'w');
@@ -298,7 +298,7 @@ class Linker {
   }
 
   error(message) {
-    console.error(`Linker Error: ${message}`);
+    console.error(`${message}`); // linker error
     this.errorFlag = true;
   }
 }
@@ -318,7 +318,9 @@ if (require.main === module) {
   while (i < args.length) {
     if (args[i] === '-o') {
       if (i + 1 >= args.length) {
-        console.error('Error: -o flag requires an output file name');
+        // individual linking output should occur, but the final
+        // link.e file should not be created in this scenario
+        console.error('Missing output file name'); // -o flag requires an output file name
         process.exit(1);
       }
       outputFileName = args[i + 1];
