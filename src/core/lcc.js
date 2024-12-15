@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const Assembler = require('./assembler');
 const Interpreter = require('./interpreter');
+const Linker = require('./linker');
 const nameHandler = require('../utils/name.js');
 const { generateBSTLSTContent } = require('../utils/genStats.js');
 
@@ -35,6 +36,7 @@ class LCC {
       process.exit(1);
     }
 
+    // If multiple inputs were supplied, the "main input file" is the first one
     this.inputFileName = this.args[0];
 
     try {
@@ -44,31 +46,66 @@ class LCC {
       process.exit(1);
     }
 
-    const ext = path.extname(this.inputFileName).toLowerCase();
+    // TODO: (extra feature) check similarly to see if multiple .a files were 
+    // supplied for multi-file assembly.
+    // Note: The original LCC does not check to confirm that all supplied files of .o extension
+    // const allAreObjectFiles = this.args.every(file => path.extname(file).toLowerCase() === '.o');
+    
+    // Simply check to see whether the first argument is a .o file
+    const firstArgIsObjectFile = path.extname(this.args[0]).toLowerCase() === '.o';
 
+    if (firstArgIsObjectFile) {
+      // We have a linking scenario: one or more files (assumed to be .o files)
+      this.linkObjectFiles(this.args);
+    } else {
+      // The default code path: assemble or execute depending on extension
+      this.handleSingleFile(this.inputFileName);
+    }
+  }
+
+  /**
+   * Link multiple .o files into a single executable
+   */
+  linkObjectFiles(objectFiles) {
+    // If user provided `-o <outfile>` on the command line, we'll have it in this.outputFileName
+    // Otherwise default to `link.e` just like original LCC
+    let outputFile = this.outputFileName || 'link.e';
+
+    // Create the Linker
+    const linker = new Linker();
+
+    // Perform actual linking
+    linker.link(objectFiles, outputFile);
+    // The Linker class will print "Creating executable file link.e" or whatever name is specified
+  }
+
+  /**
+   * If the input file is not .o, handle it as .hex, .bin, .e, or .a
+   */
+  handleSingleFile(infile) {
+    const ext = path.extname(infile).toLowerCase();
     switch (ext) {
       case '.hex':
-        console.log('Hex files are not yet supported.');
+        console.log('Hex files are not yet fully supported.');
         break;
       case '.bin':
         this.assembleFile();
-        this.executeFile(false, true); // includeSourceCode = false, includeComments = true
+        this.executeFile(false, true); 
         break;
       case '.e':
-        // Execute and output .lst, .bst files
-        this.outputFileName = this.inputFileName;
-        this.executeFile(false); // includeSourceCode = false
+        this.outputFileName = infile;
+        this.executeFile(false);
         break;
       case '.o':
-        // Linking is not yet implemented
-        console.error('Linking .o files is not yet implemented.');
-        process.exit(1);
-        break;
-      case '.a':
-      default:
-        // Assemble and output .e, .lst, .bst files
+        // to match feature parity with original LCC, we attempt to link the single .o file
         this.assembleFile();
-        this.executeFile(true); // includeSourceCode = true
+        break;
+      default:
+        // Likely an assembly source (e.g. .a or anything else)
+        this.assembleFile();
+        if(!this.assembler.isObjectModule) {
+          this.executeFile(true);
+        }
         break;
     }
   }
@@ -140,7 +177,9 @@ class LCC {
               if (i < args.length) {
                 this.outputFileName = args[i];
               } else {
-                console.error('No output file specified after -o');
+                // individual linking output should occur, but the final
+                // link.e file should not be created in this scenario
+                console.error('Missing output file name'); // No output file specified after -o
                 process.exit(1);
               }
             } else {
