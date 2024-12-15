@@ -55,7 +55,9 @@
       - [ ] test with positive numbers
       - [ ] test with negative numbers
       - [ ] ask for clarification from original author of LCC
-- [ ] implement assembly of .bin files
+- [x] implement assembly of .bin files
+  - [x] implement .e file creation from .bin files
+  - [x] implement .lst file creation from .bin files when using lcc.js to assemble and interpret all at once
 - [ ] implement assembly of .hex files
 - [ ] implement command line arguments for lcc.js (-d (symbolic debugger mode), -m (memory dump at end), -r (register dump at end), -t (instruction trace on), -f, -x, -o, -h, -l<loadpt>) "As a programmer, I can use command-line options to control the assembler and interpreter's behavior."
 - [x] implement linker: "As a programmer, I can link multiple object files (.o files) into a single executable, so that I can build larger programs from separate modules."
