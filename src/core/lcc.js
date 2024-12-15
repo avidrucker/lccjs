@@ -48,8 +48,11 @@ class LCC {
 
     switch (ext) {
       case '.hex':
+        console.log('Hex files are not yet supported.');
+        break;
       case '.bin':
-        console.log('Hex and bin files are not yet supported.');
+        this.assembleFile();
+        this.executeFile(false, true); // includeSourceCode = false, includeComments = true
         break;
       case '.e':
         // Execute and output .lst, .bst files
@@ -167,11 +170,21 @@ class LCC {
     // Store the assembler instance
     this.assembler = assembler;
 
-    // Run the assembler's main function
-    assembler.main([this.inputFileName]);
+    try {
+      // Run the assembler's main function
+      assembler.main([this.inputFileName]);
+    } catch (error) {
+      console.error(`Error assembling ${this.inputFileName}: ${error.message}`);
+      process.exit(1);
+    }
+    
   }
 
-  executeFile(includeSourceCode) {
+  // Executes the output file
+  // includeSourceCode: boolean, includeComments: boolean
+  // includeSourceCode: whether to include source code in the .lst and .bst files (true when assembling and interpretting .a files)
+  // includeComments: whether to include comments in the .lst and .bst files (this option is set to true just for .bin files currently)
+  executeFile(includeSourceCode, includeComments) {
     const interpreter = new Interpreter();
 
     // Set options in the interpreter
@@ -209,17 +222,19 @@ class LCC {
     const lstContent = generateBSTLSTContent({
       isBST: false,
       interpreter: interpreter,
-      assembler: includeSourceCode ? this.assembler : null,
+      assembler: includeSourceCode || includeComments ? this.assembler : null,
       userName: this.userName,
       inputFileName: this.inputFileName,
+      includeComments: includeComments,
     });
 
     const bstContent = generateBSTLSTContent({
       isBST: true,
       interpreter: interpreter,
-      assembler: includeSourceCode ? this.assembler : null,
+      assembler: includeSourceCode || includeComments ? this.assembler : null,
       userName: this.userName,
       inputFileName: this.inputFileName,
+      includeComments: includeComments,
     });
 
     // Write the .lst and .bst files

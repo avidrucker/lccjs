@@ -7,6 +7,7 @@ function generateBSTLSTContent(options) {
     assembler, // May be undefined
     userName,
     inputFileName,
+    includeComments
   } = options;
 
   let content = '';
@@ -42,13 +43,17 @@ function generateBSTLSTContent(options) {
 
   // Output code
   if (assembler && assembler.listing) {
-    content += 'Loc   Code           Source Code\n';
+    if (!options.includeComments) {
+      content += 'Loc   Code           Source Code\n';
+    } else {
+      content += 'Loc   Code\n';
+    }
   
     assembler.listing.forEach((entry) => {
-      const locStr = entry.locCtr !== null ? entry.locCtr.toString(16).padStart(4, '0') : '    ';
       const codeWords = entry.codeWords;
+      const macWord = entry.macWord;
   
-      if (codeWords.length > 0) {
+      if (codeWords && codeWords.length > 0) {
         let locCtr = entry.locCtr;
   
         codeWords.forEach((word, index) => {
@@ -67,10 +72,23 @@ function generateBSTLSTContent(options) {
   
           locCtr++;
         });
-      } else {
+      } else if (codeWords && codeWords.length === 0) {
         // No code words, do not include the source line
         let lineStr = `                    ${entry.sourceLine}`;
         content += `${lineStr}\n`;
+      } else if (macWord !== '') {
+        // Machine word exists (for .bin files)
+        const wordStr = isBST
+          ? macWord.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim()
+          : macWord.toString(16).padStart(4, '0');
+  
+        // Build a line with "Loc" and the code word in hex (or bin), plus optional "; comment"
+        let lineStr = `${entry.locCtr.toString(16).padStart(4, '0')}  ${wordStr}`;
+        if (includeComments && entry.comment) {
+          lineStr += ` ; ${entry.comment}`;
+        }
+        
+        content += lineStr + '\n';
       }
     });
   } else if (interpreter && interpreter.mem) {
