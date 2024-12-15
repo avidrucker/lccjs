@@ -25,6 +25,8 @@
 
 const fs = require('fs');
 
+const DISPLAY_HEX_PREFIX = false;
+
 /**
  * A utility function to print a horizontal spacer line for readability
  */
@@ -318,7 +320,7 @@ class LinkerStepsPrinter {
 
     // Print the 'S' entry if we have it so far
     if (this.gotStart) {
-      console.log(`Start Address (S): 0x${this.startAddress.toString(16).padStart(4, '0')}`);
+      console.log(`Start Address (S): ${DISPLAY_HEX_PREFIX ? '0x' : ''}${this.startAddress.toString(16).padStart(4, '0')}`);
     } else {
       console.log(`No start address encountered yet (no S entry).`);
     }
@@ -333,7 +335,7 @@ class LinkerStepsPrinter {
     } else {
       for (let i = 0; i < this.ETable.length; i++) {
         const ref = this.ETable[i];
-        console.log(`  E[${i}] -> address=0x${ref.address.toString(16).padStart(4, '0')} label="${ref.label}"`);
+        console.log(`  E[${i}] -> address=${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} label="${ref.label}"`);
       }
     }
 
@@ -344,7 +346,7 @@ class LinkerStepsPrinter {
     } else {
       for (let i = 0; i < this.eTable.length; i++) {
         const ref = this.eTable[i];
-        console.log(`  e[${i}] -> address=0x${ref.address.toString(16).padStart(4, '0')} label="${ref.label}"`);
+        console.log(`  e[${i}] -> address=${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} label="${ref.label}"`);
       }
     }
 
@@ -355,7 +357,7 @@ class LinkerStepsPrinter {
     } else {
       for (let i = 0; i < this.VTable.length; i++) {
         const ref = this.VTable[i];
-        console.log(`  V[${i}] -> address=0x${ref.address.toString(16).padStart(4, '0')} label="${ref.label}"`);
+        console.log(`  V[${i}] -> address=${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} label="${ref.label}"`);
       }
     }
 
@@ -366,7 +368,7 @@ class LinkerStepsPrinter {
     } else {
       for (let i = 0; i < this.ATable.length; i++) {
         const ref = this.ATable[i];
-        console.log(`  A[${i}] -> address=0x${ref.address.toString(16).padStart(4, '0')} moduleStart=0x${ref.moduleStart.toString(16).padStart(4, '0')}`);
+        console.log(`  A[${i}] -> address=${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} moduleStart=${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.moduleStart.toString(16).padStart(4, '0')}`);
       }
     }
 
@@ -389,7 +391,7 @@ class LinkerStepsPrinter {
     }
     for (let label of keys) {
       let address = table[label];
-      console.log(`  label="${label}" -> 0x${address.toString(16).padStart(4, '0')}`);
+      console.log(`  label="${label}" -> ${DISPLAY_HEX_PREFIX ? '0x' : ''}${address.toString(16).padStart(4, '0')}`);
     }
   }
 
@@ -416,7 +418,7 @@ class LinkerStepsPrinter {
           moduleBoundaryIdx = this.fileSizes[fileSizesIndex++];
         }
       }
-      console.log(`| 0x${i.toString(16).padStart(4, '0')} : 0x${this.mca[i].toString(16).padStart(4, '0')} |`);
+      console.log(`| ${DISPLAY_HEX_PREFIX ? '0x' : ''}${i.toString(16).padStart(4, '0')} : ${DISPLAY_HEX_PREFIX ? '0x' : ''}${this.mca[i].toString(16).padStart(4, '0')} |`);
     }
     printSpacerLine();
   }
@@ -445,10 +447,10 @@ class LinkerStepsPrinter {
       let offset = (original + globalAddr - ref.address - 1) & 0x07ff;
       let newVal = (original & 0xf800) | offset;
 
-      console.log(`\nStep 2 (E): Adjusting 0x${ref.address.toString(16).padStart(4, '0')} (label='${label}')`);
-      console.log(`  Original instruction: 0x${original.toString(16).padStart(4, '0')}`);
-      console.log(`  11-bit offset: + 0x${offset.toString(16).padStart(3, '0')}`);
-      console.log(`  New instruction: 0x${newVal.toString(16).padStart(4, '0')}`);
+      console.log(`\nStep 2 (E): Adjusting ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} (label='${label}')`);
+      console.log(`  Original instruction: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${original.toString(16).padStart(4, '0')}`);
+      console.log(`  11-bit offset: + ${DISPLAY_HEX_PREFIX ? '0x' : ''}${offset.toString(16).padStart(4, '0')}`);
+      console.log(`  New instruction: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${newVal.toString(16).padStart(4, '0')}`);
 
       this.mca[ref.address] = newVal;
     }
@@ -470,10 +472,10 @@ class LinkerStepsPrinter {
       let offset = (original + globalAddr - ref.address - 1) & 0x01ff;
       let newVal = (original & 0xfe00) | offset;
 
-      console.log(`\nStep 2 (e): Adjusting 0x${ref.address.toString(16).padStart(4, '0')} (label='${label}')`);
-      console.log(`  Original instruction: 0x${original.toString(16).padStart(4, '0')}`);
-      console.log(`  9-bit offset: + 0x${offset.toString(16).padStart(3, '0')}`);
-      console.log(`  New instruction: 0x${newVal.toString(16).padStart(4, '0')}`);
+      console.log(`\nStep 2 (e): Adjusting ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} (label='${label}')`);
+      console.log(`  Original instruction: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${original.toString(16).padStart(4, '0')}`);
+      console.log(`  9-bit offset: + ${DISPLAY_HEX_PREFIX ? '0x' : ''}${offset.toString(16).padStart(4, '0')}`);
+      console.log(`  New instruction: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${newVal.toString(16).padStart(4, '0')}`);
 
       this.mca[ref.address] = newVal;
     }
@@ -491,10 +493,10 @@ class LinkerStepsPrinter {
       let original = this.mca[ref.address];
       let newVal = original + globalAddr;
 
-      console.log(`\nStep 2 (V): Adjusting 0x${ref.address.toString(16).padStart(4, '0')} (label='${label}')`);
-      console.log(`  Original word: 0x${original.toString(16).padStart(4, '0')}`);
-      console.log(`  Full address addition: + 0x${globalAddr.toString(16).padStart(4, '0')}`);
-      console.log(`  New word: 0x${newVal.toString(16).padStart(4, '0')}`);
+      console.log(`\nStep 2 (V): Adjusting ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} (label='${label}')`);
+      console.log(`  Original word: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${original.toString(16).padStart(4, '0')}`);
+      console.log(`  Full address addition: + ${DISPLAY_HEX_PREFIX ? '0x' : ''}${globalAddr.toString(16).padStart(4, '0')}`);
+      console.log(`  New word: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${newVal.toString(16).padStart(4, '0')}`);
 
       this.mca[ref.address] = newVal;
     }
@@ -512,9 +514,9 @@ class LinkerStepsPrinter {
       let original = this.mca[ref.address];
       let newVal = original + ref.moduleStart;
 
-      console.log(`Adjusting local reference at 0x${ref.address.toString(16).padStart(4, '0')}:`);
-      console.log(`  Original word: 0x${original.toString(16).padStart(4, '0')}`);
-      console.log(`  + moduleStart(0x${ref.moduleStart.toString(16).padStart(4, '0')}) = 0x${newVal.toString(16).padStart(4, '0')}`);
+      console.log(`Adjusting local reference at ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')}:`);
+      console.log(`  Original word: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${original.toString(16).padStart(4, '0')}`);
+      console.log(`  + moduleStart(${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.moduleStart.toString(16).padStart(4, '0')}) = ${DISPLAY_HEX_PREFIX ? '0x' : ''}${newVal.toString(16).padStart(4, '0')}`);
 
       this.mca[ref.address] = newVal;
     }
@@ -557,7 +559,7 @@ class LinkerStepsPrinter {
 
     // Write out S entry if applicable
     if (this.gotStart) {
-      console.log(`S  0x${this.startAddress.toString(16).padStart(4, '0')}`);
+      console.log(`S  ${DISPLAY_HEX_PREFIX ? '0x' : ''}${this.startAddress.toString(16).padStart(4, '0')}`);
       const bufferS = Buffer.alloc(3);
       bufferS.write('S', 0);
       bufferS.writeUInt16LE(this.startAddress, 1);
@@ -567,7 +569,7 @@ class LinkerStepsPrinter {
     // Write out G entries
     for (const label of Object.keys(this.GTable)) {
       let addr = this.GTable[label];
-      console.log(`G  0x${addr.toString(16).padStart(4, '0')}  ${label}`);
+      console.log(`G  ${DISPLAY_HEX_PREFIX ? '0x' : ''}${addr.toString(16).padStart(4, '0')}  ${label}`);
       const bufferG = Buffer.alloc(3 + label.length + 1);
       bufferG.write('G', 0);
       bufferG.writeUInt16LE(addr, 1);
@@ -579,7 +581,7 @@ class LinkerStepsPrinter {
     // Write out V entries as A entries
     for (let i = 0; i < this.VTable.length; i++) {
       let ref = this.VTable[i];
-      console.log(`A  0x${ref.address.toString(16).padStart(4, '0')}  (was V)`);
+      console.log(`A  ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')}  (was V)`);
       const bufferA = Buffer.alloc(3);
       bufferA.write('A', 0);
       bufferA.writeUInt16LE(ref.address, 1);
@@ -589,7 +591,7 @@ class LinkerStepsPrinter {
     // Write out A entries
     for (let i = 0; i < this.ATable.length; i++) {
       let ref = this.ATable[i];
-      console.log(`A  0x${ref.address.toString(16).padStart(4, '0')}`);
+      console.log(`A  ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')}`);
       const bufferA = Buffer.alloc(3);
       bufferA.write('A', 0);
       bufferA.writeUInt16LE(ref.address, 1);
