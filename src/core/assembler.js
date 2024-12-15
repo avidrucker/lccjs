@@ -153,113 +153,130 @@ class Assembler {
       process.exit(1);
     }
 
-    // Construct the output file name by replacing extension with '.e'
-    this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
+    // If the file ends in ".bin", parse it as raw binary instead of doing normal assembly
+    if (path.extname(this.inputFileName).toLowerCase() === '.bin') {
+      // Note: The original LCC does not print any message for assemnbling a .bin file ...
+      // ... I'm going to say this should be here to provide user feedback & good UX
+      console.log(`Assembling ${this.inputFileName} ...`);
 
-    // Perform Pass 1
-    console.log('Starting assembly pass 1');
-    this.pass = 1;
-    this.locCtr = 0;
-    this.lineNum = 0;
-    this.errorFlag = false;
-    this.symbolTable = {};
-    this.labels.clear();
-    this.errors = [];
-    this.performPass();
-
-    if (this.errorFlag) {
-      // console.error('Errors encountered during Pass 1.');
-      // this.errors.forEach(error => console.error(error));
-      process.exit(1);
-    }
-
-    // Rewind source lines for Pass 2
-    console.log('Starting assembly pass 2');
-    this.pass = 2;
-    this.locCtr = 0;
-    this.lineNum = 0;
-    this.performPass();
-
-    // After Pass 2
-    if (this.isObjectModule) {
-      // Change output extension to .o
-      this.outputFileName = this.constructOutputFileName(this.inputFileName, '.o');
-    }
-
-    if (this.errorFlag) {
-      // console.error('Errors encountered during Pass 2.');
-      // Close the output file only if it's open
-      if (this.outFile !== null) {
-        fs.closeSync(this.outFile);
-      }
-      process.exit(1);
-    }
-
-    // **Resolve the start label to an address**
-    if (this.startLabel !== null) {
-      if (this.symbolTable.hasOwnProperty(this.startLabel)) {
-        this.startAddress = this.symbolTable[this.startLabel];
-      } else {
-        this.error(`Undefined start label: ${this.startLabel}`);
-        process.exit(1);
-      }
+      this.parseBinFile();
+      // Construct output filename with .e extension
+      this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
+      // Now write the output as a .e file
+      this.writeOutputFile();
+      
     } else {
-      // If no .start directive, default start address is 0
-      this.startAddress = 0;
-    }
 
-    // // Close the output file
-    // fs.closeSync(this.outFile);
-    // **Write the output file after Pass 2**
-    this.writeOutputFile();
+      // If not a .bin, proceed with normal two-pass assembly...
+      // Construct the output file name by replacing extension with '.e'
+      this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
 
-    // After writing the output file, handle additional outputs
-    if (this.isObjectModule) {
+      // Perform Pass 1
+      console.log('Starting assembly pass 1');
+      this.pass = 1;
+      this.locCtr = 0;
+      this.lineNum = 0;
+      this.errorFlag = false;
+      this.symbolTable = {};
+      this.labels.clear();
+      this.errors = [];
+      this.performPass();
 
-      //// TODO: makes sure there is a name.nnn file in the same
-      ////       directory, if not, generate one
-
-      // Get the userName using nameHandler
-      try {
-        this.userName = nameHandler.createNameFile(this.inputFileName);
-      } catch (error) {
-        console.error('Error handling name file:', error.message);
+      if (this.errorFlag) {
+        // console.error('Errors encountered during Pass 1.');
+        // this.errors.forEach(error => console.error(error));
         process.exit(1);
       }
 
-      console.log(`Output file ${this.outputFileName} needs linking`);
-    
-      // Generate .lst and .bst files
-      const lstFileName = this.constructOutputFileName(this.inputFileName, '.lst');
-      const bstFileName = this.constructOutputFileName(this.inputFileName, '.bst');
+      // Rewind source lines for Pass 2
+      console.log('Starting assembly pass 2');
+      this.pass = 2;
+      this.locCtr = 0;
+      this.lineNum = 0;
+      this.performPass();
 
-      // Generate content for .lst file
-      const lstContent = generateBSTLSTContent({
-        isBST: false,
-        assembler: this,
-        includeSourceCode: true,
-        userName: this.userName, 
-        inputFileName: this.inputFileName,
-      });
+      // After Pass 2
+      if (this.isObjectModule) {
+        // Change output extension to .o
+        this.outputFileName = this.constructOutputFileName(this.inputFileName, '.o');
+      }
 
-      // Generate content for .bst file
-      const bstContent = generateBSTLSTContent({
-        isBST: true,
-        assembler: this,
-        includeSourceCode: true,
-        userName: this.userName, 
-        inputFileName: this.inputFileName,
-      });
+      if (this.errorFlag) {
+        // console.error('Errors encountered during Pass 2.');
+        // Close the output file only if it's open
+        if (this.outFile !== null) {
+          fs.closeSync(this.outFile);
+        }
+        process.exit(1);
+      }
 
-      // Write the .lst file
-      fs.writeFileSync(lstFileName, lstContent, 'utf-8');
+      // **Resolve the start label to an address**
+      if (this.startLabel !== null) {
+        if (this.symbolTable.hasOwnProperty(this.startLabel)) {
+          this.startAddress = this.symbolTable[this.startLabel];
+        } else {
+          this.error(`Undefined start label: ${this.startLabel}`);
+          process.exit(1);
+        }
+      } else {
+        // If no .start directive, default start address is 0
+        this.startAddress = 0;
+      }
 
-      // Write the .bst file
-      fs.writeFileSync(bstFileName, bstContent, 'utf-8');
+      // **Write the output file after Pass 2**
+      this.writeOutputFile();
 
-      console.log(`lst file = ${lstFileName}`);
-      console.log(`bst file = ${bstFileName}`);
-}
+      // After writing the output file, handle additional outputs
+      if (this.isObjectModule) {
+
+        //// TODO: makes sure there is a name.nnn file in the same
+        ////       directory, if not, generate one
+
+        // Get the userName using nameHandler
+        try {
+          this.userName = nameHandler.createNameFile(this.inputFileName);
+        } catch (error) {
+          console.error('Error handling name file:', error.message);
+          process.exit(1);
+        }
+
+        console.log(`Output file ${this.outputFileName} needs linking`);
+      
+        // Generate .lst and .bst files
+        const lstFileName = this.constructOutputFileName(this.inputFileName, '.lst');
+        const bstFileName = this.constructOutputFileName(this.inputFileName, '.bst');
+
+        // Generate content for .lst file
+        const lstContent = generateBSTLSTContent({
+          isBST: false,
+          assembler: this,
+          includeSourceCode: true,
+          userName: this.userName, 
+          inputFileName: this.inputFileName,
+          includeComments: false // note: this flag is only for .bin files
+        });
+
+        // Generate content for .bst file
+        const bstContent = generateBSTLSTContent({
+          isBST: true,
+          assembler: this,
+          includeSourceCode: true,
+          userName: this.userName, 
+          inputFileName: this.inputFileName,
+          includeComments: false // note: this flag is only for .bin files
+        });
+
+        // Write the .lst file
+        fs.writeFileSync(lstFileName, lstContent, 'utf-8');
+
+        // Write the .bst file
+        fs.writeFileSync(bstFileName, bstContent, 'utf-8');
+
+        console.log(`lst file = ${lstFileName}`);
+        console.log(`bst file = ${bstFileName}`);
+      }
+
+    }
 
   }
 
@@ -396,9 +413,20 @@ class Assembler {
         codeWords: [],
         label: null,
         mnemonic: null,
-        operands: []
+        operands: [],
+        comment: ''
       };
       this.currentListingEntry = listingEntry;
+
+      // Extract the comment substring (everything after ';'), if any
+      let comment = '';
+      let semicolonIndex = line.indexOf(';');
+      if (semicolonIndex !== -1) {
+        // everything after ';'
+        comment = line.substring(semicolonIndex + 1).trim();
+      }
+      // Store the comment in the listing entry
+      listingEntry.comment = comment;
       
       // Remove comments and trim whitespace
       line = line.split(';')[0].trim();
@@ -485,6 +513,74 @@ class Assembler {
       }
     }
   }
+
+  //// 
+  parseBinFile() {
+    this.outputBuffer = [];     // Prepare output buffer
+    this.locCtr = 0;
+    this.loadPoint = 0; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
+    for (let lineNum = 0; lineNum < this.sourceLines.length; lineNum++) {
+      this.lineNum++;
+      let line = this.sourceLines[lineNum];
+      this.currentLine = line; // For error messages
+
+      const listingEntry = {
+        lineNum: this.lineNum,
+        locCtr: this.locCtr,
+        sourceLine: line,
+        macWord: '',
+        comment: ''
+      }
+
+      // Extract the comment substring (everything after ';'), if any
+      let comment = '';
+      let semicolonIndex = line.indexOf(';');
+      if (semicolonIndex !== -1) {
+        // everything after ';'
+        comment = line.substring(semicolonIndex + 1).trim();
+      }
+      // Store the comment in the listing entry
+      listingEntry.comment = comment;
+
+      // Remove everything after semicolon
+      if (line.indexOf(';') !== -1) {
+        line = line.substring(0, line.indexOf(';'));
+      }
+      // Trim and remove all internal spaces
+      line = line.trim().replace(/\s+/g, '');
+      if (line.length === 0) {
+        continue; // empty or comment-only line
+      }
+  
+      // Now we should have a 16-bit binary string
+      // For example: "0010000000000101"
+      if (!/^[01]+$/.test(line)) {
+        console.error(`Error: line ${lineNum+1} in .bin file is not purely binary: "${line}"`);
+        process.exit(1);
+      }
+      if (line.length !== 16) {
+        console.error(`Error: line ${lineNum+1} in .bin file does not have exactly 16 bits: "${line}"`);
+        process.exit(1);
+      }
+  
+      // Convert the binary string to a number
+      let wordValue = parseInt(line, 2);
+  
+      // Push the parsed word into outputBuffer
+      this.outputBuffer.push(wordValue & 0xFFFF);
+      this.locCtr++;
+
+      // Store the machine word in the listing entry
+      listingEntry.macWord = wordValue;
+
+      // Store the listing entry
+      this.listing.push(listingEntry);
+    }
+  
+    // If you want a "startAddress = 0" by default, do that here
+    this.startAddress = 0;     // or your choice
+    this.startLabel = null;    // No .start directive in raw bin files
+  } 
 
   tokenizeLine(line) {
     let tokens = [];
@@ -1486,6 +1582,7 @@ class Assembler {
     return value;
   }
 
+  // TODO: investigate here for detection of undefined labels
   handleExternalReference(label, usageType) {
     // Check if we've already created an entry for this label and usage type
     if (!this.externalReferences.some(ref => ref.label === label && ref.type === usageType)) {
