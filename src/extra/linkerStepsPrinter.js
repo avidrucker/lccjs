@@ -1,99 +1,85 @@
 //
 // linkerStepsPrinter.js
-// 
-// A thoroughly documented and step-by-step printing JavaScript linker
-// for LCC .o object files.
+//
+// A thoroughly documented JavaScript linker for LCC .o object files, with
+// step-by-step printing and improved clarity.
 //
 // Usage (from command line):
 //    node linkerStepsPrinter.js [-o outputfile.e] <obj module 1> <obj module 2> ...
 //
 // Purpose:
-//   The purpose of this linker is to print how each header entry (S, G, E, e, V, A) 
-//   is processed and how the corresponding machine code array (mca) is adjusted. It 
-//   also shows how to write out an LCC-compatible "executable" link.e file with the 
-//   final machine code and a reconstructed header.
+//   The goal is to show exactly how each header entry (S, G, E, e, V, A) is processed,
+//   how each machine code word is adjusted (and why), and how the final link.e file
+//   is created. This helps learners of LCC assembly see the 4 steps of linking in action.
 //
-//   The process is broken into four major steps, plus a helpful debug step:
-//   1. Read each .o file and collect header entries (with adjusted addresses) into 
-//      tables, copy code into mca.
+//   The linking stages are conceptually:
+//
+//   1. Read each .o file, parse header entries, store adjusted addresses in tables, copy machine code to mca.
 //   2. Adjust external references (E, e, V).
 //   3. Adjust local references (A).
-//   4. Write out the final "link.e" file with the reconstructed header.
+//   4. Write out link.e with all resolved code.
 //
-//   Along the way, we print thorough details to make the linking process crystal clear.
+//   We also provide thorough commentary before each major step, explaining the formulas used
+//   and how references/definitions are labeled in the final "LABEL DEFS & REFS" column.
+//
+// Author: (Your Name)
 //
 
 const fs = require('fs');
 
-const DISPLAY_HEX_PREFIX = false;
-
-/**
- * A utility function to print a horizontal spacer line for readability
- */
+// A utility function to print a horizontal spacer line for readability
 function printSpacerLine() {
   console.log('==================================================');
 }
 
+function printThinLine() {
+  console.log('--------------------------------------------------');
+}
+
 class LinkerStepsPrinter {
   constructor() {
-    // The machine code array, mca, with 65536 (0x10000) slots. 
-    // Each slot holds an unsigned 16-bit value. 
-    // We'll store instructions/words from all object modules here.
-    this.mca = new Uint16Array(65536); 
-    
-    // mcaIndex is the "pointer" into the mca array, telling us where 
-    // the next instruction/word from an object module should be placed.
+    // The machine code array, mca, with 65536 (0x10000) slots.
+    this.mca = new Uint16Array(65536);
+
+    // mcaIndex points to the next free location in mca.
     this.mcaIndex = 0;
 
-    // We'll keep track of whether we encountered an 'S' entry (start entry).
-    this.gotStart = false;  
-    this.startAddress = 0;  
+    // Keep track of whether we have a start address (S entry).
+    this.gotStart = false;
+    this.startAddress = 0;
+    this.startIsNew = false;  // We'll track if the S entry was newly added in the last module.
 
-    // The G table (globals): stores { label -> address } for globally defined labels.
-    this.GTable = {}; 
+    // Instead of storing G symbols in a map only, we store them in an array for printing
+    // and also in a dictionary for quick resolution.
+    this.GList = [];  // Each element: { address, label, isNew }
+    this.GMap = {};   // label -> address
 
-    // The E/e/V/A tables are arrays that store references and associated information.
-
-    // E table: references to external symbols that require 11-bit PC-relative adjustments
-    //   E is used for instructions with an 11-bit offset field (like a BL instruction).
-    // Structure: [ { address, label } , ... ]
+    // The E, e, V, A tables are arrays of objects:
+    // E:  [ { address, label, isNew }, ... ]  (11-bit offset references)
+    // e:  [ { address, label, isNew }, ... ]  (9-bit offset references)
+    // V:  [ { address, label, isNew }, ... ]  (full 16-bit references)
+    // A:  [ { address, moduleStart, isNew }, ... ] (local references)
     this.ETable = [];
-
-    // e table: references to external symbols that require 9-bit PC-relative adjustments
-    //   e is used for instructions with a 9-bit offset field.
-    // Structure: [ { address, label } , ... ]
     this.eTable = [];
-
-    // V table: references to external symbols that need the entire 16-bit address replaced (like .word)
-    // Structure: [ { address, label }, ... ]
     this.VTable = [];
-
-    // A table: local references. For each A entry, we store not only the adjusted address
-    // but also the "module start" (the base mcaIndex for that module). 
-    // Structure: [ { address, moduleStart }, ... ]
     this.ATable = [];
 
-    // For debugging, we can keep track of how big each module is as we read it
-    // so we can separate each module's code visually in the final print-out.
-    this.fileSizes = [];
-    this.errorFlag = false; // If an error occurs, we set this and stop.
+    // This array will store textual annotations for each address in mca to display in the
+    // "LABEL DEFS & REFS" column. Example: mcaAnnotations[addr] = [ "main defined", "sub referenced" ]
+    this.mcaAnnotations = Array(65536).fill(null).map(() => []);
 
-    // If the user wants to specify an output file name, we store it here.
+    // For debugging, we'll keep track of module size boundaries to break up the final MCA printout.
+    this.fileSizes = [];
+
+    // Whether an error was encountered
+    this.errorFlag = false;
+
+    // Final output file name
     this.outputFileName = 'link.e';
   }
 
   /**
-   * Main driver of the linking process:
-   *  1. Read object modules from disk
-   *  2. Process each module's header entries
-   *  3. Print out tables (Step 1.5 debug printing)
-   *  4. Step 2: Adjust external references
-   *  5. Step 3: Adjust local references
-   *  6. Print final MCA for debugging
-   *  7. Step 4: Create the final "link.e" file
-   *
-   * @param {string[]} inputFiles    Array of strings: the .o files to read
-   * @param {string} [outputFile]    Output file name (defaults to link.e)
+   * link - main driver of the linking process.
    */
   link(inputFiles, outputFile) {
     if (outputFile) {
@@ -102,45 +88,74 @@ class LinkerStepsPrinter {
 
     console.log(`LinkerStepsPrinter: Linking files -> ${inputFiles.join(', ')}`);
 
-    // Step 1: Read each object module and store header entries and machine code
+    console.log("\n\nSTEP 1: Parse Object Modules and Build Tables\n");
+
+    console.log(`    * Reading object modules and building tables.
+    * For each object module, we parse the header and machine code,
+    * store them in the mca, and record their definitions/references
+    * in our tables.`);
+
     for (let fileName of inputFiles) {
       this.readObjectModule(fileName);
-      if (this.errorFlag) { 
-        return; 
-      }
+      if (this.errorFlag) return;
 
-      // After reading in each file, let's do a "Step 1" debug print of current tables and mca
-      this.printStep1State(fileName);
+      // Print the tables and MCA after reading each module
+      this.printPostModuleRead(fileName);
+
+      // Mark all newly added entries as no longer "new" once they've been printed.
+      this.afterModulePrintCleanup();
     }
 
-    // Step 2: Adjust external references (E, e, V)
+    console.log("\n\nSTEP 2: External References Resolution (E, e, V)\n");
+    
+    console.log(`    * External reference resolution.
+    * Explanation: We look up each external reference (E, e, V) in the global definitions (G).
+    * If found, we adjust the machine code words accordingly using the formulas:
+    *
+    *  - E table (11-bit PC-relative): mca[addr] = (mca[addr] & 0xf800) | ((mca[addr] + G - addr - 1) & 0x7ff)
+    *  - e table (9-bit PC-relative):  mca[addr] = (mca[addr] & 0xfe00) | ((mca[addr] + G - addr - 1) & 0x1ff)
+    *  - V table (full address add):   mca[addr] = mca[addr] + G
+    *
+    * where G is the global label address from the G table, and "addr" is the location of
+    * the external reference in the machine code.`);
+     
     this.adjustExternalReferences();
-    if (this.errorFlag) {
-      return;
-    }
+    if (this.errorFlag) return;
 
-    // Step 3: Adjust local references (A)
+    console.log("\n\nSTEP 3: Adjust Local References\n");
+    
+    console.log(`    * Local reference resolution.
+    * Explanation: Each A entry has { address, moduleStart }. We add moduleStart
+    * to the word at 'address' in the mca. 
+    *
+    * Formally: mca[address] += moduleStart;`);
+     
+    console.log('\n=== Local References Resolution (A) ===');
     this.adjustLocalReferences();
-    if (this.errorFlag) {
-      return;
-    }
+    if (this.errorFlag) return;
 
-    // For debugging, let's print the final machine code array after all adjustments
-    this.printFinalMCA();
+    // Print the final MCA after everything is adjusted
+    console.log('\n=== Final Machine Code Array (mca) After All Adjustments ===');
+    this.printMCA();
 
-    // Step 4: Create link.e (or user-specified output file)
+    console.log("\n\nSTEP 4: Creating the Final Executable (link.e)");
+    
+    console.log(`
+     * Writing out the final "link.e" file.
+     * Explanation: We reconstruct a header with
+     *   - 'o' signature
+     *   - S entry if it exists
+     *   - G entries
+     *   - the V entries become A entries in the output
+     *   - A entries
+     *   - 'C' terminator
+     * followed by the machine code.`);
+    
     this.writeExecutable();
   }
 
   /**
-   * Reads a single .o file. For each module:
-   *  - Check signature ('o')
-   *  - Read all header entries until 'C'
-   *  - For each header entry, store adjusted addresses & label in the appropriate table
-   *  - After the header, read the machine code words and store them in `this.mca`
-   *  - Keep track of the file size in words to help with debug printing
-   *
-   * @param {string} fileName 
+   * Reads an object module from disk and populates the appropriate tables and machine code array.
    */
   readObjectModule(fileName) {
     let buffer;
@@ -152,26 +167,23 @@ class LinkerStepsPrinter {
     }
 
     let offset = 0;
-
-    // Check file signature
+    // Check 'o' file signature
     if (buffer[offset] !== 'o'.charCodeAt(0)) {
       this.error(`${fileName} not a linkable file (missing 'o' signature)`);
       return;
     }
     offset++;
 
-    // Now read the header entries until we see 'C' or run out of file
+    // Read header entries until we see 'C' or run out of file
     while (offset < buffer.length) {
-      if (offset >= buffer.length) break; // no more data
+      if (offset >= buffer.length) break;
       const entryType = String.fromCharCode(buffer[offset++]);
       if (entryType === 'C') {
-        // End of header, start of code
-        break;
+        break; // end of header
       }
 
       switch (entryType) {
         case 'S': {
-          // S entry: Start address
           if (offset + 1 >= buffer.length) {
             this.error('Invalid S entry (truncated)');
             return;
@@ -179,45 +191,47 @@ class LinkerStepsPrinter {
           const addr = buffer.readUInt16LE(offset);
           offset += 2;
 
-          // If gotStart was already set, it's an error
           if (this.gotStart) {
             this.error('More than one entry point (S entry) encountered');
             return;
           }
           this.gotStart = true;
-          // Adjust the address by the current mcaIndex (i.e., module base)
           this.startAddress = addr + this.mcaIndex;
+          this.startIsNew = true; // Mark newly added
+          // Mark in mcaAnnotations (S doesn't really define a label, but let's note "start set")
           break;
         }
 
         case 'G': {
-          // G entry: globally defined label
           if (offset + 1 >= buffer.length) {
             this.error('Invalid G entry (truncated)');
             return;
           }
           const addr = buffer.readUInt16LE(offset);
           offset += 2;
-          // Read the null-terminated label
           let label = '';
           while (offset < buffer.length) {
             const c = buffer[offset++];
-            if (c === 0) break; 
+            if (c === 0) break;
             label += String.fromCharCode(c);
           }
-          // Adjust address
           const adjustedAddr = addr + this.mcaIndex;
-          // Check for multiple definitions
-          if (this.GTable[label] !== undefined) {
+
+          if (this.GMap[label] !== undefined) {
             this.error(`Multiple definitions of global symbol ${label}`);
             return;
           }
-          this.GTable[label] = adjustedAddr;
+          // Add to GList and GMap
+          this.GList.push({ address: adjustedAddr, label: label, isNew: true });
+          this.GMap[label] = adjustedAddr;
+
+          // Also annotate this address in mca
+          this.mcaAnnotations[adjustedAddr].push(`${label} defined **newly added**`);
+
           break;
         }
 
         case 'E': {
-          // E entry: External reference with 11-bit address field
           if (offset + 1 >= buffer.length) {
             this.error('Invalid E entry (truncated)');
             return;
@@ -231,12 +245,13 @@ class LinkerStepsPrinter {
             label += String.fromCharCode(c);
           }
           const adjustedAddr = addr + this.mcaIndex;
-          this.ETable.push({ address: adjustedAddr, label });
+          this.ETable.push({ address: adjustedAddr, label, isNew: true });
+
+          this.mcaAnnotations[adjustedAddr].push(`${label} referenced **newly added**`);
           break;
         }
 
         case 'e': {
-          // e entry: External reference with 9-bit address field
           if (offset + 1 >= buffer.length) {
             this.error('Invalid e entry (truncated)');
             return;
@@ -250,12 +265,13 @@ class LinkerStepsPrinter {
             label += String.fromCharCode(c);
           }
           const adjustedAddr = addr + this.mcaIndex;
-          this.eTable.push({ address: adjustedAddr, label });
+          this.eTable.push({ address: adjustedAddr, label, isNew: true });
+
+          this.mcaAnnotations[adjustedAddr].push(`${label} referenced **newly added**`);
           break;
         }
 
         case 'V': {
-          // V entry: External reference that requires full 16-bit address
           if (offset + 1 >= buffer.length) {
             this.error('Invalid V entry (truncated)');
             return;
@@ -269,12 +285,13 @@ class LinkerStepsPrinter {
             label += String.fromCharCode(c);
           }
           const adjustedAddr = addr + this.mcaIndex;
-          this.VTable.push({ address: adjustedAddr, label });
+          this.VTable.push({ address: adjustedAddr, label, isNew: true });
+
+          this.mcaAnnotations[adjustedAddr].push(`${label} referenced **newly added**`);
           break;
         }
 
         case 'A': {
-          // A entry: local reference
           if (offset + 1 >= buffer.length) {
             this.error('Invalid A entry (truncated)');
             return;
@@ -282,7 +299,9 @@ class LinkerStepsPrinter {
           const addr = buffer.readUInt16LE(offset);
           offset += 2;
           const adjustedAddr = addr + this.mcaIndex;
-          this.ATable.push({ address: adjustedAddr, moduleStart: this.mcaIndex });
+          this.ATable.push({ address: adjustedAddr, moduleStart: this.mcaIndex, isNew: true });
+          // A references are internal local references, so let's mark the address
+          this.mcaAnnotations[adjustedAddr].push(`local reference **newly added**`);
           break;
         }
 
@@ -292,7 +311,7 @@ class LinkerStepsPrinter {
       }
     }
 
-    // Now read the code portion until EOF
+    // Read code portion until EOF
     let codeWords = 0;
     while (offset + 1 < buffer.length) {
       const word = buffer.readUInt16LE(offset);
@@ -300,110 +319,253 @@ class LinkerStepsPrinter {
       this.mca[this.mcaIndex++] = word;
       codeWords++;
     }
-
-    // For debugging, store the final mcaIndex for this module
     this.fileSizes.push(this.mcaIndex);
-    console.log(`Read ${codeWords} code words from ${fileName}.`);
+
+    // console.log();
+    // printThinLine();
+    // console.log(`Read ${codeWords} code words from ${fileName}.`);
   }
 
   /**
-   * Print the state of the linker after reading in a single module (Step 1 printing).
-   *
-   * @param {string} fileName 
+   * After reading each module, print a summary of newly modified tables and the current state of the MCA.
    */
-  printStep1State(fileName) {
-    printSpacerLine();
-    console.log(`Finished reading module: ${fileName}`);
-    printSpacerLine();
+  printPostModuleRead(fileName) {
+    
+    // console.log(`Finished reading module: ${fileName}`);
+    // printThinLine();
 
-    console.log('\n-- Step 1 State (Tables after reading this module) --');
+    // console.log(`\n-- State After Reading This Module --\n`);
+    console.log(`\nState after reading module ${fileName}:`);
+    printThinLine();
 
-    // Print the 'S' entry if we have it so far
+    // Print start address if we have it
     if (this.gotStart) {
-      console.log(`Start Address (S): ${DISPLAY_HEX_PREFIX ? '0x' : ''}${this.startAddress.toString(16).padStart(4, '0')}`);
-    } else {
-      console.log(`No start address encountered yet (no S entry).`);
+      let msg = `Start Address (S): ${this.formatHex(this.startAddress, 4)}`;
+      if (this.startIsNew) msg += ` **newly added**`;
+      console.log(msg);
     }
 
-    // G Table
-    this.printTable('G Table (Global definitions)', this.GTable);
-
-    // E Table
-    console.log('\nE Table (11-bit external references)');
-    if (this.ETable.length === 0) {
-      console.log('(none)');
-    } else {
-      for (let i = 0; i < this.ETable.length; i++) {
-        const ref = this.ETable[i];
-        console.log(`  E[${i}] -> address=${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} label="${ref.label}"`);
-      }
+    // Print G Table if non-empty
+    if (this.GList.length > 0) {
+      this.printTable(
+        `G Table (Global definitions) {address, label}`,
+        this.GList
+      );
     }
 
-    // e Table
-    console.log('\ne Table (9-bit external references)');
-    if (this.eTable.length === 0) {
-      console.log('(none)');
-    } else {
-      for (let i = 0; i < this.eTable.length; i++) {
-        const ref = this.eTable[i];
-        console.log(`  e[${i}] -> address=${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} label="${ref.label}"`);
-      }
-    }
+    // Print E Table if newly added entries
+    this.printTable(
+      `E Table (11-bit external references) {address, label}`,
+      this.ETable
+    );
 
-    // V Table
-    console.log('\nV Table (full 16-bit external references)');
-    if (this.VTable.length === 0) {
-      console.log('(none)');
-    } else {
-      for (let i = 0; i < this.VTable.length; i++) {
-        const ref = this.VTable[i];
-        console.log(`  V[${i}] -> address=${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} label="${ref.label}"`);
-      }
-    }
+    // Print e Table if newly added entries
+    this.printTable(
+      `e Table (9-bit external references) {address, label}`,
+      this.eTable
+    );
 
-    // A Table
-    console.log('\nA Table (local references)');
-    if (this.ATable.length === 0) {
-      console.log('(none)');
-    } else {
-      for (let i = 0; i < this.ATable.length; i++) {
-        const ref = this.ATable[i];
-        console.log(`  A[${i}] -> address=${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} moduleStart=${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.moduleStart.toString(16).padStart(4, '0')}`);
-      }
-    }
+    // Print V Table if newly added entries
+    this.printTable(
+      `V Table (full 16-bit external references) {address, label}`,
+      this.VTable
+    );
 
-    // Print the partial MCA for debugging (only from the last file boundary).
+    // Print A Table if newly added entries
+    this.printTable(
+      `A Table (local references) {localAddress, moduleStart}`,
+      this.ATable,
+      true // For A entries, we print two addresses
+    );
+    printThinLine();
+
+    // Print the partial MCA with a third column for label defs & refs
+    console.log(`\nCurrent Machine Code Array (mca):`);
+    printSpacerLine();
+    console.log(`  LOC    MCA    LABEL DEFS & REFS`);
+    printThinLine();
     this.printMCA();
   }
 
   /**
-   * Print a key-value table (label->address or similar).
-   * 
-   * @param {string} title 
-   * @param {object} table  Format: { label: address }
+   * Once we've printed the newly added items, we mark them as not new so that subsequent
+   * prints won't show "**newly added**".
    */
-  printTable(title, table) {
-    console.log(`\n${title}`);
-    const keys = Object.keys(table);
-    if (keys.length === 0) {
-      console.log('(none)');
-      return;
+  afterModulePrintCleanup() {
+    if (this.startIsNew) {
+      this.startIsNew = false;
     }
-    for (let label of keys) {
-      let address = table[label];
-      console.log(`  label="${label}" -> ${DISPLAY_HEX_PREFIX ? '0x' : ''}${address.toString(16).padStart(4, '0')}`);
+    for (let g of this.GList) {
+      if (g.isNew) {
+        // Also remove the "**newly added**" text from the mcaAnnotations
+        const arr = this.mcaAnnotations[g.address];
+        for (let idx = 0; idx < arr.length; idx++) {
+          arr[idx] = arr[idx].replace(' **newly added**','');
+        }
+      }
+      g.isNew = false;
+    }
+    for (let e of this.ETable) {
+      if (e.isNew) {
+        const arr = this.mcaAnnotations[e.address];
+        for (let idx = 0; idx < arr.length; idx++) {
+          arr[idx] = arr[idx].replace(' **newly added**','');
+        }
+      }
+      e.isNew = false;
+    }
+    for (let e of this.eTable) {
+      if (e.isNew) {
+        const arr = this.mcaAnnotations[e.address];
+        for (let idx = 0; idx < arr.length; idx++) {
+          arr[idx] = arr[idx].replace(' **newly added**','');
+        }
+      }
+      e.isNew = false;
+    }
+    for (let v of this.VTable) {
+      if (v.isNew) {
+        const arr = this.mcaAnnotations[v.address];
+        for (let idx = 0; idx < arr.length; idx++) {
+          arr[idx] = arr[idx].replace(' **newly added**','');
+        }
+      }
+      v.isNew = false;
+    }
+    for (let a of this.ATable) {
+      if (a.isNew) {
+        const arr = this.mcaAnnotations[a.address];
+        for (let idx = 0; idx < arr.length; idx++) {
+          arr[idx] = arr[idx].replace(' **newly added**','');
+        }
+      }
+      a.isNew = false;
     }
   }
 
   /**
-   * Print the current machine code array for debugging.
-   * We use the fileSizes array to break up the printing for each module’s boundary.
+   * A helper function to print tables for Step 1 summary. Only prints if there are entries.
+   * For E/e/V/G, the data shape is { address, label }.
+   * For A, the data shape is { localAddress, moduleStart }.
+   *
+   * Example lines:
+   *    0002 main **newly added**
+   * or for A table:
+   *    000d 0008 **newly added**
+   */
+  printTable(title, arr, isATable=false) {
+    if (arr.length === 0) {
+      return;
+    }
+    console.log(`\n${title}`);
+    for (let entry of arr) {
+      if (!isATable) {
+        // Format: "0002 main **newly added**" if isNew is true
+        let msg = `${this.formatHex(entry.address,4)} ${entry.label}`;
+        if (entry.isNew) {
+          msg += ' **newly added**';
+        }
+        console.log(`  ${msg}`);
+      } else {
+        // For A table: "000d 0008 **newly added**"
+        let msg = `${this.formatHex(entry.address,4)} ${this.formatHex(entry.moduleStart,4)}`;
+        if (entry.isNew) {
+          msg += ' **newly added**';
+        }
+        console.log(`  ${msg}`);
+      }
+    }
+  }
+
+  /**
+   * Step 2: Adjust external references.
+   * For each E/e/V entry, we look up the global label's address in GMap
+   * and apply the appropriate formula to mca.
+   */
+  adjustExternalReferences() {
+    // Thorough explanation printed before calling this function.
+    
+    // E (11-bit) references
+    for (let ref of this.ETable) {
+      const { address, label } = ref;
+      if (this.GMap[label] === undefined) {
+        this.error(`Undefined external reference (E) for label '${label}'`);
+        return;
+      }
+      let globalAddr = this.GMap[label];
+      // The formula: newVal = (oldVal & 0xf800) | ((oldVal + globalAddr - address - 1) & 0x07ff)
+      let original = this.mca[address];
+      let offset = (original + globalAddr - address - 1) & 0x07ff;
+      let newVal = (original & 0xf800) | offset;
+
+      console.log(`\nAdjusting address ${this.formatHex(address,4)} (11-bit reference to '${label}')`);
+      console.log(`  old word: ${this.formatHex(original,4)}`);
+      console.log(`  (oldVal & 0xf800) + offset( (oldVal + G - addr -1) & 0x7ff ) = ${this.formatHex(newVal,4)}`);
+      this.mca[address] = newVal;
+    }
+
+    // e (9-bit) references
+    for (let ref of this.eTable) {
+      const { address, label } = ref;
+      if (this.GMap[label] === undefined) {
+        this.error(`Undefined external reference (e) for label '${label}'`);
+        return;
+      }
+      let globalAddr = this.GMap[label];
+      let original = this.mca[address];
+      let offset = (original + globalAddr - address - 1) & 0x01ff;
+      let newVal = (original & 0xfe00) | offset;
+
+      console.log(`\nAdjusting address ${this.formatHex(address,4)} (9-bit reference to '${label}')`);
+      console.log(`  old word: ${this.formatHex(original,4)}`);
+      console.log(`  (oldVal & 0xfe00) + offset( (oldVal + G - addr -1) & 0x1ff ) = ${this.formatHex(newVal,4)}`);
+      this.mca[address] = newVal;
+    }
+
+    // V references
+    for (let ref of this.VTable) {
+      const { address, label } = ref;
+      if (this.GMap[label] === undefined) {
+        this.error(`Undefined external reference (V) for label '${label}'`);
+        return;
+      }
+      let globalAddr = this.GMap[label];
+      let original = this.mca[address];
+      let newVal = original + globalAddr;
+
+      console.log(`\nAdjusting address ${this.formatHex(address,4)} (full 16-bit reference to '${label}')`);
+      console.log(`  old word: ${this.formatHex(original,4)}`);
+      console.log(`  oldVal + G = ${this.formatHex(newVal,4)}`);
+
+      this.mca[address] = newVal;
+    }
+  }
+
+  /**
+   * Step 3: Adjust local references (A).
+   * We add the moduleStart to the original word at 'address'.
+   */
+  adjustLocalReferences() {
+    // Thorough explanation printed before calling this function.
+
+    for (let ref of this.ATable) {
+      const { address, moduleStart } = ref;
+      let original = this.mca[address];
+      let newVal = original + moduleStart;
+
+      console.log(`\nAdjusting address ${this.formatHex(address,4)} (local reference)`);
+      console.log(`  old word: ${this.formatHex(original,4)}`);
+      console.log(`  oldVal + moduleStart(${this.formatHex(moduleStart,4)}) = ${this.formatHex(newVal,4)}`);
+
+      this.mca[address] = newVal;
+    }
+  }
+
+  /**
+   * Print the entire machine code array up to mcaIndex, showing LOC, MCA, and LABEL DEFS & REFS.
+   * We break at each module boundary using fileSizes.
    */
   printMCA() {
-    console.log('\nCurrent Machine Code Array (mca):');
-    console.log('  LOC   MCA');
-    printSpacerLine();
-
     let moduleBoundaryIdx = 0;
     let fileSizesIndex = 0;
     if (this.fileSizes.length > 0) {
@@ -412,133 +574,31 @@ class LinkerStepsPrinter {
 
     for (let i = 0; i < this.mcaIndex; i++) {
       if (i === moduleBoundaryIdx && i !== 0) {
-        // reached the end of a module
-        printSpacerLine();
+        // We've reached the boundary of a previous module
+        printThinLine();
         if (fileSizesIndex < this.fileSizes.length) {
           moduleBoundaryIdx = this.fileSizes[fileSizesIndex++];
         }
       }
-      console.log(`| ${DISPLAY_HEX_PREFIX ? '0x' : ''}${i.toString(16).padStart(4, '0')} : ${DISPLAY_HEX_PREFIX ? '0x' : ''}${this.mca[i].toString(16).padStart(4, '0')} |`);
+
+      let locStr = this.formatHex(i, 4);
+      let mcaStr = this.formatHex(this.mca[i], 4);
+
+      // Combine label definitions & references stored in this.mcaAnnotations[i]
+      let labelInfo = this.mcaAnnotations[i];
+      let labelStr = '';
+      if (labelInfo.length > 0) {
+        labelStr = labelInfo.join(', ');
+      }
+
+      console.log(`| ${locStr} : ${mcaStr} | ${labelStr}`);
     }
     printSpacerLine();
   }
 
   /**
-   * Step 2: Adjust external references. 
-   * For each entry in ETable, eTable, and VTable, we search for the matching global label
-   * in GTable. If found, we adjust the machine code accordingly.
-   */
-  adjustExternalReferences() {
-    // E table: 11-bit references
-    for (let i = 0; i < this.ETable.length; i++) {
-      let ref = this.ETable[i];
-      let label = ref.label;
-      if (this.GTable[label] === undefined) {
-        this.error(`Undefined external reference (E) for label '${label}'`);
-        return;
-      }
-      let globalAddr = this.GTable[label];
-
-      // Explanation: For 11-bit references, the instruction's lower 11 bits is the offset.
-      // The linking step is:
-      //     mca[ref.address] = (mca[ref.address] & 0xf800) |
-      //                        ((mca[ref.address] + globalAddr - ref.address - 1) & 0x7ff);
-      let original = this.mca[ref.address];
-      let offset = (original + globalAddr - ref.address - 1) & 0x07ff;
-      let newVal = (original & 0xf800) | offset;
-
-      console.log(`\nStep 2 (E): Adjusting ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} (label='${label}')`);
-      console.log(`  Original instruction: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${original.toString(16).padStart(4, '0')}`);
-      console.log(`  11-bit offset: + ${DISPLAY_HEX_PREFIX ? '0x' : ''}${offset.toString(16).padStart(4, '0')}`);
-      console.log(`  New instruction: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${newVal.toString(16).padStart(4, '0')}`);
-
-      this.mca[ref.address] = newVal;
-    }
-
-    // e table: 9-bit references
-    for (let i = 0; i < this.eTable.length; i++) {
-      let ref = this.eTable[i];
-      let label = ref.label;
-      if (this.GTable[label] === undefined) {
-        this.error(`Undefined external reference (e) for label '${label}'`);
-        return;
-      }
-      let globalAddr = this.GTable[label];
-
-      // Explanation: For 9-bit references, the instruction's lower 9 bits is the offset.
-      //     mca[ref.address] = (mca[ref.address] & 0xfe00) |
-      //                        ((mca[ref.address] + globalAddr - ref.address - 1) & 0x01ff);
-      let original = this.mca[ref.address];
-      let offset = (original + globalAddr - ref.address - 1) & 0x01ff;
-      let newVal = (original & 0xfe00) | offset;
-
-      console.log(`\nStep 2 (e): Adjusting ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} (label='${label}')`);
-      console.log(`  Original instruction: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${original.toString(16).padStart(4, '0')}`);
-      console.log(`  9-bit offset: + ${DISPLAY_HEX_PREFIX ? '0x' : ''}${offset.toString(16).padStart(4, '0')}`);
-      console.log(`  New instruction: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${newVal.toString(16).padStart(4, '0')}`);
-
-      this.mca[ref.address] = newVal;
-    }
-
-    // V table: full 16-bit addresses (like .word references)
-    for (let i = 0; i < this.VTable.length; i++) {
-      let ref = this.VTable[i];
-      let label = ref.label;
-      if (this.GTable[label] === undefined) {
-        this.error(`Undefined external reference (V) for label '${label}'`);
-        return;
-      }
-      let globalAddr = this.GTable[label];
-
-      let original = this.mca[ref.address];
-      let newVal = original + globalAddr;
-
-      console.log(`\nStep 2 (V): Adjusting ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')} (label='${label}')`);
-      console.log(`  Original word: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${original.toString(16).padStart(4, '0')}`);
-      console.log(`  Full address addition: + ${DISPLAY_HEX_PREFIX ? '0x' : ''}${globalAddr.toString(16).padStart(4, '0')}`);
-      console.log(`  New word: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${newVal.toString(16).padStart(4, '0')}`);
-
-      this.mca[ref.address] = newVal;
-    }
-  }
-
-  /**
-   * Step 3: Adjust local references (A).
-   * For each A entry, we add the module's base address to the existing content of the machine code word.
-   */
-  adjustLocalReferences() {
-    console.log('\n-- Step 3: Adjusting local references (A) --');
-
-    for (let i = 0; i < this.ATable.length; i++) {
-      let ref = this.ATable[i];
-      let original = this.mca[ref.address];
-      let newVal = original + ref.moduleStart;
-
-      console.log(`Adjusting local reference at ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')}:`);
-      console.log(`  Original word: ${DISPLAY_HEX_PREFIX ? '0x' : ''}${original.toString(16).padStart(4, '0')}`);
-      console.log(`  + moduleStart(${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.moduleStart.toString(16).padStart(4, '0')}) = ${DISPLAY_HEX_PREFIX ? '0x' : ''}${newVal.toString(16).padStart(4, '0')}`);
-
-      this.mca[ref.address] = newVal;
-    }
-  }
-
-  /**
-   * Print the final MCA after steps 2 and 3 for debugging.
-   */
-  printFinalMCA() {
-    console.log('\n-- Final MCA after all adjustments --');
-    this.printMCA();
-  }
-
-  /**
-   * Step 4: Write out the final "link.e" file. This includes:
-   *   - a single 'o' signature
-   *   - if we got an S entry, write 'S' plus the address
-   *   - for each G entry, write 'G' entries
-   *   - for each V entry, we write them as 'A' entries in the output file (since external references are resolved)
-   *   - for each A entry, we write 'A' entries
-   *   - a 'C' terminator
-   *   - all machine code words (the final code)
+   * Step 4: Create link.e file. The header is reconstructed as described:
+   *  'o' signature, S entry (if gotStart), G entries, V as A, A entries, then 'C', then code.
    */
   writeExecutable() {
     const outFileName = this.outputFileName;
@@ -550,16 +610,20 @@ class LinkerStepsPrinter {
       return;
     }
 
-    console.log('\n-- Step 4: Writing out the final link.e file --');
-    console.log(`Creating executable file ${outFileName}`);
+    // console.log(`Creating executable file ${outFileName}`);
 
-    // Write out file signature
+    // File signature
     fs.writeSync(outFd, 'o');
-    console.log("Wrote file signature 'o'");
+    // console.log("Wrote file signature 'o'");
+    console.log();
+    printThinLine();
 
-    // Write out S entry if applicable
+    console.log();
+    console.log("o");
+
+    // S entry if present
     if (this.gotStart) {
-      console.log(`S  ${DISPLAY_HEX_PREFIX ? '0x' : ''}${this.startAddress.toString(16).padStart(4, '0')}`);
+      console.log(`S  ${this.formatHex(this.startAddress,4)}`);
       const bufferS = Buffer.alloc(3);
       bufferS.write('S', 0);
       bufferS.writeUInt16LE(this.startAddress, 1);
@@ -567,64 +631,77 @@ class LinkerStepsPrinter {
     }
 
     // Write out G entries
-    for (const label of Object.keys(this.GTable)) {
-      let addr = this.GTable[label];
-      console.log(`G  ${DISPLAY_HEX_PREFIX ? '0x' : ''}${addr.toString(16).padStart(4, '0')}  ${label}`);
-      const bufferG = Buffer.alloc(3 + label.length + 1);
+    for (let g of this.GList) {
+      let addr = g.address;
+      console.log(`G  ${this.formatHex(addr,4)}  ${g.label}`);
+      const bufferG = Buffer.alloc(3 + g.label.length + 1);
       bufferG.write('G', 0);
       bufferG.writeUInt16LE(addr, 1);
-      bufferG.write(label, 3);
-      bufferG.writeUInt8(0, 3 + label.length);
+      bufferG.write(g.label, 3);
+      bufferG.writeUInt8(0, 3 + g.label.length);
       fs.writeSync(outFd, bufferG);
     }
 
-    // Write out V entries as A entries
-    for (let i = 0; i < this.VTable.length; i++) {
-      let ref = this.VTable[i];
-      console.log(`A  ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')}  (was V)`);
+    // V entries become A entries in the final output
+    for (let v of this.VTable) {
+      console.log(`A  ${this.formatHex(v.address,4)}  (was V)`);
       const bufferA = Buffer.alloc(3);
       bufferA.write('A', 0);
-      bufferA.writeUInt16LE(ref.address, 1);
+      bufferA.writeUInt16LE(v.address, 1);
       fs.writeSync(outFd, bufferA);
     }
 
-    // Write out A entries
-    for (let i = 0; i < this.ATable.length; i++) {
-      let ref = this.ATable[i];
-      console.log(`A  ${DISPLAY_HEX_PREFIX ? '0x' : ''}${ref.address.toString(16).padStart(4, '0')}`);
+    // A entries
+    for (let a of this.ATable) {
+      console.log(`A  ${this.formatHex(a.address,4)}`);
       const bufferA = Buffer.alloc(3);
       bufferA.write('A', 0);
-      bufferA.writeUInt16LE(ref.address, 1);
+      bufferA.writeUInt16LE(a.address, 1);
       fs.writeSync(outFd, bufferA);
     }
 
-    // Terminate header
-    console.log("C");
+    // Terminator
+    console.log("C\n");
     fs.writeSync(outFd, 'C');
 
-    // Write out the final machine code
+    // Write code
     const codeBuffer = Buffer.alloc(this.mcaIndex * 2);
+    let printString = "";
     for (let i = 0; i < this.mcaIndex; i++) {
-      codeBuffer.writeUInt16LE(this.mca[i], i * 2);
+      codeBuffer.writeUInt16LE(this.mca[i], i*2);
+      printString += this.mca[i].toString(16).padStart(4, '0');
+      if (i < this.mcaIndex - 1) {
+        printString += " ";
+      }
+      if( (i + 1) % 8 === 0 ) {
+        printString += "\n";
+      }
     }
     fs.writeSync(outFd, codeBuffer);
+    console.log(printString + "\n");
 
     fs.closeSync(outFd);
-    console.log(`\nSuccessfully wrote final executable to ${outFileName}`);
+    // console.log(`\nSuccessfully wrote final executable to ${outFileName}`);
   }
 
   /**
-   * Utility function: sets errorFlag and prints out a message
-   * @param {string} message 
+   * Utility: set errorFlag and print error message.
    */
   error(message) {
     console.error(`Linker Error: ${message}`);
     this.errorFlag = true;
   }
+
+  /**
+   * Utility: Format a number as hex with a certain width (e.g. 16-bit).
+   */
+  formatHex(num, width) {
+    return num.toString(16).toUpperCase().padStart(width, '0');
+  }
 }
 
 
-// Entry point if this script is called directly
+// Entry point if this script is run directly
 if (require.main === module) {
   const args = process.argv.slice(2);
   if (args.length < 1) {
