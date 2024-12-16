@@ -243,3 +243,6 @@
 
 - [ ] Negative number arguments to .zero directive, what happens?
 - [ ] What machine code does * turn into when assembled?
+- [ ] What exactly does the .org/.orig directive do and why?
+- [ ] What is the behavior of the `sext` mnemonic?
+- [ ] On what condition(s) exactly does a .a file get treated as an object module? Is it simply the presence of a .global or .extern directive, or is it something else?
