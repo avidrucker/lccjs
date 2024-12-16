@@ -22,8 +22,6 @@
 //   We also provide thorough commentary before each major step, explaining the formulas used
 //   and how references/definitions are labeled in the final "LABEL DEFS & REFS" column.
 //
-// Author: (Your Name)
-//
 
 const fs = require('fs');
 
@@ -72,7 +70,7 @@ class LinkerStepsPrinter {
     this.errorFlag = false;
 
     // Output file name
-    this.outputFileName = 'link.e';
+    this.outputFileName = 'link.e'; // default name 'link.e' can be overridden with -o flag
   }
 
   /**
