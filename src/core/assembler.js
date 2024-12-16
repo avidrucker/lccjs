@@ -1634,8 +1634,8 @@ class Assembler {
     return value;
   }
 
-  // function which simply returns the value if it is a number
-  // capped at 16 bits
+  // function which simply returns the value if it is a number.
+  // capped at 16 bits. Some instructions do not check for out of bounds numbers.
   evaluateImmediateNaive(valueStr) {
     let value = this.parseNumber(valueStr);
     if (isNaN(value)) {
