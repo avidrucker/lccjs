@@ -1,0 +1,247 @@
+command: `node ./src/extra/linkerStepsPrinter.js ./demos/startup.o ./demos/m1.o ./demos/m2.o -o ./demos/cheese2.e`
+
+LinkerStepsPrinter: Linking files -> ./demos/startup.o, ./demos/m1.o, ./demos/m2.o
+
+
+STEP 1: Parse Object Modules and Build Tables
+
+    * Reading object modules and building tables.
+    * For each object module, we parse the header and machine code,
+    * store them in the mca, and record definitions/references in our tables.
+
+State after reading module ./demos/startup.o:
+--------------------------------------------------
+Start Address (S): 0000 **newly added**
+
+E Table (11-bit external references) {address, label}
+  0000 main **newly added**
+--------------------------------------------------
+
+Current Machine Code Array (mca):
+==================================================
+  LOC    MCA    LABEL DEFS & REFS
+--------------------------------------------------
+| 0000 : 4800 | main referenced **newly added**
+| 0001 : F000 | 
+==================================================
+
+State after reading module ./demos/m1.o:
+--------------------------------------------------
+Start Address (S): 0000
+
+G Table (Global definitions) {address, label}
+  0002 main **newly added**
+  000A i **newly added**
+  000B j **newly added**
+
+E Table (11-bit external references) {address, label}
+  0000 main
+  0005 sub **newly added**
+--------------------------------------------------
+
+Current Machine Code Array (mca):
+==================================================
+  LOC    MCA    LABEL DEFS & REFS
+--------------------------------------------------
+| 0000 : 4800 | main referenced
+| 0001 : F000 | 
+--------------------------------------------------
+| 0002 : AE00 | main defined **newly added**
+| 0003 : AA00 | 
+| 0004 : AB8C | 
+| 0005 : 4800 | sub referenced **newly added**
+| 0006 : AD4C | 
+| 0007 : AA01 | 
+| 0008 : AE01 | 
+| 0009 : C1C0 | 
+| 000A : 0005 | i defined **newly added**
+| 000B : 0007 | j defined **newly added**
+==================================================
+
+State after reading module ./demos/m2.o:
+--------------------------------------------------
+Start Address (S): 0000
+
+G Table (Global definitions) {address, label}
+  0002 main
+  000A i
+  000B j
+  000C sub **newly added**
+
+E Table (11-bit external references) {address, label}
+  0000 main
+  0005 sub
+
+e Table (9-bit external references) {address, label}
+  000F i **newly added**
+
+V Table (full 16-bit external references) {address, label}
+  001C j **newly added**
+
+A Table (local references) {localAddress, moduleStart}
+  001D 000C **newly added**
+--------------------------------------------------
+
+Current Machine Code Array (mca):
+==================================================
+  LOC    MCA    LABEL DEFS & REFS
+--------------------------------------------------
+| 0000 : 4800 | main referenced
+| 0001 : F000 | 
+--------------------------------------------------
+| 0002 : AE00 | main defined
+| 0003 : AA00 | 
+| 0004 : AB8C | 
+| 0005 : 4800 | sub referenced
+| 0006 : AD4C | 
+| 0007 : AA01 | 
+| 0008 : AE01 | 
+| 0009 : C1C0 | 
+| 000A : 0005 | i defined
+| 000B : 0007 | j defined
+--------------------------------------------------
+| 000C : AE00 | sub defined **newly added**
+| 000D : AA00 | 
+| 000E : AB8C | 
+| 000F : 2000 | i referenced **newly added**
+| 0010 : 220B | 
+| 0011 : 6240 | 
+| 0012 : 1001 | 
+| 0013 : 2209 | 
+| 0014 : 6240 | 
+| 0015 : 1001 | 
+| 0016 : F002 | 
+| 0017 : F001 | 
+| 0018 : AD4C | 
+| 0019 : AA01 | 
+| 001A : AE01 | 
+| 001B : C1C0 | 
+| 001C : 0000 | j referenced **newly added**
+| 001D : 0012 | local reference **newly added**
+| 001E : 000B | 
+==================================================
+
+
+STEP 2: External References Resolution (E, e, V)
+
+    * External reference resolution.
+    * Explanation: We look up each external reference (E, e, V) in the global definitions (G).
+    * If found, we adjust the machine code words accordingly using the formulas:
+    *
+    *  - E table (11-bit PC-relative): mca[addr] = (mca[addr] & 0xf800) | ((mca[addr] + G - addr - 1) & 0x7ff)
+    *  - e table (9-bit PC-relative):  mca[addr] = (mca[addr] & 0xfe00) | ((mca[addr] + G - addr - 1) & 0x1ff)
+    *  - V table (full address add):   mca[addr] = mca[addr] + G
+    *
+    * where G is the global label address from the G table, and "addr" is the location of
+    * the external reference in the machine code.
+
+Adjusting address 0000 (11-bit reference to 'main')
+  word pre-adjustment: 4800
+  offset = global address + (old offset - 1)
+  offset = 0002 + (0000 - 0001)
+  offset = 0001
+  adjusted word = word pre-adjustment + offset (in 11 bits)
+  adjusted word = 4800 + 0001
+  adjusted word = 4801
+
+Adjusting address 0005 (11-bit reference to 'sub')
+  word pre-adjustment: 4800
+  offset = global address + (old offset - 1)
+  offset = 000C + (0000 - 0001)
+  offset = 000B
+  adjusted word = word pre-adjustment + offset (in 11 bits)
+  adjusted word = 4800 + 000B
+  adjusted word = 480B
+
+Adjusting address 000F (9-bit reference to 'i')
+  word pre-adjustment: 2000
+  offset = global address + (old offset - 1)
+  offset = 000A + (0000 - 0001)
+  offset = 0009
+  adjusted word = word pre-adjustment + offset (in 9 bits)
+  adjusted word = 2000 + 0009
+  adjusted word = 2009
+
+Adjusting address 001C (full 16-bit reference to 'j')
+  word pre-adjustment: 0000
+  adjusted word = word pre-adjustment + global address
+  adjusted word = 0000 + 000B
+  adjusted word = 000B
+
+
+STEP 3: Adjust Local References
+
+    * Each A entry has { address, moduleStart }. We add moduleStart
+    * to the word at 'address' in the mca, again showing arithmetic step-by-step.
+
+Adjusting address 001D (local reference)
+  word pre-adjustment: 0012
+  adjusted word = word pre-adjustment + module start
+  adjusted word = 0012 + 000C
+  adjusted word = 001E
+
+=== Final Machine Code Array (mca) After All Adjustments ===
+| 0000 : 4801 | main referenced
+| 0001 : F000 | 
+--------------------------------------------------
+| 0002 : AE00 | main defined
+| 0003 : AA00 | 
+| 0004 : AB8C | 
+| 0005 : 480B | sub referenced
+| 0006 : AD4C | 
+| 0007 : AA01 | 
+| 0008 : AE01 | 
+| 0009 : C1C0 | 
+| 000A : 0005 | i defined
+| 000B : 0007 | j defined
+--------------------------------------------------
+| 000C : AE00 | sub defined
+| 000D : AA00 | 
+| 000E : AB8C | 
+| 000F : 2009 | i referenced
+| 0010 : 220B | 
+| 0011 : 6240 | 
+| 0012 : 1001 | 
+| 0013 : 2209 | 
+| 0014 : 6240 | 
+| 0015 : 1001 | 
+| 0016 : F002 | 
+| 0017 : F001 | 
+| 0018 : AD4C | 
+| 0019 : AA01 | 
+| 001A : AE01 | 
+| 001B : C1C0 | 
+| 001C : 000B | j referenced
+| 001D : 001E | local reference
+| 001E : 000B | 
+==================================================
+
+
+STEP 4: Creating the Final Executable (link.e)
+
+     * Writing out the final "link.e" file.
+     * Explanation: We reconstruct a header with
+     *   - 'o' signature
+     *   - S entry if it exists
+     *   - G entries
+     *   - the V entries become A entries in the output
+     *   - A entries
+     *   - 'C' terminator
+     * followed by the machine code.
+--------------------------------------------------
+
+o
+S  0000
+G  0002  main
+G  000A  i
+G  000B  j
+G  000C  sub
+A  001C  (was V)
+A  001D
+C
+
+4801 F000 AE00 AA00 AB8C 480B AD4C AA01 
+AE01 C1C0 0005 0007 AE00 AA00 AB8C 2009 
+220B 6240 1001 2209 6240 1001 F002 F001 
+AD4C AA01 AE01 C1C0 000B 001E 000B
+
