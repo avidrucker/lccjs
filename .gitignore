@@ -1,3 +1,4 @@
+node_modules/
 test/a1test*
 test/a2test*
 test/*.e
