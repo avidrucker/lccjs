@@ -31,7 +31,7 @@ function getCachedFilePaths(inputFilePath, options = {}) {
 function isCacheValid(inputFilePath, options = {}) {
   const { cachedInputFile, cachedOutputFile } = getCachedFilePaths(inputFilePath, options);
 
-  if (!fs.existsSync(cachedInputFile) || !fs.existsSync(cachedOutputFile)) {
+  if (!fs.existsSync(cachedInputFile) || !fs.existsSync(cachedOutputFile) || !fs.existsSync(inputFilePath)) {
     return false;
   }
 
