@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "test": "jest --verbose --runInBand --silent"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
