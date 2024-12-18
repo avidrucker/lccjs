@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // linker.js
 // LCC.js Linker
 
@@ -21,14 +22,44 @@ class Linker {
     this.outputFileName = null; // Output file name
   }
 
+  main(args) {
+    args = args || process.argv.slice(2);
+
+    if (args.length < 1) {
+      console.error('Usage: node linker.js [-o outputfile.e] <object module 1> <object module 2> ...');
+      process.exit(1);
+    }
+
+    let i = 0;
+    while (i < args.length) {
+      if (args[i] === '-o') {
+        if (i + 1 >= args.length) {
+          console.error('Missing output file name after -o');
+          process.exit(1);
+        }
+        this.outputFileName = args[i + 1];
+        i += 2;
+      } else {
+        this.inputFiles.push(args[i]);
+        i++;
+      }
+    }
+
+    if (this.inputFiles.length === 0) {
+      console.error('Error: No input object modules specified');
+      process.exit(1);
+    }
+
+    this.link(this.inputFiles, this.outputFileName);
+  }
+
   // Method to read object modules from files
   readObjectModule(filename) {
     const buffer = fs.readFileSync(filename);
     let offset = 0;
 
-    // Check file signature
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      error(`${filename} not a linkable file`); // invalid .o object file
+      this.error(`${filename} not a linkable file`);
       return;
     }
 
@@ -113,7 +144,6 @@ class Linker {
       this.readObjectModule(filename);
       if (this.errorFlag) {
         // If invalid file or read error encountered, stop immediately
-        // console.error('Errors encountered during linking: reading object module.');
         return null;
       }
       console.log(`Linking ${filename}`);
@@ -123,7 +153,6 @@ class Linker {
     for (let module of this.objectModules) {
       this.processModule(module);
       if (this.errorFlag) {
-        // console.error('Errors encountered during linking: processing module');
         return null;
       }
     }
@@ -304,41 +333,8 @@ class Linker {
 }
 
 if (require.main === module) {
-  // Collect command-line arguments
-  const args = process.argv.slice(2);
-  if (args.length < 1) {
-    console.error('Usage: node linker.js [-o outputfile.e] <object module 1> <object module 2> ...');
-    process.exit(1);
-  }
-
-  let outputFileName = null;
-  const inputFiles = [];
-
-  let i = 0;
-  while (i < args.length) {
-    if (args[i] === '-o') {
-      if (i + 1 >= args.length) {
-        // individual linking output should occur, but the final
-        // link.e file should not be created in this scenario
-        console.error('Missing output file name'); // -o flag requires an output file name
-        process.exit(1);
-      }
-      outputFileName = args[i + 1];
-      i += 2;
-    } else {
-      inputFiles.push(args[i]);
-      i++;
-    }
-  }
-
-  if (inputFiles.length === 0) {
-    console.error('Error: No input object modules specified');
-    process.exit(1);
-  }
-
   const linker = new Linker();
-  linker.link(inputFiles, outputFileName);
+  linker.main();
 }
 
 module.exports = Linker;
-  
