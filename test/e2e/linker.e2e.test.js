@@ -7,7 +7,7 @@
  * - Run the custom linker to produce .e output.
  * - If .e not cached or differs, run Docker LCC linker to produce reference .e and compare.
  * - If identical, update cache and pass; otherwise fail.
- * - Docker container is started once if needed before any test requiring it, and stopped after all tests.
+ * - Docker container is started only if needed for that test before linking or assembly, and stopped after all tests.
  * - `name.nnn` is managed similarly as in assembler/interpreter tests.
  */
 
@@ -43,8 +43,6 @@ const execSyncOptions = {
 };
 
 // Example test cases
-// { oFiles: [], userInputs: [], comment: '' }
-// userInputs could represent linker flags like ['-o', 'myoutput.e'] or other arguments.
 const testCases = [
   {
     oFiles: ['./demos/startup.o', './demos/m1.o', './demos/m2.o'],
@@ -78,68 +76,6 @@ function execSyncWithLogging(command) {
   }
 }
 
-function isFileExists(filePath) {
-  return fs.existsSync(filePath);
-}
-
-function isFileSizeValid(filePath) {
-  const stat = fs.statSync(filePath);
-  return stat.size <= MAX_FILE_SIZE;
-}
-
-// Determine if Docker is needed for any test
-function needsDockerForAnyTest(testCases) {
-  for (const testCase of testCases) {
-    if (!isAllCachedAndValid(testCase)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Check if all .a -> .o -> .e paths are cached and valid for a given testCase.
- * If everything is cached and unchanged, no Docker needed for that test.
- */
-function isAllCachedAndValid({ oFiles, userInputs }) {
-  // Given oFiles, derive aFiles
-  const aFiles = oFiles.map(o => o.replace('.o', '.a'));
-  
-  let allCached = true;
-
-  // Check .a and corresponding .o
-  for (let i = 0; i < aFiles.length; i++) {
-    const aFile = aFiles[i];
-    const oFile = oFiles[i];
-
-    // .a must match cached input to confirm no re-assembly needed
-    if (!isCacheValid(aFile, { ...cacheOptions, outputExt: '.o' })) {
-      allCached = false;
-      break;
-    }
-
-    // Check if corresponding .o matches cache
-    const cachedOFile = getCachedFilePath(oFile, LINKER_CACHE_DIR);
-    if (!fs.existsSync(oFile) || !fs.existsSync(cachedOFile) || !compareHexDumps(oFile, cachedOFile)) {
-      allCached = false;
-      break;
-    }
-  }
-
-  // Check .e
-  const outputFile = getDefaultEFileName(oFiles, userInputs);
-  if (!isCacheValid(outputFile, cacheOptions)) {
-    // This checks if cached input and output are correct, but since output is .e
-    // we must also check if local .e matches cache if it exists
-    const { cachedOutputFile } = getCachedFilePaths(outputFile, cacheOptions);
-    if (!fs.existsSync(outputFile) || !fs.existsSync(cachedOutputFile) || !compareHexDumps(outputFile, cachedOutputFile)) {
-      allCached = false;
-    }
-  }
-
-  return allCached;
-}
-
 function getDefaultEFileName(oFiles, userInputs) {
   // If userInputs include an '-o someFile.e', use that
   const oIndex = userInputs.indexOf('-o');
@@ -164,6 +100,64 @@ async function assembleWithDockerLCC(aFile, oFile, containerName) {
 
   // Clean up inside Docker
   execSyncWithLogging(`docker exec ${containerName} rm -f /home/${aFileName} /home/${oFileName}`);
+}
+
+const assemblyCacheOptions = {
+  cacheDir: LINKER_CACHE_DIR,
+  inputExt: '.a',
+  outputExt: '.o',
+};
+
+const linkCacheOptions = {
+  cacheDir: LINKER_CACHE_DIR,
+  inputExt: '.o',
+  outputExt: '.e',
+};
+
+/**
+ * Check if all .a -> .o -> .e paths are cached and valid for a given testCase.
+ * If everything is cached and unchanged, no Docker needed for that test.
+ */
+function isAllCachedAndValid({ oFiles, userInputs }) {
+  const aFiles = oFiles.map(o => o.replace('.o', '.a'));
+
+  let allCached = true;
+
+  // Check each .a -> .o
+  for (let i = 0; i < aFiles.length; i++) {
+    const aFile = aFiles[i];
+    const oFile = oFiles[i];
+
+    // Check if aFile -> oFile is cached and valid
+    if (!isCacheValid(aFile, assemblyCacheOptions)) {
+      allCached = false;
+      break;
+    }
+
+    const cachedOFile = getCachedFilePath(oFile, LINKER_CACHE_DIR);
+    if (!fs.existsSync(oFile) || !fs.existsSync(cachedOFile) || !compareHexDumps(oFile, cachedOFile)) {
+      allCached = false;
+      break;
+    }
+  }
+
+  // Check the final .e file
+  const outputFile = getDefaultEFileName(oFiles, userInputs);
+  const representativeOFile = oFiles[0]; // Use the first .o file for linking cache key
+
+  // Check if the linking result is cached
+  if (!isCacheValid(representativeOFile, linkCacheOptions)) {
+    // Not cached at all
+    allCached = false;
+  } else {
+    // Check if local output matches cached output
+    const { cachedOutputFile } = getCachedFilePaths(representativeOFile, linkCacheOptions);
+    if (!fs.existsSync(outputFile) || !fs.existsSync(cachedOutputFile) || !compareHexDumps(outputFile, cachedOutputFile)) {
+      allCached = false;
+    }
+  }
+
+  return allCached;
 }
 
 /**
@@ -199,140 +193,123 @@ function runDockerLCCForLink(oFiles, outputFile, containerName) {
 }
 
 async function runLinkerTestCase({ oFiles, userInputs, comment }) {
-  // Derive .a files from .o files
   const aFiles = oFiles.map(o => o.replace('.o', '.a'));
   const outputFile = getDefaultEFileName(oFiles, userInputs);
+  const representativeOFile = oFiles[0];
 
-  let dockerNeeded = false;
-
-  // Check if we need to assemble .o files from .a
-  for (let i = 0; i < aFiles.length; i++) {
-    const aFile = aFiles[i];
-    const oFile = oFiles[i];
-
-    // Check if aFile matches cache
-    if (!isCacheValid(aFile, { ...cacheOptions, outputExt: '.o' })) {
-      dockerNeeded = true;
-    } else {
-      // aFile cached correctly, check .o file
-      const cachedOFile = getCachedFilePath(oFile, LINKER_CACHE_DIR);
-      if (!fs.existsSync(oFile) || !fs.existsSync(cachedOFile) || !compareHexDumps(oFile, cachedOFile)) {
-        dockerNeeded = true;
-      }
-    }
-  }
-
-  // Check if linking needed
-  // If outputFile not cached or differs, we need docker LCC reference after linking
-  if (!isCacheValid(outputFile, cacheOptions)) {
-    dockerNeeded = true;
-  } else {
-    const { cachedOutputFile } = getCachedFilePaths(outputFile, cacheOptions);
-    if (!fs.existsSync(outputFile) || !fs.existsSync(cachedOutputFile) || !compareHexDumps(outputFile, cachedOutputFile)) {
-      dockerNeeded = true;
-    }
-  }
-
-  // If we need docker and it's not running, start it
-  if (dockerNeeded && !dockerController.isContainerRunning()) {
-    dockerController.startContainer();
-    // Copy name.nnn once
-    const nameFile = path.join(__dirname, '../../demos/name.nnn');
-    fs.writeFileSync(nameFile, 'Billy, Bob J\n');
-    execSyncWithLogging(`docker cp ${nameFile} ${containerName}:/home/`);
-  }
-
-  // Reassemble as needed
-  for (let i = 0; i < aFiles.length; i++) {
-    const aFile = aFiles[i];
-    const oFile = oFiles[i];
-    const cachedOFile = getCachedFilePath(oFile, LINKER_CACHE_DIR);
-
-    let assembleNeeded = false;
-    if (!isCacheValid(aFile, { ...cacheOptions, outputExt: '.o' })) {
-      assembleNeeded = true;
-    } else if (!fs.existsSync(oFile) || !fs.existsSync(cachedOFile) || !compareHexDumps(oFile, cachedOFile)) {
-      assembleNeeded = true;
-    }
-
-    if (assembleNeeded) {
-      if (!dockerNeeded) {
-        throw new Error(`Assembly needed for ${oFile} but Docker not available.`);
-      }
-      await assembleWithDockerLCC(aFile, oFile, containerName);
-      updateCacheSingular(aFile, LINKER_CACHE_DIR);
-      updateCacheSingular(oFile, LINKER_CACHE_DIR);
-    }
-  }
-
-  // Now run linker locally
+  // 1. Run local linker first to produce the local .e
   const linker = new Linker();
-  // We assume userInputs can contain flags like '-o output.e', etc.
-  // Extract output file from userInputs if specified
   let linkArgs = [...userInputs, ...oFiles];
-  console.log("linkArgs: ", linkArgs);
   linker.main(linkArgs);
 
   if (!fs.existsSync(outputFile)) {
     throw new Error(`Local linker did not produce output file: ${outputFile}`);
   }
 
-  if (isCacheValid(outputFile, cacheOptions)) {
-    // Compare local output to cached output
-    const { cachedOutputFile } = getCachedFilePaths(outputFile, cacheOptions);
-    const identical = compareHexDumps(outputFile, cachedOutputFile);
-    expect(identical).toBe(true);
+  // 2. Check if all caches (.o and .e) are valid and if local .e matches cached .e
+  if (isAllCachedAndValid({ oFiles, userInputs })) {
+    // Everything matches the cache, no Docker needed, no cache update needed
     return; // Test passes
   }
 
-  // Cache invalid or difference found => run Docker LCC to get reference
-  if (!dockerNeeded) {
-    throw new Error(`Linker test requires Docker but it's not needed? Unexpected scenario.`);
+  // 3. If we reach here, some cache is missing/invalid or .e differs from cached .e.
+  //    We may need Docker to reassemble .o files. Determine if .o files need reassembly.
+  let oNeedsDocker = false;
+  for (let i = 0; i < aFiles.length; i++) {
+    const aFile = aFiles[i];
+    const oFile = oFiles[i];
+    const cachedOFile = getCachedFilePath(oFile, LINKER_CACHE_DIR);
+
+    if (!isCacheValid(aFile, assemblyCacheOptions) ||
+        !fs.existsSync(oFile) ||
+        !fs.existsSync(cachedOFile) ||
+        !compareHexDumps(oFile, cachedOFile)) {
+      oNeedsDocker = true;
+      break;
+    }
   }
 
-  const dockerEFile = runDockerLCCForLink(oFiles, outputFile, containerName);
-  const identical = compareHexDumps(outputFile, dockerEFile);
-  expect(identical).toBe(true);
-  if (identical) {
-    // Update cache for aFiles -> oFiles and outputFile -> dockerEFile
-    for (const aFile of aFiles) {
-      if (!isCacheValid(aFile, { ...cacheOptions, outputExt: '.o' })) {
-        // If needed, re-cache
-        updateCache(aFile, aFile.replace('.a', '.o'), { ...cacheOptions, outputExt: '.o' });
+  // 4. Check if `.e` cache is valid and local .e matches cached .e
+  //    If not valid or differ, we might need Docker for linking as well.
+  let eNeedsDocker = false;
+  if (!isCacheValid(representativeOFile, linkCacheOptions)) {
+    eNeedsDocker = true;
+  } else {
+    const { cachedOutputFile } = getCachedFilePaths(representativeOFile, linkCacheOptions);
+    if (!fs.existsSync(cachedOutputFile) || !compareHexDumps(outputFile, cachedOutputFile)) {
+      eNeedsDocker = true;
+    }
+  }
+
+  // If we need Docker at all (for .o or .e), ensure the Docker container is running
+  if ((oNeedsDocker || eNeedsDocker) && !dockerController.isContainerRunning()) {
+    dockerController.startContainer();
+    const nameFile = path.join(__dirname, '../../demos/name.nnn');
+    fs.writeFileSync(nameFile, 'Billy, Bob J\n');
+    execSyncWithLogging(`docker cp ${nameFile} ${containerName}:/home/`);
+  }
+
+  // 5. Re-assemble .o files if needed
+  if (oNeedsDocker) {
+    for (let i = 0; i < aFiles.length; i++) {
+      const aFile = aFiles[i];
+      const oFile = oFiles[i];
+      const cachedOFile = getCachedFilePath(oFile, LINKER_CACHE_DIR);
+
+      if (!isCacheValid(aFile, assemblyCacheOptions) ||
+          !fs.existsSync(oFile) ||
+          !fs.existsSync(cachedOFile) ||
+          !compareHexDumps(oFile, cachedOFile)) {
+        await assembleWithDockerLCC(aFile, oFile, containerName);
+        // Update .o cache
+        updateCache(aFile, oFile, assemblyCacheOptions);
       }
     }
 
-    updateCache(outputFile, dockerEFile, cacheOptions);
+    // After updating .o files, re-run local linker to get updated .e
+    linker.main(linkArgs);
+    if (!fs.existsSync(outputFile)) {
+      throw new Error(`Local linker did not produce output file after reassembling .o files: ${outputFile}`);
+    }
+
+    // Now check if re-linking fixed the issue:
+    if (isCacheValid(representativeOFile, linkCacheOptions)) {
+      const { cachedOutputFile } = getCachedFilePaths(representativeOFile, linkCacheOptions);
+      if (fs.existsSync(cachedOutputFile) && compareHexDumps(outputFile, cachedOutputFile)) {
+        // Now local .e matches cached .e, no Docker linking needed
+        return; // Test passes
+      }
+    }
+  }
+
+  // 6. If we still need Docker for linking (e.g., .e mismatch or no cache)
+  if (eNeedsDocker) {
+    const dockerEFile = runDockerLCCForLink(oFiles, outputFile, containerName);
+    const identical = compareHexDumps(outputFile, dockerEFile);
+
+    // Expect them to be identical (test passes if so)
+    expect(identical).toBe(true);
+
+    if (identical) {
+      // Update the .e cache with the Docker reference
+      updateCacheSingular(dockerEFile, LINKER_CACHE_DIR);
+    }
   }
 }
 
 describe('Linker E2E Tests', () => {
-  let dockerStarted = false;
-  const dockerNeeded = needsDockerForAnyTest(testCases);
-
+  // Removed global dockerNeeded logic and starting Docker in beforeAll
+  
   beforeAll(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'info').mockImplementation(() => {});
     jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
-
-    if (dockerNeeded) {
-      if (!dockerController.isDockerAvailable()) {
-        console.error('Docker not available. Tests requiring Docker may fail.');
-      } else {
-        dockerController.startContainer();
-        dockerStarted = true;
-        // Copy name.nnn
-        const nameFile = path.join(__dirname, '../../demos/name.nnn');
-        fs.writeFileSync(nameFile, 'Billy, Bob J\n');
-        execSyncWithLogging(`docker cp ${nameFile} ${containerName}:/home/`);
-      }
-    }
   }, 60000);
 
   afterAll(() => {
-    if (dockerStarted) {
+    if (dockerController.isContainerRunning()) {
       dockerController.stopContainer();
     }
 
