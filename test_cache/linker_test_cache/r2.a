@@ -1,4 +1,0 @@
-    .extern f 
-    .start main
-main: bl f 
-      halt

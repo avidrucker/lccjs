@@ -1,6 +1,0 @@
-; s1.a
-    .extern x ; import x from another file
-    ld r0, x
-    dout r0
-    nl
-    halt

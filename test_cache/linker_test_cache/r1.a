@@ -1,7 +1,0 @@
-    .global x
-g:  ld r1, y
-    br h 
-h:  nl
-    ret 
-y:  .word 7
-x:  .word 9

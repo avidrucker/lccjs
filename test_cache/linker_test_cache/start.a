@@ -1,6 +1,0 @@
-    .global f 
-    .extern x
-f:  ld r0, x
-    dout r0
-    nl
-    ret
