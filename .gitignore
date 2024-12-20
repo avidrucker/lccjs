@@ -8,6 +8,7 @@ test/*.o
 demos/*.o
 src/*.o
 *.bst
+*.hex
 test/*.lst
 demos/*.lst
 src/*.lst
