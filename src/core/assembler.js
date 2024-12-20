@@ -153,8 +153,10 @@ class Assembler {
       process.exit(1);
     }
 
+    const extension = path.extname(this.inputFileName).toLowerCase();
+
     // If the file ends in ".bin", parse it as raw binary instead of doing normal assembly
-    if (path.extname(this.inputFileName).toLowerCase() === '.bin') {
+    if (extension === '.bin') {
       // Note: The original LCC does not print any message for assemnbling a .bin file ...
       // ... I'm going to say this should be here to provide user feedback & good UX
       console.log(`Assembling ${this.inputFileName} ...`);
@@ -165,6 +167,11 @@ class Assembler {
       // Now write the output as a .e file
       this.writeOutputFile();
       
+    } else if (extension === '.hex') {
+      console.log(`Assembling ${this.inputFileName} ...`);
+      this.parseHexFile();
+      this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
+      this.writeOutputFile();
     } else {
 
       // If not a .bin, proceed with normal two-pass assembly...
@@ -514,7 +521,73 @@ class Assembler {
     }
   }
 
-  //// 
+  parseHexFile() {
+    this.outputBuffer = [];
+    this.locCtr = 0;
+    this.loadPoint = 0;
+    for (let lineNum = 0; lineNum < this.sourceLines.length; lineNum++) {
+      this.lineNum++;
+      let line = this.sourceLines[lineNum];
+      this.currentLine = line; // For error messages
+
+      const listingEntry = {
+        lineNum: this.lineNum,
+        locCtr: this.locCtr,
+        sourceLine: line,
+        macWord: '',
+        comment: ''
+      }
+
+      // Extract the comment substring (everything after ';'), if any
+      let comment = '';
+      let semicolonIndex = line.indexOf(';');
+      if (semicolonIndex !== -1) {
+        // everything after ';'
+        comment = line.substring(semicolonIndex + 1).trim();
+      }
+      // Store the comment in the listing entry
+      listingEntry.comment = comment;
+
+      // Remove everything after semicolon
+      if (line.indexOf(';') !== -1) {
+        line = line.substring(0, line.indexOf(';'));
+      }
+      // Trim and remove all internal spaces
+      line = line.trim().replace(/\s+/g, '');
+      if (line.length === 0) {
+        continue; // empty or comment-only line
+      }
+  
+      // Now we should have a 16-bit hexadecimal string
+      // For example: "4B1F"
+      if (!/^[0-9A-Fa-f]+$/.test(line)) {
+        console.error(`Error: line ${lineNum+1} in .hex file is not purely hexadecimal: "${line}"`);
+        process.exit(1);
+      }
+      if (line.length !== 4) {
+        console.error(`Error: line ${lineNum+1} in .hex file does not have exactly 4 nibbles: "${line}"`);
+        process.exit(1);
+      }
+  
+      // Convert the binary string to a number
+      let wordValue = parseInt(line, 16);
+  
+      // Push the parsed word into outputBuffer
+      this.outputBuffer.push(wordValue & 0xFFFF);
+      this.locCtr++;
+
+      // Store the machine word in the listing entry
+      listingEntry.macWord = wordValue;
+
+      // Store the listing entry
+      this.listing.push(listingEntry);
+    }
+  
+    // If you want a "startAddress = 0" by default, do that here
+    this.startAddress = 0;     // or your choice
+    this.startLabel = null;    // No .start directive in raw hex files
+  }
+
   parseBinFile() {
     this.outputBuffer = [];     // Prepare output buffer
     this.locCtr = 0;

@@ -86,8 +86,6 @@ class LCC {
     const ext = path.extname(infile).toLowerCase();
     switch (ext) {
       case '.hex':
-        console.log('Hex files are not yet fully supported.');
-        break;
       case '.bin':
         this.assembleFile();
         this.executeFile(false, true); 
