@@ -2,6 +2,7 @@
 
 ## Project QoL, Documentation, and Maintenance
 - [ ] update this TODOS.md file to be more clear, concise, easy to read, etc.
+- [ ] add md file to describe scripts folder (former battery of tests)
 - [x] put assembleAll.js into utils folder
 - [x] add creation of name.nnn to assembleAll.js before calling assembler.js
 - [x] update README.md to include a more detailed description of the project (including linker.js), its various goals, and its current status (progress, test suite coverage, etc.)
@@ -61,7 +62,7 @@
 - [x] implement assembly of .bin files
   - [x] implement .e file creation from .bin files
   - [x] implement .lst file creation from .bin files when using lcc.js to assemble and interpret all at once
-- [ ] implement assembly of .hex files
+- [x] implement assembly of .hex files
 - [ ] implement command line arguments for lcc.js (-d (symbolic debugger mode), -m (memory dump at end), -r (register dump at end), -t (instruction trace on), -f, -x, -o, -h, -l<loadpt>) "As a programmer, I can use command-line options to control the assembler and interpreter's behavior."
 - [x] implement linker: "As a programmer, I can link multiple object files (.o files) into a single executable, so that I can build larger programs from separate modules."
   - [x] implement linker directives: "As a programmer, I can use .global and .extern directives to define and reference global and external symbols, so that I can share symbols between modules."
