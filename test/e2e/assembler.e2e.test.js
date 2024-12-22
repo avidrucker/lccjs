@@ -9,6 +9,23 @@
  * - If cache is invalid, it runs the assembler and then runs the LCC assembler in Docker to compare outputs.
  * - Docker container is started once if needed (if any test requires it), and stopped after all tests.
  * - Each test corresponds to a different input .a file and optional user inputs.
+ * 
+ * Test cases are based on the original assemblerBattery.script.js test cases.
+ * 
+ * To run these tests as-is, Docker does not need to be installed and running.
+ * However, to add new tests, or to modify test inputs and generate new valid cache,
+ * Docker (or a local LCC, version 63+ recommended) is needed to run the LCC assembler 
+ * and generate reference outputs or "snapshots".
+ * 
+ * These tests are considered "end-to-end" because they test the entire assembler pipeline
+ * from input .a file to final .e output. These tests currently only test "happy path"
+ * scenarios and do not test edge cases or error handling - those tests are currently
+ * handled in the integration test suite.
+ * 
+ * Note: assembler.js, as a sub-module of lcc.js, does not call the interpreter, so,
+ * 1-to-1 comparison with LCC output focuses on the output .e file only (not the .lst file).
+ * 
+ * Note: The intention is that these tests will eventually be run in a CI/CD pipeline.
  */
 
 const path = require('path');
