@@ -183,7 +183,7 @@ class Assembler {
       this.writeOutputFile();
       
     } else if (extension === '.hex') {
-      console.log(`Assembling ${this.inputFileName} ...`);
+      console.log(`Assembling ${this.inputFileName}`);
       this.parseHexFile();
       this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
       this.writeOutputFile();
@@ -207,7 +207,7 @@ class Assembler {
 
       if(this.locCtr === 0) {
         console.error('Empty file');
-        fatalExit('No instructions or data found in source file', 0);
+        fatalExit('Empty file', 0); // No instructions or data found in source file
       }
 
       if (this.errorFlag) {
@@ -408,6 +408,10 @@ class Assembler {
     return path.format({ ...parsedPath, base: undefined, ext: extension });
   }
 
+  isValidLabelDef(tokens, originalLine) {
+    return (tokens[0].endsWith(':') || !this.isWhitespace(originalLine[0]));
+  }
+
   /*
   * performPass currently handles multiple responsibilities:
   * - Reading lines from the source file.
@@ -476,9 +480,15 @@ class Assembler {
       let mnemonic = null;
       let operands = [];
 
+      // console.log("Tokens: ", tokens);
+
       // Check if line starts with a label
-      if (!this.isWhitespace(originalLine[0])) {
+      if (tokens.length > 0 && this.isValidLabelDef(tokens, originalLine)) {
+        // Remove the trailing colon from the label if the colon exists
         label = tokens.shift();
+        if(label.endsWith(':')) {
+          label = label.slice(0, -1); 
+        }
         if (this.pass === 1) {
           if (this.labels.has(label)) {
             this.error(`Duplicate label: ${label}`);
@@ -601,10 +611,11 @@ class Assembler {
       this.listing.push(listingEntry);
     }
 
-    // Note: This is custom LCC.js behavior in 12/2024 (does not match official LCC)
+    // Note: Reporting an empty hex file is custom LCC.js behavior in 12/2024
+    //       (this does not match current official LCC behavior)
     if (this.locCtr === 0) {
       console.error('Empty file');
-      fatalExit('No instructions or data found in source file', 0);
+      fatalExit('Empty file', 0); // No instructions or data found in source file
     }
   
     // If you want a "startAddress = 0" by default, do that here
@@ -674,10 +685,11 @@ class Assembler {
       this.listing.push(listingEntry);
     }
 
-    // Note: This is custom LCC.js behavior in 12/2024 (does not match official LCC)
+    // Note: The reporting of an empty bin file is custom LCC.js behavior in 12/2024
+    //       (it does not currently match official LCC behavior)
     if (this.locCtr === 0) {
       console.error('Empty file');
-      fatalExit('No instructions or data found in source file', 0);
+      fatalExit('Empty file', 0); // No instructions or data found in source file
     }
   
     // If you want a "startAddress = 0" by default, do that here
@@ -686,6 +698,7 @@ class Assembler {
   } 
 
   tokenizeLine(line) {
+    // console.log("Tokenizing line: ", line);
     let tokens = [];
     let currentToken = '';
     let inString = false;
@@ -716,6 +729,10 @@ class Assembler {
         }
       } else if (char === ':') {
         if (currentToken !== '') {
+          // tokens.push(currentToken);
+          // currentToken = '';
+          //// Append colon to the current token to identify it as a label
+          currentToken += char;
           tokens.push(currentToken);
           currentToken = '';
         }
@@ -1765,7 +1782,7 @@ class Assembler {
         this.handleExternalReference(label, usageType);
         return 0 + offset;
       } else {
-        this.error(`Undefined symbol: ${label}`);
+        this.error(`Undefined label`); // this.error(`Undefined label: ${label}`);
         return null;
       }
   
