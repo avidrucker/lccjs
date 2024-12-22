@@ -172,9 +172,9 @@ class Assembler {
 
     // If the file ends in ".bin", parse it as raw binary instead of doing normal assembly
     if (extension === '.bin') {
-      // Note: The original LCC does not print any message for assemnbling a .bin file ...
-      // ... I'm going to say this should be here to provide user feedback & good UX
-      console.log(`Assembling ${this.inputFileName} ...`);
+      // Note: The original LCC does not print any message for assemnbling a .bin file as
+      // of 12/2024. I say this should be here to provide user feedback & good UX
+      console.log(`Assembling ${this.inputFileName}`);
 
       this.parseBinFile();
       // Construct output filename with .e extension
