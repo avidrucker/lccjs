@@ -197,6 +197,7 @@ class Assembler {
       console.log('Starting assembly pass 1');
       this.pass = 1;
       this.locCtr = 0;
+      this.loadPoint = 0; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
       this.lineNum = 0;
       this.errorFlag = false;
       this.symbolTable = {};
