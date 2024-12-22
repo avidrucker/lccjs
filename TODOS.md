@@ -69,8 +69,8 @@
     - [x] .extern
     - [x] .global
 - [ ] implement offsets (no demo yet)
-  - [ ] label offsets
-    - [ ] implement decimal (base 10) offsets
+  - [o] label offsets
+    - [x] implement decimal (base 10) offsets
     - [ ] implement hexadecimal (base 16) offsets
 - [ ] implement usage of * instead of a label to indicate the current memory address
 - [ ] implement catching of division by zero where, when division by zero is detected, attempting to interpret the program will result in an error message being printed to the console ("Floating point exception"), the program will not be executed, and the .lst/.bst files will not be created. note: assembly will still create the .e file. 2nd note: it appears that the lcc makes blank .lst/.bst files when errors such as division by zero are detected
@@ -94,7 +94,7 @@
   - [ ] implement -L flag
     - [ ] implement loadPoint in interpreter.js to allow for loading of a program at a specific memory address via the S header in the .e file
 - [ ] piping of an Assembly file's output into a text file
-- [ ] implement `cea` mnemonic (no demo yet)
+- [x] implement `cea` mnemonic
 - [x] implement `cmp` mnemonic
 - [x] include comments in BST/LST files (when assembling and interpretting all at once via lcc.js)
 - [x] include all headers (S, etc.) in BST/LST files
@@ -170,7 +170,8 @@
 - [ ] implement disassembler.test.js to test disassembler.js
 
 ## Fix
-- [ ] fix issue in linker.e2e.test.js where Docker is run no matter what (even if entire cache exists and is valid) 
+- [ ] fix issue in interpreter.e2e.test.js where, if test inputs are changed, the test fails because the expected output cache is not yet currently being updated to match the new inputs (when the caches all match except for the .e file, the cache should be regenerated via Docker, and the hex dump comparison should be redone to see if the new Docker LCC .e file cache matches the local interpreter.js .e file output)
+- [x] fix issue in linker.e2e.test.js where Docker is run no matter what (even if entire cache exists and is valid) 
 - [x] fix bug where in interpreterBattery.test.js Docker is running repeatedly despite there being no need to run Docker repeatedly for the same test which should be caching the results of the test (see demoU in particular)
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
 - [x] interpreter.js output does not yet add an extra newline like lcc.js does. interpreter.js should however print an extra newline to the stdout after the program has finished executing
