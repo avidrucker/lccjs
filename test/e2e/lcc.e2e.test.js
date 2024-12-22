@@ -71,7 +71,8 @@ const testCases = [
   { aFile: './demos/demoV.a', userInputs: [], comment: 'assemble/interpret mul, div, rem' },
   { aFile: './demos/demoW.a', userInputs: [], comment: 'assemble/interpret cmp, branch instructions' },
   { aFile: './demos/demoX.a', userInputs: [], comment: 'assemble/interpret hex, cea, implicit r0 args' },
-  { aFile: './demos/demoY.a', userInputs: [], comment: 'assemble/interpret label offset ld and .word directive' },
+  { aFile: './demos/demoY.a', userInputs: [], comment: 'assemble/interpret label offsets for ld and .word directive' },
+  { aFile: './demos/demoZ.a', userInputs: [], comment: 'assemble/interpret label offsets for st, br, and lea instructions' },
 ];
 
 // Determine which tests need Docker (invalid cache)
