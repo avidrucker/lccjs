@@ -19,3 +19,4 @@ demos/ptest.a
 demos/ptest.o
 .vscode/*
 test/*.bin
+scratch/
