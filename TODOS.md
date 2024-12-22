@@ -112,6 +112,16 @@
   - [ ] picture.unit.test.js
   - [ ] lcc.unit.test.js
   - [ ] hexDisplay.unit.test.js
+- [o] write integration tests for each module
+  - [x] assembler.integration.test.js
+    - [x] test for assembler.js output when not passed any input file
+    - [x] test for assembler.js output when .a file is empty
+  - [ ] interpreter.e2e.test.js
+  - [ ] linker.e2e.test.js
+  - [ ] name.e2e.test.js
+  - [ ] picture.e2e.test.js
+  - [ ] lcc.e2e.test.js
+  - [ ] hexDisplay.e2e.test.js
 - [x] rewrite all test battery scripts as e2e tests
   - [x] assembler.e2e.test.js
   - [x] interpreter.e2e.test.js
@@ -183,6 +193,8 @@
 - [ ] implement disassembler.test.js to test disassembler.js
 
 ## Fix
+- [x] fix issue in assembler.js where valid labels that are not at start of the line but correctly terminated with a colon are not recognized as valid labels
+- [ ] modify assembler.js to report only the first error message to match LCC behavior
 - [ ] fix issue in interpreter.e2e.test.js where, if test inputs are changed, the test fails because the expected output cache is not yet currently being updated to match the new inputs (when the caches all match except for the .e file, the cache should be regenerated via Docker, and the hex dump comparison should be redone to see if the new Docker LCC .e file cache matches the local interpreter.js .e file output)
 - [x] fix issue in linker.e2e.test.js where Docker is run no matter what (even if entire cache exists and is valid) 
 - [x] fix bug where in interpreterBattery.test.js Docker is running repeatedly despite there being no need to run Docker repeatedly for the same test which should be caching the results of the test (see demoU in particular)
@@ -208,6 +220,7 @@
   - [x] assembler.js
   - [x] interpreter.js
   - [x] linker.js
+- [ ] implement toggle in assembler.js to switch on/off the ability to report multiple errors (not just the first encountered error as in the original LCC)
 
 ## Extra Features
 
