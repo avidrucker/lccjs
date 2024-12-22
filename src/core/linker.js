@@ -3,7 +3,16 @@
 // LCC.js Linker
 
 const fs = require('fs');
-const path = require('path');
+
+const isTestMode = (typeof global.it === 'function'); // crude check for Jest
+
+function fatalExit(message, code = 1) {
+  if (isTestMode) {
+    throw new Error(message);
+  } else {
+    process.exit(code);
+  }
+}
 
 class Linker {
   constructor() {
@@ -27,7 +36,7 @@ class Linker {
 
     if (args.length < 1) {
       console.error('Usage: node linker.js [-o outputfile.e] <object module 1> <object module 2> ...');
-      process.exit(1);
+      fatalExit('Usage: node linker.js [-o outputfile.e] <object module 1> <object module 2> ...', 1);
     }
 
     let i = 0;
@@ -35,7 +44,7 @@ class Linker {
       if (args[i] === '-o') {
         if (i + 1 >= args.length) {
           console.error('Missing output file name after -o');
-          process.exit(1);
+          fatalExit('Missing output file name after -o', 1);
         }
         this.outputFileName = args[i + 1];
         i += 2;
@@ -47,7 +56,7 @@ class Linker {
 
     if (this.inputFiles.length === 0) {
       console.error('Error: No input object modules specified');
-      process.exit(1);
+      fatalExit('Error: No input object modules specified', 1);
     }
 
     this.link(this.inputFiles, this.outputFileName);

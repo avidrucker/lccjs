@@ -9,6 +9,16 @@ const nameHandler = require('../utils/name.js');
 
 const MAX_MEMORY = 65536; // 2^16
 
+const isTestMode = (typeof global.it === 'function'); // crude check for Jest
+
+function fatalExit(message, code = 1) {
+  if (isTestMode) {
+    throw new Error(message);
+  } else {
+    process.exit(code);
+  }
+}
+
 class Interpreter {
   constructor() {
     this.mem = new Uint16Array(65536); // Memory (16-bit unsigned integers)
@@ -38,7 +48,8 @@ class Interpreter {
 
     if (args.length < 1) {
       console.error('Usage: node interpreter.js <input filename> [options]');
-      process.exit(1);
+      // process.exit(1);
+      fatalExit('Usage: node interpreter.js <input filename> [options]', 1);
     }
 
     // Parse arguments
@@ -55,7 +66,8 @@ class Interpreter {
             i++;
             if (i >= args.length) {
               console.error('Error: -L option requires a value');
-              process.exit(1);
+              // process.exit(1);
+              fatalExit('Error: -L option requires a value', 1);
             }
             loadPointStr = args[i];
           }
@@ -63,11 +75,13 @@ class Interpreter {
           this.loadPoint = parseInt(loadPointStr, 16);
           if (isNaN(this.loadPoint)) {
             console.error(`Invalid load point value: ${loadPointStr}`);
-            process.exit(1);
+            // process.exit(1);
+            fatalExit(`Invalid load point value: ${loadPointStr}`, 1);
           }
         } else {
           console.error(`Unknown option: ${arg}`);
-          process.exit(1);
+          // process.exit(1);
+          fatalExit(`Unknown option: ${arg}`, 1);
         }
       } else {
         // Assume it's the input file name
@@ -75,7 +89,8 @@ class Interpreter {
           this.inputFileName = arg;
         } else {
           console.error(`Unexpected argument: ${arg}`);
-          process.exit(1);
+          // process.exit(1);
+          fatalExit(`Unexpected argument: ${arg}`, 1);
         }
       }
       i++;
@@ -83,7 +98,8 @@ class Interpreter {
 
     if (!this.inputFileName) {
       console.error('No input file specified.');
-      process.exit(1);
+      // process.exit(1);
+      fatalExit('No input file specified.', 1);
     }
 
     // Get the userName using nameHandler
@@ -91,7 +107,8 @@ class Interpreter {
       this.userName = nameHandler.createNameFile(this.inputFileName);
     } catch (error) {
       console.error('Error handling name file:', error.message);
-      process.exit(1);
+      // process.exit(1);
+      fatalExit('Error handling name file: ' + error.message, 1);
     }
 
     // this prints out when called by interpreter.js
@@ -103,13 +120,15 @@ class Interpreter {
       buffer = fs.readFileSync(this.inputFileName);
     } catch (err) {
       console.error(`Cannot open input file ${this.inputFileName}`);
-      process.exit(1);
+      // process.exit(1);
+      fatalExit(`Cannot open input file ${this.inputFileName}`, 1);
     }
 
     // Check file signature
     if (buffer[0] !== 'o'.charCodeAt(0)) {
       console.error(`${this.inputFileName} is not a valid LCC executable file: missing 'o' signature`);
-      process.exit(1);
+      // process.exit(1);
+      fatalExit(`${this.inputFileName} is not a valid LCC executable file: missing 'o' signature`, 1);
     }
 
     // Load the executable into memory
@@ -131,7 +150,8 @@ class Interpreter {
       console.log(); // Ensure cursor moves to the next line
     } catch (error) {
       console.error(`Runtime Error: ${error.message}`);
-      process.exit(1);
+      // process.exit(1);
+      fatalExit(`Runtime Error: ${error.message}`, 1);
     }
 
     // Generate .lst and .bst files if required
@@ -173,7 +193,8 @@ class Interpreter {
       buffer = fs.readFileSync(fileName);
     } catch (err) {
       console.error(`Cannot open input file ${fileName}`);
-      process.exit(1);
+      // process.exit(1);
+      fatalExit(`Cannot open input file ${fileName}`, 1);
     }
 
     // Check file signature: look for "o" followed by "C" anywhere in the buffer
@@ -197,7 +218,8 @@ class Interpreter {
     // If either "o" or "C" was not found in the expected order, throw an error
     if (!foundO || !foundC) {
       console.error(`${fileName} is not a valid LCC executable file`);
-      process.exit(1);
+      // process.exit(1);
+      fatalExit(`${fileName} is not a valid LCC executable file`, 1);
     }
 
     // this prints out when called by lcc.js

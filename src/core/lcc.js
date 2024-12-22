@@ -10,6 +10,16 @@ const Linker = require('./linker');
 const nameHandler = require('../utils/name.js');
 const { generateBSTLSTContent } = require('../utils/genStats.js');
 
+const isTestMode = (typeof global.it === 'function'); // crude check for Jest
+
+function fatalExit(message, code = 1) {
+  if (isTestMode) {
+    throw new Error(message);
+  } else {
+    process.exit(code);
+  }
+}
+
 class LCC {
   constructor() {
     this.inputFileName = '';
@@ -26,14 +36,14 @@ class LCC {
 
     if (args.length === 0) {
       this.printHelp();
-      process.exit(0);
+      fatalExit('No input file specified. Printing help message.', 0);
     }
 
     this.parseArguments(args);
 
     if (this.args.length === 0) {
       console.error('No input file specified.');
-      process.exit(1);
+      fatalExit('No input file specified.', 1);
     }
 
     // If multiple inputs were supplied, the "main input file" is the first one
@@ -43,7 +53,7 @@ class LCC {
       this.userName = nameHandler.createNameFile(this.inputFileName);
     } catch (error) {
       console.error('Error handling name file:', error.message);
-      process.exit(1);
+      fatalExit('Error handling name file: ' + error.message, 1);
     }
 
     // TODO: (extra feature) check similarly to see if multiple .a files were 
@@ -164,7 +174,7 @@ class LCC {
             break;
           case '-h':
             this.printHelp();
-            process.exit(0);
+            fatalExit('Printing help message after -h flag used.', 0);
           default:
             if (arg.startsWith('-l')) {
               // Load point
@@ -178,11 +188,11 @@ class LCC {
                 // individual linking output should occur, but the final
                 // link.e file should not be created in this scenario
                 console.error('Missing output file name'); // No output file specified after -o
-                process.exit(1);
+                fatalExit('Missing output file name after -o flag', 1);
               }
             } else {
               console.error(`Unknown option: ${arg}`);
-              process.exit(1);
+              fatalExit(`Unknown option: ${arg}`, 1);
             }
             break;
         }
@@ -212,7 +222,7 @@ class LCC {
       assembler.main([this.inputFileName]);
     } catch (error) {
       console.error(`Error assembling ${this.inputFileName}: ${error.message}`);
-      process.exit(1);
+      fatalExit(`Error assembling ${this.inputFileName}: ${error.message}`, 1);
     }
     
   }
@@ -252,7 +262,7 @@ class LCC {
       console.log(); // Ensure cursor moves to the next line
     } catch (error) {
       console.error(`Error running ${this.outputFileName}: ${error.message}`);
-      process.exit(1);
+      fatalExit(`Error running ${this.outputFileName}: ${error.message}`, 1);
     }
 
     // Generate .lst and .bst files using genStats.js

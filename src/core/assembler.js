@@ -8,6 +8,15 @@ const path = require('path');
 const { generateBSTLSTContent } = require('../utils/genStats.js');
 const nameHandler = require('../utils/name.js');
 
+const isTestMode = (typeof global.it === 'function'); // crude check for Jest
+
+function fatalExit(message, code = 1) {
+  if (isTestMode) {
+    throw new Error(message);
+  } else {
+    process.exit(code);
+  }
+}
 class Assembler {
   constructor() {
     /**
@@ -139,7 +148,7 @@ class Assembler {
     if (!this.inputFileName) {
       if (args.length !== 1) {
         console.error('Usage: assembler.js <input filename>');
-        process.exit(1);
+        fatalExit('Usage: assembler.js <input filename>', 1);
       }
       this.inputFileName = args[0];
     }
@@ -150,7 +159,7 @@ class Assembler {
       this.sourceLines = sourceCode.split('\n');
     } catch (err) {
       console.error(`Cannot open input file ${this.inputFileName}`);
-      process.exit(1);
+      fatalExit(`Cannot open input file ${this.inputFileName}`, 1);
     }
 
     const extension = path.extname(this.inputFileName).toLowerCase();
@@ -192,7 +201,7 @@ class Assembler {
       if (this.errorFlag) {
         // console.error('Errors encountered during Pass 1.');
         // this.errors.forEach(error => console.error(error));
-        process.exit(1);
+        fatalExit('Errors encountered during Pass 1.', 1);
       }
 
       // Rewind source lines for Pass 2
@@ -214,7 +223,7 @@ class Assembler {
         if (this.outFile !== null) {
           fs.closeSync(this.outFile);
         }
-        process.exit(1);
+        fatalExit('Errors encountered during Pass 2.', 1);
       }
 
       // **Resolve the start label to an address**
@@ -223,7 +232,7 @@ class Assembler {
           this.startAddress = this.symbolTable[this.startLabel];
         } else {
           this.error(`Undefined start label: ${this.startLabel}`);
-          process.exit(1);
+          fatalExit(`Undefined start label: ${this.startLabel}`, 1);
         }
       } else {
         // If no .start directive, default start address is 0
@@ -244,7 +253,7 @@ class Assembler {
           this.userName = nameHandler.createNameFile(this.inputFileName);
         } catch (error) {
           console.error('Error handling name file:', error.message);
-          process.exit(1);
+          fatalExit('Error handling name file: ' + error.message, 1);
         }
 
         console.log(`Output file ${this.outputFileName} needs linking`);
@@ -293,7 +302,7 @@ class Assembler {
       this.outFile = fs.openSync(this.outputFileName, 'w');
     } catch (err) {
       console.error(`Cannot open output file ${this.outputFileName}`);
-      process.exit(1);
+      fatalExit(`Cannot open output file ${this.outputFileName}`, 1);
     }
   
     // Write the initial header 'o' to the output file
@@ -562,11 +571,11 @@ class Assembler {
       // For example: "4B1F"
       if (!/^[0-9A-Fa-f]+$/.test(line)) {
         console.error(`Error: line ${lineNum+1} in .hex file is not purely hexadecimal: "${line}"`);
-        process.exit(1);
+        fatalExit(`Error: line ${lineNum+1} in .hex file is not purely hexadecimal: "${line}"`, 1);
       }
       if (line.length !== 4) {
         console.error(`Error: line ${lineNum+1} in .hex file does not have exactly 4 nibbles: "${line}"`);
-        process.exit(1);
+        fatalExit(`Error: line ${lineNum+1} in .hex file does not have exactly 4 nibbles: "${line}"`, 1);
       }
   
       // Convert the binary string to a number
@@ -629,11 +638,11 @@ class Assembler {
       // For example: "0010000000000101"
       if (!/^[01]+$/.test(line)) {
         console.error(`Error: line ${lineNum+1} in .bin file is not purely binary: "${line}"`);
-        process.exit(1);
+        fatalExit(`Error: line ${lineNum+1} in .bin file is not purely binary: "${line}"`, 1);
       }
       if (line.length !== 16) {
         console.error(`Error: line ${lineNum+1} in .bin file does not have exactly 16 bits: "${line}"`);
-        process.exit(1);
+        fatalExit(`Error: line ${lineNum+1} in .bin file does not have exactly 16 bits: "${line}"`, 1);
       }
   
       // Convert the binary string to a number
