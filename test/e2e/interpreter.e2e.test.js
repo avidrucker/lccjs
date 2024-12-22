@@ -45,7 +45,7 @@ const cacheOptions = {
 // Test cases
 const testCases = [
   { eFile: './demos/demoA.e', userInputs: [], comment: 'interpretting mov, dout, nl, and halt' },
-  { eFile: './demos/demoB.e', userInputs: ['a', 'b'], comment: 'interpreting the simulated input of 2 user inputs' },
+  { eFile: './demos/demoB.e', userInputs: ['input1', 'input2'], comment: 'interpreting the simulated input of 2 user inputs' },
   { eFile: './demos/demoC.e', userInputs: [], comment: 'interpretting load, add, and a labeled .word directive' },
   { eFile: './demos/demoD.e', userInputs: [], comment: 'interpretting mov, mvi, and mvr instructions' },
   { eFile: './demos/demoE.e', userInputs: [], comment: 'interpretting push, pop, and custom functions' },
