@@ -64,6 +64,7 @@ const testCases = [
   { file: './demos/demoV.a', userInputs: [], comment: 'assembling mul, div, rem' },
   { file: './demos/demoW.a', userInputs: [], comment: 'assembling cmp, branch instructions' },
   { file: './demos/demoX.a', userInputs: [], comment: 'assembling hex, cea, implicit r0 args' },
+  { file: './demos/demoY.a', userInputs: [], comment: 'assembling label offsets for ld and .word directive' },
 ];
 
 // Helper functions

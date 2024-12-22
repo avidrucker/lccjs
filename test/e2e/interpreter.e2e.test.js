@@ -68,6 +68,7 @@ const testCases = [
   { eFile: './demos/demoV.e', userInputs: [], comment: 'interpreting mul, div, rem'},
   { eFile: './demos/demoW.e', userInputs: [], comment: 'interpreting cmp, branch instructions'},
   { eFile: './demos/demoX.e', userInputs: [], comment: 'interpreting hex, cea, implicit r0 args'},
+  { eFile: './demos/demoY.e', userInputs: [], comment: 'interpreting label offset ld and .word directives'},
 ];
 
 // Helper functions
