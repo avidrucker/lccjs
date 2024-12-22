@@ -104,7 +104,20 @@
 
 ## Test
 
-- [ ] **fix linkerBattery.test.js so that, even if the input caches match, the local tests are still run and compared against the cached results**
+- [ ] write unit tests for each module
+  - [ ] assembler.unit.test.js
+  - [ ] interpreter.unit.test.js
+  - [ ] linker.unit.test.js
+  - [ ] name.unit.test.js
+  - [ ] picture.unit.test.js
+  - [ ] lcc.unit.test.js
+  - [ ] hexDisplay.unit.test.js
+- [x] rewrite all test battery scripts as e2e tests
+  - [x] assembler.e2e.test.js
+  - [x] interpreter.e2e.test.js
+  - [x] lcc.e2e.test.js
+  - [x] linker.e2e.test.js
+- [ ] fix linkerBattery.script.js so that, even if the input caches match, the local tests are still run and compared against the cached results
 - [ ] **modify all tests (both at individual test case level and test suite level) to, if Docker is already running, to not close Docker after case/suite finishes - i.e., only close Docker if Docker wasn't already running before the test started. The rationale is that, if one is working in the Docker container elsewhere, it is annoying to have to restart and reattach, and also, it is more efficient to have Docker running already and not have to start and stop it repeatedly**
 - [x] supplement startup.a, m1.a, m2.a with different demos
 - [ ] consider and test whether or not interpreter.test.js consistently updates the assembled .e file from the original .a file before comparing .e file hex dumps to check for valid/invalid cache state
