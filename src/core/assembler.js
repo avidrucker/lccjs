@@ -245,9 +245,6 @@ class Assembler {
       // After writing the output file, handle additional outputs
       if (this.isObjectModule) {
 
-        //// TODO: makes sure there is a name.nnn file in the same
-        ////       directory, if not, generate one
-
         // Get the userName using nameHandler
         try {
           this.userName = nameHandler.createNameFile(this.inputFileName);
@@ -821,9 +818,13 @@ class Assembler {
           let value = this.evaluateOperand(operands[0], 'V'); // Pass 'V' as usageType
           if (value === null) return;
       
-          // Check if operand is a local symbol
-          if (this.symbolTable.hasOwnProperty(operands[0])) {
-            // Record that this word needs an 'A' entry
+          // see if operand is label +/- offset
+          const parsed = this.parseLabelWithOffset(operands[0]);
+
+          // console.log("Parsed: ", parsed);
+
+          if (parsed && this.symbolTable.hasOwnProperty(parsed.label)) {
+            // It's a local label with offset, so record an A-entry
             this.handleAdjustmentEntry(this.locCtr);
           }
       
@@ -1098,7 +1099,7 @@ class Assembler {
       'bral': 7
     };
     let macword = (codes[mnemonic.toLowerCase()] << 9) & 0xffff;
-    let address = this.getSymbolAddress(operands[0]);
+    let address = this.evaluateOperand(operands[0], 'e');
     if (address === null) return null;
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1358,7 +1359,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let label = operands[1];
     if (dr === null) return null;
-    let address = this.getSymbolAddress(label, 'e'); // Pass 'e' as usageType
+    let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
     if (address === null) return null;
     
     let isExternal = this.externLabels.has(label);
@@ -1386,7 +1387,7 @@ class Assembler {
     let sr = this.getRegister(operands[0]);
     let label = operands[1];
     if (sr === null) return null;
-    let address = this.getSymbolAddress(label);
+    let address = this.evaluateOperand(label, 'e');
     if (address === null) return null;
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1405,7 +1406,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let label = operands[1];
     if (dr === null) return null;
-    let address = this.getSymbolAddress(label);
+    let address = this.evaluateOperand(label, 'e');
     if (address === null) return null;
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1422,7 +1423,7 @@ class Assembler {
       return null;
     }
     let label = operands[0];
-    let address = this.getSymbolAddress(label, 'E'); // Pass 'E' as usageType
+    let address = this.evaluateOperand(label, 'E'); // Pass 'E' as usageType
     if (address === null) return null;
     
     let isExternal = this.externLabels.has(label);
@@ -1644,6 +1645,41 @@ class Assembler {
     return /^(r[0-7]|fp|sp|lr)$/i.test(regStr);
   }
 
+  parseLabelWithOffset(operand) {
+    // This regex matches:
+    //   1) A label: starting with letter, '_', '$', '@', followed by letters, digits, '_', '$', '@'
+    //   2) An optional offset: a plus or minus sign, optional spaces, then digits
+    //
+    // Examples matched:
+    //   "myVar"          -> label = "myVar", offset = null
+    //   "myVar+2"        -> label = "myVar", offset = 2
+    //   "myVar - 3"      -> label = "myVar", offset = -3
+    //   "x+10"           -> label = "x", offset = 10
+    //   "label- 5"       -> label = "label", offset = -5
+    const labelOffsetPattern = /^([A-Za-z_$@][A-Za-z0-9_$@]*)\s*([+\-]\s*\d+)?$/;
+    
+    let match = operand.match(labelOffsetPattern);
+    if (!match) {
+      return null; // Not a label with optional offset
+    }
+  
+    let label = match[1];
+    let offsetStr = match[2]; // something like "+2" or "- 3"
+    
+    let offset = 0;
+    if (offsetStr) {
+      // Remove spaces and parse the number
+      offsetStr = offsetStr.replace(/\s+/g, '');
+      offset = parseInt(offsetStr, 10); // parse "+2" or "-3"
+      if (isNaN(offset)) {
+        // Should never happen if regex matched, but just in case:
+        return null;
+      }
+    }
+  
+    return { label, offset };
+  }
+
   parseNumber(valueStr) {
     let value;
 
@@ -1674,36 +1710,54 @@ class Assembler {
         address: this.locCtr // Store the current location counter
       });
     }
-  }  
+  }
 
-  getSymbolAddress(label, usageType) {
-    if (this.symbolTable.hasOwnProperty(label)) {
-      return this.symbolTable[label];
-    } else if (this.externLabels.has(label)) {
-      // External symbol: generate appropriate header entry
-      this.handleExternalReference(label, usageType);
-      // Return placeholder address (0) for now
-      return 0;
-    } else {
-      this.error(`Undefined symbol: ${label}`);
-      return null;
-    }
-  }  
-
+  /**
+   * Evaluates an operand and returns its corresponding value.
+   * The operand can be a pure number, a label with an optional offset, or a plain label.
+   * 
+   * @param {string} operand - The operand to evaluate.
+   * @param {string} usageType - The context in which the operand is used (e.g., for external references).
+   * @returns {number|null} - The evaluated value of the operand, or null if the operand is undefined.
+   */
   evaluateOperand(operand, usageType) {
+    // First, try to parse as a pure number
     let value = this.parseNumber(operand);
     if (!isNaN(value)) {
       return value;
-    } else if (this.symbolTable.hasOwnProperty(operand)) {
-      return this.symbolTable[operand];
-    } else if (this.externLabels.has(operand)) {
-      // External operand: generate appropriate header entry
-      this.handleExternalReference(operand, usageType);
-      // Return placeholder address (0) for now
-      return 0;
+    }
+  
+    // If not a pure number, check if it's a label with optional offset
+    let parsed = this.parseLabelWithOffset(operand);
+    if (parsed !== null) {
+      // It's a label and possibly an offset
+      const { label, offset } = parsed;
+  
+      if (this.symbolTable.hasOwnProperty(label)) {
+        // Local label known
+        return this.symbolTable[label] + offset;
+      } else if (this.externLabels.has(label)) {
+        // External label: create external reference if needed and return placeholder (0 + offset)
+        this.handleExternalReference(label, usageType);
+        return 0 + offset;
+      } else {
+        this.error(`Undefined symbol: ${label}`);
+        return null;
+      }
+  
     } else {
-      this.error(`Undefined operand: ${operand}`);
-      return null;
+      // If we get here, it's neither a pure number nor a label-with-offset.
+      // Maybe it's just a plain label that we haven't seen? Check that scenario:
+      if (this.symbolTable.hasOwnProperty(operand)) {
+        return this.symbolTable[operand];
+      } else if (this.externLabels.has(operand)) {
+        // External symbol, return 0 placeholder
+        this.handleExternalReference(operand, usageType);
+        return 0;
+      } else {
+        this.error(`Undefined operand: ${operand}`);
+        return null;
+      }
     }
   }  
 
