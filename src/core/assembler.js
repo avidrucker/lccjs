@@ -206,7 +206,7 @@ class Assembler {
 
       if(this.locCtr === 0) {
         console.error('Empty file');
-        fatalExit('No instructions or data found in source file', 1);
+        fatalExit('No instructions or data found in source file', 0);
       }
 
       if (this.errorFlag) {
@@ -603,7 +603,7 @@ class Assembler {
     // Note: This is custom LCC.js behavior in 12/2024 (does not match official LCC)
     if (this.locCtr === 0) {
       console.error('Empty file');
-      fatalExit('No instructions or data found in source file', 1);
+      fatalExit('No instructions or data found in source file', 0);
     }
   
     // If you want a "startAddress = 0" by default, do that here
@@ -676,7 +676,7 @@ class Assembler {
     // Note: This is custom LCC.js behavior in 12/2024 (does not match official LCC)
     if (this.locCtr === 0) {
       console.error('Empty file');
-      fatalExit('No instructions or data found in source file', 1);
+      fatalExit('No instructions or data found in source file', 0);
     }
   
     // If you want a "startAddress = 0" by default, do that here
