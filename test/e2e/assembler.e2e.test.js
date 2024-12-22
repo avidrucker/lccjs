@@ -207,10 +207,10 @@ async function runAssemblerTest(inputFile, userInputs, skipCache, dockerNeeded, 
     }
     const lccOutput = runDockerLCC(inputFile, containerName, userInputs);
     const identical = compareHexDumps(assemblerOutput, lccOutput);
-    if (identical) {
-      // Update cache if needed
-      updateCache(inputFile, lccOutput, cacheOptions);
-    }
+    
+    // We always update the cache if Docker was needed
+    updateCache(inputFile, lccOutput, cacheOptions);
+    
     cleanupFiles(inputDir, inputFileName, assemblerOutput, lccOutputFile, dockerController, containerName, dockerNeeded);
     expect(identical).toBe(true);
   } else {
