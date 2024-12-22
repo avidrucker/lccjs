@@ -23,6 +23,10 @@ function fatalExit(message, code = 1) {
     process.exit(code);
   }
 }
+
+// Set to false to match original LCC behavior of reporting only a single error at a time
+const REPORT_MULTI_ERRORS = false;
+
 class Assembler {
   constructor() {
     /**
@@ -243,8 +247,11 @@ class Assembler {
         if (this.symbolTable.hasOwnProperty(this.startLabel)) {
           this.startAddress = this.symbolTable[this.startLabel];
         } else {
-          this.error(`Undefined start label: ${this.startLabel}`);
-          fatalExit(`Undefined start label: ${this.startLabel}`, 1);
+          // Note: as of 12/2024, LCC does not print any message for this case
+          //       and instead ignores undefined .start labels (but it shouldn't)
+          //       so this is a custom LCC.js behavior
+          this.error(`Undefined label`); // Undefined start label: ${this.startLabel}
+          fatalExit(`Undefined label`, 1);
         }
       } else {
         // If no .start directive, default start address is 0
@@ -408,8 +415,17 @@ class Assembler {
     return path.format({ ...parsedPath, base: undefined, ext: extension });
   }
 
+  // validates that a label either starts at the beginning of a line
+  // or is terminated with a colon, or both
   isValidLabelDef(tokens, originalLine) {
     return (tokens[0].endsWith(':') || !this.isWhitespace(originalLine[0]));
+  }
+
+  // validates that a label starts with a letter, _, $, or @, and is 
+  // (optionally) followed by letters, digits, _, $, or @
+  isValidLabel(label) {
+    // Example pattern: starts with letter, _, $, @; followed by letters, digits, _, $, @
+    return /^[A-Za-z_$@][A-Za-z0-9_$@]*$/.test(label);
   }
 
   /*
@@ -489,9 +505,12 @@ class Assembler {
         if(label.endsWith(':')) {
           label = label.slice(0, -1); 
         }
+        if (!this.isValidLabel(label)) {
+          this.error(`Bad label`); // `Invalid label format: ${label}`
+        }
         if (this.pass === 1) {
           if (this.labels.has(label)) {
-            this.error(`Duplicate label: ${label}`);
+            this.error(`Duplicate label`); // `Duplicate label: ${label}`
           } else {
             this.symbolTable[label] = this.locCtr;
             this.labels.add(label);
@@ -851,16 +870,25 @@ class Assembler {
         break;
       case '.fill':
       case '.word':
-        if (operands.length !== 1) {
+        if (operands.length !== 1 && operands.length !== 3) {
+          //// TODO: inspect to make sure that .word can handle .word x, .word x+1, and .word x + 1
+          //// TODO: inspect to make sure that .word can handle .word x+ 1 and .word x +1
+          //// TODO: inspect to make sure that .word behaves as expected with .word x + 1 + 1
+          //// TODO: inspect to make sure that .word behaves as expected with .word <NOTHING>
+          //// TODO: inspect to make sure that .word behaves as expected with .word + or .word -
           this.error(`Invalid operand count for ${mnemonic}`);
           return;
         }
         if (this.pass === 2) {
-          let value = this.evaluateOperand(operands[0], 'V'); // Pass 'V' as usageType
+          let label = operands[0];
+          if(operands[1] && operands[2]) {
+            label = operands[0] + operands[1] + operands[2];
+          }
+          let value = this.evaluateOperand(label, 'V'); // Pass 'V' as usageType
           if (value === null) return;
       
           // see if operand is label +/- offset
-          const parsed = this.parseLabelWithOffset(operands[0]);
+          const parsed = this.parseLabelWithOffset(label);
 
           // console.log("Parsed: ", parsed);
 
@@ -1121,7 +1149,7 @@ class Assembler {
   }
 
   assembleBR(mnemonic, operands) {
-    if (operands.length !== 1) {
+    if (operands.length !== 1 && operands.length !== 3) {
       this.error(`Invalid operand count for ${mnemonic}`);
       return null;
     }
@@ -1140,7 +1168,11 @@ class Assembler {
       'bral': 7
     };
     let macword = (codes[mnemonic.toLowerCase()] << 9) & 0xffff;
-    let address = this.evaluateOperand(operands[0], 'e');
+    let label = operands[0];
+    if(operands[1] && operands[2]) {
+      label = operands[0]+operands[1]+operands[2];
+    }
+    let address = this.evaluateOperand(label, 'e');
     if (address === null) return null;
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1393,12 +1425,15 @@ class Assembler {
   }
 
   assembleLD(operands) {
-    if (operands.length !== 2) {
+    if (operands.length !== 2 && operands.length !== 4) {
       this.error('Invalid operand count for ld');
       return null;
     }
     let dr = this.getRegister(operands[0]);
     let label = operands[1];
+    if(operands[2] && operands[3]) {
+      label = operands[1]+operands[2]+operands[3];
+    }
     if (dr === null) return null;
     let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
     if (address === null) return null;
@@ -1421,12 +1456,15 @@ class Assembler {
   }  
 
   assembleST(operands) {
-    if (operands.length !== 2) {
+    if (operands.length !== 2 && operands.length !== 4) {
       this.error('Invalid operand count for st');
       return null;
     }
     let sr = this.getRegister(operands[0]);
     let label = operands[1];
+    if(operands[2] && operands[3]) {
+      label = operands[1]+operands[2]+operands[3];
+    }
     if (sr === null) return null;
     let address = this.evaluateOperand(label, 'e');
     if (address === null) return null;
@@ -1440,12 +1478,15 @@ class Assembler {
   }
 
   assembleLea(operands) {
-    if (operands.length !== 2) {
+    if (operands.length !== 2 && operands.length !== 4) {
       this.error('Invalid operand count for lea');
       return null;
     }
     let dr = this.getRegister(operands[0]);
     let label = operands[1];
+    if(operands[2] && operands[3]) {
+      label = operands[1]+operands[2]+operands[3];
+    }
     if (dr === null) return null;
     let address = this.evaluateOperand(label, 'e');
     if (address === null) return null;
@@ -1816,7 +1857,7 @@ class Assembler {
   evaluateImmediateNaive(valueStr) {
     let value = this.parseNumber(valueStr);
     if (isNaN(value)) {
-      this.error(`Not a valid number: ${valueStr}`);
+      this.error(`Bad number`); // `Not a valid number: ${valueStr}`
       return null;
     }
     return value & 0xFFFF;
@@ -1827,6 +1868,12 @@ class Assembler {
     console.error(errorMsg);
     this.errors.push(errorMsg);
     this.errorFlag = true;
+
+    // If we're not reporting multiple errors, exit immediately
+    // Note: This matches the behavior in the original LCC of reporting only 1 error at a time
+    if(!REPORT_MULTI_ERRORS) {
+      fatalExit(message, 1);
+    }
   }
 }
 
