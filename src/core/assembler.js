@@ -204,6 +204,11 @@ class Assembler {
       this.errors = [];
       this.performPass();
 
+      if(this.locCtr === 0) {
+        console.error('Empty file');
+        fatalExit('No instructions or data found in source file', 1);
+      }
+
       if (this.errorFlag) {
         // console.error('Errors encountered during Pass 1.');
         // this.errors.forEach(error => console.error(error));
@@ -594,6 +599,12 @@ class Assembler {
       // Store the listing entry
       this.listing.push(listingEntry);
     }
+
+    // Note: This is custom LCC.js behavior in 12/2024 (does not match official LCC)
+    if (this.locCtr === 0) {
+      console.error('Empty file');
+      fatalExit('No instructions or data found in source file', 1);
+    }
   
     // If you want a "startAddress = 0" by default, do that here
     this.startAddress = 0;     // or your choice
@@ -660,6 +671,12 @@ class Assembler {
 
       // Store the listing entry
       this.listing.push(listingEntry);
+    }
+
+    // Note: This is custom LCC.js behavior in 12/2024 (does not match official LCC)
+    if (this.locCtr === 0) {
+      console.error('Empty file');
+      fatalExit('No instructions or data found in source file', 1);
     }
   
     // If you want a "startAddress = 0" by default, do that here
