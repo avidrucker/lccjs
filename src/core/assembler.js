@@ -3,6 +3,12 @@
 // assembler.js
 // LCC.js Assembler
 
+/*
+ * The Assembler class performs a two-pass assembly process:
+ * Pass 1: Parses the source lines, builds the symbol table, and handles labels.
+ * Pass 2: Generates machine code based on the symbol table and source lines.
+*/
+
 const fs = require('fs');
 const path = require('path');
 const { generateBSTLSTContent } = require('../utils/genStats.js');
