@@ -7,7 +7,6 @@
 const fs = require('fs');
 const path = require('path');
 const Interpreter = require('../../src/core/interpreter');
-const { checkServerIdentity } = require('tls');
 
 jest.mock('fs');
 
@@ -17,12 +16,6 @@ describe('Interpreter Integration Tests', () => {
   // A "virtual FS" object that holds filenames and contents (string or Buffer).
   // We will rebuild this for each test.
   let virtualFs;
-
-  let hexToBuffer = (hexString) => {
-    // Remove whitespace
-    const normalized = hexString.replace(/\s+/g, '');
-    return Buffer.from(normalized, 'hex');
-  }
 
   beforeAll(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
