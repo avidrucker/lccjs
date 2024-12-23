@@ -92,7 +92,7 @@
   - [x] registers draw function
 - [ ] implement flag setting for lcc.js such as `-d` for debug mode, `-L` for load point, `-r` switch to display registers at program end, `-m` switch to display memory to be displayed at program end, etc. 
   - [ ] implement -L flag
-    - [ ] implement loadPoint in interpreter.js to allow for loading of a program at a specific memory address via the S header in the .e file
+    - [ ] implement loadPoint in interpreter.js to allow for loading of a program at a specific memory address (not to confused with the S header in the .e file which indicates the *entry point*)
 - [ ] piping of an Assembly file's output into a text file
 - [x] implement `cea` mnemonic
 - [x] implement `cmp` mnemonic
