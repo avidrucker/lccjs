@@ -168,8 +168,8 @@ class Assembler {
       const sourceCode = fs.readFileSync(this.inputFileName, 'utf-8');
       this.sourceLines = sourceCode.split('\n');
     } catch (err) {
-      console.error(`Cannot open input file ${this.inputFileName}`);
-      fatalExit(`Cannot open input file ${this.inputFileName}`, 1);
+      console.error(`Cannot open input file ${this.inputFileName}`); // , err: ${err}
+      fatalExit(`Cannot open input file ${this.inputFileName}`, 1); // , err: ${err}
     }
 
     const extension = path.extname(this.inputFileName).toLowerCase();
