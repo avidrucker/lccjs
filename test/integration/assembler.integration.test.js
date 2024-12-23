@@ -16,51 +16,91 @@ const Assembler = require('../../src/core/assembler');
 // Mock filesystem so we don't actually read/write real files:
 jest.mock('fs');
 
-// A helper to mock out "fs.readFileSync" so we can feed our own
-// source code content into the assembler:
-function mockSourceFile(fileName, content) {
-  fs.readFileSync.mockImplementation((requestedFileName, encoding) => {
-    if (requestedFileName === fileName && encoding === 'utf-8') {
-      return content;
-    }
-    throw new Error(`Unexpected file read: ${requestedFileName}`);
-  });
-}
-
-// A helper to mock "fs.openSync":
-function mockOpenSync(success = true) {
-  if (success) {
-    fs.openSync.mockImplementation((outFileName, mode) => {
-      // Return a dummy file descriptor
-      return 123;
-    });
-  } else {
-    fs.openSync.mockImplementation(() => {
-      throw new Error('Cannot open output file');
-    });
-  }
-}
-
-// A helper to mock "fs.writeSync":
-function mockWriteSync() {
-  fs.writeSync.mockImplementation((fd, bufferOrString, ...args) => {
-    // no-op or store the bufferOrString somewhere
-  });
-}
-
-// A helper to mock "fs.closeSync":
-function mockCloseSync() {
-  fs.closeSync.mockImplementation((fd) => {
-    // no-op
-  });
-}
-
 describe('Assembler', () => {
   let assembler;
+
+  // A "virtual FS" object that holds filenames and contents (string or Buffer).
+  // We will rebuild this for each test.
+  let virtualFs;
 
   beforeEach(() => {
     // Reset all mocks before each test
     jest.clearAllMocks();
+
+    // Reinitialize our virtual FS for each test
+    virtualFs = {};
+
+    // Mock fs.existsSync:
+    fs.existsSync.mockImplementation((filePath) => {
+      return Object.prototype.hasOwnProperty.call(virtualFs, filePath);
+    });
+
+    // Mock fs.readFileSync:
+    fs.readFileSync.mockImplementation((filePath, encoding) => {
+      if (!Object.prototype.hasOwnProperty.call(virtualFs, filePath)) {
+        throw new Error(`ENOENT: no such file or directory, open '${filePath}'`);
+      }
+      const content = virtualFs[filePath];
+      // If it's a string and encoding is 'utf8' or 'utf-8', return it as a string
+      if (typeof content === 'string') {
+        if (encoding === 'utf8' || encoding === 'utf-8') return content;
+        // If no encoding, return a Buffer
+        return Buffer.from(content, 'utf8');
+      }
+      // Otherwise, if it's a Buffer, just return it
+      if (Buffer.isBuffer(content)) {
+        return content;
+      }
+      // If none of the above, throw an error or handle it
+      throw new Error(`Unexpected content type for '${filePath}'`);
+    });
+
+    // Mock fs.writeFileSync:
+    fs.writeFileSync.mockImplementation((filePath, data, options) => {
+      // Convert data to string if it's a Buffer
+      if (Buffer.isBuffer(data)) {
+        virtualFs[filePath] = data;
+      } else if (typeof data === 'string') {
+        // If encoding is 'utf8', store directly as a string
+        if (options && options.encoding === 'utf8') {
+          virtualFs[filePath] = data;
+        } else {
+          // Otherwise, store as Buffer
+          virtualFs[filePath] = Buffer.from(data, 'utf8');
+        }
+      } else {
+        throw new Error(`Invalid data type in writeFileSync for '${filePath}'`);
+      }
+    });
+
+    // **Mock fs.openSync, fs.writeSync, and fs.closeSync**
+    fs.openSync.mockImplementation((filePath, flags) => {
+      if (flags === 'w') {
+        // Initialize the file content in virtualFs
+        virtualFs[filePath] = '';
+      }
+      return filePath; // Use filePath as a mock file descriptor
+    });
+
+    fs.writeSync.mockImplementation((fd, buffer, offset, length, position) => {
+      // `fd` is the filePath in this mock
+      if (!virtualFs.hasOwnProperty(fd)) {
+        throw new Error(`Invalid file descriptor: ${fd}`);
+      }
+      if (Buffer.isBuffer(buffer)) {
+        virtualFs[fd] += buffer.toString('utf-8');
+      } else if (typeof buffer === 'string') {
+        virtualFs[fd] += buffer;
+      } else {
+        // Handle other possible buffer types if necessary
+        virtualFs[fd] += String(buffer);
+      }
+    });
+
+    fs.closeSync.mockImplementation((fd) => {
+      // In this mock, no action is needed on close
+      // The content has already been written to virtualFs
+    });
 
     // Create a new Assembler instance for each test
     assembler = new Assembler();
@@ -95,32 +135,20 @@ describe('Assembler', () => {
   // 3. Test assembling an **empty file**
   // -------------------------------------------------------------------------
   test('3. should attempt to assemble an empty .a file without crashing', () => {
-    const fileName = 'empty.a';
-    mockSourceFile(fileName, '');
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    const aFilePath = 'empty.a';
+    virtualFs[aFilePath] = '';
 
     // Pass the file as argument
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).toThrow('Empty file');
-    // Because with no instructions, pass1 might not find a .start label, etc.
-    // Or if your assembler is okay with an empty file, it may differ:
-    //
-    // If your assembler is truly okay with an empty file, you might
-    // expect no throw. For example, you could do:
-    //
-    // expect(() => {
-    //   assembler.main([fileName]);
-    // }).not.toThrow();
   });
 
   // -------------------------------------------------------------------------
   // 4. Test assembling a minimal program (demoA)
   // -------------------------------------------------------------------------
   test('4. should assemble demoA.a with no errors', () => {
-    const fileName = 'demoA.a';
+    const aFilePath = 'demoA.a';
     const source = `
       ; demoA.a: simple test
       mov r0, 5
@@ -128,14 +156,11 @@ describe('Assembler', () => {
       nl
       halt
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     // We expect no throw for a valid file:
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).not.toThrow();
 
     // After assembling, we can check that certain internal states
@@ -149,18 +174,15 @@ describe('Assembler', () => {
   // 5. Test .bin file parsing
   // -------------------------------------------------------------------------
   test('5a. should assemble a correctly written .bin file (each line 16 bits)', () => {
-    const fileName = 'binaryExample.bin';
+    const binFilePath = 'binaryExample.bin';
     const source = `
       0001000000000010 ; this is a 16-bit binary line
       0011100000000101 ; another 16-bit binary line
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[binFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([binFilePath]);
     }).not.toThrow();
 
     // The lines should have been parsed into two words:
@@ -171,32 +193,27 @@ describe('Assembler', () => {
   });
 
   test('5b. should throw if .bin file line is not 16 bits', () => {
-    const fileName = 'badBinary.bin';
+    const binFilePath = 'badBinary.bin';
     const source = `
       0101001001 ; only 10 bits
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[binFilePath] = source;
+
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([binFilePath]);
     }).toThrow('does not have exactly 16 bits');
   });
 
   test('5c. should throw if .bin file has non-binary characters', () => {
-    const fileName = 'badBinary2.bin';
+    const binFilePath = 'badBinary2.bin';
     const source = `
       0101001001001XYZ
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[binFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([binFilePath]);
     }).toThrow('is not purely binary');
   });
 
@@ -204,18 +221,15 @@ describe('Assembler', () => {
   // 6. Test .hex file parsing
   // -------------------------------------------------------------------------
   test('6a. should assemble a .hex file (each line exactly 4 hex digits)', () => {
-    const fileName = 'hexExample.hex';
+    const hexFilePath = 'hexExample.hex';
     const source = `
       1A2F ; 16-bit value in hex
       FFFF
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[hexFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([hexFilePath]);
     }).not.toThrow();
 
     // Should have 2 words in output buffer:
@@ -225,32 +239,26 @@ describe('Assembler', () => {
   });
 
   test('6b. should throw if .hex file line is not 4 hex digits', () => {
-    const fileName = 'badHex.hex';
+    const hexFilePath = 'badHex.hex';
     const source = `
       1A2 ; only 3 hex digits
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[hexFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([hexFilePath]);
     }).toThrow('does not have exactly 4 nibbles');
   });
 
   test('6c. should throw if .hex file has invalid hex characters', () => {
-    const fileName = 'badHex2.hex';
+    const hexFilePath = 'badHex2.hex';
     const source = `
       X123
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[hexFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([hexFilePath]);
     }).toThrow('is not purely hexadecimal');
   });
 
@@ -258,7 +266,7 @@ describe('Assembler', () => {
   // 7. Test an example that uses .word, .zero, .string, etc. (like demoB)
   // -------------------------------------------------------------------------
   test('7. should handle directives such as .word, .string, .zero without errors', () => {
-    const fileName = 'demoB.a';
+    const aFilePath = 'demoB.a';
     const source = `
       ld r0, x
       add r0, r0, 2
@@ -268,13 +276,10 @@ ask:  .string "What's your first name? "
 buffer1: .zero 10
 x: .word 5
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).not.toThrow();
 
     // We can check that the assembler created an output buffer that
@@ -291,55 +296,46 @@ x: .word 5
   // 8. Test handling of undefined labels
   // -------------------------------------------------------------------------
   test('8. should throw if a referenced label is never defined or declared .extern', () => {
-    const fileName = 'undefinedLabel.a';
+    const aFilePath = 'undefinedLabel.a';
     const source = `
       ld r0, missingLabel
       halt
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).toThrow('Undefined label');
   });
 
   // -------------------------------------------------------------------------
   // 9. Test .start directive and label resolution
   // -------------------------------------------------------------------------
-  test('9. should throw if .start label is undefined', () => {
-    const fileName = 'badStart.a';
+  test('9a. should throw if .start label is undefined', () => {
+    const aFilePath = 'badStart.a';
     const source = `
       .start main
       halt
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     // Pass 2 will complain that main is undefined
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).toThrow('Undefined label');
   });
 
-  test('should resolve .start label if defined', () => {
-    const fileName = 'goodStart.a';
+  test('9b. should resolve .start label if defined', () => {
+    const aFilePath = 'goodStart.a';
     const source = `
       .start main
     main:
       halt
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).not.toThrow();
     expect(assembler.startLabel).toBe('main');
     expect(assembler.startAddress).toBeDefined();
@@ -349,21 +345,19 @@ x: .word 5
   // -------------------------------------------------------------------------
   // 10. Test global and .o object-file generation
   // -------------------------------------------------------------------------
-  test.skip('should produce .o file when .global is used', () => {
-    const fileName = 'testObject.a';
+  test('should produce .o file when .global is used', () => {
+    const aFilePath = 'testObject.a';
     const source = `
       .global foo
       mov r0, 123
       halt
 foo:  .word 456
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
+    virtualFs['name.nnn'] = 'Cheese\n';
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).not.toThrow();
 
     // Assembler should have flagged "isObjectModule = true" and changed
@@ -376,20 +370,17 @@ foo:  .word 456
   // 11. Testing instructions with immediate out-of-range
   // -------------------------------------------------------------------------
   test('should throw if an immediate is out of range for an instruction (e.g. add)', () => {
-    const fileName = 'outOfRange.a';
+    const aFilePath = 'outOfRange.a';
     const source = `
       mov r0, 5
       ; add immediate takes a 5-bit imm, i.e. -16..15
       add r0, r0, 100 ; out of range
       halt
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).toThrow('Immediate value out of range');
   });
 
@@ -397,7 +388,7 @@ foo:  .word 456
   // 12. Testing division by zero? (No direct assembler error, but a good example)
   // -------------------------------------------------------------------------
   test('should assemble demoN.a (division by zero) successfully (no assembler error)', () => {
-    const fileName = 'demoN.a';
+    const aFilePath = 'demoN.a';
     const source = `
       mov r0, 3
       mov r1, 0
@@ -405,15 +396,12 @@ foo:  .word 456
       dout r0
       halt
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     // Even though at runtime this might cause an exception,
     // the assembler itself won't necessarily throw. So we expect no error:
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).not.toThrow();
 
     expect(assembler.errorFlag).toBe(false);
@@ -423,19 +411,16 @@ foo:  .word 456
   // 13. Testing a label with offset
   // -------------------------------------------------------------------------
   test('should properly handle label with offset in instruction operand', () => {
-    const fileName = 'labelOffset.a';
+    const aFilePath = 'labelOffset.a';
     const source = `
       mydata: .word 100
       ld r0, mydata + 2
       halt
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).not.toThrow();
     expect(assembler.errorFlag).toBe(false);
 
@@ -447,7 +432,7 @@ foo:  .word 456
   // 14. Test an entire multi-line example that does pass 1 and pass 2 properly
   // -------------------------------------------------------------------------
   test('should assemble a short multi-line example with labels and instructions', () => {
-    const fileName = 'multiLine.a';
+    const aFilePath = 'multiLine.a';
     const source = `
       .start main
 
@@ -463,13 +448,10 @@ loop:
 end:
       halt
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).not.toThrow();
     expect(assembler.errorFlag).toBe(false);
     // Should have a non-empty listing and outputBuffer:
@@ -481,19 +463,16 @@ end:
   // 15. Test passing a label to an instruction that doesn't take labels
   // -------------------------------------------------------------------------
   test('should throw an error when passing a non-ascii, non-numeric (i.e. a label) to mov instruction', () => {
-    const fileName = 'badMov.a';
+    const aFilePath = 'badMov.a';
     const source = `
       mov r0, notAValidCharOrNumber
       halt
       notAValidCharOrNumber: .string "hello"
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).toThrow('Bad number');
   });
 
@@ -501,36 +480,34 @@ end:
   // 16. Test opening a file that doesn't exist
   // -------------------------------------------------------------------------
   test('should throw an error when opening a file that does not exist', () => {
-    const fileName = 'doesNotExist.a';
+    const aFilePath = 'doesNotExist.a';
 
     // Mock fs.openSync to throw an error
     fs.openSync.mockImplementation(() => {
-      throw new Error(`ENOENT: no such file or directory, open '${fileName}'`);
+      throw new Error(`ENOENT: no such file or directory, open '${aFilePath}'`);
     });
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).toThrow('Cannot open input file doesNotExist.a');
   });
 
   // -------------------------------------------------------------------------
   // 17. Test extern and .o object-file generation
   // -------------------------------------------------------------------------
-  test.skip('should produce .o file when .extern is used', () => {
+  test('should produce .o file when .extern is used', () => {
     //// TODO: implement this test case by providing the necessary name.nnn file mock
-    const fileName = 'testObject2.a';
+    const aFilePath = 'testObject2.a';
     const source = `
       .extern bar
       ld r0, bar
       halt
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
+    virtualFs['name.nnn'] = 'Cheese\n';
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).not.toThrow();
 
     // Assembler should have flagged "isObjectModule = true" and changed
@@ -543,19 +520,16 @@ end:
   // 18. Test invalid label char detection
   // -------------------------------------------------------------------------
   test('should throw an error when using an invalid label name', () => {
-    const fileName = 'invalidLabel.a';
+    const aFilePath = 'invalidLabel.a';
     const source = `
       mov r0, 5
       halt
     5invalidLabel: .word 10
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).toThrow('Bad label');
   });
 
@@ -563,20 +537,17 @@ end:
   // 19. Test duplicate label detection
   // -------------------------------------------------------------------------
   test('should throw an error when using a duplicate label name', () => {
-    const fileName = 'duplicateLabel.a';
+    const aFilePath = 'duplicateLabel.a';
     const source = `
       mov r0, 5
       halt
     myLabel: .word 10
     myLabel: .word 20
     `;
-    mockSourceFile(fileName, source);
-    mockOpenSync(true);
-    mockWriteSync();
-    mockCloseSync();
+    virtualFs[aFilePath] = source;
 
     expect(() => {
-      assembler.main([fileName]);
+      assembler.main([aFilePath]);
     }).toThrow('Duplicate label');
   });
 });
