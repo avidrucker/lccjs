@@ -121,16 +121,17 @@ class Interpreter {
     try {
       buffer = fs.readFileSync(this.inputFileName);
     } catch (err) {
-      console.error(`Cannot open input file ${this.inputFileName}`);
+      console.error(`Cannot open input file ${this.inputFileName}`); // , err: ${err}
       // process.exit(1);
-      fatalExit(`Cannot open input file ${this.inputFileName}`, 1);
+      fatalExit(`Cannot open input file ${this.inputFileName}`, 1); // , err: ${err}
     }
 
     // Check file signature
     if (buffer[0] !== 'o'.charCodeAt(0)) {
-      console.error(`${this.inputFileName} is not a valid LCC executable file: missing 'o' signature`);
+      // `${this.inputFileName} is not a valid LCC executable file: missing 'o' signature`
+      console.error(`${this.inputFileName} is not in lcc format`);
       // process.exit(1);
-      fatalExit(`${this.inputFileName} is not a valid LCC executable file: missing 'o' signature`, 1);
+      fatalExit(`${this.inputFileName} is not in lcc format`, 1);
     }
 
     // Load the executable into memory
@@ -399,7 +400,8 @@ class Interpreter {
     if (this.instructionsExecuted >= 500000) {
       console.error("Possible infinite loop");
       this.running = false;
-      return; // Exit the step method early
+      // return; // Exit the step method early
+      fatalExit("Possible infinite loop", 1);
     }
 
     // Track max stack size
