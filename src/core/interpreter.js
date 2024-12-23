@@ -79,9 +79,9 @@ class Interpreter {
             fatalExit(`Invalid load point value: ${loadPointStr}`, 1);
           }
         } else {
-          console.error(`Unknown option: ${arg}`);
+          console.error(`Bad command line switch: ${arg}`); // `Unknown option: ${arg}`
           // process.exit(1);
-          fatalExit(`Unknown option: ${arg}`, 1);
+          fatalExit(`Bad command line switch: ${arg}`, 1);
         }
       } else {
         // Assume it's the input file name
@@ -104,7 +104,9 @@ class Interpreter {
 
     // Get the userName using nameHandler
     try {
+      //// console.log(`inputFileName = ${this.inputFileName}`);
       this.userName = nameHandler.createNameFile(this.inputFileName);
+      //// console.log("userName = " + this.userName);
     } catch (error) {
       console.error('Error handling name file:', error.message);
       // process.exit(1);
