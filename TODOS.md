@@ -104,6 +104,7 @@
 
 ## Test
 
+- [x] use file mocking in interpreter.integration.test.js to create virtual name.nnn file for assembler.integration.test.js creation of .o object files from .a object modules 
 - [ ] write unit tests for each module
   - [ ] assembler.unit.test.js
   - [ ] interpreter.unit.test.js
@@ -113,10 +114,11 @@
   - [ ] lcc.unit.test.js
   - [ ] hexDisplay.unit.test.js
 - [o] write integration tests for each module
-  - [x] assembler.integration.test.js
+  - [o] assembler.integration.test.js
     - [x] test for assembler.js output when not passed any input file
     - [x] test for assembler.js output when .a file is empty
-  - [ ] interpreter.e2e.test.js
+    - [ ] test for assembling .a object modules into .o object files
+  - [o] interpreter.e2e.test.js
   - [ ] linker.e2e.test.js
   - [ ] name.e2e.test.js
   - [ ] picture.e2e.test.js
