@@ -402,6 +402,10 @@ class Interpreter {
       this.running = false;
       // return; // Exit the step method early
       fatalExit("Possible infinite loop", 1);
+      //// TODO: after implementing symbolic debugger, this should not exit the program
+      ////       and should instead initiate symbolic debugger execution
+      //// TODO: implement a custom LCC.js behavior to set flags to toggle (1) potential
+      ////       infinite loop detection, and (2) automatic initiation of symbolic debugger
     }
 
     // Track max stack size
