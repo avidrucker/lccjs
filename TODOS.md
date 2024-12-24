@@ -101,6 +101,8 @@
 - [x] give "help" message when lcc.js is run without any arguments
 - [ ] implicit r0 for the out commands when not specified (no demo yet)
 - [ ] implicit 0 for offset6 when not specified (no demo yet)
+- [ ] implement preceding a number with # to indicate a decimal number (no demo yet)
+- [ ] implement wrapping up numbers in [] (this should have no effect on the code, and should not cause any errors) (no demo yet)
 
 ## Test
 
@@ -224,7 +226,9 @@
   - [x] assembler.js
   - [x] interpreter.js
   - [x] linker.js
-- [ ] implement toggle in assembler.js to switch on/off the ability to report multiple errors (not just the first encountered error as in the original LCC)
+- [x] implement toggle in assembler.js to switch on/off the ability to report multiple errors (not just the first encountered error as in the original LCC)
+- [ ] implement finer-grained error reporting in assembler.js (e.g. 'invalid mnemonic', 'invalid directive', 'invalid label definition', etc.
+- [ ] implement helpful error messages in assembler.js (e.g. 'Did you mean to escape this character?', 'Did you mean to write a string here? Note that strings must be enclosed in double quotes.', 'Did you mean to write a char here? Note that chars must be enclosed in single quotes.', etc.)
 
 ## Extra Features
 
