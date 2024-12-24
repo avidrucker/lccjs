@@ -2885,7 +2885,6 @@ data2: .word 10
     }).toThrow('Bad number');
   });
 
-  /*
   // -------------------------------------------------------------------------
   // 151. Test jump and link instruction (bl) with valid label
   // -------------------------------------------------------------------------
@@ -2957,7 +2956,7 @@ data2: .word 10
     // Assuming bl expects a label, not an immediate
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow('Bad label');
   });
 
   // -------------------------------------------------------------------------
@@ -3000,7 +2999,7 @@ data2: .word 10
   test('157. should throw error for ldr instruction with invalid offset', () => {
     const aFilePath = 'ldrInvalidOffset.a';
     const source = `
-      ldr r1, r2, 20
+      ldr r1, r2, 100
       halt
     `;
     virtualFs[aFilePath] = source;
@@ -3008,7 +3007,7 @@ data2: .word 10
     // Assuming offset6 must be within -32 to 31
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('offset6 out of range for ldr');
+    }).toThrow('offset6 out of range');
   });
 
   // -------------------------------------------------------------------------
@@ -3017,14 +3016,14 @@ data2: .word 10
   test('158. should throw error for ldr instruction missing operands', () => {
     const aFilePath = 'ldrMissingOperands.a';
     const source = `
-      ldr r1, r2
+      ldr r1
       halt
     `;
     virtualFs[aFilePath] = source;
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid operand count for ldr');
+    }).toThrow('Missing register');
   });
 
   // -------------------------------------------------------------------------
@@ -3046,24 +3045,25 @@ data2: .word 10
   });
 
   // -------------------------------------------------------------------------
-  // 160. Test load register instruction (ldr) with label offset (unsupported)
+  // 160. Test load register instruction (ldr) with label (unsupported)
   // -------------------------------------------------------------------------
-  test('160. should throw error for ldr instruction with label offset', () => {
-    const aFilePath = 'ldrLabelOffset.a';
+  test('160. should throw error for ldr instruction with label', () => {
+    const aFilePath = 'ldrLabel.a';
     const source = `
-      ldr r1, r2, label + 2
+      ldr r1, r2, label
       halt
     label:
       .word 10
     `;
     virtualFs[aFilePath] = source;
 
-    // Assuming ldr expects a numeric offset, not label with offset
+    // Assuming ldr expects a numeric offset, not label
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Unsupported operand format for ldr');
+    }).toThrow('Bad number');
   });
 
+  /*
   // -------------------------------------------------------------------------
   // 161. Test assembler with empty file containing only comments
   // -------------------------------------------------------------------------
@@ -3818,6 +3818,41 @@ data2: .word 10
     expect(() => {
       assembler.main([aFilePath]);
     }).toThrow('Missing operand');
+  });
+
+  // -------------------------------------------------------------------------
+  // 204. Test load register instruction (ldr) with implicit operand
+  // -------------------------------------------------------------------------
+  test('204. should throw no error for ldr instruction implicit operand', () => {
+    const aFilePath = 'ldrImplicitOperand.a';
+    const source = `
+      ldr r1, r2
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).not.toThrow();
+  });
+
+  // -------------------------------------------------------------------------
+  // 205. Test load register instruction (ldr) with label and offset (unsupported)
+  // -------------------------------------------------------------------------
+  test('205. should throw error for ldr instruction with label and offset', () => {
+    const aFilePath = 'ldrLabelOffset.a';
+    const source = `
+      ldr r1, r2, label + 5
+      halt
+    label:
+      .word 10
+    `;
+    virtualFs[aFilePath] = source;
+
+    // Assuming ldr expects a numeric offset, not label
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Bad number');
   });
 
 });
