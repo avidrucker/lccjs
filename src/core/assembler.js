@@ -817,18 +817,37 @@ class Assembler {
     mnemonic = mnemonic.toLowerCase();
     switch (mnemonic) {
       case '.start':
-        if (operands.length !== 1) {
-          this.error(`Invalid operand count for ${mnemonic}`);
-          return;
+        
+        if(operands[0] === null || operands[0] === undefined) {
+          this.error("Missing operand");
+          fatalExit("Missing operand", 1);
         }
+
+        if(!this.isValidLabel(operands[0])) {
+          this.error("Bad operand--not a valid label");
+          fatalExit("Bad operand--not a valid label", 1);
+        }
+
         this.startLabel = operands[0];
         // Note: startAddress will be resolved after Pass 2 when all symbols are known
         break;
+      case '.org':
+        this.error("This directive hasn't yet been implemented");
+        fatalExit("This directive hasn't yet been implemented", 1);
+        break;
+      case '.globl':
       case '.global':
-        if (operands.length !== 1) {
-          this.error(`Invalid operand count for ${mnemonic}`);
-          return;
+        
+        if(operands[0] === null || operands[0] === undefined) {
+          this.error("Missing operand");
+          fatalExit("Missing operand", 1);
         }
+
+        if(!this.isValidLabel(operands[0])) {
+          this.error("Bad operand--not a valid label");
+          fatalExit("Bad operand--not a valid label", 1);
+        }
+
         this.isObjectModule = true; // Set flag to produce .o file
         let globalLabel = operands[0];
       
@@ -841,10 +860,17 @@ class Assembler {
         }
         break;
       case '.extern':
-        if (operands.length !== 1) {
-          this.error(`Invalid operand count for ${mnemonic}`);
-          return;
+        
+        if(operands[0] === null || operands[0] === undefined) {
+          this.error("Missing operand");
+          fatalExit("Missing operand", 1);
         }
+
+        if(!this.isValidLabel(operands[0])) {
+          this.error("Bad operand--not a valid label");
+          fatalExit("Bad operand--not a valid label", 1);
+        }
+
         this.isObjectModule = true; // Set flag to produce .o file
         let externLabel = operands[0];
         this.externLabels.add(externLabel);
@@ -910,7 +936,10 @@ class Assembler {
             label = operands[0] + operands[1] + operands[2];
           }
           let value = this.evaluateOperand(label, 'V'); // Pass 'V' as usageType
-          if (value === null) return;
+          if (value === null) {
+            this.error('Bad number');
+            fatalExit('Bad number', 1);
+          };
       
           // see if operand is label +/- offset
           const parsed = this.parseLabelWithOffset(label);
@@ -971,7 +1000,8 @@ class Assembler {
         }
         break;
       default:
-        this.error(`Invalid directive: ${mnemonic}`);
+        this.error(`Invalid operation`); // Invalid directive: ${mnemonic}
+        fatalExit(`Invalid operation`, 1);
         break;
     }
   }
@@ -1485,9 +1515,15 @@ class Assembler {
       label = operands[1] + operands[2] + operands[3];
     }
 
-    if (dr === null) return null;
+    if (dr === null) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
+    };
     let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
-    if (address === null) return null;
+    if (address === null) {
+      this.error('Bad label');
+      fatalExit('Bad label', 1);
+    };
     
     let isExternal = this.externLabels.has(label);
     let pcoffset9;
@@ -1525,9 +1561,15 @@ class Assembler {
       label = operands[1] + operands[2] + operands[3];
     }
 
-    if (sr === null) return null;
-    let address = this.evaluateOperand(label, 'e');
-    if (address === null) return null;
+    if (sr === null) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
+    };
+    let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
+    if (address === null) {
+      this.error('Bad label');
+      fatalExit('Bad label', 1);
+    };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
       this.error('pcoffset9 out of range for st');
@@ -1935,8 +1977,9 @@ class Assembler {
         return 0;
       } else {
         // this.error(`Undefined operand: ${operand}`);
-        this.error("Bad number");
-        fatalExit("Bad number", 1);
+        // this.error("Bad number");
+        // fatalExit("Bad number", 1);
+        return null;
       }
     }
   }  
