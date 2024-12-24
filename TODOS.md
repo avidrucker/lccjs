@@ -104,6 +104,8 @@
 
 ## Test
 
+- [ ] fix e2e tests so that, if Docker is detected open before the test starts, Docker is not closed after the test finishes
+- [ ] fix bug where linker.e2e.test.js attempts to use Docker if Docker is open, even if the cache is valid
 - [x] use file mocking in interpreter.integration.test.js to create virtual name.nnn file for assembler.integration.test.js creation of .o object files from .a object modules 
 - [ ] write unit tests for each module
   - [ ] assembler.unit.test.js
