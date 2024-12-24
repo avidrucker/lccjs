@@ -1843,6 +1843,10 @@ class Assembler {
     }
   }  
 
+  isLiteral(operand) {
+    return this.isCharLiteral(operand) || !isNaN(operand);
+  }
+
   evaluateImmediate(valueStr, min, max) {
     let value = this.parseNumber(valueStr);
     if (isNaN(value) || value < min || value > max) {
