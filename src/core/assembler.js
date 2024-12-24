@@ -870,18 +870,19 @@ class Assembler {
         break;
       case '.fill':
       case '.word':
-        if (operands.length !== 1 && operands.length !== 3) {
+        // if (operands.length !== 1 && operands.length !== 3) {
           //// TODO: inspect to make sure that .word can handle .word x, .word x+1, and .word x + 1
           //// TODO: inspect to make sure that .word can handle .word x+ 1 and .word x +1
           //// TODO: inspect to make sure that .word behaves as expected with .word x + 1 + 1
           //// TODO: inspect to make sure that .word behaves as expected with .word <NOTHING>
           //// TODO: inspect to make sure that .word behaves as expected with .word + or .word -
-          this.error(`Invalid operand count for ${mnemonic}`);
-          return;
-        }
+          // this.error(`Invalid operand count for ${mnemonic}`);
+          // return;
+        // }
         if (this.pass === 2) {
           let label = operands[0];
-          if(operands[1] && operands[2]) {
+          // if not a literal, then operands[0] is a label
+          if(!this.isLiteral(operands[0]) && operands[1] && operands[2]) {
             label = operands[0] + operands[1] + operands[2];
           }
           let value = this.evaluateOperand(label, 'V'); // Pass 'V' as usageType
@@ -1137,7 +1138,7 @@ class Assembler {
 
     if(!this.isRegister(sr2orImm5)) {
       // compare with immediate
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15);
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15);  //// TODO: test bounds, see if input is naive or not
       macword = macword | (sr1 << 6) | (imm5 & 0x1F) | 0x0020;
     } else {
       // compare with register
@@ -1169,8 +1170,8 @@ class Assembler {
     };
     let macword = (codes[mnemonic.toLowerCase()] << 9) & 0xffff;
     let label = operands[0];
-    if(operands[1] && operands[2]) {
-      label = operands[0]+operands[1]+operands[2];
+    if(!this.isLiteral(operands[0]) && operands[1] && operands[2]) {
+      label = operands[0] + operands[1] + operands[2];
     }
     let address = this.evaluateOperand(label, 'e');
     if (address === null) return null;
@@ -1198,7 +1199,7 @@ class Assembler {
       if (sr2 === null) return null;
       macword |= sr2;
     } else {
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15);
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5");
       if (imm5 === null) return null;
       macword |= 0x0020 | (imm5 & 0x1F);
     }
@@ -1231,7 +1232,7 @@ class Assembler {
       if (sr2 === null) return null;
       macword |= sr2;
     } else {
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15);
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5');
       if (imm5 === null) return null;
       macword |= 0x0020 | (imm5 & 0x1F);
     }
@@ -1280,7 +1281,7 @@ class Assembler {
     let sr = this.getRegister(operands[0]);
     if (sr === null) return null;
     let ct = null;
-    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15);
+    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0005;
     return macword;
@@ -1354,7 +1355,7 @@ class Assembler {
     let sr = this.getRegister(operands[0]);
     if (sr === null) return null;
     let ct = null;
-    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15);
+    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0006;
     return macword;
@@ -1368,7 +1369,7 @@ class Assembler {
     let sr = this.getRegister(operands[0]);
     if (sr === null) return null;
     let ct = null;
-    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15);
+    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0002;
     return macword;
@@ -1382,7 +1383,7 @@ class Assembler {
     let sr = this.getRegister(operands[0]);
     if (sr === null) return null;
     let ct = null;
-    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15);
+    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0003;
     return macword;
@@ -1396,7 +1397,7 @@ class Assembler {
     let sr = this.getRegister(operands[0]);
     if (sr === null) return null;
     let ct = null;
-    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15);
+    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0004;
     return macword;
@@ -1417,7 +1418,7 @@ class Assembler {
       if (sr2 === null) return null;
       macword |= sr2;
     } else {
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15);
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5'); //// TODO: test bounds, see if input is naive or not
       if (imm5 === null) return null;
       macword |= 0x0020 | (imm5 & 0x1F);
     }
@@ -1534,7 +1535,7 @@ class Assembler {
     if (baser === null) return null;
     let offset6 = 0;
     if (operands.length === 2) {
-      offset6 = this.evaluateImmediate(operands[1], -32, 31);
+      offset6 = this.evaluateImmediate(operands[1], -32, 31);  //// TODO: test bounds, see if input is naive or not
       if (offset6 === null) return null;
     }
     let macword = 0x4000 | (baser << 6) | (offset6 & 0x3F);
@@ -1549,7 +1550,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let baser = this.getRegister(operands[1]);
     if (dr === null || baser === null) return null;
-    let offset6 = this.evaluateImmediate(operands[2], -32, 31);
+    let offset6 = this.evaluateImmediate(operands[2], -32, 31);  //// TODO: test bounds, see if input is naive or not
     if (offset6 === null) return null;
     let macword = 0x6000 | (dr << 9) | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1563,7 +1564,7 @@ class Assembler {
     let sr = this.getRegister(operands[0]);
     let baser = this.getRegister(operands[1]);
     if (sr === null || baser === null) return null;
-    let offset6 = this.evaluateImmediate(operands[2], -32, 31);
+    let offset6 = this.evaluateImmediate(operands[2], -32, 31);  //// TODO: test bounds, see if input is naive or not
     if (offset6 === null) return null;
     let macword = 0x7000 | (sr << 9) | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1578,7 +1579,7 @@ class Assembler {
     if (baser === null) return null;
     let offset6 = 0;
     if (operands.length === 2) {
-      offset6 = this.evaluateImmediate(operands[1], -32, 31);
+      offset6 = this.evaluateImmediate(operands[1], -32, 31);  //// TODO: test bounds, see if input is naive or not
       if (offset6 === null) return null;
     }
     let macword = 0xC000 | (baser << 6) | (offset6 & 0x3F);
@@ -1586,14 +1587,14 @@ class Assembler {
   }
 
   assembleRET(operands) {
-    if (operands.length > 1) {
-      this.error('Invalid operand count for ret');
-      return null;
-    }
+    //// TODO: make sure that ret+3 is valid
+    //// TODO: make sure that ret+ 3 is valid
+    //// TODO; make sure that ret +3 is valid
+    //// TODO: make sure that ret + 3 is valid
     let baser = 7; // LR register
     let offset6 = 0;
-    if (operands.length === 1) {
-      offset6 = this.evaluateImmediate(operands[0], -32, 31);
+    if (operands[0] && operands[1]) {
+      offset6 = this.evaluateImmediate(operands[1], -32, 31); //// TODO: test bounds, see if input is naive or not
       if (offset6 === null) return null;
     }
     let macword = 0xC000 | (baser << 6) | (offset6 & 0x3F);
@@ -1612,36 +1613,42 @@ class Assembler {
     return macword;
   }
 
+  //////
   assembleMOV(mnemonic, operands) {
-    if (operands.length !== 2) {
-      this.error(`Invalid operand count for ${mnemonic}`);
-      return null;
-    }
-
     let dr = this.getRegister(operands[0]);
-    if (dr === null) return null;
+    if (dr === null) {
+      this.error('Missing register');
+      fatalExit("Missing register", 1);
+    };
 
     if (mnemonic === 'mov') {
       // Determine if operands[1] is a register or immediate
       if (this.isRegister(operands[1])) {
         // Translate to 'mvr dr, sr'
         let sr = this.getRegister(operands[1]);
-        if (sr === null) return null;
         // mvr: opcode 0xA000, eopcode 12
         let macword = 0xA000 | (dr << 9) | (sr << 6) | 0x000C;
         return macword;
       } else {
+         //// TODO: test bounds, see if input is naive or not
         // Translate to 'mvi dr, imm9'
         let imm9 = this.evaluateImmediateNaive(operands[1]); // this.evaluateImmediate(operands[1], -256, 255);
-        if (imm9 === null) return null;
+        if (imm9 === null) {
+          this.error('Missing number');
+          fatalExit("Missing number", 1);
+        };
         // mvi: opcode 0xD000
         let macword = 0xD000 | (dr << 9) | (imm9 & 0x1FF);
         return macword;
       }
     } else if (mnemonic === 'mvi') {
+       //// TODO: test bounds, see if input is naive or not
       // mvi dr, imm9
       let imm9 =  this.evaluateImmediateNaive(operands[1]); // this.evaluateImmediate(operands[1], -256, 255);
-      if (imm9 === null) return null;
+      if (imm9 === null) {
+        this.error('Missing number');
+        fatalExit("Missing number", 1);
+      };
       let macword = 0xD000 | (dr << 9) | (imm9 & 0x1FF);
       return macword;
     } else if (mnemonic === 'mvr') {
@@ -1672,9 +1679,14 @@ class Assembler {
 
 
   getRegister(regStr) {
-    if (!this.isRegister(regStr)) {
-      this.error(`Invalid register: ${regStr}`);
+
+    if(regStr === null || regStr === undefined) {
       return null;
+    }
+
+    if (!this.isRegister(regStr)) {
+      this.error('Bad register'); // this.error(`Invalid register: ${regStr}`);
+      fatalExit("Bad register", 1);
     }
     if (regStr === "fp") {
       regStr = "r5";
@@ -1847,10 +1859,17 @@ class Assembler {
     return this.isCharLiteral(operand) || !isNaN(operand);
   }
 
-  evaluateImmediate(valueStr, min, max) {
+  evaluateImmediate(valueStr, min, max, type='') {
     let value = this.parseNumber(valueStr);
-    if (isNaN(value) || value < min || value > max) {
-      this.error(`Immediate value out of range: ${valueStr}`);
+
+    if (isNaN(value)) {
+      this.error(`Bad number`);
+      fatalExit("Bad number", 1);
+    }
+
+    if (value < min || value > max) {
+      // this.error(`Immediate value out of range: ${valueStr}`);
+      this.error(`${type} out of range`);
       return null;
     }
     return value;
@@ -1859,10 +1878,13 @@ class Assembler {
   // function which simply returns the value if it is a number.
   // capped at 16 bits. Some instructions do not check for out of bounds numbers.
   evaluateImmediateNaive(valueStr) {
+    if(valueStr === null || valueStr === undefined) {
+      return null;
+    }
     let value = this.parseNumber(valueStr);
     if (isNaN(value)) {
       this.error(`Bad number`); // `Not a valid number: ${valueStr}`
-      return null;
+      fatalExit("Bad number", 1);
     }
     return value & 0xFFFF;
   }
