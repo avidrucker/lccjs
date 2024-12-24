@@ -550,4 +550,249 @@ end:
       assembler.main([aFilePath]);
     }).toThrow('Duplicate label');
   });
+
+  // -------------------------------------------------------------------------
+  // 20. Test not passing mov a 2nd operand
+  // -------------------------------------------------------------------------
+  test('20. should throw an error when not passing a 2nd operand to mov', () => {
+    const aFilePath = 'noSecondOperand.a';
+    const source = `
+      mov r0
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Missing number');
+  });
+
+  // -------------------------------------------------------------------------
+  // 21. Test not passing anything to mov
+  // -------------------------------------------------------------------------
+  test('21. should throw an error when not passing anything to mov', () => {
+    const aFilePath = 'noOperands.a';
+    const source = `
+      mov
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Missing register');
+  });
+
+  // -------------------------------------------------------------------------
+  // 22. Test not passing a valid literal (but instead a label) to mov
+  // -------------------------------------------------------------------------
+  test('22. should throw an error when passing a label (instead of a literal) to mov', () => {
+    const aFilePath = 'labelToMov.a';
+    const source = `
+      mov r0, myLabel
+      halt
+    myLabel: .word 10
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Bad number');
+  });
+
+  // -------------------------------------------------------------------------
+  // 23. Test passing extra args to mov
+  // -------------------------------------------------------------------------
+  test('23. should not throw an error when passing extra arguments to mov', () => {
+    const aFilePath = 'extraArgsToMov.a';
+    const source = `
+      mov r0, 5, 10
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).not.toThrow();
+  });
+
+  // -------------------------------------------------------------------------
+  // 24. Test passing a label instead of a register to mov
+  // -------------------------------------------------------------------------
+  test('24. should throw an error when passing a label instead of a register to mov', () => {
+    const aFilePath = 'labelToMov2.a';
+    const source = `
+      mov myLabel, 5
+      halt
+    myLabel: .word 10
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Bad register');
+  });
+
+  // -------------------------------------------------------------------------
+  // 25. Test passing an invalid register to mvi
+  // -------------------------------------------------------------------------
+  test('25. should throw an error when passing an invalid register to mvi', () => {
+    const aFilePath = 'invalidRegisterToMvi.a';
+    const source = `
+      mvi r8, 5
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Bad register');
+  });
+
+  // -------------------------------------------------------------------------
+  // 26. Test passing a register instead of a literal to mvi
+  // -------------------------------------------------------------------------
+  test('26. should throw an error when passing a register instead of a literal to mvi', () => {
+    const aFilePath = 'registerToMvi.a';
+    const source = `
+      mvi r0, r1
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Bad number');
+  });
+
+  // -------------------------------------------------------------------------
+  // 27. Test referencing a label (in a .word) that isn't declared
+  // -------------------------------------------------------------------------
+  test('27. should throw an error when referencing a label that is not declared', () => {
+    const aFilePath = 'undeclaredLabel.a';
+    const source = `l
+      halt
+x: .word y
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Undefined label');
+  });
+
+  // -------------------------------------------------------------------------
+  // 28. Test passing multiple arguments to a .word directive
+  // -------------------------------------------------------------------------
+  test('28. should not throw an error when passing multiple arguments to a .word directive', () => {
+    const aFilePath = 'multipleArgsToWord.a';
+    const source = `
+    halt
+x: .word 5, 10
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).not.toThrow();
+  });
+
+  // -------------------------------------------------------------------------
+  // 29. Test passing a literal (non-label) to a ld instruction
+  // -------------------------------------------------------------------------
+  test('29. should not throw an error when passing a literal to a ld instruction', () => {
+    // Note: This behavior (passing of non-labels to ld as the 2nd argument) is allowed in the 
+    //       original LCC as of 12/2024, but it seems like it should be disallowed.
+    const aFilePath = 'literalToLd.a';
+    const source = `
+      ld r0, 5
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).not.toThrow();
+  });
+
+  // -------------------------------------------------------------------------
+  // 30. Test adding two registers
+  // -------------------------------------------------------------------------
+  test('30. should not throw an error when adding two registers', () => {
+    const aFilePath = 'addRegisters.a';
+    const source = `
+      add r0, r1, r2
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).not.toThrow();
+  });
+
+  // -------------------------------------------------------------------------
+  // 31. Test adding a register and a literal
+  // -------------------------------------------------------------------------
+  test('31. should not throw an error when adding a register and a literal', () => {
+    const aFilePath = 'addRegisterLiteral.a';
+    const source = `
+      add r0, r1, 5
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).not.toThrow();
+  });
+
+  // -------------------------------------------------------------------------
+  // 32. Test adding a literal and a register
+  // -------------------------------------------------------------------------
+  test('32. should throw an error when adding a literal and a register', () => {
+    const aFilePath = 'addLiteralRegister.a';
+    const source = `
+      add r0, 5, r1
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow("Bad register");
+  });
+
+  // -------------------------------------------------------------------------
+  // 33. Test adding a register and a label
+  // -------------------------------------------------------------------------
+  test('33. should throw an error when adding a register and a label', () => {
+    const aFilePath = 'addRegisterLabel.a';
+    const source = `
+      add r0, r1, myLabel
+      halt
+    myLabel: .word 5
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow("Bad number");
+  });
+
+  // -------------------------------------------------------------------------
+  // 34. Test adding a number that is out of range
+  // -------------------------------------------------------------------------
+  test('34. should throw an error when adding a number that is out of range', () => {
+    const aFilePath = 'addOutOfRange.a';
+    const source = `
+      add r0, r1, 300
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow("imm5 out of range");
+  });
 });
