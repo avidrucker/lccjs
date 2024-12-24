@@ -1,0 +1,3 @@
+# Core Modules
+
+assembler.js, linker.js, interpreter.js, and lcc.js comprise the main modules (and program respectively) of this project. The assembler module is responsible for **converting** the assembly code into machine code (either an executable for standalone programs, or an intermediary "object" file format for code modules). The linker module is responsible for **combining** intermediary object modules together into a single executable. The interpreter module is responsible for **executing** the machine code. The lcc module can do whatever any of the modules alone can do, and it can even do some of them in sequence (assemble and interpret, for example).
