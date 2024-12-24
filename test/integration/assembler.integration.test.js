@@ -2521,7 +2521,6 @@ data2: .word 10
     }).toThrow('Line exceeds maximum length of 300 characters');
   });
 
-  /*
   // -------------------------------------------------------------------------
   // 130. Test string directive (.string) with multi-character literal
   // -------------------------------------------------------------------------
@@ -2535,7 +2534,7 @@ data2: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid character literal');
+    }).toThrow('String constant missing leading quote');
   });
 
   // -------------------------------------------------------------------------
@@ -2585,7 +2584,7 @@ data2: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid operand count for pop');
+    }).toThrow('Missing register');
   });
 
   // -------------------------------------------------------------------------
@@ -2653,7 +2652,7 @@ data2: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid operand count for push');
+    }).toThrow('Missing register');
   });
 
   // -------------------------------------------------------------------------
@@ -2674,26 +2673,29 @@ data2: .word 10
     expect(assembler.errorFlag).toBe(false);
   });
 
+   // -------------------------------------------------------------------------
+  // 139. Test word directive (.word) with label and offset NOT out of bounds
   // -------------------------------------------------------------------------
-  // 139. Test nop-like instruction (assuming 'nop' is not defined)
-  // -------------------------------------------------------------------------
-  test('139. should throw error for undefined mnemonic', () => {
-    const aFilePath = 'undefinedMnemonic.a';
+  test('139. should not throw an error for .word directive with label offset in bounds', () => {
+    const aFilePath = 'wordOffsetOutOfBounds.a';
     const source = `
-      nop
-      halt
+    halt
+data1: .word data2 + 65535
+data2: .word 10
     `;
     virtualFs[aFilePath] = source;
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid mnemonic or directive: nop');
+    }).not.toThrow();
   });
 
   // -------------------------------------------------------------------------
   // 140. Test instruction with invalid shift count
   // -------------------------------------------------------------------------
-  test('140. should throw error for srl instruction with invalid shift count', () => {
+  test('140. should throw no error for srl instruction with shift count that goes out of range', () => {
+    // Note: This seems like a bug in the LCC.js implementation, but it is currently (as of 12/2024)
+    // the LCC behavior to accept shift counts that go out of range.
     const aFilePath = 'srlInvalidShiftCount.a';
     const source = `
       srl r1, 16
@@ -2701,10 +2703,9 @@ data2: .word 10
     `;
     virtualFs[aFilePath] = source;
 
-    // Assuming shift count (ct) must be <= 15
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('shift count out of range for srl');
+    }).not.toThrow();
   });
 
   // -------------------------------------------------------------------------
@@ -2713,14 +2714,14 @@ data2: .word 10
   test('141. should throw error for invalid shift type in srl instruction', () => {
     const aFilePath = 'srlInvalidShiftType.a';
     const source = `
-      srl r1, 1, invalidShiftType
+      srl r1, invalidShiftType
       halt
     `;
     virtualFs[aFilePath] = source;
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Unsupported shift type for srl');
+    }).toThrow('Bad number');
   });
 
   // -------------------------------------------------------------------------
@@ -2761,10 +2762,10 @@ data2: .word 10
   });
 
   // -------------------------------------------------------------------------
-  // 144. Test instruction (sll) with shift count out of bounds
+  // 144. Test instruction (sll) with shift count out of range
   // -------------------------------------------------------------------------
-  test('144. should throw error for sll instruction with shift count out of bounds', () => {
-    const aFilePath = 'sllShiftCountOutOfBounds.a';
+  test('144. should throw no error for sll instruction with shift count out of range', () => {
+    const aFilePath = 'sllShiftCountOutOfRange.a';
     const source = `
       sll r1, 20
       halt
@@ -2774,7 +2775,7 @@ data2: .word 10
     // Assuming shift count must be <= 15
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('shift count out of range for sll');
+    }).not.toThrow();
   });
 
   // -------------------------------------------------------------------------
@@ -2796,9 +2797,9 @@ data2: .word 10
   });
 
   // -------------------------------------------------------------------------
-  // 146. Test instruction (rol) with invalid shift count
+  // 146. Test instruction (rol) with out of range shift count
   // -------------------------------------------------------------------------
-  test('146. should throw error for rol instruction with invalid shift count', () => {
+  test('146. should throw no error for rol instruction with out of range shift count', () => {
     const aFilePath = 'rolInvalidShiftCount.a';
     const source = `
       rol r2, 16
@@ -2809,7 +2810,7 @@ data2: .word 10
     // Assuming shift count must be <= 15
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('shift count out of range for rol');
+    }).not.toThrow();
   });
 
   // -------------------------------------------------------------------------
@@ -2874,17 +2875,17 @@ data2: .word 10
   test('150. should throw error for rol instruction with invalid operand format', () => {
     const aFilePath = 'rolInvalidOperandFormat.a';
     const source = `
-      rol r2, +3
+      rol r2, cheese
       halt
     `;
     virtualFs[aFilePath] = source;
 
-    // Assuming '+3' is an invalid format for shift count
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid shift count format for rol');
+    }).toThrow('Bad number');
   });
 
+  /*
   // -------------------------------------------------------------------------
   // 151. Test jump and link instruction (bl) with valid label
   // -------------------------------------------------------------------------
@@ -3817,23 +3818,6 @@ data2: .word 10
     expect(() => {
       assembler.main([aFilePath]);
     }).toThrow('Missing operand');
-  });
-
-    // -------------------------------------------------------------------------
-  // 204. Test word directive (.word) with label and offset NOT out of bounds
-  // -------------------------------------------------------------------------
-  test('204. should not throw an error for .word directive with label offset in bounds', () => {
-    const aFilePath = 'wordOffsetOutOfBounds.a';
-    const source = `
-    halt
-data1: .word data2 + 65535
-data2: .word 10
-    `;
-    virtualFs[aFilePath] = source;
-
-    expect(() => {
-      assembler.main([aFilePath]);
-    }).not.toThrow();
   });
 
 });
