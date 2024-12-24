@@ -782,8 +782,8 @@ class Assembler {
       if (str[i] === '\\') {
         i++; // Move to the next character to check the escape sequence
         if (i >= str.length) {
-          this.error('Invalid escape sequence at end of string');
-          return null;
+          this.error(`Missing terminating quote`);
+          fatalExit(`Missing terminating quote`, 1);
         }
         switch (str[i]) {
           case 'n':
@@ -852,15 +852,25 @@ class Assembler {
       case '.blkw':
       case '.space':
       case '.zero':
-        if (operands.length !== 1) {
-          this.error(`Invalid operand count for ${mnemonic}`);
-          return;
+
+        if(operands[0] === null || operands[0] === undefined) {
+          this.error("Missing operand");
+          fatalExit("Missing operand", 1);
         }
+
         let num = parseInt(operands[0], 10);
-        if (isNaN(num) || num < 1 || num > (65536 - this.locCtr)) {
-          this.error(`Invalid operand for ${mnemonic}`);
-          return;
+        if (isNaN(num)) {
+          this.error("Bad number");
+          fatalExit("Bad number", 1);
         }
+
+        // Note: in the original LCC (as of 12/2024), the .zero directive arguments
+        // are not checked for negativity, so this currently is a custom LCC.js behavior
+        if(num < 1 || num > (65536 - this.locCtr)) {
+          this.error("Bad number");
+          fatalExit("Bad number", 1);
+        }
+
         if (this.pass === 2) {
           for (let i = 0; i < num; i++) {
             this.writeMachineWord(0);
@@ -870,6 +880,11 @@ class Assembler {
         break;
       case '.fill':
       case '.word':
+        if(operands[0] === null || operands[0] === undefined) {
+          this.error("Missing operand");
+          fatalExit("Missing operand", 1);
+        }
+
         // if (operands.length !== 1 && operands.length !== 3) {
           //// TODO: inspect to make sure that .word can handle .word x, .word x+1, and .word x + 1
           //// TODO: inspect to make sure that .word can handle .word x+ 1 and .word x +1
@@ -879,10 +894,19 @@ class Assembler {
           // this.error(`Invalid operand count for ${mnemonic}`);
           // return;
         // }
+
         if (this.pass === 2) {
           let label = operands[0];
-          // if not a literal, then operands[0] is a label
-          if(!this.isLiteral(operands[0]) && operands[1] && operands[2]) {
+
+          // if not a number castable literal, then operands[0] is a label
+          if(!this.isNumLiteral(operands[0]) && operands[1] && operands[2]) {
+
+            // if operands[2] is not a literal value, then it isn't a valid offset
+            if(!this.isNumLiteral(operands[2])) {
+              this.error('Bad number');
+              fatalExit('Bad number', 1);
+            }
+
             label = operands[0] + operands[1] + operands[2];
           }
           let value = this.evaluateOperand(label, 'V'); // Pass 'V' as usageType
@@ -891,17 +915,16 @@ class Assembler {
           // see if operand is label +/- offset
           const parsed = this.parseLabelWithOffset(label);
 
-          // console.log("Parsed: ", parsed);
-
           if (parsed && this.symbolTable.hasOwnProperty(parsed.label)) {
             // It's a local label with offset, so record an A-entry
             this.handleAdjustmentEntry(this.locCtr);
           }
-      
-          if (value > 65535 || value < -32768) {
-            this.error('Data does not fit in 16 bits');
-            return;
+
+          if(parsed && (parsed.offset > 65535 || parsed.offset < -32768)) {
+            this.error('Bad number'); // 'Data does not fit in 16 bits'
+            fatalExit('Bad number', 1); // 'Data does not fit in 16 bits'
           }
+
           this.writeMachineWord(value & 0xFFFF);
         }
         this.locCtr += 1;
@@ -909,14 +932,24 @@ class Assembler {
       case '.stringz':
       case '.asciz':
       case '.string':
-        if (operands.length !== 1) {
-          this.error(`Invalid operand count for ${mnemonic}`);
-          return;
+
+        if(operands[0] === null || operands[0] === undefined) {
+          this.error("Missing operand");
+          fatalExit("Missing operand", 1);
         }
+
         let strOperand = operands[0];
+
+        if(strOperand && strOperand.length > 0) {
+          if(strOperand[0] !== '"') {
+            this.error("String constant missing leading quote");
+            fatalExit("String constant missing leading quote", 1);
+          }
+        }
+
         if (!this.isStringLiteral(strOperand)) {
-          this.error(`Invalid string literal: ${strOperand}`);
-          return;
+          this.error(`Missing terminating quote`);
+          fatalExit(`Missing terminating quote`, 1);
         }
         // Extract the string without quotes
         let strContent = strOperand.slice(1, -1);
@@ -1102,8 +1135,9 @@ class Assembler {
         break;
       case 'bp':
         machineWord = this.assembleTrap(operands, 0x000E); // Trap vector for bp is 14
+        break;
       default:
-        this.error(`Invalid mnemonic or directive: ${mnemonic}`);
+        this.error("Invalid operation"); // this.error(`Invalid mnemonic or directive: ${mnemonic}`);
         return;
     }
 
@@ -1122,23 +1156,19 @@ class Assembler {
     }
   }
 
-  // cmp    1000  000  sr1 000 sr2   nzcv sr1 - sr2 (set flags) 
-  // cmp    1000  000  sr1 1  imm5   nzcv sr1 - imm5 (set flags) 
   assembleCMP(operands) {
-    if (operands.length !== 2) {
-      this.error('Invalid operand count for cmp');
-      return null;
-    }
-
     let sr1 = this.getRegister(operands[0]);
-    if (sr1 === null) return null;
+    if (sr1 === null) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
+    };
     let sr2orImm5 = operands[1];
     if (sr2orImm5 === null) return null;
     let macword = 0x8000;
 
     if(!this.isRegister(sr2orImm5)) {
       // compare with immediate
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15);  //// TODO: test bounds, see if input is naive or not
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5");  //// TODO: test bounds, see if input is naive or not
       macword = macword | (sr1 << 6) | (imm5 & 0x1F) | 0x0020;
     } else {
       // compare with register
@@ -1150,10 +1180,10 @@ class Assembler {
   }
 
   assembleBR(mnemonic, operands) {
-    if (operands.length !== 1 && operands.length !== 3) {
-      this.error(`Invalid operand count for ${mnemonic}`);
-      return null;
-    }
+    // if (operands.length !== 1 && operands.length !== 3) {
+    //   this.error(`Invalid operand count for ${mnemonic}`);
+    //   return null;
+    // }
     let codes = {
       'brz': 0,
       'bre': 0,
@@ -1170,14 +1200,25 @@ class Assembler {
     };
     let macword = (codes[mnemonic.toLowerCase()] << 9) & 0xffff;
     let label = operands[0];
-    if(!this.isLiteral(operands[0]) && operands[1] && operands[2]) {
+    if (label === null || label === undefined) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
+    }
+    if(!this.isNumLiteral(operands[0]) && operands[1] && operands[2]) {
+
+      // if operands[2] is not a literal value, then it isn't a valid offset
+      if(!this.isNumLiteral(operands[2])) {
+        this.error('Bad number');
+        fatalExit('Bad number', 1);
+      }
+
       label = operands[0] + operands[1] + operands[2];
     }
     let address = this.evaluateOperand(label, 'e');
     if (address === null) return null;
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
-      this.error('pcoffset9 out of range for branch');
+      this.error('pcoffset9 out of range'); // for branch instruction
       return null;
     }
     macword |= (pcoffset9 & 0x01FF);
@@ -1262,13 +1303,12 @@ class Assembler {
   }
 
   assembleDIV(operands) {
-    if (operands.length !== 2) {
-      this.error('Invalid operand count for div');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
-    if (dr === null || sr1 === null) return null;
+    if (dr === null || sr1 === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let macword = 0xa008 | (dr << 9) | (sr1 << 6);
     return macword;
   }
@@ -1288,13 +1328,12 @@ class Assembler {
   }
 
   assembleMUL(operands) {
-    if (operands.length !== 2) {
-      this.error('Invalid operand count for mul');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
-    if (dr === null || sr1 === null) return null;
+    if (dr === null || sr1 === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x0007;
     return macword;
   }
@@ -1404,37 +1443,48 @@ class Assembler {
   }
 
   assembleAND(operands) {
-    if (operands.length !== 3) {
-      this.error('Invalid operand count for and');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
-    if (dr === null || sr1 === null) return null;
+    if (dr === null || sr1 === null) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
+    };
     let sr2orImm5 = operands[2];
     let macword = 0x5000 | (dr << 9) | (sr1 << 6);
     if (this.isRegister(sr2orImm5)) {
       let sr2 = this.getRegister(sr2orImm5);
-      if (sr2 === null) return null;
       macword |= sr2;
     } else {
       let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5'); //// TODO: test bounds, see if input is naive or not
-      if (imm5 === null) return null;
+      if (imm5 === null) {
+        this.error('Bad number');
+        fatalExit('Bad number', 1);
+      };
       macword |= 0x0020 | (imm5 & 0x1F);
     }
     return macword;
   }
 
+  //////
   assembleLD(operands) {
-    if (operands.length !== 2 && operands.length !== 4) {
-      this.error('Invalid operand count for ld');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let label = operands[1];
-    if(operands[2] && operands[3]) {
-      label = operands[1]+operands[2]+operands[3];
+
+    if (label === null || label === undefined) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
     }
+    if(!this.isNumLiteral(operands[1]) && operands[2] && operands[3]) {
+
+      // if operands[2] is not a literal value, then it isn't a valid offset
+      if(!this.isNumLiteral(operands[3])) {
+        this.error('Bad number');
+        fatalExit('Bad number', 1);
+      }
+
+      label = operands[1] + operands[2] + operands[3];
+    }
+
     if (dr === null) return null;
     let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
     if (address === null) return null;
@@ -1457,15 +1507,24 @@ class Assembler {
   }  
 
   assembleST(operands) {
-    if (operands.length !== 2 && operands.length !== 4) {
-      this.error('Invalid operand count for st');
-      return null;
-    }
     let sr = this.getRegister(operands[0]);
     let label = operands[1];
-    if(operands[2] && operands[3]) {
-      label = operands[1]+operands[2]+operands[3];
+    
+    if (label === null || label === undefined) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
     }
+    if(!this.isNumLiteral(operands[1]) && operands[2] && operands[3]) {
+
+      // if operands[2] is not a literal value, then it isn't a valid offset
+      if(!this.isNumLiteral(operands[3])) {
+        this.error('Bad number');
+        fatalExit('Bad number', 1);
+      }
+
+      label = operands[1] + operands[2] + operands[3];
+    }
+
     if (sr === null) return null;
     let address = this.evaluateOperand(label, 'e');
     if (address === null) return null;
@@ -1479,16 +1538,34 @@ class Assembler {
   }
 
   assembleLea(operands) {
-    if (operands.length !== 2 && operands.length !== 4) {
-      this.error('Invalid operand count for lea');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let label = operands[1];
-    if(operands[2] && operands[3]) {
-      label = operands[1]+operands[2]+operands[3];
+
+    if(label === null || label === undefined) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
     }
-    if (dr === null) return null;
+
+    if(!this.isNumLiteral(operands[1]) && operands[2] && operands[3]) {
+
+      // if operands[2] is not a literal value, then it isn't a valid offset
+      if(!this.isNumLiteral(operands[2])) {
+        this.error('Bad number');
+        fatalExit('Bad number', 1);
+      }
+
+      label = operands[1] + operands[2] + operands[3];
+    }
+
+    if(!this.isValidLabel(label)) {
+      this.error(`Bad label`); // : ${label}
+      fatalExit(`Bad label`, 1); // : ${label}
+    }
+
+    if (dr === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let address = this.evaluateOperand(label, 'e');
     if (address === null) return null;
     let pcoffset9 = address - this.locCtr - 1;
@@ -1506,6 +1583,12 @@ class Assembler {
       return null;
     }
     let label = operands[0];
+
+    if(!this.isValidLabel(label)) {
+      this.error(`Bad label`); // : ${label}
+      fatalExit(`Bad label`, 1); // : ${label}
+    }
+
     let address = this.evaluateOperand(label, 'E'); // Pass 'E' as usageType
     if (address === null) return null;
     
@@ -1527,16 +1610,14 @@ class Assembler {
   }  
 
   assembleBLR(operands) {
-    if (operands.length < 1 || operands.length > 2) {
-      this.error('Invalid operand count for blr');
-      return null;
-    }
     let baser = this.getRegister(operands[0]);
-    if (baser === null) return null;
+    if (baser === null) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
+    };
     let offset6 = 0;
-    if (operands.length === 2) {
+    if (operands[1]) {
       offset6 = this.evaluateImmediate(operands[1], -32, 31);  //// TODO: test bounds, see if input is naive or not
-      if (offset6 === null) return null;
     }
     let macword = 0x4000 | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1571,12 +1652,13 @@ class Assembler {
   }
 
   assembleJMP(operands) {
-    if (operands.length < 1 || operands.length > 2) {
-      this.error('Invalid operand count for jmp');
-      return null;
-    }
     let baser = this.getRegister(operands[0]);
-    if (baser === null) return null;
+    if (baser === null) {
+      // Note: as of 12/2024, the official LCC behavior here is to segfault
+      // so, this is currently "custom" LCC.js behavior
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let offset6 = 0;
     if (operands.length === 2) {
       offset6 = this.evaluateImmediate(operands[1], -32, 31);  //// TODO: test bounds, see if input is naive or not
@@ -1593,9 +1675,8 @@ class Assembler {
     //// TODO: make sure that ret + 3 is valid
     let baser = 7; // LR register
     let offset6 = 0;
-    if (operands[0] && operands[1]) {
-      offset6 = this.evaluateImmediate(operands[1], -32, 31); //// TODO: test bounds, see if input is naive or not
-      if (offset6 === null) return null;
+    if (operands[0]) {
+      offset6 = this.evaluateImmediate(operands[0], -32, 31); //// TODO: test bounds, see if input is naive or not
     }
     let macword = 0xC000 | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1644,7 +1725,7 @@ class Assembler {
     } else if (mnemonic === 'mvi') {
        //// TODO: test bounds, see if input is naive or not
       // mvi dr, imm9
-      let imm9 =  this.evaluateImmediateNaive(operands[1]); // this.evaluateImmediate(operands[1], -256, 255);
+      let imm9 =  this.evaluateImmediate(operands[1], -256, 255, "mvi immediate"); // this.evaluateImmediate(operands[1], -256, 255);
       if (imm9 === null) {
         this.error('Missing number');
         fatalExit("Missing number", 1);
@@ -1777,6 +1858,10 @@ class Assembler {
   parseNumber(valueStr) {
     let value;
 
+    if(valueStr === null || valueStr === undefined) {
+      return null;
+    }
+
     // Handle character literals
     if (this.isCharLiteral(valueStr)) {
       value = this.parseCharLiteral(valueStr);
@@ -1849,13 +1934,16 @@ class Assembler {
         this.handleExternalReference(operand, usageType);
         return 0;
       } else {
-        this.error(`Undefined operand: ${operand}`);
-        return null;
+        // this.error(`Undefined operand: ${operand}`);
+        this.error("Bad number");
+        fatalExit("Bad number", 1);
       }
     }
   }  
 
-  isLiteral(operand) {
+  // returns true if operand is either a char (which has an ascii value) 
+  // or a number (i.e. neither a string nor a label)
+  isNumLiteral(operand) {
     return this.isCharLiteral(operand) || !isNaN(operand);
   }
 
