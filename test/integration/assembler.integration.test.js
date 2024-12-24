@@ -295,7 +295,7 @@ x: .word 5
   // -------------------------------------------------------------------------
   // 8. Test handling of undefined labels
   // -------------------------------------------------------------------------
-  test('8. should throw if a referenced label is never defined or declared .extern', () => {
+  test('8. should throw if a referenced label (from an instruction) is never defined or declared .extern', () => {
     const aFilePath = 'undefinedLabel.a';
     const source = `
       ld r0, missingLabel
@@ -345,7 +345,7 @@ x: .word 5
   // -------------------------------------------------------------------------
   // 10. Test global and .o object-file generation
   // -------------------------------------------------------------------------
-  test('should produce .o file when .global is used', () => {
+  test('10. should produce .o file when .global is used', () => {
     const aFilePath = 'testObject.a';
     const source = `
       .global foo
@@ -369,25 +369,25 @@ foo:  .word 456
   // -------------------------------------------------------------------------
   // 11. Testing instructions with immediate out-of-range
   // -------------------------------------------------------------------------
-  test('should throw if an immediate is out of range for an instruction (e.g. add)', () => {
+  test('11. should throw if an immediate is out of range for an instruction (e.g. sub)', () => {
     const aFilePath = 'outOfRange.a';
     const source = `
       mov r0, 5
-      ; add immediate takes a 5-bit imm, i.e. -16..15
-      add r0, r0, 100 ; out of range
+      ; sub immediate takes a 5-bit imm, i.e. -16..15
+      sub r0, r0, 100 ; out of range
       halt
     `;
     virtualFs[aFilePath] = source;
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Immediate value out of range');
+    }).toThrow('imm5 out of range');
   });
 
   // -------------------------------------------------------------------------
   // 12. Testing division by zero? (No direct assembler error, but a good example)
   // -------------------------------------------------------------------------
-  test('should assemble demoN.a (division by zero) successfully (no assembler error)', () => {
+  test('12. should assemble demoN.a (division by zero) successfully (no assembler error)', () => {
     const aFilePath = 'demoN.a';
     const source = `
       mov r0, 3
@@ -410,7 +410,7 @@ foo:  .word 456
   // -------------------------------------------------------------------------
   // 13. Testing a label with offset
   // -------------------------------------------------------------------------
-  test('should properly handle label with offset in instruction operand', () => {
+  test('13. should properly handle label with offset in instruction operand', () => {
     const aFilePath = 'labelOffset.a';
     const source = `
       mydata: .word 100
@@ -431,7 +431,7 @@ foo:  .word 456
   // -------------------------------------------------------------------------
   // 14. Test an entire multi-line example that does pass 1 and pass 2 properly
   // -------------------------------------------------------------------------
-  test('should assemble a short multi-line example with labels and instructions', () => {
+  test('14. should assemble a short multi-line example with labels and instructions', () => {
     const aFilePath = 'multiLine.a';
     const source = `
       .start main
@@ -462,7 +462,7 @@ end:
   // -------------------------------------------------------------------------
   // 15. Test passing a label to an instruction that doesn't take labels
   // -------------------------------------------------------------------------
-  test('should throw an error when passing a non-ascii, non-numeric (i.e. a label) to mov instruction', () => {
+  test('15. should throw an error when passing a non-ascii, non-numeric, non-literal (i.e. a label) to mov instruction', () => {
     const aFilePath = 'badMov.a';
     const source = `
       mov r0, notAValidCharOrNumber
@@ -479,7 +479,7 @@ end:
   // -------------------------------------------------------------------------
   // 16. Test opening a file that doesn't exist
   // -------------------------------------------------------------------------
-  test('should throw an error when opening a file that does not exist', () => {
+  test('16. should throw an error when opening a file that does not exist', () => {
     const aFilePath = 'doesNotExist.a';
 
     // Mock fs.openSync to throw an error
@@ -495,7 +495,7 @@ end:
   // -------------------------------------------------------------------------
   // 17. Test extern and .o object-file generation
   // -------------------------------------------------------------------------
-  test('should produce .o file when .extern is used', () => {
+  test('17. should produce .o file when .extern is used', () => {
     //// TODO: implement this test case by providing the necessary name.nnn file mock
     const aFilePath = 'testObject2.a';
     const source = `
@@ -519,7 +519,7 @@ end:
   // -------------------------------------------------------------------------
   // 18. Test invalid label char detection
   // -------------------------------------------------------------------------
-  test('should throw an error when using an invalid label name', () => {
+  test('18. should throw an error when using an invalid label name', () => {
     const aFilePath = 'invalidLabel.a';
     const source = `
       mov r0, 5
@@ -536,7 +536,7 @@ end:
   // -------------------------------------------------------------------------
   // 19. Test duplicate label detection
   // -------------------------------------------------------------------------
-  test('should throw an error when using a duplicate label name', () => {
+  test('19. should throw an error when using a duplicate label name', () => {
     const aFilePath = 'duplicateLabel.a';
     const source = `
       mov r0, 5
