@@ -1210,10 +1210,6 @@ class Assembler {
   }
 
   assembleBR(mnemonic, operands) {
-    // if (operands.length !== 1 && operands.length !== 3) {
-    //   this.error(`Invalid operand count for ${mnemonic}`);
-    //   return null;
-    // }
     let codes = {
       'brz': 0,
       'bre': 0,
@@ -1256,38 +1252,40 @@ class Assembler {
   }
 
   assembleADD(operands) {
-    if (operands.length !== 3) {
-      this.error('Invalid operand count for add');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
-    if (dr === null || sr1 === null) return null;
+    if (dr === null || sr1 === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let sr2orImm5 = operands[2];
+    if (sr2orImm5 === null || sr2orImm5 === undefined) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
+    }
     let macword = 0x1000 | (dr << 9) | (sr1 << 6);
     if (this.isRegister(sr2orImm5)) {
       let sr2 = this.getRegister(sr2orImm5);
-      if (sr2 === null) return null;
       macword |= sr2;
     } else {
       let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5");
-      if (imm5 === null) return null;
+      if (imm5 === null) {
+        this.error('Bad number');
+        fatalExit('Bad number', 1);
+      };
       macword |= 0x0020 | (imm5 & 0x1F);
     }
     return macword;
   }
 
   assembleCEA(operands) {
-    if (operands.length !== 2) {
-      this.error('Invalid operand count for cea');
-      return null;
-    }
-    let drOp = operands[0];
+    let dr = operands[0];
     let imm5op = operands[1];
 
-    return this.assembleADD([drOp, 'fp', imm5op]);
+    return this.assembleADD([dr, 'fp', imm5op]);
   }
 
+  //// TODO: fix assembleSUB so it behaves like assembleADD in terms of error handling
   assembleSUB(operands) {
     if (operands.length !== 3) {
       this.error('Invalid operand count for sub');
@@ -1311,23 +1309,21 @@ class Assembler {
   }
 
   assemblePUSH(operands) {
-    if (operands.length !== 1) {
-      this.error('Invalid operand count for push');
-      return null;
-    }
     let sr = this.getRegister(operands[0]);
-    if (sr === null) return null;
+    if (sr === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let macword = 0xA000 | (sr << 9);
     return macword;
   }
 
   assemblePOP(operands) {
-    if (operands.length !== 1) {
-      this.error('Invalid operand count for pop');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
-    if (dr === null) return null;
+    if (dr === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let macword = (0xA000 | (dr << 9)) | 0x0001;
     return macword;
   }
@@ -1344,14 +1340,13 @@ class Assembler {
   }
 
   assembleROL(operands) {
-    if (!(operands.length === 2 || operands.length === 1)) {
-      this.error('Invalid operand count for rol');
-      return null;
-    }
     let sr = this.getRegister(operands[0]);
-    if (sr === null) return null;
+    if (sr === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let ct = null;
-    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
+    if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0005;
     return macword;
@@ -1369,10 +1364,6 @@ class Assembler {
   }
 
   assembleREM(operands) {
-    if (operands.length !== 2) {
-      this.error('Invalid operand count for rem');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) return null;
@@ -1381,10 +1372,6 @@ class Assembler {
   }
 
   assembleOR(operands) {
-    if (operands.length !== 2) {
-      this.error('Invalid operand count for or');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) return null;
@@ -1393,10 +1380,6 @@ class Assembler {
   }
 
   assembleXOR(operands) {
-    if (operands.length !== 2) {
-      this.error('Invalid operand count for xor');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) return null;
@@ -1405,10 +1388,6 @@ class Assembler {
   }
 
   assembleSEXT(operands) {
-    if (operands.length !== 2) {
-      this.error('Invalid operand count for sext');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let sr = this.getRegister(operands[1]);
     if (dr === null || sr === null) return null;
@@ -1417,56 +1396,52 @@ class Assembler {
   }
 
   assembleROR(operands) {
-    if (!(operands.length === 2 || operands.length === 1)) {
-      this.error('Invalid operand count for ror');
-      return null;
-    }
     let sr = this.getRegister(operands[0]);
-    if (sr === null) return null;
+    if (sr === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let ct = null;
-    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
+    if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0006;
     return macword;
   }
 
   assembleSRL(operands) {
-    if (!(operands.length === 2 || operands.length === 1)) {
-      this.error('Invalid operand count for srl');
-      return null;
-    }
     let sr = this.getRegister(operands[0]);
-    if (sr === null) return null;
+    if (sr === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let ct = null;
-    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
+    if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0002;
     return macword;
   }
 
   assembleSRA(operands) {
-    if (!(operands.length === 2 || operands.length === 1)) {
-      this.error('Invalid operand count for sra');
-      return null;
-    }
     let sr = this.getRegister(operands[0]);
-    if (sr === null) return null;
+    if (sr === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let ct = null;
-    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
+    if (operands[1]) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0003;
     return macword;
   }
 
   assembleSLL(operands) {
-    if (!(operands.length === 2 || operands.length === 1)) {
-      this.error('Invalid operand count for sll');
-      return null;
-    }
     let sr = this.getRegister(operands[0]);
-    if (sr === null) return null;
+    if (sr === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let ct = null;
-    if (operands.length === 2) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
+    if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0004;
     return macword;
@@ -1620,10 +1595,6 @@ class Assembler {
   }
 
   assembleBL(operands) {
-    if (operands.length !== 1) {
-      this.error('Invalid operand count for bl');
-      return null;
-    }
     let label = operands[0];
 
     if(!this.isValidLabel(label)) {
@@ -1666,10 +1637,6 @@ class Assembler {
   }
 
   assembleLDR(operands) {
-    if (operands.length !== 3) {
-      this.error('Invalid operand count for ldr');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let baser = this.getRegister(operands[1]);
     if (dr === null || baser === null) return null;
@@ -1680,10 +1647,6 @@ class Assembler {
   }
 
   assembleSTR(operands) {
-    if (operands.length !== 3) {
-      this.error('Invalid operand count for str');
-      return null;
-    }
     let sr = this.getRegister(operands[0]);
     let baser = this.getRegister(operands[1]);
     if (sr === null || baser === null) return null;
@@ -1725,10 +1688,6 @@ class Assembler {
   }
 
   assembleNOT(operands) {
-    if (operands.length !== 2) {
-      this.error('Invalid operand count for not');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) return null;
@@ -1789,13 +1748,13 @@ class Assembler {
 
   assembleTrap(operands, trapVector) {
     let sr = 0; // Default to r0
-    if (operands.length === 1) {
+    if (operands[0]) {
       sr = this.getRegister(operands[0]);
-      if (sr === null) return null;
-    } else if (operands.length > 1) {
-      this.error('Invalid operand count for trap instruction');
-      return null;
-    }
+      if (sr === null) {
+        this.error('Bad register');
+        fatalExit("Bad register", 1);
+      };
+    } 
     let macword = 0xF000 | (sr << 9) | (trapVector & 0xFF);
     return macword;
   }
