@@ -1639,8 +1639,11 @@ class Assembler {
   assembleLDR(operands) {
     let dr = this.getRegister(operands[0]);
     let baser = this.getRegister(operands[1]);
-    if (dr === null || baser === null) return null;
-    let offset6 = this.evaluateImmediate(operands[2], -32, 31);  //// TODO: test bounds, see if input is naive or not
+    if (dr === null || baser === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
+    let offset6 = this.evaluateImmediate(operands[2], -32, 31, 'offset6');  //// TODO: test bounds, see if input is naive or not
     if (offset6 === null) return null;
     let macword = 0x6000 | (dr << 9) | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1649,8 +1652,11 @@ class Assembler {
   assembleSTR(operands) {
     let sr = this.getRegister(operands[0]);
     let baser = this.getRegister(operands[1]);
-    if (sr === null || baser === null) return null;
-    let offset6 = this.evaluateImmediate(operands[2], -32, 31);  //// TODO: test bounds, see if input is naive or not
+    if (sr === null || baser === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
+    let offset6 = this.evaluateImmediate(operands[2], -32, 31, 'offset6');  //// TODO: test bounds, see if input is naive or not
     if (offset6 === null) return null;
     let macword = 0x7000 | (sr << 9) | (baser << 6) | (offset6 & 0x3F);
     return macword;
