@@ -94,6 +94,29 @@ node interpreter.js path/to/yourfile.e
   - Implements a basic instruction set.
   - Handles I/O operations.
 
+### **linker.js**
+
+- **Purpose**: Combines multiple object files into a single executable.
+- **Key Features**:
+  - Resolves external references.
+  - Generates a single executable file.
+
+## **Testing**
+
+There are now comprehensive e2e tests for assembler.js, linker.js, interpreter.js, and lcc.js, as well as integration tests for assembler.js and interpreter.js. There are still many more test cases to add. For example, there are currently no unit tests.
+
+Run the full test suite via:
+
+```bash
+npm test
+```
+
+Or, optionally, run individual test files:
+
+```bash
+npx jest test/integration/assembler.integration.test.js
+```
+
 ## **Architecture Details**
 
 ### **Registers and Memory**
@@ -114,9 +137,8 @@ node interpreter.js path/to/yourfile.e
 
 ### **Areas for Improvement**
 
-- **Linker Test Suite**: Developing `linker.test.js` and `linkerBattery.test.js` to link multiple object files.
-- **Instruction Set Expansion**: Adding more instructions like shift and rotate operations.
-- **Enhanced Error Handling**: Improving error messages and diagnostics.
+- **Instruction Set Edge Cases**: Handling special cases and edge conditions, such as offsets for `ret`, out of range errors for imm5, imm6, imm9, etc..
+- **Enhanced Error Handling**: Improving error messages and diagnostics (the goal is to match the original LCC first, then expand from there).
 - **Debugging Tools**: Implementing a symbolic debugger.
 
 ### **How to Contribute**
