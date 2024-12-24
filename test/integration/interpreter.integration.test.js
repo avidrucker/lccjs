@@ -18,11 +18,11 @@ describe('Interpreter Integration Tests', () => {
   let virtualFs;
 
   beforeAll(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    jest.spyOn(console, 'info').mockImplementation(() => {});
-    jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => { });
+    jest.spyOn(console, 'warn').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => { });
+    jest.spyOn(console, 'info').mockImplementation(() => { });
+    jest.spyOn(process.stdout, 'write').mockImplementation(() => { });
   });
 
   afterAll(() => {
@@ -31,7 +31,7 @@ describe('Interpreter Integration Tests', () => {
     console.error.mockRestore();
     console.info.mockRestore();
     process.stdout.write.mockRestore();
-  })
+  });
 
   beforeEach(() => {
     // Reset all mocks
@@ -292,7 +292,7 @@ describe('Interpreter Integration Tests', () => {
     // Adjust the expected error message to match your interpreter's runtime error
     expect(() => {
       interpreter.main([eFilePath]);
-    }).toThrow('Runtime Error:'); 
+    }).toThrow('Runtime Error:');
   });
 
   // -----------------------------------------------------------------------------
@@ -332,7 +332,7 @@ describe('Interpreter Integration Tests', () => {
     const eFilePath = 'inputProgram.e';
     // 6F43 07F2 01D0 02F2 00F0
     const test14Bytes = [0x6F, 0x43, 0x07, 0xF2, 0x01, 0xD0, 0x02, 0xF2, 0x00, 0xF0];
-    virtualFs[eFilePath] = Buffer.from(test14Bytes); 
+    virtualFs[eFilePath] = Buffer.from(test14Bytes);
     //  07F2 => din r1
     //  01D0 => mov r0, 1
     //  02F2 => dout r1
@@ -394,8 +394,8 @@ describe('Interpreter Integration Tests', () => {
     // x: .word 7
     // y: .word 35
     // 6F43 7BD0 0330 0322 02F2 00F0 0700 2300
-    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x7B, 0xD0, 0x03, 0x30, 0x03, 0x22, 
-                                        0x02, 0xF2, 0x00, 0xF0, 0x07, 0x00, 0x23, 0x00]);
+    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x7B, 0xD0, 0x03, 0x30, 0x03, 0x22,
+      0x02, 0xF2, 0x00, 0xF0, 0x07, 0x00, 0x23, 0x00]);
 
     expect(() => {
       interpreter.main([eFilePath]);
@@ -468,8 +468,8 @@ describe('Interpreter Integration Tests', () => {
     //   halt
     // => "3\n2\n1\n"
     // 6F43 03D0 02F0 01F0 21B0 FC03 00F0
-    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x03, 0xD0, 0x02, 0xF0, 0x01, 
-                                        0xF0, 0x21, 0xB0, 0xFC, 0x03, 0x00, 0xF0]);
+    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x03, 0xD0, 0x02, 0xF0, 0x01,
+      0xF0, 0x21, 0xB0, 0xFC, 0x03, 0x00, 0xF0]);
 
     expect(() => {
       interpreter.main([eFilePath]);
@@ -489,8 +489,8 @@ describe('Interpreter Integration Tests', () => {
     // dout r1
     // halt
     // 6F43 05D0 00A0 01A2 02F2 00F0
-    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x05, 0xD0, 0x00, 0xA0, 
-                                        0x01, 0xA2, 0x02, 0xF2, 0x00, 0xF0]);
+    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x05, 0xD0, 0x00, 0xA0,
+      0x01, 0xA2, 0x02, 0xF2, 0x00, 0xF0]);
 
     expect(() => {
       interpreter.main([eFilePath]);
