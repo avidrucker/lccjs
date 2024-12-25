@@ -3883,4 +3883,74 @@ buffer: .word 10
     }).toThrow('Missing register');
   });
 
+  // -------------------------------------------------------------------------
+  // 208. Test different case, same spelling of labels
+  // -------------------------------------------------------------------------
+  test('208. should throw no error for different case, same spelling of labels', () => {
+    const aFilePath = 'differentCaseSameLabel.a';
+    const source = `
+     halt
+x:   .word 10
+X:   .word 15
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).not.toThrow();
+
+    expect(assembler.errorFlag).toBe(false);
+  });
+
+  // -------------------------------------------------------------------------
+  // 209. Test .string directive with escape newline char inside
+  // -------------------------------------------------------------------------
+  test('209. should assemble .string directive with escaped newline char', () => {
+    const aFilePath = 'stringEscapeNewline.a';
+    const source = `
+    lea r0, x
+    sout r0
+    halt
+x: .string "Hello,\\nworld!"
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).not.toThrow();
+  });
+
+  // -------------------------------------------------------------------------
+  // 210. Test offset with missing number
+  // -------------------------------------------------------------------------
+  test('210. should throw error for offset with missing number', () => {
+    const aFilePath = 'offsetMissingNumber.a';
+    const source = `
+    lea r0, x +
+    halt
+x: .word 10
+    `;
+
+    virtualFs[aFilePath] = source;
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Missing number');
+  });
+
+  // -------------------------------------------------------------------------
+  // 211. Test lea with no arguments
+  // -------------------------------------------------------------------------
+  test('211. should throw error for lea with no arguments', () => {
+    const aFilePath = 'leaNoArgs.a';
+    const source = `
+    lea
+    halt
+    `;
+
+    virtualFs[aFilePath] = source;
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Missing operand');
+  });
+
 });
