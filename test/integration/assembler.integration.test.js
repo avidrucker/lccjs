@@ -3953,4 +3953,36 @@ x: .word 10
     }).toThrow('Missing operand');
   });
 
+  // -------------------------------------------------------------------------
+  // 212. Test .word with operator but no operand
+  // -------------------------------------------------------------------------
+  test('212. should throw error for .word with operator but no operand', () => {
+    const aFilePath = 'wordNoOperand.a';
+    const source = `
+    halt
+x: .word +
+    `;
+
+    virtualFs[aFilePath] = source;
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Missing operand');
+  });
+
+  // -------------------------------------------------------------------------
+  // 213. Test .zero with invalid argument
+  // -------------------------------------------------------------------------
+  test('213. should throw error for .zero with invalid argument', () => {
+    const aFilePath = 'zeroInvalidArg.a';
+    const source = `
+    halt
+x: .zero +
+`;
+
+    virtualFs[aFilePath] = source;
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Bad number');
+  });
+
 });
