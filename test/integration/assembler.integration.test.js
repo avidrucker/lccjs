@@ -1544,8 +1544,6 @@ data: .word 10
     `;
     virtualFs[aFilePath] = source;
 
-    // Assuming ret should have at most one operand (baser or offset6)
-    // and passing a register where it's not expected
     expect(() => {
       assembler.main([aFilePath]);
     }).toThrow('Bad number');
@@ -3063,7 +3061,6 @@ data2: .word 10
     }).toThrow('Bad number');
   });
 
-  /*
   // -------------------------------------------------------------------------
   // 161. Test assembler with empty file containing only comments
   // -------------------------------------------------------------------------
@@ -3112,7 +3109,7 @@ data2: .word 10
     // Assuming mvr expects a register, not an immediate
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow('Bad register');
   });
 
   // -------------------------------------------------------------------------
@@ -3128,7 +3125,7 @@ data2: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid operand count for mvr');
+    }).toThrow('Missing register');
   });
 
   // -------------------------------------------------------------------------
@@ -3181,7 +3178,7 @@ data2: .word 10
     // Assuming sext expects a register, not an immediate
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow('Bad register');
   });
 
   // -------------------------------------------------------------------------
@@ -3197,7 +3194,7 @@ data2: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid operand count for sext');
+    }).toThrow('Missing register');
   });
 
   // -------------------------------------------------------------------------
@@ -3285,7 +3282,7 @@ data2: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow('Bad register');
   });
 
   // -------------------------------------------------------------------------
@@ -3301,13 +3298,15 @@ data2: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid mnemonic or directive: word');
+    }).toThrow('Invalid operation');
   });
 
   // -------------------------------------------------------------------------
   // 175. Test assembly with multiple .extern declarations for the same label
   // -------------------------------------------------------------------------
-  test('175. should throw error for multiple .extern declarations of the same label', () => {
+  test('175. should throw not error for multiple .extern declarations of the same label', () => {
+    // Note: This could be an error case, but it is currently (as of 12/2024) the LCC behavior
+    // to allow multiple .extern declarations for the same label.
     const aFilePath = 'multipleExterns.a';
     const source = `
       .extern bar
@@ -3318,21 +3317,22 @@ data2: .word 10
     virtualFs[aFilePath] = source;
     virtualFs['name.nnn'] = 'Cheese\n';
 
-    // Assuming assembler should throw error on duplicate .extern
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Duplicate .extern declaration for label bar');
+    }).not.toThrow();
   });
 
   // -------------------------------------------------------------------------
   // 176. Test instruction (jmp) with label offset without spaces
   // -------------------------------------------------------------------------
-  test('176. should assemble jmp instruction with label offset without spaces', () => {
+  test('176. should assemble jmp instruction with offset', () => {
     const aFilePath = 'jmpLabelOffsetNoSpace.a';
     const source = `
-      jmp loop+1
-      halt
-    loop:
+      jmp r0, 5
+      dout r0
+      dout r0
+      dout r0
+      dout r0
       halt
     `;
     virtualFs[aFilePath] = source;
@@ -3345,14 +3345,12 @@ data2: .word 10
   });
 
   // -------------------------------------------------------------------------
-  // 177. Test instruction (jmp) with label offset with spaces
+  // 177. Test instruction (jmp) with no offset
   // -------------------------------------------------------------------------
-  test('177. should assemble jmp instruction with label offset with spaces', () => {
+  test('177. should assemble jmp instruction with no offset', () => {
     const aFilePath = 'jmpLabelOffsetWithSpace.a';
     const source = `
-      jmp loop + 1
-      halt
-    loop:
+      jmp r0
       halt
     `;
     virtualFs[aFilePath] = source;
@@ -3365,12 +3363,12 @@ data2: .word 10
   });
 
   // -------------------------------------------------------------------------
-  // 178. Test instruction (jmp) with label and invalid offset
+  // 178. Test instruction (jmp) with label
   // -------------------------------------------------------------------------
-  test('178. should throw error for jmp instruction with label and invalid offset', () => {
+  test('178. should throw error for jmp instruction with label', () => {
     const aFilePath = 'jmpInvalidOffset.a';
     const source = `
-      jmp loop + offset
+      jmp loop
       halt
     loop:
       halt
@@ -3379,26 +3377,23 @@ data2: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid offset value for jmp');
+    }).toThrow('Bad register');
   });
 
   // -------------------------------------------------------------------------
-  // 179. Test instruction (jmp) with label offset out of bounds
+  // 179. Test instruction (jmp) with offset out of bounds
   // -------------------------------------------------------------------------
-  test('179. should throw error for jmp instruction with label offset out of bounds', () => {
+  test('179. should throw error for jmp instruction with offset out of bounds', () => {
     const aFilePath = 'jmpOffsetOutOfBounds.a';
     const source = `
-      jmp loop + 300
-      halt
-    loop:
+      jmp r0, 300
       halt
     `;
     virtualFs[aFilePath] = source;
 
-    // Assuming pcoffset11 must be between -1024 and 1023
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('pcoffset11 out of range for jmp');
+    }).toThrow('offset6 out of range');
   });
 
   // -------------------------------------------------------------------------
@@ -3453,7 +3448,7 @@ data2: .word 10
     // Assuming pcoffset11 must be between -1024 and 1023
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('pcoffset11 out of range for br');
+    }).toThrow('pcoffset9 out of range');
   });
 
   // -------------------------------------------------------------------------
@@ -3462,7 +3457,7 @@ data2: .word 10
   test('183. should assemble ret instruction with extra operands without throwing error', () => {
     const aFilePath = 'retExtraOperands.a';
     const source = `
-      ret extra
+      ret 10 50
       halt
     `;
     virtualFs[aFilePath] = source;
@@ -3488,7 +3483,7 @@ data2: .word 10
     // Assuming ret expects no operands or specific operands
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow('Bad number');
   });
 
   // -------------------------------------------------------------------------
@@ -3499,14 +3494,13 @@ data2: .word 10
     const source = `
       lea r3, buffer + 300
       halt
-    buffer:
-      .word 10
+buffer: .word 10
     `;
     virtualFs[aFilePath] = source;
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('pcoffset9 out of range for lea');
+    }).toThrow('pcoffset9 out of range');
   });
 
   // -------------------------------------------------------------------------
@@ -3528,20 +3522,19 @@ data2: .word 10
   });
 
   // -------------------------------------------------------------------------
-  // 187. Test instruction (xor) with immediate out of bounds
+  // 187. Test instruction (xor) with non-register immediate value
   // -------------------------------------------------------------------------
-  test('187. should throw error for xor instruction with immediate out of bounds', () => {
+  test('187. should throw error for xor instruction with non-register immediate value', () => {
     const aFilePath = 'xorImmediateOutOfBounds.a';
     const source = `
-      xor r1, r2, 20
+      xor r1, 20
       halt
     `;
     virtualFs[aFilePath] = source;
 
-    // Assuming imm5 for xor must be between -16 and 15
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('imm5 out of range');
+    }).toThrow('Bad register');
   });
 
   // -------------------------------------------------------------------------
@@ -3550,7 +3543,7 @@ data2: .word 10
   test('188. should throw error for xor instruction with invalid operand types', () => {
     const aFilePath = 'xorInvalidOperands.a';
     const source = `
-      xor r1, label, r3
+      xor r1, label
       halt
     label:
       .word 10
@@ -3560,7 +3553,7 @@ data2: .word 10
     // Assuming xor expects registers or immediate, not label
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow('Bad register');
   });
 
   // -------------------------------------------------------------------------
@@ -3584,7 +3577,10 @@ data2: .word 10
   // -------------------------------------------------------------------------
   // 190. Test assembler with line exceeding maximum character limit
   // -------------------------------------------------------------------------
-  test('190. should throw error for line exceeding maximum character limit', () => {
+  test.skip('190. should throw error for line exceeding maximum character limit', () => {
+    // This test is currently paused because, while it appears the LCC has a charater per line
+    // limit, it is unclear precisely what the limit is (it seems to be around 300 chars)
+    // and its behavior when the limit is exeeded does not seem to be consistent (as of 12/2024)
     const aFilePath = 'exceedMaxLine.a';
     const longLine = 'a'.repeat(301);
     const source = `
@@ -3630,7 +3626,7 @@ data2: .word 10
     // Assuming not expects exactly two registers
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid operand count for not');
+    }).toThrow('Bad register');
   });
 
   // -------------------------------------------------------------------------
@@ -3647,7 +3643,7 @@ data2: .word 10
     // Assuming not expects two operands
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid operand count for not');
+    }).toThrow('Missing register');
   });
 
   // -------------------------------------------------------------------------
@@ -3669,21 +3665,21 @@ data2: .word 10
   });
 
   // -------------------------------------------------------------------------
-  // 195. Test instruction (jmp) with label that is a reserved keyword
+  // 195. Test instruction (jmp) with label that looks like a reserved keyword
   // -------------------------------------------------------------------------
-  test('195. should throw error for jmp instruction with label that is a reserved keyword', () => {
+  test('195. should throw no error for br instruction with label that might seem like a reserved keyword', () => {
     const aFilePath = 'jmpReservedLabel.a';
     const source = `
-      jmp halt
+      br halt
       halt:
         halt
     `;
     virtualFs[aFilePath] = source;
 
-    // Assuming 'halt' is a reserved label or instruction
+    // The take-away here is that there are no reserved keywords in the LCC assembly language
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Label conflicts with reserved keyword');
+    }).not.toThrow();
   });
 
   // -------------------------------------------------------------------------
@@ -3770,7 +3766,7 @@ data2: .word 10
     expect(() => {
       assembler.main([aFilePath]);
     }).toThrow('Bad number');
-  });*/
+  });
 
   // -------------------------------------------------------------------------
   // 201. Test giving blr a non-numeric 2nd argument
@@ -3853,6 +3849,38 @@ data2: .word 10
     expect(() => {
       assembler.main([aFilePath]);
     }).toThrow('Bad number');
+  });
+
+  // -------------------------------------------------------------------------
+  // 206. Test instruction (sext) with missing operands
+  // -------------------------------------------------------------------------
+  test('206. should throw error for sext instruction missing operands', () => {
+    const aFilePath = 'sextMissingOperands.a';
+    const source = `
+      sext
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Missing register');
+  });
+
+  // -------------------------------------------------------------------------
+  // 207. Test instruction (mvr) with missing operands
+  // -------------------------------------------------------------------------
+  test('207. should throw error for mvr instruction missing operands', () => {
+    const aFilePath = 'mvrMissingOperands.a';
+    const source = `
+      mvr
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Missing register');
   });
 
 });
