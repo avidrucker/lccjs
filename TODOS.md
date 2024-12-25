@@ -8,13 +8,13 @@
 - [x] update README.md to include a more detailed description of the project (including linker.js), its various goals, and its current status (progress, test suite coverage, etc.)
 - [ ] add comments inside of the code to indicate what hasn't been tested yet
 - [ ] make a list of **known assembler errors** and how to trigger them to make into assembler tests
-  - [ ] reference to a label that does not exist (no demo yet)
-  - [ ] duplicate label declarations (no demo yet)
-  - [ ] invalid mnemonics, registers, immediates, etc. (no demo yet)
-  - [ ] line that is too long (300+ chars) (no demo yet)
-  - [ ] invalid char usage in a label (no demo yet)
-  - [ ] improperly terminated string
-  - [ ] only supplying a + or - sign without a number following it
+  - [x] reference to a label that does not exist (assembler.integration.test.js)
+  - [x] duplicate label declarations (assembler.integration.test.js)
+  - [x] invalid mnemonics, registers, immediates, etc. (assembler.integration.test.js)
+  - [ ] line that is too long (300+ chars) <-- this does not seem consistently reproducable in original LCC
+  - [x] invalid char usage in a label (assembler.integration.test.js)
+  - [x] improperly terminated string (assembler.integration.test.js)
+  - [x] only supplying a + or - sign without a number following it
 - [ ] make a list of known interpreter errors and how to trigger them to make into interpreter tests
   - division by zero "Floating point exception" (demoN.a)
   - infinite loop detection (no demo yet)
@@ -99,10 +99,10 @@
 - [x] include comments in BST/LST files (when assembling and interpretting all at once via lcc.js)
 - [x] include all headers (S, etc.) in BST/LST files
 - [x] give "help" message when lcc.js is run without any arguments
-- [ ] implicit r0 for the out commands when not specified (no demo yet)
-- [ ] implicit 0 for offset6 when not specified (no demo yet)
+- [x] implicit r0 for the out commands when not specified (no demo yet)
+- [x] implicit 0 for offset6 when not specified (no demo yet)
 - [ ] implement preceding a number with # to indicate a decimal number (no demo yet)
-- [ ] implement wrapping up numbers in [] (this should have no effect on the code, and should not cause any errors) (no demo yet)
+- [ ] (verify first that this works in LCC) implement wrapping up numbers in [] (this should have no effect on the code, and should not cause any errors) (no demo yet)
 
 ## Test
 
@@ -278,8 +278,8 @@
 
 ## Things to Investigate in LCC
 
-- [ ] Negative number arguments to .zero directive, what happens?
+- [ ] Negative number arguments to .zero directive, what happens? (answer: nothing as of 12/2024) ... What should happen?
 - [ ] What machine code does * turn into when assembled?
 - [ ] What exactly does the .org/.orig directive do and why?
-- [ ] What is the behavior of the `sext` mnemonic?
+- [ ] What precisely is the behavior of the `sext` mnemonic?
 - [ ] On what condition(s) exactly does a .a file get treated as an object module? Is it simply the presence of a .global or .extern directive, or is it something else?
