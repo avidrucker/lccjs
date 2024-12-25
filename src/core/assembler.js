@@ -935,6 +935,13 @@ class Assembler {
 
             label = operands[0] + operands[1] + operands[2];
           }
+
+          if((operands[1] && operands[1] === '+' || operands[1] === '-') && 
+          (operands[2] === null || operands[2] === undefined)) {      
+            this.error('Missing number');
+            fatalExit('Missing number', 1);
+          }
+
           let value = this.evaluateOperand(label, 'V'); // Pass 'V' as usageType
           if (value === null) {
             this.error('Bad number');
@@ -1240,6 +1247,13 @@ class Assembler {
 
       label = operands[0] + operands[1] + operands[2];
     }
+
+    if((operands[1] && operands[1] === '+' || operands[1] === '-') && 
+    (operands[2] === null || operands[2] === undefined)) {      
+      this.error('Missing number');
+      fatalExit('Missing number', 1);
+    }
+
     let address = this.evaluateOperand(label, 'e');
     if (address === null) {
       this.error('Bad label'); // TODO: verify this is correct via cross testing w/ LCC
@@ -1485,9 +1499,14 @@ class Assembler {
     return macword;
   }
 
-  //////
   assembleLD(operands) {
     let dr = this.getRegister(operands[0]);
+
+    if (dr === null) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
+    };
+
     let label = operands[1];
 
     if (label === null || label === undefined) {
@@ -1505,10 +1524,12 @@ class Assembler {
       label = operands[1] + operands[2] + operands[3];
     }
 
-    if (dr === null) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
-    };
+    if((operands[2] && operands[2] === '+' || operands[2] === '-') && 
+    (operands[3] === null || operands[3] === undefined)) {      
+      this.error('Missing number');
+      fatalExit('Missing number', 1);
+    }
+
     let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
     if (address === null) {
       this.error('Bad label');
@@ -1534,6 +1555,12 @@ class Assembler {
 
   assembleST(operands) {
     let sr = this.getRegister(operands[0]);
+
+    if (sr === null) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
+    };
+
     let label = operands[1];
     
     if (label === null || label === undefined) {
@@ -1551,10 +1578,12 @@ class Assembler {
       label = operands[1] + operands[2] + operands[3];
     }
 
-    if (sr === null) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
-    };
+    if((operands[2] && operands[2] === '+' || operands[2] === '-') && 
+    (operands[3] === null || operands[3] === undefined)) {      
+      this.error('Missing number');
+      fatalExit('Missing number', 1);
+    }
+
     let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
     if (address === null) {
       this.error('Bad label');
@@ -1571,6 +1600,12 @@ class Assembler {
 
   assembleLea(operands) {
     let dr = this.getRegister(operands[0]);
+
+    if (dr === null) {
+      this.error('Missing operand');
+      fatalExit('Missing operand', 1);
+    };
+
     let label = operands[1];
 
     if(label === null || label === undefined) {
@@ -1589,10 +1624,12 @@ class Assembler {
       label = operands[1] + operands[2] + operands[3];
     }
 
-    if (dr === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
-    };
+    if((operands[2] && operands[2] === '+' || operands[2] === '-') && 
+    (operands[3] === null || operands[3] === undefined)) {      
+      this.error('Missing number');
+      fatalExit('Missing number', 1);
+    }
+
     let address = this.evaluateOperand(label, 'e');
     if (address === null) {
       this.error('Bad label');
