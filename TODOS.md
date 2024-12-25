@@ -2,12 +2,12 @@
 
 ## Project QoL, Documentation, and Maintenance
 - [ ] update this TODOS.md file to be more clear, concise, easy to read, etc.
-- [ ] add md file to describe scripts folder (former battery of tests)
+- [x] add md file to describe scripts folder (former battery of tests)
 - [x] put assembleAll.js into utils folder
 - [x] add creation of name.nnn to assembleAll.js before calling assembler.js
 - [x] update README.md to include a more detailed description of the project (including linker.js), its various goals, and its current status (progress, test suite coverage, etc.)
 - [ ] add comments inside of the code to indicate what hasn't been tested yet
-- [ ] make a list of **known assembler errors** and how to trigger them to make into assembler tests
+- [o] make a list of **known assembler errors** and how to trigger them to make into assembler tests
   - [x] reference to a label that does not exist (assembler.integration.test.js)
   - [x] duplicate label declarations (assembler.integration.test.js)
   - [x] invalid mnemonics, registers, immediates, etc. (assembler.integration.test.js)
@@ -15,9 +15,9 @@
   - [x] invalid char usage in a label (assembler.integration.test.js)
   - [x] improperly terminated string (assembler.integration.test.js)
   - [x] only supplying a + or - sign without a number following it
-- [ ] make a list of known interpreter errors and how to trigger them to make into interpreter tests
-  - division by zero "Floating point exception" (demoN.a)
-  - infinite loop detection (no demo yet)
+- [x] make a list of known interpreter errors and how to trigger them to make into interpreter tests
+  - division by zero "Floating point exception" (interpreter.integration.test.js)
+  - infinite loop detection (interpreter.integration.test.js)
 - [ ] make a list of known linker errors and how to trigger them to make into linker tests
   - [ ] undefined external symbols
   - [ ] duplicate global symbols
@@ -27,7 +27,7 @@
 - [ ] refactor macwords into constants at the top of the file
 - [ ] refactor mnemonics into constants at the top of the file
 - [x] refactor names of lst file outputs to be more descriptive in lcc and interpreter tests
-- [ ] refactor tests to have all file comparison functions come from a single module compareFiles.js which has a hex dump comparison, .lst file comparison, and general file comparison function which can be used by all tests and also by testCacheHandler.js
+- [ ] refactor e2e tests to have all file comparison functions come from a single module compareFiles.js which has a hex dump comparison, .lst file comparison, and general file comparison function which can be used by all tests and also by testCacheHandler.js
 - [ ] single test runner script that runs all test suites in order, and logs the results of each test suite at the end
 - [ ] set up test hook which will run the test runner script and make sure every test passes before allowing a series of commits to be pushed to the repository
 - [ ] refactor to have file comparison code in one place 'compareFiles.js'
@@ -59,6 +59,7 @@
       - [ ] test with positive numbers
       - [ ] test with negative numbers
       - [ ] ask for clarification from original author of LCC
+      - [x] write 'bout' binaryPrint function to test with
 - [x] implement assembly of .bin files
   - [x] implement .e file creation from .bin files
   - [x] implement .lst file creation from .bin files when using lcc.js to assemble and interpret all at once
@@ -70,11 +71,11 @@
     - [x] .global
 - [ ] implement offsets (no demo yet)
   - [o] label offsets
-    - [x] implement decimal (base 10) offsets
-    - [ ] implement hexadecimal (base 16) offsets
-- [ ] implement usage of * instead of a label to indicate the current memory address
+    - [x] implement decimal (base 10) offsets (assembler.integration.test.js)
+    - [ ] implement hexadecimal (base 16) offsets (no demos/tests yet)
+- [ ] **implement usage of * instead of a label to indicate the current memory address**
 - [ ] implement catching of division by zero where, when division by zero is detected, attempting to interpret the program will result in an error message being printed to the console ("Floating point exception"), the program will not be executed, and the .lst/.bst files will not be created. note: assembly will still create the .e file. 2nd note: it appears that the lcc makes blank .lst/.bst files when errors such as division by zero are detected
-- [ ] implement symbolic debugger "As a programmer, I can use the debugger to step through my program, set breakpoints, watchpoints, and inspect memory and registers, so that I can debug my code."
+- [ ] **implement symbolic debugger "As a programmer, I can use the debugger to step through my program, set breakpoints, watchpoints, and inspect memory and registers, so that I can debug my code."**
     - [ ] implement debugger commands
     - [ ] implement bp (breakpoint) instruction
 - [x] implement LST creation
@@ -177,7 +178,7 @@
 - [x] implement test battery to run all tests one after the other, regardless of whether one or more tests fail, and to log the results of each test at the very end (currently the battery of tests stop when a single test fails)
 - [x] move the docker startup and shutdown out of the test files and into a separate file that is called by the test files
 - [x] move the name.nnn file existence check and creation out of the test files and into a separate file that is called by the test files, such that, for the test suite code, the name.nnn file is created only once, rather than once for each test, to cut down on unnecessary repeated file creations and deletions
-- [ ] **implement an initial smoke test that simply attempts to run the lcc via the `lcc -h` command, and, if it fails, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.**
+- [ ] **implement an initial smoke test that simply attempts to run the lcc via the `lcc.js -h` command, and, if it fails, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.**
 - ~~fix issue where interpreter.test.js runs expecting a .lst file to be created when, in fact, the .lst file is not created by the interpreter.js file, but by the lcc.js file~~ (interpreter.js should create a .lst file after all)
   - ~~change the interpreter.test.js to simply run the files and check for the expected output in the stdout, and to simulate the expected inputs, rather than checking for the existence of a .lst file~~
   - [x] migrate the majority of what is currently interpreter.test.js to lcc.test.js, which will test running lcc.js on a given file (supplied as an argument), and will check for the existence of the generated .lst file as well comparing the contents to make sure that they match
