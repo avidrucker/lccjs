@@ -911,6 +911,11 @@ class Assembler {
           fatalExit("Missing operand", 1);
         }
 
+        if(this.isOperator(operands[0]) && (operands[1] === null || operands[1] === undefined)) {
+          this.error("Missing operand");
+          fatalExit("Missing operand", 1);
+        }
+
         // if (operands.length !== 1 && operands.length !== 3) {
           //// TODO: inspect to make sure that .word can handle .word x, .word x+1, and .word x + 1
           //// TODO: inspect to make sure that .word can handle .word x+ 1 and .word x +1
@@ -936,7 +941,7 @@ class Assembler {
             label = operands[0] + operands[1] + operands[2];
           }
 
-          if((operands[1] && operands[1] === '+' || operands[1] === '-') && 
+          if((operands[1] && this.isOperator(operands[1])) && 
           (operands[2] === null || operands[2] === undefined)) {      
             this.error('Missing number');
             fatalExit('Missing number', 1);
@@ -1248,7 +1253,7 @@ class Assembler {
       label = operands[0] + operands[1] + operands[2];
     }
 
-    if((operands[1] && operands[1] === '+' || operands[1] === '-') && 
+    if((operands[1] && this.isOperator(operands[1])) && 
     (operands[2] === null || operands[2] === undefined)) {      
       this.error('Missing number');
       fatalExit('Missing number', 1);
@@ -1524,7 +1529,7 @@ class Assembler {
       label = operands[1] + operands[2] + operands[3];
     }
 
-    if((operands[2] && operands[2] === '+' || operands[2] === '-') && 
+    if((operands[2] && this.isOperator(operands[2])) && 
     (operands[3] === null || operands[3] === undefined)) {      
       this.error('Missing number');
       fatalExit('Missing number', 1);
@@ -1578,7 +1583,7 @@ class Assembler {
       label = operands[1] + operands[2] + operands[3];
     }
 
-    if((operands[2] && operands[2] === '+' || operands[2] === '-') && 
+    if((operands[2] && this.isOperator(operands[2])) && 
     (operands[3] === null || operands[3] === undefined)) {      
       this.error('Missing number');
       fatalExit('Missing number', 1);
@@ -1624,7 +1629,7 @@ class Assembler {
       label = operands[1] + operands[2] + operands[3];
     }
 
-    if((operands[2] && operands[2] === '+' || operands[2] === '-') && 
+    if((operands[2] && this.isOperator(operands[2])) && 
     (operands[3] === null || operands[3] === undefined)) {      
       this.error('Missing number');
       fatalExit('Missing number', 1);
@@ -1882,6 +1887,10 @@ class Assembler {
 
   isRegister(regStr) {
     return /^(r[0-7]|fp|sp|lr)$/i.test(regStr);
+  }
+
+  isOperator(op) {
+    return op === '+' || op === '-';
   }
 
   parseLabelWithOffset(operand) {
