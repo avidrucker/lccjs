@@ -1241,7 +1241,10 @@ class Assembler {
       label = operands[0] + operands[1] + operands[2];
     }
     let address = this.evaluateOperand(label, 'e');
-    if (address === null) return null;
+    if (address === null) {
+      this.error('Bad label'); // TODO: verify this is correct via cross testing w/ LCC
+      fatalExit('Bad label', 1);
+    };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
       this.error('pcoffset9 out of range'); // for branch instruction
@@ -1285,24 +1288,24 @@ class Assembler {
     return this.assembleADD([dr, 'fp', imm5op]);
   }
 
-  //// TODO: fix assembleSUB so it behaves like assembleADD in terms of error handling
   assembleSUB(operands) {
-    if (operands.length !== 3) {
-      this.error('Invalid operand count for sub');
-      return null;
-    }
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
-    if (dr === null || sr1 === null) return null;
+    if (dr === null || sr1 === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    }
     let sr2orImm5 = operands[2];
     let macword = 0xB000 | (dr << 9) | (sr1 << 6);
     if (this.isRegister(sr2orImm5)) {
       let sr2 = this.getRegister(sr2orImm5);
-      if (sr2 === null) return null;
       macword |= sr2;
     } else {
       let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5');
-      if (imm5 === null) return null;
+      if (imm5 === null) {
+        this.error('Bad number');
+        fatalExit('Bad number', 1);
+      };
       macword |= 0x0020 | (imm5 & 0x1F);
     }
     return macword;
@@ -1366,7 +1369,10 @@ class Assembler {
   assembleREM(operands) {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
-    if (dr === null || sr1 === null) return null;
+    if (dr === null || sr1 === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    }
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x0009;
     return macword;
   }
@@ -1374,7 +1380,10 @@ class Assembler {
   assembleOR(operands) {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
-    if (dr === null || sr1 === null) return null;
+    if (dr === null || sr1 === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    }
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000A;
     return macword;
   }
@@ -1382,7 +1391,10 @@ class Assembler {
   assembleXOR(operands) {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
-    if (dr === null || sr1 === null) return null;
+    if (dr === null || sr1 === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    }
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000B;
     return macword;
   }
@@ -1390,7 +1402,10 @@ class Assembler {
   assembleSEXT(operands) {
     let dr = this.getRegister(operands[0]);
     let sr = this.getRegister(operands[1]);
-    if (dr === null || sr === null) return null;
+    if (dr === null || sr === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let macword = 0xA000 | (dr << 9) | (sr << 6) | 0x000D;
     return macword;
   }
@@ -1461,7 +1476,7 @@ class Assembler {
       macword |= sr2;
     } else {
       let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5'); //// TODO: test bounds, see if input is naive or not
-      if (imm5 === null) {
+      if (imm5 === null || imm5 === undefined) {
         this.error('Bad number');
         fatalExit('Bad number', 1);
       };
@@ -1566,7 +1581,7 @@ class Assembler {
     if(!this.isNumLiteral(operands[1]) && operands[2] && operands[3]) {
 
       // if operands[2] is not a literal value, then it isn't a valid offset
-      if(!this.isNumLiteral(operands[2])) {
+      if(!this.isNumLiteral(operands[3])) {
         this.error('Bad number');
         fatalExit('Bad number', 1);
       }
@@ -1574,21 +1589,19 @@ class Assembler {
       label = operands[1] + operands[2] + operands[3];
     }
 
-    if(!this.isValidLabel(label)) {
-      this.error(`Bad label`); // : ${label}
-      fatalExit(`Bad label`, 1); // : ${label}
-    }
-
     if (dr === null) {
       this.error('Missing register');
       fatalExit('Missing register', 1);
     };
     let address = this.evaluateOperand(label, 'e');
-    if (address === null) return null;
+    if (address === null) {
+      this.error('Bad label');
+      fatalExit('Bad label', 1);
+    };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
-      this.error('pcoffset9 out of range for lea');
-      return null;
+      this.error('pcoffset9 out of range');
+      fatalExit('pcoffset9 out of range', 1);
     }
     let macword = 0xE000 | (dr << 9) | (pcoffset9 & 0x1FF);
     return macword;
@@ -1603,7 +1616,10 @@ class Assembler {
     }
 
     let address = this.evaluateOperand(label, 'E'); // Pass 'E' as usageType
-    if (address === null) return null;
+    if (address === null) {
+      this.error('Bad label');
+      fatalExit('Bad label', 1);
+    }
     
     let isExternal = this.externLabels.has(label);
     let pcoffset11;
@@ -1614,7 +1630,7 @@ class Assembler {
     } else {
       pcoffset11 = address - this.locCtr - 1;
       if (pcoffset11 < -1024 || pcoffset11 > 1023) {
-        this.error('pcoffset11 out of range for bl');
+        this.error('pcoffset11 out of range'); // TODO: test this in integration tests
         return null;
       }
     }
@@ -1630,7 +1646,7 @@ class Assembler {
     };
     let offset6 = 0;
     if (operands[1]) {
-      offset6 = this.evaluateImmediate(operands[1], -32, 31);  //// TODO: test bounds, see if input is naive or not
+      offset6 = this.evaluateImmediate(operands[1], -32, 31, "offset6");  //// TODO: test bounds, see if input is naive or not
     }
     let macword = 0x4000 | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1671,9 +1687,8 @@ class Assembler {
       fatalExit('Missing register', 1);
     };
     let offset6 = 0;
-    if (operands.length === 2) {
-      offset6 = this.evaluateImmediate(operands[1], -32, 31);  //// TODO: test bounds, see if input is naive or not
-      if (offset6 === null) return null;
+    if (operands[1]) {
+      offset6 = this.evaluateImmediate(operands[1], -32, 31, "offset6");  //// TODO: test bounds, see if input is naive or not
     }
     let macword = 0xC000 | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1687,7 +1702,7 @@ class Assembler {
     let baser = 7; // LR register
     let offset6 = 0;
     if (operands[0]) {
-      offset6 = this.evaluateImmediate(operands[0], -32, 31); //// TODO: test bounds, see if input is naive or not
+      offset6 = this.evaluateImmediate(operands[0], -32, 31, "offset6"); //// TODO: test bounds, see if input is naive or not
     }
     let macword = 0xC000 | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1696,12 +1711,14 @@ class Assembler {
   assembleNOT(operands) {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
-    if (dr === null || sr1 === null) return null;
+    if (dr === null || sr1 === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
     let macword = 0x9000 | (dr << 9) | (sr1 << 6);
     return macword;
   }
 
-  //////
   assembleMOV(mnemonic, operands) {
     let dr = this.getRegister(operands[0]);
     if (dr === null) {
@@ -1740,11 +1757,14 @@ class Assembler {
       let macword = 0xD000 | (dr << 9) | (imm9 & 0x1FF);
       return macword;
     } else if (mnemonic === 'mvr') {
-      // mvr dr, sr
-      let sr = this.getRegister(operands[1]);
-      if (sr === null) return null;
+      // mvr dr, sr1
+      let sr1 = this.getRegister(operands[1]);
+      if (sr1 === null) {
+        this.error('Missing register');
+        fatalExit("Missing register", 1);
+      };
       // Ensure eopcode 12 is set
-      let macword = 0xA000 | (dr << 9) | (sr << 6) | 0x000C;
+      let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000C;
       return macword;
     } else {
       this.error(`Invalid mnemonic: ${mnemonic}`);
