@@ -58,7 +58,9 @@ class Interpreter {
       let arg = args[i];
       if (arg.startsWith('-')) {
         // Option
-        if (arg.startsWith('-L')) {
+        if (arg === '-nostats') {
+          this.generateStats = false;
+        } else if (arg.startsWith('-L')) {
           // Load point option
           let loadPointStr = arg.substring(2);
           if (loadPointStr === '') {
@@ -150,7 +152,9 @@ class Interpreter {
     // Run the interpreter
     try {
       this.run();
-      console.log(); // Ensure cursor moves to the next line
+      if (this.generateStats) {
+        console.log(); // Ensure cursor moves to the next line
+      }
     } catch (error) {
       console.error(`Runtime Error: ${error.message}`);
       // process.exit(1);
@@ -825,6 +829,19 @@ class Interpreter {
     }
   }
 
+  executeSleep() {
+    const milliseconds = this.r[this.sr];
+    const start = Date.now();
+    while (Date.now() - start < milliseconds) {
+      // Busy-wait loop to block execution
+    }
+  }
+
+  executeClear() {
+    // process.stdout.write('\x1Bc');
+    console.clear();
+  }
+
   writeOutput(message) {
     process.stdout.write(message);
     this.output += message;
@@ -936,6 +953,15 @@ class Interpreter {
         break;
       case 13: // s
         this.executeS();
+        break;
+      case 14: // bp
+        this.error('Breakpoint trap not yet implemented');
+        break;
+      case 15: // clear
+        this.executeClear();
+        break;
+      case 16: // sleep
+        this.executeSleep();
         break;
       default:
         this.error(`Unknown TRAP vector: ${this.trapvec}`);

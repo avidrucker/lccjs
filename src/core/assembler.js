@@ -1178,6 +1178,12 @@ class Assembler {
       case 'bp':
         machineWord = this.assembleTrap(operands, 0x000E); // Trap vector for bp is 14
         break;
+      case 'clear':
+        machineWord = this.assembleTrap(operands, 0x000F); // Trap vector for clear is 15
+        break;
+      case 'sleep':
+        machineWord = this.assembleTrap(operands, 0x0010); // Trap vector for sleep is 16
+        break;
       default:
         this.error("Invalid operation"); // this.error(`Invalid mnemonic or directive: ${mnemonic}`);
         return;
