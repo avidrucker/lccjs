@@ -737,56 +737,61 @@ class Assembler {
   } 
 
   tokenizeLine(line) {
-    // console.log("Tokenizing line: ", line);
     let tokens = [];
     let currentToken = '';
     let inString = false;
     let stringDelimiter = '';
-
+    let escape = false; // Flag to indicate escape character
+  
     for (let i = 0; i < line.length; i++) {
       let char = line[i];
-      if ((char === '"' || char === "'") && !inString) {
-        inString = true;
-        stringDelimiter = char;
-        currentToken += char;
-      } else if (char === stringDelimiter && inString) {
-        inString = false;
-        currentToken += char;
-        tokens.push(currentToken);
-        currentToken = '';
-      } else if (inString) {
-        currentToken += char;
-      } else if (this.isWhitespace(char)) {
-        if (currentToken !== '') {
-          tokens.push(currentToken);
-          currentToken = '';
-        }
-      } else if (char === ',' && !inString) {
-        if (currentToken !== '') {
-          tokens.push(currentToken);
-          currentToken = '';
-        }
-      } else if (char === ':') {
-        if (currentToken !== '') {
-          // tokens.push(currentToken);
-          // currentToken = '';
-          //// Append colon to the current token to identify it as a label
+      if (!inString) {
+        if (char === '"' || char === "'") {
+          inString = true;
+          stringDelimiter = char;
           currentToken += char;
-          tokens.push(currentToken);
-          currentToken = '';
+        } else if (this.isWhitespace(char)) {
+          if (currentToken !== '') {
+            tokens.push(currentToken);
+            currentToken = '';
+          }
+        } else if (char === ',' && !inString) {
+          if (currentToken !== '') {
+            tokens.push(currentToken);
+            currentToken = '';
+          }
+        } else if (char === ':') {
+          if (currentToken !== '') {
+            currentToken += char;
+            tokens.push(currentToken);
+            currentToken = '';
+          }
+          // Ignore colon
+        } else {
+          currentToken += char;
         }
-        // Ignore colon
       } else {
         currentToken += char;
+        if (escape) {
+          escape = false; // Reset escape flag
+          continue;
+        }
+        if (char === '\\') {
+          escape = true; // Next character is escaped
+        } else if (char === stringDelimiter) {
+          inString = false;
+          tokens.push(currentToken);
+          currentToken = '';
+        }
       }
     }
-
+  
     if (currentToken !== '') {
       tokens.push(currentToken);
     }
-
+  
     return tokens;
-  }
+  }  
 
   isWhitespace(char) {
     return /\s/.test(char);
@@ -954,7 +959,7 @@ class Assembler {
 
             // if operands[2] is not a literal value, then it isn't a valid offset
             if(!this.isNumLiteral(operands[2])) {
-              this.error('Bad number');
+              this.error(`Bad number`); // : ${operands[2]}
               fatalExit('Bad number', 1);
             }
 
@@ -969,7 +974,7 @@ class Assembler {
 
           let value = this.evaluateOperand(label, 'V'); // Pass 'V' as usageType
           if (value === null) {
-            this.error('Bad number');
+            this.error(`Bad number`); // : ${value}
             fatalExit('Bad number', 1);
           };
       
@@ -982,7 +987,7 @@ class Assembler {
           }
 
           if(parsed && (parsed.offset > 65535 || parsed.offset < -32768)) {
-            this.error('Bad number'); // 'Data does not fit in 16 bits'
+            this.error(`Bad number`); // 'Data does not fit in 16 bits' // : ${parsed.offset}
             fatalExit('Bad number', 1); // 'Data does not fit in 16 bits'
           }
 
@@ -1870,7 +1875,8 @@ class Assembler {
   }
 
   isCharLiteral(str) {
-    return /^'(?:\\.|[^\\])'$/.test(str);
+    const match = /^'(?:\\.|[^\\])'$/.test(str);
+    return match;
   }
 
   parseCharLiteral(str) {
@@ -2030,6 +2036,7 @@ class Assembler {
         // this.error(`Undefined operand: ${operand}`);
         // this.error("Bad number");
         // fatalExit("Bad number", 1);
+        // console.log("maybe its a char???: ", operand);
         return null;
       }
     }
