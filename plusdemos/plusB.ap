@@ -1,0 +1,15 @@
+     .lccplus
+      clear ; clears the screen of anything else that was in the terminal
+      ld r1, onesecond ; load 1000 into r1 to represent milliseconds
+      mov r0, 'a' ; our initialized 'current char' to print goes into r0
+      mov r2, 'f' ; this is our 'terminal char'
+loop: cmp r0, r2 ; check to see how the current compares with the terminal
+      brgt done ; if the current is greater than the terminal, branch to done label
+      aout r0 ; print the current char
+      sleep r1 ; pause for 1 second
+      add r0, r0, 1 ; increment the char
+      br loop ; go back to the loop label
+done: nl
+      halt ; end the program
+
+onesecond: .word 1000
