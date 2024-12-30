@@ -1,0 +1,24 @@
+      .lccplus
+      lea r0, pressKey
+      sout r0
+      nl
+      mov r1, '\n'
+loop: nbain r0 ; poll for input
+      cmp r0, 0
+      brz loop ; keep polling as long as input is empty
+      cmp r0, r1 ; check for enter key
+      bre done ; if enter key pressed, we break the loop
+      lea r2, youPressed ; else, another char key was pressed
+      sout r2
+      aout r0
+      nl
+      mov r0, 0
+      br loop
+done: lea r0, goodbye
+      sout r0
+      nl
+      halt
+
+pressKey: .string "Press any key, Enter to quit: "
+youPressed: .string "You pressed "
+goodbye: .string "Goodbye!"
