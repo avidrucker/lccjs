@@ -9,6 +9,10 @@ const Interpreter = require('../core/interpreter.js');
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 
 function fatalExit(message, code = 1) {
+
+  process.stdin.setRawMode(false);
+  process.stdin.pause();
+
   if (isTestMode) {
     throw new Error(message);
   } else {
@@ -19,6 +23,8 @@ function fatalExit(message, code = 1) {
 class InterpreterPlus extends Interpreter {
   constructor() {
     super();
+    this.keyQueue = []; // For non-blocking input
+    this.nonBlockingInput = true; // Default to non-blocking
   }
 
   main(args) {
@@ -35,9 +41,7 @@ class InterpreterPlus extends Interpreter {
       let arg = args[i];
       if (arg.startsWith('-')) {
         // same logic for -nostats, etc.
-        if (arg === '-nostats') {
-          this.generateStats = false;
-        } else if (arg.startsWith('-L')) {
+        if (arg.startsWith('-L')) {
           // load point logic
           let loadPointStr = arg.substring(2);
           if (!loadPointStr) {
@@ -105,14 +109,61 @@ class InterpreterPlus extends Interpreter {
 
     this.initialMem = this.mem.slice(); // copy memory
 
+    // set up input
+    if (this.nonBlockingInput) {
+      // set up raw mode for non-blocking input
+      process.stdin.setRawMode(true);
+      process.stdin.setEncoding('utf8');
+      process.stdin.resume();
+
+      process.on('exit', () => {
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+      });
+  
+      // Each "data" event might contain multiple characters if typed quickly
+      process.stdin.on('data', (chunk) => {
+        for (const char of chunk) {
+          if (char === '\u0003') { // Ctrl-C
+            process.stdin.setRawMode(false);
+            process.stdin.pause();
+            process.exit(); // Exit the process
+          }
+          // for the Enter key
+          else if (char === '\r' || char === '\n') {
+            this.keyQueue.push('\n');
+          }
+
+          else {
+            // For arrows, ctrl, etc., you'll get escape sequences
+            // e.g. '\u001b[A' for arrow-up. For normal keys, char is straightforward.
+            this.keyQueue.push(char);
+          }
+        }
+      });
+    }
+
     // run
     try {
-      this.run();
-      if (this.generateStats) console.log();
+      // this.run();
+      this.startNonBlockingLoop();
     } catch (error) {
       console.error(`Runtime Error: ${error.message}`);
       fatalExit(`Runtime Error: ${error.message}`, 1);
     }
+  }
+
+  startNonBlockingLoop() {
+    this.running = true;
+  
+    // Option 1: setInterval with some fixed “frame” time, e.g. 16 ms
+    this.intervalID = setInterval(() => {
+      if (!this.running) {
+        clearInterval(this.intervalID);
+        return;
+      }
+      this.step();  // your single CPU step
+    }, 16);
   }
 
   // extracts header entries and loads machine code into memory
@@ -137,7 +188,6 @@ class InterpreterPlus extends Interpreter {
     // Read header entries until 'C' is encountered
     while (offset < buffer.length) {
       const entryChar = String.fromCharCode(buffer[offset++]);
-      console.log("entryChar: ", entryChar);
 
       if (entryChar === 'C') {
         // Start of code
@@ -208,12 +258,21 @@ class InterpreterPlus extends Interpreter {
     switch (this.trapvec) {
       // Keep parent's existing trap handling
       // but we add back the ones we removed from parent:
+      case 0: // HALT
+        this.running = false;
+        // turn off raw mode for non-blocking input
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        break;
       case 15: // clear
         this.executeClear();
         break;
       case 16: // sleep
         this.executeSleep();
         break;
+      case 17: // nbain
+        this.executeNonBlockingAsciiInput();
+        break
       default:
         // If it's not 15 or 16, call parent's method
         super.executeTRAP();
@@ -230,6 +289,19 @@ class InterpreterPlus extends Interpreter {
     const start = Date.now();
     while (Date.now() - start < milliseconds) {
       // busy-wait
+    }
+  }
+
+  executeNonBlockingAsciiInput() {
+    // If the queue has data, pop the oldest key,
+    // otherwise return 0 (or -1) to signify "no key"
+    if (this.keyQueue.length > 0) {
+      const nextKey = this.keyQueue.shift();
+      // We'll store the ASCII code in register DR
+      this.r[this.dr] = nextKey.charCodeAt(0);
+    } else {
+      // No key in queue
+      this.r[this.dr] = 0; 
     }
   }
 }
