@@ -1,3 +1,4 @@
+; This program prints out the letters 'a' through 'f' in the terminal 'typewriter' style
      .lccplus
       clear ; clears the screen of anything else that was in the terminal
       ld r1, onesecond ; load 1000 into r1 to represent milliseconds
