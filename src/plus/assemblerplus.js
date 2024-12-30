@@ -116,6 +116,13 @@ class AssemblerPlus extends Assembler {
           this.locCtr += 1;
         }
         break;
+      case 'nbain':
+        machineWord = this.assembleTrap(operands, 0x0011);
+        if (machineWord !== null) {
+          this.writeMachineWord(machineWord);
+          this.locCtr += 1;
+        }
+        break;
       default:
         // let the parent handle it (which will write & increment):
         super.handleInstruction(mnemonic, operands);
