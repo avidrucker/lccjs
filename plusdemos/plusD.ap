@@ -1,0 +1,43 @@
+; Typewriter Style "Hello World" Program
+; This program prints "Hello World" one character at a time with a delay between each character.
+
+    .lccplus
+
+    ; Load the delay duration (500 milliseconds) into register r1
+    ld r1, delayMillis
+
+    ; Load the address of the string "Hello World" into register r2
+    lea r2, helloWorld
+
+loop:
+    ; Load the current character from the address in r2 into r0
+    ldr r0, r2, 0
+
+    ; Compare the loaded character with null terminator (0)
+    cmp r0, 0
+    brz done            ; If character is null, exit the loop
+
+    ; Output the current character in r0
+    aout r0
+
+    ; Pause for the duration specified in r1
+    sleep r1
+
+    ; Increment the pointer in r2 to point to the next character
+    add r2, r2, 1
+
+    ; Repeat the loop
+    br loop
+
+done:
+    ; Print a newline after the string is fully printed
+    nl
+
+    ; Halt the program
+    halt
+
+; Define the delay duration in milliseconds
+delayMillis: .word 500     ; 500 ms delay between characters
+
+; Define the string "Hello World" terminated with a null character
+helloWorld: .string "Hello World"
