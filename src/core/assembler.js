@@ -154,6 +154,8 @@ class Assembler {
   main(args) {
     args = args || process.argv.slice(2);
 
+    //// TODO: change logic here to only give usage message
+    ////       if no input files are provided
     // Check if inputFileName is already set
     if (!this.inputFileName) {
       if (args.length !== 1) {
@@ -191,9 +193,9 @@ class Assembler {
       this.parseHexFile();
       this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
       this.writeOutputFile();
-    } else {
+    } else if (extension === '.a') {
 
-      // If not a .bin, proceed with normal two-pass assembly...
+      // If a .a file, proceed with normal two-pass assembly...
       // Construct the output file name by replacing extension with '.e'
       this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
 
@@ -308,11 +310,22 @@ class Assembler {
         console.log(`bst file = ${bstFileName}`);
       }
 
+    } else {
+      // Note: Treating only .a files as valid assembly files is
+      //       a unique LCC.js behavior as of 12/2024 (the official
+      //       LCC behavior is to treat all non .bin, .hex, .o, and 
+      //       .e files as assembly files)
+      if (extension === '.ap') {
+        console.error('Error: .ap files are not supported by assembler.js - Did you mean to use assemblerPlus.js?');
+        fatalExit('Error: .ap files are not supported by assembler.js - Did you mean to use assemblerPlus.js?', 1);
+      }
+      console.error('Unsupported file type');
+      fatalExit('Unsupported file type', 1);
     }
 
   }
 
-  writeOutputFile() {
+  writeOutputFile(secondIntroHeader = '') {
     // Open the output file for writing
     try {
       this.outFile = fs.openSync(this.outputFileName, 'w');
@@ -323,6 +336,13 @@ class Assembler {
   
     // Write the initial header 'o' to the output file
     fs.writeSync(this.outFile, 'o');
+
+    // Custom LCC.js behavior as of 12/2024:
+    // Write the second intro header if it is provided
+    // This enables extensions that need use special header entries
+    if(secondIntroHeader !== '') {
+      fs.writeSync(this.outFile, secondIntroHeader);
+    }
   
     // Collect all header entries
     let headerEntries = [];
@@ -1177,12 +1197,6 @@ class Assembler {
         break;
       case 'bp':
         machineWord = this.assembleTrap(operands, 0x000E); // Trap vector for bp is 14
-        break;
-      case 'clear':
-        machineWord = this.assembleTrap(operands, 0x000F); // Trap vector for clear is 15
-        break;
-      case 'sleep':
-        machineWord = this.assembleTrap(operands, 0x0010); // Trap vector for sleep is 16
         break;
       default:
         this.error("Invalid operation"); // this.error(`Invalid mnemonic or directive: ${mnemonic}`);
