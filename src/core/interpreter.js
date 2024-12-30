@@ -89,6 +89,15 @@ class Interpreter {
         // Assume it's the input file name
         if (!this.inputFileName) {
           this.inputFileName = arg;
+          const extension = path.extname(this.inputFileName).toLowerCase();
+          // Note: This is custom behavior in interpreter.js (not the official LCC)
+          //       to check specifically for .e files, since the LCC interpreter is
+          //       accessed by default when running .e files, or when assembling and
+          //       running .a files all at once.
+          if (extension !== '.e') {
+            console.error('Unsupported file type for interpreter.js (expected .e)');
+            fatalExit('Unsupported file type for interpreter.js (expected .e)', 1);
+          }
         } else {
           console.error(`Unexpected argument: ${arg}`);
           // process.exit(1);
@@ -829,18 +838,6 @@ class Interpreter {
     }
   }
 
-  executeSleep() {
-    const milliseconds = this.r[this.sr];
-    const start = Date.now();
-    while (Date.now() - start < milliseconds) {
-      // Busy-wait loop to block execution
-    }
-  }
-
-  executeClear() {
-    // process.stdout.write('\x1Bc');
-    console.clear();
-  }
 
   writeOutput(message) {
     process.stdout.write(message);
@@ -957,14 +954,11 @@ class Interpreter {
       case 14: // bp
         this.error('Breakpoint trap not yet implemented');
         break;
-      case 15: // clear
-        this.executeClear();
-        break;
-      case 16: // sleep
-        this.executeSleep();
-        break;
       default:
-        this.error(`Unknown TRAP vector: ${this.trapvec}`);
+        // `Unknown TRAP vector: ${this.trapvec}`
+        console.error(`Error on line 0 of ${this.inputFileName}`);
+        console.error();
+        this.error(`Trap vector out of range`);
         this.running = false;
     }
   }
