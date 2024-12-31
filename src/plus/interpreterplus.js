@@ -346,8 +346,8 @@ class InterpreterPlus extends Interpreter {
 
   executeRand() {
     // Linear Congruential Generator (LCG) constants
-    const a = 13;    // Multiplier (commonly used LCG constant)
-    const c = 17;    // Increment (another standard value)
+    const a = 48271;    // Multiplier (commonly used LCG constant)
+    const c = 10139;    // Increment (another standard value)
     const m = 0x10000;  // Modulus (2^16 for 16-bit)
 
     // Update seed using LCG formula
