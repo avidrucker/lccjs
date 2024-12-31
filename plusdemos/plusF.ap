@@ -1,0 +1,27 @@
+; This program generates 20 random numbers between 1 and 20, and 
+; the numbers are non-deterministic (different each time the 
+; program is run)
+        .lccplus
+        lea r0, twentyRandNums
+        sout r0
+        nl
+        millis r0
+        srand r0 ; seed the random number generator with 0
+        mov r2, 20 ; how many numbers to make
+        mov r3, 0 ; counter
+loop:   cmp r3, r2
+        bre done
+        mov r0, 1 ; min
+        mov r1, 20 ; max
+
+        ; saves a random number between 1 and 100 into r0
+        ; and updates the seed
+        rand r0, r1
+
+        dout r0 ; prints the random number
+        nl
+        add r3, r3, 1
+        br loop
+done:   halt
+
+twentyRandNums: .string "Here are 20 random numbers (1-20, non-deterministic):"
