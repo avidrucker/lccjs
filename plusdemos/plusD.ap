@@ -1,9 +1,10 @@
 ; Typewriter Style "Hello World" Program
-; This program prints "Hello World" one character at a time with a delay between each character.
+; This program prints "Hello World" one character 
+; at a time with a delay between each character.
 
-    .lccplus
+    .lccplus ; Use the LCC+ assembly language
 
-    ; Load the delay duration (500 milliseconds) into register r1
+    ; Load the delay duration (250 milliseconds) into register r1
     ld r1, delayMillis
 
     ; Load the address of the string "Hello World" into register r2
@@ -37,7 +38,7 @@ done:
     halt
 
 ; Define the delay duration in milliseconds
-delayMillis: .word 500     ; 500 ms delay between characters
+delayMillis: .word 250     ; 250 ms delay between characters
 
 ; Define the string "Hello World" terminated with a null character
 helloWorld: .string "Hello World"
