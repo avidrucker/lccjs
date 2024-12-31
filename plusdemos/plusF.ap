@@ -5,8 +5,8 @@
         lea r0, twentyRandNums
         sout r0
         nl
-        millis r0
-        srand r0 ; seed the random number generator with 0
+        millis r0 ; store the current time milliseconds in r0
+        srand r0 ; seed the random number generator with the time
         mov r2, 20 ; how many numbers to make
         mov r3, 0 ; counter
 loop:   cmp r3, r2
