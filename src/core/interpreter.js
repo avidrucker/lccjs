@@ -41,6 +41,7 @@ class Interpreter {
     this.inputFileName = '';           // Name of the input file
     this.generateStats = false;        // Whether to generate .lst and .bst files
     this.headerLines = [];
+    this.instructionsCap = 500000;     // Limit the number of instructions to prevent infinite loops
   }
 
   main(args) {
@@ -410,7 +411,7 @@ class Interpreter {
     // Note: This is a safety feature to prevent infinite loops
     // 2nd Note: This matches exactly the # of instructions 
     // permitted to run by from the lcc before entering the debugger
-    if (this.instructionsExecuted >= 500000) {
+    if (this.instructionsExecuted >= this.instructionsCap) {
       console.error("Possible infinite loop");
       this.running = false;
       // return; // Exit the step method early
@@ -963,7 +964,7 @@ class Interpreter {
         // `Unknown TRAP vector: ${this.trapvec}`
         console.error(`Error on line 0 of ${this.inputFileName}`);
         console.error();
-        this.error(`Trap vector out of range`);
+        this.error(`Trap vector out of range`); // : ${this.trapvec}
         this.running = false;
     }
   }
