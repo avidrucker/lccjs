@@ -282,8 +282,7 @@ class InterpreterPlus extends Interpreter {
         this.executeSrand();
         break;
       case 20: // millis
-        console.log("TODO: implement millis function stub")
-        //this.executeMillis();
+        this.executeMillis();
         break;
       default:
         // If it's not 15 or 16, call parent's method
