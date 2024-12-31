@@ -352,9 +352,9 @@ class InterpreterPlus extends Interpreter {
 
     // Update seed using LCG formula
     this.seed = (a * this.seed + c) % m;
-    this.seed ^= (this.seed >> 7) & 0xFFFF;  // XOR shift right by 7
-    this.seed ^= (this.seed << 9) & 0xFFFF;  // XOR shift left by 9
-    this.seed ^= (this.seed >> 13) & 0xFFFF; // XOR shift right by 13
+    this.seed ^= (this.seed << 13) & 0xFFFF;  // XOR shift right by 7
+    this.seed ^= (this.seed >> 17) & 0xFFFF;  // XOR shift left by 9
+    this.seed ^= (this.seed << 5) & 0xFFFF; // XOR shift right by 13
     // console.log("new seed: " + this.seed);
     let range;
     if (this.r[this.dr] <= this.r[this.sr1]) {
