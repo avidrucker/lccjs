@@ -25,6 +25,7 @@ class InterpreterPlus extends Interpreter {
     super();
     this.keyQueue = []; // For non-blocking input
     this.nonBlockingInput = true; // Default to non-blocking
+    this.seed = 0; // Seed for random number generator
   }
 
   main(args) {
@@ -277,9 +278,27 @@ class InterpreterPlus extends Interpreter {
       case 18: // cursor
         this.executeToggleCursor();
         break;
+      case 19: // srand
+        this.executeSrand();
+        break;
+      case 20: // millis
+        console.log("TODO: implement millis function stub")
+        //this.executeMillis();
+        break;
       default:
         // If it's not 15 or 16, call parent's method
         super.executeTRAP();
+    }
+  }
+
+  executeCase10() {    
+    switch(this.eopcode) {
+      case 14: // rand
+        this.executeRand();
+        break;
+      default:
+        // If it's not 14, call parent's method
+        super.executeCase10();
     }
   }
 
@@ -318,6 +337,39 @@ class InterpreterPlus extends Interpreter {
     } else {
       process.stdout.write('\u001B[?25h'); // show cursor
     }
+  }
+
+  executeSrand() {
+    // seed the random number generator
+    // with the value in the passed in source register
+    this.seed = this.r[this.sr];
+  }
+
+  executeRand() {
+    // Linear Congruential Generator (LCG) constants
+    const a = 13;    // Multiplier (commonly used LCG constant)
+    const c = 17;    // Increment (another standard value)
+    const m = 0x10000;  // Modulus (2^16 for 16-bit)
+
+    // Update seed using LCG formula
+    this.seed = (a * this.seed + c) % m;
+    this.seed ^= (this.seed >> 7) & 0xFFFF;  // XOR shift right by 7
+    this.seed ^= (this.seed << 9) & 0xFFFF;  // XOR shift left by 9
+    this.seed ^= (this.seed >> 13) & 0xFFFF; // XOR shift right by 13
+    // console.log("new seed: " + this.seed);
+    let range;
+    if (this.r[this.dr] <= this.r[this.sr1]) {
+      range = this.r[this.sr1] - this.r[this.dr] + 1;
+      this.r[this.dr] = (this.seed % range) + this.r[this.dr];
+    } else {
+      range = this.r[this.dr] - this.r[this.sr1] + 1;
+      this.r[this.dr] = (this.seed % range) + this.r[this.sr1];
+    }
+  }
+
+  // returns just the current milliseconds of the system clock
+  executeMillis() {
+    this.r[this.dr] = Date.now() % 1000;
   }
 }
 
