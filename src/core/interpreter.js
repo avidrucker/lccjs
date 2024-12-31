@@ -567,6 +567,11 @@ class Interpreter {
         this.r[this.dr] = this.signExtend(this.r[this.dr], this.r[this.sr1]);
         this.setNZ(this.r[this.dr]);
         break;
+      default:
+        //// TODO: compare implementation with the official LCC interpreter
+        this.error(`Unknown extended opcode: ${this.eopcode}`);
+        this.running = false;
+        fatalExit(`Unknown extended opcode: ${this.eopcode}`, 1);
     }
   }
 
