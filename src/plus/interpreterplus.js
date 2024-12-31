@@ -26,6 +26,7 @@ class InterpreterPlus extends Interpreter {
     this.keyQueue = []; // For non-blocking input
     this.nonBlockingInput = true; // Default to non-blocking
     this.seed = 0; // Seed for random number generator
+    this.instructionsCap = Infinity; // Default to no cap
   }
 
   main(args) {
@@ -146,7 +147,6 @@ class InterpreterPlus extends Interpreter {
 
     // run
     try {
-      // this.run();
       this.startNonBlockingLoop();
     } catch (error) {
       console.error(`Runtime Error: ${error.message}`);
@@ -157,15 +157,17 @@ class InterpreterPlus extends Interpreter {
   startNonBlockingLoop() {
     this.running = true;
   
-    // Option 1: setInterval with some fixed “frame” time, e.g. 16 ms
-    this.intervalID = setInterval(() => {
-      if (!this.running) {
-        clearInterval(this.intervalID);
-        return;
+    const runBatch = () => {
+      if (!this.running) return;
+      for (let i = 0; i < 500; i++) {
+        if (!this.running) break;
+        this.step();
       }
-      this.step();  // your single CPU step
-    }, 16);
-  }
+      setImmediate(runBatch);
+    };
+  
+    runBatch();
+  }  
 
   // extracts header entries and loads machine code into memory
   loadExecutableBuffer(buffer, secondIntroHeader = '') {
@@ -308,11 +310,15 @@ class InterpreterPlus extends Interpreter {
 
   executeSleep() {
     const milliseconds = this.r[this.sr];
-    const start = Date.now();
-    while (Date.now() - start < milliseconds) {
-      // busy-wait
-    }
-  }
+    // Stop the stepping, resume after setTimeout
+    this.running = false;
+    setTimeout(() => {
+      if (!this.running) {
+        this.running = true;
+        this.startNonBlockingLoop();
+      }
+    }, milliseconds);
+  }  
 
   executeNonBlockingAsciiInput() {
     // If the queue has data, pop the oldest key,
