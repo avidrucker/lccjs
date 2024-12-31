@@ -1,5 +1,7 @@
 ; This program cycles printing a single character from 'a' to 'f' in the terminal
      .lccplus
+      mov r0, 0
+      cursor r0 ; toggles the cursor off
       clear ; clears the screen of anything else that was in the terminal
       ld r1, onesecond ; load 1000 into r1 to represent milliseconds
       mov r0, 'a' ; our initialized 'current char' to print goes into r0
