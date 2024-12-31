@@ -93,6 +93,14 @@ class AssemblerPlus extends Assembler {
     console.log(`Output file = ${this.outputFileName}`);
   }
 
+  // convenience function for writing a machine word and incrementing locCtr
+  writeAndInc(macword) {
+    if (macword !== null) {
+      this.writeMachineWord(macword);
+      this.locCtr += 1;
+    }
+  }
+
   handleInstruction(mnemonic, operands) {
     if (this.pass === 1) {
       this.locCtr += 1;
@@ -104,37 +112,49 @@ class AssemblerPlus extends Assembler {
       case 'clear':
         machineWord = this.assembleTrap(operands, 0x000F);
         // Here, WE do the writing/incrementing for "clear"
-        if (machineWord !== null) {
-          this.writeMachineWord(machineWord);
-          this.locCtr += 1;
-        }
+        this.writeAndInc(machineWord);
         break;
       case 'sleep':
         machineWord = this.assembleTrap(operands, 0x0010);
-        if (machineWord !== null) {
-          this.writeMachineWord(machineWord);
-          this.locCtr += 1;
-        }
+        this.writeAndInc(machineWord);
         break;
       case 'nbain':
         machineWord = this.assembleTrap(operands, 0x0011);
-        if (machineWord !== null) {
-          this.writeMachineWord(machineWord);
-          this.locCtr += 1;
-        }
+        this.writeAndInc(machineWord);
         break;
       case 'cursor':
         machineWord = this.assembleTrap(operands, 0x0012);
-        if (machineWord !== null) {
-          this.writeMachineWord(machineWord);
-          this.locCtr += 1;
-        }
+        this.writeAndInc(machineWord);
+        break;
+      case 'srand':
+        machineWord = this.assembleTrap(operands, 0x0013);
+        this.writeAndInc(machineWord);
+        break;
+      case 'rand':
+        machineWord = this.assembleRAND(operands);
+        this.writeAndInc(machineWord);
+        break;
+      case 'millis':
+        machineWord = this.assembleTrap(operands, 0x0014);
+        this.writeAndInc(machineWord);
         break;
       default:
-        // let the parent handle it (which will write & increment):
+        // Here we let the parent handle the assembling, writing, and incrementing
         super.handleInstruction(mnemonic, operands);
-        // do NOT do your own write or locCtr++ again
     }
+  }
+
+  // assembly+: rand dr, sr1
+  // machine code: 1010 dr sr1 0 01110
+  assembleRAND(operands) {
+    let dr = this.getRegister(operands[0]);
+    let sr1 = this.getRegister(operands[1]);
+    if (dr === null || sr1 === null) {
+      this.error('Missing register');
+      fatalExit('Missing register', 1);
+    };
+    let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000E;
+    return macword;
   }
 
   // Override or extend handleDirective to add .lccplus
