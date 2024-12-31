@@ -263,6 +263,7 @@ class InterpreterPlus extends Interpreter {
         // turn off raw mode for non-blocking input
         process.stdin.setRawMode(false);
         process.stdin.pause();
+        process.stdout.write('\u001B[?25h'); // show cursor
         break;
       case 15: // clear
         this.executeClear();
@@ -273,6 +274,9 @@ class InterpreterPlus extends Interpreter {
       case 17: // nbain
         this.executeNonBlockingAsciiInput();
         break
+      case 18: // cursor
+        this.executeToggleCursor();
+        break;
       default:
         // If it's not 15 or 16, call parent's method
         super.executeTRAP();
@@ -302,6 +306,17 @@ class InterpreterPlus extends Interpreter {
     } else {
       // No key in queue
       this.r[this.dr] = 0; 
+    }
+  }
+
+  executeToggleCursor() {
+    // by default, in the beginning of all programs, the cursor is visible
+    // if the passed in register is 0, hide the cursor
+    // if the passed in register is non-zero, show the cursor
+    if (this.r[this.dr] === 0) {
+      process.stdout.write('\u001B[?25l'); // hide cursor
+    } else {
+      process.stdout.write('\u001B[?25h'); // show cursor
     }
   }
 }
