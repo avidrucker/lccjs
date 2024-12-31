@@ -1445,12 +1445,12 @@ class Assembler {
 
   assembleSEXT(operands) {
     let dr = this.getRegister(operands[0]);
-    let sr = this.getRegister(operands[1]);
-    if (dr === null || sr === null) {
+    let sr1 = this.getRegister(operands[1]);
+    if (dr === null || sr1 === null) {
       this.error('Missing register');
       fatalExit('Missing register', 1);
     };
-    let macword = 0xA000 | (dr << 9) | (sr << 6) | 0x000D;
+    let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000D;
     return macword;
   }
 
