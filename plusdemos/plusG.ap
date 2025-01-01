@@ -1,17 +1,11 @@
 ; A program that has a player that can move left 
 ; and right along a 1D board row
-; eventually, the player will be able to move up and down
-; and the board will be 2D (10x10)
-; Note: This program is INCOMPLETE
 ; Note: This program uses a couple of techniques to improve
 ; render performance. (1) It only refreshes/prints the board
 ; when the player moves. (2) Instead of clearing the entire
 ; screen, it only resets the cursor position to the top left
 ; corner of the screen. This is done by calling the resetc
 ; "reset cursor" instruction
-; TODO: Implement the board being 2D (10x10)
-; TODO: Implement the player moving up and down
-; TODO: Implement writing to and reading from a string buffer
         .lccplus
         .start startup
 
