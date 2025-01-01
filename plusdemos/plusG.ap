@@ -9,6 +9,9 @@
 ; screen, it only resets the cursor position to the top left
 ; corner of the screen. This is done by calling the resetc
 ; "reset cursor" instruction
+; TODO: Implement the board being 2D (10x10)
+; TODO: Implement the player moving up and down
+; TODO: Implement writing to and reading from a string buffer
         .lccplus
         .start startup
 
