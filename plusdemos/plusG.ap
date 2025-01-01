@@ -1,3 +1,7 @@
+; A program that has a player that can move left 
+; and right along a 1D board row
+; eventually, the player will be able to move up and down
+; and the board will be 2D (10x10)
         .lccplus
         .start startup
 
@@ -48,7 +52,8 @@ main:   push lr
         lea r2, pressKey
         sout  r2
         nl
-        bl printBoard ; printing the board should happen instantaneously 
+        ; printing should happen instantaneously
+        bl printBoard 
 
         mov r2, 16 ; delay in milliseconds
         sleep r2
