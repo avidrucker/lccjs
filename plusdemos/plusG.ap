@@ -18,7 +18,7 @@
 startup: 
         clear
         mov r0, 0
-        cursor r0 ; turn off
+        cursor r0 ; turn off cursor
         bl main
         halt 
 
@@ -70,7 +70,7 @@ main:   push lr
         ; if a letter was pressed, we can update the board
         cmp r0, 0
         bre @postPrint
-        ; print the instructions and board
+        ; reprint the instructions and board
         ; clear ; Note: this can cause flickering
         resetc ; resetc is better here than clear because the board dimensions are static
         lea r2, pressKey
@@ -104,7 +104,7 @@ printBoard:
 
         ; let's now print out each column in row 1
         mov    r3, 0 ; col counter
-@L0:    cmp    r3, 10
+  @L0:  cmp    r3, 10
         bre    @L1
         ldr    r2, fp, -3 ; x position of the player
         cmp    r3, r2
@@ -113,16 +113,16 @@ printBoard:
         ld     r2, player
         aout   r2
         br     @L3 
-@L2:    ; print blank char
+  @L2:  ; print blank char
         ld     r2, blank
         aout   r2
-@L3:    ; print space between chars
+  @L3:  ; print space between chars
         ld     r2, space
         aout   r2
         ; increment col counter
         add    r3, r3, 1
         br     @L0
-@L1:    ; done printing the row
+  @L1:  ; done printing the row
         nl
 
         mov     sp, fp
