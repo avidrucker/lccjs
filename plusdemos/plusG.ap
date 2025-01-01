@@ -55,7 +55,7 @@ main:   push lr
         ; printing should happen instantaneously
         bl printBoard 
 
-        mov r2, 16 ; delay in milliseconds
+        mov r2, 32 ; delay in milliseconds between prints
         sleep r2
         br mainLoopStart
 
