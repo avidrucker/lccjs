@@ -2,6 +2,13 @@
 ; and right along a 1D board row
 ; eventually, the player will be able to move up and down
 ; and the board will be 2D (10x10)
+; Note: This program is INCOMPLETE
+; Note: This program uses a couple of techniques to improve
+; render performance. (1) It only refreshes/prints the board
+; when the player moves. (2) Instead of clearing the entire
+; screen, it only resets the cursor position to the top left
+; corner of the screen. This is done by calling the resetc
+; "reset cursor" instruction
         .lccplus
         .start startup
 
@@ -18,7 +25,6 @@ moveRight:
         mov r0, 10
         rem r1, r0
         st r1, xypos + 0
-        mov r0, 0 ; clear ascii input
         ret
 
 moveLeft:
@@ -28,38 +34,55 @@ moveLeft:
         mov r0, 10
         rem r1, r0
         st r1, xypos + 0
-        mov r0, 0 ; clear ascii input
         ret
 
 main:   push lr
         push fp
         mov fp, sp
 
-    mainLoopStart:
+        ; print the instructions and board
+        lea r2, pressKey
+        sout  r2
+        nl
+        bl printBoard
+
+    @mainLoopStart:
         nbain r0 ; get user input
         mov r1, 'd'
         cmp r0, r1
-        bre moveRight
+        brne @notD
+        bl moveRight
+        br @keyPressed
+    @notD:
         mov r1, 'a'
         cmp r0, r1
-        bre moveLeft
+        brne @notA
+        bl moveLeft
+        br @keyPressed
+    @notA:
         mov r1, 'q'
         cmp r0, r1
-        bre mainLoopDone
-
+        bre @mainLoopDone
+    @keyPressed:
+        ; if a letter was pressed, we can update the board
+        cmp r0, 0
+        bre @postPrint
         ; print the instructions and board
-        clear
+        ; clear ; Note: this can cause flickering
+        resetc ; resetc is better here than clear because the board dimensions are static
         lea r2, pressKey
         sout  r2
         nl
         ; printing should happen instantaneously
-        bl printBoard 
+        bl printBoard
+        mov r0, 0 ; clear ascii input buffer
+    @postPrint:
 
         mov r2, 32 ; delay in milliseconds between prints
         sleep r2
-        br mainLoopStart
+        br @mainLoopStart
 
-    mainLoopDone:
+    @mainLoopDone:
         mov sp, fp
         pop fp
         pop lr
