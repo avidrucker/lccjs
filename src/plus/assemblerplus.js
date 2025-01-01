@@ -138,6 +138,10 @@ class AssemblerPlus extends Assembler {
         machineWord = this.assembleTrap(operands, 0x0014);
         this.writeAndInc(machineWord);
         break;
+      case 'resetc':
+        machineWord = this.assembleTrap(operands, 0x0015);
+        this.writeAndInc(machineWord);
+        break;
       default:
         // Here we let the parent handle the assembling, writing, and incrementing
         super.handleInstruction(mnemonic, operands);

@@ -286,6 +286,9 @@ class InterpreterPlus extends Interpreter {
       case 20: // millis
         this.executeMillis();
         break;
+      case 21: // resetc
+        this.executeResetCursor();
+        break;
       default:
         // If it's not 15 or 16, call parent's method
         super.executeTRAP();
@@ -375,6 +378,10 @@ class InterpreterPlus extends Interpreter {
   // returns just the current milliseconds of the system clock
   executeMillis() {
     this.r[this.dr] = Date.now() % 1000;
+  }
+
+  executeResetCursor() {
+    process.stdout.write('\u001B[H'); // move cursor to home
   }
 }
 
