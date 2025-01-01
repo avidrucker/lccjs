@@ -1,3 +1,5 @@
+; a non-blocking input example of a character moving
+; around a board using wasd, q to quit
       .lccplus
       .start startup
 
