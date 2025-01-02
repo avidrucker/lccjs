@@ -1,4 +1,4 @@
-; program that tests IO and LST generation thoroughly
+; demoO.a: program that tests IO and LST generation thoroughly
             lea r0, prompt
             sout r0
             lea r0, buffer
