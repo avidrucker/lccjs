@@ -34,6 +34,7 @@
 
 ## Core Features
 
+- [ ] implement operand type checking for all mnemonics and directives
 - [ ] figure out where linker.js outputs its .e (default link.e as well as custom named .e files with the -o flag) files, and make sure that the output is consistently in the correct place (is it to the same directory as the first .o file argument, or the current working directory, or something else?)
 - [x] implement lcc.js calling linker.js when lcc.js is called with multiple .o file inputs
 - [x] implement linker.js outputting to the terminal user feedback on the linking process, for valid arguments (only 1 .o file is acceptable, and not an original LCC bug, even though is unlikely to produce a viable .e file) and invalid arguments (a mixture of .o and other file types, such as .a) 
