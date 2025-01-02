@@ -358,7 +358,7 @@ main:
       rand r0, r1    ; => [0..3]
       st  r0, dir
 
-@gameLoop:
+   @gameLoop:
       ; (A) read input
       nbain r4
       cmp r4, 0
@@ -376,21 +376,21 @@ main:
         mov r0, 0
         st  r0, dir
         br @noKey
-@checkS:
+   @checkS:
       mov r1, 's'
       cmp r4, r1
       brne @checkA
         mov r0, 2
         st  r0, dir
         br @noKey
-@checkA:
+   @checkA:
       mov r1, 'a'
       cmp r4, r1
       brne @checkD
         mov r0, 3
         st  r0, dir
         br @noKey
-@checkD:
+   @checkD:
       mov r1, 'd'
       cmp r4, r1
       brne @noKey
@@ -398,7 +398,7 @@ main:
         st  r0, dir
         br @noKey
 
-@noKey:
+   @noKey:
       ; (B) move the snake
       bl moveSnake
 
@@ -414,7 +414,7 @@ main:
       bl growSnake
       bl placeFruit
 
-@skipFruit:
+   @skipFruit:
       ; (D) redraw
       resetc ; off for debugging
       ; clear ; off for debugging
@@ -426,7 +426,7 @@ main:
 
       br @gameLoop
 
-@quit:
+   @quit:
       mov sp, fp
       pop fp
       pop lr
