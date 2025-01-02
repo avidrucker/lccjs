@@ -270,3 +270,378 @@ end:      halt
     nl
     halt
 ```
+
+```
+; demoO.a: program that tests IO and LST generation thoroughly
+            lea r0, prompt
+            sout r0
+            lea r0, buffer
+            sin r0
+            lea r1, hi
+            sout r1
+            sout r0
+            nl
+            m
+            halt
+prompt:     .string "Name: "
+hi:         .string "Hi "
+buffer:     .zero 10
+```
+
+```
+; demoP.a tests the setting of the entry point
+; via the S header while leaving the load point 
+; at the default 0
+       .start main
+hi:    lea r0, msg
+       sout r0
+       ret
+msg:   .string "Hi\n"
+;===============
+main:  bl hi ; entry point is here
+       bl hi
+       halt
+```
+
+```
+; demoQ.a tests using labels as operands to .word
+; directives. The program should output 10.
+; Also, what would happen if we were to run
+; this program using a load point of 0x3000?
+    ld r0, x  ; 0
+    dout r0   ; 1
+    halt      ; 2
+x:  .word y   ; 3
+y:  .word 10  ; 4
+```
+
+```
+; demoR.a: Demonstrating shift commands srl, sra, sll
+;
+; This program shows the effects of shifting operations 
+; on positive and negative numbers.
+; We use dout to display the results and nl for new lines.
+
+        ; Initialize r0 with a positive number
+        mov r0, 16      ; r0 = 16 (binary 0000 0000 0001 0000)
+        ; Shift r0 right logically by 1 (divide by 2, zeros shifted in)
+        srl r0, 1       ; r0 = r0 >> 1 (logical shift right)
+        ; After srl, r0 should be 8 (binary 0000 0000 0000 1000)
+        dout r0         ; Output: 8
+        nl
+
+        ; Initialize r1 with a negative number
+        mov r1, -16     ; r1 = -16 (binary 1111 1111 1111 0000)
+        ; Shift r1 right logically by 1 (zeros shifted in)
+        srl r1, 1       ; r1 = r1 >> 1 (logical shift right)
+        ; After srl, r1 becomes a large positive number due to zeros shifted in
+        dout r1         ; Output: 32760
+        nl
+
+        ; Now shift r1 right arithmetically by 1 (sign bit replicated)
+        mov r1, -16     ; Reset r1 to -16
+        sra r1, 1       ; r1 = r1 >> 1 (arithmetic shift right)
+        ; After sra, r1 remains negative
+        dout r1         ; Output: -8
+        nl
+
+        ; Shift r0 left logically by 1 (multiply by 2)
+        mov r0, 16      ; Reset r0 to 16
+        sll r0, 1       ; r0 = r0 << 1 (logical shift left)
+        ; After sll, r0 should be 32 (binary 0000 0000 0010 0000)
+        dout r0         ; Output: 32
+        nl
+
+        ; Demonstrate that shifting left multiplies by powers of 2
+        ; Shift r0 left by 2 (multiply by 4)
+        mov r0, 3       ; r0 = 3
+        sll r0, 2       ; r0 = r0 << 2
+        ; After sll, r0 should be 12 (3 * 4)
+        dout r0         ; Output: 12
+        nl
+
+        halt
+
+; Practical applications:
+; - Left shift (`sll`) is used for fast multiplication by 
+;   powers of 2.
+; - Right shift (`sra`) is used for division by powers of 
+;   2 while preserving the sign.
+; - Logical right shift (`srl`) is useful for unsigned 
+;   binary arithmetic and bit manipulation.
+```
+
+```
+; demoS.a: Demonstrating rotate commands rol, ror
+;
+; This program shows how bits are rotated in registers.
+
+        ; Initialize r0 with a specific bit pattern
+        ld r0, num  ; r0 = binary 1000 0000 0000 0001
+        ; Rotate r0 left by 1
+        hout r0
+        nl
+	
+        rol r0, 1       ; r0 = rol(r0, 1)
+        ; After rol, r0 should be 0x0003 (binary 0000 0000 0000 0011)
+        hout r0         ; Output: 3
+        nl
+
+        ; Rotate r0 right by 1
+        ror r0, 1       ; r0 = ror(r0, 1)
+        ; After ror, r0 should be back to 0x8001
+        hout r0         ; Output: 8001
+        nl
+
+        ; Rotate r1 left by 4
+        ld r1, num2  ; r1 = binary 0001 0010 0011 0100
+        hout r1
+        nl
+
+        rol r1, 4       ; r1 = rol(r1, 4)
+        ; After rol, r1 should be 0x2341 (rotated bits)
+        hout r1         ; Output: 2341
+        nl
+
+        ; Rotate r1 right by 4
+        ror r1, 4       ; r1 = ror(r1, 4)
+        ; After ror, r1 should be back to 0x1234
+        hout r1         ; Output: 1234
+        nl
+
+        halt
+
+num: .word 0x8001
+num2: .word 0x1234
+
+; Practical applications:
+; - Rotate operations are used in cryptography algorithms like RSA and AES for data scrambling.
+; - Rotating bits helps implement circular buffers and cyclic redundancy checks (CRCs).
+; - Useful in graphics programming for color transformations and pixel manipulations.
+```
+
+```
+; demoT.a: Demonstrating bitwise operations and, or, xor
+;
+; This program shows how to use bitwise operations for masking and modifying bits.
+; We use dout and hout to display the results.
+
+        ; Initialize r0 with a value
+        mov r0, 0xAA    ; r0 = 0x00AA
+
+        ; Use AND to clear bits (masking)
+        mov r1, 0xF0    ; Mask to keep only the upper 4 bits
+        and r2, r0, r1  ; r2 = r0 & r1
+        hout r2         ; Output: 00A0
+        nl
+
+        ; Use OR to set bits
+        mov r1, 0xF     ; Mask to set lower 4 bits
+        or r0, r1       ; r0 = r0 | r1
+        hout r0         ; Output: 00AF
+        nl
+
+        ; Use XOR to toggle bits
+        mov r1, 0xFF    ; Mask to toggle all bits
+        xor r0, r1      ; r0 = r0 ^ r1
+        hout r0         ; Output: 50  
+        nl
+
+        ; Practical example: Checking if bit 3 is set (bit indexing from 0)
+        ; Let's check if bit 3 (from LSB) is set in r0
+        mov r1, 0x8     ; Mask for bit 3
+        and r2, r0, r1
+        cmp r2, 0
+        bre bit_not_set
+        lea r3, msg_set
+        sout r3         ; Output: "Bit 3 is set"
+        br end_msg
+bit_not_set:
+        lea r3, msg_not_set
+        sout r3         ; Output: "Bit 3 is not set"
+end_msg:
+        nl
+
+        halt
+
+msg_set:     .string "Bit 3 is set"
+msg_not_set: .string "Bit 3 is not set"
+
+; Practical applications:
+; - **AND** is used for masking bits to clear or check specific bits.
+; - **OR** is used for setting specific bits without altering others.
+; - **XOR** is used for toggling bits and is fundamental in encryption algorithms.
+; - Bit manipulation is crucial in low-level programming, embedded systems, and optimization tasks.
+```
+
+note: demoU.a is under construction as of 1/2025
+
+```
+; demoV.a demos the usage of mul, div, and rem instructions
+        mov r0, 10
+        mov r1, 3
+        mul r0, r1
+        dout r0 ; should output 30
+        nl
+
+        mov r0, 10
+        mov r1, 2
+        div r0, r1
+        dout r0 ; should output 5
+        nl
+
+        mov r0, 10
+        mov r1, 3
+        rem r0, r1
+        dout r0 ; should output 1
+        halt
+```
+
+```
+; demoW.a tests flag setting and branching instructions
+        mov r0, 1
+        mov r1, 2
+        sub r0, r0, r1
+        dout r0 ; prints -1
+        nl
+        brn @L1
+        halt
+@L1     mov r0, 3
+        mov r1, 4
+        add r0, r0, r1
+        dout r0 ; prints 7
+        nl
+        brp @L2
+        halt
+@L2:    mov r0, 5
+        mov r1, 5
+        sub r0, r0, r1
+        dout r0 ; prints 0
+        nl
+        brz @L3
+        halt
+@L3     mov r0, 6
+        cmp r0, 5
+        dout r0 ; prints 6
+        nl
+        brgt @L4
+        halt
+@L4:    mov r0, 7
+        cmp r0, 8
+        dout r0 ; prints 7
+        nl
+        brlt @L5
+        halt
+@L5:    mov r0, 1
+        cmp r0, 0
+        dout r0 ; prints 1
+        nl
+        brnz @L6
+        halt
+@L6:    ld r0, x
+        add r0, r0, 1
+        dout r0 ; prints 0
+        nl
+        brc @L7
+        halt
+@L7:    ld r0, x
+        hout r0 ; prints ffff
+        halt
+        
+x:     .word 0xffff
+```
+
+```
+; demoX.a uses hex arguments, implicit r0 for out commands, and cea
+startup:        bl main
+                halt
+
+main:           push lr 
+                push fp
+                mov fp, sp ; comment 
+
+                cea r0, 0x0 ; compute effective address, same as `add r0, fp, 0x0`
+                hout r0
+                nl
+                mov r0, 0xf
+                hout r0
+                nl
+                mov r0, 0x00ff
+                hout ; same as `hout r0`
+                nl
+                mov r0, 0xff00
+                add r0, r0, 0xf
+                hout r0
+                nl
+                dout ; same as `dout r0`
+                nl 
+                ld r0, x 
+                hout r0
+
+                mov sp, fp
+                pop fp ; comment
+                pop lr
+                ret
+
+x:             .word 0xffff
+```
+
+```
+; demoY.a uses label offsets for ld and .word
+          ld r0, x     ; loads 5
+          dout
+          nl
+          ld r1, x+1   ; loads 11
+          dout r1
+          nl
+          ld r2, x+2   ; loads 17
+          dout r2
+          nl
+          ld r3, y-2   ; loads 5
+          dout r3
+          nl
+          ld r0, a    ; loads 20
+          dout r0
+          nl
+          ld r4, z     ; loads 21
+          dout r4
+          nl
+          halt
+x:        .word 5
+          .word 11
+y:        .word 17
+z:        .word x+2    ; assembled to the address of y
+a:        .word y-1    ; assembled to the address of x+1
+```
+
+```
+; demoZ.a uses label offsets with st, br, and lea
+    ld r0, a ; loads 5
+    dout r0 ; prints 5
+    nl
+    ld r0, a+1 ; loads 11
+    dout r0 ; prints 11
+    nl
+    ld r0, c ; loads the address of a, which is 24dec
+    dout r0 ; prints 24
+    nl
+    ld r0, d ; loads the address of a, which is 24, +1 = 25
+    dout r0 ; prints 25
+    nl
+    add r0, r0, 5
+    st r0, c-1 ; stores 30 at b
+    ld r1, b
+    dout r1 ; prints 30
+    nl
+    br e+1
+e:  add r1, r1, 5 ; this line gets skipped
+f:  dout r1 ; prints 30 again
+    nl
+    lea r0, a ; loads the address of a, which is 24
+    dout r0 ; prints 24
+    halt
+a: .word 5
+b: .word 11
+c: .word a
+d: .word a+1
+```
