@@ -542,6 +542,7 @@ class Interpreter {
       case 8: // DIV
         if (this.r[this.sr1] === 0) {
           this.error('Floating point exception');
+          fatalExit('Floating point exception', 1);
         }
         this.r[this.dr] = (this.r[this.dr] / this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
@@ -549,6 +550,7 @@ class Interpreter {
       case 9: // REM
         if (this.r[this.sr1] === 0) {
           this.error('Floating point exception');
+          fatalExit('Floating point exception', 1);
         }
         this.r[this.dr] = (this.r[this.dr] % this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
