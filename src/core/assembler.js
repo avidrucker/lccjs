@@ -2033,11 +2033,22 @@ class Assembler {
         this.handleExternalReference(operand, usageType);
         return 0;
       } else {
-        // this.error(`Undefined operand: ${operand}`);
-        // this.error("Bad number");
-        // fatalExit("Bad number", 1);
-        // console.log("maybe its a char???: ", operand);
-        return null;
+        // check for * (current location counter)
+        if(operand[0] === '*') {
+          if(operand[1] === '+' || operand[1] === '-') {
+            let offset = this.parseNumber(operand.slice(1));
+            if(isNaN(offset)) {
+              this.error(`Bad number`);
+              return null;
+            }
+            return this.locCtr + offset;
+          } else {
+            return this.locCtr;
+          }
+        } else {
+          this.error(`Unspecified label error for: ${operand}`); // this.error(`Undefined label: ${operand}`);
+          return null;
+        }
       }
     }
   }  
