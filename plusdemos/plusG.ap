@@ -127,8 +127,6 @@ printBoard:
 space:  .word ' '
 blank:  .word '.'
 player:  .word '#'
-rows:   .word 10
 cols:   .word 10
 xypos:  .word 0 ; x position of the player
-        .word 0 ; y position of the player
-pressKey: .string "Press WASD to move the player, q to quit: "
+pressKey: .string "Press 'a' or 'd' to move the player, 'q' to quit: "
