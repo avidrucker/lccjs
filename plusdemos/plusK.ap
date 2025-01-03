@@ -1,0 +1,405 @@
+; Flappy Bird in LCC+js (ASCII style), with restricted register usage:
+;   - r0   = user input only
+;   - r1..r4 = general-purpose
+;   - r5+  = not used
+;   - stack for anything extra
+
+    .lccplus
+    .start startup
+
+; ---------------------------------------------------------
+; STARTUP
+; ---------------------------------------------------------
+startup:
+    clear
+    mov  r1, 0      ; r1 = 0
+    cursor r1       ; turn off cursor
+    bl   main
+    halt
+
+; ---------------------------------------------------------
+; printBoard: print ASCII board
+;   uses r1..r4, and pushes/pops any needed extra
+; ---------------------------------------------------------
+printBoard:
+    push lr
+    push fp
+    mov  fp, sp
+
+    ; We'll read all global variables into memory or registers
+    ; We only have r1..r4, so we'll have to push some onto stack if needed.
+
+    ; Step 1: load boardWidth -> r1, boardHeight -> r2
+    ld   r1, boardWidth     ; r1 = boardWidth
+    ld   r2, boardHeight    ; r2 = boardHeight
+
+    ; Step 2: load birdX -> r3, birdY -> r4
+    ld   r3, birdX
+    ld   r4, birdY
+
+    ; We'll need pipeX, gapY, gapSize, score, so push them:
+    ld   r1, pipeX     ; re-use r1
+    push r1            ; [sp-1] = pipeX
+    ld   r1, gapY
+    push r1            ; [sp-2] = gapY
+    ld   r1, gapSize
+    push r1            ; [sp-3] = gapSize
+    ld   r1, score
+    push r1            ; [sp-4] = score
+
+    ; Step 3: print top prompt (pressW)
+    lea  r1, pressW
+    sout r1
+    nl
+
+    ; TODO: refactor to print string instead of chars
+    ; Step 4: print "Score: <value>"
+    mov  r1, 'S'
+    aout r1
+    mov  r1, 'c'
+    aout r1
+    mov  r1, 'o'
+    aout r1
+    mov  r1, 'r'
+    aout r1
+    mov  r1, 'e'
+    aout r1
+    mov  r1, ':'
+    aout r1
+    mov  r1, ' '
+    aout r1
+
+    pop   r1 ; score
+    dout r1
+    nl
+
+    ; sp is now effectively storing:
+    ;   [sp-1] = score
+    ;   [sp-2] = gapSize
+    ;   [sp-3] = gapY
+    ;   [sp-4] = pipeX  (the last we pushed is at sp-4, first to pop is sp-1, etc.)
+    ; Actually be mindful of the push/pop order:
+    ;   first push: pipeX
+    ;   second push: gapY
+    ;   third push: gapSize
+    ;   fourth push: score => top of stack
+    ;
+    ; Then we popped score => top of stack => sp advanced by +1
+    ; Then we pushed it again => sp -1
+    ; We'll keep track carefully.
+
+    ; Next: We'll iterate row=0..boardHeight-1, col=0..boardWidth-1
+    mov  r1, 0   ; r1 = row
+
+@outer:
+    cmp  r1, r2  ; compare row vs boardHeight
+    bre @doneRows
+
+      ; col=0..boardWidth-1
+      mov  r4, 0  ; r4 = col
+
+  @inner:
+      ld   r3, boardWidth
+      cmp  r4, r3
+      bre @endRow
+
+        ; we have birdX in r3 from above. Let's keep it that way. We'll store boardWidth on stack if needed.
+
+        push r2          ; save boardHeight
+        push r3          ; save birdX
+        push r4          ; save col
+        push r1          ; save row
+
+        ; We'll reload birdY from memory for the compare
+        ld   r2, birdY
+        ; compare col==birdX?
+        cmp  r4, r3
+        brne @maybePipe
+          ; compare row==birdY?
+          cmp  r1, r2
+          brne @maybePipe
+          ; => we have the bird
+          ld   r2, birdSym
+          aout r2
+          br   @postCell
+
+@maybePipe:
+        ; compare col==pipeX
+        ; pipeX is on stack => [fp-4*1 - some_offset], let's figure out its offset:
+        ;   we did push in order: pipeX -> gapY -> gapSize -> score
+        ;   top was score => offset  -1 from fp
+        ;   next is gapSize => -2
+        ;   next is gapY => -3
+        ;   next is pipeX => -4
+        ; So pipeX = [fp - 4]
+        ldr  r2, fp, -4
+        cmp  r4, r2
+        brne @printDot
+
+        ; => col == pipeX => we must see if row in gap
+        ; gapY = [fp - 3], gapSize=[fp - 2]
+        ldr  r2, fp, -3   ; r2 = gapY
+        cmp  r1, r2
+        brlt @pipeChar    ; if row < gapY => pipe
+
+        add  r2, r2, 1 ; we need gapSize => [fp - 2]
+        ldr  r3, fp, -2
+        add  r2, r2, r3   ; r2 = gapY + gapSize
+        ; compare row >= r2 => pipe
+        cmp  r1, r2
+        bre @pipeChar
+
+        ; => row in [gapY..gapY+gapSize-1] => space
+        ld   r2, spaceSym
+        aout r2
+        br   @postCell
+
+@pipeChar:
+        ld   r2, pipeSym
+        aout r2
+        br   @postCell
+
+@printDot:
+        ld   r2, blankSym
+        aout r2
+
+@postCell:
+        ; print an extra space for spacing
+        mov  r2, ' '
+        aout r2
+
+        ; restore row, col, birdX, boardHeight in correct order
+        pop  r1   ; row
+        pop  r4   ; col
+        pop  r3   ; birdX
+        pop  r2   ; boardHeight
+
+        ; increment col
+        add  r4, r4, 1
+        br   @inner
+
+  @endRow:
+      nl
+      add r1, r1, 1
+      br  @outer
+
+@doneRows:
+    ; pop the four items we pushed initially
+    pop  r4  ; restore score
+    pop  r4  ; gapSize
+    pop  r4  ; gapY
+    pop  r4  ; pipeX
+
+    mov  sp, fp
+    pop  fp
+    pop  lr
+    ret
+
+; ---------------------------------------------------------
+; DATA SECTION (unchanged from original)
+; ---------------------------------------------------------
+boardWidth:   .word 20     ; 20 columns
+boardHeight:  .word 8      ; 8 rows
+
+birdX:        .word 5
+birdY:        .word 4
+birdVel:      .word 0      ; unused in final logic, but kept for reference
+
+pipeX:        .word 19
+gapY:         .word 3
+gapSize:      .word 2
+score:        .word 0
+gameOver:     .word 0
+
+pressW:       .string "Press 'w' to flap, anything else to fall, or 'q' to quit"
+gameOverMsg:  .string "GAME OVER"
+birdSym:      .word 'B'
+pipeSym:      .word '|'
+spaceSym:     .word ' '
+blankSym:     .word '.'
+
+; ---------------------------------------------------------
+; checkCollision
+;   if birdY out of [0..boardHeight-1] => gameOver=1
+;   if birdX == pipeX and birdY not in [gapY..gapY+gapSize-1], => gameOver=1
+;   Only use r1..r4, push if more needed
+; ---------------------------------------------------------
+checkCollision:
+    push lr
+    push fp
+    mov  fp, sp
+
+    ; read birdY -> r1, boardHeight -> r2
+    ld   r1, birdY
+    ld   r2, boardHeight
+
+    ; 1) if birdY < 0 or birdY >= boardHeight => gameOver=1
+    cmp  r1, 0
+    brn  @collision
+    cmp  r1, r2
+    bre @collision
+
+    ; 2) compare birdX==pipeX
+    ld   r2, birdX
+    ld   r3, pipeX
+    cmp  r2, r3
+    brne @noPipeColl
+
+    ; 2a) if birdY not in gap => collision
+    ld   r2, gapY
+    ld   r3, gapSize
+
+    cmp  r1, r2
+    brlt @collision      ; birdY < gapY => collision
+
+    add  r2, r2, r3      ; r2 = gapY + gapSize
+    cmp  r1, r2
+    bre @collision      ; birdY >= gapY+gapSize => collision
+
+@noPipeColl:
+    ; no collision => return
+    br @done
+
+@collision:
+    mov  r1, 1
+    st   r1, gameOver
+
+@done:
+    mov  sp, fp
+    pop  fp
+    pop  lr
+    ret
+
+; ---------------------------------------------------------
+; movePipe: pipeX--
+;   if pipeX<0 => pipeX=boardWidth-1, score++
+;   also randomize gapY in [1..boardHeight-2]
+; ---------------------------------------------------------
+movePipe:
+    push lr
+    push fp
+    mov  fp, sp
+
+    ; pipeX -> r1
+    ld   r1, pipeX
+    sub  r1, r1, 1
+    st   r1, pipeX
+
+    cmp  r1, -1
+    brgt @doneWrap
+
+    ; => pipeX < 0
+    ld   r2, boardWidth
+    sub  r2, r2, 1
+    st   r2, pipeX
+
+    ; score++
+    ld   r3, score
+    add  r3, r3, 1
+    st   r3, score
+
+    ; randomize gapY = 1 + rand( boardHeight-2 )
+    ld   r2, boardHeight
+    sub  r2, r2, 2
+    ; call rand => we do "rand r1,r2"? Actually we want to store it in r1 or r2
+    ; LCC+js syntax: rand DR, SR => dr = random(0..SR-1)
+    ; but we can't use r0 for random. We'll do "rand r1, r2".
+    rand r1, r2   ; r1 = random(0..r2-1)
+    add  r1, r1, 1
+    st   r1, gapY
+
+@doneWrap:
+    mov  sp, fp
+    pop  fp
+    pop  lr
+    ret
+
+; ---------------------------------------------------------
+; main
+;   loop until gameOver=1 or user presses 'q'
+;   uses only r0 for input, r1..r4 for everything else
+; ---------------------------------------------------------
+main:
+    push lr
+    push fp
+    mov  fp, sp
+
+    ; 1) srand( millis(...) )
+    ; we can't do "millis r0" because r0 is for input only, so do "millis r1"
+    millis r1
+    srand r1
+
+@loopStart:
+    ; reset cursor
+    resetc
+    bl printBoard
+
+    ; check if gameOver?
+    ld   r1, gameOver
+    cmp  r1, 1
+    bre  @endGame
+
+    ; read input => r0
+    nbain r0
+    cmp  r0, 0
+    bre  @noKey
+
+    ; if r0=='q', set gameOver=1 => done
+    mov  r1, 'q'
+    cmp  r0, r1
+    bre  @quit
+
+    ; if r0=='w', birdY--
+    mov  r1, 'w'
+    cmp  r0, r1
+    brne @fall
+       ld   r2, birdY
+       sub  r2, r2, 1
+       st   r2, birdY
+       br   @postInput
+
+@fall:
+    ; anything else => birdY++
+    ld   r2, birdY
+    add  r2, r2, 1
+    st   r2, birdY
+
+@postInput:
+    br @inputDone
+
+@noKey:
+    ; if no key => gravity => birdY++
+    ld   r2, birdY
+    add  r2, r2, 1
+    st   r2, birdY
+
+@inputDone:
+    ; move pipe
+    bl movePipe
+
+    ; check collision
+    bl checkCollision
+
+    ; sleep ~200ms
+    mov  r1, 200
+    sleep r1
+
+    br @loopStart
+
+@quit:
+    mov  r1, 1
+    st   r1, gameOver
+
+@endGame:
+    ; Print final board, show GAME OVER
+    resetc
+    bl printBoard
+
+    lea  r1, gameOverMsg
+    sout r1
+    nl
+
+    mov  sp, fp
+    pop  fp
+    pop  lr
+    ret
