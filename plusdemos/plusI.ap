@@ -1,0 +1,269 @@
+; "find the fruit" a precursor to snake
+; the player can move around the board using wasd
+; the player can eat the fruit, which gets randomly
+; placed on the board, and placed again each time
+; the player eats it
+      .lccplus
+      .start startup
+
+;---------------------------------------------------------
+; Startup: Turn off cursor, call main, then HALT
+;---------------------------------------------------------
+startup:
+      clear           ; optional: clear once at the beginning
+      mov   r0, 0
+      cursor r0       ; turn off cursor
+      bl    main
+      halt
+
+;---------------------------------------------------------
+; Data / Globals
+;---------------------------------------------------------
+pressKey: .string "Press W/A/S/D to move, Q to quit:"
+space:    .word ' '
+blank:    .word '.'
+player:   .word '#'
+fruitSym: .word 'f'
+rows:     .word 10
+cols:     .word 10
+
+; Player X,Y positions
+xypos:    .word 0  ; x
+          .word 0  ; y
+
+; Fruit X,Y positions
+fruitxy:  .word 0  ; fruitX
+          .word 0  ; fruitY
+
+;---------------------------------------------------------
+; Subroutine: placeFruit
+;  - Uses rand to pick random x,y in [0..9]
+;  - Stores in fruitxy + 0,1
+;---------------------------------------------------------
+placeFruit:
+      push  lr
+      push  fp
+      mov   fp, sp
+
+      ; pick random x in [0..9]
+      mov   r0, 0
+      mov   r1, 9
+      rand  r0, r1  ; => r0 in [0..9]
+      st    r0, fruitxy + 0
+
+      ; pick random y in [0..9]
+      mov   r0, 0
+      mov   r1, 9
+      rand  r0, r1  ; => r0 in [0..9]
+      st    r0, fruitxy + 1
+
+      mov   sp, fp
+      pop   fp
+      pop   lr
+      ret
+
+;---------------------------------------------------------
+; Move Right (x ← x+1 mod 10)
+;---------------------------------------------------------
+moveRight:
+      ld    r1, xypos + 0  ; r1 = x
+      add   r1, r1, 1
+      mov   r0, 10
+      rem   r1, r0
+      st    r1, xypos + 0
+      ret
+
+;---------------------------------------------------------
+; Move Left (x ← x−1 mod 10)
+;---------------------------------------------------------
+moveLeft:
+      ld    r1, xypos + 0  ; r1 = x
+      sub   r1, r1, 1
+      add   r1, r1, 10     ; ensure positive
+      mov   r0, 10
+      rem   r1, r0
+      st    r1, xypos + 0
+      ret
+
+;---------------------------------------------------------
+; Move Up (y ← y−1 mod 10)
+;---------------------------------------------------------
+moveUp:
+      ld    r1, xypos + 1  ; r1 = y
+      sub   r1, r1, 1
+      add   r1, r1, 10     ; ensure positive
+      mov   r0, 10
+      rem   r1, r0
+      st    r1, xypos + 1
+      ret
+
+;---------------------------------------------------------
+; Move Down (y ← y+1 mod 10)
+;---------------------------------------------------------
+moveDown:
+      ld    r1, xypos + 1  ; r1 = y
+      add   r1, r1, 1
+      mov   r0, 10
+      rem   r1, r0
+      st    r1, xypos + 1
+      ret
+
+;---------------------------------------------------------
+; Subroutine: printBoard
+;  - Prints a 10x10 board
+;    '#' for player, 'f' for fruit, '.' for empty
+;---------------------------------------------------------
+printBoard:
+      push  lr
+      push  fp
+      mov   fp, sp
+
+      ; We'll use r0..r3, r4 is reserved for nbain
+
+@printBoardStart:
+      mov   r3, 0  ; row = 0
+@outer2:
+      cmp   r3, 10
+      bre   @doneOuter2
+        mov r2, 0  ; col = 0
+  @inner2:
+        cmp r2, 10
+        bre @doneInner2
+          ; If (r3,r2) == (playerY,playerX) => print player
+          ; cmp r3, xypos + 1  ; can't do that. Actually we need to do a two-step:
+          ; Instead, let's do:
+          ld r0, xypos + 1   ; r0 = playerY
+          cmp r3, r0
+          brne @checkFruit
+            ld r1, xypos + 0 ; r1 = playerX
+            cmp r2, r1
+            brne @checkFruit
+            ; print player
+            ld r1, player
+            aout r1
+            br @postCell
+  @checkFruit:
+          ; If (r3,r2) == (fruitY,fruitX) => print 'f'
+          ld r0, fruitxy + 1 ; fruitY
+          cmp r3, r0
+          brne @notThisFruitRow
+            ld r1, fruitxy + 0 ; fruitX
+            cmp r2, r1
+            brne @notThisFruitCol
+            ; print fruit
+            ld r1, fruitSym
+            aout r1
+            br @postCell
+  @notThisFruitRow:
+  @notThisFruitCol:
+          ; print '.'
+          ld r1, blank
+          aout r1
+  @postCell:
+          ; print space
+          ld r1, space
+          aout r1
+
+          add r2, r2, 1  ; col++
+          br @inner2
+  @doneInner2:
+      nl
+      add r3, r3, 1  ; row++
+      br @outer2
+@doneOuter2:
+
+      mov   sp, fp
+      pop   fp
+      pop   lr
+      ret
+
+;---------------------------------------------------------
+; main: 
+; 1) seed with current millis
+; 2) placeFruit once
+; 3) loop reading nbain r4
+; 4) wasd => move, check collision => re-placeFruit if collided
+; 5) resetc, print, sleep
+; 6) 'q' => end
+;---------------------------------------------------------
+main:
+      push  lr
+      push  fp
+      mov   fp, sp
+
+      ; Use the current time as random seed
+      millis r0
+      srand r0
+
+      ; place fruit initially
+      bl placeFruit
+
+@loopStart:
+      nbain r4
+      cmp   r4, 0
+      bre   @skipMovement  ; no key pressed
+
+      ; check for 'q'
+      mov   r1, 'q'
+      cmp   r4, r1
+      bre   @quit
+
+      ; check 'w'
+      mov   r1, 'w'
+      cmp   r4, r1
+      brne  @checkS
+        bl  moveUp
+        br  @movementDone
+  @checkS:
+      mov   r1, 's'
+      cmp   r4, r1
+      brne  @checkA
+        bl  moveDown
+        br  @movementDone
+  @checkA:
+      mov   r1, 'a'
+      cmp   r4, r1
+      brne  @checkD
+        bl  moveLeft
+        br  @movementDone
+  @checkD:
+      mov   r1, 'd'
+      cmp   r4, r1
+      brne  @movementDone
+        bl  moveRight
+        br  @movementDone
+
+@movementDone:
+      ; after moving the player, check collision with fruit
+      ; load player (x,y) => r0,r1
+      ld r0, xypos + 0
+      ld r1, xypos + 1
+
+      ; load fruit (fx,fy) => r2,r3
+      ld r2, fruitxy + 0
+      ld r3, fruitxy + 1
+
+      cmp r0, r2
+      brne @skipMovement
+      cmp r1, r3
+      brne @skipMovement
+      ; we collided => place the fruit anew
+      bl placeFruit
+
+@skipMovement:
+      resetc
+      lea r0, pressKey
+      sout r0
+      nl
+      bl printBoard
+
+      mov r2, 32  ; ~30 FPS
+      sleep r2
+
+      br @loopStart
+
+@quit:
+      mov sp, fp
+      pop fp
+      pop lr
+      ret

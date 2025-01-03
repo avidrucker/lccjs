@@ -41,6 +41,7 @@ class Interpreter {
     this.inputFileName = '';           // Name of the input file
     this.generateStats = false;        // Whether to generate .lst and .bst files
     this.headerLines = [];
+    this.instructionsCap = 500000;     // Limit the number of instructions to prevent infinite loops
   }
 
   main(args) {
@@ -58,7 +59,9 @@ class Interpreter {
       let arg = args[i];
       if (arg.startsWith('-')) {
         // Option
-        if (arg.startsWith('-L')) {
+        if (arg === '-nostats') {
+          this.generateStats = false;
+        } else if (arg.startsWith('-L')) {
           // Load point option
           let loadPointStr = arg.substring(2);
           if (loadPointStr === '') {
@@ -87,6 +90,15 @@ class Interpreter {
         // Assume it's the input file name
         if (!this.inputFileName) {
           this.inputFileName = arg;
+          const extension = path.extname(this.inputFileName).toLowerCase();
+          // Note: This is custom behavior in interpreter.js (not the official LCC)
+          //       to check specifically for .e files, since the LCC interpreter is
+          //       accessed by default when running .e files, or when assembling and
+          //       running .a files all at once.
+          if (extension !== '.e') {
+            console.error('Unsupported file type for interpreter.js (expected .e)');
+            fatalExit('Unsupported file type for interpreter.js (expected .e)', 1);
+          }
         } else {
           console.error(`Unexpected argument: ${arg}`);
           // process.exit(1);
@@ -150,7 +162,9 @@ class Interpreter {
     // Run the interpreter
     try {
       this.run();
-      console.log(); // Ensure cursor moves to the next line
+      if (this.generateStats) {
+        console.log(); // Ensure cursor moves to the next line
+      }
     } catch (error) {
       console.error(`Runtime Error: ${error.message}`);
       // process.exit(1);
@@ -397,7 +411,7 @@ class Interpreter {
     // Note: This is a safety feature to prevent infinite loops
     // 2nd Note: This matches exactly the # of instructions 
     // permitted to run by from the lcc before entering the debugger
-    if (this.instructionsExecuted >= 500000) {
+    if (this.instructionsExecuted >= this.instructionsCap) {
       console.error("Possible infinite loop");
       this.running = false;
       // return; // Exit the step method early
@@ -528,6 +542,7 @@ class Interpreter {
       case 8: // DIV
         if (this.r[this.sr1] === 0) {
           this.error('Floating point exception');
+          fatalExit('Floating point exception', 1);
         }
         this.r[this.dr] = (this.r[this.dr] / this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
@@ -535,6 +550,7 @@ class Interpreter {
       case 9: // REM
         if (this.r[this.sr1] === 0) {
           this.error('Floating point exception');
+          fatalExit('Floating point exception', 1);
         }
         this.r[this.dr] = (this.r[this.dr] % this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
@@ -554,6 +570,11 @@ class Interpreter {
         this.r[this.dr] = this.signExtend(this.r[this.dr], this.r[this.sr1]);
         this.setNZ(this.r[this.dr]);
         break;
+      default:
+        //// TODO: compare implementation with the official LCC interpreter
+        this.error(`Unknown extended opcode: ${this.eopcode}`);
+        this.running = false;
+        fatalExit(`Unknown extended opcode: ${this.eopcode}`, 1);
     }
   }
 
@@ -825,6 +846,7 @@ class Interpreter {
     }
   }
 
+
   writeOutput(message) {
     process.stdout.write(message);
     this.output += message;
@@ -937,8 +959,14 @@ class Interpreter {
       case 13: // s
         this.executeS();
         break;
+      case 14: // bp
+        this.error('Breakpoint trap not yet implemented');
+        break;
       default:
-        this.error(`Unknown TRAP vector: ${this.trapvec}`);
+        // `Unknown TRAP vector: ${this.trapvec}`
+        console.error(`Error on line 0 of ${this.inputFileName}`);
+        console.error();
+        this.error(`Trap vector out of range`); // : ${this.trapvec}
         this.running = false;
     }
   }

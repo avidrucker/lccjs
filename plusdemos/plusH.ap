@@ -1,0 +1,203 @@
+; a non-blocking input example of a character moving
+; around a board using wasd, q to quit
+      .lccplus
+      .start startup
+
+;---------------------------------------------------------
+; Data / Globals
+;---------------------------------------------------------
+pressKey: .string "Press W/A/S/D to move, Q to quit:"
+space:    .word ' '
+blank:    .word '.'
+player:   .word '#'
+rows:     .word 10
+cols:     .word 10
+
+; Player X and Y positions (starting at 0,0).
+xypos:    .word 0  ; x
+          .word 0  ; y
+
+;---------------------------------------------------------
+; Startup: Turn off cursor, call main, then HALT
+;---------------------------------------------------------
+startup:
+      clear           ; optional: clear once at the beginning
+      mov   r0, 0
+      cursor r0       ; turn off cursor
+      bl    main
+      halt
+
+;---------------------------------------------------------
+; Move Right (x ← x+1 mod 10)
+;---------------------------------------------------------
+moveRight:
+      ld    r1, xypos + 0  ; r1 = x
+      add   r1, r1, 1
+      mov   r0, 10
+      rem   r1, r0
+      st    r1, xypos + 0
+      ret
+
+;---------------------------------------------------------
+; Move Left (x ← x−1 mod 10)
+;---------------------------------------------------------
+moveLeft:
+      ld    r1, xypos + 0  ; r1 = x
+      sub   r1, r1, 1
+      add   r1, r1, 10     ; ensure positive
+      mov   r0, 10
+      rem   r1, r0
+      st    r1, xypos + 0
+      ret
+
+;---------------------------------------------------------
+; Move Up (y ← y−1 mod 10)
+;---------------------------------------------------------
+moveUp:
+      ld    r1, xypos + 1  ; r1 = y
+      sub   r1, r1, 1
+      add   r1, r1, 10     ; ensure positive
+      mov   r0, 10
+      rem   r1, r0
+      st    r1, xypos + 1
+      ret
+
+;---------------------------------------------------------
+; Move Down (y ← y+1 mod 10)
+;---------------------------------------------------------
+moveDown:
+      ld    r1, xypos + 1  ; r1 = y
+      add   r1, r1, 1
+      mov   r0, 10
+      rem   r1, r0
+      st    r1, xypos + 1
+      ret
+
+;---------------------------------------------------------
+; Print the 10x10 Board at top-left
+;   If (row == y && col == x), print '#' else '.'
+;---------------------------------------------------------
+printBoard:
+      push  lr
+      push  fp
+      mov   fp, sp
+
+      ; We'll use r0, r1, r2, r3 internally
+
+      ; Load x,y into r2,r3
+      ld    r2, xypos + 0  ; r2 = x
+      ld    r3, xypos + 1  ; r3 = y
+
+      mov   r0, 0          ; row = 0
+@outerLoop:
+      cmp   r0, 10
+      bre   @doneOuter
+        mov r1, 0          ; col = 0
+  @innerLoop:
+        cmp r1, 10
+        bre @doneInner
+          ; compare (r0 == y) && (r1 == x)
+          cmp r0, r3
+          brne @notThisRow
+            cmp r1, r2
+            brne @notThisCol
+            ; print the player char
+            ld   r4, player
+            aout r4
+            br   @postPrint
+  @notThisRow:
+  @notThisCol:
+          ; print a blank
+          ld   r4, blank
+          aout r4
+  @postPrint:
+          ; print a space after each cell
+          ld   r4, space
+          aout r4
+
+          add  r1, r1, 1   ; col++
+          br   @innerLoop
+  @doneInner:
+      nl                  ; end of row
+      add  r0, r0, 1      ; row++
+      br   @outerLoop
+@doneOuter:
+
+      mov   sp, fp
+      pop   fp
+      pop   lr
+      ret
+
+;---------------------------------------------------------
+; Main Loop
+; - Use nbain r4 for input
+; - If r4 != 0, interpret as a key
+; - 'w','a','s','d' => move up/left/down/right
+; - 'q' => quit
+; - Then reset cursor to top-left, re-print
+; - Sleep some ms (16 or 32, etc.)
+;---------------------------------------------------------
+main:
+      push  lr
+      push  fp
+      mov   fp, sp
+
+@loopStart:
+      ; 1) read input non-blocking
+      nbain r4
+      cmp   r4, 0
+      bre   @skipMovement   ; if no key pressed, skip
+
+      ; 2) decode key
+      mov   r1, 'q'
+      cmp   r4, r1
+      bre   @quit
+
+      mov   r1, 'w'
+      cmp   r4, r1
+      brne  @checkS
+        bl  moveUp
+        br  @doneMovement
+  @checkS:
+      mov   r1, 's'
+      cmp   r4, r1
+      brne  @checkA
+        bl  moveDown
+        br  @doneMovement
+  @checkA:
+      mov   r1, 'a'
+      cmp   r4, r1
+      brne  @checkD
+        bl  moveLeft
+        br  @doneMovement
+  @checkD:
+      mov   r1, 'd'
+      cmp   r4, r1
+      brne  @doneMovement
+        bl  moveRight
+        br  @doneMovement
+
+  @doneMovement:
+        ; fall through to skipMovement
+
+@skipMovement:
+      ; 3) Re-render the board
+      resetc            ; move cursor to top-left
+      lea   r0, pressKey
+      sout  r0
+      nl
+      bl    printBoard
+
+      ; 4) small delay
+      mov   r2, 32      ; 32 ms
+      sleep r2
+
+      ; 5) loop back
+      br    @loopStart
+
+@quit:
+      ; Return from main => end program
+      mov   sp, fp
+      pop   fp
+      pop   lr
+      ret

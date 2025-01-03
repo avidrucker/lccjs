@@ -154,6 +154,8 @@ class Assembler {
   main(args) {
     args = args || process.argv.slice(2);
 
+    //// TODO: change logic here to only give usage message
+    ////       if no input files are provided
     // Check if inputFileName is already set
     if (!this.inputFileName) {
       if (args.length !== 1) {
@@ -191,9 +193,9 @@ class Assembler {
       this.parseHexFile();
       this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
       this.writeOutputFile();
-    } else {
+    } else if (extension === '.a') {
 
-      // If not a .bin, proceed with normal two-pass assembly...
+      // If a .a file, proceed with normal two-pass assembly...
       // Construct the output file name by replacing extension with '.e'
       this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
 
@@ -308,11 +310,22 @@ class Assembler {
         console.log(`bst file = ${bstFileName}`);
       }
 
+    } else {
+      // Note: Treating only .a files as valid assembly files is
+      //       a unique LCC.js behavior as of 12/2024 (the official
+      //       LCC behavior is to treat all non .bin, .hex, .o, and 
+      //       .e files as assembly files)
+      if (extension === '.ap') {
+        console.error('Error: .ap files are not supported by assembler.js - Did you mean to use assemblerPlus.js?');
+        fatalExit('Error: .ap files are not supported by assembler.js - Did you mean to use assemblerPlus.js?', 1);
+      }
+      console.error('Unsupported file type');
+      fatalExit('Unsupported file type', 1);
     }
 
   }
 
-  writeOutputFile() {
+  writeOutputFile(secondIntroHeader = '') {
     // Open the output file for writing
     try {
       this.outFile = fs.openSync(this.outputFileName, 'w');
@@ -323,6 +336,13 @@ class Assembler {
   
     // Write the initial header 'o' to the output file
     fs.writeSync(this.outFile, 'o');
+
+    // Custom LCC.js behavior as of 12/2024:
+    // Write the second intro header if it is provided
+    // This enables extensions that need use special header entries
+    if(secondIntroHeader !== '') {
+      fs.writeSync(this.outFile, secondIntroHeader);
+    }
   
     // Collect all header entries
     let headerEntries = [];
@@ -717,56 +737,61 @@ class Assembler {
   } 
 
   tokenizeLine(line) {
-    // console.log("Tokenizing line: ", line);
     let tokens = [];
     let currentToken = '';
     let inString = false;
     let stringDelimiter = '';
-
+    let escape = false; // Flag to indicate escape character
+  
     for (let i = 0; i < line.length; i++) {
       let char = line[i];
-      if ((char === '"' || char === "'") && !inString) {
-        inString = true;
-        stringDelimiter = char;
-        currentToken += char;
-      } else if (char === stringDelimiter && inString) {
-        inString = false;
-        currentToken += char;
-        tokens.push(currentToken);
-        currentToken = '';
-      } else if (inString) {
-        currentToken += char;
-      } else if (this.isWhitespace(char)) {
-        if (currentToken !== '') {
-          tokens.push(currentToken);
-          currentToken = '';
-        }
-      } else if (char === ',' && !inString) {
-        if (currentToken !== '') {
-          tokens.push(currentToken);
-          currentToken = '';
-        }
-      } else if (char === ':') {
-        if (currentToken !== '') {
-          // tokens.push(currentToken);
-          // currentToken = '';
-          //// Append colon to the current token to identify it as a label
+      if (!inString) {
+        if (char === '"' || char === "'") {
+          inString = true;
+          stringDelimiter = char;
           currentToken += char;
-          tokens.push(currentToken);
-          currentToken = '';
+        } else if (this.isWhitespace(char)) {
+          if (currentToken !== '') {
+            tokens.push(currentToken);
+            currentToken = '';
+          }
+        } else if (char === ',' && !inString) {
+          if (currentToken !== '') {
+            tokens.push(currentToken);
+            currentToken = '';
+          }
+        } else if (char === ':') {
+          if (currentToken !== '') {
+            currentToken += char;
+            tokens.push(currentToken);
+            currentToken = '';
+          }
+          // Ignore colon
+        } else {
+          currentToken += char;
         }
-        // Ignore colon
       } else {
         currentToken += char;
+        if (escape) {
+          escape = false; // Reset escape flag
+          continue;
+        }
+        if (char === '\\') {
+          escape = true; // Next character is escaped
+        } else if (char === stringDelimiter) {
+          inString = false;
+          tokens.push(currentToken);
+          currentToken = '';
+        }
       }
     }
-
+  
     if (currentToken !== '') {
       tokens.push(currentToken);
     }
-
+  
     return tokens;
-  }
+  }  
 
   isWhitespace(char) {
     return /\s/.test(char);
@@ -934,7 +959,7 @@ class Assembler {
 
             // if operands[2] is not a literal value, then it isn't a valid offset
             if(!this.isNumLiteral(operands[2])) {
-              this.error('Bad number');
+              this.error(`Bad number`); // : ${operands[2]}
               fatalExit('Bad number', 1);
             }
 
@@ -949,7 +974,7 @@ class Assembler {
 
           let value = this.evaluateOperand(label, 'V'); // Pass 'V' as usageType
           if (value === null) {
-            this.error('Bad number');
+            this.error(`Bad number`); // : ${value}
             fatalExit('Bad number', 1);
           };
       
@@ -962,7 +987,7 @@ class Assembler {
           }
 
           if(parsed && (parsed.offset > 65535 || parsed.offset < -32768)) {
-            this.error('Bad number'); // 'Data does not fit in 16 bits'
+            this.error(`Bad number`); // 'Data does not fit in 16 bits' // : ${parsed.offset}
             fatalExit('Bad number', 1); // 'Data does not fit in 16 bits'
           }
 
@@ -1420,12 +1445,12 @@ class Assembler {
 
   assembleSEXT(operands) {
     let dr = this.getRegister(operands[0]);
-    let sr = this.getRegister(operands[1]);
-    if (dr === null || sr === null) {
+    let sr1 = this.getRegister(operands[1]);
+    if (dr === null || sr1 === null) {
       this.error('Missing register');
       fatalExit('Missing register', 1);
     };
-    let macword = 0xA000 | (dr << 9) | (sr << 6) | 0x000D;
+    let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000D;
     return macword;
   }
 
@@ -1850,7 +1875,8 @@ class Assembler {
   }
 
   isCharLiteral(str) {
-    return /^'(?:\\.|[^\\])'$/.test(str);
+    const match = /^'(?:\\.|[^\\])'$/.test(str);
+    return match;
   }
 
   parseCharLiteral(str) {
@@ -1964,9 +1990,11 @@ class Assembler {
     }
   }
 
+            // TODO: implement operand type checking {valid: ["num", "char", "label"]}
   /**
    * Evaluates an operand and returns its corresponding value.
    * The operand can be a pure number, a label with an optional offset, or a plain label.
+   * Additionally, the operand can be a location marker indicated with the '*' character.
    * 
    * @param {string} operand - The operand to evaluate.
    * @param {string} usageType - The context in which the operand is used (e.g., for external references).
@@ -2007,18 +2035,44 @@ class Assembler {
         this.handleExternalReference(operand, usageType);
         return 0;
       } else {
-        // this.error(`Undefined operand: ${operand}`);
-        // this.error("Bad number");
-        // fatalExit("Bad number", 1);
-        return null;
+        // check for * (current location counter)
+        if(operand[0] === '*') {
+          if(operand[1] === '+' || operand[1] === '-') {
+            let offset = this.parseNumber(operand.slice(1));
+            if(isNaN(offset)) {
+              this.error(`Bad number`);
+              return null;
+            }
+            return this.locCtr + offset;
+          } else {
+            return this.locCtr;
+          }
+        } else {
+          // inspect to see if it was an invalid number
+          // inspect to see if it was an invalid label
+          if(operand[0] === '0' && operand[1] === 'x' && !this.isValidHexNumber(operand)) {
+            this.error(`Bad number`);
+            fatalExit("Bad number", 1);
+          } else if (!this.isValidLabel(operand)) {
+            this.error(`Bad label`);
+            fatalExit("Bad label", 1);
+          } else {
+            this.error(`Unspecified label error for: ${operand}`); // this.error(`Undefined label: ${operand}`);
+            fatalExit(`Unspecified label error for: ${operand}`, 1);
+          }
+        }
       }
     }
   }  
 
+  isValidHexNumber(str) {
+    return /^0x[0-9A-Fa-f]+$/.test(str);
+  }
+
   // returns true if operand is either a char (which has an ascii value) 
   // or a number (i.e. neither a string nor a label)
   isNumLiteral(operand) {
-    return this.isCharLiteral(operand) || !isNaN(operand);
+    return this.isCharLiteral(operand) || !isNaN(operand) || this.isValidHexNumber(operand);
   }
 
   evaluateImmediate(valueStr, min, max, type='') {

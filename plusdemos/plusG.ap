@@ -1,0 +1,132 @@
+; A program that has a player that can move left 
+; and right along a 1D board row
+; Note: This program uses a couple of techniques to improve
+; render performance. (1) It only refreshes/prints the board
+; when the player moves. (2) Instead of clearing the entire
+; screen, it only resets the cursor position to the top left
+; corner of the screen. This is done by calling the resetc
+; "reset cursor" instruction
+        .lccplus
+        .start startup
+
+startup: 
+        clear
+        mov r0, 0
+        cursor r0 ; turn off cursor
+        bl main
+        halt 
+
+moveRight:
+        ld r1, xypos + 0
+        add r1, r1, 1
+        mov r0, 10
+        rem r1, r0
+        st r1, xypos + 0
+        ret
+
+moveLeft:
+        ld r1, xypos + 0
+        sub r1, r1, 1
+        add r1, r1, 10
+        mov r0, 10
+        rem r1, r0
+        st r1, xypos + 0
+        ret
+
+main:   push lr
+        push fp
+        mov fp, sp
+
+        ; print the instructions and board
+        lea r2, pressKey
+        sout  r2
+        nl
+        bl printBoard
+
+    @mainLoopStart:
+        nbain r0 ; get user input
+        mov r1, 'd'
+        cmp r0, r1
+        brne @notD
+        bl moveRight
+        br @keyPressed
+    @notD:
+        mov r1, 'a'
+        cmp r0, r1
+        brne @notA
+        bl moveLeft
+        br @keyPressed
+    @notA:
+        mov r1, 'q'
+        cmp r0, r1
+        bre @mainLoopDone
+    @keyPressed:
+        ; if a letter was pressed, we can update the board
+        cmp r0, 0
+        bre @postPrint
+        ; reprint the instructions and board
+        ; clear ; Note: this can cause flickering
+        resetc ; resetc is better here than clear because the board dimensions are static
+        lea r2, pressKey
+        sout  r2
+        nl
+        ; printing should happen instantaneously
+        bl printBoard
+        mov r0, 0 ; clear ascii input buffer
+    @postPrint:
+
+        mov r2, 32 ; delay in milliseconds between prints
+        sleep r2
+        br @mainLoopStart
+
+    @mainLoopDone:
+        mov sp, fp
+        pop fp
+        pop lr
+        ret
+
+; for each column in row, if the player is there, print the player
+; otherwise print a blank space
+printBoard:
+        push    lr
+        push    fp
+        mov     fp, sp
+
+        sub    sp, sp, 3 ; row counter = fp - 1, col counter = fp - 2, player x = fp - 3
+        ld     r2, xypos + 0 ; x position of the player
+        str    r2, fp, -3
+
+        ; let's now print out each column in row 1
+        mov    r3, 0 ; col counter
+  @L0:  cmp    r3, 10
+        bre    @L1
+        ldr    r2, fp, -3 ; x position of the player
+        cmp    r3, r2
+        brne   @L2
+        ; print player char
+        ld     r2, player
+        aout   r2
+        br     @L3 
+  @L2:  ; print blank char
+        ld     r2, blank
+        aout   r2
+  @L3:  ; print space between chars
+        ld     r2, space
+        aout   r2
+        ; increment col counter
+        add    r3, r3, 1
+        br     @L0
+  @L1:  ; done printing the row
+        nl
+
+        mov     sp, fp
+        pop     fp
+        pop     lr
+        ret
+
+space:  .word ' '
+blank:  .word '.'
+player:  .word '#'
+cols:   .word 10
+xypos:  .word 0 ; x position of the player
+pressKey: .string "Press 'a' or 'd' to move the player, 'q' to quit: "

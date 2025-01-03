@@ -1,0 +1,433 @@
+; WIP snake game writtein lcc+js assembly
+; TODO: implement snake body growing
+; TODO: implement rendering of snake body
+; TODO: implement snake collision with self
+      .lccplus
+      .start startup
+
+;-------------------------------------------
+; Startup: Clear screen, hide cursor, call main
+;-------------------------------------------
+startup:
+      clear
+      mov   r0, 0
+      cursor r0   ; hide cursor
+      bl    main
+      halt
+
+;---------------------------------------------------------
+; placeFruit: pick random x,y in [0..9] for the fruit
+;---------------------------------------------------------
+placeFruit:
+      push  lr
+      push  fp
+      mov   fp, sp
+
+      ; random X in [0..9]
+      mov   r0, 0
+      mov   r1, 9
+      rand  r0, r1    ; r0 => [0..9]
+      st    r0, fruitxy+0
+
+      ; random Y in [0..9]
+      mov   r0, 0
+      mov   r1, 9
+      rand  r0, r1
+      st    r0, fruitxy+1
+
+      mov   sp, fp
+      pop   fp
+      pop   lr
+      ret
+
+;---------------------------------------------------------
+; moveSnake: shift snake body and move head in dir
+;   dir=0 => up, 1=>right, 2=>down, 3=>left
+;---------------------------------------------------------
+moveSnake:
+      push  lr
+      push  fp
+      mov   fp, sp
+
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;   lea r0, currentHeadIs
+    ;   sout r0
+    ;   ld  r0, snakeBuf+0   ; headX
+    ;   dout r0
+    ;   lea r0, comma
+    ;   sout r0
+    ;   ld  r0, snakeBuf+1   ; headY
+    ;   dout r0
+    ;   nl
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+      ; use r0..r3, keep r4 for nbain
+      ; 1) read snakeLen into r0
+      ld    r0, snakeLen
+      cmp   r0, 1
+      bre   @skipShift  ; if length=1, no tail to shift
+
+      ; i from snakeLen-1 down to 1
+@shiftLoop:
+      ; i--
+      ; We'll store i in r3 and loop. Start i = (snakeLen-1).
+      ; We'll do a small custom approach:
+
+      ; r1 = snakeLen
+      ld   r1, snakeLen
+      sub  r1, r1, 1     ; i = snakeLen-1
+@loop2:
+      cmp  r1, 0
+      bre  @doneShift
+
+      ; copy old = snakeBuf[2*(i-1)], new = snakeBuf[2*i]
+      ; "2*i" => i<<1
+      mov  r2, r1
+      sll  r2, 1     ; r2 = 2*i
+      mov  r3, r1
+      sub  r3, r3, 1
+      sll  r3, 1     ; r3 = 2*(i-1)
+
+      ; snakeBuf[r2]   = snakeBuf[r3]
+      push r2 ; save r2
+      push r3 ; save r3
+      lea r2, snakeBuf
+      add r2, r2, r3
+      ldr r0, r2, 0 ; oldX
+      pop r3 ; restore r3
+      pop r2 ; restore r2
+
+      push r3 ; save r3
+      push r2 ; save r2
+      lea r3, snakeBuf
+      add r3, r3, r2
+      str r0, r3, 0
+      pop r2 ; restore r2
+      pop r3 ; restore r3
+
+    ;   ld   r0, snakeBuf+r3  ; oldX
+    ;   st   r0, snakeBuf+r2
+
+      add  r3, r3, 1
+      add  r2, r2, 1
+    ;   ld   r0, snakeBuf+r3  ; oldY
+    ;   st   r0, snakeBuf+r2
+
+      push r2 ; save r2
+      push r3 ; save r3
+      lea r2, snakeBuf
+      add r2, r2, r3
+      ldr r0, r2, 0 ; oldY
+      pop r3 ; restore r3
+      pop r2 ; restore r2
+
+      push r3 ; save r3
+      push r2 ; save r2
+      lea r3, snakeBuf
+      add r3, r3, r2
+      str r0, r3, 0
+      pop r2 ; restore r2
+      pop r3 ; restore r3
+
+      sub  r1, r1, 1
+      br   @loop2
+
+@doneShift:
+@skipShift:
+
+      ; 2) read current head => snakeBuf[0], snakeBuf[1]
+      ld  r0, snakeBuf+0   ; headX
+      ld  r1, snakeBuf+1   ; headY
+
+      ; 3) move depending on dir
+      ld  r2, dir
+      cmp r2, 0
+      brne @notUp
+        ; up => y--
+        sub r1, r1, 1
+        add r1, r1, 10
+        mov r3, 10
+        rem r1, r3
+        br @doneDir
+@notUp:
+      cmp r2, 1
+      brne @notRight
+        ; right => x++
+        add r0, r0, 1
+        mov r3, 10
+        rem r0, r3
+        br @doneDir
+@notRight:
+      cmp r2, 2
+      brne @notDown
+        ; down => y++
+        add r1, r1, 1
+        mov r3, 10
+        rem r1, r3
+        br @doneDir
+@notDown:
+      ; else => left
+      sub r0, r0, 1
+      add r0, r0, 10
+      mov r3, 10
+      rem r0, r3
+@doneDir:
+
+      ; store new head
+      st r0, snakeBuf+0
+      st r1, snakeBuf+1
+
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;   lea r0, nextHeadIs
+    ;   sout r0
+    ;   ld  r0, snakeBuf+0   ; headX
+    ;   dout r0
+    ;   lea r0, comma
+    ;   sout r0
+    ;   ld  r0, snakeBuf+1   ; headY
+    ;   dout r0
+    ;   nl
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+      mov sp, fp
+      pop fp
+      pop lr
+      ret
+
+;-------------------------------------------
+; Global Data
+;-------------------------------------------
+pressKey:     .string "Press W/A/S/D to steer, Q to quit. Score: "
+currentHeadIs: .string "Current head is at: "
+nextHeadIs:    .string "Next head is at: "
+comma:         .string ", "
+space:        .word ' '
+blank:        .word '.'
+player:       .word '#'
+fruitSym:     .word 'f'
+rows:         .word 10
+cols:         .word 10
+
+; snake can have up to 20 segments => (x,y) pairs => 40 words
+snakeBuf:     .zero 40   ; [0..1]=head, [2..3]=2nd seg, ...
+snakeLen:     .word 1    ; length in segments (start=1)
+dir:          .word 0    ; direction (0=up,1=right,2=down,3=left)
+score:        .word 0
+
+; fruit X,Y
+fruitxy:      .word 0
+              .word 0
+
+;---------------------------------------------------------
+; growSnake: adds one segment to the snake
+;   Just increments snakeLen by 1, up to 20
+;---------------------------------------------------------
+growSnake:
+      push lr
+      push fp
+      mov  fp, sp
+
+      ld   r0, snakeLen
+      mov  r1, 20
+      cmp  r0, r1   ; max 20
+      bre  @skip
+      add  r0, r0, 1
+      st   r0, snakeLen
+@skip:
+      ; also increment score
+      ld   r1, score
+      add  r1, r1, 1
+      st   r1, score
+
+      mov sp, fp
+      pop fp
+      pop lr
+      ret
+
+;---------------------------------------------------------
+; printBoard: 10x10 board, snake, fruit
+; We'll do a naive approach:
+;   for row in [0..9]:
+;     for col in [0..9]:
+;       if (row,col) == fruit => 'f'
+;       else if (row,col) in snake => '#'
+;       else => '.'
+; Then a space, then next col, then NL at row end
+; Also print "Press W/A/S/D..., Score: X" at top
+;---------------------------------------------------------
+printBoard:
+      push  lr
+      push  fp
+      mov   fp, sp
+
+      ; 1) Print prompt + score
+      lea   r0, pressKey   ; "Press W/A/S/D to steer, Q to quit. Score: "
+      sout  r0
+      ld    r1, score
+      dout  r1
+      nl
+
+      ; 2) Loop over rows = [0..9], cols = [0..9]
+      mov   r3, 0        ; r3 = row index
+@outerLoop:
+      cmp   r3, 10
+      bre   @doneRows
+        mov r2, 0        ; r2 = col index
+@innerLoop:
+        cmp r2, 10
+        bre @doneCols
+
+        ; A) Check if (row,col) == snake head
+        ld  r0, snakeBuf+1  ; r0 = headY
+        cmp r3, r0
+        brne @checkFruit
+          ld r1, snakeBuf+0 ; r1 = headX
+          cmp r2, r1
+          brne @checkFruit
+          ; => This cell is the snake head
+          ld  r1, player    ; '#'
+          aout r1
+          br  @postCell
+
+@checkFruit:
+        ; B) If not head, check if (row,col) == fruit
+        ld  r0, fruitxy+1   ; fruitY
+        cmp r3, r0
+        brne @notFruitRow
+          ld r1, fruitxy+0  ; fruitX
+          cmp r2, r1
+          brne @notFruitCol
+          ; => This cell is fruit
+          ld  r1, fruitSym  ; 'f'
+          aout r1
+          br  @postCell
+@notFruitRow:
+@notFruitCol:
+        ; C) Otherwise print '.'
+        ld  r1, blank       ; '.'
+        aout r1
+
+@postCell:
+        ; D) Print a space after each cell
+        ld  r1, space
+        aout r1
+
+        ; E) Next column
+        add r2, r2, 1
+        br  @innerLoop
+@doneCols:
+      nl           ; end of row
+      add r3, r3, 1
+      br  @outerLoop
+@doneRows:
+
+      ; done rendering
+      mov   sp, fp
+      pop   fp
+      pop   lr
+      ret
+
+;---------------------------------------------------------
+; main: the main game loop
+;---------------------------------------------------------
+main:
+      push lr
+      push fp
+      mov  fp, sp
+
+      ; 1) seed random with current time
+      millis r0
+      srand r0
+
+      ; 2) place the fruit
+      bl placeFruit
+
+      ; 3) init snakeLen=1
+      mov r0, 1
+      st  r0, snakeLen
+
+      ; 4) set snake head to (5,5) for example
+      mov r0, 5
+      st  r0, snakeBuf+0
+      mov r0, 5
+      st  r0, snakeBuf+1
+
+      ; 5) pick random dir in [0..3]
+      mov r0, 0
+      mov r1, 3
+      rand r0, r1    ; => [0..3]
+      st  r0, dir
+
+   @gameLoop:
+      ; (A) read input
+      nbain r4
+      cmp r4, 0
+      bre @noKey
+
+      ; if r4=='q', quit
+      mov r1, 'q'
+      cmp r4, r1
+      bre @quit
+
+      ; if r4=='w', dir=0
+      mov r1, 'w'
+      cmp r4, r1
+      brne @checkS
+        mov r0, 0
+        st  r0, dir
+        br @noKey
+   @checkS:
+      mov r1, 's'
+      cmp r4, r1
+      brne @checkA
+        mov r0, 2
+        st  r0, dir
+        br @noKey
+   @checkA:
+      mov r1, 'a'
+      cmp r4, r1
+      brne @checkD
+        mov r0, 3
+        st  r0, dir
+        br @noKey
+   @checkD:
+      mov r1, 'd'
+      cmp r4, r1
+      brne @noKey
+        mov r0, 1
+        st  r0, dir
+        br @noKey
+
+   @noKey:
+      ; (B) move the snake
+      bl moveSnake
+
+      ; (C) check if head == fruit => grow + re-place fruit
+      ld r0, snakeBuf+0  ; headX
+      ld r1, snakeBuf+1  ; headY
+      ld r2, fruitxy+0
+      ld r3, fruitxy+1
+      cmp r0, r2
+      brne @skipFruit
+      cmp r1, r3
+      brne @skipFruit
+      bl growSnake
+      bl placeFruit
+
+   @skipFruit:
+      ; (D) redraw
+      resetc ; off for debugging
+      ; clear ; off for debugging
+      bl printBoard
+
+      ; (E) small sleep
+      mov r2, 128
+      sleep r2
+
+      br @gameLoop
+
+   @quit:
+      mov sp, fp
+      pop fp
+      pop lr
+      ret

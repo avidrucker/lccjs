@@ -34,6 +34,7 @@
 
 ## Core Features
 
+- [ ] implement operand type checking for all mnemonics and directives
 - [ ] figure out where linker.js outputs its .e (default link.e as well as custom named .e files with the -o flag) files, and make sure that the output is consistently in the correct place (is it to the same directory as the first .o file argument, or the current working directory, or something else?)
 - [x] implement lcc.js calling linker.js when lcc.js is called with multiple .o file inputs
 - [x] implement linker.js outputting to the terminal user feedback on the linking process, for valid arguments (only 1 .o file is acceptable, and not an original LCC bug, even though is unlikely to produce a viable .e file) and invalid arguments (a mixture of .o and other file types, such as .a) 
@@ -73,15 +74,18 @@
   - [o] label offsets
     - [x] implement decimal (base 10) offsets (assembler.integration.test.js)
     - [ ] implement hexadecimal (base 16) offsets (no demos/tests yet)
-- [ ] **implement usage of * instead of a label to indicate the current memory address**
+- [x] implement usage of * instead of a label to indicate the current memory address
 - [ ] implement catching of division by zero where, when division by zero is detected, attempting to interpret the program will result in an error message being printed to the console ("Floating point exception"), the program will not be executed, and the .lst/.bst files will not be created. note: assembly will still create the .e file. 2nd note: it appears that the lcc makes blank .lst/.bst files when errors such as division by zero are detected
 - [ ] **implement symbolic debugger "As a programmer, I can use the debugger to step through my program, set breakpoints, watchpoints, and inspect memory and registers, so that I can debug my code."**
     - [ ] implement debugger commands
     - [ ] implement bp (breakpoint) instruction
+    - [ ] once symbolic debugger is implemented, detection of infinite loops should lead to symbolic debugger being called and the user being notified that an infinite loop was detected without terminating program execution
 - [x] implement LST creation
 - [x] implement name.js module
 - [x] infinite loop detection
 - [ ] implement 300 char limit per line & corresponding error in assembler (no demo yet)
+  - [ ] report current 300 char limit detection behavior inconsistencies to LCC author
+  - [ ] once the behavior is clarified, implement the 300 char limit detection in assembler.js
 - [x] implement more directives like `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
   - [x] implement `.start` directive: "As a programmer, I can specify the entry point of my program via the .start directive, so that I can control where my program begins execution."
   - [ ] implement `.org/.orig` directive: "The .org directive sets the location counter during the assembly process to a greater value. For example, if at the address 5 in an assembly language program, we have the directive .org 15, the location is reset to 15. The locations 5 to 14 are padded with zeros. Thus, in this example, it has the same effect as .zero 10"
@@ -92,9 +96,12 @@
   - [x] memory draw function
   - [x] registers draw function
 - [ ] implement flag setting for lcc.js such as `-d` for debug mode, `-L` for load point, `-r` switch to display registers at program end, `-m` switch to display memory to be displayed at program end, etc. 
-  - [ ] implement -L flag
+  - [ ] **implement -L flag**
     - [ ] implement loadPoint in interpreter.js to allow for loading of a program at a specific memory address (not to confused with the S header in the .e file which indicates the *entry point*)
-- [ ] piping of an Assembly file's output into a text file
+  - [ ] implement -d flag
+  - [ ] implement -r flag
+  - [ ] implement -m flag 
+- [ ] figure out, when piping LCC output, does it (1) pipe the console output or (2) does it pipe the LST/BST contents? 
 - [x] implement `cea` mnemonic
 - [x] implement `cmp` mnemonic
 - [x] include comments in BST/LST files (when assembling and interpretting all at once via lcc.js)
@@ -107,8 +114,8 @@
 
 ## Test
 
-- [ ] fix e2e tests so that, if Docker is detected open before the test starts, Docker is not closed after the test finishes
-- [ ] fix bug where linker.e2e.test.js attempts to use Docker if Docker is open, even if the cache is valid
+- [ ] **fix e2e tests so that, if Docker is detected open before the test starts, Docker is not closed after the test finishes**
+- [ ] **fix bug where linker.e2e.test.js attempts to use Docker if Docker is open, even if the cache is valid**
 - [x] use file mocking in interpreter.integration.test.js to create virtual name.nnn file for assembler.integration.test.js creation of .o object files from .a object modules 
 - [ ] write unit tests for each module
   - [ ] assembler.unit.test.js
@@ -134,8 +141,8 @@
   - [x] interpreter.e2e.test.js
   - [x] lcc.e2e.test.js
   - [x] linker.e2e.test.js
-- [ ] fix linkerBattery.script.js so that, even if the input caches match, the local tests are still run and compared against the cached results
-- [ ] **modify all tests (both at individual test case level and test suite level) to, if Docker is already running, to not close Docker after case/suite finishes - i.e., only close Docker if Docker wasn't already running before the test started. The rationale is that, if one is working in the Docker container elsewhere, it is annoying to have to restart and reattach, and also, it is more efficient to have Docker running already and not have to start and stop it repeatedly**
+- [ ] make sure that in linker.e2e.test.js, even if the input caches match, the local tests are still run and compared against the cached results
+- [ ] **modify all e2e tests (both at individual test case level and test suite level) to, if Docker is already running, to not close Docker after case/suite finishes - i.e., only close Docker if Docker wasn't already running before the test started. The rationale is that, if one is working in the Docker container elsewhere, it is annoying to have to restart and reattach, and also, it is more efficient to have Docker running already and not have to start and stop it repeatedly**
 - [x] supplement startup.a, m1.a, m2.a with different demos
 - [ ] consider and test whether or not interpreter.test.js consistently updates the assembled .e file from the original .a file before comparing .e file hex dumps to check for valid/invalid cache state
 - [x] write test inputs and outputs to cache so that tests can be run without needing to run the lcc in Docker
@@ -147,19 +154,19 @@
   - [x] lccBattery.test.js
   - [x] linker.test.js
   - [x] linkerBattery.test.js
-- [ ] enable interpreter.js tests to expect (and handle gracefully) interpreter failures such as on infinite loops, division by zero, etc., and to confirm that either the program errored out or that the resulting .lst file is empty
-- [o] improve test suites to include a meaningful comment that describes each test
+- [x] enable interpreter.integration.test.js tests to expect (and handle gracefully) interpreter failures such as on infinite loops, division by zero, etc., and to confirm that either the program errored out or that the resulting .lst file is empty
+- [x] improve test suites to include a meaningful comment that describes each test
   - [x] lccBattery.test.js
   - [x] assemblerBattery.test.js 
   - [x] interpreterBattery.test.js
-  - [ ] linkerBattery.test.js
-- [ ] improve test outputs that more accurately describe what the failure was and where it occurred
-  - [ ] assembler.test.js
+  - [x] linkerBattery.test.js
+- [x] improve test outputs that more accurately describe what the failure was and where it occurred
+  - [x] assembler.test.js
   - [x] make sure that assembler.test.js continues to run (and check .e hex dumps) even if the LCC fails to interpret a program
 - [x] test .start directive usage (demoN.a)
-- [ ] test assembly of .bin files
-- [ ] (interpreter) test detection of division by zero
-- [ ] (assembler) test creation of .o files from passed .a files
+- [x] test assembly of .bin files
+- [x] (interpreter) test detection of division by zero (test 22 in interpreter.integration.test.js)
+- [x] (assembler) test creation of .o files from passed .a files
 - [x] add linker testing
   - [x] test creation of .e file from multiple passed .o files
   - [x] test .extern, and .global
@@ -168,7 +175,7 @@
 - [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
 - [x] `cmp` and `br` test
 - [x] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
-- [ ] use lcc locally to test if the lcc exists on local machine, if lcc exists locally, use it instead of Docker lcc
+- [ ] **use lcc locally to test if the lcc exists on local machine, if lcc exists locally, use it instead of Docker lcc**
 - [ ] write script to install ubuntu docker image with lcc to run tests on when lcc does not exist on local machine
   - [ ] create docker image with lcc 63 installed, host it on dockerhub so that it can be pulled down for testing purposes
 - [x] write docker checks for (1) to see if docker is installed on the current machine and (2) to see if docker is currently running, so the tests fail gracefully and give helpful outputs such as "error: docker is not installed" or "error: docker is not running"
@@ -178,31 +185,34 @@
 - [x] implement test battery to run all tests one after the other, regardless of whether one or more tests fail, and to log the results of each test at the very end (currently the battery of tests stop when a single test fails)
 - [x] move the docker startup and shutdown out of the test files and into a separate file that is called by the test files
 - [x] move the name.nnn file existence check and creation out of the test files and into a separate file that is called by the test files, such that, for the test suite code, the name.nnn file is created only once, rather than once for each test, to cut down on unnecessary repeated file creations and deletions
-- [ ] **implement an initial smoke test that simply attempts to run the lcc via the `lcc.js -h` command, and, if it fails, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.**
+- [ ] implement initial smoke tests ...  and, if they fail, will skip attempting to run any other tests and will log an error message to the console. This test should notify the user explicitly what the issue is: for example, whether the lcc is not available/installed, or, that the lcc has not been given executable permissions, or that the current architecture is not supported by the lcc, etc.
+  - [ ] that simply attempt to run lcc.js via the `node ./src/core/lcc.js` command
+  - [ ] that simply attempt to run the lcc via the `lcc.js -h` command
 - ~~fix issue where interpreter.test.js runs expecting a .lst file to be created when, in fact, the .lst file is not created by the interpreter.js file, but by the lcc.js file~~ (interpreter.js should create a .lst file after all)
   - ~~change the interpreter.test.js to simply run the files and check for the expected output in the stdout, and to simulate the expected inputs, rather than checking for the existence of a .lst file~~
   - [x] migrate the majority of what is currently interpreter.test.js to lcc.test.js, which will test running lcc.js on a given file (supplied as an argument), and will check for the existence of the generated .lst file as well comparing the contents to make sure that they match
 - [x] create an lccBattery.test.js which will call lcc.js on a list of specified .a files, and will compare the contents of each .lst file to the expected output (created by running the files with the number 1 appended to the end of their file names remotely in a dockerized container), and will log the results of each test at the very end
-- [ ] test for duplicate labels
-- [ ] test for correct usage of division
-- [ ] test for line that is too long (300+ chars)
+- [x] test for duplicate labels (test 19 in assembler.integration.test.js)
+- [ ] test for correct usage of division (demoV.a, used in assembler.e2e.test.js)
+- [ ] test for line that is too long (300+ chars) (currently blocked by the fact that the original LCC does not appear to consistently handle this behavior)
 - [x] test informally with a1test.a
-- [ ] test for invalid char usage in a label (non-accepted symbols, starting with a number, etc.)
-- [ ] test for escaped strings, escaped chars
+- [x] test for invalid char usage in a label (non-accepted symbols, starting with a number, etc.)
+- [x] test for escaped strings, escaped chars
 - [ ] test for colon terminated labels that have spaces preceding them on a line
-- [ ] test for invalid mnemonic detection
-- [ ] test for bad register detection
+- [x] test for invalid mnemonic detection (test 123 in assembler.integration.test.js)
+- [x] test for bad register detection (many tests in assembler.integration.test.js)
 - [ ] test for bad immediate detection
 - [ ] write test suite for disassembler
-- [ ] test for implicit (abbreviated) r0 (register zero) usage with out instructions
-- [ ] create new folder for invalid code examples
-  - [ ] move all invalid code examples to the new folder (demoJ.a (Possible infinite loop) and demoN.a (Floating point exception))
-- [ ] implement disassembler.test.js to test disassembler.js
+- [x] test for implicit (abbreviated) r0 (register zero) usage with out instructions (demoX.a, used in assembler.e2e.test.js)
+- [x] rewrite invalid test cases as intergration tests
+- ~~create new folder for invalid code examples~~
+  - ~~move all invalid code examples to the new folder (demoJ.a (Possible infinite loop) and demoN.a (Floating point exception))~~
+- [ ] implement disassembler.e2e.test.js to test disassembler.js, test by (1) running disassembler.js on a .e file, (2) running the resulting .a file through the assembler, run the resulting new .e file through the interpreter, and compare the LST file output of the original .e file run through the interpreter with the LST file output of the new .e file run through the interpreter
 
 ## Fix
 - [x] fix issue in assembler.js where valid labels that are not at start of the line but correctly terminated with a colon are not recognized as valid labels
-- [ ] modify assembler.js to report only the first error message to match LCC behavior
-- [ ] fix issue in interpreter.e2e.test.js where, if test inputs are changed, the test fails because the expected output cache is not yet currently being updated to match the new inputs (when the caches all match except for the .e file, the cache should be regenerated via Docker, and the hex dump comparison should be redone to see if the new Docker LCC .e file cache matches the local interpreter.js .e file output)
+- [x] modify assembler.js to report only the first error message to match LCC behavior (using a toggle to switch on/off the ability to report multiple errors)
+- [ ] **fix issue in interpreter.e2e.test.js where, if test inputs are changed, the test fails because the expected output cache is not yet currently being updated to match the new inputs (when the caches all match except for the .e file, the cache should be regenerated via Docker, and the hex dump comparison should be redone to see if the new Docker LCC .e file cache matches the local interpreter.js .e file output)**
 - [x] fix issue in linker.e2e.test.js where Docker is run no matter what (even if entire cache exists and is valid) 
 - [x] fix bug where in interpreterBattery.test.js Docker is running repeatedly despite there being no need to run Docker repeatedly for the same test which should be caching the results of the test (see demoU in particular)
 - [x] lcc.js assembly output .e file and assembler.js assembly output .e file should be the same, but currently are not, specifically in the headers (o, S, C, etc.)
@@ -210,14 +220,15 @@
 - [x] assembler.test.js should delete all extra files created during testing, but currently does not delete all extra files generated locally
 - [x] there appears to be an infinite write loop glitch when running assembler.test.js on demoB.a, ideally there will be a way to cap infinite writes and max memory usage with a graceful failure and notification to the user that the test failed due to (near/potentially)infinite writes - the issue was that demoB.a was being interpretted by lcc, and the terminal process was waiting for intput infinitely
 - [x] fix issue where interpreter.js needs there to be a name.nnn file but is currently running without one - move the logic to check for a name.nnn file from lcc.js to name.js and let interpreter.js call it so that, both interpreter.js when called directly can check for the name.nnn file, and lcc.js, by running interpreter.js as it already does, will automatically also make the same check via interpreter.js
-- [ ] once symbolic debugger is implemented, detection of infinite loops should lead to symbolic debugger being called and the user being notified that an infinite loop was detected without terminating program execution
 - [ ] refactor assembleMOV to simplify and DRY up logic
 - [x] abort lcc.js assembly and execution if name input is not supplied when asked for
 - [x] abort interpreter.js execution if name input is not supplied when asked for
 - [x] fix issue where lcc appeared to be generated inconsistent newlines in .lst files (the issue was how the name.nnn file was being generated, it did indeed need to be terminated with a \n newline character)
 - [x] fix issue where disassembler.js does not handle demoP correctly (not handling the .start directive yet, nor treating code as code, and the string data as string data)
-- [ ] fix disassembler.js to handle G and A header entries, and to ignore E and V entries
+- [ ] fix disassembler.js to handle G and A header entries
+- [ ] fix disassembler.js to ignore E and V entries
 - [x] fix hexDisplay.js to display hex as is without flipping the bytes
+- [ ] rewrite operand detection function that takes in a string and returns the type of operand it is (register, immediate, label, etc.) by taking in an extra argument of what the expected operand types are (e.g. {validTypes: ['num', 'reg']} for `add`/`sub`/`and`, or {validTypes: ['num', 'char', 'label']} for `.word`)
 
 ## Extended Features
 - [x] (picture.js) hex viewer to inspect .e and .o files
@@ -229,7 +240,7 @@
   - [x] linker.js
 - [x] implement toggle in assembler.js to switch on/off the ability to report multiple errors (not just the first encountered error as in the original LCC)
 - [ ] implement finer-grained error reporting in assembler.js (e.g. 'invalid mnemonic', 'invalid directive', 'invalid label definition', etc.
-- [ ] implement helpful error messages in assembler.js (e.g. 'Did you mean to escape this character?', 'Did you mean to write a string here? Note that strings must be enclosed in double quotes.', 'Did you mean to write a char here? Note that chars must be enclosed in single quotes.', etc.)
+- [ ] implement helpful error messages in assembler.js (e.g. 'Did you mean to escape this character?', 'Did you mean to write a string here? Note that strings must be enclosed in double quotes.', 'Did you mean to write a char here? Note that chars must be enclosed in single quotes.', etc.), and put them under a feature toggle flag
 
 ## Extra Features
 

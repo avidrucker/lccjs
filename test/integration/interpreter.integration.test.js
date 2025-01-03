@@ -500,4 +500,20 @@ describe('Interpreter Integration Tests', () => {
     expect(interpreter.r[1]).toBe(5);
     expect(interpreter.output).toBe('5');
   });
+
+  // -----------------------------------------------------------------------------
+  // 22. Test handling of division by zero
+  // -----------------------------------------------------------------------------
+  test('22. should throw error when dividing by zero', () => {
+    const eFilePath = 'divideByZero.e';
+    // mov r0, 5
+    // mov r1, 0
+    // div r0, r1
+    // halt
+    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x05, 0xD0, 0x00, 0xD2, 0x48, 0xA0, 0x00, 0xF0]);
+
+    expect(() => {
+      interpreter.main([eFilePath]);
+    }).toThrow('Floating point exception');
+  });
 });

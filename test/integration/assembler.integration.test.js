@@ -2002,7 +2002,7 @@ label: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow('Bad number'); // validated as correct error message
   });
 
   // -------------------------------------------------------------------------

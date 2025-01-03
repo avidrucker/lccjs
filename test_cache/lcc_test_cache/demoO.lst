@@ -1,4 +1,4 @@
-LCC.js Assemble/Link/Interpret/Debug Ver 0.1  Tue, Nov 26, 2024, 18:05:25
+LCC.js Assemble/Link/Interpret/Debug Ver 0.1  Thu, Jan 2, 2025, 13:34:43
 Billy, Bob J
 
 Header
@@ -6,7 +6,7 @@ o
 C
 
 Loc   Code           Source Code
-                    ; program that tests IO and LST generation thoroughly
+                    ; demoO.a: program that tests IO and LST generation thoroughly
 0000  e009                   lea r0, prompt
 0001  f006                   sout r0
 0002  e012                   lea r0, buffer

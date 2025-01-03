@@ -29,6 +29,7 @@ class LCC {
     this.assembler = null;
     this.interpreter = null;
     this.inputBuffer = '';
+    this.generateStats = true;
   }
 
   main(args) {
@@ -172,6 +173,9 @@ class LCC {
           case '-t':
             this.options.trace = true;
             break;
+          case '-nostats':
+            this.options.noStats = true;
+            break;
           case '-h':
             this.printHelp();
             fatalExit('Printing help message after -h flag used.', 0);
@@ -248,45 +252,56 @@ class LCC {
     // Load the executable file
     interpreter.loadExecutableFile(this.outputFileName);
 
-    // After execution, generate .lst and .bst files
-    const lstFileName = this.outputFileName.replace(/\.e$/, '.lst');
-    const bstFileName = this.outputFileName.replace(/\.e$/, '.bst');
+    let lstFileName;
+    let bstFileName;
 
-    console.log(`lst file = ${lstFileName}`);
-    console.log(`bst file = ${bstFileName}`);
-    console.log('====================================================== Output');
+    if (this.generateStats) {
+      // After execution, generate .lst and .bst files
+      lstFileName = this.outputFileName.replace(/\.e$/, '.lst');
+      bstFileName = this.outputFileName.replace(/\.e$/, '.bst');
+
+      console.log(`lst file = ${lstFileName}`);
+      console.log(`bst file = ${bstFileName}`);
+      console.log('====================================================== Output');
+    }
 
     // Run the interpreter
     try {
       interpreter.run();
-      console.log(); // Ensure cursor moves to the next line
+      if (this.generateStats) {
+        console.log(); // Ensure cursor moves to the next line
+      }
     } catch (error) {
       console.error(`Error running ${this.outputFileName}: ${error.message}`);
       fatalExit(`Error running ${this.outputFileName}: ${error.message}`, 1);
     }
 
-    // Generate .lst and .bst files using genStats.js
-    const lstContent = generateBSTLSTContent({
-      isBST: false,
-      interpreter: interpreter,
-      assembler: includeSourceCode || includeComments ? this.assembler : null,
-      userName: this.userName,
-      inputFileName: this.inputFileName,
-      includeComments: includeComments,
-    });
+    if (this.generateStats) {
+      // Generate .lst and .bst files using genStats.js
+      const lstContent = generateBSTLSTContent({
+        isBST: false,
+        interpreter: interpreter,
+        assembler: includeSourceCode || includeComments ? this.assembler : null,
+        userName: this.userName,
+        inputFileName: this.inputFileName,
+        includeComments: includeComments,
+      });
 
-    const bstContent = generateBSTLSTContent({
-      isBST: true,
-      interpreter: interpreter,
-      assembler: includeSourceCode || includeComments ? this.assembler : null,
-      userName: this.userName,
-      inputFileName: this.inputFileName,
-      includeComments: includeComments,
-    });
+      const bstContent = generateBSTLSTContent({
+        isBST: true,
+        interpreter: interpreter,
+        assembler: includeSourceCode || includeComments ? this.assembler : null,
+        userName: this.userName,
+        inputFileName: this.inputFileName,
+        includeComments: includeComments,
+      });
 
-    // Write the .lst and .bst files
-    fs.writeFileSync(lstFileName, lstContent);
-    fs.writeFileSync(bstFileName, bstContent);
+      // Write the .lst and .bst files
+      fs.writeFileSync(lstFileName, lstContent);
+      fs.writeFileSync(bstFileName, bstContent);
+    } else {
+      // console.clear();
+    }
   }
 }
 
