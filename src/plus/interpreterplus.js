@@ -8,11 +8,15 @@ const Interpreter = require('../core/interpreter.js');
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 
-function fatalExit(message, code = 1) {
-
+function resetProcessStdin() {
   process.stdin.setRawMode(false);
   process.stdin.pause();
   process.stdout.write('\u001B[?25h'); // show cursor
+}
+
+function fatalExit(message, code = 1) {
+
+  resetProcessStdin();
 
   if (isTestMode) {
     throw new Error(message);
@@ -120,18 +124,14 @@ class InterpreterPlus extends Interpreter {
       process.stdin.resume();
 
       process.on('exit', () => {
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        process.stdout.write('\u001B[?25h'); // show cursor
+        resetProcessStdin();
       });
   
       // Each "data" event might contain multiple characters if typed quickly
       process.stdin.on('data', (chunk) => {
         for (const char of chunk) {
           if (char === '\u0003') { // Ctrl-C
-            process.stdin.setRawMode(false);
-            process.stdin.pause();
-            process.stdout.write('\u001B[?25h'); // show cursor
+            resetProcessStdin();
             process.exit(); // Exit the process
           }
           // for the Enter key
@@ -267,9 +267,7 @@ class InterpreterPlus extends Interpreter {
       case 0: // HALT
         this.running = false;
         // turn off raw mode for non-blocking input
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        process.stdout.write('\u001B[?25h'); // show cursor
+        resetProcessStdin();
         break;
       case 14: // bp breakpoint
         this.executeLccPlusBreakpoint();
