@@ -12,6 +12,7 @@ function fatalExit(message, code = 1) {
 
   process.stdin.setRawMode(false);
   process.stdin.pause();
+  process.stdout.write('\u001B[?25h'); // show cursor
 
   if (isTestMode) {
     throw new Error(message);
@@ -121,6 +122,7 @@ class InterpreterPlus extends Interpreter {
       process.on('exit', () => {
         process.stdin.setRawMode(false);
         process.stdin.pause();
+        process.stdout.write('\u001B[?25h'); // show cursor
       });
   
       // Each "data" event might contain multiple characters if typed quickly
@@ -129,6 +131,7 @@ class InterpreterPlus extends Interpreter {
           if (char === '\u0003') { // Ctrl-C
             process.stdin.setRawMode(false);
             process.stdin.pause();
+            process.stdout.write('\u001B[?25h'); // show cursor
             process.exit(); // Exit the process
           }
           // for the Enter key
