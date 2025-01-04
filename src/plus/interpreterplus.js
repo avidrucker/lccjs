@@ -271,6 +271,9 @@ class InterpreterPlus extends Interpreter {
         process.stdin.pause();
         process.stdout.write('\u001B[?25h'); // show cursor
         break;
+      case 14: // bp breakpoint
+        this.executeLccPlusBreakpoint();
+        break;
       case 15: // clear
         this.executeClear();
         break;
@@ -296,6 +299,16 @@ class InterpreterPlus extends Interpreter {
         // If it's not 15 or 16, call parent's method
         super.executeTRAP();
     }
+  }
+
+  executeLccPlusBreakpoint() {
+    this.running = false;
+    // wait for the user to press any key, then once they have
+    // pressed any key, resume execution
+    process.stdin.once('data', () => {
+      this.running = true;
+      this.startNonBlockingLoop();
+    });
   }
 
   executeCase10() {    
