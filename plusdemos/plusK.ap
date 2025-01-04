@@ -1,8 +1,8 @@
-; Flappy Bird in LCC+js (ASCII style), with restricted register usage:
+; plusK.ap: Flappy Bird in LCC+js (ASCII style)
+; This game uses restricted register usage:
 ;   - r0   = user input only
 ;   - r1..r4 = general-purpose
-;   - r5+  = not used
-;   - stack for anything extra
+; TODO: fix game loop so that it works correctly
 
     .lccplus
     .start startup

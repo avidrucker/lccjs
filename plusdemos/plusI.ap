@@ -1,8 +1,8 @@
-; "find the fruit" a precursor to snake
-; the player can move around the board using wasd
+; plusI.ap: "find the fruit" - a precursor to snake
+; the player can move around the board using 'wasd'
 ; the player can eat the fruit, which gets randomly
 ; placed on the board, and placed again each time
-; the player eats it
+; the player eats it. press 'q' to quit
       .lccplus
       .start startup
 
