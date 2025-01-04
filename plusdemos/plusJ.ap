@@ -1,7 +1,9 @@
-; WIP snake game writtein lcc+js assembly
-; TODO: implement snake body growing
-; TODO: implement rendering of snake body
-; TODO: implement snake collision with self
+; plusJ.ap: A snake-precursor game with animated character
+; movement written in lcc+js assembly. move with 'wasd',
+; "eat the fruit" by colliding with it, and quit with 'q'.
+; Note: The character in this game does not grow segments,
+; and instead stays the same size.
+
       .lccplus
       .start startup
 

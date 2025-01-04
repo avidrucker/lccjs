@@ -1,5 +1,7 @@
-; This program generates 20 random numbers between 1 and 20, and 
-; the numbers are deterministic (same each time the program is run)
+; plusE.ap: rand and srand
+; This program generates 20 random numbers between 1 and 20, 
+; and the numbers are deterministic (same each time the 
+; program is run)
         .lccplus
         lea r0, twentyRandNums
         sout r0

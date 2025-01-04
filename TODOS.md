@@ -242,14 +242,17 @@
 - [ ] implement finer-grained error reporting in assembler.js (e.g. 'invalid mnemonic', 'invalid directive', 'invalid label definition', etc.
 - [ ] implement helpful error messages in assembler.js (e.g. 'Did you mean to escape this character?', 'Did you mean to write a string here? Note that strings must be enclosed in double quotes.', 'Did you mean to write a char here? Note that chars must be enclosed in single quotes.', etc.), and put them under a feature toggle flag
 
-## Extra Features
+## LCC+ / Extra Features
 
+- [ ] ability to toggle a specific instruction count cap (e.g. 1000 instructions) in lcc+.js via a flag, such as: `-cap 100000`
 - [ ] ability to assemble a list of .a files in sequence like so: `lcc.js file1.a file2.a file3.a` (no demo yet)
 - [ ] docs and examples for all mnemonics
 - [ ] manual for lcc.js
 - [ ] emoji support
-- [ ] RAND support
-- [ ] TIME support (seconds & milliseconds)
+- [x] RAND support
+- [o] TIME support (seconds & milliseconds)
+  - [x] milliseconds
+  - [ ] seconds in the day
 - [ ] terminal graphics rendering support, similar to GBA or NES graphics rendering
   - [ ] ability to draw pixels
   - [ ] ability to draw lines
@@ -259,7 +262,7 @@
 - [ ] new flags
   - [ ] infinite loop permission flag
   - [ ] turn off auto-symbolic debugger flag
-- [ ] ability to detect single character press inputs ("KEYDOWN", "KEYUP", etc.) rather than requiring the user to press enter after each input
+- [x] ability to detect single character press inputs ("KEYDOWN", "KEYUP", etc.) rather than requiring the user to press enter after each input: `nbain` non-blocking ascii input command
 - [o] deassembler/disassembler (takes a .e file and outputs a .a file)
   - [x] majority of instructions (mov, ld, add, sub, lea) disassembly
   - [x] div instruction disassembly
@@ -268,7 +271,7 @@
   - [ ] G heading .global (?) disassembly
   - [ ] replaced auto-generated labels with named labels from header
 - [ ] website that allows users to upload .a files, run & see the output of the program, and download the .e file, .bst file, etc.
-- [ ] ability to include lcc.js extension modules via a comment in the .a file, which makes clear that a given program is an lcc.js+ extension program rather than a standard lcc.js program
+- [x] ability to include lcc.js extension modules via a unique directive `.lccplus` in .ap files, which makes clear that a given program is an lcc.js+ extension program rather than a standard lcc.js program
 - [ ] ability to get terminal dimensions and adjust the output of the program to fit the terminal window
 - [ ] ability to make file system operations
 - [ ] ability to parse text files

@@ -1,6 +1,7 @@
-; This program generates 20 random numbers between 1 and 20, and 
-; the numbers are non-deterministic (different each time the 
-; program is run)
+; plusF.ap: millis, srand, rand
+; This program generates 20 random numbers between 1 and 20, 
+; and  the numbers are non-deterministic (different each time 
+; the program is run)
         .lccplus
         lea r0, twentyRandNums
         sout r0

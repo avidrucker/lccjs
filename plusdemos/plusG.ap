@@ -1,3 +1,4 @@
+; plusG.ap: 1D board row with player movement (uses resetc)
 ; A program that has a player that can move left 
 ; and right along a 1D board row
 ; Note: This program uses a couple of techniques to improve

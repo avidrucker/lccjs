@@ -8,10 +8,15 @@ const Interpreter = require('../core/interpreter.js');
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 
-function fatalExit(message, code = 1) {
-
+function resetProcessStdin() {
   process.stdin.setRawMode(false);
   process.stdin.pause();
+  process.stdout.write('\u001B[?25h'); // show cursor
+}
+
+function fatalExit(message, code = 1) {
+
+  resetProcessStdin();
 
   if (isTestMode) {
     throw new Error(message);
@@ -119,16 +124,14 @@ class InterpreterPlus extends Interpreter {
       process.stdin.resume();
 
       process.on('exit', () => {
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
+        resetProcessStdin();
       });
   
       // Each "data" event might contain multiple characters if typed quickly
       process.stdin.on('data', (chunk) => {
         for (const char of chunk) {
           if (char === '\u0003') { // Ctrl-C
-            process.stdin.setRawMode(false);
-            process.stdin.pause();
+            resetProcessStdin();
             process.exit(); // Exit the process
           }
           // for the Enter key
@@ -264,9 +267,10 @@ class InterpreterPlus extends Interpreter {
       case 0: // HALT
         this.running = false;
         // turn off raw mode for non-blocking input
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        process.stdout.write('\u001B[?25h'); // show cursor
+        resetProcessStdin();
+        break;
+      case 14: // bp breakpoint
+        this.executeLccPlusBreakpoint();
         break;
       case 15: // clear
         this.executeClear();
@@ -293,6 +297,16 @@ class InterpreterPlus extends Interpreter {
         // If it's not 15 or 16, call parent's method
         super.executeTRAP();
     }
+  }
+
+  executeLccPlusBreakpoint() {
+    this.running = false;
+    // wait for the user to press any key, then once they have
+    // pressed any key, resume execution
+    process.stdin.once('data', () => {
+      this.running = true;
+      this.startNonBlockingLoop();
+    });
   }
 
   executeCase10() {    
