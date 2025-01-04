@@ -21,8 +21,11 @@
 ;; TODO: implement type 'p' for pause in the snake game, show
 ;;       "Paused" on the screen until the p key is pressed again,
 ;;       then resume play
+;; TODO: implement win condition for when snake fills entire 
+;;       board & there is no place for the fruit to respawn
 ;; TODO: implement a variable width board that can go up to size 15x15
 ;; TODO: implement a variable width board that can go up to size 31x31
+
 
         .lccplus
         .start  startup
