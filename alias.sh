@@ -4,8 +4,9 @@ LCC_JS="lccjs"
 LCC_PLUS_JS="lccplusjs"
 
 LCC_JS_PATH="node $(pwd)/src/core/lcc.js"
-
 LCC_PLUS_JS_PATH="node $(pwd)/src/plus/lccplus.js"
+
+
 
 if [[ $SHELL == *"zsh"* ]]; then # if the user is using zsh, then set the shell config to "~/.zshrc"
     SHELL_CONFIG_FILE="$HOME/.zshrc"
@@ -25,7 +26,7 @@ if (! grep -q "alias $LCC_JS=" "$SHELL_CONFIG_FILE"); then # looks for the alias
         exit 1
     fi
     echo "alias $LCC_JS='$LCC_JS_PATH'" >> "$SHELL_CONFIG_FILE" # adds the alias "lccjs" 
-    echo "alias $$LCC_JS='$LCC_PLUS_JS_PATH'" >> "$SHELL_CONFIG_FILE" # adds the alias "lccplusjs" to the shell config file
+    echo "alias $LCC_PLUS_JS='$LCC_PLUS_JS_PATH'" >> "$SHELL_CONFIG_FILE" # adds the alias "lccplusjs" to the shell config file
     echo "Aliases '$LCC_JS' and '$LCC_PLUS_JS' added to $SHELL_CONFIG_FILE." # outputs the the user that the aliases have been successfully added
 else # if the aliases already exist...
     echo "Aliases already exist in $SHELL_CONFIG_FILE. No changes made." # inform the user and move on
