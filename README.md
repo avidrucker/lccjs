@@ -59,6 +59,13 @@ Clone the repository:
 ```bash
 git clone git@github.com:avidrucker/lccjs.git
 cd lccjs
+```  
+
+Setup aliases on UNIX systems:  
+
+```bash
+chmod u+x aliases.sh  
+./aliases.sh  
 ```
 
 ---
