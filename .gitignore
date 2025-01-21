@@ -20,3 +20,4 @@ demos/ptest.o
 .vscode/*
 test/*.bin
 scratch/
+plusdemos/*.ep
