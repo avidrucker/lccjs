@@ -64,8 +64,9 @@ cd lccjs
 Setup aliases on UNIX systems:  
 
 ```bash
-chmod u+x aliases.sh  
-./aliases.sh  
+chmod u+x alias.sh  
+./alias.sh  
+source ~/.bashrc
 ```
 
 ---
