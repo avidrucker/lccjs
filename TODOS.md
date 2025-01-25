@@ -246,6 +246,8 @@
 
 - [ ] ability to toggle a specific instruction count cap (e.g. 1000 instructions) in lcc+.js via a flag, such as: `-cap 100000`
 - [ ] ability to assemble a list of .a files in sequence like so: `lcc.js file1.a file2.a file3.a` (no demo yet)
+- [ ] implement frames per second display
+- [ ] implement instructions per second display
 - [ ] docs and examples for all mnemonics
 - [ ] manual for lcc.js
 - [ ] emoji support
