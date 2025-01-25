@@ -183,6 +183,8 @@ Run all tests:
 npm test
 ```
 
+> Note: If you encounter issues with `jest` not being found, you may need to install it globally: `npm install -g jest`.
+
 Run a specific test file:
 
 ```bash
