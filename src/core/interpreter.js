@@ -699,6 +699,7 @@ class Interpreter {
   readLineFromStdin() {
     if (this.inputBuffer && this.inputBuffer.length > 0) {
       // Use the inputBuffer to simulate user input
+      this.inputBuffer = this.inputBuffer.replace(/\r\n/g, '\n');
       // TODO: check to make sure this behaves as expected on both Linux and Windows
       const newlineIndex = this.inputBuffer.indexOf('\n');
       let inputLine = '';
@@ -741,6 +742,7 @@ class Interpreter {
           }
         }
       }
+      input = input.replace(/\r$/, '');
       return { inputLine: input, isSimulated: false };
     }
   }
