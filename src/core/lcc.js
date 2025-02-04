@@ -10,6 +10,8 @@ const Linker = require('./linker');
 const nameHandler = require('../utils/name.js');
 const { generateBSTLSTContent } = require('../utils/genStats.js');
 
+const newline = process.platform === 'win32' ? '\r\n' : '\n';
+
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 
 function fatalExit(message, code = 1) {
@@ -145,7 +147,7 @@ class LCC {
     console.log('   .lst: time-stamped listing in hex and output from run');
     console.log('   .bst: time-stamped listing in binary and output from run');
     console.log('   .a or other: assembler code');
-    console.log('lcc.js Ver 0.1\n');
+    console.log(`lcc.js Ver 0.1${newline}`);
   }
 
   parseArguments(args) {

@@ -12,7 +12,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const prompt = "Enter familyname, firstname middleinitial (if any)\n";
+const newline = process.platform === 'win32' ? '\r\n' : '\n';
+const prompt = `Enter familyname, firstname middleinitial (if any)${newline}`;
 
 function readLineFromStdin() {
   let input = '';
@@ -66,7 +67,6 @@ function createNameFile(inputPath) {
   }
 
   // Write to name.nnn file with \n if on linux/mac or \r\n if on windows
-  const newline = process.platform === 'win32' ? '\r\n' : '\n';
   fs.writeFileSync(nameFile, name + newline, { encoding: 'utf8' });
   return name;
 }

@@ -7,6 +7,8 @@ const path = require('path');
 const { generateBSTLSTContent } = require('../utils/genStats.js');
 const nameHandler = require('../utils/name.js');
 
+const newline = process.platform === 'win32' ? '\r\n' : '\n';
+
 const MAX_MEMORY = 65536; // 2^16
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
@@ -697,6 +699,7 @@ class Interpreter {
   readLineFromStdin() {
     if (this.inputBuffer && this.inputBuffer.length > 0) {
       // Use the inputBuffer to simulate user input
+      // TODO: check to make sure this behaves as expected on both Linux and Windows
       const newlineIndex = this.inputBuffer.indexOf('\n');
       let inputLine = '';
       if (newlineIndex !== -1) {
@@ -798,7 +801,7 @@ class Interpreter {
     for (let addr = 0; addr <= this.memMax; addr++) {
       const content = this.mem[addr];
       const line = `${addr.toString(16).padStart(4, '0')}: ${content.toString(16).padStart(4, '0')}`;
-      this.writeOutput(line + '\n');
+      this.writeOutput(line + newline);
     }
   }
 
@@ -813,7 +816,7 @@ class Interpreter {
       const regStr = this.r[i].toString(16).padStart(4, '0');
       output += `r${i} = ${regStr}  `;
     }
-    output += '\n';
+    output += newline;
     // Second line: r4, fp, sp, lr
     const r4Str = this.r[4].toString(16).padStart(4, '0');
     const fpStr = this.r[5].toString(16).padStart(4, '0');
@@ -828,10 +831,10 @@ class Interpreter {
     let fp = this.r[5];
 
     if (sp === this.spInitial) {
-      this.writeOutput('Stack empty\n');
+      this.writeOutput(`Stack empty${newline}`);
       return;
     } else {
-      this.writeOutput("Stack:\n");
+      this.writeOutput(`Stack:${newline}`);
 
       for (let addr = sp; addr < MAX_MEMORY; addr++) {
         let value = this.mem[addr];
@@ -841,7 +844,7 @@ class Interpreter {
         if (addr === fp) {
           line += ' <--- fp';
         }
-        this.writeOutput(line + '\n');
+        this.writeOutput(line + newline);
       }
     }
   }
@@ -858,7 +861,7 @@ class Interpreter {
         this.running = false;
         break;
       case 1: // NL
-        this.writeOutput('\n');
+        this.writeOutput(newline);
         break;
       case 2:// DOUT
         let value = this.r[this.sr];
@@ -898,7 +901,7 @@ class Interpreter {
 
           let dinValue = parseInt(dinInput, 10);
           if (isNaN(dinValue)) {
-            const errorMsg = 'Invalid dec constant. Re-enter:\n';
+            const errorMsg = `Invalid dec constant. Re-enter:${newline}`;
             this.writeOutput(errorMsg);
             continue;
           } else {
@@ -925,7 +928,7 @@ class Interpreter {
 
           let hinValue = parseInt(hinInput, 16);
           if (isNaN(hinValue)) {
-            const errorMsg = 'Invalid hex constant. Re-enter:\n';
+            const errorMsg = `Invalid hex constant. Re-enter:${newline}`;
             this.writeOutput(errorMsg);
             continue;
           } else {
