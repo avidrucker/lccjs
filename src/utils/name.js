@@ -65,8 +65,9 @@ function createNameFile(inputPath) {
     process.exit(1);
   }
 
-  // Write to name.nnn file
-  fs.writeFileSync(nameFile, name + "\n", { encoding: 'utf8' });
+  // Write to name.nnn file with \n if on linux/mac or \r\n if on windows
+  const newline = process.platform === 'win32' ? '\r\n' : '\n';
+  fs.writeFileSync(nameFile, name + newline, { encoding: 'utf8' });
   return name;
 }
 
