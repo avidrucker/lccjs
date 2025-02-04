@@ -4,7 +4,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const ansiEscapes = require('ansi-escapes');
+// const ansiEscapes = require('ansi-escapes');
 const Interpreter = require('../core/interpreter.js');
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
@@ -12,7 +12,10 @@ const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 function resetProcessStdin() {
   process.stdin.setRawMode(false);
   process.stdin.pause();
-  process.stdout.write(ansiEscapes.cursorShow); // show cursor
+  // process.stdout.write(ansiEscapes.cursorShow); // show cursor
+  process.stdout.write('\u001B[?25h'); // show cursor
+  }
+
 }
 
 function fatalExit(message, code = 1) {
@@ -356,9 +359,11 @@ class InterpreterPlus extends Interpreter {
     // if the passed in register is 0, hide the cursor
     // if the passed in register is non-zero, show the cursor
     if (this.r[this.dr] === 0) {
-      process.stdout.write(ansiEscapes.cursorHide); // hide cursor
+      process.stdout.write('\u001B[?25l');
+      //process.stdout.write(ansiEscapes.cursorHide); // hide cursor
     } else {
-      process.stdout.write(ansiEscapes.cursorShow); // show cursor
+      process.stdout.write('\u001B[?25h'); // show cursor
+      // process.stdout.write(ansiEscapes.cursorShow); // show cursor
     }
   }
 
