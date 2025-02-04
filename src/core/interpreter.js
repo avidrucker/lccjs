@@ -713,7 +713,6 @@ class Interpreter {
       // Echo the simulated input back to output and stdout
       ///// this.writeOutput(inputLine + '\n');
       this.writeOutput(inputLine);
-      this.inputBuffer = ''; // Clear the input buffer
       return { inputLine, isSimulated: true };
     } else {
       // Original code for reading from stdin
@@ -744,7 +743,6 @@ class Interpreter {
         }
       }
       input = input.replace(/\r$/, '');
-      this.inputBuffer = ''; // Clear the input buffer
       return { inputLine: input, isSimulated: false };
     }
   }
