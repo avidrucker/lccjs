@@ -750,7 +750,7 @@ class Interpreter {
       let ainChar = this.inputBuffer.charAt(0);
       this.inputBuffer = this.inputBuffer.slice(1);
       // Echo the simulated input back to output and stdout
-      this.writeOutput(ainChar + "\n");
+      this.writeOutput(ainChar + newline);
       return { char: ainChar, isSimulated: true };
     } else {
       // Read one character from stdin
@@ -790,10 +790,10 @@ class Interpreter {
 
     // add newline here if input is simulated
     if (isSimulated) {
-      this.writeOutput("\n");
+      this.writeOutput(newline);
     } else //// else, add input to the output buffer w/ newline delimeter
     {
-      this.output += input + "\n";
+      this.output += input + newline;
     }
   }
 
@@ -810,7 +810,7 @@ class Interpreter {
     const irValue = this.mem[(this.pc) & 0xFFFF];
     const irStr = irValue.toString(16).padStart(4, '0');
     const nzcvStr = `${this.n}${this.z}${this.c}${this.v}`.padStart(4, '0');
-    let output = `pc = ${pcStr}  ir = ${irStr}  NZCV = ${nzcvStr}\n`;
+    let output = `pc = ${pcStr}  ir = ${irStr}  NZCV = ${nzcvStr}${newline}`;
     // First line: r0 to r3
     for (let i = 0; i <= 3; i++) {
       const regStr = this.r[i].toString(16).padStart(4, '0');
@@ -822,7 +822,7 @@ class Interpreter {
     const fpStr = this.r[5].toString(16).padStart(4, '0');
     const spStr = this.r[6].toString(16).padStart(4, '0');
     const lrStr = this.r[7].toString(16).padStart(4, '0');
-    output += `r4 = ${r4Str}  fp = ${fpStr}  sp = ${spStr}  lr = ${lrStr}  \n`;
+    output += `r4 = ${r4Str}  fp = ${fpStr}  sp = ${spStr}  lr = ${lrStr}  ${newline}`;
     this.writeOutput(output);
   }
 
@@ -909,10 +909,10 @@ class Interpreter {
             // No need to echo input here; already handled in readLineFromStdin()
             //// unless input is simulated
             if (isSimulated) {
-              this.writeOutput("\n");
+              this.writeOutput(newline);
             } else {
               // add input to the output buffer w/ newline delimeter
-              this.output += dinInput + "\n";
+              this.output += dinInput + newline;
             }
             break;
           }
@@ -936,9 +936,9 @@ class Interpreter {
             // No need to echo input here; already handled in readLineFromStdin()
             //// unless input is simulated
             if (isSimulated) {
-              this.writeOutput("\n");
+              this.writeOutput(newline);
             } else {
-              this.output += hinInput + "\n";
+              this.output += hinInput + newline;
             }
             break;
           }
