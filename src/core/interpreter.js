@@ -728,10 +728,26 @@ class Interpreter {
             break;
           }
           let char = buffer.toString('utf8');
-          if (char === '\n' || char === '\r') {
-            // Stop reading input on newline or carriage return
+          
+          // If it's a UNIX newline, we're done.
+          if (char === '\n') {
             break;
           }
+
+          // If it's '\r', check whether the next char is '\n'.
+          if (char === '\r') {
+            const nextBytes = fs.readSync(fd, buffer, 0, 1, null);
+            if (nextBytes > 0) {
+              const nextChar = buffer.toString('utf8', 0, nextBytes);
+              // If nextChar is not '\n', we treat this '\r' as a line terminator
+              // and the nextChar is actually the start of the next line.
+              if (nextChar !== '\n') {
+                input += nextChar; // Or handle it differently if you prefer
+              }
+            }
+            break;
+          }
+
           input += char;
         } catch (err) {
           if (err.code === 'EAGAIN') {
