@@ -16,8 +16,6 @@ function resetProcessStdin() {
   process.stdout.write('\u001B[?25h'); // show cursor
   }
 
-}
-
 function fatalExit(message, code = 1) {
 
   resetProcessStdin();
