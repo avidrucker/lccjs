@@ -1,21 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Distribution</title>
 </head>
+
 <body>
-    <!-- ✅ Ensure script loads before use -->
+    <input id="stdin" type="text" placeholder="Type here and press Enter" />
+    <script>
+        localStorage.clear(); // Clear local storage
+        const fsWrapperStorage = {
+            "file:///C:/Users/lettu/projects/lccjs/demos/demoA.a": `; demoA.a: simple program assembly/execution and test input/output caching
+    mov r0, 5
+    dout r0
+    nl
+    halt`,
+            "file:/C:/Users/lettu/projects/lccjs/demos/name.nnn": "lettu"
+        };
+
+        localStorage.setItem("fsWrapper", JSON.stringify(fsWrapperStorage));
+    </script>
+
     <script src="dist/bundle.js"></script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // set process.args to C:\Users\lettu\projects\lccjs\demos but for file:///C:/Users/lettu/projects/lccjs/demos
-            //process.argv = ["node", "file:///C:/Users/lettu/projects/lccjs/demos"];
-            const lcc = new LCC.default( ); // ✅ Now `LCC` is available globally
+
+
+            const stdinElement = document.getElementById("stdin");
+
+            stdinElement.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    process.stdin.readSync(); // Manually read from buffer
+                }
+            });
+
+            const lcc = new LCC.default();
             lcc.main(["file:///C:/Users/lettu/projects/lccjs/demos/demoA.a"]);
         });
     </script>
 </body>
+
 </html>

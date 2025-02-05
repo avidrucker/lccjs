@@ -31,6 +31,7 @@ export default {
     new webpack.ProvidePlugin({
       // process: "process/browser.js", // Ensure process is fully specified
       process: [path.resolve(process.cwd(), "src/polyfills/processWrapper.js"), "default"], 
+      Buffer: ["buffer", "Buffer"], // Ensure Buffer is fully specified
     }),
     new webpack.DefinePlugin({
       global: "{}", // ✅ Define global as an empty object at build time
