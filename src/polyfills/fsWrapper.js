@@ -49,7 +49,7 @@ const storageProxy = new Proxy(storage, handler);
 window.fsWrapperStorage = storageProxy;
 window.fsWrapperStorage.subscribe = handler.subscribe;
 
-
+let inputBuffer = [];
 
 // File System Wrapper
 const fsWrapper = {

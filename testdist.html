@@ -12,15 +12,67 @@
 <body>
     <div id="editor"></div>
     <input id="stdin" type="text" placeholder="Type here and press Enter" />
+    <div id="stdout"></div>
+    <div id="stderr"></div>
+    <button id="run">Run</button>
 
 
     <script>
-        const editor = CodeMirror(document.getElementById("editor"), {
-            value: `; demoA.a: simple program assembly/execution and test input/output caching
+        const demoAString = `; demoA.a: simple program assembly/execution and test input/output caching
     mov r0, 5
     dout r0
     nl
-    halt`,
+    halt`;
+        const demoGString = `    lea r0, prompt3
+    sout r0
+    ain r0
+    lea r1, reply
+    sout r1
+    aout r0
+    nl
+
+    lea r0, prompt1
+    sout r0
+    din r0
+    lea r1, reply
+    sout r1
+    dout r0
+    lea r1, signed
+    sout r1
+    nl
+    lea r1, reply
+    sout r1
+    udout r0
+    lea r1, unsigned
+    sout r1
+    nl
+
+    lea r0, prompt2
+    sout r0
+    hin r0
+    lea r1, reply
+    sout r1
+    hout r0
+
+    halt
+
+prompt1: .string "Enter a negative number: "
+prompt2: .string "Enter a hex number: "
+prompt3: .string "Enter a single character: "
+reply: .string "You entered: "
+signed: .string " signed"
+unsigned: .string " unsigned"`
+
+        const demoSimpleIO = `; demoSimpleIO.a: simple program assembly/execution and test input/output caching
+    lea r0, prompt
+    sout r0
+    ain r0
+    aout r0
+    nl
+    halt
+prompt: .string "Enter a number: "`;
+        const editor = CodeMirror(document.getElementById("editor"), {
+            value: demoAString,
             mode: "lcc",
             theme: "material",
             lineNumbers: true,
@@ -43,35 +95,16 @@
         });
     </script>
 
-    <script>
-        // FIXME: Remove hardcoded file inputs
-        localStorage.clear(); // Clear local storage
-        const fsWrapperStorage = {
-            "file:///C:/Users/lettu/projects/lccjs/demos/demoA.a": `; demoA.a: simple program assembly/execution and test input/output caching
-    mov r0, 5
-    dout r0
-    nl
-    halt`,
-            "file:/C:/Users/lettu/projects/lccjs/demos/name.nnn": "lettu"
-        };
-
-        localStorage.setItem("fsWrapper", JSON.stringify(fsWrapperStorage));
-    </script>
-
     <script src="dist/bundle.js"></script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-
-            
-
-
             const stdinElement = document.getElementById("stdin");
 
             stdinElement.addEventListener("keydown", function (event) {
                 if (event.key === "Enter") {
                     event.preventDefault();
-                    process.stdin.readSync(); // Manually read from buffer
+                    window.process.stdin.readSync(); // Manually read from buffer
                 }
             });
 
@@ -80,7 +113,35 @@
             window.fsWrapperStorage.subscribe((type, key, value) => {
                 console.log("fs", type, key, value);
             });
-            lcc.main(["file:///C:/Users/lettu/projects/lccjs/demos/demoA.a"]);
+
+            // subscribe to window.process.stdout.subscribe
+            window.process.subscribe((type, data) => {
+                if(type === "stdout.write"){
+                    document.getElementById("stdout").textContent += data;
+                } else if(type === "stderr.write"){
+                    document.getElementById("stderr").textContent += data;
+                } else if(type === "exit"){
+                    
+                }
+            });
+            
+            const runButton = document.getElementById("run");
+            runButton.addEventListener("click", function () {
+                softInitUI();
+                
+                delete window.fsWrapperStorage["file:///C:/Users/lettu/projects/lccjs/demos/demoA.e"];
+                delete window.fsWrapperStorage["file:///C:/Users/lettu/projects/lccjs/demos/demoA.bst"];
+                delete window.fsWrapperStorage["file:///C:/Users/lettu/projects/lccjs/demos/demoA.lst"];
+                window.fsWrapperStorage["file:///C:/Users/lettu/projects/lccjs/demos/demoA.a"] = editor.getValue();
+                window.fsWrapperStorage["file:/C:/Users/lettu/projects/lccjs/demos/name.nnn"] = "lettu";
+                
+                lcc.main(["file:///C:/Users/lettu/projects/lccjs/demos/demoA.a"]);
+            });
+
+            function softInitUI(){
+                document.getElementById("stdout").textContent = "";
+                document.getElementById("stderr").textContent = "";
+            }
         });
     </script>
 </body>
