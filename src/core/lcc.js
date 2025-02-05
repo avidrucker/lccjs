@@ -2,13 +2,14 @@
 
 // lcc.js
 
-const fs = require('fs');
-const path = require('path');
-const Assembler = require('./assembler');
-const Interpreter = require('./interpreter');
-const Linker = require('./linker');
-const nameHandler = require('../utils/name.js');
-const { generateBSTLSTContent } = require('../utils/genStats.js');
+import fs from "fs";
+import path from "path";
+import Assembler from "./assembler.js";
+import Interpreter from "./interpreter.js";
+import Linker from "./linker.js";
+import nameHandler from "../utils/name.js";
+import { generateBSTLSTContent } from "../utils/genStats.js";
+
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 
@@ -307,9 +308,15 @@ class LCC {
   }
 }
 
-module.exports = LCC;
+// Convert import.meta.url to a file path
+const metaURL = import.meta.url;
+const scriptPath = path.resolve(import.meta.url.replace("file:///", ""));
 
-if (require.main === module) {
+if (scriptPath === process.argv[1]) {
   const lcc = new LCC();
   lcc.main();
+} else if (typeof window !== "undefined") {  // ✅ Ensure LCC is globally accessible
+  window.LCC = LCC;
 }
+
+export default LCC;

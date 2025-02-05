@@ -3,8 +3,8 @@
 // picture.js
 // Reads a .o or .e file and outputs a "picture" of the file
 
-const fs = require('fs');
-const path = require('path');
+import fs from "fs";
+import path from 'path';
 
 // Check command-line arguments
 if (process.argv.length !== 3) {

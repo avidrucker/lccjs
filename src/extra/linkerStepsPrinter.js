@@ -23,7 +23,7 @@
 //   and how references/definitions are labeled in the final "LABEL DEFS & REFS" column.
 //
 
-const fs = require('fs');
+import fs from "fs";
 
 // Utilities for printing visual separators
 function printSpacerLine() {

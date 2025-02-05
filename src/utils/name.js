@@ -9,8 +9,8 @@
 // This program asks t he user for their name in the 
 // format "LastName, FirstName MiddleInitial"
 
-const fs = require('fs');
-const path = require('path');
+import fs from "fs";
+import path from 'path';
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 const prompt = `Enter familyname, firstname middleinitial (if any)${newline}`;
@@ -71,4 +71,4 @@ function createNameFile(inputPath) {
   return name;
 }
 
-module.exports = { createNameFile };
+export default { createNameFile };

@@ -3,7 +3,7 @@
 // disassembler.js
 // LCC.js Disassembler - Execution Order Processing with WIP Disassembly
 
-const fs = require('fs');
+import fs from "fs";
 
 // Main Disassembler Class
 class Disassembler {

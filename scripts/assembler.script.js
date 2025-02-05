@@ -22,12 +22,12 @@ Summary of Behavior and Objectives
   - Cleanup: Cleans up any temporary files created during the test, both locally and inside the Docker container.
 */
 
-const Assembler = require('../src/core/assembler');
-const path = require('path');
-const fs = require('fs');
-const { execSync } = require('child_process');
-const DockerController = require('./dockerController');
-const { isCacheValid, updateCache, getCachedFilePaths } = require('./testCacheHandler');
+import Assembler from '../src/core/assembler';
+import path from 'path';
+import fs from 'fs';
+import { execSync } from 'child_process';
+import DockerController from './dockerController';
+import { isCacheValid, updateCache, getCachedFilePaths } from './testCacheHandler';
 
 const execSyncOptions = {
   stdio: 'pipe',

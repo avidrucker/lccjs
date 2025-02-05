@@ -2,10 +2,10 @@
 
 // interpreterplus.js
 
-const fs = require('fs');
-const path = require('path');
-// const ansiEscapes = require('ansi-escapes');
-const Interpreter = require('../core/interpreter.js');
+import fs from "fs";
+import path from 'path';
+// import ansiEscapes from 'ansi-escapes';
+import Interpreter from '../core/interpreter.js';
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 

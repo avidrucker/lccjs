@@ -2,7 +2,7 @@
 // linker.js
 // LCC.js Linker
 
-const fs = require('fs');
+import fs from "fs";
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 
@@ -341,9 +341,9 @@ class Linker {
   }
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const linker = new Linker();
   linker.main();
 }
 
-module.exports = Linker;
+export default Linker;

@@ -2,10 +2,10 @@
 
 // interpreter.js
 
-const fs = require('fs');
-const path = require('path');
-const { generateBSTLSTContent } = require('../utils/genStats.js');
-const nameHandler = require('../utils/name.js');
+import fs from "fs";
+import path from "path";
+import { generateBSTLSTContent } from "../utils/genStats.js";
+import nameHandler from "../utils/name.js";
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 
@@ -1065,10 +1065,10 @@ class Interpreter {
 }
 
 // Instantiate and run the interpreter if this script is run directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const interpreter = new Interpreter();
   interpreter.generateStats = true; // Set to generate .lst and .bst files
   interpreter.main();
 }
 
-module.exports = Interpreter;
+export default Interpreter;

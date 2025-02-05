@@ -1,8 +1,8 @@
 // assemblerplus.js
 
-const fs = require('fs');
-const path = require('path');
-const Assembler = require('../core/assembler.js');
+import fs from "fs";
+import path from 'path';
+import Assembler from '../core/assembler.js';
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 

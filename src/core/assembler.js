@@ -9,10 +9,10 @@
  * Pass 2: Generates machine code based on the symbol table and source lines.
 */
 
-const fs = require('fs');
-const path = require('path');
-const { generateBSTLSTContent } = require('../utils/genStats.js');
-const nameHandler = require('../utils/name.js');
+import fs from "fs";
+import path from "path";
+import { generateBSTLSTContent } from '../utils/genStats.js';
+import nameHandler from '../utils/name.js';
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 
@@ -2119,11 +2119,11 @@ class Assembler {
   }
 }
 
-module.exports = Assembler;
+export default Assembler;
 
 // Instantiate and run the assembler if this script is run directly
-if (require.main === module) {
+console.log(process.argv[1]);
+if (import.meta.url === `file://${process.argv[1]}`) {
   const assembler = new Assembler();
   assembler.main();
 }
-

@@ -3,7 +3,7 @@
 // hexDisplay.js
 // Reads a .o or .e file and outputs a Hex/Ascii display of the file
 
-const fs = require('fs');
+import fs from "fs";
 
 // Check command-line arguments
 if (process.argv.length !== 3) {

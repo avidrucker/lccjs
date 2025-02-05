@@ -1,6 +1,6 @@
 // genStats.js
 
-function generateBSTLSTContent(options) {
+export function generateBSTLSTContent(options) {
   const {
     isBST,
     interpreter, // May be undefined
@@ -144,6 +144,6 @@ function generateBSTLSTContent(options) {
   return content;
 }
 
-module.exports = {
+export default {
   generateBSTLSTContent,
 };

@@ -3,10 +3,10 @@
 // lccplus.js
 // This is the "driver" for LCC+ that calls assemblerplus.js and interpreterplus.js
 
-const fs = require('fs');
-const path = require('path');
-const AssemblerPlus = require('./assemblerplus.js');
-const InterpreterPlus = require('./interpreterplus.js');
+import fs from "fs";
+import path from "path";
+import AssemblerPlus from "./assemblerplus.js";
+import InterpreterPlus from "./interpreterplus.js";
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 function fatalExit(message, code = 1) {
