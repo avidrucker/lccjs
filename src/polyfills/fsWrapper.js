@@ -1,21 +1,66 @@
-let fsWrapper;
-
 console.warn("FS Polyfill is being used in the browser.");
 
 const storageKey = "fsWrapper";
+
+// Load storage from localStorage
 let storage = JSON.parse(localStorage.getItem(storageKey) || "{}");
 
-const saveStorage = () => localStorage.setItem(storageKey, JSON.stringify(storage));
+// Function to save to localStorage
+const saveStorage = () => {
+  localStorage.setItem(storageKey, JSON.stringify(storageProxy));
+};
 
-fsWrapper = {
+// Create a proxy that automatically updates `window.fsWrapperStorage` and `localStorage`
+const handler = {
+  subscribers: [],
+  get(target, key) {
+      handler.subscribers.forEach(callback => callback('get', key, target[key]));
+      return target[key];
+  },
+
+
+  set(target, key, value) {
+      target[key] = value;
+      saveStorage();
+      window.fsWrapperStorage = target; // Ensure it stays in sync
+      handler.subscribers.forEach(callback => callback('set', key, value));
+      return true;
+  },
+
+  deleteProperty(target, key) {
+      if (key in target) {
+          delete target[key];
+          saveStorage();
+          window.fsWrapperStorage = target;
+          handler.subscribers.forEach(callback => callback('delete', key));
+          return true;
+      }
+      return false;
+  },
+
+  subscribe(callback) {
+      handler.subscribers.push(callback);
+  }
+};
+
+const storageProxy = new Proxy(storage, handler);
+
+// Update global reference
+window.fsWrapperStorage = storageProxy;
+window.fsWrapperStorage.subscribe = handler.subscribe;
+
+
+
+// File System Wrapper
+const fsWrapper = {
     readFile: (path, encoding, callback) => {
         if (typeof encoding === "function") {
             callback = encoding;
             encoding = "utf8";
         }
         setTimeout(() => {
-            if (storage[path]) {
-                callback(null, storage[path]);
+            if (storageProxy[path]) {
+                callback(null, storageProxy[path]);
             } else {
                 callback(new Error("File not found"), null);
             }
@@ -23,19 +68,17 @@ fsWrapper = {
     },
     writeFile: (path, data, callback) => {
         setTimeout(() => {
-            storage[path] = data;
-            saveStorage();
+            storageProxy[path] = data;
             callback(null);
         }, 10);
     },
-    existsSync: (path) => !!storage[path],
+    existsSync: (path) => !!storageProxy[path],
     readdir: (path, callback) => {
-        setTimeout(() => callback(null, Object.keys(storage)), 10);
+        setTimeout(() => callback(null, Object.keys(storageProxy)), 10);
     },
     unlink: (path, callback) => {
         setTimeout(() => {
-            delete storage[path];
-            saveStorage();
+            delete storageProxy[path];
             callback(null);
         }, 10);
     },
@@ -44,52 +87,46 @@ fsWrapper = {
     },
 
     // Synchronous methods
-    readdirSync: () => Object.keys(storage),
+    readdirSync: () => Object.keys(storageProxy),
     writeFileSync: (path, data) => {
-        storage[path] = data;
-        saveStorage();
+        storageProxy[path] = data;
     },
     readFileSync: (path, encoding) => {
-        if (storage[path]) {
-            // return buffer
+        if (storageProxy[path]) {
             if (encoding === "utf-8" || encoding === "utf8") {
-                return storage[path];
+                return storageProxy[path];
             }
-            return Buffer.from(storage[path].split('').map(char => char.codePointAt(0)));
+            return Buffer.from(storageProxy[path].split('').map(char => char.codePointAt(0)));
         }
         throw new Error("File not found");
     },
     statSync: (path) => {
-        if (storage[path]) {
-            return { size: storage[path].length, isFile: true };
+        if (storageProxy[path]) {
+            return { size: storageProxy[path].length, isFile: true };
         }
         throw new Error("File not found");
     },
     mkdirSync: () => { },
     copyFileSync: (src, dest) => {
-        if (!storage[src]) throw new Error("Source file not found");
-        storage[dest] = storage[src];
-        saveStorage();
+        if (!storageProxy[src]) throw new Error("Source file not found");
+        storageProxy[dest] = storageProxy[src];
     },
     unlinkSync: (path) => {
-        delete storage[path];
-        saveStorage();
+        delete storageProxy[path];
     },
     writeSync: (fd, data) => {
-      console.log(fd, data);
+        console.log(fd, data);
         if (fd === 0) { // If it's stdin, write it to the input buffer
             inputBuffer.push(data);
         } else {
-            // if data is a buffer
             if (data instanceof Buffer) {
-                data = Array.from(data, byte => String.fromCodePoint(byte)).join('')
+                data = Array.from(data, byte => String.fromCodePoint(byte)).join('');
             }
-            storage[fd] = (storage[fd] || "") + data;
-            saveStorage();
+            storageProxy[fd] = (storageProxy[fd] || "") + data;
         }
     },
     openSync: (path, flags) => {
-        if (!storage[path]) storage[path] = "";
+        if (!storageProxy[path]) storageProxy[path] = "";
         return path;
     },
     readSync: (fd, buffer, offset, length, position) => {
@@ -103,7 +140,7 @@ fsWrapper = {
             return 0;
         }
 
-        const data = storage[fd];
+        const data = storageProxy[fd];
         if (!data) return 0;
         const bytesRead = Math.min(length, data.length - position);
         buffer.set(Buffer.from(data.slice(position, position + bytesRead)), offset);
