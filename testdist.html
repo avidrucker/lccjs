@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Distribution</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css" integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js" integrity="sha512-8RnEqURPUc5aqFEN04aQEiPlSAdE0jlFS/9iGgUyNtwFnSKCXhmB6ZTNl7LnDtDWKabJIASzXrzD0K+LYexU9g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
 </head>
 
 <body>
@@ -16,61 +16,13 @@
     <div id="stderr"></div>
     <button id="run">Run</button>
 
-
     <script>
         const demoAString = `; demoA.a: simple program assembly/execution and test input/output caching
     mov r0, 5
     dout r0
     nl
     halt`;
-        const demoGString = `    lea r0, prompt3
-    sout r0
-    ain r0
-    lea r1, reply
-    sout r1
-    aout r0
-    nl
 
-    lea r0, prompt1
-    sout r0
-    din r0
-    lea r1, reply
-    sout r1
-    dout r0
-    lea r1, signed
-    sout r1
-    nl
-    lea r1, reply
-    sout r1
-    udout r0
-    lea r1, unsigned
-    sout r1
-    nl
-
-    lea r0, prompt2
-    sout r0
-    hin r0
-    lea r1, reply
-    sout r1
-    hout r0
-
-    halt
-
-prompt1: .string "Enter a negative number: "
-prompt2: .string "Enter a hex number: "
-prompt3: .string "Enter a single character: "
-reply: .string "You entered: "
-signed: .string " signed"
-unsigned: .string " unsigned"`
-
-        const demoSimpleIO = `; demoSimpleIO.a: simple program assembly/execution and test input/output caching
-    lea r0, prompt
-    sout r0
-    ain r0
-    aout r0
-    nl
-    halt
-prompt: .string "Enter a number: "`;
         const editor = CodeMirror(document.getElementById("editor"), {
             value: demoAString,
             mode: "lcc",
@@ -93,56 +45,39 @@ prompt: .string "Enter a number: "`;
                 }
             }
         });
-    </script>
 
-    <script src="dist/bundle.js"></script>
+        let worker = new Worker("worker.js");
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const stdinElement = document.getElementById("stdin");
-
-            stdinElement.addEventListener("keydown", function (event) {
-                if (event.key === "Enter") {
-                    event.preventDefault();
-                    window.process.stdin.readSync(); // Manually read from buffer
-                }
-            });
-
-            const lcc = new LCC.default();
-            // subscribe to window.fsWrapperStorage.subscribe
-            window.fsWrapperStorage.subscribe((type, key, value) => {
-                console.log("fs", type, key, value);
-            });
-
-            // subscribe to window.process.stdout.subscribe
-            window.process.subscribe((type, data) => {
-                if(type === "stdout.write"){
-                    document.getElementById("stdout").textContent += data;
-                } else if(type === "stderr.write"){
-                    document.getElementById("stderr").textContent += data;
-                } else if(type === "exit"){
-                    
-                }
-            });
-            
-            const runButton = document.getElementById("run");
-            runButton.addEventListener("click", function () {
-                softInitUI();
-                
-                delete window.fsWrapperStorage["file:///C:/Users/lettu/projects/lccjs/demos/demoA.e"];
-                delete window.fsWrapperStorage["file:///C:/Users/lettu/projects/lccjs/demos/demoA.bst"];
-                delete window.fsWrapperStorage["file:///C:/Users/lettu/projects/lccjs/demos/demoA.lst"];
-                window.fsWrapperStorage["file:///C:/Users/lettu/projects/lccjs/demos/demoA.a"] = editor.getValue();
-                window.fsWrapperStorage["file:/C:/Users/lettu/projects/lccjs/demos/name.nnn"] = "lettu";
-                
-                lcc.main(["file:///C:/Users/lettu/projects/lccjs/demos/demoA.a"]);
-            });
-
-            function softInitUI(){
-                document.getElementById("stdout").textContent = "";
-                document.getElementById("stderr").textContent = "";
+        // Handle messages from the worker
+        worker.onmessage = function (event) {
+            const { type, data } = event.data;
+            if (type === "stdout") {
+                document.getElementById("stdout").textContent += data;
+            } else if (type === "stderr") {
+                document.getElementById("stderr").textContent += data;
+            } else if (type === "exit") {
+                console.log("LCC process exited with code:", data);
             }
+        };
+
+        document.getElementById("run").addEventListener("click", function () {
+            softInitUI();
+
+            const filePath = "demoA.a";
+            const code = editor.getValue();
+            const name = "lettuce";
+
+            // Send code to worker
+            worker.postMessage({
+                type: "run",
+                payload: { code, filePath, name }
+            });
         });
+
+        function softInitUI() {
+            document.getElementById("stdout").textContent = "";
+            document.getElementById("stderr").textContent = "";
+        }
     </script>
 </body>
 

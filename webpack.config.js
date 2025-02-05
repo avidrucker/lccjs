@@ -8,7 +8,7 @@ export default {
     filename: "bundle.js",
     path: path.resolve(process.cwd(), "dist"),
     library: "LCC", // ✅ This exposes LCC globally for browser use
-    libraryTarget: "window", // ✅ Makes it available as `window.LCC`
+    //libraryTarget: "window", // ✅ Makes it available as `window.LCC`
   },
   resolve: {
     alias: {

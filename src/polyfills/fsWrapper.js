@@ -3,11 +3,11 @@ console.warn("FS Polyfill is being used in the browser.");
 const storageKey = "fsWrapper";
 
 // Load storage from localStorage
-let storage = JSON.parse(localStorage.getItem(storageKey) || "{}");
+let storage = {}//JSON.parse(localStorage.getItem(storageKey) || "{}");
 
 // Function to save to localStorage
 const saveStorage = () => {
-  localStorage.setItem(storageKey, JSON.stringify(storageProxy));
+  //localStorage.setItem(storageKey, JSON.stringify(storageProxy));
 };
 
 // Create a proxy that automatically updates `window.fsWrapperStorage` and `localStorage`
@@ -22,7 +22,7 @@ const handler = {
   set(target, key, value) {
       target[key] = value;
       saveStorage();
-      window.fsWrapperStorage = target; // Ensure it stays in sync
+      self.fsWrapperStorage = target; // Ensure it stays in sync
       handler.subscribers.forEach(callback => callback('set', key, value));
       return true;
   },
@@ -31,7 +31,7 @@ const handler = {
       if (key in target) {
           delete target[key];
           saveStorage();
-          window.fsWrapperStorage = target;
+          self.fsWrapperStorage = target;
           handler.subscribers.forEach(callback => callback('delete', key));
           return true;
       }
@@ -46,8 +46,8 @@ const handler = {
 const storageProxy = new Proxy(storage, handler);
 
 // Update global reference
-window.fsWrapperStorage = storageProxy;
-window.fsWrapperStorage.subscribe = handler.subscribe;
+self.fsWrapperStorage = storageProxy;
+self.fsWrapperStorage.subscribe = handler.subscribe;
 
 let inputBuffer = [];
 

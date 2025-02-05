@@ -315,8 +315,6 @@ const scriptPath = path.resolve(import.meta.url.replace("file:///", ""));
 if (scriptPath === process.argv[1]) {
   const lcc = new LCC();
   lcc.main();
-} else if (typeof window !== "undefined") {  // ✅ Ensure LCC is globally accessible
-  window.LCC = LCC;
 }
 
 export default LCC;
