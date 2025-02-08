@@ -28,10 +28,25 @@ function readLineFromStdin() {
         break;
       }
       let char = buffer.toString('utf8');
-      if (char === '\n' || char === '\r') {
-        // Stop reading input on newline or carriage return
+      
+      // If it's a carriage return, check for a following newline
+      if (char === '\r') {
+        // Windows line ending. We should consume the next character if it is '\n'
+        let nextBytes = fs.readSync(fd, buffer, 0, 1, null);
+        if (nextBytes > 0) {
+          let nextChar = buffer.toString('utf8', 0, 1);
+          if (nextChar === '\n') {
+            // console.log("Next char is newline");
+          }
+        }
         break;
       }
+
+      // If it's a newline, just break
+      if (char === '\n') {
+        break;
+      }
+
       input += char;
     } catch (err) {
       if (err.code === 'EAGAIN') {
