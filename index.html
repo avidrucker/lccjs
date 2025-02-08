@@ -37,15 +37,15 @@
 
     <script>
         const demoAString = `; demoA.a: simple program assembly/execution and test input/output caching
-    mov r0, 5
-    dout r0
-    nl
-    sin r1
+	lea r0, ask
+	sout r0
+    ain r1
     aout r1
     nl
     mov r0, 1
     dout r0
-    halt`;
+    halt
+ask:  .string "enter a letter: "`;
 
         const editor = CodeMirror(document.getElementById("editor"), {
             value: demoAString,

@@ -93,7 +93,6 @@ const inputBufferHandler = {
     }
 };
 
-self.inputBuffer = inputBufferProxy;
 
 
 // Proxy for input buffer
@@ -111,6 +110,8 @@ const inputBufferProxy = new Proxy(inputBuffer, {
         return true;
     }
 });
+
+self.inputBuffer = inputBufferProxy;
 
 // File System Wrapper
 const fsWrapper = {
