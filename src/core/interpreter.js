@@ -120,6 +120,7 @@ class Interpreter {
     try {
       //// console.log(`inputFileName = ${this.inputFileName}`);
       this.userName = nameHandler.createNameFile(this.inputFileName);
+      console.log(`User name file created INTERPRETER: '${this.userName}'`); //////
       //// console.log("userName = " + this.userName);
     } catch (error) {
       console.error('Error handling name file:', error.message);

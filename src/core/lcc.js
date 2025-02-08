@@ -54,6 +54,7 @@ class LCC {
 
     try {
       this.userName = nameHandler.createNameFile(this.inputFileName);
+      console.log(`User name file created LCC: '${this.userName}'`); //////
     } catch (error) {
       console.error('Error handling name file:', error.message);
       fatalExit('Error handling name file: ' + error.message, 1);
