@@ -40,11 +40,12 @@ const process = {
     stdin: {
         fd: 0, // Fake file descriptor
         read: (callback) => {
+            console.log("read");
             process.subscribers.forEach(callback => callback("stdin"));
             inputCallback = callback;
-            stdinInput.focus();
         },
         readSync: () => {
+            console.log("readSync");
             process.subscribers.forEach(callback => callback("stdin"));
             return inputBuffer.length > 0 ? inputBuffer.shift() : null;
         }

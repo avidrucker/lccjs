@@ -7,6 +7,25 @@
     <title>Test Distribution</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+    <style>
+        html {
+            height: 100%;
+            background-color: #353232;
+        }
+
+        #stdout,
+        #stderr {
+            color: white;
+            font-family: monospace;
+            white-space: pre;
+            overflow: auto;
+            height: 45px;
+            background-color: #353232;
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin: 5px;
+        }
+    </style>
 </head>
 
 <body>
@@ -21,12 +40,18 @@
     mov r0, 5
     dout r0
     nl
+    sin r1
+    aout r1
+    nl
+    mov r0, 1
+    dout r0
     halt`;
 
         const editor = CodeMirror(document.getElementById("editor"), {
             value: demoAString,
             mode: "lcc",
-            theme: "material",
+            // dark theme
+            theme: "darcula",
             lineNumbers: true,
             indentUnit: 4,
             tabSize: 4,
@@ -47,6 +72,18 @@
         });
 
         let worker = new Worker("worker.js");
+
+        // Create Shared Buffers
+        const inputBuffer = new SharedArrayBuffer(256); // Shared memory for input
+        const inputIndex = new SharedArrayBuffer(4);    // Index for read/write
+
+        worker.postMessage({
+            inputBuffer: inputBuffer,
+            inputIndex: inputIndex
+        });
+
+        const inputView = new Uint8Array(inputBuffer);
+        const indexView = new Int32Array(inputIndex);
 
         // Handle messages from the worker
         worker.onmessage = function (event) {
@@ -72,6 +109,23 @@
                 type: "run",
                 payload: { code, filePath, name }
             });
+        });
+
+        document.getElementById("stdin").addEventListener("keyup", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                const stdin = document.getElementById("stdin").value;
+                document.getElementById("stdin").value = "";
+                console.log("Sending stdin to worker:", stdin);
+
+                // Encode input string into the shared buffer
+                const encoded = new TextEncoder().encode(stdin);
+                inputView.set(encoded, 0); // Write input to buffer
+                Atomics.store(indexView, 0, encoded.length); // Store input length
+
+                // Notify Worker of new input
+                Atomics.notify(indexView, 0);
+            }
         });
 
         function softInitUI() {

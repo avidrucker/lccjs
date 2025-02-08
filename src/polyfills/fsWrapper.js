@@ -7,40 +7,40 @@ let storage = {}//JSON.parse(localStorage.getItem(storageKey) || "{}");
 
 // Function to save to localStorage
 const saveStorage = () => {
-  //localStorage.setItem(storageKey, JSON.stringify(storageProxy));
+    //localStorage.setItem(storageKey, JSON.stringify(storageProxy));
 };
 
 // Create a proxy that automatically updates `window.fsWrapperStorage` and `localStorage`
 const handler = {
-  subscribers: [],
-  get(target, key) {
-      handler.subscribers.forEach(callback => callback('get', key, target[key]));
-      return target[key];
-  },
+    subscribers: [],
+    get(target, key) {
+        handler.subscribers.forEach(callback => callback('get', key, target[key]));
+        return target[key];
+    },
 
 
-  set(target, key, value) {
-      target[key] = value;
-      saveStorage();
-      self.fsWrapperStorage = target; // Ensure it stays in sync
-      handler.subscribers.forEach(callback => callback('set', key, value));
-      return true;
-  },
+    set(target, key, value) {
+        target[key] = value;
+        saveStorage();
+        self.fsWrapperStorage = target; // Ensure it stays in sync
+        handler.subscribers.forEach(callback => callback('set', key, value));
+        return true;
+    },
 
-  deleteProperty(target, key) {
-      if (key in target) {
-          delete target[key];
-          saveStorage();
-          self.fsWrapperStorage = target;
-          handler.subscribers.forEach(callback => callback('delete', key));
-          return true;
-      }
-      return false;
-  },
+    deleteProperty(target, key) {
+        if (key in target) {
+            delete target[key];
+            saveStorage();
+            self.fsWrapperStorage = target;
+            handler.subscribers.forEach(callback => callback('delete', key));
+            return true;
+        }
+        return false;
+    },
 
-  subscribe(callback) {
-      handler.subscribers.push(callback);
-  }
+    subscribe(callback) {
+        handler.subscribers.push(callback);
+    }
 };
 
 const storageProxy = new Proxy(storage, handler);
@@ -50,6 +50,67 @@ self.fsWrapperStorage = storageProxy;
 self.fsWrapperStorage.subscribe = handler.subscribe;
 
 let inputBuffer = [];
+
+const inputBufferHandler = {
+    subscribers: [],
+
+    get(target, key) {
+        if (typeof target[key] === "function") {
+            return target[key].bind(target);
+        }
+        inputBufferHandler.subscribers.forEach(callback => callback('get', key, target[key]));
+        return target[key];
+    },
+
+    set(target, key, value) {
+        target[key] = value;
+        inputBufferHandler.subscribers.forEach(callback => callback('set', key, value));
+        return true;
+    },
+
+    apply(target, thisArg, args) {
+        if (typeof target === "function") {
+            const result = target.apply(thisArg, args);
+            inputBufferHandler.subscribers.forEach(callback => callback('apply', target.name, args, result));
+            return result;
+        }
+    },
+
+    push(target, ...items) {
+        const result = target.push(...items);
+        inputBufferHandler.subscribers.forEach(callback => callback('push', items));
+        return result;
+    },
+
+    shift(target) {
+        const result = target.shift();
+        inputBufferHandler.subscribers.forEach(callback => callback('shift', result));
+        return result;
+    },
+
+    subscribe(callback) {
+        inputBufferHandler.subscribers.push(callback);
+    }
+};
+
+self.inputBuffer = inputBufferProxy;
+
+
+// Proxy for input buffer
+const inputBufferProxy = new Proxy(inputBuffer, {
+    get(target, key) {
+        if (key === "subscribe") return inputBufferHandler.subscribe;
+        if (key === "push") return inputBufferHandler.push.bind(null, target);
+        if (key === "shift") return inputBufferHandler.shift.bind(null, target);
+        return target[key];
+    },
+
+    set(target, key, value) {
+        target[key] = value;
+        inputBufferHandler.subscribers.forEach(callback => callback('set', key, value));
+        return true;
+    }
+});
 
 // File System Wrapper
 const fsWrapper = {
@@ -117,7 +178,7 @@ const fsWrapper = {
     writeSync: (fd, data) => {
         console.log(fd, data);
         if (fd === 0) { // If it's stdin, write it to the input buffer
-            inputBuffer.push(data);
+            inputBufferProxy.push(data);
         } else {
             if (data instanceof Buffer) {
                 data = Array.from(data, byte => String.fromCodePoint(byte)).join('');
@@ -131,12 +192,17 @@ const fsWrapper = {
     },
     readSync: (fd, buffer, offset, length, position) => {
         if (fd === 0) { // If it's stdin, read from the buffer
-            if (inputBuffer.length > 0) {
-                let inputData = inputBuffer.shift();
+            if (inputBufferProxy.length == 0)
+                self.waitForInput();
+            if (inputBufferProxy.length > 0) {
+                let inputData = inputBufferProxy.shift();
                 let bytesRead = Math.min(length, inputData.length);
                 buffer.set(Buffer.from(inputData.slice(0, bytesRead)), offset);
                 return bytesRead;
+            } else { // Call the sleep callback.
+                console.error("No input data available even after waiting.");
             }
+
             return 0;
         }
 
