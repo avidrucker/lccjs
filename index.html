@@ -7,10 +7,27 @@
     <title>Test Distribution</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/theme/darcula.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror-one-dark-theme@1.1.1/one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/z80/z80.min.js"></script>
+
     <style>
-        html {
+        html,body {
             height: 100%;
             background-color: #353232;
+            margin: 0;
+        }
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 20px);
+            padding: 10px;
+        }
+        #editor {
+            flex-grow: 1;
+        }
+        .CodeMirror{
+            height: 100%;
         }
 
         #stdout,
@@ -19,21 +36,51 @@
             font-family: monospace;
             white-space: pre;
             overflow: auto;
-            height: 45px;
+            height: 100px;
             background-color: #353232;
             border: 1px solid #ccc;
             padding: 5px;
             margin: 5px;
         }
+
+        #run {
+            width: 100%;
+        }
+
+        #input-container {
+            display: flex;
+            margin: 5px;
+        }
+
+        #stdin {
+            flex-grow: 1;
+        }
+
+        .label {
+            font-style: italic;
+            font-weight: lighter;
+            position: absolute;
+            right: calc(2em);
+            opacity: 0.5;
+        }
     </style>
 </head>
 
 <body>
-    <div id="editor"></div>
-    <input id="stdin" type="text" placeholder="Type here and press Enter" />
-    <div id="stdout"></div>
-    <div id="stderr"></div>
-    <button id="run">Run</button>
+    <div id="app">
+        <div id="editor"></div>
+        <button id="run">Run</button>
+        <div id="input-container">
+            <input id="stdin" type="text" placeholder="Type here and press Enter" />
+            <button id="enter">enter</button>
+        </div>
+        <div id="stdout">
+            <div class="label">output</div>
+        </div>
+        <div id="stderr">
+            <div class="label">errors</div>
+        </div>
+    </div>
 
     <script>
         const demoAString = `; demoA.a: simple program assembly/execution and test input/output caching
@@ -49,9 +96,10 @@ ask:  .string "enter a letter: "`;
 
         const editor = CodeMirror(document.getElementById("editor"), {
             value: demoAString,
-            mode: "lcc",
+            mode: "z80", // TODO: change to lcc
             // dark theme
             theme: "darcula",
+        
             lineNumbers: true,
             indentUnit: 4,
             tabSize: 4,
@@ -119,7 +167,7 @@ ask:  .string "enter a letter: "`;
                 console.log("Sending stdin to worker:", stdin);
 
                 // Encode input string into the shared buffer
-                const encoded = new TextEncoder().encode(stdin+'\n');
+                const encoded = new TextEncoder().encode(stdin + '\n');
                 inputView.set(encoded, 0); // Write input to buffer
                 Atomics.store(indexView, 0, encoded.length); // Store input length
 
