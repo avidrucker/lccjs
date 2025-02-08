@@ -20,15 +20,17 @@ self.waitForInput = function waitForInput() {
             let inputCopy = new Uint8Array(length);
             inputCopy.set(inputView.subarray(0, length));
             let inputStr = new TextDecoder().decode(inputCopy);
-            self.inputBuffer.push(inputCopy);
+            for (let i = 0; i < inputCopy.length; i++) {
+                self.inputBuffer.push(inputCopy[i]);
+            }
+            
 
             console.log("Input:", inputStr);
             self.process.stdout.write(inputStr + "\n");
-
-            // Reset index and allow new input
-            Atomics.store(indexView, 0, 0);
-            break;
         }
+        // Reset index and allow new input
+        Atomics.store(indexView, 0, 0);
+        break;
     }
 }
 

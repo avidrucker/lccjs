@@ -119,7 +119,7 @@ ask:  .string "enter a letter: "`;
                 console.log("Sending stdin to worker:", stdin);
 
                 // Encode input string into the shared buffer
-                const encoded = new TextEncoder().encode(stdin);
+                const encoded = new TextEncoder().encode(stdin+'\n');
                 inputView.set(encoded, 0); // Write input to buffer
                 Atomics.store(indexView, 0, encoded.length); // Store input length
 

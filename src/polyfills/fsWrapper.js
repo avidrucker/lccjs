@@ -196,10 +196,18 @@ const fsWrapper = {
             if (inputBufferProxy.length == 0)
                 self.waitForInput();
             if (inputBufferProxy.length > 0) {
-                let inputData = inputBufferProxy.shift();
-                let bytesRead = Math.min(length, inputData.length);
-                buffer.set(Buffer.from(inputData.slice(0, bytesRead)), offset);
-                return bytesRead;
+                let inputByte;
+                let bytesRead = 0;
+                while( true ) {
+                    inputByte = inputBufferProxy.shift()
+                    if (inputByte.length == 0) 
+                        return bytesRead;
+
+                    buffer.set(Buffer.from([inputByte]), offset + bytesRead);
+                    bytesRead += 1;
+                    if (bytesRead >= length) 
+                        return bytesRead;
+                }
             } else { // Call the sleep callback.
                 console.error("No input data available even after waiting.");
             }
