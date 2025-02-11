@@ -147,6 +147,7 @@ buffer:     .zero 10"`;
                 document.getElementById("stderr").textContent += data;
             } else if (type === "exit") {
                 console.log("LCC process exited with code:", data);
+                document.getElementById("stderr").textContent += `LCC process exited with code: ${data}\n`;
             }
         };
 

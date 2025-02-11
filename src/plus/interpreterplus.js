@@ -20,7 +20,7 @@ function fatalExit(message, code = 1) {
 
   resetProcessStdin();
 
-  if (isTestMode) {
+  if (isTestMode || self?.isWebWorker) {
     throw new Error(message);
   } else {
     process.exit(code);

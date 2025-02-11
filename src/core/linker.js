@@ -7,7 +7,7 @@ import fs from "fs";
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 
 function fatalExit(message, code = 1) {
-  if (isTestMode) {
+  if (isTestMode || self?.isWebWorker) {
     throw new Error(message);
   } else {
     process.exit(code);

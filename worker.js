@@ -4,6 +4,8 @@ self.importScripts("dist/bundle.js" + "?v=" + randomnumber); // Load the LCC com
 
 let lcc = new LCC.default();
 
+self.isWebWorker = true;
+
 let inputBuffer;
 let inputView;
 let inputIndex;
@@ -92,7 +94,13 @@ self.onmessage = function (event) {
         });
 
         // Run the LCC compiler
-        lcc.main([filePath]);
+        try{
+            lcc.main([filePath]);
+        } catch (e) {
+            console.log(e);
+            self.postMessage({ type: "stderr", data: e });
+        }
+        
     } else if (type === "stdin") {
         //self.inputBuffer.push(payload)
         console.log("stdin generic", payload);
