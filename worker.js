@@ -1,5 +1,6 @@
 // worker.js
-self.importScripts("dist/bundle.js"); // Load the LCC library
+let randomnumber = Math.floor(Math.random() * 1000000);
+self.importScripts("dist/bundle.js" + "?v=" + randomnumber); // Load the LCC compiler
 
 let lcc = new LCC.default();
 
