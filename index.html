@@ -83,16 +83,20 @@
     </div>
 
     <script>
-        const demoAString = `; demoA.a: simple program assembly/execution and test input/output caching
-	lea r0, ask
-	sout r0
-    ain r1
-    aout r1
-    nl
-    mov r0, 1
-    dout r0
-    halt
-ask:  .string "enter a letter: "`;
+        const demoAString = `; demoO.a: program that tests IO and LST generation thoroughly
+            lea r0, prompt
+            sout r0
+            lea r0, buffer
+            sin r0
+            lea r1, hi
+            sout r1
+            sout r0
+            nl
+            m
+            halt
+prompt:     .string "Name: "
+hi:         .string "Hi "
+buffer:     .zero 10"`;
 
         const editor = CodeMirror(document.getElementById("editor"), {
             value: demoAString,
