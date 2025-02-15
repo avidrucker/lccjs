@@ -13,21 +13,17 @@
 
     <style>
         html,body {
-            height: 100%;
+            height: 100vh;
             background-color: #353232;
             margin: 0;
         }
         #app {
-            display: flex;
-            flex-direction: column;
-            height: calc(100% - 20px);
-            padding: 10px;
+            height: 100%;
         }
         #editor {
-            flex-grow: 1;
+            flex-shrink: 1;
         }
         .CodeMirror{
-            height: 100%;
         }
 
         #stdout,
@@ -36,11 +32,10 @@
             font-family: monospace;
             white-space: pre;
             overflow: auto;
-            height: 100px;
             background-color: #353232;
             border: 1px solid #ccc;
-            padding: 5px;
-            margin: 5px;
+            flex-grow: 1;
+            min-height: 2em;
         }
 
         #run {
@@ -49,7 +44,6 @@
 
         #input-container {
             display: flex;
-            margin: 5px;
         }
 
         #stdin {
@@ -63,22 +57,36 @@
             right: calc(2em);
             opacity: 0.5;
         }
+
+        .app-footer {
+            height: 35vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #app-inner {
+            height: 100%;
+        }
     </style>
 </head>
 
 <body>
     <div id="app">
-        <div id="editor"></div>
-        <button id="run">Run</button>
-        <div id="input-container">
-            <input id="stdin" type="text" placeholder="Type here and press Enter" />
-            <button id="enter">enter</button>
-        </div>
-        <div id="stdout">
-            <div class="label">output</div>
-        </div>
-        <div id="stderr">
-            <div class="label">errors</div>
+        <div id="app-inner">
+            <div id="editor"></div>
+            <footer class="app-footer">
+                <button id="run">Run</button>
+                <div id="input-container">
+                    <input id="stdin" type="text" placeholder="Type here and press Enter" />
+                    <button id="enter">enter</button>
+                </div>
+                <div id="stdout">
+                    <div class="label">output</div>
+                </div>
+                <div id="stderr">
+                    <div class="label">errors</div>
+                </div>
+            </footer>
         </div>
     </div>
 
