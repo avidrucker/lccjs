@@ -12,6 +12,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/z80/z80.min.js"></script>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         html,body {
             height: 100vh;
             background-color: #353232;
@@ -22,8 +26,12 @@
         }
         #editor {
             flex-shrink: 1;
+            height: 60vh;
+            max-height: 60vh;
         }
         .CodeMirror{
+            height: 60vh;
+            max-height: 60vh;
         }
 
         #stdout,
@@ -33,9 +41,10 @@
             white-space: pre;
             overflow: auto;
             background-color: #353232;
-            border: 1px solid #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.5);
             flex-grow: 1;
             min-height: 2em;
+            position: relative;
         }
 
         #run {
@@ -55,6 +64,7 @@
             font-weight: lighter;
             position: absolute;
             right: calc(2em);
+            top: 0;
             opacity: 0.5;
         }
 
@@ -62,6 +72,7 @@
             height: 35vh;
             display: flex;
             flex-direction: column;
+            max-height: 35vh;
         }
         
         #app-inner {
