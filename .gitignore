@@ -21,3 +21,4 @@ demos/ptest.o
 test/*.bin
 scratch/
 plusdemos/*.ep
+dist/*
