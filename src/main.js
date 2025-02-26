@@ -47,26 +47,6 @@ function initializeEditor() {
   editor.on('change', () => {
     linter.lint();
   });
-  
-  // Set up hover events for context information
-  const editorElement = editor.getWrapperElement();
-  
-  editorElement.addEventListener('mouseover', (e) => {
-    const pos = editor.coordsChar({
-      left: e.clientX,
-      top: e.clientY
-    });
-    
-    const token = editor.getTokenAt(pos);
-    if (token && token.type) {
-      // Show hover information based on token type
-      hoverProvider.showHoverForToken(token, pos, e);
-    }
-  });
-  
-  editorElement.addEventListener('mouseout', () => {
-    hoverProvider.hideHover();
-  });
 }
 
 // Initialize the terminal interface
@@ -117,6 +97,17 @@ function appendToTerminal(text, className = '') {
   const terminal = document.getElementById('terminal');
   if (!terminal) return;
   
+  // Handle newlines in the text
+  if (text.includes('\n')) {
+    const lines = text.split('\n');
+    lines.forEach(line => {
+      if (line.trim() !== '') {
+        appendToTerminal(line, className);
+      }
+    });
+    return;
+  }
+  
   const line = document.createElement('div');
   line.className = className ? `terminal-line ${className}` : 'terminal-line';
   line.textContent = text;
@@ -153,20 +144,22 @@ function initializeCommandPalette() {
   const commandPaletteInput = document.getElementById('command-palette-input');
   const commandPaletteResults = document.getElementById('command-palette-results');
   
+  if (!commandPalette || !commandPaletteInput || !commandPaletteResults) {
+    console.error('Command palette elements not found');
+    return;
+  }
+  
   // Define available commands
   const commands = [
     { id: 'run', name: 'Run Program', action: () => document.getElementById('btn-run').click() },
-    { id: 'clear', name: 'Clear Output', action: () => document.getElementById('btn-clear').click() },
+    { id: 'clear', name: 'Clear Terminal', action: () => document.getElementById('btn-clear').click() },
     { id: 'toggle-error', name: 'Toggle Error Checking', action: () => document.getElementById('btn-toggle-error').click() },
     { id: 'toggle-warning', name: 'Toggle Warning Checking', action: () => document.getElementById('btn-toggle-warning').click() },
     { id: 'toggle-info', name: 'Toggle Info Checking', action: () => document.getElementById('btn-toggle-info').click() },
     { id: 'toggle-theme', name: 'Toggle Dark Mode', action: () => document.getElementById('btn-theme-toggle').click() },
     { id: 'open-file', name: 'Open File', action: () => document.getElementById('btn-open').click() },
     { id: 'save-file', name: 'Save File', action: () => document.getElementById('btn-save').click() },
-    { id: 'download-bin', name: 'Download as Binary (.bin)', action: () => downloadFile('bin') },
-    { id: 'download-a', name: 'Download as Assembly (.a)', action: () => downloadFile('a') },
-    { id: 'download-lst', name: 'Download as Listing (.lst)', action: () => downloadFile('lst') },
-    { id: 'download-bst', name: 'Download as Binary Listing (.bst)', action: () => downloadFile('bst') }
+    { id: 'load-demo', name: 'Load Demo', action: () => document.getElementById('btn-load-demo').click() }
   ];
   
   // Handle input in the command palette
@@ -230,40 +223,41 @@ function initializeCommandPalette() {
   });
   
   // Show all commands when the command palette is opened
-  document.getElementById('btn-command-palette').addEventListener('click', () => {
-    commandPaletteInput.value = '';
-    commandPaletteInput.dispatchEvent(new Event('input'));
-  });
+  const commandPaletteBtn = document.getElementById('btn-command-palette');
+  if (commandPaletteBtn) {
+    commandPaletteBtn.addEventListener('click', () => {
+      commandPaletteInput.value = '';
+      commandPaletteInput.dispatchEvent(new Event('input'));
+    });
+  }
 }
 
 // Initialize file operations (open, save)
 function initializeFileOperations() {
-  // New file button
-  document.getElementById('btn-new').addEventListener('click', () => {
-    if (confirm('Create a new file? Any unsaved changes will be lost.')) {
-      window.editor.setValue('');
-    }
-  });
+  const btnNew = document.getElementById('btn-new');
+  const btnOpen = document.getElementById('btn-open');
+  const btnSave = document.getElementById('btn-save');
+  const fileInput = document.getElementById('file-input');
   
-  document.getElementById('btn-new-mobile').addEventListener('click', () => {
+  if (!btnNew || !btnOpen || !btnSave || !fileInput) {
+    console.error('File operation elements not found');
+    return;
+  }
+  
+  // New file button
+  btnNew.addEventListener('click', () => {
     if (confirm('Create a new file? Any unsaved changes will be lost.')) {
       window.editor.setValue('');
-      document.getElementById('mobile-menu').classList.add('hidden');
     }
   });
   
   // Open file button
-  document.getElementById('btn-open').addEventListener('click', () => {
-    document.getElementById('file-input').click();
-  });
-  
-  document.getElementById('btn-open-mobile').addEventListener('click', () => {
-    document.getElementById('file-input').click();
-    document.getElementById('mobile-menu').classList.add('hidden');
+  btnOpen.addEventListener('click', () => {
+    fileInput.click();
   });
   
   // File input change handler
-  document.getElementById('file-input').addEventListener('change', (event) => {
+  fileInput.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -275,37 +269,29 @@ function initializeFileOperations() {
   });
   
   // Save file button
-  document.getElementById('btn-save').addEventListener('click', () => {
+  btnSave.addEventListener('click', () => {
     downloadFile('a');
   });
   
-  document.getElementById('btn-save-mobile').addEventListener('click', () => {
-    downloadFile('a');
-    document.getElementById('mobile-menu').classList.add('hidden');
-  });
+  // Mobile buttons
+  const btnNewMobile = document.getElementById('btn-load-demo-mobile');
+  if (btnNewMobile) {
+    btnNewMobile.addEventListener('click', () => {
+      loadDemo('demoA.a');
+      document.getElementById('hamburger-menu').classList.add('hidden');
+    });
+  }
 }
 
 // Initialize download options
 function initializeDownloadOptions() {
-  // Download button
-  document.getElementById('btn-download').addEventListener('click', () => {
-    const downloadMenu = document.getElementById('download-menu');
-    downloadMenu.classList.toggle('hidden');
-  });
-  
   // Download format buttons
-  document.querySelectorAll('#download-menu [data-format]').forEach(button => {
+  document.querySelectorAll('.download-format-btn').forEach(button => {
     button.addEventListener('click', () => {
       const format = button.getAttribute('data-format');
       downloadFile(format);
-      document.getElementById('download-menu').classList.add('hidden');
+      document.getElementById('hamburger-menu').classList.add('hidden');
     });
-  });
-  
-  // Mobile download button
-  document.getElementById('btn-download-mobile').addEventListener('click', () => {
-    downloadFile('a');
-    document.getElementById('mobile-menu').classList.add('hidden');
   });
 }
 
@@ -327,38 +313,56 @@ function downloadFile(format) {
 
 // Initialize linting toggle buttons
 function initializeLintingToggles() {
-  document.getElementById('btn-toggle-error').addEventListener('click', function() {
+  const btnToggleError = document.getElementById('btn-toggle-error');
+  const btnToggleWarning = document.getElementById('btn-toggle-warning');
+  const btnToggleInfo = document.getElementById('btn-toggle-info');
+  
+  if (!btnToggleError || !btnToggleWarning || !btnToggleInfo) {
+    console.error('Linting toggle elements not found');
+    return;
+  }
+  
+  btnToggleError.addEventListener('click', function() {
     this.classList.toggle('opacity-50');
-    window.lccLinter.toggleErrorChecking();
+    if (window.lccLinter) {
+      window.lccLinter.toggleErrorChecking();
+    }
   });
   
-  document.getElementById('btn-toggle-warning').addEventListener('click', function() {
+  btnToggleWarning.addEventListener('click', function() {
     this.classList.toggle('opacity-50');
-    window.lccLinter.toggleWarningChecking();
+    if (window.lccLinter) {
+      window.lccLinter.toggleWarningChecking();
+    }
   });
   
-  document.getElementById('btn-toggle-info').addEventListener('click', function() {
+  btnToggleInfo.addEventListener('click', function() {
     this.classList.toggle('opacity-50');
-    window.lccLinter.toggleInfoChecking();
+    if (window.lccLinter) {
+      window.lccLinter.toggleInfoChecking();
+    }
   });
 }
 
 // Initialize theme toggle
 function initializeThemeToggle() {
-  // Dark mode is initialized in index.html
+  const btnThemeToggle = document.getElementById('btn-theme-toggle');
+  
+  if (!btnThemeToggle) {
+    console.error('Theme toggle element not found');
+    return;
+  }
   
   // Toggle dark mode
-  document.getElementById('btn-theme-toggle').addEventListener('click', function() {
+  btnThemeToggle.addEventListener('click', function() {
     document.documentElement.classList.toggle('dark');
     const isDark = document.documentElement.classList.contains('dark');
     localStorage.setItem('darkMode', isDark);
     this.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
     
     // Update CodeMirror theme
-    if (isDark) {
-      window.editor.setOption('theme', 'lcc-dark');
-    } else {
-      window.editor.setOption('theme', 'lcc-light');
+    if (window.editor) {
+      window.editor.setOption('theme', isDark ? 'lcc-dark' : 'lcc-light');
     }
   });
 }
@@ -372,18 +376,19 @@ function loadDemo(demoFile) {
     })
     .catch(error => {
       console.error('Error loading demo:', error);
-      document.getElementById('error-output').textContent += `Error loading demo: ${error.message}\n`;
+      appendToTerminal(`Error loading demo: ${error.message}`, 'text-red-500');
     });
 }
 
 // Initialize demo selector
-document.getElementById('select-demo').addEventListener('change', function() {
-  const demoFile = this.value;
-  if (demoFile) {
-    loadDemo(demoFile);
-  }
-});
+const btnLoadDemo = document.getElementById('btn-load-demo');
+if (btnLoadDemo) {
+  btnLoadDemo.addEventListener('click', () => {
+    loadDemo('demoA.a');
+  });
+}
 
 // Export functions for global use
 window.loadDemo = loadDemo;
 window.downloadFile = downloadFile;
+window.appendToTerminal = appendToTerminal;

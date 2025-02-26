@@ -72,12 +72,9 @@
             <button id="btn-run" class="btn btn-primary text-sm">
               <i class="fas fa-play mr-1"></i> Run
             </button>
-            <select id="select-demo" class="text-sm px-2 py-1 rounded border border-secondary-700 bg-secondary-800 text-secondary-100">
-              <option value="">Select Demo</option>
-              <option value="demoA.a">Demo A</option>
-              <option value="demoB.a">Demo B</option>
-              <option value="demoC.a">Demo C</option>
-            </select>
+            <button id="btn-load-demo" class="btn btn-secondary text-sm">
+              <i class="fas fa-file-code mr-1"></i> Load Demo
+            </button>
           </div>
         </div>
         <div class="flex items-center space-x-2">
@@ -110,6 +107,9 @@
         <button id="btn-save" class="hamburger-menu-item">
           <i class="fas fa-save"></i> Save File
         </button>
+        <button id="btn-load-demo-mobile" class="hamburger-menu-item">
+          <i class="fas fa-file-code"></i> Load Demo
+        </button>
       </div>
       <div class="hamburger-menu-section">
         <h3 class="hamburger-menu-section-title">Download Options</h3>
@@ -119,16 +119,16 @@
           <input type="checkbox" id="download-as-txt" class="mr-2">
           Download as .txt
         </label>
-        <button data-format="bin" class="hamburger-menu-item">
+        <button data-format="bin" class="hamburger-menu-item download-format-btn">
           <i class="fas fa-download"></i> Binary (.bin)
         </button>
-        <button data-format="a" class="hamburger-menu-item">
+        <button data-format="a" class="hamburger-menu-item download-format-btn">
           <i class="fas fa-download"></i> Assembly (.a)
         </button>
-        <button data-format="lst" class="hamburger-menu-item">
+        <button data-format="lst" class="hamburger-menu-item download-format-btn">
           <i class="fas fa-download"></i> Listing (.lst)
         </button>
-        <button data-format="bst" class="hamburger-menu-item">
+        <button data-format="bst" class="hamburger-menu-item download-format-btn">
           <i class="fas fa-download"></i> Binary Listing (.bst)
         </button>
       </div>
@@ -316,6 +316,7 @@ buffer:     .zero 10`;
     // Initialize worker
     let randomnumber = Math.floor(Math.random() * 1000000); 
     let worker = new Worker("worker.js" + "?v=" + randomnumber);
+    window.worker = worker;
 
     // Check if SharedArrayBuffer is supported
     let inputBuffer, inputIndex, inputView, indexView;
@@ -349,6 +350,17 @@ buffer:     .zero 10`;
     function appendToTerminal(text, className = '') {
       const terminal = document.getElementById('terminal');
       if (!terminal) return;
+      
+      // Handle newlines in the text
+      if (text.includes('\n')) {
+        const lines = text.split('\n');
+        lines.forEach(line => {
+          if (line.trim() !== '') {
+            appendToTerminal(line, className);
+          }
+        });
+        return;
+      }
       
       const line = document.createElement('div');
       line.className = className ? `terminal-line ${className}` : 'terminal-line';
@@ -384,11 +396,24 @@ buffer:     .zero 10`;
       const code = editor.getValue();
       const name = "user";
 
+      // Reset input buffer
+      if (inputView && indexView) {
+        Atomics.store(indexView, 0, 0);
+      }
+
       // Send code to worker
       worker.postMessage({
         type: "run",
         payload: { code, filePath, name }
       });
+      
+      // Focus the terminal input after running
+      setTimeout(() => {
+        const terminalInput = document.getElementById('terminal-input');
+        if (terminalInput) {
+          terminalInput.focus();
+        }
+      }, 500);
     });
 
     // Terminal input handling
@@ -430,6 +455,11 @@ buffer:     .zero 10`;
               payload: { input }
             });
           }
+          
+          // Focus the input field again to allow for more input
+          setTimeout(() => {
+            this.focus();
+          }, 10);
         }
       });
     }
@@ -439,21 +469,31 @@ buffer:     .zero 10`;
       document.getElementById("terminal").innerHTML = "";
     });
 
-    // Demo selector
-    document.getElementById("select-demo").addEventListener("change", function() {
-      const demoFile = this.value;
-      if (demoFile) {
-        fetch(`demos/${demoFile}`)
-          .then(response => response.text())
-          .then(code => {
-            editor.setValue(code);
-          })
-          .catch(error => {
-            console.error("Error loading demo:", error);
-            appendToTerminal(`Error loading demo: ${error.message}`, 'text-red-500');
-          });
-      }
-    });
+    // Load demo
+    function loadDemo() {
+      // Load the demo from demoA.a
+      fetch('demos/demoA.a')
+        .then(response => response.text())
+        .then(code => {
+          editor.setValue(code);
+        })
+        .catch(error => {
+          console.error("Error loading demo:", error);
+          appendToTerminal(`Error loading demo: ${error.message}`, 'text-red-500');
+        });
+    }
+
+    // Demo button
+    document.getElementById("btn-load-demo").addEventListener("click", loadDemo);
+    
+    // Mobile demo button
+    const mobileDemoBtn = document.getElementById("btn-load-demo-mobile");
+    if (mobileDemoBtn) {
+      mobileDemoBtn.addEventListener("click", function() {
+        loadDemo();
+        document.getElementById("hamburger-menu").classList.add("hidden");
+      });
+    }
 
     // File operations
     document.getElementById("btn-open").addEventListener("click", function() {
@@ -492,7 +532,7 @@ buffer:     .zero 10`;
     });
 
     // Download with format
-    document.querySelectorAll("[data-format]").forEach(button => {
+    document.querySelectorAll(".download-format-btn").forEach(button => {
       button.addEventListener("click", function() {
         const format = this.getAttribute("data-format");
         const code = editor.getValue();
@@ -521,7 +561,8 @@ buffer:     .zero 10`;
       { id: "toggle-info", name: "Toggle Info Checking", action: () => document.getElementById("btn-toggle-info").click() },
       { id: "toggle-theme", name: "Toggle Dark Mode", action: () => document.getElementById("btn-theme-toggle").click() },
       { id: "open-file", name: "Open File", action: () => document.getElementById("btn-open").click() },
-      { id: "save-file", name: "Save File", action: () => document.getElementById("btn-save").click() }
+      { id: "save-file", name: "Save File", action: () => document.getElementById("btn-save").click() },
+      { id: "load-demo", name: "Load Demo", action: () => loadDemo() }
     ];
 
     const commandPaletteInput = document.getElementById("command-palette-input");

@@ -25,105 +25,56 @@ try {
 self.isWebWorker = true;
 
 // Input handling
-let inputBuffer;
-let inputView;
-let inputIndex;
-let indexView;
-let inputBufferReady = false;
+let waitingForInput = false;
+let inputCallback = null;
+let inputBuffer = [];
 
-// Function to read input in a blocking manner
-self.waitForInput = function waitForInput() {
-  if (!inputBufferReady) {
-    console.error("Input buffer not ready");
-    return;
-  }
-  
-  try {
-    console.log("waitForInput", inputBuffer.byteLength);
-    
-    // Use a polling approach instead of Atomics.wait which requires SharedArrayBuffer
-    // This is a fallback for browsers that don't support SharedArrayBuffer
-    let length = 0;
-    const checkInterval = setInterval(() => {
-      length = Atomics.load(indexView, 0);
-      if (length > 0) {
-        clearInterval(checkInterval);
-        
-        let inputCopy = new Uint8Array(length);
-        inputCopy.set(inputView.subarray(0, length));
-        let inputStr = new TextDecoder().decode(inputCopy);
-        
-        for (let i = 0; i < inputCopy.length; i++) {
-          if (!self.inputBuffer) {
-            self.inputBuffer = [];
-          }
-          self.inputBuffer.push(inputCopy[i]);
-        }
-        
-        console.log("Input:", inputStr);
-        if (self.process && self.process.stdout) {
-          self.process.stdout.write(inputStr + "\n");
-        }
-        
-        // Reset index and allow new input
-        Atomics.store(indexView, 0, 0);
-      }
-    }, 100);
-    
-    // Set a timeout to clear the interval after 30 seconds
-    setTimeout(() => {
-      clearInterval(checkInterval);
-    }, 30000);
-  } catch (e) {
-    console.error("Error in waitForInput:", e);
-  }
-}
+// Output handling
+let outputBuffer = '';
+
+// Known prompts to detect
+const KNOWN_PROMPTS = [
+  "Name: ",
+  "What's your first name? ",
+  "What's your last name? "
+];
 
 // Handle messages from the main thread
 self.onmessage = function(event) {
   try {
     const { type, payload } = event.data;
     
-    if (event.data.inputBuffer && event.data.inputIndex) {
-      inputBuffer = event.data.inputBuffer;
-      inputView = new Uint8Array(inputBuffer);
-      inputIndex = event.data.inputIndex;
-      indexView = new Int32Array(inputIndex);
-      inputBufferReady = true;
-      console.log("Worker received shared buffers.");
-    } else if (type === "fallback") {
+    if (type === "fallback") {
       console.log("Using fallback mechanism for input/output");
       // Initialize fallback mechanism
       self.inputBuffer = [];
-      inputBufferReady = false;
-      
-      // Override waitForInput to use message passing instead of SharedArrayBuffer
-      self.waitForInput = function() {
-        // Send a message to the main thread requesting input
-        self.postMessage({ type: "stdin-request" });
-        
-        // The main thread will respond with a message containing the input
-        // This will be handled in the onmessage function
-      };
     } else if (type === "stdin-fallback") {
       // Handle input from the main thread
       const input = payload.input;
       console.log("Received input via fallback:", input);
+      waitingForInput = false;
       
       // Convert the input to a buffer
       const encoded = new TextEncoder().encode(input + '\n');
       
       // Process the input
+      if (!self.inputBuffer) {
+        self.inputBuffer = [];
+      }
+      
       for (let i = 0; i < encoded.length; i++) {
-        if (!self.inputBuffer) {
-          self.inputBuffer = [];
-        }
         self.inputBuffer.push(encoded[i]);
       }
       
-      // Write to stdout
+      // Echo the input to the terminal
       if (self.process && self.process.stdout) {
         self.process.stdout.write(input + "\n");
+      }
+      
+      // If there's a callback, call it
+      if (inputCallback) {
+        inputCallback();
+        inputCallback = null;
       }
     } else if (type === "run") {
       const { code, filePath, name } = payload;
@@ -139,36 +90,78 @@ self.onmessage = function(event) {
 
       // Store the code in the virtual file system
       self.fsWrapperStorage[filePath] = code;
-
       self.fsWrapperStorage["name.nnn"] = name || "noname";
 
+      // Reset state
+      outputBuffer = '';
+      waitingForInput = false;
+      
+      // Override the waitForInput function
+      self.waitForInput = function() {
+        waitingForInput = true;
+        
+        // Signal to the main thread that we're waiting for input
+        self.postMessage({ type: "stdin-request" });
+        
+        // Set up a callback to continue execution after input is received
+        inputCallback = () => {
+          console.log("Input callback executed");
+        };
+      };
+      
       // Capture stdout and stderr output
-      if (self.process.subscribers.length > 0) {
-        self.process.subscribers = [];
-      }
-      self.process.subscribe((type, data) => {
-        if (type === "stdout.write") {
-          self.postMessage({ type: "stdout", data });
-        } else if (type === "stderr.write") {
-          self.postMessage({ type: "stderr", data });
-        } else if (type === "exit") {
-          self.postMessage({ type: "exit", code: data });
-        } else if (type === "stdin") {
-          console.log("stdin", data);
-          // Read input from the shared buffer
-          let bytesRead = self.fsWrapper.readSync(0, inputView, 0, 256, 0);
-          if (bytesRead > 0) {
-            // Update the index to signal new input
-            Atomics.store(indexView, 0, bytesRead);
-            Atomics.notify(indexView, 0, 1);
-            console.log("stdin", bytesRead);
-            self.inputBuffer.push(bytesRead);
-          } else {
-            // Wait for more input
-            waitForInput();
-          }
+      if (self.process && self.process.subscribers) {
+        if (self.process.subscribers.length > 0) {
+          self.process.subscribers = [];
         }
-      });
+        
+        self.process.subscribe((type, data) => {
+          if (type === "stdout.write") {
+            // Buffer the output
+            outputBuffer += data;
+            
+            // Check if this is a prompt
+            for (const prompt of KNOWN_PROMPTS) {
+              if (outputBuffer.includes(prompt)) {
+                // Send the complete prompt
+                self.postMessage({ type: "stdout", data: outputBuffer });
+                outputBuffer = '';
+                
+                // Wait for input
+                self.waitForInput();
+                return;
+              }
+            }
+            
+            // If we have a newline, send the line
+            if (outputBuffer.includes('\n')) {
+              self.postMessage({ type: "stdout", data: outputBuffer });
+              outputBuffer = '';
+            }
+            
+            // If we have more than 20 characters, send it
+            if (outputBuffer.length > 20) {
+              self.postMessage({ type: "stdout", data: outputBuffer });
+              outputBuffer = '';
+            }
+          } else if (type === "stderr.write") {
+            // Send stderr immediately
+            self.postMessage({ type: "stderr", data: data });
+          } else if (type === "exit") {
+            // Flush any remaining output
+            if (outputBuffer) {
+              self.postMessage({ type: "stdout", data: outputBuffer });
+              outputBuffer = '';
+            }
+            self.postMessage({ type: "exit", code: data });
+          } else if (type === "stdin") {
+            console.log("stdin requested");
+            
+            // Wait for input
+            self.waitForInput();
+          }
+        });
+      }
 
       // Run the LCC compiler
       try {
@@ -177,8 +170,6 @@ self.onmessage = function(event) {
         console.log(e);
         self.postMessage({ type: "stderr", data: e.toString() });
       }
-    } else if (type === "stdin") {
-      console.log("stdin generic", payload);
     }
   } catch (e) {
     console.error("Error in worker message handler:", e);
