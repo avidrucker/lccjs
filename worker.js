@@ -96,6 +96,14 @@ self.onmessage = function(event) {
             delete self.fsWrapperStorage[fileName + ".bst"];
             delete self.fsWrapperStorage[fileName + ".lst"];
             delete self.fsWrapperStorage[fileName + ".e"];
+
+            self.fsWrapperStorage.subscribe((type, key, value) => {
+                console.log("Storage event:", type, key, value);
+                if (type === "set") {
+                    // sync storage to main thread on every change
+                    self.postMessage({ type: "storage", data: self.fsWrapperStorage.jsonify() });
+                }
+            });
             
             self.fsWrapperStorage[filePath] = code;
             self.fsWrapperStorage["name.nnn"] = name || "noname";
@@ -127,6 +135,9 @@ self.onmessage = function(event) {
                 console.log(e);
                 self.postMessage({ type: "stderr", data: e.toString() });
             }
+            self.postMessage({ type: "storage", data: self.fsWrapperStorage.jsonify() });
+        } else if (type === "getStorage"){
+            self.postMessage({ type: "storage", data: self.fsWrapperStorage.jsonify() });
         }
     } catch (e) {
         console.error("Error in worker message handler:", e);

@@ -17,8 +17,6 @@ const handler = {
         handler.subscribers.forEach(callback => callback('get', key, target[key]));
         return target[key];
     },
-
-
     set(target, key, value) {
         target[key] = value;
         saveStorage();
@@ -42,12 +40,15 @@ const handler = {
         handler.subscribers.push(callback);
     }
 };
-
+const jsonifyStorageProxy = () => {
+    return JSON.stringify(storage);
+};
 const storageProxy = new Proxy(storage, handler);
 
 // Update global reference
 self.fsWrapperStorage = storageProxy;
 self.fsWrapperStorage.subscribe = handler.subscribe;
+self.fsWrapperStorage.jsonify = jsonifyStorageProxy;
 
 let inputBuffer = [];
 

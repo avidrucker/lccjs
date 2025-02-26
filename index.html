@@ -211,22 +211,6 @@
       }
     });
 
-    // Hamburger menu toggle
-    document.getElementById('hamburger-menu-btn').addEventListener('click', function() {
-      const hamburgerMenu = document.getElementById('hamburger-menu');
-      hamburgerMenu.classList.toggle('hidden');
-    });
-
-    // Close hamburger menu when clicking outside
-    document.addEventListener('click', function(event) {
-      const hamburgerMenu = document.getElementById('hamburger-menu');
-      const hamburgerMenuBtn = document.getElementById('hamburger-menu-btn');
-      
-      if (!hamburgerMenu.contains(event.target) && event.target !== hamburgerMenuBtn) {
-        hamburgerMenu.classList.add('hidden');
-      }
-    });
-
     // Command palette toggle
     document.getElementById('btn-command-palette').addEventListener('click', function() {
       const commandPalette = document.getElementById('command-palette');
@@ -383,6 +367,9 @@ buffer:     .zero 10`;
         // The worker is requesting input
         // Focus the input field
         document.getElementById('terminal-input').focus();
+      } else if(type === "storage"){
+
+        localStorage.setItem("fsWrapper", data);
       }
     };
 
@@ -511,17 +498,6 @@ buffer:     .zero 10`;
       }
     });
 
-    document.getElementById("btn-save").addEventListener("click", function() {
-      const code = editor.getValue();
-      const blob = new Blob([code], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "program.a";
-      a.click();
-      URL.revokeObjectURL(url);
-      document.getElementById("hamburger-menu").classList.add("hidden");
-    });
 
     document.getElementById("btn-new").addEventListener("click", function() {
       if (confirm('Create a new file? Any unsaved changes will be lost.')) {
@@ -530,26 +506,6 @@ buffer:     .zero 10`;
       document.getElementById("hamburger-menu").classList.add("hidden");
     });
 
-    // Download with format
-    document.querySelectorAll(".download-format-btn").forEach(button => {
-      button.addEventListener("click", function() {
-        const format = this.getAttribute("data-format");
-        const code = editor.getValue();
-        const asTxt = document.getElementById("download-as-txt").checked;
-        
-        // In a real implementation, we would process the code based on the format
-        // For now, we'll just download the raw code with the selected extension
-        const blob = new Blob([code], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `program.${asTxt ? "txt" : format}`;
-        a.click();
-        URL.revokeObjectURL(url);
-        
-        document.getElementById("hamburger-menu").classList.add("hidden");
-      });
-    });
 
     // Command palette functionality
     const commands = [

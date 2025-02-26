@@ -318,16 +318,37 @@ function initializeDownloadOptions() {
 
 // Download file with the specified format
 function downloadFile(format) {
-  const code = window.editor.getValue();
+  //const code = window.editor.getValue();
   const asTxt = document.getElementById('download-as-txt').checked;
+
+  switch (format) {
+    case 'a':
+      var code = JSON.parse(localStorage['fsWrapper'])['program.a'];
+      break;
+    case 'bst':
+      var code = JSON.parse(localStorage['fsWrapper'])['program.bst'];
+      break;
+    case 'lst':
+      var code = JSON.parse(localStorage['fsWrapper'])['program.lst'];
+      break;
+    case 'e':
+      var code = JSON.parse(localStorage['fsWrapper'])['program.e'];
+      break;
+    case 'nnn':
+      var code = JSON.parse(localStorage['fsWrapper'])['name.nnn'];
+      break;
+    default:
+      // error
+      console.error('Invalid download format:', format);
+      return;
+  }
   
-  // In a real implementation, we would process the code based on the format
-  // For now, we'll just download the raw code with the selected extension
+
   const blob = new Blob([code], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `program.${asTxt ? 'txt' : format}`;
+  a.download = `program.${format}${asTxt ? '.txt' : ''}`;
   a.click();
   URL.revokeObjectURL(url);
 }
