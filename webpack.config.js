@@ -3,12 +3,18 @@ import webpack from "webpack";
 
 export default {
   mode: "development",
-  entry: "./src/core/lcc.js",
+  entry: {
+    bundle: "./src/core/lcc.js",
+    main: "./src/main.js"
+  },
   output: {
-    filename: "bundle.js",
+    filename: "[name].js",
     path: path.resolve(process.cwd(), "dist"),
-    library: "LCC", // ✅ This exposes LCC globally for browser use
-    //libraryTarget: "window", // ✅ Makes it available as `window.LCC`
+    library: {
+      name: "LCC",
+      type: "umd",
+      export: "default",
+    },
   },
   resolve: {
     alias: {
@@ -48,6 +54,14 @@ export default {
             presets: ["@babel/preset-env"],
           },
         },
+      },
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          'postcss-loader',
+        ],
       },
     ],
   },

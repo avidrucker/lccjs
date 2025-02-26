@@ -1,0 +1,28 @@
+                ; DONE: fix error grab for char/string literal args to mov (see next line)
+				; TODO: assign a warning to the next line's ''
+                mov r0, '' ; TODO: valid LCC assembly, but the behavior is strange in that it puts a single quote "'" into the register...
+				aout
+                nl
+                ; mov r0, "" ; " TODO: fix error grab for char/string literal args to mov
+                mov r0, '\' ; TODO: valid LCC assembly, assign info, `maybe you meant '\\'?`
+				aout
+                nl
+                mov r0, ''' ; TODO: valid LCC assembly, assign info, `maybe you meant '\''?`
+                aout
+                nl
+
+                ld r0, invalChar
+                aout
+                nl
+
+                lea r0, valStr
+                sout r0
+                nl
+                halt
+
+invalChar:      .word ''' ; TODO: valid LCC assembly, assign info
+valStr:        .string """ ; TODO: valid LCC assembler, assign info, remove err message
+invalStr2:     .string "\" ; TODO: keep this as an error as it throws 'Missing terminating quote' error in LCC
+validStr       ; DONE: fix syntax highlighting so that the r does not get highlighted as a debug instruction
+orange:         .string "\"orange" ; valid code 6
+badString1:    .string abc" ; this should only show a code 7, not a code 5

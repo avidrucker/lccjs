@@ -1,0 +1,266 @@
+startup:    bl main
+						halt
+		 
+main:       push lr
+						push fp
+						mov fp, sp
+
+						;; comment out the following chunk of code in order to have the program run
+						push rr
+						push ' '
+						push "  "
+						push banana
+						push 10
+						pop ' '
+						pop "  "
+						pop tree
+						pop 5
+						push r8
+						push r9
+						dout blah ; dout blah
+						dout 5 ; ERROR: invalid operand
+						dout r0a ; ERROR: invalid operand
+						;; TODO: fix dout line below so it only grabs to last non-escaped 
+						;; single quote before semi-colons (optionally preceded by whitespace) 
+						;; or end of line
+						dout ' ' ; 'ERROR: invalid operand;
+						dout "  " ; ERROR: invalid operand
+						add r0, r0, "\" "
+						add r0, r0, "cheese" ; ERROR: invalid operand ^^^
+						add r0, r0, "      " ; ERROR: invalid operand ^^^
+						mov r0, " "
+						mov r0, "hi" ; ERROR: invalid operand
+						mov r0, yes;
+						cheese r0 ; bad mnemonic
+label:      cheese r1 ; bad mnemonic following a label
+5bad:       ; bad label example ; DONE: fix this so the error is caught and displayed
+ 6bad:       ; bad label example
+inva%lid    ; bad label ; DONE: fix this so the error is caught and displayed
+ @L_$b      ; another bad label
+; invalidLabel; LCC does not validate this label, so, maybe we should also not syntax highlight it? TODO: make a decision
+; label1:mov;asdafagwq <-- this is a good label & mnemonic that is missing operands "Missing register"
+;  label5:mov;asdafagwq <-- this is a good label & mnemonic that is missing operands "Missing register"
+						; ; SEE END OF FILE FOR MORE BAD CODE EXAMPLES
+
+						;; WARNINGS START
+						add r0, r0, ' ' ; WARNING imm5 out of range
+						add r0, r0, 16
+						dout r0
+						; ; WARNINGS END
+
+						.string ";"; DONE: fix this so it is correctly identified as NOT an error
+validStr3:              .string "\"" 
+
+validLabel:; this works for some reason, but not its sibling 'invalidLabel'
+@L_$a
+label2:mov r0, ' '; stuff
+label3:mov r0, 5; stuff2
+					
+
+@L_$c:; i am a comment
+ @L_$d:
+alsoValid3:  ; with a comment
+alsovalid    ; with a comment
+alsovalid2  
+				val:mov r0, 5 
+						mov r0, ';'   
+
+						ld r0, x     ; loads 5
+						ld r1, x+1   ; loads 11
+						ld r2, x+2   ; loads 17
+						ld r3, y-2   ; loads 5
+
+						st r0, x     ; loads 5
+						st r1, x+1   ; loads 11
+						st r2, x+2   ; loads 17
+						st r3, y-2   ; loads 5
+
+						bl @L1+1
+						bl @L1-1
+
+						cmp r0, r1
+						brc *+10
+						brnz *+9
+						bre *+8
+						brne *+7
+						brlt *+6
+						brgt *+5
+						brz *+4
+						brp *+3
+						brn *+2
+						br *+1
+
+						jmp r0
+						jmp r0, -5
+						jmp r0, 5
+
+						brc *-10
+						brnz *-9
+						bre *-8
+						brne *-7
+						brlt *-6
+						brgt *-5
+						brz *-4
+						brp *-3
+						brn *-2
+						br *-1
+@L1         
+						br @L2
+@L2:   
+						; dout
+						; dout;
+						; dout ;
+						dout r0 ; dout blah ; this comment is to be ignored
+						nl
+						dout r1
+						nl
+						dout r2
+						nl
+						dout r3
+						nl
+						mov r4, '\\' ; NOTE: this is valid escape character usage 
+						aout r4
+						nl
+
+						add r0, r0, r1
+						add r0, r0, 5
+						add r0, r0, -5
+
+						ld r4 hex
+						hout r4
+						nl
+
+						lea r0 world-6
+						lea r0 hello+6
+						lea r0 world - 6
+						lea r0 hello + 6
+						sout r0
+						nl
+
+						cea r0, 15 ; max val: validated by LCC, look for more examples
+						cea r0, -16 ; min val: validated by LCC, look for more examples
+						dout r0
+						nl
+
+						ld r0, char
+						aout r0
+						nl
+
+						mov r0, r1 ; mov r0, "hi" make sure to ignore code in comments
+						mov r0, -5
+						mov r0, 5
+						mov r0, 'A'
+						mov r0, ' '
+						mov r0, '\\'
+						mov r0, '\n'
+						mov r0, '?'
+						mov r0, 0xff
+						; mov r0, 0x101 ; why does this print out ff01?
+						; mov r0, 0x0100 ; why does this print out ff00?
+						hout r0
+						nl
+
+						ld r0, hex2
+						hout r0
+						nl
+
+						lea r0, goodStr3
+						sout r0
+						nl
+
+; a:          m 
+; b:          r 
+; c:          s 
+; d:          bp 
+
+						mov sp, fp
+						pop fp
+						pop lr
+						ret
+					
+x:        .word 5
+		  .word 11
+y:        .word 17
+z:        .word x+2    ; assembled to the address of y
+hex:      .word 0x8000     ; assigning hexadecimal values to .word directives
+hex2:      .word 0xffff     ; assigning hexadecimal values to .word directives
+hello:    .string "Hello"
+world     .string "\"World\"" ; DONE: fix syntax highlighting so this entire string is highlighted in the correct color
+words:    .string "Cool Pool"
+validStr: .string "\\"
+justQts:  .string "" ; DONE: fix syntax highlighting
+char      .word 'R'
+char2     .word '\\'
+		  ;; TODO: make sure the next line is syntax highlighted correctly
+          .word '' ; DONE: fix this so it is correctly identified as NOT an error
+          .word ' ' ; DONE: fix this so it is correctly identified as NOT an error
+		  .word '\''
+		  .word ';'; DONE: fix this so it is correctly identified as NOT an error
+blah:     .word 20
+blah2     .word -5
+blah3:    .word blah2-1
+goodStr1: .string "abc"
+goodStr2: .string "Hello World"
+goodStr3: .string "\"\\" ; comment
+goodStr4: .string ""
+goodStr5: .string " "
+goodStr6: .string "\""
+
+; MORE BAD CODE
+badStr1:  .string 5
+badStr2:  .string ' '
+badStr3:  .string hello
+badStr4:  .string '  '
+badStr5:  .string 5 ;'
+goodStr1:  .string "abc" ; " ; TODO: fix this
+badStr6:  .string ' ' ;' ; TODO; fix this so it only grabs up to the last non-escaped single quote not after a semicolon
+badStr7:  .string hello ;'
+badStr8:  .string '  ' ;' ; TODO: fix this err grab so it only grabs up to the last non-escaped single quote not after a semicolon
+badStr9:  .string "abc ; I am a comment
+badStr10:  .string "abc
+badStr11:  .string "abc 
+badStr12:  .string "abc  ; I am comment
+badStr13: .string abc" ; TODO: fix this so that it does not trigger error code 5 (and only triggers error code 7)
+badStr14: .string 'abc'
+invalStr: .string "\" ; note: This correctly throws an error in the LCC assembler
+potato:   .word "potato"
+badWord1: .word "" ; DONE: fix error highlighting so it captures the entire string
+badWord2:  .word " " ; DONE: fix error highlighting so it captures the entire string 
+ badlabel  .word 10
+valid3:    .cheese 5
+; 					 12345 abcde
+; .badLabel2    .word 5
+; #badLabel3:    .word 5
+; ?badLabel4    .word 5
+; bad%Label5   .word 5
+; .start main
+
+;; errors start
+          .word 'a;'  ; TODO: fix syntax highlighting so that comment does not begin until after quote encapsulated string is finished 
+          .word 'a 
+          .word a' 
+		  .word 'a
+          .word 'a
+          .word a'
+          .word 'a\' '
+          .word 'a a' ;
+		  .word '  '
+;; errors end
+          .word 'a'
+          .word ';'; DONE: DON'T GRAB AFTER NON-ENCAPSULATED space, tab, semicolon, or newline
+          .word ''' ; TODO: mark this w/ a warning, as well as two lines
+		  .word ''' 
+		  .word '''
+          .word '' ; TODO: fix syntax highlighting on this line, as well as 2 lines down
+          .word ' '
+          .word '' 
+          .word ' ' 
+          .word '\''
+		  .word '\n'
+		  .word ';';
+valid:    .word -500;
+valid2:   .word 500;
+valid3:   .word -500 ;
+valid4:   .word 500 ;
+valid5:   .word -500
+valid6:   .word 500

@@ -1,0 +1,90 @@
+; a1test.a
+s:        lea r0, c6
+          st r0, ac6
+          lea r0, c7
+          st r0, ac7
+          ld r0, x
+          dout r0        ; 1   (dout equivalent to dout r0)
+          nl
+          add r0, r0, r0
+          dout r0        ; 2
+          nl
+          add r0, r0, 1
+          dout r0        ; 3
+          nl 
+          add r0, r0, 3
+          and r0, r0, 4
+          dout r0        ; 4
+          nl
+          br L1
+          halt
+L1:       
+          brp L2
+          halt
+L2:        
+ABC:
+          add r1, r0, 0
+          not r1, r1
+          brn L3
+          halt
+L3:       br L4 
+x:        .word 1
+L4:       and r2, r2, 0
+          brz L5
+          halt
+          .zero 3
+L5:       lea r3, L6
+          jmp r3
+          halt
+L6:       bl r1sub       ; 5
+          lea r4, r2sub
+          blr r4         ; 6
+          ld r0, ac7
+          ldr r0, r0, 0
+          dout r0        ; 7
+          nl
+          lea r4, c6
+          ldr r0, r4, 4
+          dout r0        ; 8
+          nl
+          ld  r5, minus
+          not r0, r5 
+          dout r0        ; -9
+          nl
+          add r0, r0, -1
+          st r0, save
+          ld r0, save
+          dout r0        ; -10
+          nl
+          add r0, r0, -1
+          ld r1, ac7
+          str r0, r1, 0
+          ld  r0, c7
+          dout r0        ; -11
+          nl
+          add r0, r0, -1
+          lea r1, save
+          str r0, r1, 1
+          ld  r0, save2
+          dout r0        ; -12
+          nl
+          halt
+          ; hello
+
+r1sub:    ld r0, c5
+          dout r0        ; 5
+          nl
+          ret
+c5:       .word 5
+minus:    .word 8
+r2sub:    ld r0, c6
+          dout r0
+          nl
+          ret
+c6:       .word 6        ; .word equivalent to .fill
+c7:       .word 7
+ac6:      .word 0          
+ac7:      .word 0
+c8:       .word 8
+save:     .word -5
+save2:    .word 100

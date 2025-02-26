@@ -1,0 +1,109 @@
+{
+  "name": "lcc-tools",
+  "publisher": "lettucegoblin",
+  "displayName": "LCC-Tools",
+  "description": "LCC syntax highlighting (Dos Reis version of LCC)",
+  "version": "1.1.8",
+  "icon": "images/golden.png",
+  "keywords": [
+    "lcc",
+    "lcc-tools",
+    "syntax highlighting"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lettucegoblin/vscode-lcc.git"
+  },
+  "engines": {
+    "vscode": "^1.86.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "lcc.toggleErrorLinting",
+        "title": "LCC: Toggle Error Linting"
+      },
+      {
+        "command": "lcc.toggleWarningLinting",
+        "title": "LCC: Toggle Warning Linting"
+      }
+    ],
+    "languages": [
+      {
+        "id": "lcc",
+        "aliases": [
+          "LCC",
+          "lcc"
+        ],
+        "extensions": [
+          ".bin",
+          ".a"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "configuration": {
+      "title": "LCC Assembly",
+      "properties": {
+        "lccAssembly.enableErrorUnderlining": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable error underlining in LCC Assembly files"
+        },
+        "lccAssembly.enableWarningUnderlining": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable warning underlining in LCC Assembly files"
+        },
+        "lccAssembly.enableInformationUnderlining": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable information underlining in LCC Assembly files"
+        }
+      }
+    },
+    "languageserver": {
+      "assembly": {
+        "command": "node",
+        "args": [
+          "./out/server.js"
+        ],
+        "filetypes": [
+          "a"
+        ]
+      }
+    },
+    "grammars": [
+      {
+        "language": "lcc",
+        "scopeName": "source.lcc",
+        "path": "./syntaxes/lcc.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "lcc",
+        "path": "./snippets/lcc.json"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.86.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^2.3.9"
+  }
+}

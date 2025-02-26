@@ -1,217 +1,578 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Distribution</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/theme/darcula.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror-one-dark-theme@1.1.1/one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/z80/z80.min.js"></script>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        html,body {
-            height: 100vh;
-            background-color: #353232;
-            margin: 0;
-        }
-        #app {
-            height: 100%;
-        }
-        #editor {
-            flex-shrink: 1;
-            height: 60vh;
-            max-height: 60vh;
-        }
-        .CodeMirror{
-            height: 60vh;
-            max-height: 60vh;
-        }
-
-        #stdout,
-        #stderr {
-            color: white;
-            font-family: monospace;
-            white-space: pre;
-            overflow: auto;
-            background-color: #353232;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            flex-grow: 1;
-            min-height: 2em;
-            position: relative;
-        }
-
-        #run {
-            width: 100%;
-        }
-
-        #input-container {
-            display: flex;
-        }
-
-        #stdin {
-            flex-grow: 1;
-        }
-
-        .label {
-            font-style: italic;
-            font-weight: lighter;
-            position: absolute;
-            right: calc(2em);
-            top: 0;
-            opacity: 0.5;
-        }
-
-        .app-footer {
-            height: 35vh;
-            display: flex;
-            flex-direction: column;
-            max-height: 35vh;
-        }
-        
-        #app-inner {
-            height: 100%;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LCC.js - JavaScript-based Assembler and Interpreter</title>
+  
+  <!-- CodeMirror -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+  
+  <!-- Our bundled scripts -->
+  <script src="./dist/bundle.js" defer></script>
+  <script src="./dist/main.js" type="module" defer></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+              950: '#082f49',
+            },
+            secondary: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              400: '#94a3b8',
+              500: '#64748b',
+              600: '#475569',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            },
+          },
+        },
+      },
+    }
+  </script>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body>
-    <div id="app">
-        <div id="app-inner">
-            <div id="editor"></div>
-            <footer class="app-footer">
-                <button id="run">Run</button>
-                <div id="input-container">
-                    <input id="stdin" type="text" placeholder="Type here and press Enter" />
-                    <button id="enter">enter</button>
-                </div>
-                <div id="stdout">
-                    <div class="label">output</div>
-                </div>
-                <div id="stderr">
-                    <div class="label">errors</div>
-                </div>
-            </footer>
+<body class="bg-secondary-900 text-secondary-100 min-h-screen">
+  <div id="app" class="flex flex-col h-screen">
+    <!-- Header -->
+    <header class="bg-secondary-800 shadow-md">
+      <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+          <h1 class="text-xl font-bold text-primary-400">LCC.js</h1>
+          <div class="hidden md:flex space-x-2">
+            <button id="btn-run" class="btn btn-primary text-sm">
+              <i class="fas fa-play mr-1"></i> Run
+            </button>
+            <select id="select-demo" class="text-sm px-2 py-1 rounded border border-secondary-700 bg-secondary-800 text-secondary-100">
+              <option value="">Select Demo</option>
+              <option value="demoA.a">Demo A</option>
+              <option value="demoB.a">Demo B</option>
+              <option value="demoC.a">Demo C</option>
+            </select>
+          </div>
         </div>
+        <div class="flex items-center space-x-2">
+          <button id="btn-command-palette" class="btn btn-secondary text-sm" title="Command Palette (Ctrl+Shift+P)">
+            <i class="fas fa-terminal"></i>
+          </button>
+          <button id="btn-theme-toggle" class="btn btn-secondary text-sm" title="Toggle Dark Mode">
+            <i class="fas fa-sun"></i>
+          </button>
+          <!-- Hamburger Menu Button -->
+          <button id="hamburger-menu-btn" class="btn btn-secondary text-sm">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hamburger Menu Dropdown -->
+    <div id="hamburger-menu" class="hamburger-menu hidden">
+      <div class="hamburger-menu-section">
+        <h3 class="hamburger-menu-section-title">File Operations</h3>
+      </div>
+      <div class="p-2">
+        <button id="btn-new" class="hamburger-menu-item">
+          <i class="fas fa-file"></i> New File
+        </button>
+        <button id="btn-open" class="hamburger-menu-item">
+          <i class="fas fa-folder-open"></i> Open File
+        </button>
+        <button id="btn-save" class="hamburger-menu-item">
+          <i class="fas fa-save"></i> Save File
+        </button>
+      </div>
+      <div class="hamburger-menu-section">
+        <h3 class="hamburger-menu-section-title">Download Options</h3>
+      </div>
+      <div class="p-2">
+        <label class="hamburger-menu-item">
+          <input type="checkbox" id="download-as-txt" class="mr-2">
+          Download as .txt
+        </label>
+        <button data-format="bin" class="hamburger-menu-item">
+          <i class="fas fa-download"></i> Binary (.bin)
+        </button>
+        <button data-format="a" class="hamburger-menu-item">
+          <i class="fas fa-download"></i> Assembly (.a)
+        </button>
+        <button data-format="lst" class="hamburger-menu-item">
+          <i class="fas fa-download"></i> Listing (.lst)
+        </button>
+        <button data-format="bst" class="hamburger-menu-item">
+          <i class="fas fa-download"></i> Binary Listing (.bst)
+        </button>
+      </div>
+      <div class="hamburger-menu-section">
+        <h3 class="hamburger-menu-section-title">Linting Options</h3>
+      </div>
+      <div class="p-2">
+        <button id="btn-toggle-error" class="hamburger-menu-item">
+          <i class="fas fa-times-circle text-red-500"></i> Toggle Error Checking
+        </button>
+        <button id="btn-toggle-warning" class="hamburger-menu-item">
+          <i class="fas fa-exclamation-triangle text-yellow-500"></i> Toggle Warning Checking
+        </button>
+        <button id="btn-toggle-info" class="hamburger-menu-item">
+          <i class="fas fa-info-circle text-blue-500"></i> Toggle Info Checking
+        </button>
+      </div>
     </div>
 
-    <script>
-        const demoAString = `; WelcomeProg.a This is a program that reads a name from the user and prints a greeting.
-            lea r0, prompt
-            sout r0
-            lea r0, buffer
-            sin r0
-            lea r1, hi
-            sout r1
-            sout r0
-            nl
-            m
-            halt
+    <!-- Main Content -->
+    <main class="flex-1 container mx-auto px-4 py-6 flex flex-col md:flex-row gap-6 overflow-hidden">
+      <!-- Left Panel: Editor -->
+      <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-lg font-semibold text-primary-400">Editor</h2>
+        </div>
+        <div id="editor-container" class="flex-1 overflow-hidden rounded-xl border border-secondary-700 bg-secondary-800"></div>
+      </div>
+
+      <!-- Right Panel: Terminal -->
+      <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-lg font-semibold text-primary-400">Terminal</h2>
+          <div class="flex space-x-2">
+            <button id="btn-clear" class="btn btn-secondary text-sm">
+              <i class="fas fa-trash-alt mr-1"></i> Clear
+            </button>
+          </div>
+        </div>
+        <!-- Unified Terminal -->
+        <div class="flex-1 flex flex-col min-h-0 rounded-xl border border-secondary-700 bg-secondary-900 overflow-hidden">
+          <div id="terminal" class="terminal">
+            <!-- Terminal output will be appended here -->
+          </div>
+          <div class="border-t border-secondary-700 p-2 flex">
+            <input id="terminal-input" type="text" placeholder="Type here and press Enter" class="terminal-input" />
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Command Palette (hidden by default) -->
+    <div id="command-palette" class="command-palette hidden">
+      <input id="command-palette-input" type="text" class="command-palette-input" placeholder="Type a command...">
+      <div id="command-palette-results" class="command-palette-results"></div>
+    </div>
+  </div>
+
+  <!-- File input (hidden) -->
+  <input type="file" id="file-input" accept=".a,.bin,.lst,.bst" class="hidden">
+
+  <script>
+    // Initialize dark mode based on user preference
+    if (localStorage.getItem('darkMode') === 'true' || 
+        (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      document.getElementById('btn-theme-toggle').innerHTML = '<i class="fas fa-sun"></i>';
+    }
+
+    // Toggle dark mode
+    document.getElementById('btn-theme-toggle').addEventListener('click', function() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('darkMode', isDark);
+      this.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+      
+      // Update CodeMirror theme
+      if (window.editor) {
+        window.editor.setOption('theme', isDark ? 'lcc-dark' : 'lcc-light');
+      }
+    });
+
+    // Hamburger menu toggle
+    document.getElementById('hamburger-menu-btn').addEventListener('click', function() {
+      const hamburgerMenu = document.getElementById('hamburger-menu');
+      hamburgerMenu.classList.toggle('hidden');
+    });
+
+    // Close hamburger menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const hamburgerMenu = document.getElementById('hamburger-menu');
+      const hamburgerMenuBtn = document.getElementById('hamburger-menu-btn');
+      
+      if (!hamburgerMenu.contains(event.target) && event.target !== hamburgerMenuBtn) {
+        hamburgerMenu.classList.add('hidden');
+      }
+    });
+
+    // Command palette toggle
+    document.getElementById('btn-command-palette').addEventListener('click', function() {
+      const commandPalette = document.getElementById('command-palette');
+      commandPalette.classList.toggle('hidden');
+      if (!commandPalette.classList.contains('hidden')) {
+        document.getElementById('command-palette-input').focus();
+      }
+    });
+
+    // Close command palette when clicking outside
+    document.addEventListener('click', function(event) {
+      const commandPalette = document.getElementById('command-palette');
+      const commandPaletteButton = document.getElementById('btn-command-palette');
+      
+      if (!commandPalette.contains(event.target) && event.target !== commandPaletteButton) {
+        commandPalette.classList.add('hidden');
+      }
+    });
+
+    // Keyboard shortcut for command palette (Ctrl+Shift+P)
+    document.addEventListener('keydown', function(event) {
+      if (event.ctrlKey && event.shiftKey && event.key === 'P') {
+        event.preventDefault();
+        const commandPalette = document.getElementById('command-palette');
+        commandPalette.classList.toggle('hidden');
+        if (!commandPalette.classList.contains('hidden')) {
+          document.getElementById('command-palette-input').focus();
+        }
+      }
+    });
+
+    // Initialize CodeMirror with LCC mode
+    const demoAString = `; WelcomeProg.a This is a program that reads a name from the user and prints a greeting.
+    lea r0, prompt
+    sout r0
+    lea r0, buffer
+    sin r0
+    lea r1, hi
+    sout r1
+    sout r0
+    nl
+    m
+    halt
 prompt:     .string "Name: "
 hi:         .string "Hi "
-buffer:     .zero 10"`;
+buffer:     .zero 10`;
 
-        const editor = CodeMirror(document.getElementById("editor"), {
-            value: demoAString,
-            mode: "z80", // TODO: change to lcc
-            // dark theme
-            theme: "darcula",
-        
-            lineNumbers: true,
-            indentUnit: 4,
-            tabSize: 4,
-            indentWithTabs: true,
-            lineWrapping: true,
-            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-            autoCloseBrackets: true,
-            matchBrackets: true,
-            autoCloseTags: true,
-            matchTags: true,
-            foldGutter: true,
-            extraKeys: {
-                "Ctrl-Space": "autocomplete",
-                "Ctrl-S": function (cm) {
-                    console.log(cm.getValue());
-                }
+    // Initialize editor with LCC mode
+    const editor = CodeMirror(document.getElementById("editor-container"), {
+      value: demoAString,
+      mode: "lcc",
+      theme: "lcc-dark",
+      lineNumbers: true,
+      indentUnit: 4,
+      tabSize: 4,
+      indentWithTabs: true,
+      lineWrapping: true,
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"],
+      autoCloseBrackets: true,
+      matchBrackets: true,
+      foldGutter: true,
+      extraKeys: {
+        "Ctrl-Space": "autocomplete",
+        "Ctrl-S": function(cm) {
+          document.getElementById("btn-save").click();
+        }
+      }
+    });
+
+    // Make editor available globally
+    window.editor = editor;
+
+    // Adjust editor height
+    function adjustEditorHeight() {
+      const editorContainer = document.getElementById('editor-container');
+      if (editorContainer) {
+        const editorWrapper = editorContainer.querySelector('.CodeMirror');
+        if (editorWrapper) {
+          editorWrapper.style.height = '100%';
+        }
+      }
+    }
+    
+    window.addEventListener('resize', adjustEditorHeight);
+    adjustEditorHeight();
+
+    // Initialize worker
+    let randomnumber = Math.floor(Math.random() * 1000000); 
+    let worker = new Worker("worker.js" + "?v=" + randomnumber);
+
+    // Check if SharedArrayBuffer is supported
+    let inputBuffer, inputIndex, inputView, indexView;
+    
+    try {
+      // Create Shared Buffers if supported
+      inputBuffer = new SharedArrayBuffer(256);
+      inputIndex = new SharedArrayBuffer(4);
+      
+      worker.postMessage({
+        inputBuffer: inputBuffer,
+        inputIndex: inputIndex
+      });
+      
+      inputView = new Uint8Array(inputBuffer);
+      indexView = new Int32Array(inputIndex);
+      
+      console.log("SharedArrayBuffer is supported");
+    } catch (e) {
+      console.warn("SharedArrayBuffer is not supported. Using fallback mechanism.", e);
+      
+      // Fallback for browsers without SharedArrayBuffer support
+      // We'll use regular message passing instead
+      worker.postMessage({
+        type: "fallback",
+        payload: { useMessagePassing: true }
+      });
+    }
+
+    // Append text to the terminal
+    function appendToTerminal(text, className = '') {
+      const terminal = document.getElementById('terminal');
+      if (!terminal) return;
+      
+      const line = document.createElement('div');
+      line.className = className ? `terminal-line ${className}` : 'terminal-line';
+      line.textContent = text;
+      
+      terminal.appendChild(line);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    // Handle messages from the worker
+    worker.onmessage = function(event) {
+      const { type, data } = event.data;
+      if (type === "stdout") {
+        appendToTerminal(data);
+      } else if (type === "stderr") {
+        appendToTerminal(data, 'text-red-500');
+      } else if (type === "exit") {
+        console.log("LCC process exited with code:", data);
+        appendToTerminal(`LCC process exited with code: ${data}`, 'text-yellow-500');
+      } else if (type === "stdin-request") {
+        // The worker is requesting input
+        // Focus the input field
+        document.getElementById('terminal-input').focus();
+      }
+    };
+
+    // Run button
+    document.getElementById("btn-run").addEventListener("click", function() {
+      // Clear terminal
+      document.getElementById("terminal").innerHTML = "";
+
+      const filePath = "program.a";
+      const code = editor.getValue();
+      const name = "user";
+
+      // Send code to worker
+      worker.postMessage({
+        type: "run",
+        payload: { code, filePath, name }
+      });
+    });
+
+    // Terminal input handling
+    const terminalInput = document.getElementById('terminal-input');
+    if (terminalInput) {
+      terminalInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          
+          const input = this.value;
+          this.value = '';
+          
+          // Display the input in the terminal
+          appendToTerminal(`> ${input}`, 'input');
+          
+          // Send input to worker
+          if (inputView && indexView) {
+            // SharedArrayBuffer approach
+            try {
+              // Encode input string into the shared buffer
+              const encoded = new TextEncoder().encode(input + '\n');
+              inputView.set(encoded, 0); // Write input to buffer
+              Atomics.store(indexView, 0, encoded.length); // Store input length
+
+              // Notify Worker of new input
+              Atomics.notify(indexView, 0);
+            } catch (e) {
+              console.error("Error sending input via SharedArrayBuffer:", e);
+              // Fallback to message passing
+              worker.postMessage({
+                type: "stdin-fallback",
+                payload: { input }
+              });
             }
-        });
-        let randomnumber = Math.floor(Math.random() * 1000000); 
-        // For cache invalidation while testing
-        let worker = new Worker("worker.js" + "?v=" + randomnumber);
-
-        // Create Shared Buffers
-        const inputBuffer = new SharedArrayBuffer(256); // Shared memory for input
-        const inputIndex = new SharedArrayBuffer(4);    // Index for read/write
-
-        worker.postMessage({
-            inputBuffer: inputBuffer,
-            inputIndex: inputIndex
-        });
-
-        const inputView = new Uint8Array(inputBuffer);
-        const indexView = new Int32Array(inputIndex);
-
-        // Handle messages from the worker
-        worker.onmessage = function (event) {
-            const { type, data } = event.data;
-            if (type === "stdout") {
-                document.getElementById("stdout").textContent += data;
-            } else if (type === "stderr") {
-                document.getElementById("stderr").textContent += data;
-            } else if (type === "exit") {
-                console.log("LCC process exited with code:", data);
-                document.getElementById("stderr").textContent += `LCC process exited with code: ${data}\n`;
-            }
-        };
-
-        document.getElementById("run").addEventListener("click", function () {
-            softInitUI();
-
-            const filePath = "demoA.a";
-            const code = editor.getValue();
-            const name = "lettuce";
-
-            // Send code to worker
+          } else {
+            // Fallback to message passing
             worker.postMessage({
-                type: "run",
-                payload: { code, filePath, name }
+              type: "stdin-fallback",
+              payload: { input }
             });
-        });
-
-        function onEnter() {
-            const stdin = document.getElementById("stdin").value;
-                document.getElementById("stdin").value = "";
-                console.log("Sending stdin to worker:", stdin);
-
-                // Encode input string into the shared buffer
-                const encoded = new TextEncoder().encode(stdin + '\n');
-                inputView.set(encoded, 0); // Write input to buffer
-                Atomics.store(indexView, 0, encoded.length); // Store input length
-
-                // Notify Worker of new input
-                Atomics.notify(indexView, 0);
+          }
         }
+      });
+    }
 
-        document.getElementById('enter').addEventListener('click', onEnter);
+    // Clear button
+    document.getElementById("btn-clear").addEventListener("click", function() {
+      document.getElementById("terminal").innerHTML = "";
+    });
 
-        document.getElementById("stdin").addEventListener("keyup", function (event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                onEnter();
-            }
+    // Demo selector
+    document.getElementById("select-demo").addEventListener("change", function() {
+      const demoFile = this.value;
+      if (demoFile) {
+        fetch(`demos/${demoFile}`)
+          .then(response => response.text())
+          .then(code => {
+            editor.setValue(code);
+          })
+          .catch(error => {
+            console.error("Error loading demo:", error);
+            appendToTerminal(`Error loading demo: ${error.message}`, 'text-red-500');
+          });
+      }
+    });
+
+    // File operations
+    document.getElementById("btn-open").addEventListener("click", function() {
+      document.getElementById("file-input").click();
+      document.getElementById("hamburger-menu").classList.add("hidden");
+    });
+
+    document.getElementById("file-input").addEventListener("change", function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          editor.setValue(e.target.result);
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    document.getElementById("btn-save").addEventListener("click", function() {
+      const code = editor.getValue();
+      const blob = new Blob([code], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "program.a";
+      a.click();
+      URL.revokeObjectURL(url);
+      document.getElementById("hamburger-menu").classList.add("hidden");
+    });
+
+    document.getElementById("btn-new").addEventListener("click", function() {
+      if (confirm('Create a new file? Any unsaved changes will be lost.')) {
+        editor.setValue('');
+      }
+      document.getElementById("hamburger-menu").classList.add("hidden");
+    });
+
+    // Download with format
+    document.querySelectorAll("[data-format]").forEach(button => {
+      button.addEventListener("click", function() {
+        const format = this.getAttribute("data-format");
+        const code = editor.getValue();
+        const asTxt = document.getElementById("download-as-txt").checked;
+        
+        // In a real implementation, we would process the code based on the format
+        // For now, we'll just download the raw code with the selected extension
+        const blob = new Blob([code], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `program.${asTxt ? "txt" : format}`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        document.getElementById("hamburger-menu").classList.add("hidden");
+      });
+    });
+
+    // Command palette functionality
+    const commands = [
+      { id: "run", name: "Run Program", action: () => document.getElementById("btn-run").click() },
+      { id: "clear", name: "Clear Terminal", action: () => document.getElementById("btn-clear").click() },
+      { id: "toggle-error", name: "Toggle Error Checking", action: () => document.getElementById("btn-toggle-error").click() },
+      { id: "toggle-warning", name: "Toggle Warning Checking", action: () => document.getElementById("btn-toggle-warning").click() },
+      { id: "toggle-info", name: "Toggle Info Checking", action: () => document.getElementById("btn-toggle-info").click() },
+      { id: "toggle-theme", name: "Toggle Dark Mode", action: () => document.getElementById("btn-theme-toggle").click() },
+      { id: "open-file", name: "Open File", action: () => document.getElementById("btn-open").click() },
+      { id: "save-file", name: "Save File", action: () => document.getElementById("btn-save").click() }
+    ];
+
+    const commandPaletteInput = document.getElementById("command-palette-input");
+    const commandPaletteResults = document.getElementById("command-palette-results");
+
+    commandPaletteInput.addEventListener("input", function() {
+      const query = this.value.toLowerCase();
+      const filteredCommands = commands.filter(cmd => 
+        cmd.name.toLowerCase().includes(query)
+      );
+      
+      commandPaletteResults.innerHTML = "";
+      
+      filteredCommands.forEach(cmd => {
+        const item = document.createElement("div");
+        item.className = "command-palette-item";
+        item.textContent = cmd.name;
+        item.addEventListener("click", () => {
+          cmd.action();
+          document.getElementById("command-palette").classList.add("hidden");
+          commandPaletteInput.value = "";
         });
+        commandPaletteResults.appendChild(item);
+      });
+    });
 
-        function softInitUI() {
-            document.getElementById("stdout").textContent = "";
-            document.getElementById("stderr").textContent = "";
-        }
-    </script>
+    // Toggle linting options
+    document.getElementById("btn-toggle-error").addEventListener("click", function() {
+      this.classList.toggle("opacity-50");
+      if (window.lccLinter) {
+        window.lccLinter.toggleErrorChecking();
+      }
+      document.getElementById("hamburger-menu").classList.add("hidden");
+    });
+
+    document.getElementById("btn-toggle-warning").addEventListener("click", function() {
+      this.classList.toggle("opacity-50");
+      if (window.lccLinter) {
+        window.lccLinter.toggleWarningChecking();
+      }
+      document.getElementById("hamburger-menu").classList.add("hidden");
+    });
+
+    document.getElementById("btn-toggle-info").addEventListener("click", function() {
+      this.classList.toggle("opacity-50");
+      if (window.lccLinter) {
+        window.lccLinter.toggleInfoChecking();
+      }
+      document.getElementById("hamburger-menu").classList.add("hidden");
+    });
+  </script>
 </body>
 
 </html>

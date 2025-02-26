@@ -1,0 +1,5 @@
+node_modules
+.vscode-test/
+*.vsix
+
+WIP\ notes.txt

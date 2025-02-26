@@ -1,0 +1,98 @@
+{
+    "Function Body": {
+        "prefix": "function_body",
+        "body": [
+            "${1:f}:      push lr",
+            "        push fp",
+            "        mov fp, sp",
+            "        ${2:}",
+            "        mov sp, fp",
+            "        pop fp",
+            "        pop lr",
+            "        ret"
+        ],
+        "description": "Function boilerplate"
+    },
+    "Startup Code": {
+        "prefix": "startup_code",
+        "body": [
+            "         .start startup",
+            "startup:        bl main",
+            "                halt"
+        ],
+        "description": "Startup code"
+    },
+    "Hello World": {
+        "prefix": "hello_world",
+        "body": [
+            "startup:    bl main",
+            "            halt",
+            "                  ",
+            "main:       lea r0, msg",
+            "            sout r0",
+            "            nl",
+            "            ret",
+            "msg:       .string \"Hello, world!\""
+        ],
+        "description": "Hello World"
+    },
+    "While Loop": {
+        "prefix": "while_loop",
+        "body": [
+            "        mov r0, 0",
+            "@L0:    ; loop start",
+            "        cmp r0, 5",
+            "        bre @L1  ",
+            "        dout r0",
+            "        nl",
+            "        add r0, r0, 1",
+            "        br @L0",
+            "@L1:    ; loop end"
+        ],
+        "description": "While loop"
+    },
+    "If Else": {
+        "prefix": "if_else",
+        "body": [
+            "        mov r0, 4",
+            "        cmp r0, 5",
+            "        brgt @L0",
+            "        bre @L0",
+            "        ; if less than 5",
+            "        dout r0",
+            "        lea r0, lessThan5",
+            "        sout r0",
+            "        nl",
+            "        br @L1",
+            "@L0:    ; else",
+            "        dout r0",
+            "        lea r0, notLessThan5",
+            "        sout r0",
+            "@L1:    ; if-else end",
+            "lessThan5: .string \" is less than 5\"",
+            "notLessThan5: .string \" is not less than 5\""
+        ],
+        "description": "If else"
+    },
+    "Malloc": {
+        "prefix": "malloc",
+        "body": [
+            "; struct Point *p;",
+            "p:        .word 0",
+            "        ",
+            "        ; in calling function",
+            "        ; p = malloc(sizeof(struct Point));",
+            "        ; allocate 2 words",
+            "        mov r1, 2",
+            "        bl malloc",
+            "        st r0, p",
+            "        ",
+            "; below all other code",
+            "malloc:   ld r0, @avail    ; get address of next free block",
+            "          add r1, r0, r1   ; r1 holds size of allocation",
+            "          st r1, @avail    ; update @avail",
+            "          ret              ; return address of allocated block",
+            "@avail:  .word *+1"
+        ]
+    }
+}
