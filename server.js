@@ -9,13 +9,16 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files from the current directory
-app.use(express.static(__dirname));
 
-// Serve the index.html file for all routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+// Set security headers
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "credentialless"); // Less strict
+  next();
+})
+
+// Serve static files from the current directory
+app.use(express.static(".")); // Serve files from /public
 
 // Start the server
 app.listen(PORT, () => {

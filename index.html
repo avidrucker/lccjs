@@ -315,7 +315,7 @@ buffer:     .zero 10`;
 
     // Initialize worker
     let randomnumber = Math.floor(Math.random() * 1000000); 
-    let worker = new Worker("worker.js" + "?v=" + randomnumber);
+    let worker = new Worker("./worker.js" + "?v=" + randomnumber);
     window.worker = worker;
 
     // Check if SharedArrayBuffer is supported
@@ -427,7 +427,7 @@ buffer:     .zero 10`;
           this.value = '';
           
           // Display the input in the terminal
-          appendToTerminal(`> ${input}`, 'input');
+          //appendToTerminal(`> ${input}`, 'input');
           
           // Send input to worker
           if (inputView && indexView) {

@@ -92,27 +92,48 @@ function processTerminalInput(input) {
   }
 }
 
+function appendToLastTerminalLine(text) {
+  const terminal = document.getElementById('terminal');
+  if (!terminal) return;
+
+  // if there are no terminal-lines, create a new one
+  if (terminal.childElementCount === 0) {
+    terminal.appendChild(createTerminalLine(text));
+    return;
+  }
+
+  const lastLine = terminal.lastElementChild;
+  if (lastLine && lastLine.classList.contains('terminal-line')) {
+    lastLine.textContent += text;
+  }
+}
+
+function createTerminalLine(text, className = '') {
+  const line = document.createElement('div');
+  line.className = `terminal-line ${className}`;
+  line.textContent = text;
+  return line;
+}
+
 // Append text to the terminal
 function appendToTerminal(text, className = '') {
   const terminal = document.getElementById('terminal');
   if (!terminal) return;
   
-  // Handle newlines in the text
-  if (text.includes('\n')) {
+  if (className === 'input') {
+    terminal.appendChild(createTerminalLine(text, className));
+  } else if (text.includes('\n')) { 
     const lines = text.split('\n');
+    appendToLastTerminalLine(lines.shift());
+
     lines.forEach(line => {
-      if (line.trim() !== '') {
-        appendToTerminal(line, className);
-      }
+      terminal.appendChild(createTerminalLine(line, className));
+      
     });
-    return;
+  } else {
+    appendToLastTerminalLine(text);
   }
-  
-  const line = document.createElement('div');
-  line.className = className ? `terminal-line ${className}` : 'terminal-line';
-  line.textContent = text;
-  
-  terminal.appendChild(line);
+
   terminal.scrollTop = terminal.scrollHeight;
 }
 
