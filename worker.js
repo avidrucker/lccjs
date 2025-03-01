@@ -60,6 +60,14 @@ self.waitForInput = function waitForInput() {
     }
 };
 
+self.fsWrapperStorage.subscribe((type, key, value) => {
+    console.log("Storage event:", type, key, value);
+    if (type === "set") {
+        // sync storage to main thread on every change
+        self.postMessage({ type: "storage", data: self.fsWrapperStorage.jsonify() });
+    }
+});
+
 // Handle messages from the main thread
 self.onmessage = function(event) {
     try {
@@ -91,19 +99,14 @@ self.onmessage = function(event) {
             const fileName = filePath.split('.').slice(0, -1).join('.');
 
             console.log("Running:", fileName);
+
+            // Clear input buffer
+            while(self.inputBuffer.shift());
             
             // Clear previous outputs
             delete self.fsWrapperStorage[fileName + ".bst"];
             delete self.fsWrapperStorage[fileName + ".lst"];
             delete self.fsWrapperStorage[fileName + ".e"];
-
-            self.fsWrapperStorage.subscribe((type, key, value) => {
-                console.log("Storage event:", type, key, value);
-                if (type === "set") {
-                    // sync storage to main thread on every change
-                    self.postMessage({ type: "storage", data: self.fsWrapperStorage.jsonify() });
-                }
-            });
             
             self.fsWrapperStorage[filePath] = code;
             self.fsWrapperStorage["name.nnn"] = name || "noname";
