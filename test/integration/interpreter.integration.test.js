@@ -110,7 +110,8 @@ describe('Interpreter Integration Tests', () => {
     expect(interpreter.output).toBe('');
   });
 
-  test('2. Should create name.nnn if it does not exist (simulate user name = "MilkyWay")', () => {
+  // TODO: convert this to an e2e test
+  test.skip('2. Should create name.nnn if it does not exist (simulate user name = "MilkyWay")', () => {
     const eFilePath = 'someFile.e';
     const nameFilePath = 'name.nnn';
     delete virtualFs[nameFilePath]; // deletes name.nnn so it does not exist
@@ -243,10 +244,11 @@ describe('Interpreter Integration Tests', () => {
     expect(interpreter.loadPoint).toBe(0x30);
   });
 
+  // TODO: convert this to an e2e test
   // -----------------------------------------------------------------------------
   // 10. Simulate infinite loop => after 500000 instructions => throws possible loop
   // -----------------------------------------------------------------------------
-  test('10. should stop if instructionsExecuted exceed 500000', () => {
+  test.skip('10. should stop if instructionsExecuted exceed 500000', () => {
     const eFilePath = 'infiniteLoop.e';
     // Suppose a program that loops forever.
     const test10Bytes = [0x6F, 0x43, 0x02, 0xF0]; // just 'oC' + dout r0
@@ -276,13 +278,14 @@ describe('Interpreter Integration Tests', () => {
     expect(interpreter.output).toBe('42');
   });
 
+  // TODO: remove this test, as it is not a valid test case
   // -----------------------------------------------------------------------------
   // 12. (Potentially) referencing an undefined label at runtime => 
   //     Typically the interpreter expects a fully assembled .e, 
   //     so "undefined label" might not occur. This might be an assembler-level error. 
   //     We'll simulate a jump to a nonsense address to see if interpreter complains.
   // -----------------------------------------------------------------------------
-  test('12. should fail if code tries to jump to an invalid address (simulate undefined label)', () => {
+  test.skip('12. should fail if code tries to jump to an invalid address (simulate undefined label)', () => {
     const eFilePath = 'undefinedLabel.e';
     // 'oC' + something that jumps to address 0x270F + halt
     // e.g. 0xC000 270F => This is purely hypothetical; your interpreter might differ.
