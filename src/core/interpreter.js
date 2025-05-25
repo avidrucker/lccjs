@@ -45,6 +45,7 @@ class Interpreter {
     this.headerLines = [];
     this.instructionsCap = 500000;     // Limit the number of instructions to prevent infinite loops
     this.debugMode = false;            // Debug mode flag
+    this.hasJumped = false;            // Flag to track jump/branch instruction executions 
   }
 
   main(args) {
@@ -357,10 +358,17 @@ class Interpreter {
     this.trapvec = this.ir & 0xFF; // trap vector (bits 7-0)
 
     if (this.debugMode) {
+      // TODO: decide how to handle e2e test case
+      // to quit debug mode
+      // if (isTestMode) {
+      //   this.running = false;
+      //   return;
+      // }
       this.debug();
     }
 
     const prevRegs = this.r.slice(); // saves r0–r7
+    const prevPC = this.pc; // saves the previous PC value
 
     // Execute instruction
     switch (this.opcode) {
@@ -418,7 +426,7 @@ class Interpreter {
     }
 
     // if any registers changed or flags were set, print them out
-    if (this.debugMode) {
+    if (this.debugMode && this.running) {
       let regsOrFlagsOutput = '';
 
       for (let i = 0; i < 8; i++) {
@@ -437,10 +445,18 @@ class Interpreter {
         if (regsOrFlagsOutput.trim() !== '') {
           regsOrFlagsOutput += ' '; // a 1 space inbetween regs and flags
         } else {
-          regsOrFlagsOutput += '     '; // add 5 spaces to padd flags
+          regsOrFlagsOutput += '     '; // add 5 spaces to pad flags
         }
         regsOrFlagsOutput += `<NZCV = ${n}${z}${c}${v}>`;
         this.flagsSet = false; // Reset the flag set
+      }
+
+      if (this.hasJumped) {
+        if (regsOrFlagsOutput.trim() === '') {
+          regsOrFlagsOutput += '     '; // add 5 spaces to pad flags
+        }
+        regsOrFlagsOutput += `<pc = ${prevPC.toString(16)}/${this.pc.toString(16)}>`;
+        this.hasJumped = false; // Reset the jump flag
       }
 
       if (regsOrFlagsOutput.trim() !== '') {
@@ -562,11 +578,18 @@ class Interpreter {
     const line = this.pc - 1;
     const source = this.mem[line] || '(unknown)';
     const mnemonic = this.hexToMnemonic(this.ir);
-    process.stdout.write(`${mnemonic.toLowerCase()}>>>`);
-    // pause and wait for user input, press enter to continue
-    this.readCharFromStdin();
-    const state = this.formatDebugState(line, source);
-    process.stdout.write(`${state}     ; ${mnemonic.toLowerCase()} \n`);
+    process.stdout.write(`${mnemonic.toLowerCase()}>>> `); // we don't want a newline here
+
+    const { inputLine, isSimulated } = this.readLineFromStdin();
+
+    const trimmedInput = inputLine.trim().toLowerCase();
+    if (trimmedInput === 'q') {
+      // this.writeDebugOutput('Exiting debugger...');
+      this.running = false;
+    } else {
+      const state = this.formatDebugState(line, source);
+      this.writeDebugOutput(`${state}     ; ${mnemonic.toLowerCase()} \n`);
+    }
   }
 
   // cmp    1000  000  sr1 000 sr2   nzcv sr1 - sr2 (set flags) 
@@ -624,6 +647,7 @@ class Interpreter {
     if (conditionMet) {
       this.pc = (this.pc + this.pcoffset9) & 0xFFFF;
     }
+    this.hasJumped = conditionMet; // Set flag to indicate a jump/branch was executed
   }
 
   executeCase10() {
@@ -817,6 +841,7 @@ class Interpreter {
 
   executeJMP() {
     this.pc = (this.r[this.baser] + this.offset6) & 0xFFFF;
+    this.hasJumped = true; // Set flag to indicate a jump was executed
   }
 
   executeBLorBLR() {
@@ -829,6 +854,7 @@ class Interpreter {
       this.r[7] = this.pc;
       this.pc = (this.r[this.baser] + this.offset6) & 0xFFFF;
     }
+    this.hasJumped = true; // Set flag to indicate a jump was executed
   }
 
   executeSOUT() {
