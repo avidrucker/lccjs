@@ -319,7 +319,15 @@ let anyDockerNeeded = false;
 let dockerNeededForTest = new Map();
 
 describe('Linker E2E Tests', () => {
+
   beforeAll(() => {
+
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'info').mockImplementation(() => {});
+    jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+
     const nameFile = path.join(__dirname, '../../demos/name.nnn');
     fs.writeFileSync(nameFile, 'Billy, Bob J\n');
 
@@ -340,6 +348,12 @@ describe('Linker E2E Tests', () => {
   }, 60000);
 
   afterAll(() => {
+    console.log.mockRestore();
+    console.warn.mockRestore();
+    console.error.mockRestore();
+    console.info.mockRestore();
+    process.stdout.write.mockRestore();
+
     if (dockerController.isContainerRunning()) {
       dockerController.stopContainer();
     }

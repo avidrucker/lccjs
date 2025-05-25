@@ -23,6 +23,22 @@ describe('Assembler', () => {
   // We will rebuild this for each test.
   let virtualFs;
 
+  beforeAll(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'info').mockImplementation(() => {});
+    jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    console.log.mockRestore();
+    console.warn.mockRestore();
+    console.error.mockRestore();
+    console.info.mockRestore();
+    process.stdout.write.mockRestore();
+  });
+
   beforeEach(() => {
     // Reset all mocks before each test
     jest.clearAllMocks();
@@ -104,22 +120,6 @@ describe('Assembler', () => {
 
     // Create a new Assembler instance for each test
     assembler = new Assembler();
-  });
-
-  beforeAll(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    jest.spyOn(console, 'info').mockImplementation(() => {});
-    jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
-  });
-
-  afterAll(() => {
-    console.log.mockRestore();
-    console.warn.mockRestore();
-    console.error.mockRestore();
-    console.info.mockRestore();
-    process.stdout.write.mockRestore();
   });
 
   // -------------------------------------------------------------------------
