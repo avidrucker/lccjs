@@ -528,11 +528,11 @@ class Interpreter {
     const line = this.pc - 1;
     const source = this.mem[line] || '(unknown)';
     const mnemonic = this.hexToMnemonic(this.ir);
-    this.writeOutput(`${mnemonic.toLowerCase()}>>>`);
+    process.stdout.write(`${mnemonic.toLowerCase()}>>>`);
     // pause and wait for user input, press enter to continue
     this.readCharFromStdin();
     const state = this.formatDebugState(line, source);
-    this.writeOutput(`${state}    ; ${mnemonic.toLowerCase()} \n`);
+    process.stdout.write(`${state}    ; ${mnemonic.toLowerCase()} \n`);
   }
 
   // cmp    1000  000  sr1 000 sr2   nzcv sr1 - sr2 (set flags) 
@@ -970,6 +970,10 @@ class Interpreter {
     }
   }
 
+  writeDebugOutput(message) {
+    process.stdout.write(message + "\n");
+    this.output += message;
+  }
 
   writeOutput(message) {
     process.stdout.write(message);
@@ -992,7 +996,7 @@ class Interpreter {
         }
         const doutStr = `${value}`;
         if(this.debugMode) {
-          this.writeOutput(`${doutStr}\n`);
+          this.writeDebugOutput(doutStr);
         } else {
           this.writeOutput(doutStr);
         }
@@ -1001,7 +1005,7 @@ class Interpreter {
         // print as unsigned decimal
         const udoutStr = `${this.r[this.sr] & 0xFFFF}`;
         if(this.debugMode) {
-          this.writeOutput(`${udoutStr}\n`);
+          this.writeDebugOutput(udoutStr);
         } else {
           this.writeOutput(udoutStr);
         }
@@ -1010,7 +1014,7 @@ class Interpreter {
         // print as hexadecimal
         const houtStr = this.r[this.sr].toString(16).toLowerCase();
         if(this.debugMode) {
-          this.writeOutput(`${houtStr}\n`);
+          this.writeDebugOutput(houtStr);
         } else {
           this.writeOutput(houtStr);
         }
@@ -1019,7 +1023,7 @@ class Interpreter {
         // print as ASCII character
         const aoutChar = String.fromCharCode(this.r[this.sr] & 0xFF);
         if(this.debugMode) {
-          this.writeOutput(`${aoutChar}\n`);
+          this.writeDebugOutput(aoutChar);
         } else {
           this.writeOutput(aoutChar);
         }
@@ -1028,7 +1032,7 @@ class Interpreter {
         // print string at address
         this.executeSOUT();
         if(this.debugMode) {
-          this.writeOutput(newline);
+          this.writeDebugOutput("");
         }
         break;
       case 7: // DIN
