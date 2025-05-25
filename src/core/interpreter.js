@@ -644,9 +644,24 @@ class Interpreter {
         this.r[6] = (this.r[6] + 1) & 0xFFFF;
         break;
       /*
-      The shift instructions move the contents of the source register either left or right, depending on the specific instruction. The first operand in a shift assembly language instruction specifies the register to be shifted, while the second operand indicates the shift count, which is the number of positions to shift. The shift count must be a value between 0 and 15, and if it is not provided, it defaults to 1.
+      The shift instructions move the contents of the source register either 
+      left or right, depending on the specific instruction. The first operand 
+      in a shift assembly language instruction specifies the register to be 
+      shifted, while the second operand indicates the shift count, which is 
+      the number of positions to shift. The shift count must be a value 
+      between 0 and 15, and if it is not provided, it defaults to 1.
 
-      The SRL (shift right logical) instruction shifts bits to the right, inserting a 0 on the left to ensure the sign bit becomes 0, regardless of its previous state. The SRA (shift right arithmetic) instruction also shifts bits to the right but preserves the sign bit by copying it into the leftmost position. The SLL (shift left logical) instruction shifts bits to the left, inserting a 0 on the right. For all shift instructions, the c flag is set to the last bit shifted out of the register, and the n and z flags are updated to reflect the state of the register after the shift. For instance, the instruction srl r1, 1 shifts the contents of r1 one position to the right, inserting a 0 on the left.
+      The SRL (shift right logical) instruction shifts bits to the right, 
+      inserting a 0 on the left to ensure the sign bit becomes 0, regardless 
+      of its previous state. The SRA (shift right arithmetic) instruction 
+      also shifts bits to the right but preserves the sign bit by copying it 
+      into the leftmost position. The SLL (shift left logical) instruction 
+      shifts bits to the left, inserting a 0 on the right. For all shift 
+      instructions, the c flag is set to the last bit shifted out of the 
+      register, and the n and z flags are updated to reflect the state of 
+      the register after the shift. For instance, the instruction srl r1, 1
+       shifts the contents of r1 one position to the right, inserting a 0 on 
+       the left.
       */
       case 2: // SRL
         this.c = (this.r[this.sr] >> (ct - 1)) & 1; // Store the last bit shifted out
