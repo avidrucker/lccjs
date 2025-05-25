@@ -455,15 +455,15 @@ class Interpreter {
     // Note: This is a safety feature to prevent infinite loops
     // 2nd Note: This matches exactly the # of instructions 
     // permitted to run by from the lcc before entering the debugger
-    if (this.instructionsExecuted >= this.instructionsCap) {
+    if (this.instructionsExecuted >= this.instructionsCap && !this.debugMode) {
       console.error("Possible infinite loop");
-      this.running = false;
-      // return; // Exit the step method early
-      fatalExit("Possible infinite loop", 1);
-      //// TODO: after implementing symbolic debugger, this should not exit the program
-      ////       and should instead initiate symbolic debugger execution
-      //// TODO: implement a custom LCC.js behavior to set flags to toggle (1) potential
-      ////       infinite loop detection, and (2) automatic initiation of symbolic debugger
+      // this.running = false;
+      // fatalExit("Possible infinite loop", 1);
+      // instead of exiting the program, this condition instead 
+      // initiates the execution of the symbolic debugger
+      this.debugMode = true;
+      //// TODO: implement a custom LCC.js behavior to set flags to toggle 
+      ////       off potential infinite loop detection
     }
 
     // Track max stack size
