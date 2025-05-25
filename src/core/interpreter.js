@@ -532,7 +532,7 @@ class Interpreter {
     // pause and wait for user input, press enter to continue
     this.readCharFromStdin();
     const state = this.formatDebugState(line, source);
-    process.stdout.write(`${state}    ; ${mnemonic.toLowerCase()} \n`);
+    process.stdout.write(`${state}     ; ${mnemonic.toLowerCase()} \n`);
   }
 
   // cmp    1000  000  sr1 000 sr2   nzcv sr1 - sr2 (set flags) 
