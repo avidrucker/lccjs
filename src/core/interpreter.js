@@ -360,6 +360,8 @@ class Interpreter {
       this.debug();
     }
 
+    const prevRegs = this.r.slice(); // saves r0–r7
+
     // Execute instruction
     switch (this.opcode) {
       case 0: // BR
@@ -413,6 +415,38 @@ class Interpreter {
       default:
         this.error(`Unknown opcode: ${this.opcode}`);
         this.running = false;
+    }
+
+    // if any registers changed or flags were set, print them out
+    if (this.debugMode) {
+      let regsOrFlagsOutput = '';
+
+      for (let i = 0; i < 8; i++) {
+        const oldVal = prevRegs[i];
+        const newVal = this.r[i];
+        if (oldVal !== newVal) {
+          const hexOld = oldVal.toString(16).padStart(1, '0');
+          const hexNew = newVal.toString(16).padStart(1, '0');
+          regsOrFlagsOutput += `     <r${i} = ${hexOld}/${hexNew}>`;
+        }
+      }
+    
+      const [n, z, c, v] = [this.n, this.z, this.c, this.v];
+      
+      if (this.flagsSet) {
+        if (regsOrFlagsOutput.trim() !== '') {
+          regsOrFlagsOutput += ' '; // a 1 space inbetween regs and flags
+        } else {
+          regsOrFlagsOutput += '     '; // add 5 spaces to padd flags
+        }
+        regsOrFlagsOutput += `<NZCV = ${n}${z}${c}${v}>`;
+        this.flagsSet = false; // Reset the flag set
+      }
+
+      if (regsOrFlagsOutput.trim() !== '') {
+        this.writeDebugOutput(regsOrFlagsOutput);
+      }
+
     }
 
     this.instructionsExecuted++;
@@ -1122,6 +1156,7 @@ class Interpreter {
   }
 
   setNZ(value) {
+    this.flagsSet = true; // Set the flag set indicator
     value = this.toSigned16(value);
     if (value < 0) {
         this.n = 1;
@@ -1136,6 +1171,7 @@ class Interpreter {
   }
 
   setCV(sum, x, y) {
+    this.flagsSet = true; // Set the flag set indicator
     // Convert values to signed 16-bit integers
     sum = this.toSigned16(sum);
     x = this.toSigned16(x);
