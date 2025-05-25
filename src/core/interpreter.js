@@ -44,6 +44,7 @@ class Interpreter {
     this.generateStats = false;        // Whether to generate .lst and .bst files
     this.headerLines = [];
     this.instructionsCap = 500000;     // Limit the number of instructions to prevent infinite loops
+    this.debugMode = false;            // Debug mode flag
   }
 
   main(args) {
@@ -61,8 +62,11 @@ class Interpreter {
       let arg = args[i];
       if (arg.startsWith('-')) {
         // Option
+
         if (arg === '-nostats') {
           this.generateStats = false;
+        } else if (arg === '-d') {
+          this.debugMode = true;
         } else if (arg.startsWith('-L')) {
           // Load point option
           let loadPointStr = arg.substring(2);
@@ -352,6 +356,10 @@ class Interpreter {
     this.eopcode = this.ir & 0x1F; // eopcode (bits 4-0)
     this.trapvec = this.ir & 0xFF; // trap vector (bits 7-0)
 
+    if (this.debugMode) {
+      this.debug();
+    }
+
     // Execute instruction
     switch (this.opcode) {
       case 0: // BR
@@ -430,6 +438,101 @@ class Interpreter {
     if (stackSize > this.maxStackSize) {
       this.maxStackSize = stackSize;
     }
+  }
+
+  // convert source hex to matching mnemonic
+  hexToMnemonic(hex) {
+    const mnemonics = {
+      0x0000: 'BR',
+      0x1000: 'ADD',
+      0x2000: 'LD',
+      0x3000: 'ST',
+      0x4000: 'BL',
+      0x5000: 'AND',
+      0x6000: 'LDR',
+      0x7000: 'STR',
+      0x8000: 'CMP',
+      0x9000: 'NOT',
+      0xA000: 'CASE10',
+      0xB000: 'SUB',
+      0xC000: 'JMP/RET',
+      0xD000: 'MVI',
+      0xE000: 'LEA',
+      0xF000: 'TRAP'
+    };
+    let mnemonic = mnemonics[hex & 0xF000] || `Unknown(${hex.toString(16)})`;
+    if (mnemonic === 'CASE10') {
+      // Handle the extended opcode separately
+      const extendedMnemonics = {
+        0x0: 'PUSH',
+        0x1: 'POP',
+        0x2: 'SRL',
+        0x3: 'SRA',
+        0x4: 'SLL',
+        0x5: 'ROL',
+        0x6: 'ROR',
+        0x7: 'MUL',
+        0x8: 'DIV',
+        0x9: 'REM',
+        0xA: 'OR',
+        0xB: 'XOR',
+        0xC: 'MVR',
+        0xD: 'SEXT'
+      };
+      mnemonic = extendedMnemonics[hex & 0x000F] || `Unknown(${hex.toString(16)})`;
+    }
+    
+    if(mnemonic === 'TRAP') {
+      const trapMnemonics = {
+        0x00: 'HALT',
+        0x01: 'NL',
+        0x02: 'DOUT',
+        0x03: 'UDOUT',
+        0x04: 'HOUT',
+        0x05: 'AOUT',
+        0x06: 'SOUT',
+        0x07: 'DIN',
+        0x08: 'HIN',
+        0x09: 'AIN',
+        0x0A: 'SIN',
+        0x0B: 'M',
+        0x0C: 'R',
+        0x0D: 'S',
+        0x0E: 'BP',
+      }
+      mnemonic = trapMnemonics[hex & 0x000F] || `Unknown(${hex.toString(16)})`;
+    }
+
+    if(mnemonic === 'BR') {
+      const brMnemonics = {
+        0x00: 'BRZ',
+        0x01: 'BRNZ',
+        0x02: 'BRN',
+        0x03: 'BRP',
+        0x04: 'BRLT',
+        0x05: 'BRGT',
+        0x06: 'BRC',
+        0x07: 'BR'
+      };
+      mnemonic = brMnemonics[this.code] || `Unknown(${hex.toString(16)})`;
+    }
+    
+    return mnemonic;
+  }
+
+  formatDebugState(line, source) {
+    return `${line.toString(16).padStart(3, ' ')}: ${source.toString(16).padStart(4, '0')}`;
+  }
+
+  debug() {
+    const line = this.pc - 1;
+    const source = this.mem[line] || '(unknown)';
+    const mnemonic = this.hexToMnemonic(this.ir);
+    this.writeOutput(`${mnemonic.toLowerCase()}>>>`);
+    // pause and wait for user input, press enter to continue
+    this.readCharFromStdin();
+    const state = this.formatDebugState(line, source);
+    this.writeOutput(`${state}    ; ${mnemonic.toLowerCase()} \n`);
   }
 
   // cmp    1000  000  sr1 000 sr2   nzcv sr1 - sr2 (set flags) 
@@ -888,26 +991,45 @@ class Interpreter {
           value -= 0x10000;
         }
         const doutStr = `${value}`;
-        this.writeOutput(doutStr);
+        if(this.debugMode) {
+          this.writeOutput(`${doutStr}\n`);
+        } else {
+          this.writeOutput(doutStr);
+        }
         break;
       case 3: // UDOUT
         // print as unsigned decimal
         const udoutStr = `${this.r[this.sr] & 0xFFFF}`;
-        this.writeOutput(udoutStr);
+        if(this.debugMode) {
+          this.writeOutput(`${udoutStr}\n`);
+        } else {
+          this.writeOutput(udoutStr);
+        }
         break;
       case 4: // HOUT
         // print as hexadecimal
         const houtStr = this.r[this.sr].toString(16).toLowerCase();
-        this.writeOutput(houtStr);
+        if(this.debugMode) {
+          this.writeOutput(`${houtStr}\n`);
+        } else {
+          this.writeOutput(houtStr);
+        }
         break;
       case 5: // AOUT
         // print as ASCII character
         const aoutChar = String.fromCharCode(this.r[this.sr] & 0xFF);
-        this.writeOutput(aoutChar);
+        if(this.debugMode) {
+          this.writeOutput(`${aoutChar}\n`);
+        } else {
+          this.writeOutput(aoutChar);
+        }
         break;
       case 6: // SOUT
         // print string at address
         this.executeSOUT();
+        if(this.debugMode) {
+          this.writeOutput(newline);
+        }
         break;
       case 7: // DIN
         while (true) {
