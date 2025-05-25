@@ -740,7 +740,6 @@ class Interpreter {
   executeLD() {
     const address = (this.pc + this.pcoffset9) & 0xFFFF;
     this.r[this.dr] = this.mem[address];
-    this.setNZ(this.r[this.dr]);
   }
 
   executeST() {
@@ -751,27 +750,22 @@ class Interpreter {
 
   executeMVI() {
     this.r[this.dr] = this.imm9;
-    this.setNZ(this.r[this.dr]);
   }
 
   executeLEA() {
     this.r[this.dr] = (this.pc + this.pcoffset9) & 0xFFFF;
   }
 
-  ////
   executeLDR() {
     const address = (this.r[this.baser] + this.offset6) & 0xFFFF;
     this.r[this.dr] = this.mem[address];
-    this.setNZ(this.r[this.dr]);
   }
 
-  ////
   executeSTR() {
     const address = (this.r[this.baser] + this.offset6) & 0xFFFF;
     this.mem[address] = this.r[this.sr];
   }
 
-  ////
   executeJMP() {
     this.pc = (this.r[this.baser] + this.offset6) & 0xFFFF;
   }
