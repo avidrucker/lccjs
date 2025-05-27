@@ -472,12 +472,20 @@ class Interpreter {
     // 2nd Note: This matches exactly the # of instructions 
     // permitted to run by from the lcc before entering the debugger
     if (this.instructionsExecuted >= this.instructionsCap && !this.debugMode) {
-      console.error("Possible infinite loop");
-      // this.running = false;
-      // fatalExit("Possible infinite loop", 1);
+      
       // instead of exiting the program, this condition instead 
       // initiates the execution of the symbolic debugger
-      this.debugMode = true;
+      // detect if the program is running in the terminal
+      if (process.stdin.isTTY) {
+        // If running in the terminal, we can trigger debug mode
+        console.error("Possible infinite loop");
+        this.debugMode = true;
+      } else {
+        // else, terminate the program
+        this.running = false;
+        fatalExit("Possible infinite loop", 1);
+      }
+      
       //// TODO: implement a custom LCC.js behavior to set flags to toggle 
       ////       off potential infinite loop detection
     }
