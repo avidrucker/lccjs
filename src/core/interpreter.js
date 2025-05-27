@@ -44,6 +44,8 @@ class Interpreter {
     this.generateStats = false;        // Whether to generate .lst and .bst files
     this.headerLines = [];
     this.instructionsCap = 500000;     // Limit the number of instructions to prevent infinite loops
+    this.debugMode = false;            // Debug mode flag
+    this.hasJumped = false;            // Flag to track jump/branch instruction executions 
   }
 
   main(args) {
@@ -61,8 +63,11 @@ class Interpreter {
       let arg = args[i];
       if (arg.startsWith('-')) {
         // Option
+
         if (arg === '-nostats') {
           this.generateStats = false;
+        } else if (arg === '-d') {
+          this.debugMode = true;
         } else if (arg.startsWith('-L')) {
           // Load point option
           let loadPointStr = arg.substring(2);
@@ -352,6 +357,19 @@ class Interpreter {
     this.eopcode = this.ir & 0x1F; // eopcode (bits 4-0)
     this.trapvec = this.ir & 0xFF; // trap vector (bits 7-0)
 
+    if (this.debugMode) {
+      // TODO: decide how to handle e2e test case
+      // to quit debug mode
+      // if (isTestMode) {
+      //   this.running = false;
+      //   return;
+      // }
+      this.debug();
+    }
+
+    const prevRegs = this.r.slice(); // saves r0–r7
+    const prevPC = this.pc; // saves the previous PC value
+
     // Execute instruction
     switch (this.opcode) {
       case 0: // BR
@@ -407,21 +425,69 @@ class Interpreter {
         this.running = false;
     }
 
+    // if any registers changed or flags were set, print them out
+    if (this.debugMode && this.running) {
+      let regsOrFlagsOutput = '';
+
+      for (let i = 0; i < 8; i++) {
+        const oldVal = prevRegs[i];
+        const newVal = this.r[i];
+        if (oldVal !== newVal) {
+          const hexOld = oldVal.toString(16).padStart(1, '0');
+          const hexNew = newVal.toString(16).padStart(1, '0');
+          regsOrFlagsOutput += `     <r${i} = ${hexOld}/${hexNew}>`;
+        }
+      }
+    
+      const [n, z, c, v] = [this.n, this.z, this.c, this.v];
+      
+      if (this.flagsSet) {
+        if (regsOrFlagsOutput.trim() !== '') {
+          regsOrFlagsOutput += ' '; // a 1 space inbetween regs and flags
+        } else {
+          regsOrFlagsOutput += '     '; // add 5 spaces to pad flags
+        }
+        regsOrFlagsOutput += `<NZCV = ${n}${z}${c}${v}>`;
+        this.flagsSet = false; // Reset the flag set
+      }
+
+      if (this.hasJumped) {
+        if (regsOrFlagsOutput.trim() === '') {
+          regsOrFlagsOutput += '     '; // add 5 spaces to pad flags
+        }
+        regsOrFlagsOutput += `<pc = ${prevPC.toString(16)}/${this.pc.toString(16)}>`;
+        this.hasJumped = false; // Reset the jump flag
+      }
+
+      if (regsOrFlagsOutput.trim() !== '') {
+        this.writeDebugOutput(regsOrFlagsOutput);
+      }
+
+    }
+
     this.instructionsExecuted++;
 
     // Check if the instruction limit has been reached
     // Note: This is a safety feature to prevent infinite loops
     // 2nd Note: This matches exactly the # of instructions 
     // permitted to run by from the lcc before entering the debugger
-    if (this.instructionsExecuted >= this.instructionsCap) {
-      console.error("Possible infinite loop");
-      this.running = false;
-      // return; // Exit the step method early
-      fatalExit("Possible infinite loop", 1);
-      //// TODO: after implementing symbolic debugger, this should not exit the program
-      ////       and should instead initiate symbolic debugger execution
-      //// TODO: implement a custom LCC.js behavior to set flags to toggle (1) potential
-      ////       infinite loop detection, and (2) automatic initiation of symbolic debugger
+    if (this.instructionsExecuted >= this.instructionsCap && !this.debugMode) {
+      
+      // instead of exiting the program, this condition instead 
+      // initiates the execution of the symbolic debugger
+      // detect if the program is running in the terminal
+      if (process.stdin.isTTY) {
+        // If running in the terminal, we can trigger debug mode
+        console.error("Possible infinite loop");
+        this.debugMode = true;
+      } else {
+        // else, terminate the program
+        this.running = false;
+        fatalExit("Possible infinite loop", 1);
+      }
+      
+      //// TODO: implement a custom LCC.js behavior to set flags to toggle 
+      ////       off potential infinite loop detection
     }
 
     // Track max stack size
@@ -429,6 +495,108 @@ class Interpreter {
     let stackSize = sp === 0 ? 0 : MAX_MEMORY - sp;
     if (stackSize > this.maxStackSize) {
       this.maxStackSize = stackSize;
+    }
+  }
+
+  // convert source hex to matching mnemonic
+  hexToMnemonic(hex) {
+    const mnemonics = {
+      0x0000: 'BR',
+      0x1000: 'ADD',
+      0x2000: 'LD',
+      0x3000: 'ST',
+      0x4000: 'BL',
+      0x5000: 'AND',
+      0x6000: 'LDR',
+      0x7000: 'STR',
+      0x8000: 'CMP',
+      0x9000: 'NOT',
+      0xA000: 'CASE10',
+      0xB000: 'SUB',
+      0xC000: 'JMP/RET',
+      0xD000: 'MVI',
+      0xE000: 'LEA',
+      0xF000: 'TRAP'
+    };
+    let mnemonic = mnemonics[hex & 0xF000] || `Unknown(${hex.toString(16)})`;
+    if (mnemonic === 'CASE10') {
+      // Handle the extended opcode separately
+      const extendedMnemonics = {
+        0x0: 'PUSH',
+        0x1: 'POP',
+        0x2: 'SRL',
+        0x3: 'SRA',
+        0x4: 'SLL',
+        0x5: 'ROL',
+        0x6: 'ROR',
+        0x7: 'MUL',
+        0x8: 'DIV',
+        0x9: 'REM',
+        0xA: 'OR',
+        0xB: 'XOR',
+        0xC: 'MVR',
+        0xD: 'SEXT'
+      };
+      mnemonic = extendedMnemonics[hex & 0x000F] || `Unknown(${hex.toString(16)})`;
+    }
+    
+    if(mnemonic === 'TRAP') {
+      const trapMnemonics = {
+        0x00: 'HALT',
+        0x01: 'NL',
+        0x02: 'DOUT',
+        0x03: 'UDOUT',
+        0x04: 'HOUT',
+        0x05: 'AOUT',
+        0x06: 'SOUT',
+        0x07: 'DIN',
+        0x08: 'HIN',
+        0x09: 'AIN',
+        0x0A: 'SIN',
+        0x0B: 'M',
+        0x0C: 'R',
+        0x0D: 'S',
+        0x0E: 'BP',
+      }
+      mnemonic = trapMnemonics[hex & 0x000F] || `Unknown(${hex.toString(16)})`;
+    }
+
+    if(mnemonic === 'BR') {
+      const brMnemonics = {
+        0x00: 'BRZ',
+        0x01: 'BRNZ',
+        0x02: 'BRN',
+        0x03: 'BRP',
+        0x04: 'BRLT',
+        0x05: 'BRGT',
+        0x06: 'BRC',
+        0x07: 'BR'
+      };
+      mnemonic = brMnemonics[this.code] || `Unknown(${hex.toString(16)})`;
+    }
+    
+    return mnemonic;
+  }
+
+  formatDebugState(line, source) {
+    return `${line.toString(16).padStart(3, ' ')}: ${source.toString(16).padStart(4, '0')}`;
+  }
+
+  debug() {
+    const line = this.pc - 1;
+    const source = this.mem[line] || '(unknown)';
+    const mnemonic = this.hexToMnemonic(this.ir);
+    process.stdout.write(`${mnemonic.toLowerCase()}>>> `); // we don't want a newline here
+
+    const { inputLine, isSimulated } = this.readLineFromStdin();
+
+    const trimmedInput = inputLine.trim().toLowerCase();
+    if (trimmedInput === 'q') {
+      // this.writeDebugOutput('Exiting debugger...');
+      this.running = false;
+    } else {
+      const state = this.formatDebugState(line, source);
+      this.writeDebugOutput(`${state}     ; ${mnemonic.toLowerCase()} \n`);
     }
   }
 
@@ -487,6 +655,7 @@ class Interpreter {
     if (conditionMet) {
       this.pc = (this.pc + this.pcoffset9) & 0xFFFF;
     }
+    this.hasJumped = conditionMet; // Set flag to indicate a jump/branch was executed
   }
 
   executeCase10() {
@@ -507,9 +676,24 @@ class Interpreter {
         this.r[6] = (this.r[6] + 1) & 0xFFFF;
         break;
       /*
-      The shift instructions move the contents of the source register either left or right, depending on the specific instruction. The first operand in a shift assembly language instruction specifies the register to be shifted, while the second operand indicates the shift count, which is the number of positions to shift. The shift count must be a value between 0 and 15, and if it is not provided, it defaults to 1.
+      The shift instructions move the contents of the source register either 
+      left or right, depending on the specific instruction. The first operand 
+      in a shift assembly language instruction specifies the register to be 
+      shifted, while the second operand indicates the shift count, which is 
+      the number of positions to shift. The shift count must be a value 
+      between 0 and 15, and if it is not provided, it defaults to 1.
 
-      The SRL (shift right logical) instruction shifts bits to the right, inserting a 0 on the left to ensure the sign bit becomes 0, regardless of its previous state. The SRA (shift right arithmetic) instruction also shifts bits to the right but preserves the sign bit by copying it into the leftmost position. The SLL (shift left logical) instruction shifts bits to the left, inserting a 0 on the right. For all shift instructions, the c flag is set to the last bit shifted out of the register, and the n and z flags are updated to reflect the state of the register after the shift. For instance, the instruction srl r1, 1 shifts the contents of r1 one position to the right, inserting a 0 on the left.
+      The SRL (shift right logical) instruction shifts bits to the right, 
+      inserting a 0 on the left to ensure the sign bit becomes 0, regardless 
+      of its previous state. The SRA (shift right arithmetic) instruction 
+      also shifts bits to the right but preserves the sign bit by copying it 
+      into the leftmost position. The SLL (shift left logical) instruction 
+      shifts bits to the left, inserting a 0 on the right. For all shift 
+      instructions, the c flag is set to the last bit shifted out of the 
+      register, and the n and z flags are updated to reflect the state of 
+      the register after the shift. For instance, the instruction srl r1, 1
+       shifts the contents of r1 one position to the right, inserting a 0 on 
+       the left.
       */
       case 2: // SRL
         this.c = (this.r[this.sr] >> (ct - 1)) & 1; // Store the last bit shifted out
@@ -637,7 +821,6 @@ class Interpreter {
   executeLD() {
     const address = (this.pc + this.pcoffset9) & 0xFFFF;
     this.r[this.dr] = this.mem[address];
-    this.setNZ(this.r[this.dr]);
   }
 
   executeST() {
@@ -648,29 +831,25 @@ class Interpreter {
 
   executeMVI() {
     this.r[this.dr] = this.imm9;
-    this.setNZ(this.r[this.dr]);
   }
 
   executeLEA() {
     this.r[this.dr] = (this.pc + this.pcoffset9) & 0xFFFF;
   }
 
-  ////
   executeLDR() {
     const address = (this.r[this.baser] + this.offset6) & 0xFFFF;
     this.r[this.dr] = this.mem[address];
-    this.setNZ(this.r[this.dr]);
   }
 
-  ////
   executeSTR() {
     const address = (this.r[this.baser] + this.offset6) & 0xFFFF;
     this.mem[address] = this.r[this.sr];
   }
 
-  ////
   executeJMP() {
     this.pc = (this.r[this.baser] + this.offset6) & 0xFFFF;
+    this.hasJumped = true; // Set flag to indicate a jump was executed
   }
 
   executeBLorBLR() {
@@ -683,6 +862,7 @@ class Interpreter {
       this.r[7] = this.pc;
       this.pc = (this.r[this.baser] + this.offset6) & 0xFFFF;
     }
+    this.hasJumped = true; // Set flag to indicate a jump was executed
   }
 
   executeSOUT() {
@@ -868,8 +1048,36 @@ class Interpreter {
   }
 
 
+  // This function writes output to stdout,
+  // and it also adds a newline at the end.
+  // It is used for writing debug output that should
+  // be followed by a newline, as in the case of
+  // debug messages, error messages, etc.
+  writeDebugOutput(message) {
+    process.stdout.write(message + "\n");
+    this.output += message;
+  }
+
+  // This function writes output to stdout,
+  // but it does not add a newline at the end.
+  // It is used for writing output that should not
+  // be followed by a newline, as in the case of
+  // aout, dout, sout, etc.
   writeOutput(message) {
     process.stdout.write(message);
+    this.output += message;
+  }
+
+  // This function writes debug output to stdout,
+  // but it also checks if debugMode is enabled.
+  // If debugMode is off, it writes the message 
+  // without a newline.
+  writeDebugOutputOrElse(message) {
+    if(this.debugMode) {
+      process.stdout.write(message + "\n");
+    } else {
+      process.stdout.write(message);
+    }
     this.output += message;
   }
 
@@ -888,26 +1096,29 @@ class Interpreter {
           value -= 0x10000;
         }
         const doutStr = `${value}`;
-        this.writeOutput(doutStr);
+        writeDebugOutputOrElse(doutStr);
         break;
       case 3: // UDOUT
         // print as unsigned decimal
         const udoutStr = `${this.r[this.sr] & 0xFFFF}`;
-        this.writeOutput(udoutStr);
+        writeDebugOutputOrElse(udoutStr);
         break;
       case 4: // HOUT
         // print as hexadecimal
         const houtStr = this.r[this.sr].toString(16).toLowerCase();
-        this.writeOutput(houtStr);
+        writeDebugOutputOrElse(houtStr);
         break;
       case 5: // AOUT
         // print as ASCII character
         const aoutChar = String.fromCharCode(this.r[this.sr] & 0xFF);
-        this.writeOutput(aoutChar);
+        writeDebugOutputOrElse(aoutChar);
         break;
       case 6: // SOUT
         // print string at address
         this.executeSOUT();
+        if(this.debugMode) {
+          this.writeDebugOutput("");
+        }
         break;
       case 7: // DIN
         while (true) {
@@ -1002,6 +1213,7 @@ class Interpreter {
   }
 
   setNZ(value) {
+    this.flagsSet = true; // Set the flag set indicator
     value = this.toSigned16(value);
     if (value < 0) {
         this.n = 1;
@@ -1016,6 +1228,7 @@ class Interpreter {
   }
 
   setCV(sum, x, y) {
+    this.flagsSet = true; // Set the flag set indicator
     // Convert values to signed 16-bit integers
     sum = this.toSigned16(sum);
     x = this.toSigned16(x);

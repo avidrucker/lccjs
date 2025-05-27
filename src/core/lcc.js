@@ -242,6 +242,7 @@ class LCC {
 
     // Set options in the interpreter
     interpreter.options = this.options;
+    interpreter.debugMode = !!this.options.debug;
 
     // Pass inputBuffer to interpreter
     if (this.inputBuffer) {
