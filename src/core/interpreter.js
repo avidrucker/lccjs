@@ -1047,13 +1047,37 @@ class Interpreter {
     }
   }
 
+
+  // This function writes output to stdout,
+  // and it also adds a newline at the end.
+  // It is used for writing debug output that should
+  // be followed by a newline, as in the case of
+  // debug messages, error messages, etc.
   writeDebugOutput(message) {
     process.stdout.write(message + "\n");
     this.output += message;
   }
 
+  // This function writes output to stdout,
+  // but it does not add a newline at the end.
+  // It is used for writing output that should not
+  // be followed by a newline, as in the case of
+  // aout, dout, sout, etc.
   writeOutput(message) {
     process.stdout.write(message);
+    this.output += message;
+  }
+
+  // This function writes debug output to stdout,
+  // but it also checks if debugMode is enabled.
+  // If debugMode is off, it writes the message 
+  // without a newline.
+  writeDebugOutputOrElse(message) {
+    if(this.debugMode) {
+      process.stdout.write(message + "\n");
+    } else {
+      process.stdout.write(message);
+    }
     this.output += message;
   }
 
@@ -1072,38 +1096,22 @@ class Interpreter {
           value -= 0x10000;
         }
         const doutStr = `${value}`;
-        if(this.debugMode) {
-          this.writeDebugOutput(doutStr);
-        } else {
-          this.writeOutput(doutStr);
-        }
+        writeDebugOutputOrElse(doutStr);
         break;
       case 3: // UDOUT
         // print as unsigned decimal
         const udoutStr = `${this.r[this.sr] & 0xFFFF}`;
-        if(this.debugMode) {
-          this.writeDebugOutput(udoutStr);
-        } else {
-          this.writeOutput(udoutStr);
-        }
+        writeDebugOutputOrElse(udoutStr);
         break;
       case 4: // HOUT
         // print as hexadecimal
         const houtStr = this.r[this.sr].toString(16).toLowerCase();
-        if(this.debugMode) {
-          this.writeDebugOutput(houtStr);
-        } else {
-          this.writeOutput(houtStr);
-        }
+        writeDebugOutputOrElse(houtStr);
         break;
       case 5: // AOUT
         // print as ASCII character
         const aoutChar = String.fromCharCode(this.r[this.sr] & 0xFF);
-        if(this.debugMode) {
-          this.writeDebugOutput(aoutChar);
-        } else {
-          this.writeOutput(aoutChar);
-        }
+        writeDebugOutputOrElse(aoutChar);
         break;
       case 6: // SOUT
         // print string at address
