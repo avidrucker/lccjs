@@ -100,7 +100,7 @@ describe('Assembler vs Oracle (demos → .e) with golden cache', () => {
       // --- Step 2: ensure golden .e exists (or regenerate with oracle)
       if (!fs.existsSync(goldenE)) {
         if (cfg.goldenAutoUpdate) {
-          const { bytes: eBytes } = runOracleOnDemo(demoPath, inputs, (opts || {}));
+          const { bytes: eBytes } = runOracleOnDemo(demoPath, inputs, opts);
           writeBytes(goldenE, eBytes);
         } else {
           throw new Error(
