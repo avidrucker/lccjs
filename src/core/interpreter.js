@@ -1096,22 +1096,22 @@ class Interpreter {
           value -= 0x10000;
         }
         const doutStr = `${value}`;
-        writeDebugOutputOrElse(doutStr);
+        this.writeDebugOutputOrElse(doutStr);
         break;
       case 3: // UDOUT
         // print as unsigned decimal
         const udoutStr = `${this.r[this.sr] & 0xFFFF}`;
-        writeDebugOutputOrElse(udoutStr);
+        this.writeDebugOutputOrElse(udoutStr);
         break;
       case 4: // HOUT
         // print as hexadecimal
         const houtStr = this.r[this.sr].toString(16).toLowerCase();
-        writeDebugOutputOrElse(houtStr);
+        this.writeDebugOutputOrElse(houtStr);
         break;
       case 5: // AOUT
         // print as ASCII character
         const aoutChar = String.fromCharCode(this.r[this.sr] & 0xFF);
-        writeDebugOutputOrElse(aoutChar);
+        this.writeDebugOutputOrElse(aoutChar);
         break;
       case 6: // SOUT
         // print string at address
