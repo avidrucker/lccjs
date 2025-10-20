@@ -1,0 +1,46 @@
+; demoS.a: Demonstrating rotate commands rol, ror
+;
+; This program shows how bits are rotated in registers.
+
+        ; Initialize r0 with a specific bit pattern
+        ld r0, num  ; r0 = binary 1000 0000 0000 0001
+        ; Rotate r0 left by 1
+        hout r0
+        nl
+	
+        rol r0, 1       ; r0 = rol(r0, 1)
+        ; After rol, r0 should be 0x0003 (binary 0000 0000 0000 0011)
+        hout r0         ; Output: 3
+        nl
+
+        ; Rotate r0 right by 1
+        ror r0, 1       ; r0 = ror(r0, 1)
+        ; After ror, r0 should be back to 0x8001
+        hout r0         ; Output: 8001
+        nl
+
+        ; Rotate r1 left by 4
+        ld r1, num2  ; r1 = binary 0001 0010 0011 0100
+        hout r1
+        nl
+
+        rol r1, 4       ; r1 = rol(r1, 4)
+        ; After rol, r1 should be 0x2341 (rotated bits)
+        hout r1         ; Output: 2341
+        nl
+
+        ; Rotate r1 right by 4
+        ror r1, 4       ; r1 = ror(r1, 4)
+        ; After ror, r1 should be back to 0x1234
+        hout r1         ; Output: 1234
+        nl
+
+        halt
+
+num: .word 0x8001
+num2: .word 0x1234
+
+; Practical applications:
+; - Rotate operations are used in cryptography algorithms like RSA and AES for data scrambling.
+; - Rotating bits helps implement circular buffers and cyclic redundancy checks (CRCs).
+; - Useful in graphics programming for color transformations and pixel manipulations.

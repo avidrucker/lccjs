@@ -1,0 +1,31 @@
+    mov r0, 'B'
+    aout r0
+    nl
+    mov r0, 65
+    dout r0
+    nl
+    aout r0
+    nl
+    mov r0, 0xff
+    hout r0
+    nl
+    mov r0, -15
+    udout r0
+    nl
+    dout r0
+    nl
+    ld r0, x
+    dout r0
+    nl
+    udout r0
+    nl
+    hout r0
+    nl
+    add r0, r0, 1
+    dout r0
+    nl
+    udout r0
+    nl
+    halt
+
+x:  .word 0xffff

@@ -1,0 +1,59 @@
+; demoU.a: Demonstrating the sext instruction
+;
+; This program shows how sign extension works.
+        mov r0, 0xFF ; 0b 1111 1111
+        hout r0
+        nl
+        mov r1, 3
+        lea r2, adj
+        sout r2
+        dout r1
+        nl
+        sext r0, r1
+        lea r2, result
+        sout r2
+        hout r0
+        nl
+
+        mov r0, 0x11 ; 0b 0001 0001
+        hout r0
+        nl
+        mov r1, 5
+        lea r2, adj
+        sout r2
+        dout r1
+        nl
+        sext r0, r1
+        lea r2, result
+        sout r2
+        hout r0
+        nl
+
+        mov r1, 15
+repeat:
+        cmp r1, -1
+        bre done
+        ld r0, x ; 0b 0001 0010 0011 0100
+        hout r0
+        nl
+        lea r2, adj
+        sout r2
+        dout r1
+        nl
+        sext r0, r1
+        lea r2, result
+        sout r2
+        hout r0
+        nl
+        sub r1, r1, 1
+        br repeat
+done:
+        halt
+
+x:      .word 0x1234
+adj:    .string "Sign extending field # "
+result: .string "Result: "
+
+; Practical applications:
+; - Sign extension is necessary when converting smaller signed integers to larger ones.
+; - Ensures correct arithmetic when dealing with data from sources with different bit widths.

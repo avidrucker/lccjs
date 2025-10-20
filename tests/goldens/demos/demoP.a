@@ -1,0 +1,12 @@
+; demoP.a tests the setting of the entry point
+; via the S header while leaving the load point 
+; at the default 0
+       .start main
+hi:    lea r0, msg
+       sout r0
+       ret
+msg:   .string "Hi\n"
+;===============
+main:  bl hi ; entry point is here
+       bl hi
+       halt

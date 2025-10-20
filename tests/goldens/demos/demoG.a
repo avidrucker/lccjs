@@ -1,0 +1,39 @@
+    lea r0, prompt3
+    sout r0
+    ain r0
+    lea r1, reply
+    sout r1
+    aout r0
+    nl
+
+    lea r0, prompt1
+    sout r0
+    din r0
+    lea r1, reply
+    sout r1
+    dout r0
+    lea r1, signed
+    sout r1
+    nl
+    lea r1, reply
+    sout r1
+    udout r0
+    lea r1, unsigned
+    sout r1
+    nl
+
+    lea r0, prompt2
+    sout r0
+    hin r0
+    lea r1, reply
+    sout r1
+    hout r0
+
+    halt
+
+prompt1: .string "Enter a negative number: "
+prompt2: .string "Enter a hex number: "
+prompt3: .string "Enter a single character: "
+reply: .string "You entered: "
+signed: .string " signed"
+unsigned: .string " unsigned"
