@@ -1,4 +1,6 @@
 // tests/helpers/hex.js
+const CHARS_PER_BYTE = 3;
+
 function toHex(u8) {
   return Array.from(u8, b => b.toString(16).padStart(2, '0')).join(' ').toUpperCase();
 }
@@ -9,7 +11,7 @@ function hexdump(u8, width = 16) {
     const slice = u8.slice(i, i + width);
     const hex = Array.from(slice, b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
     const ascii = Array.from(slice, b => (b >= 32 && b <= 126 ? String.fromCharCode(b) : '.')).join('');
-    out.push(`${i.toString(16).padStart(6,'0')}: ${hex.padEnd(width*3-1,' ')}  ${ascii}`);
+    out.push(`${i.toString(16).padStart(6,'0')}: ${hex.padEnd(width*CHARS_PER_BYTE-1,' ')}  ${ascii}`);
   }
   return out.join('\n');
 }
