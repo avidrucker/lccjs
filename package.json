@@ -1,8 +1,12 @@
 {
   "scripts": {
-    "test": "jest --verbose --runInBand --silent"
+    "test": "jest --runInBand tests/new",
+    "test:all": "jest --runInBand",
+    "test:legacy": "jest --runInBand test/",
+    "test:oracle": "jest --runInBand tests/new/integration.oracle.spec.js"
   },
   "devDependencies": {
+    "dotenv": "^17.2.3",
     "jest": "^29.7.0"
   }
 }
