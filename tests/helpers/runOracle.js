@@ -31,7 +31,6 @@ function runOracleOnDemo(demoPath, userInputs = [], opts = {}) {
   if (!fs.existsSync(nameFile)) fs.writeFileSync(nameFile, 'TestUser\n');
 
   // Prepare stdin if any user inputs were specified (kept for parity; assembler typically ignores stdin)
-  const input = userInputs.length ? userInputs.join('\n') + '\n' : undefined;
 
   // 1) Pass only the BASENAME (so it doesn't start with '/')
 // 2) if inputs are required, pipe them via `input`; otherwise ignore stdin
