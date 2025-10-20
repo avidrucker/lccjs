@@ -1,0 +1,25 @@
+; demoY.a uses label offsets for ld and .word
+          ld r0, x     ; loads 5
+          dout
+          nl
+          ld r1, x+1   ; loads 11
+          dout r1
+          nl
+          ld r2, x+2   ; loads 17
+          dout r2
+          nl
+          ld r3, y-2   ; loads 5
+          dout r3
+          nl
+          ld r0, a    ; loads 20
+          dout r0
+          nl
+          ld r4, z     ; loads 21
+          dout r4
+          nl
+          halt
+x:        .word 5
+          .word 11
+y:        .word 17
+z:        .word x+2    ; assembled to the address of y
+a:        .word y-1    ; assembled to the address of x+1
