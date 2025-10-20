@@ -123,7 +123,6 @@ describe('Assembler vs Oracle (demos → .e) with golden cache', () => {
       const match = sameLen && mismatchIndex === -1;
 
       if (!match) {
-        const { hexdump, diffHex } = require('../helpers/hex');
         const msg =
           `\n=== ${file} .e mismatch ===\n` +
           `--- JS (.e) hexdump ---\n${hexdump(jsBytes)}\n\n` +
