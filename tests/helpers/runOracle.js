@@ -32,9 +32,9 @@ function runOracleOnDemo(demoPath, userInputs = [], opts = {}) {
 
   // Prepare stdin if any user inputs were specified (kept for parity; assembler typically ignores stdin)
 
-  // 1) Pass only the BASENAME (so it doesn't start with '/')
-// 2) if inputs are required, pipe them via `input`; otherwise ignore stdin
-  // 3) use generous timeout from .env
+  // 1) Pass only the BASENAME (oracle expects just the filename, not a path; the file is in the working directory)
+  // 2) If inputs are required, pipe them via `input`; otherwise ignore stdin
+  // 3) Use generous timeout from .env
   const spawnOpts = {
     cwd: tmp,
     encoding: 'utf8',
