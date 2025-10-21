@@ -1,4 +1,4 @@
-// tests/new/integration.oracle.spec.js
+// tests/new/assembler.oracle.e2e.spec.js
 const fs = require('fs');
 const path = require('path');
 const { cfg, assertOracleConfigured } = require('../helpers/env');
