@@ -1,0 +1,148 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Tue Oct 21 08:51:48 2025
+TestUser
+
+Header
+o
+C
+
+Loc   Code
+0000  d0ff
+0001  f004
+0002  f001
+0003  d203
+0004  e428
+0005  f406
+0006  f202
+0007  f001
+0008  a04d
+0009  e43b
+000a  f406
+000b  f004
+000c  f001
+000d  d011
+000e  f004
+000f  f001
+0010  d205
+0011  e41b
+0012  f406
+0013  f202
+0014  f001
+0015  a04d
+0016  e42e
+0017  f406
+0018  f004
+0019  f001
+001a  d20f
+001b  807f
+001c  000e
+001d  200e
+001e  f004
+001f  f001
+0020  e40c
+0021  f406
+0022  f202
+0023  f001
+0024  a04d
+0025  e41f
+0026  f406
+0027  f004
+0028  f001
+0029  b261
+002a  0ff0
+002b  f000
+002c  1234
+002d  0053
+002e  0069
+002f  0067
+0030  006e
+0031  0020
+0032  0065
+0033  0078
+0034  0074
+0035  0065
+0036  006e
+0037  0064
+0038  0069
+0039  006e
+003a  0067
+003b  0020
+003c  0066
+003d  0069
+003e  0065
+003f  006c
+0040  0064
+0041  0020
+0042  0023
+0043  0020
+0044  0000
+0045  0052
+0046  0065
+0047  0073
+0048  0075
+0049  006c
+004a  0074
+004b  003a
+004c  0020
+004d  0000
+====================================================== Output
+ff
+Sign extending field # 3
+Result: ffff
+11
+Sign extending field # 5
+Result: fffb
+1234
+Sign extending field # 15
+Result: 4
+1234
+Sign extending field # 14
+Result: fff5
+1234
+Sign extending field # 13
+Result: fff6
+1234
+Sign extending field # 12
+Result: fff7
+1234
+Sign extending field # 11
+Result: fff4
+1234
+Sign extending field # 10
+Result: fff5
+1234
+Sign extending field # 9
+Result: fff6
+1234
+Sign extending field # 8
+Result: fff7
+1234
+Sign extending field # 7
+Result: fffc
+1234
+Sign extending field # 6
+Result: 4
+1234
+Sign extending field # 5
+Result: 4
+1234
+Sign extending field # 4
+Result: 4
+1234
+Sign extending field # 3
+Result: 0
+1234
+Sign extending field # 2
+Result: 0
+1234
+Sign extending field # 1
+Result: 0
+1234
+Sign extending field # 0
+Result: 0
+
+========================================== Program statistics
+Input file name       =      demoU1.e
+Instructions executed =  11e (hex)   286 (dec)
+Program size          =   4e (hex)    78 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)

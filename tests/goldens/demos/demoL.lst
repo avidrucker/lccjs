@@ -1,0 +1,39 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Tue Oct 21 08:51:48 2025
+TestUser
+
+Header
+o
+C
+
+Loc   Code
+0000  f00c
+0001  f001
+0002  d003
+0003  d203
+0004  d40b
+0005  f00c
+0006  f001
+0007  d1ff
+0008  d201
+0009  1401
+000a  f00c
+000b  f000
+====================================================== Output
+pc = 0001  ir = f001  NZCV = 0000
+r0 = 0000  r1 = 0000  r2 = 0000  r3 = 0000  
+r4 = 0000  fp = 0000  sp = 0000  lr = 0000  
+
+pc = 0006  ir = f001  NZCV = 0000
+r0 = 0003  r1 = 0003  r2 = 000b  r3 = 0000  
+r4 = 0000  fp = 0000  sp = 0000  lr = 0000  
+
+pc = 000b  ir = f000  NZCV = 0110
+r0 = ffff  r1 = 0001  r2 = 0000  r3 = 0000  
+r4 = 0000  fp = 0000  sp = 0000  lr = 0000  
+
+========================================== Program statistics
+Input file name       =      demoL1.e
+Instructions executed =    c (hex)    12 (dec)
+Program size          =    c (hex)    12 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)

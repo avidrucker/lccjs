@@ -1,0 +1,39 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Tue Oct 21 08:51:48 2025
+TestUser
+
+Header
+o
+C
+
+Loc   Code
+0000  d005
+0001  1022
+0002  f002
+0003  f001
+0004  a20c
+0005  1263
+0006  f202
+0007  f001
+0008  d402
+0009  f402
+000a  f001
+000b  a68c
+000c  16e1
+000d  f602
+000e  f001
+000f  f002
+0010  f001
+0011  f000
+====================================================== Output
+7
+10
+2
+3
+7
+
+========================================== Program statistics
+Input file name       =      demoD1.e
+Instructions executed =   12 (hex)    18 (dec)
+Program size          =   12 (hex)    18 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)
