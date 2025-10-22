@@ -189,6 +189,8 @@ class Assembler {
       this.writeOutputFile();
       
     } else if (extension === '.hex') {
+      // Note: I believe that the original LCC does not print any 
+      // message for assemnbling a .hex file as of 12/2024.
       console.log(`Assembling ${this.inputFileName}`);
       this.parseHexFile();
       this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
