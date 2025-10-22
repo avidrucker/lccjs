@@ -1,0 +1,4 @@
+; s2.a
+    .global x ; export x to other files
+x:  .word 9
+y:  .word 7
