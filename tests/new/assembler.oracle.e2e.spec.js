@@ -52,6 +52,17 @@ function fileBytesEqual(a, b) {
 }
 
 describe('Assembler vs Oracle (demos → .e) with golden cache', () => {
+  // Mock console.log to suppress assembler output
+  beforeAll(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    console.log.mockRestore();
+    console.error.mockRestore();
+  });
+  
   ensureDir(GOLDEN_DIR);
 
   for (const { file, inputs, comment, opts = {} } of DEMOS) {

@@ -185,6 +185,17 @@ function runOracleInterpreter(eFile, userInputs, opts = {}) {
 }
 
 describe('Interpreter vs Oracle (demos → .lst) with golden cache', () => {
+  // Mock console.log to suppress assembler output
+  beforeAll(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    console.log.mockRestore();
+    console.error.mockRestore();
+  });
+  
   ensureDir(GOLDEN_DIR);
 
   for (const { file: base, inputs, comment, opts = {} } of DEMOS) {
