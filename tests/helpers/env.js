@@ -2,7 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
+require('dotenv').config({ path: path.resolve(process.cwd(), '.env'),
+                           quiet: true });
 
 function expandTilde(p) {
   if (!p) return p;
