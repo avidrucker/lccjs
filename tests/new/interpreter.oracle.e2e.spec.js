@@ -189,11 +189,19 @@ describe('Interpreter vs Oracle (demos → .lst) with golden cache', () => {
   beforeAll(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'info').mockImplementation(() => {});
+    jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+    jest.spyOn(process.stderr, 'write').mockImplementation(() => {});
   });
 
   afterAll(() => {
     console.log.mockRestore();
     console.error.mockRestore();
+    console.warn.mockRestore();
+    console.info.mockRestore();
+    process.stdout.write.mockRestore();
+    process.stderr.write.mockRestore();
   });
   
   ensureDir(GOLDEN_DIR);

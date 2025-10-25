@@ -227,8 +227,8 @@ function runOracleLink(oFiles, outputName, opts = {}) {
 describe('Linker vs Oracle (multi-module demos → .o → .e) with golden cache', () => {
   // Mock console.log to suppress assembler/linker output
   beforeAll(() => {
-    // jest.spyOn(console, 'log').mockImplementation(() => {});
-    // jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     
     // Create name.nnn file in DEMOS_DIR for any tests that might need it
     const nameFile = path.join(DEMOS_DIR, 'name.nnn');
@@ -238,8 +238,8 @@ describe('Linker vs Oracle (multi-module demos → .o → .e) with golden cache'
   });
 
   afterAll(() => {
-    // console.log.mockRestore();
-    // console.error.mockRestore();
+    console.log.mockRestore();
+    console.error.mockRestore();
   });
 
   ensureDir(GOLDEN_DIR);
