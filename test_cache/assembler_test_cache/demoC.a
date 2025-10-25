@@ -1,7 +1,0 @@
-    ld r0, x
-    add r0, r0, 2
-    dout r0
-    nl
-    halt
-
-x:  .word 5

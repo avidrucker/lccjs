@@ -1,9 +1,0 @@
-; demoQ.a tests using labels as operands to .word
-; directives. The program should output 10.
-; Also, what would happen if we were to run
-; this program using a load point of 0x3000?
-    ld r0, x  ; 0
-    dout r0   ; 1
-    halt      ; 2
-x:  .word y   ; 3
-y:  .word 10  ; 4
