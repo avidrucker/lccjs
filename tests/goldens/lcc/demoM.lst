@@ -1,0 +1,71 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Sat Oct 25 10:49:02 2025
+TestUser
+
+Header
+o
+C
+
+Loc   Code           Source Code
+           ; program that tests the s command
+           ; and also compares .lst/.bst file
+           ; generation with empty lines at
+           ; the end of the file
+0000  f00d startup:  s
+0001  f001           nl
+
+0002  d003           mov r0, 3
+0003  a000           push r0
+
+0004  f00d           s
+0005  f001           nl
+
+0006  4802           bl main
+0007  1da1           add sp, sp, 1
+0008  f000           halt
+
+0009  ae00 main:     push lr
+000a  aa00           push fp
+000b  ab8c           mov fp, sp
+
+000c  f00d           s
+000d  f001           nl
+
+000e  d005           mov r0, 5
+000f  a000           push r0
+0010  d00a           mov r0, 10
+0011  a000           push r0
+
+0012  f00d           s
+0013  f001           nl
+
+0014  ad4c           mov sp, fp
+0015  aa01           pop fp
+0016  ae01           pop lr
+0017  c1c0           ret
+
+
+====================================================== Output
+Stack empty
+
+Stack:
+ffff: 0003
+
+Stack:
+fffd: 0000 <--- fp
+fffe: 0007
+ffff: 0003
+
+Stack:
+fffb: 000a
+fffc: 0005
+fffd: 0000 <--- fp
+fffe: 0007
+ffff: 0003
+
+
+========================================== Program statistics
+Input file name       =      demoM1.a
+Instructions executed =   18 (hex)    24 (dec)
+Program size          =   18 (hex)    24 (dec)
+Max stack size        =    5 (hex)     5 (dec)
+Load point            =    0 (hex)     0 (dec)

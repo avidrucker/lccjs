@@ -1,0 +1,34 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Sat Oct 25 10:49:02 2025
+TestUser
+
+Header
+o
+C
+
+Loc   Code           Source Code
+0000  d00a           mov r0, 10
+0001  8020 start:    cmp r0, 0
+0002  0004           bre end
+0003  f002           dout r0
+0004  f001           nl
+0005  b021           sub r0, r0, 1
+0006  0ffa           br start
+0007  f000 end:      halt
+====================================================== Output
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+
+========================================== Program statistics
+Input file name       =      demoI1.a
+Instructions executed =   40 (hex)    64 (dec)
+Program size          =    8 (hex)     8 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)

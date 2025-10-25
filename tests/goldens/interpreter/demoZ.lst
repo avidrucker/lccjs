@@ -1,0 +1,52 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Sat Oct 25 10:49:03 2025
+TestUser
+
+Header
+o
+A     001a
+A     001b
+C
+
+Loc   Code
+0000  2017
+0001  f002
+0002  f001
+0003  2015
+0004  f002
+0005  f001
+0006  2013
+0007  f002
+0008  f001
+0009  2011
+000a  f002
+000b  f001
+000c  1025
+000d  300b
+000e  220a
+000f  f202
+0010  f001
+0011  0e01
+0012  1265
+0013  f202
+0014  f001
+0015  e002
+0016  f002
+0017  f000
+0018  0005
+0019  000b
+001a  0018
+001b  0019
+====================================================== Output
+5
+11
+24
+25
+30
+30
+24
+========================================== Program statistics
+Input file name       =      demoZ1.e
+Instructions executed =   17 (hex)    23 (dec)
+Program size          =   1c (hex)    28 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)

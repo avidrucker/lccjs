@@ -1,0 +1,39 @@
+; example program to test string input and output
+; furthermore, this program will also be used to
+; test lst/bst file generation with comments and
+; blank lines when lcc.js is used to assemble and
+; interpret from a .a file all in one go, versus 
+; when using interpreter.js by itself on a .e file
+    lea r0, ask ; example comment on a line of code
+    sout r0
+    lea r0, buffer1    
+    sin r0
+    lea r1, hi
+    sout r1
+    lea r0, buffer1
+    sout r0
+    lea r1, period
+    sout r1
+    nl
+    lea r1, ask2
+    sout r1
+    lea r1, buffer2
+    sin r1
+    lea r2, hi
+    sout r2
+    sout r0
+    lea r2, space
+    sout r2
+    sout r1
+    lea r2, period
+    sout r2 
+    halt ; the next 2 lines are intentionally blank
+
+
+ask:  .string "What's your first name? "
+ask2: .string "What's your last name? "
+hi:   .string "Hi, "
+period: .string "."
+space: .string " "
+buffer1: .zero 10
+buffer2: .zero 10

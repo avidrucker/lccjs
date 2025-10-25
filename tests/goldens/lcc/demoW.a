@@ -1,0 +1,51 @@
+; demoW.a tests flag setting and branching instructions
+        mov r0, 1
+        mov r1, 2
+        sub r0, r0, r1
+        dout r0 ; prints -1
+        nl
+        brn @L1
+        halt
+@L1     mov r0, 3
+        mov r1, 4
+        add r0, r0, r1
+        dout r0 ; prints 7
+        nl
+        brp @L2
+        halt
+@L2:    mov r0, 5
+        mov r1, 5
+        sub r0, r0, r1
+        dout r0 ; prints 0
+        nl
+        brz @L3
+        halt
+@L3     mov r0, 6
+        cmp r0, 5
+        dout r0 ; prints 6
+        nl
+        brgt @L4
+        halt
+@L4:    mov r0, 7
+        cmp r0, 8
+        dout r0 ; prints 7
+        nl
+        brlt @L5
+        halt
+@L5:    mov r0, 1
+        cmp r0, 0
+        dout r0 ; prints 1
+        nl
+        brnz @L6
+        halt
+@L6:    ld r0, x
+        add r0, r0, 1
+        dout r0 ; prints 0
+        nl
+        brc @L7
+        halt
+@L7:    ld r0, x
+        hout r0 ; prints ffff
+        halt
+        
+x:     .word 0xffff

@@ -1,0 +1,74 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Sat Oct 25 10:49:02 2025
+TestUser
+
+Header
+o
+C
+
+Loc   Code           Source Code
+           ; demoW.a tests flag setting and branching instructions
+0000  d001         mov r0, 1
+0001  d202         mov r1, 2
+0002  b001         sub r0, r0, r1
+0003  f002         dout r0 ; prints -1
+0004  f001         nl
+0005  0401         brn @L1
+0006  f000         halt
+0007  d003 @L1     mov r0, 3
+0008  d204         mov r1, 4
+0009  1001         add r0, r0, r1
+000a  f002         dout r0 ; prints 7
+000b  f001         nl
+000c  0601         brp @L2
+000d  f000         halt
+000e  d005 @L2:    mov r0, 5
+000f  d205         mov r1, 5
+0010  b001         sub r0, r0, r1
+0011  f002         dout r0 ; prints 0
+0012  f001         nl
+0013  0001         brz @L3
+0014  f000         halt
+0015  d006 @L3     mov r0, 6
+0016  8025         cmp r0, 5
+0017  f002         dout r0 ; prints 6
+0018  f001         nl
+0019  0a01         brgt @L4
+001a  f000         halt
+001b  d007 @L4:    mov r0, 7
+001c  8028         cmp r0, 8
+001d  f002         dout r0 ; prints 7
+001e  f001         nl
+001f  0801         brlt @L5
+0020  f000         halt
+0021  d001 @L5:    mov r0, 1
+0022  8020         cmp r0, 0
+0023  f002         dout r0 ; prints 1
+0024  f001         nl
+0025  0201         brnz @L6
+0026  f000         halt
+0027  2008 @L6:    ld r0, x
+0028  1021         add r0, r0, 1
+0029  f002         dout r0 ; prints 0
+002a  f001         nl
+002b  0c01         brc @L7
+002c  f000         halt
+002d  2002 @L7:    ld r0, x
+002e  f004         hout r0 ; prints ffff
+002f  f000         halt
+
+0030  ffff x:     .word 0xffff
+====================================================== Output
+-1
+7
+0
+6
+7
+1
+0
+ffff
+========================================== Program statistics
+Input file name       =      demoW1.a
+Instructions executed =   29 (hex)    41 (dec)
+Program size          =   31 (hex)    49 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)

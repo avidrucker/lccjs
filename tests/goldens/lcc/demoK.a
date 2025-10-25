@@ -1,0 +1,14 @@
+; program that tests the m command
+; demonstrates that disassembly of programs
+; with unused labels outputs unlabeled data
+        m
+        nl
+
+        mov r2, 11
+        st r2, x
+        m
+
+        halt
+
+x:      .word 7
+y:      .word 23
