@@ -7,7 +7,7 @@ const { assembleWithJS } = require('../helpers/assembleJS');
 const { diffHex, hexdump } = require('../helpers/hex');
 
 const DEMOS_DIR = path.resolve(__dirname, '../../demos');
-const GOLDEN_DIR = path.resolve(__dirname, '../goldens/demos');
+const GOLDEN_DIR = path.resolve(__dirname, '../goldens/assembler');
 
 // mirror the old E2E list (26 demos; J was disabled previously)
 const DEMOS = [

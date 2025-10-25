@@ -17,11 +17,16 @@ function runOracleOnDemo(demoPath, userInputs = [], opts = {}) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-oracle-'));
   const base = path.basename(demoPath, '.a');
 
-  // Legacy naming convention: base1.a -> base1.e
+  // Legacy naming convention: base1.a -> base1.e, base1.lst, base1.bst
   const oracleInBase = `${base}1.a`;
   const oracleOutBase = `${base}1.e`;
+  const oracleLstBase = `${base}1.lst`;
+  const oracleBstBase = `${base}1.bst`;
+  
   const oracleIn = path.join(tmp, oracleInBase);
   const oracleOut = path.join(tmp, oracleOutBase);
+  const oracleLst = path.join(tmp, oracleLstBase);
+  const oracleBst = path.join(tmp, oracleBstBase);
 
   // Copy input .a (legacy suite used base1.a)
   fs.copyFileSync(demoPath, oracleIn);
@@ -55,10 +60,12 @@ function runOracleOnDemo(demoPath, userInputs = [], opts = {}) {
   if (res.error) throw res.error;
 
   const hasE = fs.existsSync(oracleOut);
+  const hasLst = fs.existsSync(oracleLst);
+  const hasBst = fs.existsSync(oracleBst);
 
   if (debug) {
     // eslint-disable-next-line no-console
-    console.warn(`[oracle] exit=${res.status} hasE=${hasE} tmp=${tmp}\nstdout:\n${res.stdout || ''}\nstderr:\n${res.stderr || ''}`);
+    console.warn(`[oracle] exit=${res.status} hasE=${hasE} hasLst=${hasLst} hasBst=${hasBst} tmp=${tmp}\nstdout:\n${res.stdout || ''}\nstderr:\n${res.stderr || ''}`);
   }
 
   if (res.status !== 0) {
@@ -75,7 +82,19 @@ function runOracleOnDemo(demoPath, userInputs = [], opts = {}) {
   }
 
   const bytes = fs.readFileSync(oracleOut);
-  return { bytes, outPath: oracleOut, tmpDir: tmp, kept: keepTmp ? tmp : null };
+  
+  // Read .lst and .bst if they exist
+  const lst = hasLst ? fs.readFileSync(oracleLst, 'utf8') : undefined;
+  const bst = hasBst ? fs.readFileSync(oracleBst, 'utf8') : undefined;
+
+  return { 
+    bytes, 
+    lst, 
+    bst, 
+    outPath: oracleOut, 
+    tmpDir: tmp, 
+    kept: keepTmp ? tmp : null 
+  };
 }
 
 module.exports = { runOracleOnDemo };

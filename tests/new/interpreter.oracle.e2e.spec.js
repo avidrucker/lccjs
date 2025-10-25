@@ -6,7 +6,7 @@ const { runOracleOnDemo } = require('../helpers/runOracle');
 const { assembleWithJS } = require('../helpers/assembleJS');
 
 const DEMOS_DIR = path.resolve(__dirname, '../../demos');
-const GOLDEN_DIR = path.resolve(__dirname, '../goldens/demos');
+const GOLDEN_DIR = path.resolve(__dirname, '../goldens/interpreter');
 
 // Mirror the interpreter test list (25 demos; J and N were disabled)
 const DEMOS = [
