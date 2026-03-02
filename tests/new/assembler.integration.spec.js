@@ -382,6 +382,26 @@ foo:  .word 456
     expect(path.extname(assembler.outputFileName)).toBe('.o');
   });
 
+  test('10b. should write .o, .lst, and .bst files when .global is used', () => {
+    const aFilePath = 'testObjectArtifacts.a';
+    const source = `
+      .global foo
+      mov r0, 123
+      halt
+foo:  .word 456
+    `;
+    virtualFs[aFilePath] = source;
+    virtualFs['name.nnn'] = 'Cheese\n';
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).not.toThrow();
+
+    expect(virtualFs['testObjectArtifacts.o']).toBeDefined();
+    expect(virtualFs['testObjectArtifacts.lst']).toBeDefined();
+    expect(virtualFs['testObjectArtifacts.bst']).toBeDefined();
+  });
+
   // -------------------------------------------------------------------------
   // 11. Testing instructions with immediate out-of-range
   // -------------------------------------------------------------------------
@@ -2292,6 +2312,8 @@ data2: .word 10
     }).toThrow('Missing operand');
   });
 
+  // TODO: enable these .org tests once .org/.orig is implemented and the
+  // expected original-LCC-compatible behavior is locked down.
   // -------------------------------------------------------------------------
   // 117. Test org directive (.org) with valid address
   // -------------------------------------------------------------------------
@@ -2417,6 +2439,12 @@ data2: .word 10
   // -------------------------------------------------------------------------
   // 124. Test instruction with too many characters in label
   // -------------------------------------------------------------------------
+  // Removed from the active suite:
+  // The original LCC appears to have a line-length cap of roughly 300
+  // characters per line, but we do not currently have evidence of a separate
+  // label-length limit. This case should not remain as a skipped label-limit
+  // test until that distinction is verified.
+  /*
   test.skip('124. should throw error for label exceeding maximum length', () => {
     // Note: It may not be correct to say there is a maximum label length - 
     //       there might just be a cap on the length of a line of code
@@ -2432,6 +2460,7 @@ data2: .word 10
       assembler.main([aFilePath]);
     }).toThrow('Label exceeds maximum length');
   });
+  */
 
   // -------------------------------------------------------------------------
   // 125. Test instruction with unsupported operand format (e.g., indirect)
@@ -2505,7 +2534,10 @@ data2: .word 10
   // -------------------------------------------------------------------------
   // 129. Test assembly of a line exceeding maximum character limit
   // -------------------------------------------------------------------------
-  test.skip('129. should throw error for line exceeding 300 characters', () => {
+  // TODO: this remains pending because line-length handling is currently a
+  // unique LCC.js behavior. Original LCC behavior around 300+ character lines
+  // still appears undefined or unpredictable and needs more research.
+  test('129. should throw error for line exceeding 300 characters', () => {
     const aFilePath = 'longLine.a';
     const longLine = 'a'.repeat(301);
     const source = `
@@ -3574,25 +3606,8 @@ buffer: .word 10
     expect(assembler.errorFlag).toBe(false);
   });
 
-  // -------------------------------------------------------------------------
-  // 190. Test assembler with line exceeding maximum character limit
-  // -------------------------------------------------------------------------
-  test.skip('190. should throw error for line exceeding maximum character limit', () => {
-    // This test is currently paused because, while it appears the LCC has a charater per line
-    // limit, it is unclear precisely what the limit is (it seems to be around 300 chars)
-    // and its behavior when the limit is exeeded does not seem to be consistent (as of 12/2024)
-    const aFilePath = 'exceedMaxLine.a';
-    const longLine = 'a'.repeat(301);
-    const source = `
-      mov r0, 5 ; ${longLine}
-      halt
-    `;
-    virtualFs[aFilePath] = source;
-
-    expect(() => {
-      assembler.main([aFilePath]);
-    }).toThrow('Line exceeds maximum length of 300 characters');
-  });
+  // Consolidated into test 129 above so there is a single pending "line too
+  // long" case until the original-LCC behavior is researched and specified.
 
   // -------------------------------------------------------------------------
   // 191. Test instruction (not) with valid operands

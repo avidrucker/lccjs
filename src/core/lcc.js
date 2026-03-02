@@ -2,13 +2,13 @@
 
 // lcc.js
 
-const fs = require('fs');
 const path = require('path');
 const Assembler = require('./assembler');
 const Interpreter = require('./interpreter');
 const Linker = require('./linker');
 const nameHandler = require('../utils/name.js');
-const { generateBSTLSTContent } = require('../utils/genStats.js');
+const { buildReportArtifacts } = require('../utils/reportArtifacts');
+const { constructSiblingFileName, writeReportFiles } = require('../utils/fileArtifacts');
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 
@@ -34,6 +34,28 @@ class LCC {
     this.generateStats = true;
   }
 
+  resolveUserName(inputFileName = this.inputFileName) {
+    try {
+      return nameHandler.createNameFile(inputFileName);
+    } catch (error) {
+      console.error('Error handling name file:', error.message);
+      fatalExit('Error handling name file: ' + error.message, 1);
+    }
+  }
+
+  buildReportArtifacts(includeSourceCode, includeComments, now) {
+    const userName = this.resolveUserName();
+
+    return buildReportArtifacts({
+      interpreter: this.interpreter,
+      assembler: includeSourceCode || includeComments ? this.assembler : null,
+      userName,
+      inputFileName: this.inputFileName,
+      includeComments: includeComments,
+      now,
+    });
+  }
+
   main(args) {
     args = args || process.argv.slice(2);
 
@@ -51,13 +73,6 @@ class LCC {
 
     // If multiple inputs were supplied, the "main input file" is the first one
     this.inputFileName = this.args[0];
-
-    try {
-      this.userName = nameHandler.createNameFile(this.inputFileName);
-    } catch (error) {
-      console.error('Error handling name file:', error.message);
-      fatalExit('Error handling name file: ' + error.message, 1);
-    }
 
     // TODO: (extra feature) check similarly to see if multiple .a files were 
     // supplied for multi-file assembly.
@@ -122,9 +137,7 @@ class LCC {
   }
 
   constructOutputFileName(inputFileName) {
-    const parsedPath = path.parse(inputFileName);
-    // Remove extension and add '.e'
-    return path.format({ ...parsedPath, base: undefined, ext: '.e' });
+    return constructSiblingFileName(inputFileName, '.e');
   }
 
   printHelp() {
@@ -260,8 +273,8 @@ class LCC {
 
     if (this.generateStats) {
       // After execution, generate .lst and .bst files
-      lstFileName = this.outputFileName.replace(/\.e$/, '.lst');
-      bstFileName = this.outputFileName.replace(/\.e$/, '.bst');
+      lstFileName = constructSiblingFileName(this.outputFileName, '.lst');
+      bstFileName = constructSiblingFileName(this.outputFileName, '.bst');
 
       console.log(`lst file = ${lstFileName}`);
       console.log(`bst file = ${bstFileName}`);
@@ -280,28 +293,12 @@ class LCC {
     }
 
     if (this.generateStats) {
-      // Generate .lst and .bst files using genStats.js
-      const lstContent = generateBSTLSTContent({
-        isBST: false,
-        interpreter: interpreter,
-        assembler: includeSourceCode || includeComments ? this.assembler : null,
-        userName: this.userName,
-        inputFileName: this.inputFileName,
-        includeComments: includeComments,
-      });
-
-      const bstContent = generateBSTLSTContent({
-        isBST: true,
-        interpreter: interpreter,
-        assembler: includeSourceCode || includeComments ? this.assembler : null,
-        userName: this.userName,
-        inputFileName: this.inputFileName,
-        includeComments: includeComments,
-      });
+      // Generate .lst and .bst files using genStats.js only when the wrapper
+      // is actually going to write those report artifacts.
+      const { lstContent, bstContent } = this.buildReportArtifacts(includeSourceCode, includeComments);
 
       // Write the .lst and .bst files
-      fs.writeFileSync(lstFileName, lstContent);
-      fs.writeFileSync(bstFileName, bstContent);
+      writeReportFiles(this.outputFileName, lstContent, bstContent);
     } else {
       // console.clear();
     }

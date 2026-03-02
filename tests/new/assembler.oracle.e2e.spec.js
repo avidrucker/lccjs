@@ -4,6 +4,12 @@ const path = require('path');
 const { cfg, assertOracleConfigured } = require('../helpers/env');
 const { runOracleOnDemo } = require('../helpers/runOracle');
 const { assembleWithJS } = require('../helpers/assembleJS');
+const {
+  ensureDir,
+  readBytes,
+  writeBytes,
+} = require('../helpers/fileHelpers');
+const { fileBytesEqual } = require('../helpers/compareFiles');
 const { diffHex, hexdump } = require('../helpers/hex');
 
 const DEMOS_DIR = path.resolve(__dirname, '../../demos');
@@ -38,18 +44,6 @@ const DEMOS = [
   { file: 'demoY.a', inputs: [], comment: 'label offsets for ld and .word directive' },
   { file: 'demoZ.a', inputs: [], comment: 'label offsets for st, br, and lea instructions' },
 ];
-
-function ensureDir(p) { if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true }); }
-
-function readBytes(p) { return fs.readFileSync(p); }
-function writeBytes(p, bytes) { fs.writeFileSync(p, bytes); }
-
-function fileBytesEqual(a, b) {
-  const A = readBytes(a); const B = readBytes(b);
-  if (A.length !== B.length) return false;
-  for (let i = 0; i < A.length; i++) if (A[i] !== B[i]) return false;
-  return true;
-}
 
 describe('Assembler vs Oracle (demos → .e) with golden cache', () => {
   // Mock console.log to suppress assembler output

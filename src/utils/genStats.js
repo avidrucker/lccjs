@@ -7,13 +7,14 @@ function generateBSTLSTContent(options) {
     assembler, // May be undefined
     userName,
     inputFileName,
-    includeComments
+    includeComments,
+    now = new Date(),
   } = options;
 
   let content = '';
 
   // Header
-  content += `LCC.js Assemble/Link/Interpret/Debug Ver 0.1  ${new Date().toLocaleString('en-US', {
+  content += `LCC.js Assemble/Link/Interpret/Debug Ver 0.1  ${now.toLocaleString('en-US', {
     weekday: 'short',
     year: 'numeric',
     month: 'short',

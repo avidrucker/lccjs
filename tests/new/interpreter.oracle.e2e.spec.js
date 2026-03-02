@@ -4,6 +4,18 @@ const path = require('path');
 const { cfg, assertOracleConfigured } = require('../helpers/env');
 const { runOracleOnDemo } = require('../helpers/runOracle');
 const { assembleWithJS } = require('../helpers/assembleJS');
+const {
+  ensureDir,
+  readBytes,
+  readText,
+  writeBytes,
+  writeText,
+} = require('../helpers/fileHelpers');
+const {
+  compareLstFiles,
+  fileBytesEqual,
+  lstDiff,
+} = require('../helpers/compareFiles');
 
 const DEMOS_DIR = path.resolve(__dirname, '../../demos');
 const GOLDEN_DIR = path.resolve(__dirname, '../goldens/interpreter');
@@ -38,62 +50,15 @@ const DEMOS = [
   { file: 'demoZ', inputs: [], comment: 'label offsets for st, br, and lea instructions' },
 ];
 
-function ensureDir(p) { if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true }); }
-
-function readText(p) { return fs.readFileSync(p, 'utf8'); }
-function writeText(p, text) { fs.writeFileSync(p, text, 'utf8'); }
-function readBytes(p) { return fs.readFileSync(p); }
-function writeBytes(p, bytes) { fs.writeFileSync(p, bytes); }
-
-function fileBytesEqual(a, b) {
-  const A = readBytes(a); const B = readBytes(b);
-  if (A.length !== B.length) return false;
-  for (let i = 0; i < A.length; i++) if (A[i] !== B[i]) return false;
-  return true;
-}
-
-function normalizeContent(lines) {
-  lines = lines.map(line => line.replace(/;.*/, '')); // remove comments
-  lines = lines.map(line => line.trim());
-  const linesToSkipRegex = /^(Input\s*file\s*name\s*=|LCC\s*Assemble|LCC\.js\s*Assemble)/i;
-  lines = lines.filter(line => !linesToSkipRegex.test(line));
-  lines = lines.filter(line => line !== ''); // remove empty lines
-  lines = lines.slice(1); // skip first non-empty line (username)
-  lines = lines.map(line => line.toLowerCase().replace(/\s+/g, ' ').trim());
-  return lines;
-}
-
-function compareLstFiles(file1, file2) {
-  const content1 = readText(file1).split('\n');
-  const content2 = readText(file2).split('\n');
-
-  const c1 = normalizeContent(content1);
-  const c2 = normalizeContent(content2);
-
-  if (c1.length !== c2.length) return false;
-  for (let i = 0; i < c1.length; i++) {
-    if (c1[i] !== c2[i]) return false;
-  }
-  return true;
-}
-
-function lstDiff(file1, file2) {
-  const content1 = readText(file1).split('\n');
-  const content2 = readText(file2).split('\n');
-
-  const c1 = normalizeContent(content1);
-  const c2 = normalizeContent(content2);
-
-  const lines = [];
-  const maxLen = Math.max(c1.length, c2.length);
-  for (let i = 0; i < maxLen; i++) {
-    const line1 = c1[i] || '<missing>';
-    const line2 = c2[i] || '<missing>';
-    const mark = line1 === line2 ? ' ' : '!';
-    lines.push(`${mark} ${i.toString().padStart(4, '0')}: ${line1} | ${line2}`);
-  }
-  return lines.join('\n');
-}
+const lstCompareOptions = {
+  stripComments: true,
+  trimLines: true,
+  collapseWhitespace: true,
+  omitEmptyLines: true,
+  skipFirstNonEmptyLine: true,
+  caseInsensitive: true,
+  skipPatterns: [/^(Input\s*file\s*name\s*=|LCC\s*Assemble|LCC\.js\s*Assemble)/i],
+};
 
 function runJSInterpreter(eFile, userInputs) {
   const Interpreter = require('../../src/core/interpreter');
@@ -264,12 +229,12 @@ describe('Interpreter vs Oracle (demos → .lst) with golden cache', () => {
     test(`${base} — ${comment}`, () => {
       const jsLstPath = runJSInterpreter(demoEPath, inputs);
       
-      const match = compareLstFiles(jsLstPath, goldenLst);
+      const match = compareLstFiles(jsLstPath, goldenLst, lstCompareOptions);
 
       if (!match) {
         const msg =
           `\n=== ${base} .lst mismatch ===\n` +
-          `--- JS (.lst) vs Golden (.lst) normalized diff ---\n${lstDiff(jsLstPath, goldenLst)}\n`;
+          `--- JS (.lst) vs Golden (.lst) normalized diff ---\n${lstDiff(jsLstPath, goldenLst, lstCompareOptions)}\n`;
         throw new Error(msg);
       }
     });

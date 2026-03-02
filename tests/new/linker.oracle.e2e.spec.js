@@ -3,6 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const { cfg, assertOracleConfigured } = require('../helpers/env');
 const { assembleWithJS } = require('../helpers/assembleJS');
+const {
+  ensureDir,
+  readBytes,
+  writeBytes,
+} = require('../helpers/fileHelpers');
+const { fileBytesEqual } = require('../helpers/compareFiles');
 const { diffHex, hexdump } = require('../helpers/hex');
 
 const DEMOS_DIR = path.resolve(__dirname, '../../demos');
@@ -26,18 +32,6 @@ const DEMOS = [
     comment: 'Linking three object modules custom example 2',
   },
 ];
-
-function ensureDir(p) { if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true }); }
-
-function readBytes(p) { return fs.readFileSync(p); }
-function writeBytes(p, bytes) { fs.writeFileSync(p, bytes); }
-
-function fileBytesEqual(a, b) {
-  const A = readBytes(a); const B = readBytes(b);
-  if (A.length !== B.length) return false;
-  for (let i = 0; i < A.length; i++) if (A[i] !== B[i]) return false;
-  return true;
-}
 
 function assembleWithJSToO(sourcePath) {
   const Assembler = require('../../src/core/assembler');

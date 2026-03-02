@@ -1,5 +1,29 @@
 # TO-DO's
 
+## Active Refactor Remaining Steps
+- [x] extract shared report generation into a single helper and route assembler.js, interpreter.js, and lcc.js through it
+- [x] add pure unit coverage for the shared report helper across assembler-style and interpreter-style inputs
+- [x] add deterministic report timestamp injection support without relying on global fake timers
+- [x] finish the remaining wrapper regression coverage for the refactor
+  - [x] assembler.js object-module flow should still create `.lst`/`.bst` reports after `.o` creation
+  - [x] interpreter.js should reject non-`.e` inputs with the current LCC.js-specific error message
+- [x] formalize richer pure API return shapes for assembler and interpreter
+  - [x] assembler `assembleSource(...)` should return structured output metadata, bytes, and optional reports
+  - [x] interpreter `executeBuffer(...)` should return structured runtime state and optional reports
+- [ ] extract shared typed errors / CLI error mapping so reusable paths stop depending on `fatalExit`
+  - [x] add shared typed interpreter errors for invalid executable format and runtime faults
+  - [ ] migrate remaining interpreter reusable-path `fatalExit` sites to typed errors
+  - [x] introduce assembler typed errors and keep CLI-only exit mapping in wrappers
+- [x] extract shared file/report adapter helpers and route wrapper paths through them
+  - [x] move shared file artifact helpers to `src/utils/fileArtifacts.js`
+  - [x] move shared typed errors to `src/utils/errors.js`
+  - [x] move shared report helpers to `src/utils/reportArtifacts.js`
+- [ ] continue replacing filesystem-heavy tests with pure seam tests where wrapper behavior is not under test
+- [x] add dedicated `name.nnn` wrapper and CLI regression coverage
+  - [x] interpreter wrapper should create `name.nnn` when stats are enabled and the file is missing
+  - [x] interpreter CLI should prompt for a name and create `name.nnn` in a real temp directory
+- [ ] update progress reports and local refactor notes when major refactor milestones are completed
+
 ## Project QoL, Documentation, and Maintenance
 - [ ] update this TODOS.md file to be more clear, concise, easy to read, etc.
 - [x] add md file to describe scripts folder (former battery of tests)
@@ -11,7 +35,7 @@
   - [x] reference to a label that does not exist (assembler.integration.test.js)
   - [x] duplicate label declarations (assembler.integration.test.js)
   - [x] invalid mnemonics, registers, immediates, etc. (assembler.integration.test.js)
-  - [ ] line that is too long (300+ chars) <-- this does not seem consistently reproducable in original LCC
+  - [o] line that is too long (300+ chars) <-- this does not seem consistently reproducable in original LCC
   - [x] invalid char usage in a label (assembler.integration.test.js)
   - [x] improperly terminated string (assembler.integration.test.js)
   - [x] only supplying a + or - sign without a number following it
@@ -27,10 +51,10 @@
 - [ ] refactor macwords into constants at the top of the file
 - [ ] refactor mnemonics into constants at the top of the file
 - [x] refactor names of lst file outputs to be more descriptive in lcc and interpreter tests
-- [ ] refactor e2e tests to have all file comparison functions come from a single module compareFiles.js which has a hex dump comparison, .lst file comparison, and general file comparison function which can be used by all tests and also by testCacheHandler.js
+- [x] refactor e2e tests to have all file comparison functions come from a single module compareFiles.js which has a hex dump comparison, .lst file comparison, and general file comparison function which can be used by all tests and also by testCacheHandler.js
 - [ ] single test runner script that runs all test suites in order, and logs the results of each test suite at the end
 - [ ] set up test hook which will run the test runner script and make sure every test passes before allowing a series of commits to be pushed to the repository
-- [ ] refactor to have file comparison code in one place 'compareFiles.js'
+- [x] refactor to have file comparison code in one place 'compareFiles.js'
 
 ## Core Features
 
@@ -83,9 +107,10 @@
 - [x] implement LST creation
 - [x] implement name.js module
 - [x] infinite loop detection
-- [ ] implement 300 char limit per line & corresponding error in assembler (no demo yet)
+- [x] implement 300 char limit per line & corresponding error in assembler (current LCC.js behavior counts the raw line, including comments, until researched further)
   - [ ] report current 300 char limit detection behavior inconsistencies to LCC author
-  - [ ] once the behavior is clarified, implement the 300 char limit detection in assembler.js
+  - [ ] research whether the original LCC 300-character limit includes comments, excludes comments, or is based on some other parsing rule
+  - [ ] research whether the original LCC enforces a true label-length limit separately from the apparent per-line character cap
 - [x] implement more directives like `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
   - [x] implement `.start` directive: "As a programmer, I can specify the entry point of my program via the .start directive, so that I can control where my program begins execution."
   - [ ] implement `.org/.orig` directive: "The .org directive sets the location counter during the assembly process to a greater value. For example, if at the address 5 in an assembly language program, we have the directive .org 15, the location is reset to 15. The locations 5 to 14 are padded with zeros. Thus, in this example, it has the same effect as .zero 10"
@@ -172,6 +197,7 @@
   - [x] test .extern, and .global
 - [ ] test .org/.orig directive usage
   - [ ] research to find out what exactly the .org/.orig directive does and why
+- [ ] research and document original-LCC behavior for 300+ character source lines so the pending unique LCC.js test can be specified precisely
 - [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
 - [x] `cmp` and `br` test
 - [x] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output
@@ -202,6 +228,16 @@
 - [x] test for invalid mnemonic detection (test 123 in assembler.integration.test.js)
 - [x] test for bad register detection (many tests in assembler.integration.test.js)
 - [ ] test for bad immediate detection
+- [ ] add regression tests for unique LCC.js behavior we want to preserve during refactors
+  - [x] assembler.js should reject non-`.a` source files that official LCC would still treat as assembly source
+  - [x] assembler.js should reject `.ap` files with the current LCC.js-specific error message that points users to `assemblerPlus.js`
+  - [x] assembler.js object-module flow should still create `.lst`/`.bst` reports after `.o` creation
+  - [x] interpreter.js should reject non-`.e` inputs with the current LCC.js-specific error message
+  - [x] interpreter.js should reject invalid `.e` signatures before printing `.lst`/`.bst` file paths
+  - [x] interpreter.js with `-nostats` should not require or create `name.nnn`
+  - [x] lcc.js should remain the higher-level wrapper that can assemble and then interpret a `.a` file in one call
+  - [x] lcc.js should only require or create `name.nnn` when it is actually writing `.lst`/`.bst` reports
+  - [x] new in-memory core seams should be covered by tests that confirm they match the current file-based public API outputs byte-for-byte / text-for-text
 - [ ] write test suite for disassembler
 - [x] test for implicit (abbreviated) r0 (register zero) usage with out instructions (demoX.a, used in assembler.e2e.test.js)
 - [x] rewrite invalid test cases as intergration tests

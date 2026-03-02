@@ -4,7 +4,13 @@
 
 const fs = require('fs');
 const path = require('path');
-const { generateBSTLSTContent } = require('../utils/genStats.js');
+const { buildReportArtifacts } = require('../utils/reportArtifacts');
+const { InvalidExecutableFormatError, InterpreterRuntimeError } = require('../utils/errors');
+const {
+  constructSiblingFileName,
+  readBinaryInput,
+  writeReportFiles,
+} = require('../utils/fileArtifacts');
 const nameHandler = require('../utils/name.js');
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
@@ -21,8 +27,147 @@ function fatalExit(message, code = 1) {
   }
 }
 
+function cliErrorExit(message, code = 1) {
+  console.error(message);
+  fatalExit(message, code);
+}
+
+function cliWrappedErrorExit(prefix, error, code = 1) {
+  console.error(prefix, error.message);
+  fatalExit(`${prefix} ${error.message}`, code);
+}
+
 class Interpreter {
   constructor() {
+    /**
+     * Memory (16-bit unsigned integers)
+     */
+    this.mem = new Uint16Array(65536);
+
+    /**
+     * Registers r0 to r7 (16-bit signed integers)
+     */
+    this.r = new Uint16Array(8);
+
+    /**
+     * Program Counter
+     */
+    this.pc = 0;
+
+    /**
+     * Instruction Register
+     */
+    this.ir = 0;
+
+    /**
+     * Negative flag
+     */
+    this.n = 0;
+
+    /**
+     * Zero flag
+     */
+    this.z = 0;
+
+    /**
+     * Carry flag
+     */
+    this.c = 0;
+
+    /**
+     * Overflow flag
+     */
+    this.v = 0;
+
+    /**
+     * Whether the interpreter is currently running
+     */
+    this.running = true;
+
+    /**
+     * Output string
+     */
+    this.output = '';
+
+    /**
+     * Input buffer for SIN (if needed)
+     */
+    this.inputBuffer = '';
+
+    /**
+     * Options from lcc.js
+     */
+    this.options = {};
+
+    /**
+     * For program statistics
+     */
+    this.instructionsExecuted = 0;
+
+    /**
+     * For program statistics
+     */
+    this.maxStackSize = 0;
+
+    /**
+     * Default load point is 0
+     */
+    this.loadPoint = 0;
+
+    /**
+     * For tracking stack size
+     */
+    this.spInitial = 0;
+
+    /**
+     * Keep track of the highest memory address used
+     */
+    this.memMax = 0;
+
+    /**
+     * Name of the input file
+     */
+    this.inputFileName = '';
+
+    /**
+     * Whether to generate .lst and .bst files
+     */
+    this.generateStats = false;
+
+    /**
+     * Header entries extracted from the executable
+     */
+    this.headerLines = [];
+
+    /**
+     * Limit the number of instructions to prevent infinite loops
+     */
+    this.instructionsCap = 500000;
+
+    /**
+     * Debug mode flag
+     */
+    this.debugMode = false;
+
+    /**
+     * Flag to track jump/branch instruction executions
+     */
+    this.hasJumped = false;
+
+    /**
+     * Whether runtime failures should throw typed errors instead of exiting
+     */
+    this.throwOnRuntimeError = false;
+
+    /**
+     * Whether infinite-loop detection is allowed to enter symbolic debugger mode
+     */
+    this.allowRuntimeDebugging = false;
+  }
+
+  // Reset all per-run execution state so the interpreter core can be reused
+  // without depending on filesystem-backed entrypoints.
+  resetExecutionState() {
     this.mem = new Uint16Array(65536); // Memory (16-bit unsigned integers)
     this.r = new Uint16Array(8);       // Registers r0 to r7 (16-bit signed integers)
     this.pc = 0;                       // Program Counter
@@ -33,28 +178,114 @@ class Interpreter {
     this.v = 0;                        // Overflow flag
     this.running = true;
     this.output = '';                  // Output string
-    this.inputBuffer = '';             // Input buffer for SIN (if needed)
-    this.options = {};                 // Options from lcc.js
     this.instructionsExecuted = 0;     // For program statistics
     this.maxStackSize = 0;             // For program statistics
-    this.loadPoint = 0;                // Default load point is 0
     this.spInitial = 0;                // For tracking stack size
     this.memMax = 0;                   // Keep track of the highest memory address used
-    this.inputFileName = '';           // Name of the input file
-    this.generateStats = false;        // Whether to generate .lst and .bst files
     this.headerLines = [];
-    this.instructionsCap = 500000;     // Limit the number of instructions to prevent infinite loops
-    this.debugMode = false;            // Debug mode flag
-    this.hasJumped = false;            // Flag to track jump/branch instruction executions 
+    this.hasJumped = false;            // Flag to track jump/branch instruction executions
+    this.initialMem = null;
+    this.throwOnRuntimeError = false;
+    this.allowRuntimeDebugging = false;
+  }
+
+  // Capture the current in-memory execution state in a structured result so
+  // callers can inspect runtime behavior without depending on mutable instance fields.
+  createExecutionResult({ buildReports = false, userName, inputFileName = this.inputFileName, now } = {}) {
+    let reports = { lst: null, bst: null };
+
+    if (buildReports) {
+      if (!userName) {
+        throw new InterpreterRuntimeError('userName is required when buildReports is true');
+      }
+
+      const { lstContent, bstContent } = this.buildReportArtifacts(userName, inputFileName, now);
+      reports = {
+        lst: lstContent,
+        bst: bstContent,
+      };
+    }
+
+    return {
+      inputFileName,
+      output: this.output,
+      mem: this.mem.slice(),
+      registers: this.r.slice(),
+      pc: this.pc,
+      instructionsExecuted: this.instructionsExecuted,
+      maxStackSize: this.maxStackSize,
+      loadPoint: this.loadPoint,
+      memMax: this.memMax,
+      headerLines: [...this.headerLines],
+      reports,
+    };
+  }
+
+  // Execute an in-memory executable buffer without requiring sibling files on disk.
+  executeBuffer(buffer, options = {}) {
+    const {
+      inputFileName = this.inputFileName,
+      loadPoint = this.loadPoint,
+      allowDebugOnInfiniteLoop = false,
+      inputBuffer = this.inputBuffer,
+      runtimeOptions = this.options,
+      buildReports = false,
+      userName,
+      now,
+    } = options;
+
+    this.inputFileName = inputFileName;
+    this.loadPoint = loadPoint;
+    this.inputBuffer = inputBuffer;
+    this.options = runtimeOptions;
+
+    this.resetExecutionState();
+    this.throwOnRuntimeError = true;
+    this.allowRuntimeDebugging = allowDebugOnInfiniteLoop;
+
+    // Check file signature
+    if (buffer[0] !== 'o'.charCodeAt(0)) {
+      throw new InvalidExecutableFormatError(`${this.inputFileName} is not in lcc format`);
+    }
+
+    // Load the executable into memory
+    this.loadExecutableBuffer(buffer);
+
+    // Capture the initial memory state
+    this.initialMem = this.mem.slice(); // Makes a copy of the memory array
+
+    // Run the interpreter
+    try {
+      this.run();
+    } finally {
+      this.throwOnRuntimeError = false;
+      this.allowRuntimeDebugging = false;
+    }
+
+    return this.createExecutionResult({
+      buildReports,
+      userName,
+      inputFileName: this.inputFileName,
+      now,
+    });
+  }
+
+  // Build the listing/statistics file contents without writing them to disk.
+  // This lets tests and higher-level wrappers verify output in memory.
+  buildReportArtifacts(userName, inputFileName = this.inputFileName, now) {
+    return buildReportArtifacts({
+      interpreter: this,
+      userName,
+      inputFileName,
+      now,
+    });
   }
 
   main(args) {
     args = args || process.argv.slice(2);
 
     if (args.length < 1) {
-      console.error('Usage: node interpreter.js <input filename> [options]');
-      // process.exit(1);
-      fatalExit('Usage: node interpreter.js <input filename> [options]', 1);
+      cliErrorExit('Usage: node interpreter.js <input filename> [options]', 1);
     }
 
     // Parse arguments
@@ -75,23 +306,17 @@ class Interpreter {
             // Load point value is in the next argument
             i++;
             if (i >= args.length) {
-              console.error('Error: -L option requires a value');
-              // process.exit(1);
-              fatalExit('Error: -L option requires a value', 1);
+              cliErrorExit('Error: -L option requires a value', 1);
             }
             loadPointStr = args[i];
           }
           // Parse load point value (hexadecimal)
           this.loadPoint = parseInt(loadPointStr, 16);
           if (isNaN(this.loadPoint)) {
-            console.error(`Invalid load point value: ${loadPointStr}`);
-            // process.exit(1);
-            fatalExit(`Invalid load point value: ${loadPointStr}`, 1);
+            cliErrorExit(`Invalid load point value: ${loadPointStr}`, 1);
           }
         } else {
-          console.error(`Bad command line switch: ${arg}`); // `Unknown option: ${arg}`
-          // process.exit(1);
-          fatalExit(`Bad command line switch: ${arg}`, 1);
+          cliErrorExit(`Bad command line switch: ${arg}`, 1); // `Unknown option: ${arg}`
         }
       } else {
         // Assume it's the input file name
@@ -103,33 +328,17 @@ class Interpreter {
           //       accessed by default when running .e files, or when assembling and
           //       running .a files all at once.
           if (extension !== '.e') {
-            console.error('Unsupported file type for interpreter.js (expected .e)');
-            fatalExit('Unsupported file type for interpreter.js (expected .e)', 1);
+            cliErrorExit('Unsupported file type for interpreter.js (expected .e)', 1);
           }
         } else {
-          console.error(`Unexpected argument: ${arg}`);
-          // process.exit(1);
-          fatalExit(`Unexpected argument: ${arg}`, 1);
+          cliErrorExit(`Unexpected argument: ${arg}`, 1);
         }
       }
       i++;
     }
 
     if (!this.inputFileName) {
-      console.error('No input file specified.');
-      // process.exit(1);
-      fatalExit('No input file specified.', 1);
-    }
-
-    // Get the userName using nameHandler
-    try {
-      //// console.log(`inputFileName = ${this.inputFileName}`);
-      this.userName = nameHandler.createNameFile(this.inputFileName);
-      //// console.log("userName = " + this.userName);
-    } catch (error) {
-      console.error('Error handling name file:', error.message);
-      // process.exit(1);
-      fatalExit('Error handling name file: ' + error.message, 1);
+      cliErrorExit('No input file specified.', 1);
     }
 
     // this prints out when called by interpreter.js
@@ -138,74 +347,65 @@ class Interpreter {
     // Open and read the executable file
     let buffer;
     try {
-      buffer = fs.readFileSync(this.inputFileName);
+      buffer = readBinaryInput(this.inputFileName);
     } catch (err) {
-      console.error(`Cannot open input file ${this.inputFileName}`); // , err: ${err}
-      // process.exit(1);
-      fatalExit(`Cannot open input file ${this.inputFileName}`, 1); // , err: ${err}
+      cliErrorExit(`Cannot open input file ${this.inputFileName}`, 1); // , err: ${err}
     }
 
-    // Check file signature
+    // Check file signature before printing any report filenames so direct CLI behavior
+    // stays aligned with the pre-refactor interpreter flow.
     if (buffer[0] !== 'o'.charCodeAt(0)) {
       // `${this.inputFileName} is not a valid LCC executable file: missing 'o' signature`
-      console.error(`${this.inputFileName} is not in lcc format`);
-      // process.exit(1);
-      fatalExit(`${this.inputFileName} is not in lcc format`, 1);
+      cliErrorExit(`${this.inputFileName} is not in lcc format`, 1);
     }
 
-    // Load the executable into memory
-    this.loadExecutableBuffer(buffer);
-
-    // Capture the initial memory state
-    this.initialMem = this.mem.slice(); // Makes a copy of the memory array
-
     // Prepare .lst and .bst file names
-    const lstFileName = this.inputFileName.replace(/\.e$/, '.lst');
-    const bstFileName = this.inputFileName.replace(/\.e$/, '.bst');
+    const lstFileName = this.constructBSTLSTFileName(this.inputFileName, false);
+    const bstFileName = this.constructBSTLSTFileName(this.inputFileName, true);
     console.log(`lst file = ${lstFileName}`);
     console.log(`bst file = ${bstFileName}`);
     console.log('====================================================== Output');
 
     // Run the interpreter
     try {
-      this.run();
+      this.executeBuffer(buffer, {
+        inputFileName: this.inputFileName,
+        loadPoint: this.loadPoint,
+        allowDebugOnInfiniteLoop: true,
+      });
       if (this.generateStats) {
         console.log(); // Ensure cursor moves to the next line
       }
     } catch (error) {
-      console.error(`Runtime Error: ${error.message}`);
-      // process.exit(1);
-      fatalExit(`Runtime Error: ${error.message}`, 1);
+      if (error.message === `${this.inputFileName} is not in lcc format`) {
+        // `${this.inputFileName} is not a valid LCC executable file: missing 'o' signature`
+        cliErrorExit(`${this.inputFileName} is not in lcc format`, 1);
+      }
+      cliErrorExit(`Runtime Error: ${error.message}`, 1);
     }
 
     // Generate .lst and .bst files if required
     if (this.generateStats) {
-      const lstContent = generateBSTLSTContent({
-        isBST: false,
-        interpreter: this,
-        assembler: null,
-        userName: this.userName,
-        inputFileName: this.inputFileName,
-      });
+      // Get the userName using nameHandler only when the wrapper is actually
+      // about to write report artifacts that include it.
+      let userName;
+      try {
+        //// console.log(`inputFileName = ${this.inputFileName}`);
+        userName = nameHandler.createNameFile(this.inputFileName);
+        //// console.log("userName = " + userName);
+      } catch (error) {
+        cliWrappedErrorExit('Error handling name file:', error, 1);
+      }
 
-      const bstContent = generateBSTLSTContent({
-        isBST: true,
-        interpreter: this,
-        assembler: null,
-        userName: this.userName,
-        inputFileName: this.inputFileName,
-      });
+      const { lstContent, bstContent } = this.buildReportArtifacts(userName, this.inputFileName);
 
       // Write the .lst and .bst files
-      fs.writeFileSync(lstFileName, lstContent);
-      fs.writeFileSync(bstFileName, bstContent);
+      writeReportFiles(this.inputFileName, lstContent, bstContent);
     }
   }
 
   constructBSTLSTFileName(inputFileName, isBST) {
-    const parsedPath = path.parse(inputFileName);
-    // Remove extension and add '.bst'
-    return path.format({ ...parsedPath, base: undefined, ext: isBST ? '.bst' : '.lst' });
+    return constructSiblingFileName(inputFileName, isBST ? '.bst' : '.lst');
   }
 
   // for use in lcc.js
@@ -214,11 +414,9 @@ class Interpreter {
   loadExecutableFile(fileName) {
     let buffer;
     try {
-      buffer = fs.readFileSync(fileName);
+      buffer = readBinaryInput(fileName);
     } catch (err) {
-      console.error(`Cannot open input file ${fileName}`);
-      // process.exit(1);
-      fatalExit(`Cannot open input file ${fileName}`, 1);
+      cliErrorExit(`Cannot open input file ${fileName}`, 1);
     }
 
     // Check file signature: look for "o" followed by "C" anywhere in the buffer
@@ -241,9 +439,7 @@ class Interpreter {
 
     // If either "o" or "C" was not found in the expected order, throw an error
     if (!foundO || !foundC) {
-      console.error(`${fileName} is not a valid LCC executable file`);
-      // process.exit(1);
-      fatalExit(`${fileName} is not a valid LCC executable file`, 1);
+      cliErrorExit(`${fileName} is not a valid LCC executable file`, 1);
     }
 
     // this prints out when called by lcc.js
@@ -261,8 +457,7 @@ class Interpreter {
 
     // Read file signature
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      this.error('Invalid file signature: missing "o"');
-      return;
+      this.raiseRuntimeError(new InvalidExecutableFormatError('Invalid file signature: missing "o"'));
     }
 
     // Do not store the 'o' signature in headerLines
@@ -280,8 +475,7 @@ class Interpreter {
       } else if (entryChar === 'S') {
         // Start address entry: read two bytes as little endian
         if (offset + 1 >= buffer.length) {
-          this.error('Incomplete start address in header');
-          return;
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete start address in header'));
         }
         startAddress = buffer.readUInt16LE(offset);
         offset += 2;
@@ -289,8 +483,7 @@ class Interpreter {
       } else if (entryChar === 'G') {
         // Skip 'G' entry: Read address and label
         if (offset + 1 >= buffer.length) {
-          this.error('Incomplete G entry in header');
-          return;
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete G entry in header'));
         }
         const address = buffer.readUInt16LE(offset);
         offset += 2;
@@ -304,16 +497,14 @@ class Interpreter {
       } else if (entryChar === 'A') {
         // Skip 'A' entry: Read address
         if (offset + 1 >= buffer.length) {
-          this.error('Incomplete A entry in header');
-          return;
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete A entry in header'));
         }
         const address = buffer.readUInt16LE(offset);
         offset += 2;
         this.headerLines.push(`A ${address.toString(16).padStart(4, '0')}`);
       } else {
         // Skip unknown entries or handle as needed
-        this.error(`Unknown header entry: '${entryChar}'`);
-        return;
+        this.raiseRuntimeError(new InvalidExecutableFormatError(`Unknown header entry: '${entryChar}'`));
       }
     }
 
@@ -421,8 +612,7 @@ class Interpreter {
         this.executeTRAP();
         break;
       default:
-        this.error(`Unknown opcode: ${this.opcode}`);
-        this.running = false;
+        this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown opcode: ${this.opcode}`));
     }
 
     // if any registers changed or flags were set, print them out
@@ -476,14 +666,14 @@ class Interpreter {
       // instead of exiting the program, this condition instead 
       // initiates the execution of the symbolic debugger
       // detect if the program is running in the terminal
-      if (process.stdin.isTTY) {
+      if (this.allowRuntimeDebugging && process.stdin.isTTY) {
         // If running in the terminal, we can trigger debug mode
         console.error("Possible infinite loop");
         this.debugMode = true;
       } else {
         // else, terminate the program
         this.running = false;
-        fatalExit("Possible infinite loop", 1);
+        this.raiseRuntimeError(new InterpreterRuntimeError('Possible infinite loop'));
       }
       
       //// TODO: implement a custom LCC.js behavior to set flags to toggle 
@@ -727,16 +917,14 @@ class Interpreter {
         break;
       case 8: // DIV
         if (this.r[this.sr1] === 0) {
-          this.error('Floating point exception');
-          fatalExit('Floating point exception', 1);
+          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception'));
         }
         this.r[this.dr] = (this.r[this.dr] / this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
       case 9: // REM
         if (this.r[this.sr1] === 0) {
-          this.error('Floating point exception');
-          fatalExit('Floating point exception', 1);
+          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception'));
         }
         this.r[this.dr] = (this.r[this.dr] % this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
@@ -758,9 +946,7 @@ class Interpreter {
         break;
       default:
         //// TODO: compare implementation with the official LCC interpreter
-        this.error(`Unknown extended opcode: ${this.eopcode}`);
-        this.running = false;
-        fatalExit(`Unknown extended opcode: ${this.eopcode}`, 1);
+        this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown extended opcode: ${this.eopcode}`));
     }
   }
 
@@ -1192,14 +1378,14 @@ class Interpreter {
         this.executeS();
         break;
       case 14: // bp
-        this.error('Breakpoint trap not yet implemented');
+        // TODO: implement breakpoint trap now that symbolic debugger is implemented
+        this.raiseRuntimeError(new InterpreterRuntimeError('Breakpoint trap not yet implemented'));
         break;
       default:
         // `Unknown TRAP vector: ${this.trapvec}`
         console.error(`Error on line 0 of ${this.inputFileName}`);
         console.error();
-        this.error(`Trap vector out of range`); // : ${this.trapvec}
-        this.running = false;
+        this.raiseRuntimeError(new InterpreterRuntimeError('Trap vector out of range')); // : ${this.trapvec}
     }
   }
 
@@ -1274,6 +1460,21 @@ class Interpreter {
     // console.error(`Interpreter Error: ${message}`);
     console.error(`${message}`);
     this.running = false;
+  }
+
+  raiseRuntimeError(error) {
+    this.running = false;
+
+    if (!(error instanceof Error)) {
+      error = new InterpreterRuntimeError(String(error));
+    }
+
+    if (this.throwOnRuntimeError) {
+      throw error;
+    }
+
+    this.error(error.message);
+    fatalExit(error.message, 1);
   }
 }
 

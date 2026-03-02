@@ -126,43 +126,9 @@ describe('Interpreter Integration Tests', () => {
     expect(interpreter.output).toBe('');
   });
 
-  // TODO: convert this to an e2e test
-  test.skip('2. Should create name.nnn if it does not exist (simulate user name = "MilkyWay")', () => {
-    const eFilePath = 'someFile.e';
-    const nameFilePath = 'name.nnn';
-    delete virtualFs[nameFilePath]; // deletes name.nnn so it does not exist
-
-    // We'll put a minimal .e file in the virtual FS (the program just halts):
-    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x00, 0xF0]);
-    // But do NOT define `virtualFs[nameFilePath]`, so the file doesn't exist
-
-    // Next, we must also mock the user input that name.js tries to read
-    // from stdin if the .nnn file does not exist.
-    // In your `name.js`, it calls readLineFromStdin() => fs.readSync(...).
-    // We can mock fs.readSync or we can do a trick with a buffer. For simplicity:
-    let readBuffer = Buffer.from('MilkyWay\n', 'utf8');
-    let readOffset = 0;
-    fs.readSync.mockImplementation((fd, buffer, offset, length, position) => {
-      if (readOffset >= readBuffer.length) {
-        return 0; // EOF
-      }
-      buffer[0] = readBuffer[readOffset];
-      readOffset++;
-      return 1;
-    });
-
-    // Now run the interpreter
-    expect(() => {
-      interpreter.main([eFilePath]);
-    }).not.toThrow();
-
-    // Because the .nnn did not exist, the code should have prompted for a name,
-    // read "MilkyWay", and created name.nnn with that content.
-    expect(virtualFs[nameFilePath]).toBe('MilkyWay\n');
-
-    // Program output is still empty, because we just halted.
-    expect(interpreter.output).toBe('');
-  });
+  // Moved to dedicated wrapper coverage:
+  // - tests/new/name.integration.spec.js verifies mocked wrapper behavior
+  // - tests/new/interpreter.e2e.spec.js verifies real CLI prompt/file creation behavior
 
   test('3. Should interpret a typical demoA.e with name.nnn existing', () => {
     const eFilePath = 'demoA.e';
@@ -198,6 +164,12 @@ describe('Interpreter Integration Tests', () => {
     }).toThrow(`Cannot open input file ${nonExistentFile}`);
   });
 
+  test('5b. should reject non-.e inputs with the current interpreter.js error message', () => {
+    expect(() => {
+      interpreter.main(['demoA.a']);
+    }).toThrow('Unsupported file type for interpreter.js (expected .e)');
+  });
+
   // -----------------------------------------------------------------------------
   // 6. Test handling of invalid signature in .e file (missing 'o')
   // -----------------------------------------------------------------------------
@@ -212,6 +184,18 @@ describe('Interpreter Integration Tests', () => {
     expect(() => {
       interpreter.main([eFilePath]);
     }).toThrow(`${eFilePath} is not in lcc format`); // `${fileName} is not a valid LCC executable file: missing 'o' signature`
+  });
+
+  test('6b. should reject an invalid .e signature before printing .lst and .bst file paths', () => {
+    const eFilePath = 'badSignatureBeforeStats.e';
+    virtualFs[eFilePath] = Buffer.from([0x41, 0x43, 0x00, 0xF0]);
+
+    expect(() => {
+      interpreter.main([eFilePath]);
+    }).toThrow(`${eFilePath} is not in lcc format`);
+
+    expect(console.log).not.toHaveBeenCalledWith(`lst file = ${eFilePath.replace(/\.e$/, '.lst')}`);
+    expect(console.log).not.toHaveBeenCalledWith(`bst file = ${eFilePath.replace(/\.e$/, '.bst')}`);
   });
 
   // -----------------------------------------------------------------------------
@@ -260,20 +244,12 @@ describe('Interpreter Integration Tests', () => {
     expect(interpreter.loadPoint).toBe(0x30);
   });
 
-  // TODO: convert this to an e2e test
   // -----------------------------------------------------------------------------
   // 10. Simulate infinite loop => after 500000 instructions => throws possible loop
   // -----------------------------------------------------------------------------
-  test.skip('10. should stop if instructionsExecuted exceed 500000', () => {
-    const eFilePath = 'infiniteLoop.e';
-    // Suppose a program that loops forever.
-    const test10Bytes = [0x6F, 0x43, 0x02, 0xF0]; // just 'oC' + dout r0
-    virtualFs[eFilePath] = Buffer.from(test10Bytes);
-
-    expect(() => {
-      interpreter.main([eFilePath]);
-    }).toThrow('Possible infinite loop');
-  });
+  // Moved to pure in-memory coverage in interpreter.unit.spec.js because the
+  // reusable runtime path should throw the expected error without activating
+  // CLI debugger behavior during test execution.
 
   // -----------------------------------------------------------------------------
   // 11. Test a file that does: mov r0,42; dout r0; halt => outputs "42"
@@ -317,12 +293,19 @@ describe('Interpreter Integration Tests', () => {
   // a120: 0000     ; brz
   // brz>>>q
   // ```
+  // Removed from the active suite:
+  // "Undefined label at runtime" is the wrong abstraction boundary. Undefined
+  // labels are assembler errors, not interpreter errors. If we want bad
+  // control-flow coverage here, it should be replaced with a real executable
+  // that triggers a known interpreter runtime fault.
+  //
   // -----------------------------------------------------------------------------
   // 12. (Potentially) referencing an undefined label at runtime => 
   //     Typically the interpreter expects a fully assembled .e, 
   //     so "undefined label" might not occur. This might be an assembler-level error. 
   //     We'll simulate a jump to a nonsense address to see if interpreter complains.
   // -----------------------------------------------------------------------------
+  /*
   test.skip('12. should fail if code tries to jump to an invalid address (simulate undefined label)', () => {
     const eFilePath = 'undefinedLabel.e';
     // 'oC' + something that jumps to address 0x270F + halt
@@ -335,6 +318,7 @@ describe('Interpreter Integration Tests', () => {
       interpreter.main([eFilePath]);
     }).toThrow('Runtime Error:');
   });
+  */
 
   // -----------------------------------------------------------------------------
   // 13. Test multiple .e files each with name.nnn 

@@ -11,12 +11,23 @@
 
 const fs = require('fs');
 const path = require('path');
-const { generateBSTLSTContent } = require('../utils/genStats.js');
+const { buildReportArtifacts } = require('../utils/reportArtifacts');
+const {
+  constructSiblingFileName,
+  readTextInput,
+  writeReportFiles,
+} = require('../utils/fileArtifacts');
+const { AssemblerError } = require('../utils/errors');
 const nameHandler = require('../utils/name.js');
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
+let activeAssemblerContext = null;
 
 function fatalExit(message, code = 1) {
+  if (activeAssemblerContext && activeAssemblerContext.throwOnAssemblyError) {
+    throw activeAssemblerContext.createAssemblyError(message, code);
+  }
+
   if (isTestMode) {
     throw new Error(message);
   } else {
@@ -24,7 +35,20 @@ function fatalExit(message, code = 1) {
   }
 }
 
-// Set to false to match original LCC behavior of reporting only a single error at a time
+function cliErrorExit(message, code = 1) {
+  console.error(message);
+  fatalExit(message, code);
+}
+
+function cliWrappedErrorExit(prefix, error, code = 1) {
+  console.error(prefix, error.message);
+  fatalExit(`${prefix} ${error.message}`, code);
+}
+
+/**
+ * Set to false to match original LCC behavior of reporting only 
+ * a single error at a time
+ *  */
 const REPORT_MULTI_ERRORS = false;
 
 class Assembler {
@@ -97,7 +121,7 @@ class Assembler {
     /**
      * Load point
      */
-    this.loadPoint = 0;
+    this.loadPoint = 0; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
 
     /**
      * Program size
@@ -138,6 +162,11 @@ class Assembler {
      * Array to store adjustment entries
      */
     this.adjustmentEntries = [];
+
+    /**
+     * Whether reusable assembly paths should throw typed errors instead of exiting
+     */
+    this.throwOnAssemblyError = false;
   }
 
   /**
@@ -151,6 +180,308 @@ class Assembler {
     }
   }
 
+  // Reset all per-run assembler state so the core logic can be reused
+  // without depending on a fresh class instance or any filesystem setup.
+  resetAssemblyState() {
+    this.symbolTable = {};
+    this.locCtr = 0;
+    this.lineNum = 0;
+    this.sourceLines = [];
+    this.errorFlag = false;
+    this.pass = 1;
+    this.labels = new Set();
+    this.errors = [];
+    this.outputBuffer = [];
+    this.outFile = null;
+    this.listing = [];
+    this.loadPoint = 0; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
+    this.programSize = 0;
+    this.startLabel = null;
+    this.startAddress = null;
+    this.isObjectModule = false;
+    this.globalLabels = new Set();
+    this.externLabels = new Set();
+    this.externalReferences = [];
+    this.adjustmentEntries = [];
+    this.throwOnAssemblyError = false;
+  }
+
+  createAssemblyError(message, exitCode = 1) {
+    const error = new AssemblerError(message);
+    error.exitCode = exitCode;
+    return error;
+  }
+
+  /**
+   * Validates the raw source line length before any comment stripping or tokenization.
+   * For now, the 300-character limit includes comments until the original LCC behavior
+   * is researched and specified more precisely.
+   *
+   * @param {string} line - The raw source line.
+   */
+  validateLineLength(line) {
+    if (line.length > 300) {
+      cliErrorExit('Line exceeds maximum length of 300 characters', 1);
+    }
+  }
+
+  // Capture the current in-memory assembly state in a structured result so
+  // callers can consume assembled output without depending on instance mutation.
+  createAssemblyResult({ buildReports = false, userName, includeComments = false, now } = {}) {
+    let reports = { lst: null, bst: null };
+
+    if (buildReports) {
+      if (!userName) {
+        throw this.createAssemblyError('userName is required when buildReports is true', 1);
+      }
+
+      const { lstContent, bstContent } = this.buildReportArtifacts(userName, includeComments, now);
+      reports = {
+        lst: lstContent,
+        bst: bstContent,
+      };
+    }
+
+    return {
+      inputFileName: this.inputFileName,
+      outputFileName: this.outputFileName,
+      isObjectModule: this.isObjectModule,
+      startAddress: this.startAddress,
+      loadPoint: this.loadPoint,
+      symbolTable: { ...this.symbolTable },
+      listing: this.listing.map(entry => ({ ...entry })),
+      outputBuffer: this.outputBuffer.slice(),
+      outputBytes: this.toOutputBuffer(),
+      reports,
+    };
+  }
+
+  assembleSource(sourceCode, options = {}) {
+    const {
+      inputFileName = this.inputFileName,
+      outputFileName = this.outputFileName,
+      throwOnAssemblyError = true,
+      buildReports = false,
+      userName,
+      includeComments = false,
+      now,
+    } = options;
+
+    this.resetAssemblyState();
+    this.inputFileName = inputFileName;
+    this.outputFileName = outputFileName;
+    this.sourceLines = sourceCode.split('\n');
+    this.throwOnAssemblyError = throwOnAssemblyError;
+
+    const previousAssemblerContext = activeAssemblerContext;
+    activeAssemblerContext = this;
+
+    try {
+      const extension = path.extname(this.inputFileName).toLowerCase();
+
+      // If the file ends in ".bin", parse it as raw binary instead of doing normal assembly.
+      // This keeps the core parsing path reusable while preserving the existing CLI behavior.
+      if (extension === '.bin') {
+        // Note: The original LCC does not print any message for assembling a .bin file as
+        // of 12/2024. We keep the current LCC.js user feedback here.
+        console.log(`Assembling ${this.inputFileName}`);
+        this.parseBinFile();
+        // Construct output filename with .e extension.
+        this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
+        return;
+      }
+
+      // If the file ends in ".hex", parse it as raw hexadecimal instead of doing normal assembly.
+      if (extension === '.hex') {
+        // Note: I believe that the original LCC does not print any
+        // message for assembling a .hex file as of 12/2024.
+        // so this is custom lcc.js behavior
+        console.log(`Assembling ${this.inputFileName}`);
+        this.parseHexFile();
+        this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
+        return;
+      }
+
+      // Note: Treating only .a files as valid assembly files is
+      //       a unique LCC.js behavior as of 12/2024. The official
+      //       LCC behavior is to treat all non .bin, .hex, .o, and
+      //       .e files as assembly files.
+      if (extension !== '.a') {
+        if (extension === '.ap') {
+          cliErrorExit('Error: .ap files are not supported by assembler.js - Did you mean to use assemblerPlus.js?', 1);
+        }
+        // custom lcc.js behavior: print an error and exit if the
+        // file extension is not recognized as a supported type
+        // (currently only .a, .bin, and .hex are supported)
+        cliErrorExit('Unsupported file type', 1);
+      }
+
+      // If a .a file, proceed with the normal two-pass assembly flow.
+      // Construct the default output file name by replacing the extension with '.e'.
+      this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
+
+      // Perform Pass 1.
+      console.log('Starting assembly pass 1');
+      this.pass = 1;
+      this.performPass();
+
+      if (this.locCtr === 0) {
+        cliErrorExit('Empty file', 0);
+      }
+
+      if (this.errorFlag) {
+        fatalExit('Errors encountered during Pass 1.', 1);
+      }
+
+      // Rewind source lines for Pass 2.
+      console.log('Starting assembly pass 2');
+      this.pass = 2;
+      this.locCtr = 0;
+      this.lineNum = 0;
+      this.performPass();
+
+      // After Pass 2, object modules switch from .e output to .o output.
+      if (this.isObjectModule) {
+        this.outputFileName = this.constructOutputFileName(this.inputFileName, '.o');
+      }
+
+      if (this.errorFlag) {
+        // Close the output file only if it was opened earlier in the run.
+        if (this.outFile !== null) {
+          fs.closeSync(this.outFile);
+        }
+        fatalExit('Errors encountered during Pass 2.', 1);
+      }
+
+      // Resolve the start label to an address before serializing the output file.
+      if (this.startLabel !== null) {
+        if (this.symbolTable.hasOwnProperty(this.startLabel)) {
+          this.startAddress = this.symbolTable[this.startLabel];
+        } else {
+          // Note: as of 12/2024, LCC does not print any message for this case
+          // and instead ignores undefined .start labels, but LCC.js treats it as an error.
+          this.failAssembly('Undefined label', 1);
+        }
+      } else {
+        // If no .start directive is present, default the start address to 0.
+        this.startAddress = 0;
+      }
+
+      return this.createAssemblyResult({
+        buildReports,
+        userName,
+        includeComments,
+        now,
+      });
+    } finally {
+      activeAssemblerContext = previousAssemblerContext;
+      this.throwOnAssemblyError = false;
+    }
+  }
+
+  // Build the listing/statistics file contents without writing them to disk.
+  // This lets tests and future wrappers verify output in memory.
+  buildReportArtifacts(userName, includeComments = false, now) {
+    return buildReportArtifacts({
+      assembler: this,
+      userName,
+      inputFileName: this.inputFileName,
+      includeComments,
+      now,
+    });
+  }
+
+  buildOutputFileChunks(secondIntroHeader = '') {
+    const chunks = [Buffer.from('o', 'ascii')];
+
+    // Custom LCC.js behavior as of 12/2024:
+    // Write the second intro header if it is provided.
+    // This enables extensions that need special header entries.
+    if (secondIntroHeader !== '') {
+      chunks.push(Buffer.from(secondIntroHeader, 'ascii'));
+    }
+
+    // Collect all header entries before serializing them so they can be sorted
+    // and returned either to the file-writing path or an in-memory caller.
+    let headerEntries = [];
+
+    // Add 'S' entry if present.
+    if (this.startLabel !== null && this.startAddress !== null) {
+      headerEntries.push({ type: 'S', address: this.startAddress });
+    }
+
+    // Collect 'G' entries.
+    for (let label of this.globalLabels) {
+      const address = this.symbolTable[label];
+      headerEntries.push({ type: 'G', address: address, label: label });
+    }
+
+    // Collect external references ('E', 'e', 'V').
+    for (let ref of this.externalReferences) {
+      headerEntries.push({ type: ref.type, address: ref.address, label: ref.label });
+    }
+
+    // Collect 'A' entries.
+    for (let address of this.adjustmentEntries) {
+      headerEntries.push({ type: 'A', address: address });
+    }
+
+    // Sort header entries by address so the serialized output matches the existing file format.
+    headerEntries.sort((a, b) => a.address - b.address);
+
+    // Serialize the header entries into byte chunks.
+    for (let entry of headerEntries) {
+      switch (entry.type) {
+        case 'S': {
+          const buffer = Buffer.alloc(3);
+          buffer.write('S', 0, 'ascii');
+          buffer.writeUInt16LE(entry.address, 1);
+          chunks.push(buffer);
+          break;
+        }
+        case 'G':
+        case 'E':
+        case 'e':
+        case 'V': {
+          const buffer = Buffer.alloc(3 + entry.label.length + 1);
+          buffer.write(entry.type, 0, 'ascii');
+          buffer.writeUInt16LE(entry.address, 1);
+          buffer.write(entry.label, 3, 'ascii');
+          buffer.writeUInt8(0, 3 + entry.label.length);
+          chunks.push(buffer);
+          break;
+        }
+        case 'A': {
+          const buffer = Buffer.alloc(3);
+          buffer.write('A', 0, 'ascii');
+          buffer.writeUInt16LE(entry.address, 1);
+          chunks.push(buffer);
+          break;
+        }
+        default:
+          // Should not reach here.
+          this.error('invalid header entry error');
+          break;
+      }
+    }
+
+    // Write the code start marker 'C'.
+    chunks.push(Buffer.from('C', 'ascii'));
+
+    // Write machine code words.
+    const codeBuffer = Buffer.alloc(this.outputBuffer.length * 2);
+    for (let i = 0; i < this.outputBuffer.length; i++) {
+      codeBuffer.writeUInt16LE(this.outputBuffer[i], i * 2);
+    }
+    chunks.push(codeBuffer);
+
+    return chunks;
+  }
+
+  toOutputBuffer(secondIntroHeader = '') {
+    return Buffer.concat(this.buildOutputFileChunks(secondIntroHeader));
+  }
+
   main(args) {
     args = args || process.argv.slice(2);
 
@@ -159,170 +490,47 @@ class Assembler {
     // Check if inputFileName is already set
     if (!this.inputFileName) {
       if (args.length !== 1) {
-        console.error('Usage: assembler.js <input filename>');
-        fatalExit('Usage: assembler.js <input filename>', 1);
+        cliErrorExit('Usage: assembler.js <input filename>', 1);
       }
       this.inputFileName = args[0];
     }
 
     // Read the source code from the input file
+    let sourceCode;
     try {
-      const sourceCode = fs.readFileSync(this.inputFileName, 'utf-8');
-      this.sourceLines = sourceCode.split('\n');
+      sourceCode = readTextInput(this.inputFileName);
     } catch (err) {
-      console.error(`Cannot open input file ${this.inputFileName}`); // , err: ${err}
-      fatalExit(`Cannot open input file ${this.inputFileName}`, 1); // , err: ${err}
+      cliErrorExit(`Cannot open input file ${this.inputFileName}`, 1); // , err: ${err}
     }
 
-    const extension = path.extname(this.inputFileName).toLowerCase();
+    this.assembleSource(sourceCode, {
+      inputFileName: this.inputFileName,
+      outputFileName: this.outputFileName,
+      throwOnAssemblyError: false,
+    });
 
-    // If the file ends in ".bin", parse it as raw binary instead of doing normal assembly
-    if (extension === '.bin') {
-      // Note: The original LCC does not print any message for assemnbling a .bin file as
-      // of 12/2024. I say this should be here to provide user feedback & good UX
-      console.log(`Assembling ${this.inputFileName}`);
+    // Write the assembled output file after the in-memory assembly pass completes.
+    this.writeOutputFile();
 
-      this.parseBinFile();
-      // Construct output filename with .e extension
-      this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
-      // Now write the output as a .e file
-      this.writeOutputFile();
-      
-    } else if (extension === '.hex') {
-      // Note: I believe that the original LCC does not print any 
-      // message for assemnbling a .hex file as of 12/2024.
-      console.log(`Assembling ${this.inputFileName}`);
-      this.parseHexFile();
-      this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
-      this.writeOutputFile();
-    } else if (extension === '.a') {
-
-      // If a .a file, proceed with normal two-pass assembly...
-      // Construct the output file name by replacing extension with '.e'
-      this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
-
-      // Perform Pass 1
-      console.log('Starting assembly pass 1');
-      this.pass = 1;
-      this.locCtr = 0;
-      this.loadPoint = 0; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
-      this.lineNum = 0;
-      this.errorFlag = false;
-      this.symbolTable = {};
-      this.labels.clear();
-      this.errors = [];
-      this.performPass();
-
-      if(this.locCtr === 0) {
-        console.error('Empty file');
-        fatalExit('Empty file', 0); // No instructions or data found in source file
+    // After writing the output file, handle the additional object-module artifacts.
+    if (this.isObjectModule) {
+      // Get the userName using nameHandler so the generated reports match current behavior.
+      try {
+        this.userName = nameHandler.createNameFile(this.inputFileName);
+      } catch (error) {
+        cliWrappedErrorExit('Error handling name file:', error, 1);
       }
 
-      if (this.errorFlag) {
-        // console.error('Errors encountered during Pass 1.');
-        // this.errors.forEach(error => console.error(error));
-        fatalExit('Errors encountered during Pass 1.', 1);
-      }
+      console.log(`Output file ${this.outputFileName} needs linking`);
 
-      // Rewind source lines for Pass 2
-      console.log('Starting assembly pass 2');
-      this.pass = 2;
-      this.locCtr = 0;
-      this.lineNum = 0;
-      this.performPass();
+      // Generate .lst and .bst files.
+      const { lstContent, bstContent } = this.buildReportArtifacts(this.userName);
 
-      // After Pass 2
-      if (this.isObjectModule) {
-        // Change output extension to .o
-        this.outputFileName = this.constructOutputFileName(this.inputFileName, '.o');
-      }
+      // Write the .lst and .bst files.
+      const { lstFileName, bstFileName } = writeReportFiles(this.inputFileName, lstContent, bstContent);
 
-      if (this.errorFlag) {
-        // console.error('Errors encountered during Pass 2.');
-        // Close the output file only if it's open
-        if (this.outFile !== null) {
-          fs.closeSync(this.outFile);
-        }
-        fatalExit('Errors encountered during Pass 2.', 1);
-      }
-
-      // **Resolve the start label to an address**
-      if (this.startLabel !== null) {
-        if (this.symbolTable.hasOwnProperty(this.startLabel)) {
-          this.startAddress = this.symbolTable[this.startLabel];
-        } else {
-          // Note: as of 12/2024, LCC does not print any message for this case
-          //       and instead ignores undefined .start labels (but it shouldn't)
-          //       so this is a custom LCC.js behavior
-          this.error(`Undefined label`); // Undefined start label: ${this.startLabel}
-          fatalExit(`Undefined label`, 1);
-        }
-      } else {
-        // If no .start directive, default start address is 0
-        this.startAddress = 0;
-      }
-
-      // **Write the output file after Pass 2**
-      this.writeOutputFile();
-
-      // After writing the output file, handle additional outputs
-      if (this.isObjectModule) {
-
-        // Get the userName using nameHandler
-        try {
-          this.userName = nameHandler.createNameFile(this.inputFileName);
-        } catch (error) {
-          console.error('Error handling name file:', error.message);
-          fatalExit('Error handling name file: ' + error.message, 1);
-        }
-
-        console.log(`Output file ${this.outputFileName} needs linking`);
-      
-        // Generate .lst and .bst files
-        const lstFileName = this.constructOutputFileName(this.inputFileName, '.lst');
-        const bstFileName = this.constructOutputFileName(this.inputFileName, '.bst');
-
-        // Generate content for .lst file
-        const lstContent = generateBSTLSTContent({
-          isBST: false,
-          assembler: this,
-          includeSourceCode: true,
-          userName: this.userName, 
-          inputFileName: this.inputFileName,
-          includeComments: false // note: this flag is only for .bin files
-        });
-
-        // Generate content for .bst file
-        const bstContent = generateBSTLSTContent({
-          isBST: true,
-          assembler: this,
-          includeSourceCode: true,
-          userName: this.userName, 
-          inputFileName: this.inputFileName,
-          includeComments: false // note: this flag is only for .bin files
-        });
-
-        // Write the .lst file
-        fs.writeFileSync(lstFileName, lstContent, 'utf-8');
-
-        // Write the .bst file
-        fs.writeFileSync(bstFileName, bstContent, 'utf-8');
-
-        console.log(`lst file = ${lstFileName}`);
-        console.log(`bst file = ${bstFileName}`);
-      }
-
-    } else {
-      // Note: Treating only .a files as valid assembly files is
-      //       a unique LCC.js behavior as of 12/2024 (the official
-      //       LCC behavior is to treat all non .bin, .hex, .o, and 
-      //       .e files as assembly files)
-      if (extension === '.ap') {
-        console.error('Error: .ap files are not supported by assembler.js - Did you mean to use assemblerPlus.js?');
-        fatalExit('Error: .ap files are not supported by assembler.js - Did you mean to use assemblerPlus.js?', 1);
-      }
-      console.error('Unsupported file type');
-      fatalExit('Unsupported file type', 1);
+      console.log(`lst file = ${lstFileName}`);
+      console.log(`bst file = ${bstFileName}`);
     }
 
   }
@@ -332,109 +540,20 @@ class Assembler {
     try {
       this.outFile = fs.openSync(this.outputFileName, 'w');
     } catch (err) {
-      console.error(`Cannot open output file ${this.outputFileName}`);
-      fatalExit(`Cannot open output file ${this.outputFileName}`, 1);
+      cliErrorExit(`Cannot open output file ${this.outputFileName}`, 1);
     }
   
-    // Write the initial header 'o' to the output file
-    fs.writeSync(this.outFile, 'o');
-
-    // Custom LCC.js behavior as of 12/2024:
-    // Write the second intro header if it is provided
-    // This enables extensions that need use special header entries
-    if(secondIntroHeader !== '') {
-      fs.writeSync(this.outFile, secondIntroHeader);
+    // Reuse the same serialized chunks that the in-memory API exposes.
+    for (const chunk of this.buildOutputFileChunks(secondIntroHeader)) {
+      fs.writeSync(this.outFile, chunk);
     }
-  
-    // Collect all header entries
-    let headerEntries = [];
-  
-    // Add 'S' entry if present
-    if (this.startLabel !== null && this.startAddress !== null) {
-      headerEntries.push({ type: 'S', address: this.startAddress });
-    }
-  
-    // Collect 'G' entries
-    for (let label of this.globalLabels) {
-      const address = this.symbolTable[label];
-      headerEntries.push({ type: 'G', address: address, label: label });
-    }
-  
-    // Collect external references ('E', 'e', 'V')
-    for (let ref of this.externalReferences) {
-      headerEntries.push({ type: ref.type, address: ref.address, label: ref.label });
-    }
-  
-    // Collect 'A' entries
-    for (let address of this.adjustmentEntries) {
-      headerEntries.push({ type: 'A', address: address });
-    }
-  
-    // Now sort the header entries by address
-    headerEntries.sort((a, b) => a.address - b.address);
-  
-    // Write the header entries
-    for (let entry of headerEntries) {
-      switch (entry.type) {
-        case 'S': {
-          const buffer = Buffer.alloc(3);
-          buffer.write('S', 0, 'ascii');
-          buffer.writeUInt16LE(entry.address, 1);
-          fs.writeSync(this.outFile, buffer);
-          break;
-        }
-        case 'G': {
-          const buffer = Buffer.alloc(3 + entry.label.length + 1);
-          buffer.write('G', 0, 'ascii');
-          buffer.writeUInt16LE(entry.address, 1);
-          buffer.write(entry.label, 3, 'ascii');
-          buffer.writeUInt8(0, 3 + entry.label.length);
-          fs.writeSync(this.outFile, buffer);
-          break;
-        }
-        case 'E':
-        case 'e':
-        case 'V': {
-          const buffer = Buffer.alloc(3 + entry.label.length + 1);
-          buffer.write(entry.type, 0, 'ascii');
-          buffer.writeUInt16LE(entry.address, 1);
-          buffer.write(entry.label, 3, 'ascii');
-          buffer.writeUInt8(0, 3 + entry.label.length);
-          fs.writeSync(this.outFile, buffer);
-          break;
-        }
-        case 'A': {
-          const buffer = Buffer.alloc(3);
-          buffer.write('A', 0, 'ascii');
-          buffer.writeUInt16LE(entry.address, 1);
-          fs.writeSync(this.outFile, buffer);
-          break;
-        }
-        default:
-          // Should not reach here
-          this.error("invalid header entry error");
-          break;
-      }
-    }
-  
-    // Write the code start marker 'C'
-    fs.writeSync(this.outFile, 'C');
-  
-    // Write machine code words
-    const codeBuffer = Buffer.alloc(this.outputBuffer.length * 2);
-    for (let i = 0; i < this.outputBuffer.length; i++) {
-      codeBuffer.writeUInt16LE(this.outputBuffer[i], i * 2);
-    }
-    fs.writeSync(this.outFile, codeBuffer);
   
     // Close the output file
     fs.closeSync(this.outFile);
   }  
 
   constructOutputFileName(inputFileName, extension) {
-    const parsedPath = path.parse(inputFileName);
-    // Remove extension and add the specified extension
-    return path.format({ ...parsedPath, base: undefined, ext: extension });
+    return constructSiblingFileName(inputFileName, extension);
   }
 
   // validates that a label either starts at the beginning of a line
@@ -460,7 +579,7 @@ class Assembler {
   performPass() {
     // At the beginning of Pass 1
     if (this.pass === 1) {
-      this.loadPoint = this.locCtr;
+      this.loadPoint = this.locCtr; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
     }
 
     if (this.pass === 2) {
@@ -470,6 +589,7 @@ class Assembler {
     for (let line of this.sourceLines) {
       this.lineNum++;
       let originalLine = line;
+      this.validateLineLength(originalLine);
       this.currentLine = originalLine; // Store current line for error reporting
       
       // Create listing entry
@@ -593,10 +713,11 @@ class Assembler {
   parseHexFile() {
     this.outputBuffer = [];
     this.locCtr = 0;
-    this.loadPoint = 0;
+    this.loadPoint = 0; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
     for (let lineNum = 0; lineNum < this.sourceLines.length; lineNum++) {
       this.lineNum++;
       let line = this.sourceLines[lineNum];
+      this.validateLineLength(line);
       this.currentLine = line; // For error messages
 
       const listingEntry = {
@@ -630,12 +751,10 @@ class Assembler {
       // Now we should have a 16-bit hexadecimal string
       // For example: "4B1F"
       if (!/^[0-9A-Fa-f]+$/.test(line)) {
-        console.error(`Error: line ${lineNum+1} in .hex file is not purely hexadecimal: "${line}"`);
-        fatalExit(`Error: line ${lineNum+1} in .hex file is not purely hexadecimal: "${line}"`, 1);
+        cliErrorExit(`Error: line ${lineNum+1} in .hex file is not purely hexadecimal: "${line}"`, 1);
       }
       if (line.length !== 4) {
-        console.error(`Error: line ${lineNum+1} in .hex file does not have exactly 4 nibbles: "${line}"`);
-        fatalExit(`Error: line ${lineNum+1} in .hex file does not have exactly 4 nibbles: "${line}"`, 1);
+        cliErrorExit(`Error: line ${lineNum+1} in .hex file does not have exactly 4 nibbles: "${line}"`, 1);
       }
   
       // Convert the binary string to a number
@@ -655,8 +774,7 @@ class Assembler {
     // Note: Reporting an empty hex file is custom LCC.js behavior in 12/2024
     //       (this does not match current official LCC behavior)
     if (this.locCtr === 0) {
-      console.error('Empty file');
-      fatalExit('Empty file', 0); // No instructions or data found in source file
+      cliErrorExit('Empty file', 0); // No instructions or data found in source file
     }
   
     // If you want a "startAddress = 0" by default, do that here
@@ -671,6 +789,7 @@ class Assembler {
     for (let lineNum = 0; lineNum < this.sourceLines.length; lineNum++) {
       this.lineNum++;
       let line = this.sourceLines[lineNum];
+      this.validateLineLength(line);
       this.currentLine = line; // For error messages
 
       const listingEntry = {
@@ -704,12 +823,10 @@ class Assembler {
       // Now we should have a 16-bit binary string
       // For example: "0010000000000101"
       if (!/^[01]+$/.test(line)) {
-        console.error(`Error: line ${lineNum+1} in .bin file is not purely binary: "${line}"`);
-        fatalExit(`Error: line ${lineNum+1} in .bin file is not purely binary: "${line}"`, 1);
+        cliErrorExit(`Error: line ${lineNum+1} in .bin file is not purely binary: "${line}"`, 1);
       }
       if (line.length !== 16) {
-        console.error(`Error: line ${lineNum+1} in .bin file does not have exactly 16 bits: "${line}"`);
-        fatalExit(`Error: line ${lineNum+1} in .bin file does not have exactly 16 bits: "${line}"`, 1);
+        cliErrorExit(`Error: line ${lineNum+1} in .bin file does not have exactly 16 bits: "${line}"`, 1);
       }
   
       // Convert the binary string to a number
@@ -729,8 +846,7 @@ class Assembler {
     // Note: The reporting of an empty bin file is custom LCC.js behavior in 12/2024
     //       (it does not currently match official LCC behavior)
     if (this.locCtr === 0) {
-      console.error('Empty file');
-      fatalExit('Empty file', 0); // No instructions or data found in source file
+      cliErrorExit('Empty file', 0); // No instructions or data found in source file
     }
   
     // If you want a "startAddress = 0" by default, do that here
@@ -809,8 +925,7 @@ class Assembler {
       if (str[i] === '\\') {
         i++; // Move to the next character to check the escape sequence
         if (i >= str.length) {
-          this.error(`Missing terminating quote`);
-          fatalExit(`Missing terminating quote`, 1);
+          this.failAssembly(`Missing terminating quote`, 1);
         }
         switch (str[i]) {
           case 'n':
@@ -846,33 +961,28 @@ class Assembler {
       case '.start':
         
         if(operands[0] === null || operands[0] === undefined) {
-          this.error("Missing operand");
-          fatalExit("Missing operand", 1);
+          this.failAssembly("Missing operand", 1);
         }
 
         if(!this.isValidLabel(operands[0])) {
-          this.error("Bad operand--not a valid label");
-          fatalExit("Bad operand--not a valid label", 1);
+          this.failAssembly("Bad operand--not a valid label", 1);
         }
 
         this.startLabel = operands[0];
         // Note: startAddress will be resolved after Pass 2 when all symbols are known
         break;
       case '.org':
-        this.error("This directive hasn't yet been implemented");
-        fatalExit("This directive hasn't yet been implemented", 1);
+        this.failAssembly("This directive hasn't yet been implemented", 1);
         break;
       case '.globl':
       case '.global':
         
         if(operands[0] === null || operands[0] === undefined) {
-          this.error("Missing operand");
-          fatalExit("Missing operand", 1);
+          this.failAssembly("Missing operand", 1);
         }
 
         if(!this.isValidLabel(operands[0])) {
-          this.error("Bad operand--not a valid label");
-          fatalExit("Bad operand--not a valid label", 1);
+          this.failAssembly("Bad operand--not a valid label", 1);
         }
 
         this.isObjectModule = true; // Set flag to produce .o file
@@ -889,13 +999,11 @@ class Assembler {
       case '.extern':
         
         if(operands[0] === null || operands[0] === undefined) {
-          this.error("Missing operand");
-          fatalExit("Missing operand", 1);
+          this.failAssembly("Missing operand", 1);
         }
 
         if(!this.isValidLabel(operands[0])) {
-          this.error("Bad operand--not a valid label");
-          fatalExit("Bad operand--not a valid label", 1);
+          this.failAssembly("Bad operand--not a valid label", 1);
         }
 
         this.isObjectModule = true; // Set flag to produce .o file
@@ -907,21 +1015,18 @@ class Assembler {
       case '.zero':
 
         if(operands[0] === null || operands[0] === undefined) {
-          this.error("Missing operand");
-          fatalExit("Missing operand", 1);
+          this.failAssembly("Missing operand", 1);
         }
 
         let num = parseInt(operands[0], 10);
         if (isNaN(num)) {
-          this.error("Bad number");
-          fatalExit("Bad number", 1);
+          this.failAssembly("Bad number", 1);
         }
 
         // Note: in the original LCC (as of 12/2024), the .zero directive arguments
         // are not checked for negativity, so this currently is a custom LCC.js behavior
         if(num < 1 || num > (65536 - this.locCtr)) {
-          this.error("Bad number");
-          fatalExit("Bad number", 1);
+          this.failAssembly("Bad number", 1);
         }
 
         if (this.pass === 2) {
@@ -934,13 +1039,11 @@ class Assembler {
       case '.fill':
       case '.word':
         if(operands[0] === null || operands[0] === undefined) {
-          this.error("Missing operand");
-          fatalExit("Missing operand", 1);
+          this.failAssembly("Missing operand", 1);
         }
 
         if(this.isOperator(operands[0]) && (operands[1] === null || operands[1] === undefined)) {
-          this.error("Missing operand");
-          fatalExit("Missing operand", 1);
+          this.failAssembly("Missing operand", 1);
         }
 
         // if (operands.length !== 1 && operands.length !== 3) {
@@ -961,8 +1064,7 @@ class Assembler {
 
             // if operands[2] is not a literal value, then it isn't a valid offset
             if(!this.isNumLiteral(operands[2])) {
-              this.error(`Bad number`); // : ${operands[2]}
-              fatalExit('Bad number', 1);
+              this.failAssembly(`Bad number`, 1); // : ${operands[2]}
             }
 
             label = operands[0] + operands[1] + operands[2];
@@ -970,14 +1072,12 @@ class Assembler {
 
           if((operands[1] && this.isOperator(operands[1])) && 
           (operands[2] === null || operands[2] === undefined)) {      
-            this.error('Missing number');
-            fatalExit('Missing number', 1);
+            this.failAssembly('Missing number', 1);
           }
 
           let value = this.evaluateOperand(label, 'V'); // Pass 'V' as usageType
           if (value === null) {
-            this.error(`Bad number`); // : ${value}
-            fatalExit('Bad number', 1);
+            this.failAssembly(`Bad number`, 1); // : ${value}
           };
       
           // see if operand is label +/- offset
@@ -989,8 +1089,7 @@ class Assembler {
           }
 
           if(parsed && (parsed.offset > 65535 || parsed.offset < -32768)) {
-            this.error(`Bad number`); // 'Data does not fit in 16 bits' // : ${parsed.offset}
-            fatalExit('Bad number', 1); // 'Data does not fit in 16 bits'
+            this.failAssembly(`Bad number`, 1); // 'Data does not fit in 16 bits' // : ${parsed.offset}
           }
 
           this.writeMachineWord(value & 0xFFFF);
@@ -1002,22 +1101,19 @@ class Assembler {
       case '.string':
 
         if(operands[0] === null || operands[0] === undefined) {
-          this.error("Missing operand");
-          fatalExit("Missing operand", 1);
+          this.failAssembly("Missing operand", 1);
         }
 
         let strOperand = operands[0];
 
         if(strOperand && strOperand.length > 0) {
           if(strOperand[0] !== '"') {
-            this.error("String constant missing leading quote");
-            fatalExit("String constant missing leading quote", 1);
+            this.failAssembly("String constant missing leading quote", 1);
           }
         }
 
         if (!this.isStringLiteral(strOperand)) {
-          this.error(`Missing terminating quote`);
-          fatalExit(`Missing terminating quote`, 1);
+          this.failAssembly(`Missing terminating quote`, 1);
         }
         // Extract the string without quotes
         let strContent = strOperand.slice(1, -1);
@@ -1039,8 +1135,7 @@ class Assembler {
         }
         break;
       default:
-        this.error(`Invalid operation`); // Invalid directive: ${mnemonic}
-        fatalExit(`Invalid operation`, 1);
+        this.failAssembly(`Invalid operation`, 1); // Invalid directive: ${mnemonic}
         break;
     }
   }
@@ -1228,8 +1323,7 @@ class Assembler {
   assembleCMP(operands) {
     let sr1 = this.getRegister(operands[0]);
     if (sr1 === null) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     };
     let sr2orImm5 = operands[1];
     if (sr2orImm5 === null) return null;
@@ -1266,15 +1360,13 @@ class Assembler {
     let macword = (codes[mnemonic.toLowerCase()] << 9) & 0xffff;
     let label = operands[0];
     if (label === null || label === undefined) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     }
     if(!this.isNumLiteral(operands[0]) && operands[1] && operands[2]) {
 
       // if operands[2] is not a literal value, then it isn't a valid offset
       if(!this.isNumLiteral(operands[2])) {
-        this.error('Bad number');
-        fatalExit('Bad number', 1);
+        this.failAssembly('Bad number', 1);
       }
 
       label = operands[0] + operands[1] + operands[2];
@@ -1282,14 +1374,12 @@ class Assembler {
 
     if((operands[1] && this.isOperator(operands[1])) && 
     (operands[2] === null || operands[2] === undefined)) {      
-      this.error('Missing number');
-      fatalExit('Missing number', 1);
+      this.failAssembly('Missing number', 1);
     }
 
     let address = this.evaluateOperand(label, 'e');
     if (address === null) {
-      this.error('Bad label'); // TODO: verify this is correct via cross testing w/ LCC
-      fatalExit('Bad label', 1);
+      this.failAssembly('Bad label', 1); // TODO: verify this is correct via cross testing w/ LCC
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1304,13 +1394,11 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let sr2orImm5 = operands[2];
     if (sr2orImm5 === null || sr2orImm5 === undefined) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     }
     let macword = 0x1000 | (dr << 9) | (sr1 << 6);
     if (this.isRegister(sr2orImm5)) {
@@ -1319,8 +1407,7 @@ class Assembler {
     } else {
       let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5");
       if (imm5 === null) {
-        this.error('Bad number');
-        fatalExit('Bad number', 1);
+        this.failAssembly('Bad number', 1);
       };
       macword |= 0x0020 | (imm5 & 0x1F);
     }
@@ -1338,8 +1425,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     }
     let sr2orImm5 = operands[2];
     let macword = 0xB000 | (dr << 9) | (sr1 << 6);
@@ -1349,8 +1435,7 @@ class Assembler {
     } else {
       let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5');
       if (imm5 === null) {
-        this.error('Bad number');
-        fatalExit('Bad number', 1);
+        this.failAssembly('Bad number', 1);
       };
       macword |= 0x0020 | (imm5 & 0x1F);
     }
@@ -1360,8 +1445,7 @@ class Assembler {
   assemblePUSH(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let macword = 0xA000 | (sr << 9);
     return macword;
@@ -1370,8 +1454,7 @@ class Assembler {
   assemblePOP(operands) {
     let dr = this.getRegister(operands[0]);
     if (dr === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let macword = (0xA000 | (dr << 9)) | 0x0001;
     return macword;
@@ -1381,8 +1464,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let macword = 0xa008 | (dr << 9) | (sr1 << 6);
     return macword;
@@ -1391,8 +1473,7 @@ class Assembler {
   assembleROL(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
@@ -1405,8 +1486,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x0007;
     return macword;
@@ -1416,8 +1496,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     }
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x0009;
     return macword;
@@ -1427,8 +1506,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     }
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000A;
     return macword;
@@ -1438,8 +1516,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     }
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000B;
     return macword;
@@ -1449,8 +1526,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000D;
     return macword;
@@ -1459,8 +1535,7 @@ class Assembler {
   assembleROR(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
@@ -1472,8 +1547,7 @@ class Assembler {
   assembleSRL(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
@@ -1485,8 +1559,7 @@ class Assembler {
   assembleSRA(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
@@ -1498,8 +1571,7 @@ class Assembler {
   assembleSLL(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
@@ -1512,8 +1584,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     };
     let sr2orImm5 = operands[2];
     let macword = 0x5000 | (dr << 9) | (sr1 << 6);
@@ -1523,8 +1594,7 @@ class Assembler {
     } else {
       let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5'); //// TODO: test bounds, see if input is naive or not
       if (imm5 === null || imm5 === undefined) {
-        this.error('Bad number');
-        fatalExit('Bad number', 1);
+        this.failAssembly('Bad number', 1);
       };
       macword |= 0x0020 | (imm5 & 0x1F);
     }
@@ -1535,22 +1605,19 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
 
     if (dr === null) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     };
 
     let label = operands[1];
 
     if (label === null || label === undefined) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     }
     if(!this.isNumLiteral(operands[1]) && operands[2] && operands[3]) {
 
       // if operands[2] is not a literal value, then it isn't a valid offset
       if(!this.isNumLiteral(operands[3])) {
-        this.error('Bad number');
-        fatalExit('Bad number', 1);
+        this.failAssembly('Bad number', 1);
       }
 
       label = operands[1] + operands[2] + operands[3];
@@ -1558,14 +1625,12 @@ class Assembler {
 
     if((operands[2] && this.isOperator(operands[2])) && 
     (operands[3] === null || operands[3] === undefined)) {      
-      this.error('Missing number');
-      fatalExit('Missing number', 1);
+      this.failAssembly('Missing number', 1);
     }
 
     let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
     if (address === null) {
-      this.error('Bad label');
-      fatalExit('Bad label', 1);
+      this.failAssembly('Bad label', 1);
     };
     
     let isExternal = this.externLabels.has(label);
@@ -1589,22 +1654,19 @@ class Assembler {
     let sr = this.getRegister(operands[0]);
 
     if (sr === null) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     };
 
     let label = operands[1];
     
     if (label === null || label === undefined) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     }
     if(!this.isNumLiteral(operands[1]) && operands[2] && operands[3]) {
 
       // if operands[2] is not a literal value, then it isn't a valid offset
       if(!this.isNumLiteral(operands[3])) {
-        this.error('Bad number');
-        fatalExit('Bad number', 1);
+        this.failAssembly('Bad number', 1);
       }
 
       label = operands[1] + operands[2] + operands[3];
@@ -1612,14 +1674,12 @@ class Assembler {
 
     if((operands[2] && this.isOperator(operands[2])) && 
     (operands[3] === null || operands[3] === undefined)) {      
-      this.error('Missing number');
-      fatalExit('Missing number', 1);
+      this.failAssembly('Missing number', 1);
     }
 
     let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
     if (address === null) {
-      this.error('Bad label');
-      fatalExit('Bad label', 1);
+      this.failAssembly('Bad label', 1);
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1634,23 +1694,20 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
 
     if (dr === null) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     };
 
     let label = operands[1];
 
     if(label === null || label === undefined) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     }
 
     if(!this.isNumLiteral(operands[1]) && operands[2] && operands[3]) {
 
       // if operands[2] is not a literal value, then it isn't a valid offset
       if(!this.isNumLiteral(operands[3])) {
-        this.error('Bad number');
-        fatalExit('Bad number', 1);
+        this.failAssembly('Bad number', 1);
       }
 
       label = operands[1] + operands[2] + operands[3];
@@ -1658,19 +1715,16 @@ class Assembler {
 
     if((operands[2] && this.isOperator(operands[2])) && 
     (operands[3] === null || operands[3] === undefined)) {      
-      this.error('Missing number');
-      fatalExit('Missing number', 1);
+      this.failAssembly('Missing number', 1);
     }
 
     let address = this.evaluateOperand(label, 'e');
     if (address === null) {
-      this.error('Bad label');
-      fatalExit('Bad label', 1);
+      this.failAssembly('Bad label', 1);
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
-      this.error('pcoffset9 out of range');
-      fatalExit('pcoffset9 out of range', 1);
+      this.failAssembly('pcoffset9 out of range', 1);
     }
     let macword = 0xE000 | (dr << 9) | (pcoffset9 & 0x1FF);
     return macword;
@@ -1680,14 +1734,12 @@ class Assembler {
     let label = operands[0];
 
     if(!this.isValidLabel(label)) {
-      this.error(`Bad label`); // : ${label}
-      fatalExit(`Bad label`, 1); // : ${label}
+      this.failAssembly(`Bad label`, 1); // : ${label}
     }
 
     let address = this.evaluateOperand(label, 'E'); // Pass 'E' as usageType
     if (address === null) {
-      this.error('Bad label');
-      fatalExit('Bad label', 1);
+      this.failAssembly('Bad label', 1);
     }
     
     let isExternal = this.externLabels.has(label);
@@ -1710,8 +1762,7 @@ class Assembler {
   assembleBLR(operands) {
     let baser = this.getRegister(operands[0]);
     if (baser === null) {
-      this.error('Missing operand');
-      fatalExit('Missing operand', 1);
+      this.failAssembly('Missing operand', 1);
     };
     let offset6 = 0;
     if (operands[1]) {
@@ -1725,8 +1776,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let baser = this.getRegister(operands[1]);
     if (dr === null || baser === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let offset6 = this.evaluateImmediate(operands[2], -32, 31, 'offset6');  //// TODO: test bounds, see if input is naive or not
     if (offset6 === null) return null;
@@ -1738,8 +1788,7 @@ class Assembler {
     let sr = this.getRegister(operands[0]);
     let baser = this.getRegister(operands[1]);
     if (sr === null || baser === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let offset6 = this.evaluateImmediate(operands[2], -32, 31, 'offset6');  //// TODO: test bounds, see if input is naive or not
     if (offset6 === null) return null;
@@ -1752,8 +1801,9 @@ class Assembler {
     if (baser === null) {
       // Note: as of 12/2024, the official LCC behavior here is to segfault
       // so, this is currently "custom" LCC.js behavior
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      // TODO: confirm whether this is still the official LCC behavior in 2026, 
+      // and if not, update this error handling accordingly
+      this.failAssembly('Missing register', 1);
     };
     let offset6 = 0;
     if (operands[1]) {
@@ -1781,8 +1831,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing register');
-      fatalExit('Missing register', 1);
+      this.failAssembly('Missing register', 1);
     };
     let macword = 0x9000 | (dr << 9) | (sr1 << 6);
     return macword;
@@ -1791,8 +1840,7 @@ class Assembler {
   assembleMOV(mnemonic, operands) {
     let dr = this.getRegister(operands[0]);
     if (dr === null) {
-      this.error('Missing register');
-      fatalExit("Missing register", 1);
+      this.failAssembly('Missing register', 1);
     };
 
     if (mnemonic === 'mov') {
@@ -1808,8 +1856,7 @@ class Assembler {
         // Translate to 'mvi dr, imm9'
         let imm9 = this.evaluateImmediateNaive(operands[1]); // this.evaluateImmediate(operands[1], -256, 255);
         if (imm9 === null) {
-          this.error('Missing number');
-          fatalExit("Missing number", 1);
+          this.failAssembly('Missing number', 1);
         };
         // mvi: opcode 0xD000
         let macword = 0xD000 | (dr << 9) | (imm9 & 0x1FF);
@@ -1820,8 +1867,7 @@ class Assembler {
       // mvi dr, imm9
       let imm9 =  this.evaluateImmediate(operands[1], -256, 255, "mvi immediate"); // this.evaluateImmediate(operands[1], -256, 255);
       if (imm9 === null) {
-        this.error('Missing number');
-        fatalExit("Missing number", 1);
+        this.failAssembly('Missing number', 1);
       };
       let macword = 0xD000 | (dr << 9) | (imm9 & 0x1FF);
       return macword;
@@ -1829,8 +1875,7 @@ class Assembler {
       // mvr dr, sr1
       let sr1 = this.getRegister(operands[1]);
       if (sr1 === null) {
-        this.error('Missing register');
-        fatalExit("Missing register", 1);
+        this.failAssembly('Missing register', 1);
       };
       // Ensure eopcode 12 is set
       let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000C;
@@ -1846,8 +1891,7 @@ class Assembler {
     if (operands[0]) {
       sr = this.getRegister(operands[0]);
       if (sr === null) {
-        this.error('Bad register');
-        fatalExit("Bad register", 1);
+        this.failAssembly('Bad register', 1);
       };
     } 
     let macword = 0xF000 | (sr << 9) | (trapVector & 0xFF);
@@ -1862,8 +1906,7 @@ class Assembler {
     }
 
     if (!this.isRegister(regStr)) {
-      this.error('Bad register'); // this.error(`Invalid register: ${regStr}`);
-      fatalExit("Bad register", 1);
+      this.failAssembly('Bad register', 1); // this.error(`Invalid register: ${regStr}`);
     }
     if (regStr === "fp") {
       regStr = "r5";
@@ -2053,14 +2096,11 @@ class Assembler {
           // inspect to see if it was an invalid number
           // inspect to see if it was an invalid label
           if(operand[0] === '0' && operand[1] === 'x' && !this.isValidHexNumber(operand)) {
-            this.error(`Bad number`);
-            fatalExit("Bad number", 1);
+            this.failAssembly(`Bad number`, 1);
           } else if (!this.isValidLabel(operand)) {
-            this.error(`Bad label`);
-            fatalExit("Bad label", 1);
+            this.failAssembly(`Bad label`, 1);
           } else {
-            this.error(`Unspecified label error for: ${operand}`); // this.error(`Undefined label: ${operand}`);
-            fatalExit(`Unspecified label error for: ${operand}`, 1);
+            this.failAssembly(`Unspecified label error for: ${operand}`, 1); // this.error(`Undefined label: ${operand}`);
           }
         }
       }
@@ -2081,8 +2121,7 @@ class Assembler {
     let value = this.parseNumber(valueStr);
 
     if (isNaN(value)) {
-      this.error(`Bad number`);
-      fatalExit("Bad number", 1);
+      this.failAssembly(`Bad number`, 1);
     }
 
     if (value < min || value > max) {
@@ -2101,10 +2140,17 @@ class Assembler {
     }
     let value = this.parseNumber(valueStr);
     if (isNaN(value)) {
-      this.error(`Bad number`); // `Not a valid number: ${valueStr}`
-      fatalExit("Bad number", 1);
+      this.failAssembly(`Bad number`, 1); // `Not a valid number: ${valueStr}`
     }
     return value & 0xFFFF;
+  }
+
+  failAssembly(message, code = 1) {
+    this.error(message);
+
+    if (REPORT_MULTI_ERRORS) {
+      fatalExit(message, code);
+    }
   }
 
   error(message) {
@@ -2128,4 +2174,3 @@ if (require.main === module) {
   const assembler = new Assembler();
   assembler.main();
 }
-
