@@ -1,10 +1,24 @@
 ; ############################################################
-; # A playable LCC+js Snake game that leverages linked lists.
-; # Uses only r0-r3 for general logic, r4 for ASCII input.
+; # A playable LCC+js Snake game implemented with a linked list.
 ; #
-; # Board is 10x10, fruit starts at (3,3). Snake starts at (5,5).
+; # Register usage:
+; #   r0-r3  general game logic
+; #   r4     last polled ASCII input
+; #
+; # Board is 10x10. Fruit starts at (3,3). Snake starts at (5,5).
 ; # Keys: w=up, a=left, s=down, d=right, q=quit
-; # This version is asynchronous, and non-input-blocking.
+; #
+; # Direction encoding used by this program:
+; #   0 = left
+; #   1 = down
+; #   2 = right
+; #   3 = up
+; #
+; # Internal coordinate convention:
+; #   r2 = row (vertical / y)
+; #   r3 = col (horizontal / x)
+; #
+; # This version is asynchronous and non-blocking for input.
 ; ############################################################
 
 ;; DONE: implement randomly placing the fruit elsewhere after it
@@ -25,6 +39,9 @@
 ;;       board & there is no place for the fruit to respawn
 ;; TODO: implement a variable width board that can go up to size 15x15
 ;; TODO: implement a variable width board that can go up to size 31x31
+;; TODO: implement replaying option
+;; TODO: implement high score tracking
+;; TODO: implement alt controls HJKL (vim style)
 
 
         .lccplus
@@ -42,26 +59,27 @@ startup:    clear ; clear screen
             halt
 
 ;================================================================
-; createNode: (int x, int y) => returns pointer in r0
-;   Allocates 3 words for a node: x, y, next
-;   next=0, x=r2, y=r3
+; createNode: (int row, int col) => returns pointer in r0
+;   Allocates 3 words for a node: row, col, next
+;   next=0, row comes from the first coordinate argument and col
+;   comes from the second coordinate argument.
 ;================================================================
 createNode: push lr
             push fp
             mov fp, sp
 
-            ; arguments are at (fp+2)=x, (fp+3)=y
+            ; arguments are at (fp+2)=row, (fp+3)=col
 
             ; 1) call malloc(3 words)
             mov r1, 3    ; size=3
             bl  malloc   ; r0=newly allocated pointer
 
-            ; 2) store x,y => x=*(r0+0), y=*(r0+1)
+            ; 2) store row,col => row=*(r0+0), col=*(r0+1)
             ;    next=*(r0+2)=0
-            ; We need x,y from the stack
-            ldr r2, fp, 2  ; x
+            ; We load row and col from the stack
+            ldr r2, fp, 2  ; row
             str r2, r0, 0
-            ldr r3, fp, 3  ; y
+            ldr r3, fp, 3  ; col
             str r3, r0, 1
             mov r2, 0      ; next=0
             str r2, r0, 2
@@ -72,27 +90,27 @@ createNode: push lr
             ret
 
 ;================================================================
-; addNodeTail(int *snakePtr, int x, int y)
-;   if (*snakePtr==NULL) => *snakePtr=newNode
-;   else => traverse till temp->next=0, then temp->next=newNode
-; "growSnake" by adding a new node at the tail
+; appendSnakeHead(int *snakePtr, int row, int col)
+;   The linked list is stored from snake tail -> snake head.
+;   This routine appends a new segment at the logical head of the
+;   snake by adding a node to the end of the list.
 ;================================================================
-addNodeTail:
+appendSnakeHead:
             push lr
             push fp
             mov fp, sp
 
             ; (fp+2) => &snake
-            ; (fp+3) => x
-            ; (fp+4) => y
+            ; (fp+3) => row
+            ; (fp+4) => col
 
-            ; 1) newNode = createNode(x,y)
-            ldr r0, fp, 3   ; x
-            ldr r1, fp, 4   ; y
-            push r1         ; push y
-            push r0         ; push x
+            ; 1) newNode = createNode(row,col)
+            ldr r0, fp, 3   ; row
+            ldr r1, fp, 4   ; col
+            push r1         ; push col
+            push r0         ; push row
             bl createNode
-            add sp, sp, 2   ; dealloc x,y from stack
+            add sp, sp, 2   ; dealloc row,col from stack
             ; newNode is now in r0
 
             ; 2) load *snakePtr
@@ -126,11 +144,12 @@ addNodeTail:
             ret
 
 ;================================================================
-; removeHead(int *snakePtr)
-;   if (*snakePtr==NULL) => do nothing
-;   else => temp=*snake, *snake=temp->next, free(temp)
+; removeSnakeTail(int *snakePtr)
+;   Removes the oldest segment, which is stored at the front of the
+;   linked list.
 ;================================================================
-removeHead: push lr
+removeSnakeTail:
+            push lr
             push fp
             mov fp, sp
 
@@ -157,28 +176,28 @@ removeHead: push lr
             ret
 
 ;================================================================
-; checkCollision(int *snakePtr, int x, int y)
-;   returns 1 if (x,y) is in snake, else 0
+; checkCollision(int *snakePtr, int row, int col)
+;   Returns 1 if the coordinate is in the snake, else 0.
 ;================================================================
 checkCollision:
             push lr
             push fp
             mov fp, sp
 
-            ; (fp+2)=&snake, (fp+3)=x, (fp+4)=y
+            ; (fp+2)=&snake, (fp+3)=row, (fp+4)=col
             ldr r0, fp, 2    ; r0=&snake
             ldr r1, r0, 0    ; r1=*snake (first node)
-            ldr r2, fp, 3    ; x
-            ldr r3, fp, 4    ; y
+            ldr r2, fp, 3    ; row
+            ldr r3, fp, 4    ; col
 
     @loopColl:
             cmp r1, 0
             bre @noColl1
-            ; compare r2,r3 with (r1->x, r1->y)
-            ldr r0, r1, 0    ; node->x
+            ; compare row/col with the current node
+            ldr r0, r1, 0    ; node->row
             cmp r0, r2
             brne @next
-            ldr r0, r1, 1    ; node->y
+            ldr r0, r1, 1    ; node->col
             cmp r0, r3
             brne @next
             ; => found collision
@@ -198,18 +217,18 @@ checkCollision:
             ret
 
 ;---------------------------------------------------
-; GLOBAL VARIABLES
+; GLOBAL STATE
 ;---------------------------------------------------
-; boardSize:      .word 10         ; 10x10 board ;; TODO: use this throughout code
-snake:          .zero 1          ; pointer to the first node (tail) in the snake list
-snakeLen:       .word 1          ; length of the snake
-fruitX:         .word 3
-fruitY:         .word 3
-direction:      .word 0          ; 0=up,1=right,2=down,3=left
-; gameOverFlag:   .zero 1          ; 0=running, 1=game over
-sleepTime:      .word 150        ; sleep time in ms
+boardSize:      .word 10
+boardMaxIndex:  .word 9
+snake:          .zero 1          ; pointer to the linked-list tail
+snakeLen:       .word 1
+fruitRow:       .word 3
+fruitCol:       .word 3
+direction:      .word 0          ; 0=left, 1=down, 2=right, 3=up
+sleepTime:      .word 150
 
-; We define a node as 3 words: node->x, node->y, node->next
+; We define a node as 3 words: node->row, node->col, node->next
 ; We'll have subroutines that manipulate this list.
 
 ;----------------------------------------------------------------
@@ -224,24 +243,51 @@ enterAnyKey:    .string "Press any key to quit."
 scoreMsg:       .string "Score: "
 
 ;---------------------------------------------------------
-; placeFruit: pick random x,y in [0..9] for the fruit
+; placeFruitRandom: pick a random row/col in [0..9] for the fruit
 ;---------------------------------------------------------
-placeFruit:
+placeFruitRandom:
         push  lr
         push  fp
         mov   fp, sp
 
-        ; random X in [0..9]
+        ; random row in [0..9]
         mov   r0, 0
-        mov   r1, 9
+        ld    r1, boardMaxIndex
         rand  r0, r1    ; r0 => [0..9]
-        st    r0, fruitX
+        st    r0, fruitRow
 
-        ; random Y in [0..9]
+        ; random col in [0..9]
         mov   r0, 0
-        mov   r1, 9
+        ld    r1, boardMaxIndex
         rand  r0, r1
-        st    r0, fruitY
+        st    r0, fruitCol
+
+        mov   sp, fp
+        pop   fp
+        pop   lr
+        ret
+
+;---------------------------------------------------------
+; placeFruitSafely: keep placing fruit until it is not inside
+; the snake body
+;---------------------------------------------------------
+placeFruitSafely:
+        push  lr
+        push  fp
+        mov   fp, sp
+
+    @tryPlaceFruit:
+        bl    placeFruitRandom
+        ld    r0, fruitCol
+        push  r0
+        ld    r0, fruitRow
+        push  r0
+        lea   r0, snake
+        push  r0
+        bl    checkCollision
+        add   sp, sp, 3
+        cmp   r0, 1
+        bre   @tryPlaceFruit
 
         mov   sp, fp
         pop   fp
@@ -250,17 +296,14 @@ placeFruit:
 
 ;================================================================
 ; printBoard(int *snakePtr)
-;   Loops row=[0..9], col=[0..9], checks fruit or snake
+;   Loops row=[0..9], col=[0..9], prints fruit, snake, or dot.
 ;================================================================
 printBoard:
             push lr
             push fp
             mov fp, sp
 
-            ; We'll use r0-r3 carefully
-            ; (fp+2) => &snake
             ldr r0, fp, 2   ; r0=&snake
-            ldr r1, r0, 0   ; r1=*snake pointer if we need it
 
             mov r2, 0       ; row=0
     @rowLoop:
@@ -274,24 +317,20 @@ printBoard:
             brgt @doneCols ; brge
             bre @doneCols
 
-            ; 1) Check if (r3,r2) => (fruitX,fruitY)
-            ; We'll push r2,r3, load fruitX, compare, etc.
+            ; Save row/col while we reuse registers for fruit/snake checks
             push r2
             push r3
-            ld   r0, fruitX
+            ld   r0, fruitRow
             cmp  r2, r0
             brne @checkSnake
-            ld   r0, fruitY
+            ld   r0, fruitCol
             cmp  r3, r0
             brne @checkSnake
-            ; => This cell is fruit
             ld   r0, fruitChar
             aout r0
             br   @postCell
 
     @checkSnake:
-            ; checkCollision(&snake, col=r3, row=r2)
-            ; We only have r0-r3, so we push as needed
             push r3           ; col
             push r2           ; row
             lea r0, snake     ; r0=&snake
@@ -300,7 +339,6 @@ printBoard:
             add sp, sp, 3
             cmp r0, 1
             brne @printDot
-            ; => in snake => print 'O'
             ld r0, snakeChar
             aout r0
             br @postCell
@@ -310,7 +348,6 @@ printBoard:
             aout r0
 
     @postCell:
-            ; print space
             ld r0, spaceChar
             aout r0
 
@@ -328,8 +365,7 @@ printBoard:
             br @rowLoop
 
     @doneRows:
-            ; uncomment the following 2 lines
-            ; to play the game in dev mode :-)
+            ; Uncomment these two lines for step-by-step dev mode
             ; r
             ; bp
 
@@ -346,126 +382,97 @@ main:       push lr
             push fp
             mov fp, sp
 
-            ; snake=0
             mov r0, 0
             st r0, snake
 
-            ; fruitX=3, fruitY=3 already set
-            ; direction=1 => right
-            ;   mov r0, 1
-            ;   st r0, direction
-
-            ; set initial snake segment => (5,5)
-            ; we want addNodeTail(&snake, 5,5)
+            ; Set initial snake segment at row 5, col 5
             mov r1, 5
-            push r1         ; y
-            push r1         ; x
+            push r1         ; col
+            push r1         ; row
             lea r0, snake
             push r0
-            bl addNodeTail
+            bl appendSnakeHead
             add sp, sp, 3   ; pop the arguments
 
-            ; gameOverFlag=0
-            ; mov r0, 0
-            ; st r0, gameOverFlag
     @loopGame:
-            resetc ; clear
-            ; 1) printBoard(&snake)
+            resetc
             lea r0, snake
             push r0
             bl printBoard
             add sp, sp, 1
             bl printScore
-
-            ; for debugging
-            ; r
-
-            ; 2) read input with ain (blocking)
-            ;    if input=='q', game over
             nbain r4
 
             mov r0, 'q'
             cmp r4, r0
             bre @gameOver
 
-            ; set direction if 'w','a','s','d'
+            ; Update direction from keyboard input
             mov r0, 'w'
             cmp r4, r0
             brne @checkD
-                ; => up => direction=0
-                mov r1, 0
+                mov r1, 3
                 st r1, direction
                 br @doneDir
     @checkD:
             mov r0, 'd'
             cmp r4, r0
             brne @checkS
-                ; => right => direction=1
-                mov r1, 1
+                mov r1, 2
                 st r1, direction
                 br @doneDir
     @checkS:
             mov r0, 's'
             cmp r4, r0
             brne @checkA
-                ; => down => direction=2
-                mov r1, 2
+                mov r1, 1
                 st r1, direction
                 br @doneDir
     @checkA:
             mov r0, 'a'
             cmp r4, r0
             brne @doneDir
-                ; => left => direction=3
-                mov r1, 3
+                mov r1, 0
                 st r1, direction
     @doneDir:
-            ; 3) compute new head coords based on direction
-            ld r0, direction
-
-            push r0       ; save direction
             lea r1, snake
             push r1
-            bl getLastNodeXY   ; we will implement getLastNodeXY below
-            add sp, sp, 2
-            ; new head coords in r2=x, r3=y
+            bl getSnakeHeadXY
+            add sp, sp, 1
+            ; New head coordinates are based on the current snake head
+            ; r2 = row, r3 = col
 
-            ; update them by direction
-            ; direction in top of stack? We popped it, so let's re-load from memory:
             ld r0, direction
 
+            ; Apply the next step based on the current direction
             cmp r0, 3
             brne @notUp
-                sub r3, r3, 1
+                sub r2, r2, 1
                 br @wrapped
     @notUp:
             cmp r0, 2
             brne @notRight
-                add r2, r2, 1
+                add r3, r3, 1
                 br @wrapped
     @notRight:
             cmp r0, 1
             brne @notDown
-                add r3, r3, 1
+                add r2, r2, 1
                 br @wrapped
     @notDown:
             cmp r0, 0
             brne @noKey
-            ; direction=3 => left
-                sub r2, r2, 1
+                sub r3, r3, 1
                 br @wrapped
     @noKey:
             br @wrapped
     @wrapped:
-            ; wrap them into 0..9
-            ; We'll do a small mod approach:
             push r3
             push r2
             bl wrapCoord
             add sp, sp, 2
-            ; after wrapCoord, r2=wrappedX, r3=wrappedY
+            ; after wrapCoord, r2=wrappedRow, r3=wrappedCol
 
-            ; 4) check collision => if collision => gameOver
             push r3
             push r2
             lea r0, snake
@@ -480,41 +487,26 @@ main:       push lr
             push r3 ; save r3
             push r2 ; save r2
 
-            ; 5) addNodeTail(&snake, r2, r3)
+            ; Add the new head segment
             push r3
             push r2
             lea r0, snake
             push r0
-            bl addNodeTail
+            bl appendSnakeHead
             add sp, sp, 3
 
             pop r2 ; restore r2
             pop r3 ; restore r3
 
-            ; 6) check if (r2,r3)==(fruitX,fruitY). If not, removeHead(&snake)
-            ld r0, fruitX
+            ; Check whether the snake ate the fruit. If not, trim the tail.
+            ld r0, fruitRow
             cmp r2, r0
             brne @removeTail
-            ld r0, fruitY
+            ld r0, fruitCol
             cmp r3, r0
             brne @removeTail
-            ; => fruit eaten => skip removing tail, then reposition fruit
-            ; Here we make sure to place fruit so it's not on the snake
-    @placingFruit: ; START LOOP until fruit is not on snake
-            bl placeFruit
-            ; checkCollision(&snake, col, row)
-            ld r0, fruitY
-            push r0
-            ld r0, fruitX
-            push r0
-            lea r0, snake     ; r0=&snake
-            push r0
-            bl checkCollision
-            add sp, sp, 3
-            cmp r0, 1 ; 1 means collision
-            bre @placingFruit ; END LOOP when fruit is not on snake
+            bl placeFruitSafely
 
-            ; increase snakeLen by 1
             ld r0, snakeLen
             add r0, r0, 1
             st r0, snakeLen
@@ -523,30 +515,23 @@ main:       push lr
     @removeTail:
             lea r0, snake
             push r0
-            bl removeHead
+            bl removeSnakeTail
             add sp, sp, 1
     @doneStep:
-            ; 7) sleep for a while
             ld r0, sleepTime
             sleep r0
             br @loopGame
 
     @gameOver:
-            ; set gameOverFlag=1
-            ; mov r0, 1
-            ; st r0, gameOverFlag
-            ; Print "Game Over!"
-            lea r0, GMsg
+            ld  r0, @GMsgPtr
             sout r0
             nl
 
-            lea r0, enterAnyKey
+            ld  r0, @enterAnyKeyPtr
             sout r0
             nl
 
-            ; wait for any key
             ain r4
-            ; done
             mov sp, fp
             pop fp
             pop lr
@@ -561,9 +546,10 @@ printScore:
     mov fp, sp
 
     ; 1) print "Score: "
-    lea r0, scoreMsg
+    ld  r0, @scoreMsgPtr
     sout r0
-    ld r0, snakeLen
+    ld  r1, @snakeLenPtr
+    ldr r0, r1, 0
     dout r0
     nl
 
@@ -573,10 +559,10 @@ printScore:
     ret
 
 ;================================================================
-; getLastNodeXY(&snake) => returns x in r2, y in r3
-;  If snake=empty => r2,r3=0
+; getSnakeHeadXY(&snake) => returns row in r2, col in r3
+;   If snake is empty => r2=r3=0
 ;================================================================
-getLastNodeXY:
+getSnakeHeadXY:
           push lr
           push fp
           mov fp, sp
@@ -587,8 +573,8 @@ getLastNodeXY:
           bre @empty
 
 @loopGL:
-          ldr r2, r1, 0   ; x
-          ldr r3, r1, 1   ; y
+          ldr r2, r1, 0   ; row
+          ldr r3, r1, 1   ; col
           ldr r0, r1, 2   ; next
           cmp r0, 0
           bre @doneGL
@@ -610,25 +596,26 @@ getLastNodeXY:
           ret
 
 ;================================================================
-; wrapCoord: 
-;   pops two values from stack => (x, y)
-;   applies wrap to 0..9 => r2=wrappedX, r3=wrappedY
-;   returns in r2,r3
+; wrapCoord:
+;   Loads row and col from the stack frame and wraps each coordinate
+;   into the board range [0..9].
 ;================================================================
 wrapCoord:
           push lr
           push fp
           mov fp, sp
 
-          ldr r2, fp, 2  ; x
-          ldr r3, fp, 3  ; y
+          ldr r2, fp, 2  ; row
+          ldr r3, fp, 3  ; col
 
-          ; we want (x+10)%10, (y+10)%10
-          add r2, r2, 10
-          mov r0, 10
+          ; We compute (coord + boardSize) % boardSize
+          ld  r1, @boardSizePtr
+          ldr r0, r1, 0
+          add r2, r2, r0
           rem r2, r0
-          add r3, r3, 10
-          mov r0, 10
+          ld  r1, @boardSizePtr
+          ldr r0, r1, 0
+          add r3, r3, r0
           rem r3, r0
 
           mov sp, fp
@@ -636,16 +623,17 @@ wrapCoord:
           pop lr
           ret
 
-stubSleep:
-          ret
-
-stubRand:
-          mov r0, 4  ; always returns 4 :-)
-          ret
+@GMsgPtr:         .word GMsg
+@enterAnyKeyPtr:  .word enterAnyKey
+@scoreMsgPtr:     .word scoreMsg
+@snakeLenPtr:     .word snakeLen
+@boardSizePtr:    .word boardSize
 
 ;================================================================
 ; malloc stub:
-;   This just uses a global pointer @avail and returns old pointer
+;   Uses a simple bump pointer at @avail and returns the old value.
+;   There is no free in this demo, so removed snake segments are not
+;   reclaimed.
 ;================================================================
 malloc:
           ld r0, @avail
