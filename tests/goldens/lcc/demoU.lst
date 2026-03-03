@@ -1,0 +1,160 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Mon Mar  2 22:28:03 2026
+TestUser
+
+Header
+o
+C
+
+Loc   Code           Source Code
+           ; demoU.a: Demonstrating the sext instruction
+           ;
+           ; This program shows how sign extension works.
+0000  d0ff         mov r0, 0xFF ; 0b 1111 1111
+0001  f004         hout r0
+0002  f001         nl
+0003  d203         mov r1, 3
+0004  e428         lea r2, adj
+0005  f406         sout r2
+0006  f202         dout r1
+0007  f001         nl
+0008  a04d         sext r0, r1
+0009  e43b         lea r2, result
+000a  f406         sout r2
+000b  f004         hout r0
+000c  f001         nl
+
+000d  d011         mov r0, 0x11 ; 0b 0001 0001
+000e  f004         hout r0
+000f  f001         nl
+0010  d205         mov r1, 5
+0011  e41b         lea r2, adj
+0012  f406         sout r2
+0013  f202         dout r1
+0014  f001         nl
+0015  a04d         sext r0, r1
+0016  e42e         lea r2, result
+0017  f406         sout r2
+0018  f004         hout r0
+0019  f001         nl
+
+001a  d20f         mov r1, 15
+           repeat:
+001b  807f         cmp r1, -1
+001c  000e         bre done
+001d  200e         ld r0, x ; 0b 0001 0010 0011 0100
+001e  f004         hout r0
+001f  f001         nl
+0020  e40c         lea r2, adj
+0021  f406         sout r2
+0022  f202         dout r1
+0023  f001         nl
+0024  a04d         sext r0, r1
+0025  e41f         lea r2, result
+0026  f406         sout r2
+0027  f004         hout r0
+0028  f001         nl
+0029  b261         sub r1, r1, 1
+002a  0ff0         br repeat
+           done:
+002b  f000         halt
+
+002c  1234 x:      .word 0x1234
+002d  0053 adj:    .string "Sign extending field # "
+002e  0069
+002f  0067
+0030  006e
+0031  0020
+0032  0065
+0033  0078
+0034  0074
+0035  0065
+0036  006e
+0037  0064
+0038  0069
+0039  006e
+003a  0067
+003b  0020
+003c  0066
+003d  0069
+003e  0065
+003f  006c
+0040  0064
+0041  0020
+0042  0023
+0043  0020
+0044  0000
+0045  0052 result: .string "Result: "
+0046  0065
+0047  0073
+0048  0075
+0049  006c
+004a  0074
+004b  003a
+004c  0020
+004d  0000
+
+           ; Practical applications:
+           ; - Sign extension is necessary when converting smaller 
+           ; - Ensures correct arithmetic when dealing with data fr
+====================================================== Output
+ff
+Sign extending field # 3
+Result: ffff
+11
+Sign extending field # 5
+Result: fffb
+1234
+Sign extending field # 15
+Result: 4
+1234
+Sign extending field # 14
+Result: fff5
+1234
+Sign extending field # 13
+Result: fff6
+1234
+Sign extending field # 12
+Result: fff7
+1234
+Sign extending field # 11
+Result: fff4
+1234
+Sign extending field # 10
+Result: fff5
+1234
+Sign extending field # 9
+Result: fff6
+1234
+Sign extending field # 8
+Result: fff7
+1234
+Sign extending field # 7
+Result: fffc
+1234
+Sign extending field # 6
+Result: 4
+1234
+Sign extending field # 5
+Result: 4
+1234
+Sign extending field # 4
+Result: 4
+1234
+Sign extending field # 3
+Result: 0
+1234
+Sign extending field # 2
+Result: 0
+1234
+Sign extending field # 1
+Result: 0
+1234
+Sign extending field # 0
+Result: 0
+
+========================================== Program statistics
+Input file name       =      demoU1.a
+Instructions executed =  11e (hex)   286 (dec)
+Program size          =   4e (hex)    78 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)

@@ -21,13 +21,8 @@ const { AssemblerError } = require('../utils/errors');
 const nameHandler = require('../utils/name.js');
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
-let activeAssemblerContext = null;
 
 function fatalExit(message, code = 1) {
-  if (activeAssemblerContext && activeAssemblerContext.throwOnAssemblyError) {
-    throw activeAssemblerContext.createAssemblyError(message, code);
-  }
-
   if (isTestMode) {
     throw new Error(message);
   } else {
@@ -221,8 +216,16 @@ class Assembler {
    */
   validateLineLength(line) {
     if (line.length > 300) {
-      cliErrorExit('Line exceeds maximum length of 300 characters', 1);
+      this.abortAssembly('Line exceeds maximum length of 300 characters', 1);
     }
+  }
+
+  abortAssembly(message, code = 1) {
+    if (this.throwOnAssemblyError) {
+      throw this.createAssemblyError(message, code);
+    }
+
+    fatalExit(message, code);
   }
 
   // Capture the current in-memory assembly state in a structured result so
@@ -273,9 +276,6 @@ class Assembler {
     this.sourceLines = sourceCode.split('\n');
     this.throwOnAssemblyError = throwOnAssemblyError;
 
-    const previousAssemblerContext = activeAssemblerContext;
-    activeAssemblerContext = this;
-
     try {
       const extension = path.extname(this.inputFileName).toLowerCase();
 
@@ -308,12 +308,12 @@ class Assembler {
       //       .e files as assembly files.
       if (extension !== '.a') {
         if (extension === '.ap') {
-          cliErrorExit('Error: .ap files are not supported by assembler.js - Did you mean to use assemblerPlus.js?', 1);
+          this.abortAssembly('Error: .ap files are not supported by assembler.js - Did you mean to use assemblerPlus.js?', 1);
         }
         // custom lcc.js behavior: print an error and exit if the
         // file extension is not recognized as a supported type
         // (currently only .a, .bin, and .hex are supported)
-        cliErrorExit('Unsupported file type', 1);
+        this.abortAssembly('Unsupported file type', 1);
       }
 
       // If a .a file, proceed with the normal two-pass assembly flow.
@@ -326,11 +326,11 @@ class Assembler {
       this.performPass();
 
       if (this.locCtr === 0) {
-        cliErrorExit('Empty file', 0);
+        this.abortAssembly('Empty file', 0);
       }
 
       if (this.errorFlag) {
-        fatalExit('Errors encountered during Pass 1.', 1);
+        this.abortAssembly('Errors encountered during Pass 1.', 1);
       }
 
       // Rewind source lines for Pass 2.
@@ -350,7 +350,7 @@ class Assembler {
         if (this.outFile !== null) {
           fs.closeSync(this.outFile);
         }
-        fatalExit('Errors encountered during Pass 2.', 1);
+        this.abortAssembly('Errors encountered during Pass 2.', 1);
       }
 
       // Resolve the start label to an address before serializing the output file.
@@ -374,7 +374,6 @@ class Assembler {
         now,
       });
     } finally {
-      activeAssemblerContext = previousAssemblerContext;
       this.throwOnAssemblyError = false;
     }
   }
@@ -589,8 +588,8 @@ class Assembler {
     for (let line of this.sourceLines) {
       this.lineNum++;
       let originalLine = line;
-      this.validateLineLength(originalLine);
       this.currentLine = originalLine; // Store current line for error reporting
+      this.validateLineLength(originalLine);
       
       // Create listing entry
       const listingEntry = {
@@ -717,8 +716,8 @@ class Assembler {
     for (let lineNum = 0; lineNum < this.sourceLines.length; lineNum++) {
       this.lineNum++;
       let line = this.sourceLines[lineNum];
-      this.validateLineLength(line);
       this.currentLine = line; // For error messages
+      this.validateLineLength(line);
 
       const listingEntry = {
         lineNum: this.lineNum,
@@ -751,10 +750,10 @@ class Assembler {
       // Now we should have a 16-bit hexadecimal string
       // For example: "4B1F"
       if (!/^[0-9A-Fa-f]+$/.test(line)) {
-        cliErrorExit(`Error: line ${lineNum+1} in .hex file is not purely hexadecimal: "${line}"`, 1);
+        this.abortAssembly(`Error: line ${lineNum+1} in .hex file is not purely hexadecimal: "${line}"`, 1);
       }
       if (line.length !== 4) {
-        cliErrorExit(`Error: line ${lineNum+1} in .hex file does not have exactly 4 nibbles: "${line}"`, 1);
+        this.abortAssembly(`Error: line ${lineNum+1} in .hex file does not have exactly 4 nibbles: "${line}"`, 1);
       }
   
       // Convert the binary string to a number
@@ -774,7 +773,7 @@ class Assembler {
     // Note: Reporting an empty hex file is custom LCC.js behavior in 12/2024
     //       (this does not match current official LCC behavior)
     if (this.locCtr === 0) {
-      cliErrorExit('Empty file', 0); // No instructions or data found in source file
+      this.abortAssembly('Empty file', 0); // No instructions or data found in source file
     }
   
     // If you want a "startAddress = 0" by default, do that here
@@ -789,8 +788,8 @@ class Assembler {
     for (let lineNum = 0; lineNum < this.sourceLines.length; lineNum++) {
       this.lineNum++;
       let line = this.sourceLines[lineNum];
-      this.validateLineLength(line);
       this.currentLine = line; // For error messages
+      this.validateLineLength(line);
 
       const listingEntry = {
         lineNum: this.lineNum,
@@ -823,10 +822,10 @@ class Assembler {
       // Now we should have a 16-bit binary string
       // For example: "0010000000000101"
       if (!/^[01]+$/.test(line)) {
-        cliErrorExit(`Error: line ${lineNum+1} in .bin file is not purely binary: "${line}"`, 1);
+        this.abortAssembly(`Error: line ${lineNum+1} in .bin file is not purely binary: "${line}"`, 1);
       }
       if (line.length !== 16) {
-        cliErrorExit(`Error: line ${lineNum+1} in .bin file does not have exactly 16 bits: "${line}"`, 1);
+        this.abortAssembly(`Error: line ${lineNum+1} in .bin file does not have exactly 16 bits: "${line}"`, 1);
       }
   
       // Convert the binary string to a number
@@ -846,7 +845,7 @@ class Assembler {
     // Note: The reporting of an empty bin file is custom LCC.js behavior in 12/2024
     //       (it does not currently match official LCC behavior)
     if (this.locCtr === 0) {
-      cliErrorExit('Empty file', 0); // No instructions or data found in source file
+      this.abortAssembly('Empty file', 0); // No instructions or data found in source file
     }
   
     // If you want a "startAddress = 0" by default, do that here
@@ -972,7 +971,35 @@ class Assembler {
         // Note: startAddress will be resolved after Pass 2 when all symbols are known
         break;
       case '.org':
-        this.failAssembly("This directive hasn't yet been implemented", 1);
+      case '.orig':
+
+        if (operands[0] === null || operands[0] === undefined) {
+          this.failAssembly('Missing operand', 1);
+        }
+
+        const orgAddress = this.parseNumber(operands[0]);
+        if (isNaN(orgAddress)) {
+          // Custom LCC.js behavior: keep the .org-specific error wording rather
+          // than the shorter oracle message ("Bad number") for non-numeric args.
+          this.failAssembly('Invalid number for .org directive', 1);
+        }
+
+        if (orgAddress < 0 || orgAddress > 0xFFFF) {
+          this.failAssembly('Bad number', 1);
+        }
+
+        if (orgAddress < this.locCtr) {
+          this.failAssembly('Backward address on .org', 1);
+        }
+
+        if (this.pass === 2) {
+          while (this.locCtr < orgAddress) {
+            this.writeMachineWord(0);
+            this.locCtr += 1;
+          }
+        } else {
+          this.locCtr = orgAddress;
+        }
         break;
       case '.globl':
       case '.global':
@@ -2149,7 +2176,7 @@ class Assembler {
     this.error(message);
 
     if (REPORT_MULTI_ERRORS) {
-      fatalExit(message, code);
+      this.abortAssembly(message, code);
     }
   }
 
@@ -2162,7 +2189,7 @@ class Assembler {
     // If we're not reporting multiple errors, exit immediately
     // Note: This matches the behavior in the original LCC of reporting only 1 error at a time
     if(!REPORT_MULTI_ERRORS) {
-      fatalExit(message, 1);
+      this.abortAssembly(message, 1);
     }
   }
 }

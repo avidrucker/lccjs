@@ -4,6 +4,11 @@ const path = require('path');
 const { cfg, assertOracleConfigured } = require('../helpers/env');
 const { assembleWithJS } = require('../helpers/assembleJS');
 const {
+  createTempWorkspace,
+  runInWorkspaceCwd,
+  stageFileInWorkspace,
+} = require('../helpers/tempWorkspace');
+const {
   ensureDir,
   readBytes,
   writeBytes,
@@ -35,19 +40,14 @@ const DEMOS = [
 
 function assembleWithJSToO(sourcePath) {
   const Assembler = require('../../src/core/assembler');
-  const os = require('os');
-  
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-asm-o-'));
   const base = path.basename(sourcePath, '.a');
-  const tmpSrc = path.join(tmp, `${base}.a`);
-  fs.copyFileSync(sourcePath, tmpSrc);
-
-  // Create name.nnn in temp directory
-  const nameFile = path.join(tmp, 'name.nnn');
-  fs.writeFileSync(nameFile, 'TestUser\n');
+  const tmp = createTempWorkspace('lccjs-asm-o-');
+  const tmpSrc = stageFileInWorkspace(sourcePath, tmp, `${base}.a`);
 
   const asm = new Assembler();
-  asm.main([tmpSrc]);
+  runInWorkspaceCwd(tmp, () => {
+    asm.main([path.basename(tmpSrc)]);
+  });
 
   const outO = path.join(tmp, `${base}.o`);
   if (!fs.existsSync(outO)) {
@@ -59,26 +59,19 @@ function assembleWithJSToO(sourcePath) {
 
 function linkWithJS(oFiles, outputName) {
   const Linker = require('../../src/core/linker');
-  const os = require('os');
-  
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-link-'));
-  
-  // Create name.nnn in temp directory
-  const nameFile = path.join(tmp, 'name.nnn');
-  fs.writeFileSync(nameFile, 'TestUser\n');
+  const tmp = createTempWorkspace('lccjs-link-');
   
   // Copy all .o files to temp directory
   const tmpOFiles = oFiles.map(oFile => {
-    const base = path.basename(oFile);
-    const tmpO = path.join(tmp, base);
-    fs.copyFileSync(oFile, tmpO);
-    return tmpO;
+    return stageFileInWorkspace(oFile, tmp, path.basename(oFile));
   });
 
   const outE = path.join(tmp, `${outputName}.e`);
   
   const linker = new Linker();
-  linker.main(['-o', outE, ...tmpOFiles]);
+  runInWorkspaceCwd(tmp, () => {
+    linker.main(['-o', path.basename(outE), ...tmpOFiles.map(file => path.basename(file))]);
+  });
 
   if (!fs.existsSync(outE)) {
     throw new Error(`JS linker did not produce expected .e: ${outE}`);

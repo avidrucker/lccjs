@@ -22,6 +22,16 @@ function fatalExit(message, code = 1) {
   }
 }
 
+function cliErrorExit(message, code = 1) {
+  console.error(message);
+  fatalExit(message, code);
+}
+
+function cliWrappedErrorExit(prefix, error, code = 1) {
+  console.error(prefix, error.message);
+  fatalExit(`${prefix} ${error.message}`, code);
+}
+
 class LCC {
   constructor() {
     this.inputFileName = '';
@@ -38,8 +48,7 @@ class LCC {
     try {
       return nameHandler.createNameFile(inputFileName);
     } catch (error) {
-      console.error('Error handling name file:', error.message);
-      fatalExit('Error handling name file: ' + error.message, 1);
+      cliWrappedErrorExit('Error handling name file:', error, 1);
     }
   }
 
@@ -67,8 +76,7 @@ class LCC {
     this.parseArguments(args);
 
     if (this.args.length === 0) {
-      console.error('No input file specified.');
-      fatalExit('No input file specified.', 1);
+      cliErrorExit('No input file specified.', 1);
     }
 
     // If multiple inputs were supplied, the "main input file" is the first one
@@ -206,12 +214,10 @@ class LCC {
               } else {
                 // individual linking output should occur, but the final
                 // link.e file should not be created in this scenario
-                console.error('Missing output file name'); // No output file specified after -o
-                fatalExit('Missing output file name after -o flag', 1);
+                cliErrorExit('Missing output file name after -o flag', 1);
               }
             } else {
-              console.error(`Unknown option: ${arg}`);
-              fatalExit(`Unknown option: ${arg}`, 1);
+              cliErrorExit(`Unknown option: ${arg}`, 1);
             }
             break;
         }
@@ -240,8 +246,7 @@ class LCC {
       // Run the assembler's main function
       assembler.main([this.inputFileName]);
     } catch (error) {
-      console.error(`Error assembling ${this.inputFileName}: ${error.message}`);
-      fatalExit(`Error assembling ${this.inputFileName}: ${error.message}`, 1);
+      cliWrappedErrorExit(`Error assembling ${this.inputFileName}:`, error, 1);
     }
     
   }
@@ -256,6 +261,7 @@ class LCC {
     // Set options in the interpreter
     interpreter.options = this.options;
     interpreter.debugMode = !!this.options.debug;
+    interpreter.allowRuntimeDebugging = true;
 
     // Pass inputBuffer to interpreter
     if (this.inputBuffer) {
@@ -288,8 +294,9 @@ class LCC {
         console.log(); // Ensure cursor moves to the next line
       }
     } catch (error) {
-      console.error(`Error running ${this.outputFileName}: ${error.message}`);
-      fatalExit(`Error running ${this.outputFileName}: ${error.message}`, 1);
+      cliWrappedErrorExit(`Error running ${this.outputFileName}:`, error, 1);
+    } finally {
+      interpreter.allowRuntimeDebugging = false;
     }
 
     if (this.generateStats) {

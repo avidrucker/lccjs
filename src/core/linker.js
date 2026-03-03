@@ -3,6 +3,7 @@
 // LCC.js Linker
 
 const fs = require('fs');
+const { LinkerError } = require('../utils/errors');
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 
@@ -12,6 +13,11 @@ function fatalExit(message, code = 1) {
   } else {
     process.exit(code);
   }
+}
+
+function cliErrorExit(message, code = 1) {
+  console.error(message);
+  fatalExit(message, code);
 }
 
 class Linker {
@@ -29,22 +35,21 @@ class Linker {
     this.objectModules = []; // List of object modules to process
     this.inputFiles = []; // List of input files
     this.outputFileName = null; // Output file name
+    this.throwOnLinkerError = false;
   }
 
   main(args) {
     args = args || process.argv.slice(2);
 
     if (args.length < 1) {
-      console.error('Usage: node linker.js [-o outputfile.e] <object module 1> <object module 2> ...');
-      fatalExit('Usage: node linker.js [-o outputfile.e] <object module 1> <object module 2> ...', 1);
+      cliErrorExit('Usage: node linker.js [-o outputfile.e] <object module 1> <object module 2> ...', 1);
     }
 
     let i = 0;
     while (i < args.length) {
       if (args[i] === '-o') {
         if (i + 1 >= args.length) {
-          console.error('Missing output file name after -o');
-          fatalExit('Missing output file name after -o', 1);
+          cliErrorExit('Missing output file name after -o', 1);
         }
         this.outputFileName = args[i + 1];
         i += 2;
@@ -55,24 +60,34 @@ class Linker {
     }
 
     if (this.inputFiles.length === 0) {
-      console.error('Error: No input object modules specified');
-      fatalExit('Error: No input object modules specified', 1);
+      cliErrorExit('Error: No input object modules specified', 1);
     }
 
     this.link(this.inputFiles, this.outputFileName);
   }
 
-  // Method to read object modules from files
-  readObjectModule(filename) {
-    const buffer = fs.readFileSync(filename);
+  createLinkerError(message, exitCode = 1) {
+    const error = new LinkerError(message);
+    error.exitCode = exitCode;
+    return error;
+  }
+
+  abortLinking(message, exitCode = 1) {
+    if (this.throwOnLinkerError) {
+      throw this.createLinkerError(message, exitCode);
+    }
+
+    this.error(message);
+  }
+
+  parseObjectModuleBuffer(buffer, filename = '<buffer>') {
     let offset = 0;
 
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      this.error(`${filename} not a linkable file`);
-      return;
+      throw this.createLinkerError(`${filename} not a linkable file`);
     }
 
-    let module = {
+    const module = {
       headers: [],
       code: [],
     };
@@ -82,15 +97,13 @@ class Linker {
       const entryType = String.fromCharCode(buffer[offset++]);
 
       if (entryType === 'C') {
-        // End of header, start of code
         break;
       }
 
       switch (entryType) {
         case 'S': {
           if (offset + 1 >= buffer.length) {
-            this.error('Invalid S entry');
-            return;
+            throw this.createLinkerError('Invalid S entry');
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -102,16 +115,14 @@ class Linker {
         case 'e':
         case 'V': {
           if (offset + 1 >= buffer.length) {
-            // Incomplete entry
-            this.error(`Invalid ${entryType} entry`);
-            return;
+            throw this.createLinkerError(`Invalid ${entryType} entry`);
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
           let label = '';
           while (offset < buffer.length) {
             const charCode = buffer[offset++];
-            if (charCode === 0) break; // Null terminator
+            if (charCode === 0) break;
             label += String.fromCharCode(charCode);
           }
           module.headers.push({ type: entryType, address, label });
@@ -119,8 +130,7 @@ class Linker {
         }
         case 'A': {
           if (offset + 1 >= buffer.length) {
-            this.error('Invalid A entry');
-            return;
+            throw this.createLinkerError('Invalid A entry');
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -128,16 +138,31 @@ class Linker {
           break;
         }
         default:
-          this.error(`Unknown header entry ${entryType} in file ${filename}`);
-          return;
+          throw this.createLinkerError(`Unknown header entry ${entryType} in file ${filename}`);
       }
     }
 
-    // Read code
     while (offset + 1 < buffer.length) {
       const word = buffer.readUInt16LE(offset);
       offset += 2;
       module.code.push(word);
+    }
+
+    return module;
+  }
+
+  // Method to read object modules from files
+  readObjectModule(filename) {
+    const buffer = fs.readFileSync(filename);
+    let module;
+    try {
+      module = this.parseObjectModuleBuffer(buffer, filename);
+    } catch (error) {
+      if (error instanceof LinkerError) {
+        this.abortLinking(error.message, error.exitCode || 1);
+        return;
+      }
+      throw error;
     }
 
     // Store the module for processing

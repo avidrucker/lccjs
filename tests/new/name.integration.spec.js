@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const Interpreter = require('../../src/core/interpreter');
 
 jest.mock('fs');
@@ -115,5 +116,22 @@ describe('Name Wrapper Integration Tests', () => {
     expect(virtualFs['name.nnn']).toBeUndefined();
     expect(virtualFs['noStats.lst']).toBeUndefined();
     expect(virtualFs['noStats.bst']).toBeUndefined();
+  });
+
+  test('interpreter wrapper should use cwd name.nnn even when the input file is in a nested directory', () => {
+    const interpreter = new Interpreter();
+    const eFilePath = path.join('subdir', 'nested.e');
+
+    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x00, 0xF0]);
+    virtualFs['name.nnn'] = 'RootName\n';
+    virtualFs[path.join('subdir', 'name.nnn')] = 'NestedName\n';
+    interpreter.generateStats = true;
+
+    expect(() => {
+      interpreter.main([eFilePath]);
+    }).not.toThrow();
+
+    expect(fs.readFileSync).toHaveBeenCalledWith('name.nnn', 'utf8');
+    expect(fs.readFileSync).not.toHaveBeenCalledWith(path.join('subdir', 'name.nnn'), 'utf8');
   });
 });

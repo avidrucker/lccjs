@@ -1,0 +1,9 @@
+; Experiment: confirm which directory oracle/LCC use for name.nnn
+; Expected runtime output is trivial; the important signal is the user name
+; embedded in the generated .lst/.bst files.
+
+        .start main
+
+main    dout r0
+        nl
+        halt

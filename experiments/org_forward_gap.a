@@ -1,0 +1,21 @@
+; org_forward_gap.a
+; Goal:
+;   Determine how oracle LCC handles a forward .org that creates a gap.
+; Questions:
+;   - Does .org exist in oracle LCC?
+;   - Does it pad intervening words with zero?
+;   - Where do labels after .org land in the .lst / .e layout?
+
+        .start main
+
+before: .word 11
+        .org 4
+after:  .word 22
+
+main:   ld r0, before
+        dout r0
+        nl
+        ld r0, after
+        dout r0
+        nl
+        halt

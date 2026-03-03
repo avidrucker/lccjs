@@ -1,0 +1,53 @@
+; sext_sweep.a
+; Goal:
+;   Determine how oracle LCC interprets the second operand of sext.
+; Questions:
+;   - Does r1 specify the bit index to extend from?
+;   - How do several widths affect the same source value?
+;   - Does the result match the current demoU intuition?
+
+        lea r2, title
+        sout r2
+
+        mov r0, 0x1234
+        hout r0
+        nl
+
+        mov r1, 3
+        sext r0, r1
+        lea r2, case3
+        sout r2
+        hout r0
+        nl
+
+        mov r0, 0x1234
+        mov r1, 7
+        sext r0, r1
+        lea r2, case7
+        sout r2
+        hout r0
+        nl
+
+        mov r0, 0x1234
+        mov r1, 11
+        sext r0, r1
+        lea r2, case11
+        sout r2
+        hout r0
+        nl
+
+        mov r0, 0x1234
+        mov r1, 15
+        sext r0, r1
+        lea r2, case15
+        sout r2
+        hout r0
+        nl
+
+        halt
+
+title:  .string "Initial value: "
+case3:  .string "sext with r1 = 3  -> "
+case7:  .string "sext with r1 = 7  -> "
+case11: .string "sext with r1 = 11 -> "
+case15: .string "sext with r1 = 15 -> "

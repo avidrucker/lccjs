@@ -1,5 +1,5 @@
 /**
- * Shared typed error classes for reusable assembler and interpreter paths.
+ * Shared typed error classes for reusable assembler, interpreter, and linker paths.
  *
  * These error types provide a stable boundary between pure programmatic APIs
  * and the file-oriented CLI wrappers. Reusable in-memory methods throw these
@@ -20,9 +20,12 @@ class InterpreterRuntimeError extends LccError {}
 
 class AssemblerError extends LccError {}
 
+class LinkerError extends LccError {}
+
 module.exports = {
   LccError,
   AssemblerError,
+  LinkerError,
   InvalidExecutableFormatError,
   InterpreterRuntimeError,
 };

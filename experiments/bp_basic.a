@@ -1,0 +1,14 @@
+; bp_basic.a
+; Goal:
+;   Determine how the oracle LCC handles the bp instruction at runtime.
+; Questions:
+;   - Does bp enter the debugger?
+;   - Does it print a specific message?
+;   - Does execution stop, continue, or wait for user interaction?
+;   - Does it produce .lst/.bst before or after the breakpoint interaction?
+
+        mov r0, 7
+        bp
+        dout r0
+        nl
+        halt

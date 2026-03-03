@@ -5,6 +5,11 @@ const { cfg, assertOracleConfigured } = require('../helpers/env');
 const { runOracleOnDemo } = require('../helpers/runOracle');
 const { assembleWithJS } = require('../helpers/assembleJS');
 const {
+  createTempWorkspace,
+  runInWorkspaceCwd,
+  stageFileInWorkspace,
+} = require('../helpers/tempWorkspace');
+const {
   ensureDir,
   readBytes,
   writeBytes,
@@ -43,7 +48,7 @@ const DEMOS = [
   { file: 'demoR', inputs: [], comment: 'srl, sra, sll' },
   { file: 'demoS', inputs: [], comment: 'rol, ror' },
   { file: 'demoT', inputs: [], comment: 'and, or, xor' },
-  // { file: 'demoU', inputs: [], comment: 'sext' }, // TODO: fix sext implementation to match oracle lcc
+  { file: 'demoU', inputs: [], comment: 'sext' },
   { file: 'demoV', inputs: [], comment: 'mul, div, rem' },
   { file: 'demoW', inputs: [], comment: 'cmp, branch instructions' },
   { file: 'demoX', inputs: [], comment: 'hex, cea, implicit r0 args' },
@@ -65,20 +70,19 @@ const xstCompareOptions = {
 function runJSLCC(aFile, userInputs) {
   const LCC = require('../../src/core/lcc');
   const base = path.basename(aFile, '.a');
-  const dir = path.dirname(aFile);
-  const lstFile = path.join(dir, `${base}.lst`);
-  const bstFile = path.join(dir, `${base}.bst`);
-
-  // Clean up any existing files
-  [lstFile, bstFile].forEach(f => {
-    if (fs.existsSync(f)) fs.unlinkSync(f);
-  });
+  const tmp = createTempWorkspace('lccjs-js-lcc-');
+  const tmpAFile = stageFileInWorkspace(aFile, tmp, `${base}.a`);
+  const lstFile = path.join(tmp, `${base}.lst`);
+  const bstFile = path.join(tmp, `${base}.bst`);
 
   const lcc = new LCC();
   if (userInputs && userInputs.length > 0) {
     lcc.inputBuffer = userInputs.join('\n') + '\n';
   }
-  lcc.main([aFile]);
+
+  runInWorkspaceCwd(tmp, () => {
+    lcc.main([path.basename(tmpAFile)]);
+  });
 
   if (!fs.existsSync(lstFile)) {
     throw new Error(`JS LCC did not produce .lst: ${lstFile}`);

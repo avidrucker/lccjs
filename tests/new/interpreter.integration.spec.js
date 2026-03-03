@@ -143,6 +143,40 @@ describe('Interpreter Integration Tests', () => {
     expect(interpreter.output).toBe('5\n');
   });
 
+  test('3b. should treat bp as a CLI wrapper breakpoint message and continue in non-TTY runs', () => {
+    const eFilePath = 'bpNonTty.e';
+    virtualFs[eFilePath] = Buffer.from([
+      0x6F, 0x43,
+      0x07, 0xD0, // mov r0, 7
+      0x0E, 0xF0, // bp
+      0x02, 0xF0, // dout r0
+      0x01, 0xF0, // nl
+      0x00, 0xF0, // halt
+    ]);
+
+    const isTTYDescriptor = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY');
+
+    Object.defineProperty(process.stdin, 'isTTY', {
+      configurable: true,
+      value: false,
+    });
+
+    try {
+      expect(() => {
+        interpreter.main([eFilePath]);
+      }).not.toThrow();
+
+      expect(interpreter.output).toBe('software breakpoint\n7\n');
+      expect(interpreter.debugMode).toBe(false);
+    } finally {
+      if (isTTYDescriptor) {
+        Object.defineProperty(process.stdin, 'isTTY', isTTYDescriptor);
+      } else {
+        delete process.stdin.isTTY;
+      }
+    }
+  });
+
   // -----------------------------------------------------------------------------
   // 4. Test handling of no arguments => usage message
   // -----------------------------------------------------------------------------

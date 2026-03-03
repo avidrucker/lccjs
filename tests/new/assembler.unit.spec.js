@@ -165,4 +165,81 @@ describe('Assembler Unit Tests', () => {
       assembler.assembleSource(source, { inputFileName: 'undefinedLabel.a' });
     }).toThrow(AssemblerError);
   });
+
+  test('assembleSource() should treat duplicate .start directives by preserving the last declared start label', () => {
+    const source = `
+      .start alpha
+      .start beta
+      alpha: halt
+      beta: halt
+    `;
+
+    const assembler = new Assembler();
+    const result = assembler.assembleSource(source, { inputFileName: 'duplicateStart.a' });
+
+    expect(assembler.startLabel).toBe('beta');
+    expect(result.startAddress).toBe(1);
+  });
+
+  test('assembleSource() should treat whitespace-only source as an empty file error', () => {
+    const assembler = new Assembler();
+
+    expect(() => {
+      assembler.assembleSource('   \n\t\n', { inputFileName: 'whitespaceOnly.a' });
+    }).toThrow(AssemblerError);
+  });
+
+  test('assembleSource() should allow the same label to appear in both .global and .extern declarations', () => {
+    const source = `
+      .global shared
+      .extern shared
+      halt
+    `;
+
+    const assembler = new Assembler();
+    const result = assembler.assembleSource(source, { inputFileName: 'sharedLabel.a' });
+
+    expect(result.isObjectModule).toBe(true);
+    expect(assembler.globalLabels.has('shared')).toBe(true);
+    expect(assembler.externLabels.has('shared')).toBe(true);
+  });
+
+  test('assembleSource() should support escaped backslash and escaped quote in .string directives', () => {
+    const source = `
+      msg: .string "a\\\\\\\"b"
+      halt
+    `;
+
+    const assembler = new Assembler();
+
+    expect(() => {
+      assembler.assembleSource(source, { inputFileName: 'escapedString.a' });
+    }).not.toThrow();
+
+    expect(assembler.outputBuffer[0]).toBe('a'.charCodeAt(0));
+    expect(assembler.outputBuffer[1]).toBe('\\'.charCodeAt(0));
+    expect(assembler.outputBuffer[2]).toBe('"'.charCodeAt(0));
+    expect(assembler.outputBuffer[3]).toBe('b'.charCodeAt(0));
+  });
+
+  test('assembleSource() should reject multiple labels on the same line under the current LCC.js contract', () => {
+    const source = `
+      first: second: halt
+    `;
+
+    const assembler = new Assembler();
+
+    expect(() => {
+      assembler.assembleSource(source, { inputFileName: 'multipleLabels.a' });
+    }).toThrow('Invalid operation');
+  });
+
+  test('assembleSource() should throw a typed assembler error for a line exceeding 300 characters', () => {
+    const assembler = new Assembler();
+    const source = `${'a'.repeat(301)}\nhalt\n`;
+
+    expect(() => {
+      assembler.assembleSource(source, { inputFileName: 'longLine.a' });
+    }).toThrow(AssemblerError);
+  });
 });

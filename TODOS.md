@@ -1,6 +1,12 @@
 # TO-DO's
 
 ## Active Refactor Remaining Steps
+- [x] document the active core behavior matrix for preserved, wrapper-only, pure-API, and research-marked behavior
+- [x] add missing unit-level contract coverage for current shared helpers and core orchestrators
+  - [x] `tests/new/errors.unit.spec.js`
+  - [x] `tests/new/fileArtifacts.unit.spec.js`
+  - [x] `tests/new/lcc.unit.spec.js`
+  - [x] `tests/new/linker.unit.spec.js`
 - [x] extract shared report generation into a single helper and route assembler.js, interpreter.js, and lcc.js through it
 - [x] add pure unit coverage for the shared report helper across assembler-style and interpreter-style inputs
 - [x] add deterministic report timestamp injection support without relying on global fake timers
@@ -19,6 +25,13 @@
   - [x] move shared typed errors to `src/utils/errors.js`
   - [x] move shared report helpers to `src/utils/reportArtifacts.js`
 - [ ] continue replacing filesystem-heavy tests with pure seam tests where wrapper behavior is not under test
+- [ ] split the oversized assembler integration coverage into categorized suites
+  - [ ] `assembler.cli.integration.spec.js`
+  - [ ] `assembler.formats.integration.spec.js`
+  - [ ] `assembler.directives.integration.spec.js`
+  - [ ] `assembler.instructions.integration.spec.js`
+  - [ ] `assembler.labels.integration.spec.js`
+  - [ ] `assembler.object-modules.integration.spec.js`
 - [x] add dedicated `name.nnn` wrapper and CLI regression coverage
   - [x] interpreter wrapper should create `name.nnn` when stats are enabled and the file is missing
   - [x] interpreter CLI should prompt for a name and create `name.nnn` in a real temp directory
@@ -80,7 +93,10 @@
   - [x] implement `or` mnenmonic
   - [x] implement `xor` mnemonic
   - [o] implement `sext` mnemonic correctly
-    - [ ] figure out the correct behavior of `sext`
+    - [ ] derive the exact oracle `sext` runtime rule from `experiments/sext_sweep.a` and `experiments/sext_boundaries.a`
+      - [x] gather oracle outputs for multiple `sext` register-content cases
+      - [x] confirm the parity gap against oracle is real
+      - [ ] explain the exact transform from observed oracle outputs
       - [ ] test with positive numbers
       - [ ] test with negative numbers
       - [ ] ask for clarification from original author of LCC
@@ -103,6 +119,10 @@
 - [ ] **implement symbolic debugger "As a programmer, I can use the debugger to step through my program, set breakpoints, watchpoints, and inspect memory and registers, so that I can debug my code."**
     - [ ] implement debugger commands
     - [ ] implement bp (breakpoint) instruction
+      - [x] confirm via oracle that `bp` is not a fatal runtime error
+      - [x] confirm via oracle that `bp` prints `software breakpoint` and trace-like `>>>` prompts to stdout
+      - [ ] determine whether non-interactive oracle runs always auto-continue after `bp`
+      - [ ] decide how closely LCC.js should match oracle breakpoint stdout before full debugger parity is implemented
     - [ ] once symbolic debugger is implemented, detection of infinite loops should lead to symbolic debugger being called and the user being notified that an infinite loop was detected without terminating program execution
 - [x] implement LST creation
 - [x] implement name.js module
@@ -114,6 +134,11 @@
 - [x] implement more directives like `.fill` (alt to `.word`), `.blkw` (alt to `.zero`), etc.
   - [x] implement `.start` directive: "As a programmer, I can specify the entry point of my program via the .start directive, so that I can control where my program begins execution."
   - [ ] implement `.org/.orig` directive: "The .org directive sets the location counter during the assembly process to a greater value. For example, if at the address 5 in an assembly language program, we have the directive .org 15, the location is reset to 15. The locations 5 to 14 are padded with zeros. Thus, in this example, it has the same effect as .zero 10"
+    - [x] confirm via oracle that forward `.org` pads intervening words with zeros
+    - [x] confirm via oracle that backward `.org` fails with `Backward address on .org`
+    - [x] confirm via oracle that invalid `.org` operands fail with `Bad number`
+    - [ ] decide whether to match oracle behavior of still emitting a 1-byte `o` file on `.org` assembly failure
+    - [ ] add parity tests for forward-gap, backward-address, and invalid-operand `.org`
 - [x] implement dout/udout/hout/aout in interpreter.js
 - [x] implement din/ain/hin in interpreter.js
 - [x] implement debugging commands s (stack), m (memory), r (registers)
@@ -198,6 +223,12 @@
 - [ ] test .org/.orig directive usage
   - [ ] research to find out what exactly the .org/.orig directive does and why
 - [ ] research and document original-LCC behavior for 300+ character source lines so the pending unique LCC.js test can be specified precisely
+- [x] create oracle experiment programs and a reusable experiment runner under `experiments/`
+- [x] write an oracle experiment results log in `experiments/results.md`
+- [x] add a research-marked test bucket for ambiguous behavior
+  - [x] `.org/.orig`
+  - [x] 300-character source-line semantics
+  - [x] possible independent label-length limits
 - [x] negative numbers test (negative data in a .word, negative imm5 arg to `add`, negative inputs to `mov`)
 - [x] `cmp` and `br` test
 - [x] implement .e file testing that compares the hex dump of assembler.js's output and lcc's output

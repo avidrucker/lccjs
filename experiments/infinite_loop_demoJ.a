@@ -1,0 +1,24 @@
+; infinite_loop_demoJ.a
+;
+; Safe experiment copy of demos/demoJ.a.
+; This program is useful for testing whether `interpreter.js`, `lcc.js`, or
+; the oracle enter debugger-like behavior after the 500,000-instruction guard
+; instead of just running forever.
+
+            mov r1, 'a'
+outerloop:  ld r2, lastchar
+            cmp r1, r2
+            bre postoloop
+            mov r0, 0
+innerloop:  cmp r0, -1
+            bre postiloop
+            aout r1
+            hout r0
+            nl
+            add r0, r0, 1
+            br innerloop
+postiloop:  add r1, r1, 1
+            br outerloop
+postoloop:  halt
+
+lastchar:   .word 'c'

@@ -15,7 +15,7 @@ Generates .lst (listing) and .bst (binary listing) reports combining assembler o
 
 name.js
 
-Checks for a name.nnn file in the working directory and reads the stored user name. If missing, prompts interactively for a "LastName, FirstName MiddleInitial" string, saves it to name.nnn, and returns the value. Used to embed author metadata in generated files.
+Checks for a name.nnn file in the current working directory and reads the stored user name. If missing, prompts interactively for a "LastName, FirstName MiddleInitial" string, saves it to name.nnn, and returns the value. This matches oracle LCC behavior even when the input .a/.e/.o file is located in another directory. Used to embed author metadata in generated files.
 
 hexDisplay.js
 

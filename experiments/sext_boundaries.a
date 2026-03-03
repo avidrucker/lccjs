@@ -1,0 +1,51 @@
+; sext_boundaries.a
+; Goal:
+;   Determine how oracle LCC handles sign-extension boundaries for values that
+;   should clearly become negative or remain positive depending on the width.
+; Questions:
+;   - What does sext produce when the chosen sign bit is set?
+;   - What does sext produce when the chosen sign bit is clear?
+;   - Is the destination register the only register modified?
+
+        lea r2, banner
+        sout r2
+
+        mov r0, 0x00FF
+        mov r1, 3
+        sext r0, r1
+        lea r2, ff4
+        sout r2
+        hout r0
+        nl
+
+        mov r0, 0x0011
+        mov r1, 5
+        sext r0, r1
+        lea r2, p6
+        sout r2
+        hout r0
+        nl
+
+        mov r0, 0x00F0
+        mov r1, 7
+        sext r0, r1
+        lea r2, neg8
+        sout r2
+        hout r0
+        nl
+
+        mov r0, 0x0070
+        mov r1, 7
+        sext r0, r1
+        lea r2, pos8
+        sout r2
+        hout r0
+        nl
+
+        halt
+
+banner: .string "Testing sext boundaries"
+ff4:    .string "0x00FF with r1 = 3 -> "
+p6:     .string "0x0011 with r1 = 5 -> "
+neg8:   .string "0x00F0 with r1 = 7 -> "
+pos8:   .string "0x0070 with r1 = 7 -> "

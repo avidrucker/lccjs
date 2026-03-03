@@ -3,15 +3,17 @@
 
 // This program's purpose is to check for a name.nnn file.
 // If it exists, it reads the name from the file to use.
-// If name.nnn does not exist, this program prompts the 
+// If name.nnn does not exist, this program prompts the
 // user for their name, creates the name.nnn file, and
 // saves the name inside of it.
+//
+// Oracle LCC resolves name.nnn relative to the current working directory,
+// not relative to the input .a/.e/.o file location. LCC.js keeps the same
+// behavior so direct CLI use and oracle-driven tests stay aligned.
 // This program asks t he user for their name in the 
 // format "LastName, FirstName MiddleInitial"
 
 const fs = require('fs');
-const path = require('path');
-
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 const prompt = `Enter familyname, firstname middleinitial (if any)${newline}`;
 
@@ -61,9 +63,10 @@ function readLineFromStdin() {
 }
 
 function createNameFile(inputPath) {
-  // Get the directory of the input file
-  const dir = path.dirname(inputPath);
-  const nameFile = path.join(dir, 'name.nnn');
+  // Match oracle LCC behavior by always resolving name.nnn from cwd.
+  // The input path is accepted for API compatibility but intentionally unused.
+  void inputPath;
+  const nameFile = 'name.nnn';
 
   // Check if name.nnn already exists
   if (fs.existsSync(nameFile)) {

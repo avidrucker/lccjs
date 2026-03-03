@@ -1,19 +1,24 @@
 // tests/helpers/assembleJS.js
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const Assembler = require('../../src/core/assembler');
+const {
+  createTempWorkspace,
+  runInWorkspaceCwd,
+  stageFileInWorkspace,
+} = require('./tempWorkspace');
 
 function assembleWithJS(sourcePath) {
   // Write outputs into a temp dir, let assembler write its files normally.
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-asm-'));
+  const tmp = createTempWorkspace('lccjs-asm-');
   const base = path.basename(sourcePath, path.extname(sourcePath));
-  const tmpSrc = path.join(tmp, `${base}.a`);
-  fs.copyFileSync(sourcePath, tmpSrc);
+  const tmpSrc = stageFileInWorkspace(sourcePath, tmp, `${base}.a`);
 
   const asm = new Assembler();
-  // assembler.main reads provided args as file list
-  asm.main([tmpSrc]);
+  runInWorkspaceCwd(tmp, () => {
+    // assembler.main reads provided args as file list
+    asm.main([path.basename(tmpSrc)]);
+  });
 
   // Convention (your assembler writes .e alongside input)
   const outE = path.join(tmp, `${base}.e`);

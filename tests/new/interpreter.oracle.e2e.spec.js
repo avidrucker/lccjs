@@ -5,6 +5,11 @@ const { cfg, assertOracleConfigured } = require('../helpers/env');
 const { runOracleOnDemo } = require('../helpers/runOracle');
 const { assembleWithJS } = require('../helpers/assembleJS');
 const {
+  createTempWorkspace,
+  runInWorkspaceCwd,
+  stageFileInWorkspace,
+} = require('../helpers/tempWorkspace');
+const {
   ensureDir,
   readBytes,
   readText,
@@ -42,7 +47,7 @@ const DEMOS = [
   { file: 'demoR', inputs: [], comment: 'srl, sra, sll' },
   { file: 'demoS', inputs: [], comment: 'rol, ror' },
   { file: 'demoT', inputs: [], comment: 'and, or, xor' },
-  // { file: 'demoU', inputs: [], comment: 'sext' }, // TODO: fix sext implementation to match oracle lcc
+  { file: 'demoU', inputs: [], comment: 'sext' },
   { file: 'demoV', inputs: [], comment: 'mul, div, rem' },
   { file: 'demoW', inputs: [], comment: 'cmp, branch instructions' },
   { file: 'demoX', inputs: [], comment: 'hex, cea, implicit r0 args' },
@@ -63,18 +68,19 @@ const lstCompareOptions = {
 function runJSInterpreter(eFile, userInputs) {
   const Interpreter = require('../../src/core/interpreter');
   const base = path.basename(eFile, '.e');
-  const dir = path.dirname(eFile);
-  const lstFile = path.join(dir, `${base}.lst`);
-
-  // Clean up any existing .lst
-  if (fs.existsSync(lstFile)) fs.unlinkSync(lstFile);
+  const tmp = createTempWorkspace('lccjs-js-interp-');
+  const tmpEFile = stageFileInWorkspace(eFile, tmp, `${base}.e`);
+  const lstFile = path.join(tmp, `${base}.lst`);
 
   const interp = new Interpreter();
   if (userInputs && userInputs.length > 0) {
     interp.inputBuffer = userInputs.join('\n') + '\n';
   }
   interp.generateStats = true;
-  interp.main([eFile]);
+
+  runInWorkspaceCwd(tmp, () => {
+    interp.main([path.basename(tmpEFile)]);
+  });
 
   if (!fs.existsSync(lstFile)) {
     throw new Error(`JS interpreter did not produce .lst: ${lstFile}`);

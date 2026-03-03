@@ -1,0 +1,9 @@
+; org_invalid_operand.a
+; Goal:
+;   Determine how oracle LCC reports invalid .org operands.
+; Questions:
+;   - What exact error text is used?
+;   - Does oracle reject labels, missing operands, or out-of-range values differently?
+
+        .org banana
+        halt

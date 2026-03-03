@@ -1,0 +1,14 @@
+; org_backward_overlap.a
+; Goal:
+;   Determine whether oracle LCC permits .org to move the location counter
+;   backwards or into already-defined memory.
+; Questions:
+;   - Is backward .org rejected?
+;   - If rejected, what error text appears?
+;   - If accepted, how does the resulting output look?
+
+        .word 1
+        .word 2
+        .org 1
+        .word 3
+        halt

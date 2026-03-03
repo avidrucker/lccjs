@@ -1,0 +1,8 @@
+; Experiment: confirm which directory oracle/LCC use for name.nnn
+; when the input file lives in a nested folder.
+
+        .start main
+
+main    dout r0
+        nl
+        halt

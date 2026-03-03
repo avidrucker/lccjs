@@ -1,0 +1,8 @@
+; infinite_loop_silent.a
+;
+; Silent infinite loop experiment for debugger-entry testing.
+; This is safer than demoJ for symbolic-debugger experiments because it reaches
+; the 500,000-instruction guard without flooding stdout with normal program
+; output first.
+
+loop:   br loop
