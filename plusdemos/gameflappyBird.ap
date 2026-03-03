@@ -62,6 +62,7 @@ frameDelayMs:    .word 160      ; main game-speed / frame-rate control
 score:           .word 0
 gameOver:        .word 0
 collisionReason: .word 0        ; 0=none, 1=bounds, 2=pipe, 3=quit
+debugEnabled:    .word 0        ; 0=hide debug lines, 1=show debug lines
 
 hudMsg:          .string "Flappy Bird: w=flap, q=quit"
 scoreMsg:        .string "Score: "
@@ -157,8 +158,8 @@ randomizeGap:
 ; ---------------------------------------------------------
 ; drawFrame
 ;   Prints the HUD and the current board.
-;   The screen is fully cleared and redrawn each frame so old pipe
-;   positions do not leave behind stale characters.
+;   Each frame resets the cursor to the home position and repaints
+;   the entire board over the previous frame.
 ;   Each board cell is rendered as a single character so a 2-column
 ;   pipe is visibly `##`.
 ; ---------------------------------------------------------
@@ -167,9 +168,7 @@ drawFrame:
     push fp
     mov  fp, sp
 
-    clear
-    mov  r0, 0
-    cursor r0
+    resetc
 
     ld   r1, @hudMsgPtr
     ldr  r0, r1, 0
@@ -259,8 +258,13 @@ drawFrame:
     br   @rowLoop
 
 @doneRows:
+    ld   r4, @debugEnabledPtr
+    ldr  r4, r4, 0
+    cmp  r4, 0
+    bre  @frameDone
     bl   printDebugState
 
+@frameDone:
     mov  sp, fp
     pop  fp
     pop  lr
@@ -397,6 +401,7 @@ printDebugState:
 @boardLastColPtr: .word boardLastCol
 @birdColPtr:      .word birdCol
 @frameDelayPtr:   .word frameDelayMs
+@debugEnabledPtr: .word debugEnabled
 @gameOverMsgPtr:  .word gameOverMsg
 @collisionReasonPtr: .word collisionReason
 @hudMsgPtr:       .word hudMsg
