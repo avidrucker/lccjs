@@ -1,26 +1,118 @@
-# Utilities
+# Utility Modules
 
-LCC.js has a few utility programs that help with the development of the main modules. Some of these utilities are necessary for the function of LCC.js (such as genStats.js and name.js), while others are more for helpful analysis (such as hexDisplay.js and picture.js).
+The `src/utils` directory contains shared support modules used by the core toolchain, plus a few standalone inspection tools.
 
-- genStats.js: This program produces the .lst and .bst file outputs, which show program statistics in hex and binary formats, respectively.
-- name.js: This program takes in a user's name and creates a name.nnn file to store it. The contents of the name.nnn file are used for displaying in the statistics files.
-- hexDisplay.js: This program takes a machine code executable (.e) or object binary (.o) and displays it in hexadecimal format (a hex dump that is displayed "as-is" where the header entries are in big endian except for address numbers which are little endian, followed by the code in little endian format).
-- picture.js: This program takes in a machine code executable (.e) or object binary (.o) and displays the binary data as a slightly more human-readable "picture" (a header followed by the code in big endian format).
+These utilities fall into two groups:
 
-Longer Summaries:
+- architectural support used directly by `src/core`
+- standalone analysis/debugging helpers for developers
 
-genStats.js
+## Shared Architectural Utilities
 
-Generates .lst (listing) and .bst (binary listing) reports combining assembler or interpreter metadata, memory dumps, and runtime statistics. Produces formatted text output showing addresses, opcodes (hex or binary), source lines, and program metrics like instruction counts and stack usage. Used for debugging and performance analysis.
+### `errors.js`
 
-name.js
+Defines shared typed error classes for reusable in-memory APIs.
 
-Checks for a name.nnn file in the current working directory and reads the stored user name. If missing, prompts interactively for a "LastName, FirstName MiddleInitial" string, saves it to name.nnn, and returns the value. This matches oracle LCC behavior even when the input .a/.e/.o file is located in another directory. Used to embed author metadata in generated files.
+Current error types include:
 
-hexDisplay.js
+- `LccError`
+- `AssemblerError`
+- `InterpreterRuntimeError`
+- `InvalidExecutableFormatError`
+- `LinkerError`
 
-Reads a .o or .e binary and prints a formatted hex+ASCII display of its contents, similar to xxd. Each line shows hexadecimal word pairs alongside printable ASCII characters, helping developers inspect raw binaries for debugging or reverse engineering.
+Purpose:
 
-picture.js
+- give pure APIs a stable failure contract
+- keep wrapper/CLI exit behavior separate from reusable logic
 
-Reads a .o or .e binary and outputs a textual representation of header entries and code words. Unlike hexDisplay.js, this tool emphasizes decoding the header metadata (symbols, labels, addresses) and shows the raw machine code words in structured lines, useful for quickly understanding file structure rather than raw byte values.
+### `fileArtifacts.js`
+
+Provides shared file-artifact helpers used by wrappers.
+
+Current responsibilities:
+
+- sibling output filename construction
+- shared text/binary file reads and writes
+- report-file writing helpers
+
+Purpose:
+
+- prevent repeated file-naming and file-writing logic in `assembler.js`, `interpreter.js`, and `lcc.js`
+
+### `reportArtifacts.js`
+
+Provides shared in-memory report generation for `.lst` and `.bst`.
+
+Purpose:
+
+- centralize report-content construction
+- support deterministic report generation through injectable `now`
+- let pure APIs generate reports without touching the filesystem
+
+This helper is used by assembler-, interpreter-, and lcc-driven report paths.
+
+### `genStats.js`
+
+Contains the lower-level formatting logic used to generate listing/statistics content.
+
+Purpose:
+
+- render `.lst` / `.bst` output from assembler/interpreter state
+- provide the formatting machinery used by `reportArtifacts.js`
+
+### `name.js`
+
+Handles `name.nnn` lookup and creation.
+
+Current behavior:
+
+- resolves `name.nnn` from the current working directory
+- prompts for a name if the file is missing
+- stores the name for use in `.lst` / `.bst` report headers
+
+This cwd-based behavior matches the current oracle LCC behavior.
+
+## Standalone Inspection Utilities
+
+### `hexDisplay.js`
+
+Displays a `.e` or `.o` file as a hex-oriented dump for inspection.
+
+Useful for:
+
+- debugging file contents
+- inspecting headers and code bytes
+- comparing artifacts during development
+
+### `picture.js`
+
+Displays a `.e` or `.o` file in a more structure-oriented textual format.
+
+Useful for:
+
+- quickly inspecting header entries
+- understanding object/executable layout
+- debugging file structure more readably than a raw hex dump
+
+## How `src/utils` Fits the Current Architecture
+
+The current architectural goal is:
+
+- `src/core` owns assembly, execution, linking, and orchestration behavior
+- `src/utils` owns shared support concerns that should not be duplicated across core modules
+
+In practice, `src/utils` now holds the shared pieces for:
+
+- typed errors
+- file artifact handling
+- report generation
+- `name.nnn` handling
+
+This separation keeps the wrapper/core boundary easier to maintain and test.
+
+## Related Docs
+
+- [README.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/README.md)
+- [src/core/core.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/core.md)
+- [docs/core-behavior-matrix.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/core-behavior-matrix.md)
