@@ -1,249 +1,294 @@
-# **LCC.js & LCC+js - An Educational Assembler and Interpreter**
+# LCC.js
 
-## **Overview**
+LCC.js is a JavaScript implementation of the LCC assembler / linker / interpreter toolchain for a simple 16-bit educational machine. The project now supports both file-oriented CLI usage and in-memory programmatic usage, with a growing test suite and oracle-driven parity work against the original LCC.
 
-**LCC.js** is a JavaScript-based assembler and interpreter for a simple 16-bit virtual machine architecture. Inspired by educational projects like the Low-Cost Computer (LCC), it provides a platform for learning assembly language programming and understanding how high-level code translates to machine operations.
+## What This Repo Contains
 
-Building on LCC.js, **LCC+js** introduces an extended assembly instruction set and real-time execution features for more interactive, game-oriented applications. This extension adds new instructions (e.g., for non-blocking input, screen manipulation, and timed delays) and separate `.ap` / `.ep` file formats, making it possible to write assembly-based terminal games or simulations.
+- `src/core`
+  - `assembler.js`: assembles `.a`, `.bin`, and `.hex`
+  - `interpreter.js`: executes `.e`
+  - `linker.js`: links `.o` files into `.e`
+  - `lcc.js`: top-level orchestrator for assemble / link / execute flows
+- `src/utils`
+  - shared report generation, file artifact helpers, typed errors, `name.nnn` handling, and analysis utilities
+- `src/plus`
+  - LCC+ variants for the extended `.ap` / `.ep` toolchain
+- `tests/new`
+  - current unit, integration, oracle/e2e, and research-marked tests
+- `experiments`
+  - focused oracle experiments for ambiguous or parity-sensitive behavior such as `.org`, `bp`, and `sext`
 
-## **Table of Contents**
+## Current Architecture
 
-1. [Features](#features)  
-2. [Getting Started](#getting-started)  
-   - [Prerequisites](#prerequisites)  
-   - [Installation](#installation)  
-3. [Usage](#usage)  
-   - [Assembling and Running Code with lcc.js](#assembling-and-running-code-with-lccjs)  
-   - [Using assembler.js and interpreter.js Separately](#using-assemblerjs-and-interpreterjs-separately)  
-   - [LCC+js Assembly and Execution](#lccjs-assembly-and-execution)  
-4. [Understanding the Components](#understanding-the-components)  
-   - [lcc.js](#lccjs)  
-   - [assembler.js](#assemblerjs)  
-   - [interpreter.js](#interpreterjs)  
-   - [linker.js](#linkerjs)  
-   - [assemblerplus.js & interpreterplus.js (LCC+js)](#assemblerplusjs--interpreterplusjs-lccjs)  
-   - [disassembler.js & linkerStepsPrinter.js](#disassemblerjs--linkerstepsprinterjs)  
-   - [Directory Structure](#directory-structure)  
-5. [Testing](#testing)  
-6. [Architecture Details](#architecture-details)  
-   - [Registers and Memory](#registers-and-memory)  
-   - [Instruction Set (LCC.js & LCC+js)](#instruction-set-lccjs--lccjs)  
-7. [Contributing](#contributing)  
-   - [Areas for Improvement](#areas-for-improvement)  
-   - [How to Contribute](#how-to-contribute)  
-8. [License](#license)  
-9. [Contact](#contact)  
+The core refactor has already established a clean split between reusable logic and CLI wrappers.
 
----
+Current reusable in-memory APIs:
 
-## **Features**
+- `Assembler#assembleSource(sourceText, options)`
+- `Assembler#toOutputBuffer()`
+- `Assembler#buildReportArtifacts(userName, includeComments, now)`
+- `Interpreter#executeBuffer(buffer, options)`
+- `Interpreter#buildReportArtifacts(userName, inputFileName, now)`
+- `Linker#parseObjectModuleBuffer(buffer, filename)`
 
-- **Educational Focus**: Ideal for learning the basics of assembly language and virtual machine architectures.  
-- **Cross-Platform**: Runs anywhere Node.js is available.  
-- **Modular Design**: Separate components for assembling, linking, interpreting, plus extended “plus” modules for advanced use.  
-- **Real-Time Extensions (LCC+js)**: Non-blocking input, screen clearing, timed delays, and other game-oriented features.  
-- **Extensible**: Straightforward to add new instructions or behaviors.
+Current wrapper entrypoints:
 
----
+- `node ./src/core/assembler.js file.a`
+- `node ./src/core/interpreter.js file.e`
+- `node ./src/core/linker.js file1.o file2.o`
+- `node ./src/core/lcc.js file.a`
 
-## **Getting Started**
+The design goal is:
 
-### **Prerequisites**
+- pure APIs throw typed errors
+- wrappers own console output, exit behavior, and file I/O
+- report generation is centralized
+- `name.nnn` is a wrapper/report concern, not a pure execution concern
 
-- **Node.js**: Download and install from [nodejs.org](https://nodejs.org/).
+## Installation
 
-### **Installation**
+Requirements:
 
-Clone the repository:
+- Node.js
+
+Install dependencies:
 
 ```bash
-git clone git@github.com:avidrucker/lccjs.git
-cd lccjs
-```  
-
-Setup aliases on UNIX systems:  
-
-```bash
-chmod u+x alias.sh  
-./alias.sh  
-source ~/.bashrc
+npm install
 ```
 
----
+## CLI Usage
 
-## **Usage**
+### `lcc.js`
 
-### **Assembling and Running Code with lcc.js**
-
-For a standard `.a` assembly file:
+Assemble and run an assembly program:
 
 ```bash
-node ./src/core/lcc.js path/to/yourfile.a
+node ./src/core/lcc.js demos/demoA.a
 ```
 
-- **lcc.js** automatically detects file type, assembles the source, and interprets the resulting `.e` executable.
+Run an executable directly:
 
-### **Using assembler.js and interpreter.js Separately**
+```bash
+node ./src/core/lcc.js demos/demoA.e
+```
 
-- **Assemble** a `.a` file:
+Link object modules:
 
-  ```bash
-  node ./src/core/assembler.js path/to/yourfile.a
-  ```
+```bash
+node ./src/core/lcc.js module1.o module2.o
+node ./src/core/lcc.js -o custom.e module1.o module2.o
+```
 
-  This generates a `.e` or `.o` file (depending on directives) in the same folder.
+Supported options currently include:
 
-- **Interpret** the produced executable:
+- `-d`
+- `-m`
+- `-r`
+- `-f`
+- `-x`
+- `-t`
+- `-l<hexloadpoint>`
+- `-o <outfile>`
+- `-h`
+- `-nostats`
 
-  ```bash
-  node ./src/core/interpreter.js path/to/yourfile.e
-  ```
+### `assembler.js`
 
-### **LCC+js Assembly and Execution**
+```bash
+node ./src/core/assembler.js demos/demoA.a
+node ./src/core/assembler.js somefile.hex
+node ./src/core/assembler.js somefile.bin
+```
 
-For **LCC+js** features (non-blocking input, screen manipulation, real-time instructions, etc.):
+Output is written beside the input file as `.e` or `.o`. Object-module assembly also writes `.lst` and `.bst`.
 
-1. **AssemblerPlus** processes `.ap` files, generating `.ep` executables:
-   ```bash
-   node ./src/plus/assemblerplus.js path/to/yourfile.ap
-   ```
-2. **InterpreterPlus** runs the resulting `.ep`:
-   ```bash
-   node ./src/plus/interpreterplus.js path/to/yourfile.ep
-   ```
-3. **LccPlus** (combined) for one-step assembly and execution:
-   ```bash
-   node ./src/plus/lccplus.js path/to/yourfile.ap
-   ```
+### `interpreter.js`
 
-These tools introduce extended instructions like `clear`, `sleep`, `nbain`, and more. See [Instruction Set (LCC.js & LCC+js)](#instruction-set-lccjs--lccjs) for details.
+```bash
+node ./src/core/interpreter.js demos/demoA.e
+node ./src/core/interpreter.js demos/demoA.e -nostats
+```
 
----
+When stats are enabled, the wrapper writes sibling `.lst` and `.bst` files.
 
-## **Understanding the Components**
+### `linker.js`
 
-### **lcc.js**
-- **Purpose**: A high-level command-line tool that orchestrates assembly, linking, and execution.  
-- **Functionality**: 
-  - Automatically detects file types (`.a` or `.o`, etc.).  
-  - Assembles `.a` files, interprets `.e` files.  
-  - Provides a simple CLI for a one-step workflow.
+```bash
+node ./src/core/linker.js module1.o module2.o
+node ./src/core/linker.js -o program.e module1.o module2.o
+```
 
-### **assembler.js**
-- **Purpose**: Translates `.a` assembly code into machine code (.e or .o).  
-- **Key Features**:
-  - **Two-Pass Assembly**: Builds symbol table (pass 1) and generates code (pass 2).  
-  - **Symbol Table and Directives**: Handles labels, `.start`, `.globl`, `.word`, etc.  
-  - **Error Reporting**: Provides errors and warnings if assembly issues occur.
+If no output file is provided, the default is `link.e`.
 
-### **interpreter.js**
-- **Purpose**: Executes `.e` machine code on a simulated 16-bit virtual machine.  
-- **Key Features**:
-  - **Registers & Memory**: Manages an 8-register set and 65,536 words of memory.  
-  - **Instruction Decoding**: Implements the standard LCC.js instruction set (arithmetic, logic, control flow, I/O via TRAP).  
-  - **Execution Cap**: Defaults to 500,000 instructions to prevent infinite loops.
+## Programmatic Usage
 
-### **linker.js**
-- **Purpose**: Combines multiple object files (`.o`) into a single executable (`.e`).  
-- **Key Features**:
-  - **Symbol Resolution**: Merges global and external symbols.  
-  - **Adjusts Addresses**: Ensures references and offsets are correct in the final combined output.
+### Assemble in memory
 
-### **assemblerplus.js & interpreterplus.js (LCC+js)**
-- **Purpose**: Extend LCC.js for real-time, interactive applications (games, demos).  
-- **New Instructions**:
-  - `clear`, `sleep`, `nbain`, `cursor`, `srand`, `rand`, `millis`, `resetc`, etc.  
-  - Allows partial screen clearing, non-blocking input, timed delays, etc.
-- **File Extensions**:
-  - `.ap` → **AssemblerPlus** → `.ep`  
-  - `.ep` → **InterpreterPlus** → runs advanced instructions in real time.
-- **Non-Blocking Execution**: The interpreter uses an event loop for continuous stepping and immediate keystroke handling.
+```js
+const Assembler = require('./src/core/assembler');
 
-### **disassembler.js & linkerStepsPrinter.js (Extra)**
-- **`disassembler.js`**: Takes an `.e` file and disassembles machine code back to a textual instruction representation—useful for debugging.  
-- **`linkerStepsPrinter.js`**: Outputs the step-by-step linking process to help visualize how symbols and references are resolved.
+const assembler = new Assembler();
+const result = assembler.assembleSource(`
+  mov r0, 5
+  dout r0
+  halt
+`, {
+  inputFileName: 'demoA.a',
+  buildReports: true,
+  userName: 'Drucker, Avi',
+});
 
-### **Directory Structure**
+console.log(result.outputBytes);
+console.log(result.reports.lst);
+```
 
-- **`core/`**: Contains primary modules for LCC.js (assembler.js, interpreter.js, etc.).  
-- **`utils/`**: Utility scripts for generating listings/statistics, name handling, and other shared functionality.  
-- **`plus/`**: Modules for **LCC+js** (assemblerplus.js, interpreterplus.js, lccplus.js) adding extended features.  
-- **`test/`**: Houses all test files—both integration tests and end-to-end (e2e).  
-- **`extra/`**: Holds additional tools like `disassembler.js` and `linkerStepsPrinter.js`.
+`assembleSource(...)` returns structured data including:
 
----
+- `inputFileName`
+- `outputFileName`
+- `isObjectModule`
+- `startAddress`
+- `loadPoint`
+- `symbolTable`
+- `listing`
+- `outputBuffer`
+- `outputBytes`
+- `reports`
 
-## **Testing**
+### Execute in memory
 
-Extensive end-to-end (e2e) and integration tests have been implemented for **assembler.js**, **linker.js**, **interpreter.js**, and **lcc.js**—covering a wide range of functionality. Further edge cases can always be added to improve coverage.
+```js
+const Interpreter = require('./src/core/interpreter');
 
-Run all tests:
+const interpreter = new Interpreter();
+const result = interpreter.executeBuffer(executableBuffer, {
+  inputFileName: 'demoA.e',
+  inputBuffer: 'hello\n',
+  buildReports: true,
+  userName: 'Drucker, Avi',
+});
+
+console.log(result.output);
+console.log(result.instructionsExecuted);
+```
+
+`executeBuffer(...)` returns structured runtime state including:
+
+- `inputFileName`
+- `output`
+- `mem`
+- `registers`
+- `pc`
+- `instructionsExecuted`
+- `maxStackSize`
+- `loadPoint`
+- `memMax`
+- `headerLines`
+- `reports`
+
+## Testing
+
+Primary test suite:
 
 ```bash
 npm test
 ```
 
-> Note: If you encounter issues with `jest` not being found, you may need to install it globally: `npm install -g jest`.
-
-Run a specific test file:
+Other useful commands:
 
 ```bash
-npx jest test/integration/assembler.integration.test.js
+npm run test:all
+npm run test:legacy
+npm run test:oracle
 ```
 
-While there are still opportunities for additional test cases (especially unit tests), the current suite provides strong coverage across the main features.
+Current test organization under `tests/new` includes:
 
----
+- unit tests for pure helpers and pure APIs
+- integration tests for wrapper behavior and file artifacts
+- oracle/e2e tests for compatibility checks
+- research-marked tests for ambiguous behavior still under investigation
 
-## **Architecture Details**
+Examples:
 
-### **Registers and Memory**
-- **Registers**: 8 (r0–r7), with special roles for `sp` (r6), `fp` (r5), and `lr` (r7).  
-- **Memory**: 65,536 words (16-bit each).
+```bash
+npm test -- --runTestsByPath tests/new/assembler.unit.spec.js
+npm test -- --runTestsByPath tests/new/lcc.oracle.e2e.spec.js
+```
 
-### **Instruction Set (LCC.js & LCC+js)**
+## Oracle Parity Work
 
-**LCC.js** includes:
-- **Arithmetic**: `ADD`, `SUB`, `MUL`, `DIV`, `REM`  
-- **Logical**: `AND`, `OR`, `XOR`, `NOT`  
-- **Data Movement**: `MOV`, `LD`, `ST`, `LEA`, `LDR`, `STR`, `PUSH`, `POP`  
-- **Control Flow**: `BR` (`brz`, `brn`, etc.), `JMP`, `JSR`, `RET`, `BL`, `BLR`  
-- **I/O (TRAP)**: `AOUT`, `DOUT`, `HOUT`, `SOUT`, `AIN`, `DIN`, `HIN`, `SIN`, etc.
+The repo contains oracle-driven research tooling under `experiments/`.
 
-**LCC+js** introduces **extended instructions** (via **assemblerplus.js** & **interpreterplus.js**):
-- **Non-Blocking Input**: `nbain`  
-- **Screen Clearing**: `clear`, partial reset with `resetc`  
-- **Timed Delay**: `sleep`  
-- **Cursor Control**: `cursor` (hide/show)  
-- **Randomness**: `srand`, `rand` (seed-based random generation)  
-- **Milliseconds**: `millis` (retrieve current time mod 1000)
+Use it when behavior is ambiguous or not yet fully matched:
 
----
+- `.org`
+- `bp`
+- `sext`
+- debugger-related behavior
+- other original-LCC drift questions
 
-## **Contributing**
+See:
 
-### **Areas for Improvement**
+- [experiments/README.md](./experiments/README.md)
+- [experiments/results.md](./experiments/results.md)
+- [experiments/debugger-results.md](./experiments/debugger-results.md)
 
-1. **Debugging Tools**: Symbolic debugger or additional introspection features.  
-2. **More LCC+js Demos**: Additional example programs showing real-time features.  
-3. **Edge-Case Test Coverage**: Adding more specialized test scenarios to further solidify reliability.  
-4. **Performance Optimization**: Improving execution speed and memory usage.  
-5. **Documentation**: Continually refining and expanding docs.
+## `name.nnn` Behavior
 
-### **How to Contribute**
+LCC.js now matches oracle behavior here:
 
-1. **Fork** the repository.  
-2. **Create a branch** for your feature or fix.  
-3. **Submit a Pull Request** with a clear explanation of changes.
+- `name.nnn` is resolved from the current working directory
+- it is only required when `.lst` / `.bst` reports are actually being written
+- pure in-memory APIs do not require `name.nnn`
 
----
+This matters for CLI use, tests, and oracle comparisons.
 
-## **License**
+## Current Status
 
-This project is open-source under the [MIT License](LICENSE).
+The codebase is mid-refactor, but already in a usable state.
 
----
+Implemented and stable enough to rely on:
 
-## **Contact**
+- in-memory assembly and execution seams
+- centralized report generation
+- centralized file artifact helpers
+- typed error classes for pure reusable paths
+- categorized assembler integration coverage
+- oracle-backed research workflow
 
-For questions or feedback, please open an issue or submit a pull request.
+Still actively being refined:
+
+- deeper decomposition of `src/core/assembler.js`
+- deeper decomposition of `src/core/interpreter.js`
+- remaining linker boundary cleanup and modularity work
+- exact oracle parity for some behaviors such as `sext`
+- full symbolic debugger parity
+
+## Known Parity / Research Areas
+
+Areas that still require active research or refinement:
+
+- exact oracle `sext` semantics
+- final `bp` parity and debugger interaction details
+- some original-LCC edge cases around line-length parsing
+- some linker output-location behavior
+- whether to match oracle’s exact artifact behavior on certain assembly failures
+
+The current source of truth for active behavior contracts is:
+
+- [docs/core-behavior-matrix.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/core-behavior-matrix.md)
+
+## Additional Docs
+
+- [docs/assembler.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/assembler.md)
+- [docs/interpreter.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/interpreter.md)
+- [docs/lcc.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/lcc.md)
+- [docs/linker.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/linker.md)
+- [src/core/core.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/core.md)
+- [src/utils/utils.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/utils.md)
+
+## License
+
+MIT
