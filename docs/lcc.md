@@ -92,12 +92,12 @@ Some option behavior is already covered well by tests; some still need additiona
 
 `lcc.js` coordinates:
 
-- [assembler.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/assembler.js)
-- [interpreter.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/interpreter.js)
-- [linker.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/linker.js)
-- [reportArtifacts.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/reportArtifacts.js)
-- [fileArtifacts.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/fileArtifacts.js)
-- [name.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/name.js)
+- [assembler.js](../src/core/assembler.js)
+- [interpreter.js](../src/core/interpreter.js)
+- [linker.js](../src/core/linker.js)
+- [reportArtifacts.js](../src/utils/reportArtifacts.js)
+- [fileArtifacts.js](../src/utils/fileArtifacts.js)
+- [name.js](../src/utils/name.js)
 
 ## Current Status
 
@@ -111,6 +111,6 @@ Still open:
 
 ## Related Tests
 
-- [lcc.unit.spec.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/tests/new/lcc.unit.spec.js)
-- [lcc.integration.spec.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/tests/new/lcc.integration.spec.js)
-- [lcc.oracle.e2e.spec.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/tests/new/lcc.oracle.e2e.spec.js)
+- [lcc.unit.spec.js](../tests/new/lcc.unit.spec.js)
+- [lcc.integration.spec.js](../tests/new/lcc.integration.spec.js)
+- [lcc.oracle.e2e.spec.js](../tests/new/lcc.oracle.e2e.spec.js)

@@ -12,12 +12,6 @@ This document outlines our **planned improvements, refactors, and example progra
 
 ### ✅ Short-Term Priorities
 
-* **Remove Docker Dependency**
-
-  * Refactor all e2e tests to **use local LCC binaries if installed**, falling back to Docker only when needed.
-  * Add clear error messages when neither option is available.
-  * Update test helpers to detect environment automatically.
-
 * **Refactor Large Switch Statements**
 
   * Convert huge `switch` blocks in:
@@ -125,7 +119,6 @@ These are longer-term goals:
 
 * All major refactors complete.
 * All example programs published.
-* Docker dependency removed for local test running.
 * Tests pass in CI on Linux, macOS, and Windows.
 
 ---

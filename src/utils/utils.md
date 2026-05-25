@@ -113,6 +113,6 @@ This separation keeps the wrapper/core boundary easier to maintain and test.
 
 ## Related Docs
 
-- [README.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/README.md)
-- [src/core/core.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/core.md)
-- [docs/core-behavior-matrix.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/core-behavior-matrix.md)
+- [README.md](../../README.md)
+- [src/core/core.md](../../src/core/core.md)
+- [docs/core-behavior-matrix.md](../../docs/core-behavior-matrix.md)

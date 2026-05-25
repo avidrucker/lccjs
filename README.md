@@ -199,7 +199,6 @@ Other useful commands:
 
 ```bash
 npm run test:all
-npm run test:legacy
 npm run test:oracle
 ```
 
@@ -278,16 +277,16 @@ Areas that still require active research or refinement:
 
 The current source of truth for active behavior contracts is:
 
-- [docs/core-behavior-matrix.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/core-behavior-matrix.md)
+- [docs/core-behavior-matrix.md](./docs/core-behavior-matrix.md)
 
 ## Additional Docs
 
-- [docs/assembler.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/assembler.md)
-- [docs/interpreter.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/interpreter.md)
-- [docs/lcc.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/lcc.md)
-- [docs/linker.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/linker.md)
-- [src/core/core.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/core.md)
-- [src/utils/utils.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/utils.md)
+- [docs/assembler.md](./docs/assembler.md)
+- [docs/interpreter.md](./docs/interpreter.md)
+- [docs/lcc.md](./docs/lcc.md)
+- [docs/linker.md](./docs/linker.md)
+- [src/core/core.md](./src/core/core.md)
+- [src/utils/utils.md](./src/utils/utils.md)
 
 ## License
 

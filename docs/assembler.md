@@ -141,9 +141,9 @@ These are still open and should not be treated as fully settled behavior:
 
 ## Related Files
 
-- [assembler.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/assembler.js)
-- [reportArtifacts.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/reportArtifacts.js)
-- [fileArtifacts.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/fileArtifacts.js)
-- [errors.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/errors.js)
-- [assembler.unit.spec.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/tests/new/assembler.unit.spec.js)
-- [assembler.cli.integration.spec.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/tests/new/assembler.cli.integration.spec.js)
+- [assembler.js](../src/core/assembler.js)
+- [reportArtifacts.js](../src/utils/reportArtifacts.js)
+- [fileArtifacts.js](../src/utils/fileArtifacts.js)
+- [errors.js](../src/utils/errors.js)
+- [assembler.unit.spec.js](../tests/new/assembler.unit.spec.js)
+- [assembler.cli.integration.spec.js](../tests/new/assembler.cli.integration.spec.js)

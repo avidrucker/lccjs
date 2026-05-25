@@ -2,8 +2,7 @@
   "scripts": {
     "test": "jest --runInBand tests/new",
     "test:all": "jest --runInBand",
-    "test:legacy": "jest --runInBand test/",
-    "test:oracle": "jest --runInBand tests/new/integration.oracle.spec.js"
+    "test:oracle": "jest --runInBand --testPathPattern oracle.e2e"
   },
   "devDependencies": {
     "dotenv": "^17.2.3",
