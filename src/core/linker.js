@@ -228,7 +228,7 @@ class Linker {
           break;
         case 'G':
           if (this.GTable.hasOwnProperty(header.label)) {
-            this.error(`Multiple definitions of global symbol ${header.label}`);
+            this.error(`More than one global declaration for ${header.label}`);
             return;
           }
           this.GTable[header.label] = header.address + this.mcaIndex;
