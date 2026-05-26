@@ -116,7 +116,7 @@ class Assembler {
     /**
      * Load point
      */
-    this.loadPoint = 0; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
+    this.loadPoint = 0; // @todo #52:30m/DEV Consolidate the 5 loadPoint hardcodes into a single helper (OB-020a; precondition for OB-020b wiring -l<hex loadpt> flag)
 
     /**
      * Program size
@@ -189,7 +189,7 @@ class Assembler {
     this.outputBuffer = [];
     this.outFile = null;
     this.listing = [];
-    this.loadPoint = 0; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
+    this.loadPoint = 0;
     this.programSize = 0;
     this.startLabel = null;
     this.startAddress = null;
@@ -484,8 +484,7 @@ class Assembler {
   main(args) {
     args = args || process.argv.slice(2);
 
-    //// TODO: change logic here to only give usage message
-    ////       if no input files are provided
+    // @todo #63:15m/DEV Tighten the "no args → usage" path (OB-030): stdout exit 0 when args missing; reserve exit 1 for misuse.
     // Check if inputFileName is already set
     if (!this.inputFileName) {
       if (args.length !== 1) {
@@ -578,7 +577,7 @@ class Assembler {
   performPass() {
     // At the beginning of Pass 1
     if (this.pass === 1) {
-      this.loadPoint = this.locCtr; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
+      this.loadPoint = this.locCtr;
     }
 
     if (this.pass === 2) {
@@ -712,7 +711,7 @@ class Assembler {
   parseHexFile() {
     this.outputBuffer = [];
     this.locCtr = 0;
-    this.loadPoint = 0; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
+    this.loadPoint = 0;
     for (let lineNum = 0; lineNum < this.sourceLines.length; lineNum++) {
       this.lineNum++;
       let line = this.sourceLines[lineNum];
@@ -784,7 +783,7 @@ class Assembler {
   parseBinFile() {
     this.outputBuffer = [];     // Prepare output buffer
     this.locCtr = 0;
-    this.loadPoint = 0; // TODO: fix this to not be hardcoded, because flags may dictate where in memory the program starts
+    this.loadPoint = 0;
     for (let lineNum = 0; lineNum < this.sourceLines.length; lineNum++) {
       this.lineNum++;
       let line = this.sourceLines[lineNum];
@@ -1073,15 +1072,11 @@ class Assembler {
           this.failAssembly("Missing operand", 1);
         }
 
-        // if (operands.length !== 1 && operands.length !== 3) {
-          //// TODO: inspect to make sure that .word can handle .word x, .word x+1, and .word x + 1
-          //// TODO: inspect to make sure that .word can handle .word x+ 1 and .word x +1
-          //// TODO: inspect to make sure that .word behaves as expected with .word x + 1 + 1
-          //// TODO: inspect to make sure that .word behaves as expected with .word <NOTHING>
-          //// TODO: inspect to make sure that .word behaves as expected with .word + or .word -
-          // this.error(`Invalid operand count for ${mnemonic}`);
-          // return;
-        // }
+        // @todo #56:30m/DEV Resolve this dead .word validation block (OB-023):
+        //   decide accepted operand-spacing forms (`.word x`, `.word x+1`,
+        //   `.word x + 1`, `.word x+ 1`, `.word x +1`, `.word x + 1 + 1`,
+        //   `.word <NOTHING>`, `.word +` / `.word -`); implement validation
+        //   OR remove the dead block; document accepted forms in core-behavior-matrix.md.
 
         if (this.pass === 2) {
           let label = operands[0];
@@ -1358,7 +1353,7 @@ class Assembler {
 
     if(!this.isRegister(sr2orImm5)) {
       // compare with immediate
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5");  //// TODO: test bounds, see if input is naive or not
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5"); // @todo #54:45m/QA Add negative tests for evaluateImmediate at all 10 call sites (OB-021)
       macword = macword | (sr1 << 6) | (imm5 & 0x1F) | 0x0020;
     } else {
       // compare with register
@@ -1406,7 +1401,7 @@ class Assembler {
 
     let address = this.evaluateOperand(label, 'e');
     if (address === null) {
-      this.failAssembly('Bad label', 1); // TODO: verify this is correct via cross testing w/ LCC
+      this.failAssembly('Bad label', 1); // @todo #60:45m/QA Verify this error wording matches cuh63 6.3 (OB-027)
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1589,7 +1584,7 @@ class Assembler {
       this.failAssembly('Missing register', 1);
     };
     let ct = null;
-    if (operands[1]) ct = this.evaluateImmediate(operands[1], 0, 15); //// TODO: test bounds, see if input is naive or not
+    if (operands[1]) ct = this.evaluateImmediate(operands[1], 0, 15);
     if (ct === null) ct = 1;
     let macword = 0xA000 | (sr << 9) | (ct << 5) | 0x0003;
     return macword;
@@ -1619,7 +1614,7 @@ class Assembler {
       let sr2 = this.getRegister(sr2orImm5);
       macword |= sr2;
     } else {
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5'); //// TODO: test bounds, see if input is naive or not
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5');
       if (imm5 === null || imm5 === undefined) {
         this.failAssembly('Bad number', 1);
       };
@@ -1778,7 +1773,7 @@ class Assembler {
     } else {
       pcoffset11 = address - this.locCtr - 1;
       if (pcoffset11 < -1024 || pcoffset11 > 1023) {
-        this.error('pcoffset11 out of range'); // TODO: test this in integration tests
+        this.error('pcoffset11 out of range'); // @todo #55:15m/QA Test this error path in integration tests (OB-022)
         return null;
       }
     }
@@ -1793,7 +1788,7 @@ class Assembler {
     };
     let offset6 = 0;
     if (operands[1]) {
-      offset6 = this.evaluateImmediate(operands[1], -32, 31, "offset6");  //// TODO: test bounds, see if input is naive or not
+      offset6 = this.evaluateImmediate(operands[1], -32, 31, "offset6");
     }
     let macword = 0x4000 | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1805,7 +1800,7 @@ class Assembler {
     if (dr === null || baser === null) {
       this.failAssembly('Missing register', 1);
     };
-    let offset6 = this.evaluateImmediate(operands[2], -32, 31, 'offset6');  //// TODO: test bounds, see if input is naive or not
+    let offset6 = this.evaluateImmediate(operands[2], -32, 31, 'offset6');
     if (offset6 === null) return null;
     let macword = 0x6000 | (dr << 9) | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1817,7 +1812,7 @@ class Assembler {
     if (sr === null || baser === null) {
       this.failAssembly('Missing register', 1);
     };
-    let offset6 = this.evaluateImmediate(operands[2], -32, 31, 'offset6');  //// TODO: test bounds, see if input is naive or not
+    let offset6 = this.evaluateImmediate(operands[2], -32, 31, 'offset6');
     if (offset6 === null) return null;
     let macword = 0x7000 | (sr << 9) | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1828,27 +1823,25 @@ class Assembler {
     if (baser === null) {
       // Note: as of 12/2024, the official LCC behavior here is to segfault
       // so, this is currently "custom" LCC.js behavior
-      // TODO: confirm whether this is still the official LCC behavior in 2026, 
-      // and if not, update this error handling accordingly
+      // @todo #60:45m/QA Verify "Missing register" error matches cuh63 6.3 (OB-027)
       this.failAssembly('Missing register', 1);
     };
     let offset6 = 0;
     if (operands[1]) {
-      offset6 = this.evaluateImmediate(operands[1], -32, 31, "offset6");  //// TODO: test bounds, see if input is naive or not
+      offset6 = this.evaluateImmediate(operands[1], -32, 31, "offset6");
     }
     let macword = 0xC000 | (baser << 6) | (offset6 & 0x3F);
     return macword;
   }
 
   assembleRET(operands) {
-    //// TODO: make sure that ret+3 is valid
-    //// TODO: make sure that ret+ 3 is valid
-    //// TODO; make sure that ret +3 is valid
-    //// TODO: make sure that ret + 3 is valid
+    // @todo #57:15m/DOC Decide accepted ret operand-spacing forms (OB-024):
+    //   ret+3, ret+ 3, ret +3, ret + 3 — pick which are valid, write the
+    //   decision into core-behavior-matrix.md, add a spacing-variants test.
     let baser = 7; // LR register
     let offset6 = 0;
     if (operands[0]) {
-      offset6 = this.evaluateImmediate(operands[0], -32, 31, "offset6"); //// TODO: test bounds, see if input is naive or not
+      offset6 = this.evaluateImmediate(operands[0], -32, 31, "offset6");
     }
     let macword = 0xC000 | (baser << 6) | (offset6 & 0x3F);
     return macword;
@@ -1879,7 +1872,7 @@ class Assembler {
         let macword = 0xA000 | (dr << 9) | (sr << 6) | 0x000C;
         return macword;
       } else {
-         //// TODO: test bounds, see if input is naive or not
+
         // Translate to 'mvi dr, imm9'
         let imm9 = this.evaluateImmediateNaive(operands[1]); // this.evaluateImmediate(operands[1], -256, 255);
         if (imm9 === null) {
@@ -1890,7 +1883,7 @@ class Assembler {
         return macword;
       }
     } else if (mnemonic === 'mvi') {
-       //// TODO: test bounds, see if input is naive or not
+
       // mvi dr, imm9
       let imm9 =  this.evaluateImmediate(operands[1], -256, 255, "mvi immediate"); // this.evaluateImmediate(operands[1], -256, 255);
       if (imm9 === null) {
@@ -2050,7 +2043,7 @@ class Assembler {
     return value;
   }
 
-  // TODO: investigate here for detection of undefined labels
+  // @todo #61:60m/DEV Add undefined-label detection here (OB-028)
   handleExternalReference(label, usageType) {
     // Check if we've already created an entry for this label and usage type
     if (!this.externalReferences.some(ref => ref.label === label && ref.type === usageType)) {
@@ -2062,7 +2055,7 @@ class Assembler {
     }
   }
 
-            // TODO: implement operand type checking {valid: ["num", "char", "label"]}
+  // @todo #61:60m/DEV Implement systematic operand type checking (OB-028): {valid: ["num", "char", "label"]} schema per mnemonic
   /**
    * Evaluates an operand and returns its corresponding value.
    * The operand can be a pure number, a label with an optional offset, or a plain label.

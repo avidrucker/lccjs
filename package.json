@@ -2,7 +2,8 @@
   "scripts": {
     "test": "jest --runInBand tests/new",
     "test:all": "jest --runInBand",
-    "test:oracle": "jest --runInBand --testPathPattern oracle.e2e"
+    "test:oracle": "jest --runInBand --testPathPattern oracle.e2e",
+    "puzzles": "pdd --source . --file puzzles.xml --skip-gitignore --exclude 'docs/**' --exclude '*.md' --exclude 'node_modules/**' --exclude 'coverage/**' --exclude 'scratch/**' --exclude 'experiments/**' --exclude 'tests/goldens/**' --exclude 'public_experiments/**' --exclude 'demos/**' --exclude 'plusdemos/**' --exclude 'cit118demos/**' --exclude 'package-lock.json'"
   },
   "devDependencies": {
     "dotenv": "^17.2.3",

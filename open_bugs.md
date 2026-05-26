@@ -22,6 +22,7 @@ Last updated: 2026-05-25.
 ## Confirmed bugs (verified)
 
 ### OB-001 — LCC.js `mov` accepts out-of-spec immediates and silently wraps
+- **GH:** [#31](https://github.com/avidrucker/lccjs/issues/31)
 - **Severity:** medium (silent miscompile, not a crash)
 - **Status:** open
 - **Where:** `src/core/assembler.js` (the `mov` parser path)
@@ -40,6 +41,7 @@ Last updated: 2026-05-25.
   tests for −257, −256, +255, +256.
 
 ### OB-002 — Disassembler decodes `mvi` imm9 with an 8-bit mask
+- **GH:** [#32](https://github.com/avidrucker/lccjs/issues/32)
 - **Severity:** medium (latent — module has 0% coverage)
 - **Status:** open
 - **Where:** `src/extra/disassembler.js:419`
@@ -53,6 +55,7 @@ Last updated: 2026-05-25.
   representative negative `mvi` immediates.
 
 ### OB-003 — Linker `error()` does not abort; `link()` writes broken `.e`
+- **GH:** [#33](https://github.com/avidrucker/lccjs/issues/33), [#34](https://github.com/avidrucker/lccjs/issues/34), [#35](https://github.com/avidrucker/lccjs/issues/35) (decomposed)
 - **Severity:** high (writes corrupt output silently)
 - **Status:** open
 - **Where:** `src/core/linker.js:172-205, 363-366`
@@ -69,6 +72,7 @@ Last updated: 2026-05-25.
   with an unresolved external reference.
 
 ### OB-004 — `Interpreter.raiseRuntimeError` ignores `throwOnRuntimeError`
+- **GH:** [#36](https://github.com/avidrucker/lccjs/issues/36)
 - **Severity:** low (dead flag, no behavior change)
 - **Status:** open
 - **Where:** `src/core/interpreter.js:1542-1550` (raise path);
@@ -82,6 +86,7 @@ Last updated: 2026-05-25.
   `Assembler.abortAssembly` does), or delete it entirely.
 
 ### OB-005 — `genStats.js` decimal / hex program-size inconsistency
+- **GH:** [#37](https://github.com/avidrucker/lccjs/issues/37)
 - **Severity:** medium (silent numerical inconsistency in reports)
 - **Status:** open
 - **Where:** `src/utils/genStats.js:125`
@@ -92,6 +97,7 @@ Last updated: 2026-05-25.
   unit test with a non-zero `loadPoint`.
 
 ### OB-006 — `interpreterplus.js` xorshift comments contradict the code
+- **GH:** [#38](https://github.com/avidrucker/lccjs/issues/38)
 - **Severity:** low (doc-only; code is correct classical xorshift)
 - **Status:** open
 - **Where:** `src/plus/interpreterplus.js:382-384`
@@ -104,6 +110,7 @@ Last updated: 2026-05-25.
   enough for any reader who knows xorshift.
 
 ### OB-007 — Linker `link()` accumulates state across calls
+- **GH:** [#39](https://github.com/avidrucker/lccjs/issues/39)
 - **Severity:** low (latent; no current caller invokes twice)
 - **Status:** open
 - **Where:** `src/core/linker.js` (`link()` method)
@@ -120,6 +127,7 @@ Last updated: 2026-05-25.
 ## Upstream bugs (not LCC.js code, but affect parity work)
 
 ### OB-008 — cuh63 6.3: `mov` rejects negatives that its own `mvi` accepts
+- **GH:** [#40](https://github.com/avidrucker/lccjs/issues/40)
 - **Severity:** medium (blocks oracle regen of 5 demos)
 - **Status:** report drafted, not yet sent
 - **Where:** cuh63 6.3 `lcc` binary
@@ -143,6 +151,7 @@ Last updated: 2026-05-25.
 ## High-suspicion smells (likely bugs; need verification)
 
 ### OB-009 — `assemblerplus.js:158` double-exits on error
+- **GH:** [#41](https://github.com/avidrucker/lccjs/issues/41)
 - **Severity:** medium (loses multi-error reporting)
 - **Status:** open
 - **Where:** `src/plus/assemblerplus.js:158`
@@ -156,6 +165,7 @@ Last updated: 2026-05-25.
   fail-fast (and rename to make the intent visible).
 
 ### OB-010 — `assemblerplus.js:184` requires undocumented `.lccplus` directive
+- **GH:** [#42](https://github.com/avidrucker/lccjs/issues/42)
 - **Severity:** low (UX issue)
 - **Status:** open
 - **Where:** `src/plus/assemblerplus.js:184`
@@ -167,6 +177,7 @@ Last updated: 2026-05-25.
   improve the error message to tell users what to add.
 
 ### OB-011 — `interpreterplus.js:36` dead `instructionsCap`
+- **GH:** [#43](https://github.com/avidrucker/lccjs/issues/43)
 - **Severity:** low (dead code)
 - **Status:** open
 - **Where:** `src/plus/interpreterplus.js:36`
@@ -177,6 +188,7 @@ Last updated: 2026-05-25.
   wanted.
 
 ### OB-012 — `interpreterplus.js:167` magic batch size of 500
+- **GH:** [#44](https://github.com/avidrucker/lccjs/issues/44)
 - **Severity:** low (smell)
 - **Status:** open
 - **Where:** `src/plus/interpreterplus.js:167`
@@ -188,6 +200,7 @@ Last updated: 2026-05-25.
   explaining the trade-off, or measure and document.
 
 ### OB-013 — `lccplus.js:40-42` argument-shadowing on constructor + main()
+- **GH:** [#45](https://github.com/avidrucker/lccjs/issues/45)
 - **Severity:** low (fragile coupling)
 - **Status:** open
 - **Where:** `src/plus/lccplus.js:40-42`
@@ -198,6 +211,7 @@ Last updated: 2026-05-25.
   `main()` only; document the chosen direction.
 
 ### OB-014 — `disassembler.js:84-87` silently skips G/E/V header entries
+- **GH:** [#46](https://github.com/avidrucker/lccjs/issues/46)
 - **Severity:** medium (latent; module has 0% coverage)
 - **Status:** open
 - **Where:** `src/extra/disassembler.js:84-87`
@@ -208,6 +222,7 @@ Last updated: 2026-05-25.
   typed error on malformed input.
 
 ### OB-015 — `disassembler.js:189-210` `.zero` adjustment may truncate
+- **GH:** [#47](https://github.com/avidrucker/lccjs/issues/47)
 - **Severity:** medium (latent)
 - **Status:** open
 - **Where:** `src/extra/disassembler.js:189-210`
@@ -219,6 +234,7 @@ Last updated: 2026-05-25.
   adjusted count `> 0` and emit a typed error otherwise.
 
 ### OB-016 — `disassembler.js:731-805` unbounded string accumulation
+- **GH:** [#48](https://github.com/avidrucker/lccjs/issues/48)
 - **Severity:** medium (memory-DoS surface if disassembler is
   ever exposed to untrusted input)
 - **Status:** open
@@ -231,6 +247,7 @@ Last updated: 2026-05-25.
   emit a typed error on overflow.
 
 ### OB-017 — `linkerStepsPrinter.js:501` V-table adjustment silently wraps
+- **GH:** [#49](https://github.com/avidrucker/lccjs/issues/49)
 - **Severity:** medium (latent; tool has 0% coverage)
 - **Status:** open
 - **Where:** `src/extra/linkerStepsPrinter.js:501`
@@ -241,6 +258,7 @@ Last updated: 2026-05-25.
   before storing.
 
 ### OB-018 — `linkerStepsPrinter.js` `writeExecutable` lacks try/finally
+- **GH:** [#50](https://github.com/avidrucker/lccjs/issues/50)
 - **Severity:** low (partial-write leaves fd open + corrupt file)
 - **Status:** open
 - **Where:** `src/extra/linkerStepsPrinter.js` (`writeExecutable`)
@@ -251,6 +269,7 @@ Last updated: 2026-05-25.
   write failure, unlink the partial file.
 
 ### OB-019 — `Interpreter.executeSRL/SRA/ROL/ROR` corner at `ct = 0`
+- **GH:** [#51](https://github.com/avidrucker/lccjs/issues/51)
 - **Severity:** low (unreachable today)
 - **Status:** open
 - **Where:** `src/core/interpreter.js:920-944`
@@ -267,6 +286,7 @@ Last updated: 2026-05-25.
 ## Accumulated TODO debt (lurking unknowns)
 
 ### OB-020 — `loadPoint = 0` hardcoded in 5 spots; `-l<hex loadpt>` flag incomplete
+- **GH:** [#52](https://github.com/avidrucker/lccjs/issues/52), [#53](https://github.com/avidrucker/lccjs/issues/53) (decomposed)
 - **Severity:** medium (documented feature does not work)
 - **Status:** open
 - **Where:** `src/core/assembler.js:119, 192, 581, 715, 787`
@@ -280,6 +300,7 @@ Last updated: 2026-05-25.
   five duplicates; add an integration test with `-l1000`.
 
 ### OB-021 — `evaluateImmediate` bounds untested across 6+ instructions
+- **GH:** [#54](https://github.com/avidrucker/lccjs/issues/54)
 - **Severity:** medium (validators may not actually validate)
 - **Status:** open
 - **Where:** `src/core/assembler.js:1361, 1592, 1622, 1796, 1808, 1820, 1837`
@@ -293,6 +314,7 @@ Last updated: 2026-05-25.
   call site with values at −1/+0/+max/+max+1/−min−1.
 
 ### OB-022 — `assembler.js:1781` `pcoffset11 out of range` path untested
+- **GH:** [#55](https://github.com/avidrucker/lccjs/issues/55)
 - **Severity:** low (validator likely correct but unverified)
 - **Status:** open
 - **Where:** `src/core/assembler.js:1781`
@@ -303,6 +325,7 @@ Last updated: 2026-05-25.
   branch target.
 
 ### OB-023 — Dead `.word` validation block with five outstanding TODOs
+- **GH:** [#56](https://github.com/avidrucker/lccjs/issues/56)
 - **Severity:** low (dead code + accumulated questions)
 - **Status:** open
 - **Where:** `src/core/assembler.js:1077-1084`
@@ -315,6 +338,7 @@ Last updated: 2026-05-25.
   `.word` docs.
 
 ### OB-024 — Operand-spacing TODOs for `ret+3` / `ret +3` / `ret+ 3` / `ret + 3`
+- **GH:** [#57](https://github.com/avidrucker/lccjs/issues/57)
 - **Severity:** low (open parity question)
 - **Status:** open
 - **Where:** `src/core/assembler.js:1844-1847`
@@ -326,6 +350,7 @@ Last updated: 2026-05-25.
   accepted; collapse the four TODOs.
 
 ### OB-025 — `interpreter.js:1101` line-ending portability untested
+- **GH:** [#58](https://github.com/avidrucker/lccjs/issues/58)
 - **Severity:** low (cross-platform risk)
 - **Status:** open
 - **Where:** `src/core/interpreter.js:1101`
@@ -336,6 +361,7 @@ Last updated: 2026-05-25.
   with explicit `\r\n` and verifies the same parse as `\n`.
 
 ### OB-026 — `lcc.js:85` multi-file input not implemented
+- **GH:** [#59](https://github.com/avidrucker/lccjs/issues/59)
 - **Severity:** low (missing feature, not active bug)
 - **Status:** open
 - **Where:** `src/core/lcc.js:85`
