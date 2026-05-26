@@ -155,10 +155,7 @@ class AssemblerPlus extends Assembler {
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
       this.error('Missing register');
-      // @todo #41:30m/DEV Don't bypass error accumulation (OB-009):
-      //   this.error() above already sets errorFlag per parent's pattern; the
-      //   immediate fatalExit() prevents multi-error reporting. Choose one path.
-      fatalExit('Missing register', 1);
+      return null;
     };
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000E;
     return macword;
