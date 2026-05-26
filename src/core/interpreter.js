@@ -573,11 +573,9 @@ class Interpreter {
     this.trapvec = this.ir & 0xFF; // trap vector (bits 7-0)
 
     if (this.debugMode) {
-      // @todo #64:15m/DEV Resolve debug-mode behavior in e2e tests (OB-031): decide whether debugMode should be reachable in test mode at all.
-      // if (isTestMode) {
-      //   this.running = false;
-      //   return;
-      // }
+      // debugMode is safe in tests: readLineFromStdin() reads from inputBuffer
+      // when set, so tests can drive the debugger by pre-loading inputBuffer
+      // with commands (e.g. 'q\n' to quit immediately).
       this.debug();
     }
 

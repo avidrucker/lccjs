@@ -81,6 +81,7 @@ The tokenizer splits on whitespace and commas; `+` and `-` are not delimiters.
 - `Preserve`: infinite-loop detection is active
 - `Preserve`: pure in-memory execution does not enter debug mode automatically
 - `Preserve`: CLI runtime debugging is TTY-gated
+- `Preserve`: `debugMode` is testable via `interpreter.inputBuffer` — `readLineFromStdin()` reads from the buffer when set, so tests can exercise the symbolic debugger by pre-loading debug commands (e.g. `'q\n'` to quit immediately)
 - `Preserve`: `bp` is no longer treated as a fatal unimplemented trap in the CLI path
 - `Pure API`: `executeBuffer(...)` executes without requiring sibling files
 - `Pure API`: `executeBuffer(...)` returns structured runtime state and optional reports
