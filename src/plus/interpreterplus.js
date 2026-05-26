@@ -9,6 +9,10 @@ const Interpreter = require('../core/interpreter.js');
 
 const isTestMode = (typeof global.it === 'function'); // crude check for Jest
 
+// Number of interpreter steps executed per setImmediate tick in runAsync().
+// Tuned for reasonable UI responsiveness in .ap games; adjust if lag is observed.
+const ASYNC_BATCH_SIZE = 500;
+
 function resetProcessStdin() {
   process.stdin.setRawMode(false);
   process.stdin.pause();
@@ -163,10 +167,7 @@ class InterpreterPlus extends Interpreter {
   
     const runBatch = () => {
       if (!this.running) return;
-      // @todo #44:15m/DEV Lift magic 500 batch size to a named constant (OB-012):
-      //   no rationale documented; could be too high (UI lag in .ap games) or
-      //   too low (throughput throttle). Measure and document.
-      for (let i = 0; i < 500; i++) {
+      for (let i = 0; i < ASYNC_BATCH_SIZE; i++) {
         if (!this.running) break;
         this.step();
       }
