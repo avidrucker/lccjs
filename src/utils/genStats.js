@@ -50,27 +50,31 @@ function generateBSTLSTContent(options) {
       content += 'Loc   Code\n';
     }
   
+    // listingLoadPoint is the -l<hex> CLI offset: shifts displayed addresses
+    // without affecting encoded machine code or the .e file.
+    const listingOffset = (assembler.listingLoadPoint || 0);
+
     assembler.listing.forEach((entry) => {
       const codeWords = entry.codeWords;
       const macWord = entry.macWord;
-  
+
       if (codeWords && codeWords.length > 0) {
-        let locCtr = entry.locCtr;
-  
+        let locCtr = entry.locCtr + listingOffset;
+
         codeWords.forEach((word, index) => {
           const wordStr = isBST
             ? word.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim()
             : word.toString(16).padStart(4, '0');
-  
+
           let lineStr = `${locCtr.toString(16).padStart(4, '0')}  ${wordStr.padEnd(10)}`;
-  
+
           if (index === 0) {
             // Include source code
             lineStr += ` ${entry.sourceLine}`;
           }
-  
+
           content += `${lineStr}\n`;
-  
+
           locCtr++;
         });
       } else if (codeWords && codeWords.length === 0) {
@@ -82,13 +86,13 @@ function generateBSTLSTContent(options) {
         const wordStr = isBST
           ? macWord.toString(2).padStart(16, '0').replace(/(.{4})/g, '$1 ').trim()
           : macWord.toString(16).padStart(4, '0');
-  
+
         // Build a line with "Loc" and the code word in hex (or bin), plus optional "; comment"
-        let lineStr = `${entry.locCtr.toString(16).padStart(4, '0')}  ${wordStr}`;
+        let lineStr = `${(entry.locCtr + listingOffset).toString(16).padStart(4, '0')}  ${wordStr}`;
         if (includeComments && entry.comment) {
           lineStr += ` ; ${entry.comment}`;
         }
-        
+
         content += lineStr + '\n';
       }
     });

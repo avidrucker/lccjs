@@ -115,13 +115,17 @@ class Assembler {
 
     /**
      * Load point
-     * defaultLoadPoint is the CLI-configured value (set via -l<hex> before assembly runs);
-     * loadPoint tracks the current assembly-time load point, reset to defaultLoadPoint at
-     * the start of each file parse.  All reset sites use defaultLoadPoint so OB-020b only
-     * needs to set this one property to wire the -l flag through.
+     * defaultLoadPoint: the internal default for loadPoint (always 0; all reset
+     *   sites use this so there is a single place to change it if ever needed).
+     * loadPoint: tracks the current assembly-time locCtr start (normally 0;
+     *   set to locCtr at pass-1 start; used in programSize = locCtr - loadPoint).
+     * listingLoadPoint: the -l<hex> CLI value (display-only); added to locCtr
+     *   when rendering listing addresses so they match the intended memory layout.
+     *   Does NOT affect encoded machine code or the .e file.
      */
     this.defaultLoadPoint = 0;
     this.loadPoint = this.defaultLoadPoint;
+    this.listingLoadPoint = 0;
 
     /**
      * Program size
@@ -580,9 +584,12 @@ class Assembler {
   * - Updating the location counter.
   */
   performPass() {
-    // At the beginning of Pass 1
+    // At the beginning of Pass 1 capture where in locCtr-space code starts.
+    // locCtr is always 0 here (reset before pass 1) so this equals defaultLoadPoint
+    // (also 0).  Kept separate so programSize = locCtr - loadPoint is correct for
+    // programs that begin at a non-zero locCtr via .org.
     if (this.pass === 1) {
-      this.loadPoint = this.locCtr;
+      this.loadPoint = this.defaultLoadPoint;
     }
 
     if (this.pass === 2) {

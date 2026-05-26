@@ -240,6 +240,13 @@ class LCC {
   assembleFile() {
     const assembler = new Assembler();
 
+    // Wire -l<hex> load point through to assembler (OB-020b).
+    // listingLoadPoint is a display-only offset added to each locCtr when
+    // rendering .lst/.bst addresses.  The .e binary content is unchanged.
+    if (this.options.loadPoint) {
+      assembler.listingLoadPoint = this.options.loadPoint;
+    }
+
     // Set input and output file names
     assembler.inputFileName = this.inputFileName;
     assembler.outputFileName = this.outputFileName || this.constructOutputFileName(this.inputFileName);
@@ -256,7 +263,7 @@ class LCC {
     } catch (error) {
       cliWrappedErrorExit(`Error assembling ${this.inputFileName}:`, error, 1);
     }
-    
+
   }
 
   // Executes the output file
