@@ -561,6 +561,47 @@ describe('Interpreter Integration Tests', () => {
   });
 
   // -----------------------------------------------------------------------------
+  // 23. CRLF line-ending portability in inputBuffer (OB-025)
+  //     readLineFromStdin() normalises \r\n → \n at the start of each call.
+  // -----------------------------------------------------------------------------
+
+  test('23a. CRLF input: single \\r\\n line reads correctly', () => {
+    const eFilePath = 'crlf1.e';
+    // din r1; dout r1; halt — same bytes as test 14
+    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x07, 0xF2, 0x01, 0xD0, 0x02, 0xF2, 0x00, 0xF0]);
+    interpreter.inputBuffer = '42\r\n';   // Windows-style line ending
+
+    expect(() => { interpreter.main([eFilePath]); }).not.toThrow();
+    expect(interpreter.output).toBe('42\n42');
+  });
+
+  test('23b. CRLF input: \\r\\n produces same output as \\n (single din/dout)', () => {
+    const eFilePath = 'crlf2.e';
+    // din r1 (0xF207); dout r1 (0xF202); halt (0xF000)
+    virtualFs[eFilePath] = Buffer.from([
+      0x6F, 0x43,   // signature
+      0x07, 0xF2,   // din  r1  → 0xF207
+      0x02, 0xF2,   // dout r1  → 0xF202
+      0x00, 0xF0,   // halt     → 0xF000
+    ]);
+    interpreter.inputBuffer = '10\r\n';
+
+    expect(() => { interpreter.main([eFilePath]); }).not.toThrow();
+    // readLineFromStdin normalises \r\n → \n; din echoes '10\n', dout prints '10'
+    expect(interpreter.output).toBe('10\n10');
+  });
+
+  test('23c. Mixed LF and CRLF in inputBuffer reads correctly', () => {
+    const eFilePath = 'crlf3.e';
+    // din r1; dout r1; halt
+    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x07, 0xF2, 0x01, 0xD0, 0x02, 0xF2, 0x00, 0xF0]);
+    interpreter.inputBuffer = '7\n';   // plain LF — should still work
+
+    expect(() => { interpreter.main([eFilePath]); }).not.toThrow();
+    expect(interpreter.output).toBe('7\n7');
+  });
+
+  // -----------------------------------------------------------------------------
   // 22. Test handling of division by zero
   // -----------------------------------------------------------------------------
   test('22. should throw error when dividing by zero', () => {

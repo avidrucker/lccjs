@@ -1090,7 +1090,6 @@ class Interpreter {
     if (this.inputBuffer && this.inputBuffer.length > 0) {
       // Use the inputBuffer to simulate user input
       this.inputBuffer = this.inputBuffer.replace(/\r\n/g, '\n');
-      // @todo #58:30m/QA Test CRLF input handling on Linux vs Windows (OB-025)
       const newlineIndex = this.inputBuffer.indexOf('\n');
       let inputLine = '';
       if (newlineIndex !== -1) {
