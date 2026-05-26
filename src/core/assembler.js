@@ -115,8 +115,13 @@ class Assembler {
 
     /**
      * Load point
+     * defaultLoadPoint is the CLI-configured value (set via -l<hex> before assembly runs);
+     * loadPoint tracks the current assembly-time load point, reset to defaultLoadPoint at
+     * the start of each file parse.  All reset sites use defaultLoadPoint so OB-020b only
+     * needs to set this one property to wire the -l flag through.
      */
-    this.loadPoint = 0; // @todo #52:30m/DEV Consolidate the 5 loadPoint hardcodes into a single helper (OB-020a; precondition for OB-020b wiring -l<hex loadpt> flag)
+    this.defaultLoadPoint = 0;
+    this.loadPoint = this.defaultLoadPoint;
 
     /**
      * Program size
@@ -189,7 +194,7 @@ class Assembler {
     this.outputBuffer = [];
     this.outFile = null;
     this.listing = [];
-    this.loadPoint = 0;
+    this.loadPoint = this.defaultLoadPoint;
     this.programSize = 0;
     this.startLabel = null;
     this.startAddress = null;
@@ -711,7 +716,7 @@ class Assembler {
   parseHexFile() {
     this.outputBuffer = [];
     this.locCtr = 0;
-    this.loadPoint = 0;
+    this.loadPoint = this.defaultLoadPoint;
     for (let lineNum = 0; lineNum < this.sourceLines.length; lineNum++) {
       this.lineNum++;
       let line = this.sourceLines[lineNum];
@@ -783,7 +788,7 @@ class Assembler {
   parseBinFile() {
     this.outputBuffer = [];     // Prepare output buffer
     this.locCtr = 0;
-    this.loadPoint = 0;
+    this.loadPoint = this.defaultLoadPoint;
     for (let lineNum = 0; lineNum < this.sourceLines.length; lineNum++) {
       this.lineNum++;
       let line = this.sourceLines[lineNum];
