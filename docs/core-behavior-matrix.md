@@ -136,6 +136,14 @@ The tokenizer splits on whitespace and commas; `+` and `-` are not delimiters.
 - `Preserve`: `.a` files that assemble to `.e` are then executed automatically
 - `Preserve`: `.a` files that assemble to `.o` are not executed
 
+### Multi-file `.a` input
+
+When `lcc foo.a bar.a` is invoked with multiple non-`.o` source files:
+
+- `Preserve`: only `args[0]` (`foo.a`) is assembled and (if `.e`) executed
+- `Research`: remaining `.a` args are silently ignored — OG LCC likely behaves the same (one source → one `.e`), but this has not been oracle-verified
+- `Research`: if OG LCC does assemble multiple `.a` files to multiple `.e/.o`, LCC.js would need a multi-file pass loop in `lcc.js`
+
 ### Report and `name.nnn` behavior
 
 - `Preserve`: `name.nnn` is only needed when reports are actually written

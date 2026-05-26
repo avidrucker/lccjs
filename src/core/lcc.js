@@ -83,11 +83,11 @@ class LCC {
     // If multiple inputs were supplied, the "main input file" is the first one
     this.inputFileName = this.args[0];
 
-    // @todo #59:45m/DEV Decide multi-file .a input handling (OB-026): implement multi-file assembly to match the oracle, OR document the divergence in core-behavior-matrix.md.
-    // Note: The original LCC does not check to confirm that all supplied files of .o extension
-    // const allAreObjectFiles = this.args.every(file => path.extname(file).toLowerCase() === '.o');
-    
-    // Simply check to see whether the first argument is a .o file
+    // Dispatch strategy: if the first arg is a .o file, link all args as object modules.
+    // Otherwise, process only the first arg as a source/executable/binary file.
+    // Multiple .a files: only args[0] is assembled; remaining .a args are silently ignored.
+    // This matches the most-common OG LCC usage (single source file → single .e).
+    // See core-behavior-matrix.md → "Multi-file .a input" for documented divergence.
     const firstArgIsObjectFile = path.extname(this.args[0]).toLowerCase() === '.o';
 
     if (firstArgIsObjectFile) {
