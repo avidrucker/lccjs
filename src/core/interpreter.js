@@ -905,9 +905,10 @@ class Interpreter {
        shifts the contents of r1 one position to the right, inserting a 0 on 
        the left.
       */
-      // @todo #51:20m/DEV Guard ct=0 corner in SRL/SRA/ROL/ROR (OB-019):
-      //   ct-1 becomes -1; JS evaluates >> -1 as >> 31. Unreachable today
-      //   (assembler defaults ct=1) but undocumented. Guard or document why.
+      // ct=0 corner: ct-1 becomes -1; JS evaluates >> -1 as >> 31.
+      // This is safe because this.r[this.sr] is a Uint16Array element (0–65535),
+      // so bit 31 is always 0 → c=0, which is the correct carry for a zero-shift.
+      // The value-shift operations (>>>0, >>0, <<0) are all no-ops. No guard needed.
       case 2: // SRL
         this.c = (this.r[this.sr] >> (ct - 1)) & 1; // Store the last bit shifted out
         this.r[this.sr] = (this.r[this.sr] >>> ct); // Unsigned right shift (injects 0's from the left)
