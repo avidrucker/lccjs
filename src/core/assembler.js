@@ -1365,7 +1365,7 @@ class Assembler {
 
     if(!this.isRegister(sr2orImm5)) {
       // compare with immediate
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5"); // @todo #54:45m/QA Add negative tests for evaluateImmediate at all 10 call sites (OB-021)
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5");
       macword = macword | (sr1 << 6) | (imm5 & 0x1F) | 0x0020;
     } else {
       // compare with register
