@@ -179,6 +179,9 @@ class Interpreter {
     /**
      * Whether runtime failures should throw typed errors instead of exiting
      */
+    // @todo #36:15m/DEV Resolve dead throwOnRuntimeError flag (OB-004):
+    //   set by executeBuffer but never read by raiseRuntimeError. Either
+    //   honor it (branch like Assembler.abortAssembly) or delete it.
     this.throwOnRuntimeError = false;
 
     /**
@@ -915,6 +918,9 @@ class Interpreter {
        shifts the contents of r1 one position to the right, inserting a 0 on 
        the left.
       */
+      // @todo #51:20m/DEV Guard ct=0 corner in SRL/SRA/ROL/ROR (OB-019):
+      //   ct-1 becomes -1; JS evaluates >> -1 as >> 31. Unreachable today
+      //   (assembler defaults ct=1) but undocumented. Guard or document why.
       case 2: // SRL
         this.c = (this.r[this.sr] >> (ct - 1)) & 1; // Store the last bit shifted out
         this.r[this.sr] = (this.r[this.sr] >>> ct); // Unsigned right shift (injects 0's from the left)

@@ -33,6 +33,9 @@ class InterpreterPlus extends Interpreter {
     this.keyQueue = []; // For non-blocking input
     this.nonBlockingInput = true; // Default to non-blocking
     this.seed = 0; // Seed for random number generator
+    // @todo #43:15m/DEV Resolve dead instructionsCap (OB-011):
+    //   set in constructor but never read in this class. Delete, or wire it
+    //   up if plus-mode infinite-loop detection is on the roadmap.
     this.instructionsCap = Infinity; // Default to no cap
   }
 
@@ -164,6 +167,9 @@ class InterpreterPlus extends Interpreter {
   
     const runBatch = () => {
       if (!this.running) return;
+      // @todo #44:15m/DEV Lift magic 500 batch size to a named constant (OB-012):
+      //   no rationale documented; could be too high (UI lag in .ap games) or
+      //   too low (throughput throttle). Measure and document.
       for (let i = 0; i < 500; i++) {
         if (!this.running) break;
         this.step();
@@ -378,6 +384,9 @@ class InterpreterPlus extends Interpreter {
     const m = 0x10000;  // Modulus (2^16 for 16-bit)
 
     // Update seed using LCG formula
+    // @todo #38:15m/DOC Fix xorshift comments (OB-006):
+    //   below lines say 'right by 7 / left by 9 / right by 13' but code does
+    //   << 13 / >> 17 / << 5 (canonical 16-bit xorshift). Correct or delete.
     this.seed = (a * this.seed + c) % m;
     this.seed ^= (this.seed << 13) & 0xFFFF;  // XOR shift right by 7
     this.seed ^= (this.seed >> 17) & 0xFFFF;  // XOR shift left by 9

@@ -1857,6 +1857,9 @@ class Assembler {
     return macword;
   }
 
+  // @todo #31:30m/DEV Validate `mov` immediate to spec range -256..+255 (OB-001):
+  //   currently accepts out-of-spec values and silently wraps via 9-bit signed
+  //   encoding. Route through the same validator `mvi` already uses.
   assembleMOV(mnemonic, operands) {
     let dr = this.getRegister(operands[0]);
     if (dr === null) {

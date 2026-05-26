@@ -169,6 +169,13 @@ class Linker {
     this.objectModules.push(module);
   }
 
+  // @todo #39:30m/DEV Reset linker state at start of link() (OB-007):
+  //   mca/mcaIndex/GTable etc. accumulate across calls; second invocation
+  //   on the same instance silently produces garbage. Add reset() helper.
+  // @todo #34:30m/DEV Make link() fail-closed on errors (OB-003b):
+  //   currently error() only sets a flag; link() then falls through to
+  //   createExecutable() and writes a corrupt .e. Make error() throw a
+  //   typed LinkerError. Depends on #33 (failing test); then #35 (doc).
   link(filenames, outputFileName) {
     this.inputFiles = filenames; // Save input files
     this.outputFileName = outputFileName || 'link.e'; // Save output filename

@@ -122,6 +122,9 @@ function generateBSTLSTContent(options) {
       },
       {
         label: 'Program size',
+        // @todo #37:15m/DEV Fix dec/hex program-size inconsistency (OB-005):
+        //   decimal form uses memMax+1; hex form uses memMax-loadPoint+1.
+        //   Decimal is wrong whenever loadPoint != 0. Use the hex formula for both.
         value: `${(interpreter.memMax - interpreter.loadPoint + 1).toString(16)} (hex)    ${interpreter.memMax + 1} (dec)`,
       },
       {
