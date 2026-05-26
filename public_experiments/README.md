@@ -21,3 +21,4 @@ Distinct from:
 | Investigation | Subject | Status |
 |---|---|---|
 | [`mov_mvi_parity/`](./mov_mvi_parity/) | cuh63 6.3 `mov` rejects negative immediates that its own `mvi` accepts; LCC.js `mov` silently wraps out-of-range values | both findings documented; LCC.js-side fix tracked in `open_bugs.md`; cuh63-side report drafted in `docs/cuh63-mov-immediate-bug-report.md` |
+| [`cuh63_audit/`](./cuh63_audit/) | Broader sweep of cuh63 6.3 (~50 probes) confirming the `mov` regression is isolated and surfacing two undocumented minor behaviors (`.orig` accepted as `.org` synonym; duplicate `.start` last-wins) | audit results referenced from the bug report's "Scope verification" section |

@@ -198,6 +198,53 @@ Route `mov`'s immediate-range check through the same validator that
 `mvi` already uses. If they share validation, the two acceptance sets
 become identical by construction and the spec is preserved.
 
+## Scope verification
+
+Before sending this report, I ran a broader audit of cuh63 6.3 to confirm
+the `mov` regression is isolated, not part of a wider parser change.
+The audit script and its summary live in
+[`public_experiments/cuh63_audit/`](../public_experiments/cuh63_audit/)
+in the LCC.js parity-testing repository.
+
+The audit verified that the following all behave per spec in cuh63 6.3
+and are unaffected by the issue described above:
+
+- `mvi dr, imm9` (the underlying instruction) — accepts the full
+  −256..+255 range.
+- Other pseudo-instructions: `cea dr, imm5` (pseudo for
+  `add dr, fp, imm5`) and `mov dr, sr` (pseudo for `mvr dr, sr`).
+- `imm5` immediates on `add`, `sub`, `and`: −16..+15 accepted, ±16+
+  correctly rejected.
+- Numeric literal forms: decimal, hex, binary, `char`, unary `+`/`−`,
+  negative zero.
+- Directive synonyms: `.string`/`.stringz`/`.asciz`,
+  `.word`/`.fill`, `.zero`/`.space`/`.blkw`, `.global`/`.globl`.
+- Label arithmetic (`br main+1`) and the `*` current-address notation.
+
+Concentrating the suggested fix on the `mov` pseudo's validator (and
+not the wider parser) is therefore safe and well-scoped.
+
+## Other observations made during the audit (not separate bug reports)
+
+Two minor behaviors surfaced during the audit that may also be worth
+a quick look. They are not in the same category as the `mov`
+regression, but flagging them here in case they are unintentional.
+
+1. **`.orig` is silently accepted as a synonym for `.org`.** The ISA
+   summary's "Assembler Directives" section lists `.org` but not
+   `.orig`. `cuh63 6.3` accepts `.orig 5` and produces a listing
+   byte-identical to `.org 5` — same zero-padding, same encoded
+   output. Either the doc could mention `.orig` as an accepted alias,
+   or the assembler could reject the undocumented form. (LCC.js
+   matches this in the permissive direction.)
+
+2. **Duplicate `.start` directives are silently accepted (last-one
+   wins).** A program with two `.start` directives produces a `.e`
+   header containing the address of the latter target, with no
+   warning. This may be intentional, but the documentation does not
+   specify. (LCC.js currently does the same; either way, parity work
+   should align on a documented behavior.)
+
 ## Acknowledgements
 
 This was found while building a JavaScript reimplementation of LCC for
