@@ -422,10 +422,7 @@ class Disassembler {
 
     disassembleMVI(word) {
         const dr = (word >> 9) & 0x7;
-        // @todo #32:15m/DEV Mask should be 0x1FF, not 0xFF (OB-002):
-        //   9-bit imm9 field loses bit 8 with current mask; round-trip test against
-        //   `mov r0, -15 → d1f1` will surface the regression.
-        const imm9 = this.signExtend(word & 0xFF, 9);
+        const imm9 = this.signExtend(word & 0x1FF, 9);
         const operands = `${this.registerNames[dr]}, ${imm9}`;
         const mnemonic = 'mvi';
         return { mnemonic, operands };
