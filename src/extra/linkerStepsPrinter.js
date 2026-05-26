@@ -498,10 +498,13 @@ class LinkerStepsPrinter {
       console.log(`  adjusted word = word pre-adjustment + global address`);
       console.log(`  adjusted word = ${this.formatHex(preAdjustmentWord,4)} + ${this.formatHex(globalAddr,4)}`);
 
-      // @todo #49:30m/DEV Check V-table overflow before store (OB-017):
-      //   newVal is stored into a Uint16Array slot; sums > 0xFFFF wrap silently.
-      //   Emit a typed error before storing.
       let newVal = preAdjustmentWord + globalAddr;
+
+      if (newVal > 0xFFFF) {
+        this.error(`V-table adjustment overflow at address ${this.formatHex(address,4)}: ` +
+          `${this.formatHex(preAdjustmentWord,4)} + ${this.formatHex(globalAddr,4)} = ${this.formatHex(newVal,4)} > 0xFFFF`);
+        return;
+      }
 
       console.log(`  adjusted word = ${this.formatHex(newVal,4)}`);
 
