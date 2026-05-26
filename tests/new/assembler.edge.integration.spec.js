@@ -1040,6 +1040,35 @@ x: .word 10
     }).toThrow('Missing operand');
   });
 
+  // ── ret offset spacing (OB-024) ────────────────────────────────────────────
+  // Tokenizer splits on whitespace; '+'/'-' are not delimiters.
+  // Valid: 'ret N', 'ret +N', 'ret -N'. Invalid: 'ret+N', 'ret+ N', 'ret + N'.
+
+  test('213. ret with space-separated offset → no error', () => {
+    virtualFs['ret-space.a'] = '  ret 3\n  halt';
+    assembler.main(['ret-space.a']);
+  });
+
+  test('214. ret with +N offset → no error', () => {
+    virtualFs['ret-plus.a'] = '  ret +3\n  halt';
+    assembler.main(['ret-plus.a']);
+  });
+
+  test('215. ret with -N offset → no error', () => {
+    virtualFs['ret-minus.a'] = '  ret -3\n  halt';
+    assembler.main(['ret-minus.a']);
+  });
+
+  test('216. ret+N (no space) → Invalid operation (mnemonic is ret+3)', () => {
+    virtualFs['ret-nospace.a'] = '  ret+3\n  halt';
+    expect(() => assembler.main(['ret-nospace.a'])).toThrow('Invalid operation');
+  });
+
+  test('217. ret + N (spaces around +) → Bad number (+ becomes operand)', () => {
+    virtualFs['ret-spaced-plus.a'] = '  ret + 3\n  halt';
+    expect(() => assembler.main(['ret-spaced-plus.a'])).toThrow('Bad number');
+  });
+
   test('212. should throw pcoffset11 out of range for call target > 1023 words ahead', () => {
     // call is at locCtr=0; target label is at address 1025
     // pcoffset11 = 1025 - 0 - 1 = 1024 > 1023 → out of range

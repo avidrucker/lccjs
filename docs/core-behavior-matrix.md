@@ -37,6 +37,23 @@ It is intentionally descriptive, not aspirational. Its purpose is to separate:
 - `Research`: whether `.orig` should be treated as a synonym for `.org`
 - `Research`: whether LCC.js should match oracle’s 1-byte `o` artifact on certain `.org` failures
 
+### `ret` offset-operand spacing
+
+The tokenizer splits on whitespace and commas; `+` and `-` are not delimiters.
+
+| Form        | Accepted | Notes                                          |
+|-------------|----------|------------------------------------------------|
+| `ret`       | ✓        | offset defaults to 0                           |
+| `ret 3`     | ✓        | offset = 3                                     |
+| `ret +3`    | ✓        | `+3` parsed as integer +3 by `parseInt`        |
+| `ret -3`    | ✓        | `-3` parsed as integer -3                      |
+| `ret+3`     | ✗        | `ret+3` is one token → unknown mnemonic        |
+| `ret+ 3`    | ✗        | `ret+` is the mnemonic token → unknown         |
+| `ret + 3`   | ✗        | `+` becomes operands[0] → `Bad number`         |
+
+- `Preserve`: `ret N`, `ret +N`, `ret -N` are the accepted offset forms (N in [-32..31])
+- `Preserve`: `ret+N` (no space) is rejected as an unknown mnemonic, not a spacing variant
+
 ### Object modules and output
 
 - `Preserve`: `.global` / `.extern` can cause `.o` output

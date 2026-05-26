@@ -1847,9 +1847,6 @@ class Assembler {
   }
 
   assembleRET(operands) {
-    // @todo #57:15m/DOC Decide accepted ret operand-spacing forms (OB-024):
-    //   ret+3, ret+ 3, ret +3, ret + 3 — pick which are valid, write the
-    //   decision into core-behavior-matrix.md, add a spacing-variants test.
     let baser = 7; // LR register
     let offset6 = 0;
     if (operands[0]) {
