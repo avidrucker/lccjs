@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Pre-push hook for lccjs — surfaces malformed PDD puzzles before they ship.
+#
+# Install (one time, per clone):
+#
+#   ln -sf ../../scripts/git-hooks/pre-push .git/hooks/pre-push
+#
+# This relative symlink means the hook stays current as `scripts/git-hooks/pre-push`
+# evolves on the branch you're on. If you'd rather decouple, `cp` instead of
+# `ln -sf`.
+#
+# Behavior:
+#   - If `pdd` is not installed, prints a one-line note and exits 0 (don't
+#     block the push for contributors who don't have the Ruby gem).
+#   - If `pdd` is installed but `npm run puzzles` errors, prints the error
+#     and blocks the push.
+#
+# Override with `git push --no-verify` if you really need to bypass.
+
+set -e
+
+if ! command -v pdd >/dev/null 2>&1; then
+  echo "[pre-push] pdd not installed; skipping puzzle scan. (gem install pdd to enable.)"
+  exit 0
+fi
+
+if ! command -v npm >/dev/null 2>&1; then
+  echo "[pre-push] npm not installed; skipping puzzle scan."
+  exit 0
+fi
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "[pre-push] scanning for PDD puzzles..."
+if ! out=$(npm run --silent puzzles 2>&1); then
+  echo "[pre-push] PDD scan FAILED — fix malformed puzzles before pushing."
+  echo "$out" | tail -20
+  echo
+  echo "Bypass with: git push --no-verify"
+  exit 1
+fi
+
+# Surface puzzle count as a heartbeat — helps catch sudden growth.
+if [ -f puzzles.xml ]; then
+  count=$(grep -c "<puzzle>" puzzles.xml || echo 0)
+  echo "[pre-push] PDD scan OK — $count puzzle(s) tracked."
+fi
