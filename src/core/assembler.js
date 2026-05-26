@@ -493,10 +493,14 @@ class Assembler {
   main(args) {
     args = args || process.argv.slice(2);
 
-    // @todo #63:15m/DEV Tighten the "no args → usage" path (OB-030): stdout exit 0 when args missing; reserve exit 1 for misuse.
-    // Check if inputFileName is already set
+    // Check if inputFileName is already set (e.g., set by lcc.js before calling main())
     if (!this.inputFileName) {
-      if (args.length !== 1) {
+      if (args.length === 0) {
+        // No args: print usage to stdout and exit 0 (help, not error)
+        console.log('Usage: assembler.js <input filename>');
+        fatalExit('Usage: assembler.js <input filename>', 0);
+      } else if (args.length !== 1) {
+        // Wrong number of args: print error to stderr and exit 1
         cliErrorExit('Usage: assembler.js <input filename>', 1);
       }
       this.inputFileName = args[0];
