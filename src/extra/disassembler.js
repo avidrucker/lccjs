@@ -728,14 +728,12 @@ class Disassembler {
 
     // Processes Data Sections (e.g., Strings)
     processData(address) {
+        const MAX_STRING_LENGTH = 32768; // defensive cap: upper bound is the 16-bit address space
         let currentAddress = address;
         const dataEntries = []; // Array to hold data entries
         let str = ''; // String accumulator
         let zeroCount = 0; // Counter for zeros
         let strStartAddress = null; // Starting address of a string
-        // @todo #48:30m/DEV Cap unbounded string accumulation (OB-016):
-        //   processData reads bytes until null terminator with no length cap;
-        //   a blob of printable ASCII can exhaust memory before termination.
         let zeroStartAddress = null; // Starting address of zeros
         let justFinishedString = false; // Flag to skip null terminator
 
@@ -788,6 +786,12 @@ class Disassembler {
                         strStartAddress = currentAddress;
                     }
                     str += String.fromCharCode(lowByte);
+                    // Flush when the string exceeds the cap to bound memory usage
+                    if (str.length >= MAX_STRING_LENGTH) {
+                        dataEntries.push({ type: '.string', value: str, address: strStartAddress });
+                        str = '';
+                        strStartAddress = null;
+                    }
                 } else {
                     // Non-printable character; save as .word
                     if (str.length > 0) {
