@@ -15,7 +15,17 @@ The **LCC.js** assembler (`assembler.js`) provides a traditional two-pass assemb
 2. **`.lccplus` Directive:**
    - Signals that the source code uses LCC+js features.
    - Ensures a special header entry (`p`) is included in the output, indicating the file is an LCC+js program rather than a standard LCC.js program.
-   - If `.lccplus` is missing, `assemblerplus.js` refuses to produce final output.
+   - **Required**: if `.lccplus` is missing, `assemblerplus.js` refuses to produce final output and reports:
+     ```
+     Missing .lccplus directive. Add ".lccplus" near the top of your .ap source file.
+     ```
+   - Typical minimal `.ap` skeleton:
+     ```asm
+     .lccplus
+     .start main
+     main  ; your code here
+           halt
+     ```
 
 ---
 

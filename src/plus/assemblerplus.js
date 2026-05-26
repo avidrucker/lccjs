@@ -180,10 +180,7 @@ class AssemblerPlus extends Assembler {
     if (this.isLCCPlusFile) {
       super.writeOutputFile('p');
     } else {
-      console.error('Missing .lccplus directive');
-      // @todo #42:20m/DOC Document the required .lccplus directive (OB-010):
-      //   add to src/plus/plus.md; improve this message to tell users what
-      //   directive to add to their source file.
+      console.error('Missing .lccplus directive. Add ".lccplus" near the top of your .ap source file.');
       fatalExit('Missing .lccplus directive', 1);
     }
   }
