@@ -13,28 +13,26 @@ Last updated: 2026-05-25.
 
 ## Known bugs (correctness)
 
-These are real defects, not just smells. Citations refer to commit `87f41d4`
-(branch `research-2026-may`); verify before fixing if the branch has moved on.
+**Bug entries live in [`open_bugs.md`](./open_bugs.md)** — that file
+has stable IDs (OB-001..), severity, location, reproduction notes, and
+suggested fixes. The headline items as of 2026-05-25 are:
 
-- **Linker error propagation is broken.** `Linker.error()` only sets `errorFlag`
-  and logs; `link()` still falls through to `adjustLocalReferences()` and
-  `createExecutable()` after an `adjustExternalReferences()` failure, writing a
-  broken `.e` to disk. (`src/core/linker.js:172-205, 363-366`) — review item #3.
-- **`Interpreter.raiseRuntimeError` ignores its own flag.**
-  `throwOnRuntimeError` is set in `executeBuffer` but never read.
-  (`src/core/interpreter.js:1542-1550`) — review item #4.
-- **`Linker.link()` accumulates state across calls.** No reset of
-  `mca/mcaIndex/GTable/...`. Latent, not currently exercised.
-- **`genStats.js` dec/hex program-size inconsistency.** Decimal form uses
-  `memMax + 1`; hex form uses `memMax - loadPoint + 1`. Decimal is wrong when
-  `loadPoint != 0`. (`src/utils/genStats.js:125`) — review item #5.
-- **Test harness binary-buffer corruption.** `assemblerIntegrationHarness.js`
-  concatenates write chunks as utf-8 strings, mangling 16-bit-word binary
-  output. Latent — no current test inspects bytes through this harness.
-  (`tests/helpers/assemblerIntegrationHarness.js:67-78`) — review item #8.
-- **`Interpreter.executeSRL/SRA/ROL/ROR`** use `ct - 1`, which becomes `>> -1`
-  (≡ `>> 31`) when `ct = 0`. Unreachable in practice today; still an
-  undocumented corner. (`src/core/interpreter.js:920-944`).
+- **OB-001** — LCC.js `mov` accepts out-of-spec immediates and
+  silently wraps (medium; affects `assembler.js`)
+- **OB-003** — Linker `error()` does not abort; `link()` writes a
+  broken `.e` (high; affects `linker.js`)
+- **OB-005** — `genStats.js` decimal/hex program-size inconsistency
+  on non-zero load points
+- **OB-002** — Disassembler decodes `mvi` imm9 with an 8-bit mask
+  (latent; `src/extra/` has 0% coverage)
+
+Plus another ~20 entries split across confirmed bugs, high-suspicion
+smells in `src/plus/` and `src/extra/`, and accumulated TODO debt
+(notably **OB-020**: `loadPoint = 0` hardcoded in 5 spots, so
+`-l<hex loadpt>` doesn't work as documented). One upstream bug
+report (**OB-008**, cuh63 6.3's `mov`/`mvi` discrepancy) is drafted
+in `docs/cuh63-mov-immediate-bug-report.md` and ready to send to
+Prof. Dos Reis.
 
 ## Missing features and asymmetries
 

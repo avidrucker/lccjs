@@ -213,15 +213,20 @@ Thank you for the educational tool; it is a pleasure to work with.
 
 ## Probe scripts used (for full reproducibility)
 
-These are kept in `scratch/mov_parity/` in the parity-testing
-repository:
+These are checked into the LCC.js parity-testing repository under
+[`public_experiments/mov_mvi_parity/`](../public_experiments/mov_mvi_parity/)
+and are intended to be runnable as-is on any machine where the cuh63
+`lcc` binary is reachable via the `LCC_ORACLE` environment variable
+(the same variable the LCC.js test suite uses):
 
-- `probe.sh` — sweeps `mov r0, <val>` for `val ∈ {−257,−256,−255,
-  −128,−16,−15,−1,0,1,15,16,127,128,255,256,257,511,512}` and reports
-  accept/reject for OG `lcc` and the JS reimplementation, plus the
-  encoding bytes produced.
-- `probe_mvi.sh` — same sweep, comparing `mov` against `mvi` side by
-  side for both implementations. Output reproduced in the table above.
 - `mov_neg.a` — the minimal one-line reproduction.
+- `probe.sh` — sweeps `mov r0, <val>` for
+  `val ∈ {−257,−256,−255,−128,−16,−15,−1,0,1,15,16,127,128,255,256,257,511,512}`
+  and reports accept/reject for OG `lcc` and the LCC.js
+  reimplementation, plus the encoding bytes LCC.js produces.
+- `probe_mvi.sh` — same sweep, comparing `mov` against `mvi` side by
+  side on the same OG binary. The output is reproduced in the
+  acceptance table above; `public_experiments/mov_mvi_parity/README.md`
+  walks through how to interpret it.
 
-I'm happy to share these scripts or full session logs if useful.
+I'm happy to share full session logs or extend the probes if useful.
