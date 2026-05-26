@@ -570,9 +570,6 @@ class LinkerStepsPrinter {
   /**
    * Step 4: Write out the final "link.e" file with the reconstructed header + code.
    */
-  // @todo #50:20m/DEV Add try/finally around fd ops (OB-018):
-  //   openSync + writeSync without try/finally leaks the fd and leaves a
-  //   half-written file on partial-write failure. Close fd; unlink partial.
   writeExecutable() {
     const outFileName = this.outputFileName;
     let outFd;
@@ -583,73 +580,78 @@ class LinkerStepsPrinter {
       return;
     }
 
-    printThinLine();
-    console.log("\no");
+    try {
+      printThinLine();
+      console.log("\no");
 
-    // Write out the file signature
-    fs.writeSync(outFd, 'o');
+      // Write out the file signature
+      fs.writeSync(outFd, 'o');
 
-    // S entry if present
-    if (this.gotStart) {
-      console.log(`S  ${this.formatHex(this.startAddress,4)}`);
-      const bufferS = Buffer.alloc(3);
-      bufferS.write('S', 0);
-      bufferS.writeUInt16LE(this.startAddress, 1);
-      fs.writeSync(outFd, bufferS);
-    }
-
-    // G entries
-    for (let g of this.GList) {
-      let addr = g.address;
-      console.log(`G  ${this.formatHex(addr,4)}  ${g.label}`);
-      const bufferG = Buffer.alloc(3 + g.label.length + 1);
-      bufferG.write('G', 0);
-      bufferG.writeUInt16LE(addr, 1);
-      bufferG.write(g.label, 3);
-      bufferG.writeUInt8(0, 3 + g.label.length);
-      fs.writeSync(outFd, bufferG);
-    }
-
-    // V entries become A entries in the final output
-    for (let v of this.VTable) {
-      console.log(`A  ${this.formatHex(v.address,4)}  (was V)`);
-      const bufferA = Buffer.alloc(3);
-      bufferA.write('A', 0);
-      bufferA.writeUInt16LE(v.address, 1);
-      fs.writeSync(outFd, bufferA);
-    }
-
-    // A entries
-    for (let a of this.ATable) {
-      console.log(`A  ${this.formatHex(a.address,4)}`);
-      const bufferA = Buffer.alloc(3);
-      bufferA.write('A', 0);
-      bufferA.writeUInt16LE(a.address, 1);
-      fs.writeSync(outFd, bufferA);
-    }
-
-    // Header terminator
-    console.log("C\n");
-    fs.writeSync(outFd, 'C');
-
-    // Write code
-    const codeBuffer = Buffer.alloc(this.mcaIndex * 2);
-    let printString = "";
-    for (let i = 0; i < this.mcaIndex; i++) {
-      codeBuffer.writeUInt16LE(this.mca[i], i*2);
-      printString += this.formatHex(this.mca[i],4);
-      if (i < this.mcaIndex - 1) {
-        printString += " ";
+      // S entry if present
+      if (this.gotStart) {
+        console.log(`S  ${this.formatHex(this.startAddress,4)}`);
+        const bufferS = Buffer.alloc(3);
+        bufferS.write('S', 0);
+        bufferS.writeUInt16LE(this.startAddress, 1);
+        fs.writeSync(outFd, bufferS);
       }
-      if( (i + 1) % 8 === 0 ) {
-        printString += "\n";
-      }
-    }
-    fs.writeSync(outFd, codeBuffer);
-    console.log(printString + "\n");
 
-    fs.closeSync(outFd);
-    // Could print a final success message if desired
+      // G entries
+      for (let g of this.GList) {
+        let addr = g.address;
+        console.log(`G  ${this.formatHex(addr,4)}  ${g.label}`);
+        const bufferG = Buffer.alloc(3 + g.label.length + 1);
+        bufferG.write('G', 0);
+        bufferG.writeUInt16LE(addr, 1);
+        bufferG.write(g.label, 3);
+        bufferG.writeUInt8(0, 3 + g.label.length);
+        fs.writeSync(outFd, bufferG);
+      }
+
+      // V entries become A entries in the final output
+      for (let v of this.VTable) {
+        console.log(`A  ${this.formatHex(v.address,4)}  (was V)`);
+        const bufferA = Buffer.alloc(3);
+        bufferA.write('A', 0);
+        bufferA.writeUInt16LE(v.address, 1);
+        fs.writeSync(outFd, bufferA);
+      }
+
+      // A entries
+      for (let a of this.ATable) {
+        console.log(`A  ${this.formatHex(a.address,4)}`);
+        const bufferA = Buffer.alloc(3);
+        bufferA.write('A', 0);
+        bufferA.writeUInt16LE(a.address, 1);
+        fs.writeSync(outFd, bufferA);
+      }
+
+      // Header terminator
+      console.log("C\n");
+      fs.writeSync(outFd, 'C');
+
+      // Write code
+      const codeBuffer = Buffer.alloc(this.mcaIndex * 2);
+      let printString = "";
+      for (let i = 0; i < this.mcaIndex; i++) {
+        codeBuffer.writeUInt16LE(this.mca[i], i*2);
+        printString += this.formatHex(this.mca[i],4);
+        if (i < this.mcaIndex - 1) {
+          printString += " ";
+        }
+        if( (i + 1) % 8 === 0 ) {
+          printString += "\n";
+        }
+      }
+      fs.writeSync(outFd, codeBuffer);
+      console.log(printString + "\n");
+
+    } catch (err) {
+      this.error(`Write error for ${outFileName}: ${err.message}`);
+      try { fs.unlinkSync(outFileName); } catch (_) {} // remove partial file
+    } finally {
+      try { fs.closeSync(outFd); } catch (_) {}
+    }
   }
 
 
