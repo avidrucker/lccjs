@@ -1039,4 +1039,16 @@ x: .word 10
       assembler.main([aFilePath]);
     }).toThrow('Missing operand');
   });
+
+  test('212. should throw pcoffset11 out of range for call target > 1023 words ahead', () => {
+    // call is at locCtr=0; target label is at address 1025
+    // pcoffset11 = 1025 - 0 - 1 = 1024 > 1023 → out of range
+    const filler = '  .word 0\n'.repeat(1024);
+    const source = `  call foo\n${filler}foo halt`;
+
+    virtualFs['pcoffset11.a'] = source;
+    expect(() => {
+      assembler.main(['pcoffset11.a']);
+    }).toThrow('pcoffset11 out of range');
+  });
 });

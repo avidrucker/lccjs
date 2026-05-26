@@ -1785,7 +1785,7 @@ class Assembler {
     } else {
       pcoffset11 = address - this.locCtr - 1;
       if (pcoffset11 < -1024 || pcoffset11 > 1023) {
-        this.error('pcoffset11 out of range'); // @todo #55:15m/QA Test this error path in integration tests (OB-022)
+        this.error('pcoffset11 out of range');
         return null;
       }
     }
