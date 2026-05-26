@@ -81,13 +81,14 @@ class Disassembler {
                 }
                 this.startAddress = buffer.readUInt16LE(offset);
                 offset += 2;
-            // @todo #46:30m/DEV Validate the null terminator on G/E/V entries (OB-014):
-            //   the inner while loop scans until 0 or EOF; premature EOF silently
-            //   corrupts label data. Raise a typed error on malformed input.
             } else if (['G', 'E', 'V'].includes(entryType)) {
                 // Skip address (2 bytes) and null-terminated string
                 offset += 2; // Skip address
                 while (offset < fileSize && buffer[offset++] !== 0);
+                if (buffer[offset - 1] !== 0) {
+                    console.error(`Invalid file: ${entryType} entry label has no null terminator`);
+                    process.exit(1);
+                }
             } else if (entryType === 'A') {
                 // Skip address (2 bytes)
                 offset += 2;
