@@ -24,6 +24,7 @@ plusdemos/*.ep
 cit118demos/
 lccjs.zip
 .env
+coverage/
 scratch.md
 progress-report.md
 progress-report-2.md
