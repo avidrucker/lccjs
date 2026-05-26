@@ -143,6 +143,8 @@ Confirmed by `npx jest --coverage` on 2026-05-25 (branch
     `docs/core-behavior-matrix.md` as a deliberate divergence (LCC.js
     follows the spec; cuh63 6.3 is stricter on `mov` than spec).
   - Consider reporting the cuh63 `mov` regression to Prof. Dos Reis.
+    A draft, sendable report is in
+    [`docs/cuh63-mov-immediate-bug-report.md`](./docs/cuh63-mov-immediate-bug-report.md).
 
 ## Code smells (not bugs, but worth addressing)
 
