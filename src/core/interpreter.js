@@ -177,14 +177,6 @@ class Interpreter {
     this.hasJumped = false;
 
     /**
-     * Whether runtime failures should throw typed errors instead of exiting
-     */
-    // @todo #36:15m/DEV Resolve dead throwOnRuntimeError flag (OB-004):
-    //   set by executeBuffer but never read by raiseRuntimeError. Either
-    //   honor it (branch like Assembler.abortAssembly) or delete it.
-    this.throwOnRuntimeError = false;
-
-    /**
      * Whether infinite-loop detection is allowed to enter symbolic debugger mode
      */
     this.allowRuntimeDebugging = false;
@@ -210,7 +202,6 @@ class Interpreter {
     this.headerLines = [];
     this.hasJumped = false;            // Flag to track jump/branch instruction executions
     this.initialMem = null;
-    this.throwOnRuntimeError = false;
     this.allowRuntimeDebugging = false;
   }
 
@@ -271,7 +262,6 @@ class Interpreter {
     this.options = runtimeOptions;
 
     this.resetExecutionState();
-    this.throwOnRuntimeError = true;
     this.allowRuntimeDebugging = allowDebugOnInfiniteLoop;
 
     // Check file signature
@@ -289,7 +279,6 @@ class Interpreter {
     try {
       this.run();
     } finally {
-      this.throwOnRuntimeError = false;
       this.allowRuntimeDebugging = false;
     }
 
