@@ -180,6 +180,13 @@ class Interpreter {
      * Whether infinite-loop detection is allowed to enter symbolic debugger mode
      */
     this.allowRuntimeDebugging = false;
+
+    /**
+     * When true, the instructionsCap check is skipped entirely.
+     * Useful for long-running .ap programs where the cap would produce a
+     * spurious "Possible infinite loop" error.
+     */
+    this.disableInfiniteLoopDetection = false;
   }
 
   // Reset all per-run execution state so the interpreter core can be reused
@@ -682,9 +689,10 @@ class Interpreter {
     // Note: This is a safety feature to prevent infinite loops
     // 2nd Note: This matches exactly the # of instructions 
     // permitted to run by from the lcc before entering the debugger
-    if (this.instructionsExecuted >= this.instructionsCap && !this.debugMode) {
-      
-      // instead of exiting the program, this condition instead 
+    if (!this.disableInfiniteLoopDetection &&
+        this.instructionsExecuted >= this.instructionsCap && !this.debugMode) {
+
+      // instead of exiting the program, this condition instead
       // initiates the execution of the symbolic debugger
       // detect if the program is running in the terminal
       if (this.canEnterInteractiveDebugger()) {
@@ -696,8 +704,6 @@ class Interpreter {
         this.running = false;
         this.raiseRuntimeError(new InterpreterRuntimeError('Possible infinite loop'));
       }
-      
-      // @todo #62:30m/DEV Add flag to disable infinite-loop detection (OB-029): useful for long-running .ap programs.
     }
 
     // Track max stack size

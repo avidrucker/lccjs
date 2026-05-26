@@ -37,6 +37,9 @@ class InterpreterPlus extends Interpreter {
     this.keyQueue = []; // For non-blocking input
     this.nonBlockingInput = true; // Default to non-blocking
     this.seed = 0; // Seed for random number generator
+    // .ap programs run indefinitely by design (game loops); disable the
+    // instructionsCap-based infinite-loop detection inherited from Interpreter.
+    this.disableInfiniteLoopDetection = true;
   }
 
   main(args) {

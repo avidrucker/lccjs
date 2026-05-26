@@ -95,6 +95,7 @@ The tokenizer splits on whitespace and commas; `+` and `-` are not delimiters.
 - `Preserve`: division by zero reports `Floating point exception`
 - `Preserve`: unsupported trap vectors are runtime errors
 - `Preserve`: infinite-loop detection is active
+- `Preserve`: `disableInfiniteLoopDetection = false` by default; set to `true` to skip the instructionsCap check entirely (used by InterpreterPlus for long-running `.ap` game loops)
 - `Preserve`: pure in-memory execution does not enter debug mode automatically
 - `Preserve`: CLI runtime debugging is TTY-gated
 - `Preserve`: `debugMode` is testable via `interpreter.inputBuffer` — `readLineFromStdin()` reads from the buffer when set, so tests can exercise the symbolic debugger by pre-loading debug commands (e.g. `'q\n'` to quit immediately)
