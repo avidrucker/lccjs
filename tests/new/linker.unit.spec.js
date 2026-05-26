@@ -39,7 +39,6 @@ describe('Linker Unit Tests', () => {
 
     linker.readObjectModule('module.o');
 
-    expect(linker.errorFlag).toBe(false);
     expect(linker.objectModules).toHaveLength(1);
     expect(linker.objectModules[0]).toEqual({
       headers: [
@@ -62,27 +61,43 @@ describe('Linker Unit Tests', () => {
     }).toThrow('bad.o not a linkable file');
   });
 
-  test('processModule() should report duplicate global symbols', () => {
+  test('processModule() should throw LinkerError on duplicate global symbols', () => {
     const linker = new Linker();
     linker.GTable.main = 3;
 
-    linker.processModule({
-      headers: [{ type: 'G', address: 0, label: 'main' }],
-      code: [],
-    });
+    expect(() => {
+      linker.processModule({
+        headers: [{ type: 'G', address: 0, label: 'main' }],
+        code: [],
+      });
+    }).toThrow(LinkerError);
 
-    expect(linker.errorFlag).toBe(true);
-    expect(console.error).toHaveBeenCalledWith('Multiple definitions of global symbol main');
+    expect(() => {
+      linker.GTable.main = 3;
+      linker.processModule({
+        headers: [{ type: 'G', address: 0, label: 'main' }],
+        code: [],
+      });
+    }).toThrow('More than one global declaration for main');
+
+    expect(console.error).toHaveBeenCalledWith('More than one global declaration for main');
   });
 
-  test('adjustExternalReferences() should report undefined external symbols', () => {
+  test('adjustExternalReferences() should throw LinkerError on undefined external symbols', () => {
     const linker = new Linker();
     linker.mca = [0];
     linker.ETable = [{ address: 0, label: 'missing' }];
 
-    linker.adjustExternalReferences();
+    expect(() => {
+      linker.adjustExternalReferences();
+    }).toThrow(LinkerError);
 
-    expect(linker.errorFlag).toBe(true);
+    expect(() => {
+      linker.mca = [0];
+      linker.ETable = [{ address: 0, label: 'missing' }];
+      linker.adjustExternalReferences();
+    }).toThrow('missing is an undefined external reference');
+
     expect(console.error).toHaveBeenCalledWith('missing is an undefined external reference');
   });
 

@@ -151,21 +151,15 @@ for the 300-character limit")
 
 When the linker encounters an error (undefined external, duplicate global),
 OG LCC prints the error message but exits with code 0 (confirmed by probe).
-LCC.js matches this behavior: `Linker.error()` sets `errorFlag` and logs, but
-does not throw; the calling chain returns early rather than aborting with a
-non-zero exit.
+LCC.js matches this behavior: `Linker.error()` logs to stderr and throws
+`LinkerError`; `lcc.js:linkObjectFiles` catches `LinkerError` and returns
+cleanly, so the process exits 0.
 
 This is parity-correct, not a deviation. Documented here because the
-flag-based `error()` pattern is a recognized code smell (OB-003b) — any
-future refactor to a thrown-exception model must preserve the exit-0 outcome
-to maintain parity.
+exit-0 outcome must be preserved whenever the error-handling path is changed.
 
-**Source:** `src/core/linker.js:370–373` (`error()`), `src/core/linker.js:175`
-(OB-003b `@todo`)
-
-**GitHub issues:** [#33 OB-003a](https://github.com/avidrucker/lccjs/issues/33),
-[#34 OB-003b](https://github.com/avidrucker/lccjs/issues/34),
-[#35 OB-003c](https://github.com/avidrucker/lccjs/issues/35)
+**Source:** `src/core/linker.js` (`error()`), `src/core/lcc.js:linkObjectFiles`
+(catch block for `LinkerError`)
 
 ---
 

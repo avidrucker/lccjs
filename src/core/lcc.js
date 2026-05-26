@@ -6,6 +6,7 @@ const path = require('path');
 const Assembler = require('./assembler');
 const Interpreter = require('./interpreter');
 const Linker = require('./linker');
+const { LinkerError } = require('../utils/errors');
 const nameHandler = require('../utils/name.js');
 const { buildReportArtifacts } = require('../utils/reportArtifacts');
 const { constructSiblingFileName, writeReportFiles } = require('../utils/fileArtifacts');
@@ -109,9 +110,17 @@ class LCC {
     // Create the Linker
     const linker = new Linker();
 
-    // Perform actual linking
-    linker.link(objectFiles, outputFile);
-    // The Linker class will print "Creating executable file link.e" or whatever name is specified
+    // Perform actual linking; LinkerError is caught here to preserve OG LCC's
+    // exit-0-on-linker-error behavior — the error message was already logged by
+    // Linker.error() before the throw.
+    try {
+      linker.link(objectFiles, outputFile);
+    } catch (error) {
+      if (error instanceof LinkerError) {
+        return; // already logged; match OG LCC exit-0 behavior
+      }
+      throw error;
+    }
   }
 
   /**

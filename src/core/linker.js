@@ -31,11 +31,9 @@ class Linker {
     this.ATable = []; // Local references
     this.start = null;
     this.gotStart = false;
-    this.errorFlag = false;
     this.objectModules = []; // List of object modules to process
     this.inputFiles = []; // List of input files
     this.outputFileName = null; // Output file name
-    this.throwOnLinkerError = false;
   }
 
   main(args) {
@@ -66,25 +64,11 @@ class Linker {
     this.link(this.inputFiles, this.outputFileName);
   }
 
-  createLinkerError(message, exitCode = 1) {
-    const error = new LinkerError(message);
-    error.exitCode = exitCode;
-    return error;
-  }
-
-  abortLinking(message, exitCode = 1) {
-    if (this.throwOnLinkerError) {
-      throw this.createLinkerError(message, exitCode);
-    }
-
-    this.error(message);
-  }
-
   parseObjectModuleBuffer(buffer, filename = '<buffer>') {
     let offset = 0;
 
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      throw this.createLinkerError(`${filename} not a linkable file`);
+      throw new LinkerError(`${filename} not a linkable file`);
     }
 
     const module = {
@@ -103,7 +87,7 @@ class Linker {
       switch (entryType) {
         case 'S': {
           if (offset + 1 >= buffer.length) {
-            throw this.createLinkerError('Invalid S entry');
+            throw new LinkerError('Invalid S entry');
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -115,7 +99,7 @@ class Linker {
         case 'e':
         case 'V': {
           if (offset + 1 >= buffer.length) {
-            throw this.createLinkerError(`Invalid ${entryType} entry`);
+            throw new LinkerError(`Invalid ${entryType} entry`);
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -130,7 +114,7 @@ class Linker {
         }
         case 'A': {
           if (offset + 1 >= buffer.length) {
-            throw this.createLinkerError('Invalid A entry');
+            throw new LinkerError('Invalid A entry');
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -138,7 +122,7 @@ class Linker {
           break;
         }
         default:
-          throw this.createLinkerError(`Unknown header entry ${entryType} in file ${filename}`);
+          throw new LinkerError(`Unknown header entry ${entryType} in file ${filename}`);
       }
     }
 
@@ -154,57 +138,40 @@ class Linker {
   // Method to read object modules from files
   readObjectModule(filename) {
     const buffer = fs.readFileSync(filename);
-    let module;
     try {
-      module = this.parseObjectModuleBuffer(buffer, filename);
+      const module = this.parseObjectModuleBuffer(buffer, filename);
+      this.objectModules.push(module);
     } catch (error) {
       if (error instanceof LinkerError) {
-        this.abortLinking(error.message, error.exitCode || 1);
-        return;
+        this.error(error.message); // log then re-throw as LinkerError
       }
       throw error;
     }
-
-    // Store the module for processing
-    this.objectModules.push(module);
   }
 
   // @todo #39:30m/DEV Reset linker state at start of link() (OB-007):
   //   mca/mcaIndex/GTable etc. accumulate across calls; second invocation
   //   on the same instance silently produces garbage. Add reset() helper.
-  // @todo #34:30m/DEV Make link() fail-closed on errors (OB-003b):
-  //   currently error() only sets a flag; link() then falls through to
-  //   createExecutable() and writes a corrupt .e. Make error() throw a
-  //   typed LinkerError. Depends on #33 (failing test); then #35 (doc).
   link(filenames, outputFileName) {
     this.inputFiles = filenames; // Save input files
     this.outputFileName = outputFileName || 'link.e'; // Save output filename
-    
+
     // Read all object modules
     for (let filename of filenames) {
       this.readObjectModule(filename);
-      if (this.errorFlag) {
-        // If invalid file or read error encountered, stop immediately
-        return null;
-      }
       console.log(`Linking ${filename}`);
     }
 
     // Process each module
     for (let module of this.objectModules) {
       this.processModule(module);
-      if (this.errorFlag) {
-        return null;
-      }
     }
 
     // Adjust external references
     this.adjustExternalReferences();
-    if (this.errorFlag) return;
 
     // Adjust local references
     this.adjustLocalReferences();
-    if (this.errorFlag) return;
 
     // Create executable
     console.log(`Creating executable file ${this.outputFileName}`);
@@ -221,7 +188,6 @@ class Linker {
         case 'S':
           if (this.gotStart) {
             this.error('Multiple entry points');
-            return;
           }
           this.start = header.address + this.mcaIndex;
           this.gotStart = true;
@@ -229,7 +195,6 @@ class Linker {
         case 'G':
           if (this.GTable.hasOwnProperty(header.label)) {
             this.error(`More than one global declaration for ${header.label}`);
-            return;
           }
           this.GTable[header.label] = header.address + this.mcaIndex;
           break;
@@ -259,7 +224,6 @@ class Linker {
           break;
         default:
           this.error(`Invalid header entry: ${header.type}`);
-          return;
       }
     }
 
@@ -274,7 +238,6 @@ class Linker {
     for (let ref of this.ETable) {
       if (!this.GTable.hasOwnProperty(ref.label)) {
         this.error(`${ref.label} is an undefined external reference`);
-        return;
       }
       let Gaddr = this.GTable[ref.label];
       let offset = ((this.mca[ref.address] + Gaddr - ref.address - 1) & 0x7ff);
@@ -285,7 +248,6 @@ class Linker {
     for (let ref of this.eTable) {
       if (!this.GTable.hasOwnProperty(ref.label)) {
         this.error(`${ref.label} is an undefined external reference`);
-        return;
       }
       let Gaddr = this.GTable[ref.label];
       let offset = ((this.mca[ref.address] + Gaddr - ref.address - 1) & 0x1ff);
@@ -296,7 +258,6 @@ class Linker {
     for (let ref of this.VTable) {
       if (!this.GTable.hasOwnProperty(ref.label)) {
         this.error(`${ref.label} is an undefined external reference`);
-        return;
       }
       let Gaddr = this.GTable[ref.label];
       this.mca[ref.address] += Gaddr;
@@ -369,7 +330,7 @@ class Linker {
 
   error(message) {
     console.error(`${message}`); // linker error
-    this.errorFlag = true;
+    throw new LinkerError(message);
   }
 }
 

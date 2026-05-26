@@ -48,13 +48,14 @@ Typed reusable-path error:
 
 - `LinkerError`
 
-Current boundary:
+All linker error paths now throw `LinkerError`:
 
-- `parseObjectModuleBuffer(...)` throws `LinkerError`
-- `readObjectModule(...)` catches typed parse failures and maps them into the current linker error flow
-- `main(...)` remains wrapper/CLI-oriented and uses CLI exit behavior
-
-This means linker is partially modernized, but not yet as purely separated as assembler/interpreter.
+- `parseObjectModuleBuffer(...)` throws `LinkerError` on malformed input
+- `readObjectModule(...)` catches parse failures and re-raises via `error()`, logging before re-throw
+- `processModule(...)`, `adjustExternalReferences()` — call `error()` which logs and throws
+- `link(...)` is fail-closed: any `LinkerError` thrown during linking propagates to the caller
+- `lcc.js` wraps `linker.link()` in a try/catch for `LinkerError`, returning cleanly to preserve OG LCC's exit-0-on-linker-error behavior
+- `main(...)` (direct CLI) remains wrapper/CLI-oriented and uses CLI exit behavior
 
 ## Current Preserved Behaviors
 
