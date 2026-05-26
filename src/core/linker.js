@@ -36,6 +36,23 @@ class Linker {
     this.outputFileName = null; // Output file name
   }
 
+  // Reset all per-link state so the same Linker instance can be reused across
+  // multiple link() calls without state leaking from one run into the next.
+  resetState() {
+    this.mca = [];
+    this.mcaIndex = 0;
+    this.GTable = {};
+    this.ETable = [];
+    this.eTable = [];
+    this.VTable = [];
+    this.ATable = [];
+    this.start = null;
+    this.gotStart = false;
+    this.objectModules = [];
+    this.inputFiles = [];
+    this.outputFileName = null;
+  }
+
   main(args) {
     args = args || process.argv.slice(2);
 
@@ -149,10 +166,8 @@ class Linker {
     }
   }
 
-  // @todo #39:30m/DEV Reset linker state at start of link() (OB-007):
-  //   mca/mcaIndex/GTable etc. accumulate across calls; second invocation
-  //   on the same instance silently produces garbage. Add reset() helper.
   link(filenames, outputFileName) {
+    this.resetState();
     this.inputFiles = filenames; // Save input files
     this.outputFileName = outputFileName || 'link.e'; // Save output filename
 
