@@ -383,14 +383,11 @@ class InterpreterPlus extends Interpreter {
     const c = 10139;    // Increment (another standard value)
     const m = 0x10000;  // Modulus (2^16 for 16-bit)
 
-    // Update seed using LCG formula
-    // @todo #38:15m/DOC Fix xorshift comments (OB-006):
-    //   below lines say 'right by 7 / left by 9 / right by 13' but code does
-    //   << 13 / >> 17 / << 5 (canonical 16-bit xorshift). Correct or delete.
+    // Update seed using LCG formula, then apply three xorshift mixing steps
     this.seed = (a * this.seed + c) % m;
-    this.seed ^= (this.seed << 13) & 0xFFFF;  // XOR shift right by 7
-    this.seed ^= (this.seed >> 17) & 0xFFFF;  // XOR shift left by 9
-    this.seed ^= (this.seed << 5) & 0xFFFF; // XOR shift right by 13
+    this.seed ^= (this.seed << 13) & 0xFFFF;  // XOR shift left by 13
+    this.seed ^= (this.seed >> 17) & 0xFFFF;  // XOR shift right by 17
+    this.seed ^= (this.seed << 5) & 0xFFFF;   // XOR shift left by 5
     // console.log("new seed: " + this.seed);
     let range;
     if (this.r[this.dr] <= this.r[this.sr1]) {
