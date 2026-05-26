@@ -37,6 +37,22 @@ It is intentionally descriptive, not aspirational. Its purpose is to separate:
 - `Research`: whether `.orig` should be treated as a synonym for `.org`
 - `Research`: whether LCC.js should match oracle’s 1-byte `o` artifact on certain `.org` failures
 
+### `.word` operand spacing
+
+Tokenizer splits on whitespace and commas; `+`/`-` are NOT delimiters.
+
+| Form              | Accepted | Notes                                                    |
+|-------------------|----------|----------------------------------------------------------|
+| `.word N`         | ✓        | integer literal                                          |
+| `.word label`     | ✓        | resolves to label address                                |
+| `.word label+N`   | ✓        | one token; `parseLabelWithOffset` extracts offset        |
+| `.word label + N` | ✓        | three tokens; joined to `label+N` before evaluation     |
+| `.word +`         | ✗        | caught before pass 2: "Missing operand"                  |
+| `.word label +N`  | ⚠        | two tokens; `+N` is silently ignored; only label resolved |
+
+- `Preserve`: `.word N`, `.word label`, `.word label+N`, `.word label + N` are accepted
+- `Research`: `.word label +N` (spaced unary) silently ignores the `+N` suffix — not guarded
+
 ### `ret` offset-operand spacing
 
 The tokenizer splits on whitespace and commas; `+` and `-` are not delimiters.

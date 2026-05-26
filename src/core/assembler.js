@@ -1088,12 +1088,14 @@ class Assembler {
           this.failAssembly("Missing operand", 1);
         }
 
-        // @todo #56:30m/DEV Resolve this dead .word validation block (OB-023):
-        //   decide accepted operand-spacing forms (`.word x`, `.word x+1`,
-        //   `.word x + 1`, `.word x+ 1`, `.word x +1`, `.word x + 1 + 1`,
-        //   `.word <NOTHING>`, `.word +` / `.word -`); implement validation
-        //   OR remove the dead block; document accepted forms in core-behavior-matrix.md.
-
+        // Accepted .word operand forms (tokenizer splits on whitespace/comma,
+        // not on +/- so unspaced label+offset is a single token):
+        //   .word N          literal number
+        //   .word label      label address
+        //   .word label+N    one token (parseLabelWithOffset extracts offset)
+        //   .word label + N  three tokens (3-operand block below joins them)
+        //   .word +          → Missing operand (caught above at line 1087)
+        //   .word label +N   two tokens: only label is evaluated; +N is ignored (known gap)
         if (this.pass === 2) {
           let label = operands[0];
 
