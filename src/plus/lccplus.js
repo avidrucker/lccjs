@@ -37,12 +37,9 @@ class LCCPlus {
       if (extension === '.ap') {
         // 1) Assemble .ap -> .ep
         const assembler = new AssemblerPlus();
-        // @todo #45:30m/DEV Fix dual-path inputFileName passing (OB-013):
-        //   passing both via property and via main([...]) relies on undocumented
-        //   mutation ordering. Pick one path; document the chosen direction.
-        assembler.inputFileName = this.inputFileName; 
-        // Note: pass [this.inputFileName] so assembler sees the correct file
-        assembler.main([this.inputFileName]); 
+        // Use main([file]) as the single path for inputFileName; assembler.main()
+        // sets this.inputFileName from args[0] when the property is not pre-set.
+        assembler.main([this.inputFileName]);
         const epFile = assembler.outputFileName;
   
         // 2) Interpret the resulting .ep
