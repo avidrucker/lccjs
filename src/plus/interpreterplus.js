@@ -33,10 +33,6 @@ class InterpreterPlus extends Interpreter {
     this.keyQueue = []; // For non-blocking input
     this.nonBlockingInput = true; // Default to non-blocking
     this.seed = 0; // Seed for random number generator
-    // @todo #43:15m/DEV Resolve dead instructionsCap (OB-011):
-    //   set in constructor but never read in this class. Delete, or wire it
-    //   up if plus-mode infinite-loop detection is on the roadmap.
-    this.instructionsCap = Infinity; // Default to no cap
   }
 
   main(args) {
