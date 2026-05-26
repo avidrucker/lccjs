@@ -179,6 +179,9 @@ class Interpreter {
     /**
      * Whether runtime failures should throw typed errors instead of exiting
      */
+    // @todo #36:15m/DEV Resolve dead throwOnRuntimeError flag (OB-004):
+    //   set by executeBuffer but never read by raiseRuntimeError. Either
+    //   honor it (branch like Assembler.abortAssembly) or delete it.
     this.throwOnRuntimeError = false;
 
     /**
@@ -581,8 +584,7 @@ class Interpreter {
     this.trapvec = this.ir & 0xFF; // trap vector (bits 7-0)
 
     if (this.debugMode) {
-      // TODO: decide how to handle e2e test case
-      // to quit debug mode
+      // @todo #64:15m/DEV Resolve debug-mode behavior in e2e tests (OB-031): decide whether debugMode should be reachable in test mode at all.
       // if (isTestMode) {
       //   this.running = false;
       //   return;
@@ -708,8 +710,7 @@ class Interpreter {
         this.raiseRuntimeError(new InterpreterRuntimeError('Possible infinite loop'));
       }
       
-      //// TODO: implement a custom LCC.js behavior to set flags to toggle 
-      ////       off potential infinite loop detection
+      // @todo #62:30m/DEV Add flag to disable infinite-loop detection (OB-029): useful for long-running .ap programs.
     }
 
     // Track max stack size
@@ -917,6 +918,9 @@ class Interpreter {
        shifts the contents of r1 one position to the right, inserting a 0 on 
        the left.
       */
+      // @todo #51:20m/DEV Guard ct=0 corner in SRL/SRA/ROL/ROR (OB-019):
+      //   ct-1 becomes -1; JS evaluates >> -1 as >> 31. Unreachable today
+      //   (assembler defaults ct=1) but undocumented. Guard or document why.
       case 2: // SRL
         this.c = (this.r[this.sr] >> (ct - 1)) & 1; // Store the last bit shifted out
         this.r[this.sr] = (this.r[this.sr] >>> ct); // Unsigned right shift (injects 0's from the left)
@@ -977,7 +981,7 @@ class Interpreter {
         this.setNZ(this.r[this.dr]);
         break;
       default:
-        //// TODO: compare implementation with the official LCC interpreter
+        // @todo #60:45m/QA Compare unknown-eopcode error wording with cuh63 6.3 (OB-027)
         this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown extended opcode: ${this.eopcode}`));
     }
   }
@@ -1098,7 +1102,7 @@ class Interpreter {
     if (this.inputBuffer && this.inputBuffer.length > 0) {
       // Use the inputBuffer to simulate user input
       this.inputBuffer = this.inputBuffer.replace(/\r\n/g, '\n');
-      // TODO: check to make sure this behaves as expected on both Linux and Windows
+      // @todo #58:30m/QA Test CRLF input handling on Linux vs Windows (OB-025)
       const newlineIndex = this.inputBuffer.indexOf('\n');
       let inputLine = '';
       if (newlineIndex !== -1) {

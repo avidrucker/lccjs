@@ -71,9 +71,9 @@ At the moment:
 
 ## Related Docs
 
-- [README.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/README.md)
-- [docs/core-behavior-matrix.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/core-behavior-matrix.md)
-- [docs/assembler.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/assembler.md)
-- [docs/interpreter.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/interpreter.md)
-- [docs/linker.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/linker.md)
-- [docs/lcc.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/lcc.md)
+- [README.md](../../README.md)
+- [docs/core-behavior-matrix.md](../../docs/core-behavior-matrix.md)
+- [docs/assembler.md](../../docs/assembler.md)
+- [docs/interpreter.md](../../docs/interpreter.md)
+- [docs/linker.md](../../docs/linker.md)
+- [docs/lcc.md](../../docs/lcc.md)

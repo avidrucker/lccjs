@@ -82,8 +82,7 @@ class LCC {
     // If multiple inputs were supplied, the "main input file" is the first one
     this.inputFileName = this.args[0];
 
-    // TODO: (extra feature) check similarly to see if multiple .a files were 
-    // supplied for multi-file assembly.
+    // @todo #59:45m/DEV Decide multi-file .a input handling (OB-026): implement multi-file assembly to match the oracle, OR document the divergence in core-behavior-matrix.md.
     // Note: The original LCC does not check to confirm that all supplied files of .o extension
     // const allAreObjectFiles = this.args.every(file => path.extname(file).toLowerCase() === '.o');
     

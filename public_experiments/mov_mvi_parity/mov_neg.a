@@ -1,0 +1,6 @@
+; minimal repro: mov with a negative immediate
+; OG cuh63 6.3 rejects this; lccjs accepts it via a 9-bit signed encoding
+    mov r0, -15
+    dout r0
+    nl
+    halt

@@ -155,6 +155,9 @@ class AssemblerPlus extends Assembler {
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
       this.error('Missing register');
+      // @todo #41:30m/DEV Don't bypass error accumulation (OB-009):
+      //   this.error() above already sets errorFlag per parent's pattern; the
+      //   immediate fatalExit() prevents multi-error reporting. Choose one path.
       fatalExit('Missing register', 1);
     };
     let macword = 0xA000 | (dr << 9) | (sr1 << 6) | 0x000E;
@@ -181,6 +184,9 @@ class AssemblerPlus extends Assembler {
       super.writeOutputFile('p');
     } else {
       console.error('Missing .lccplus directive');
+      // @todo #42:20m/DOC Document the required .lccplus directive (OB-010):
+      //   add to src/plus/plus.md; improve this message to tell users what
+      //   directive to add to their source file.
       fatalExit('Missing .lccplus directive', 1);
     }
   }

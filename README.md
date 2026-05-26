@@ -199,7 +199,6 @@ Other useful commands:
 
 ```bash
 npm run test:all
-npm run test:legacy
 npm run test:oracle
 ```
 
@@ -216,6 +215,59 @@ Examples:
 npm test -- --runTestsByPath tests/new/assembler.unit.spec.js
 npm test -- --runTestsByPath tests/new/lcc.oracle.e2e.spec.js
 ```
+
+### Running oracle-parity tests
+
+The `*.oracle.e2e.spec.js` suites (and `npm run test:oracle`) drive the
+original LCC ("the oracle") and diff its output against LCC.js. They are
+skipped if the oracle is not configured, so you can run `npm test` without
+this setup; only the oracle suites need it.
+
+**1. Obtain the LCC package** from Prof. Anthony Dos Reis. The canonical
+distribution is the `cuh` zip (e.g. `cuh63.zip`, the "Computing Unsaturated
+Hex" 6.3 edition) that ships alongside his textbook. The package contains
+prebuilt `lcc`, `linker`, `sim`, etc. binaries for Windows, Linux,
+Raspberry Pi, pre-m1 Mac (top-level), and Apple Silicon Mac (`macm/`).
+
+**2. Install it to a folder of your choice.** Per the package's
+`0READFIRST.txt`, no system install is required — just unzip and use the
+files in place. On Linux:
+
+```bash
+mkdir -p ~/Documents/Study/Assembly/cuh63
+unzip ~/Downloads/cuh63.zip -d ~/Documents/Study/Assembly/cuh63
+cd ~/Documents/Study/Assembly/cuh63
+cp lnx/* .              # overlay the Linux binaries on the pre-m1 Mac ones
+chmod 755 lcc linker sim b basic comment h2b hexbin micro o optimal r register s see stack tiny
+./lcc                   # sanity-check; should print "Usage: lcc <infile>"
+```
+
+On Apple Silicon Mac, use `cp macm/* .` instead. On Raspberry Pi,
+`cp rasp/* .`. On Windows and pre-m1 Mac, no copy is needed.
+
+**3. Point LCC.js at the binary.** Copy `.env.example` to `.env` and set
+`LCC_ORACLE` to the absolute path of the `lcc` binary you just installed:
+
+```bash
+cp .env.example .env
+# then edit .env so LCC_ORACLE points at e.g. /home/you/.../cuh63/lcc
+```
+
+`.env` is gitignored; `.env.example` is the checked-in template.
+
+**4. Run the oracle suites:**
+
+```bash
+npm run test:oracle
+```
+
+Optional knobs (see `.env.example`):
+
+- `LCC_TIMEOUT_MS` — per-oracle-invocation timeout in ms (default 20000).
+- `GOLDEN_AUTO_UPDATE=1` — refresh the golden caches when oracle output
+  legitimately changes. Leave off in normal runs.
+- `KEEP_ORACLE_TMP=1`, `DEBUG_ORACLE=1` — debugging knobs for
+  `tests/helpers/runOracle.js`.
 
 ## Oracle Parity Work
 
@@ -278,16 +330,16 @@ Areas that still require active research or refinement:
 
 The current source of truth for active behavior contracts is:
 
-- [docs/core-behavior-matrix.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/core-behavior-matrix.md)
+- [docs/core-behavior-matrix.md](./docs/core-behavior-matrix.md)
 
 ## Additional Docs
 
-- [docs/assembler.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/assembler.md)
-- [docs/interpreter.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/interpreter.md)
-- [docs/lcc.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/lcc.md)
-- [docs/linker.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/docs/linker.md)
-- [src/core/core.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/core.md)
-- [src/utils/utils.md](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/utils.md)
+- [docs/assembler.md](./docs/assembler.md)
+- [docs/interpreter.md](./docs/interpreter.md)
+- [docs/lcc.md](./docs/lcc.md)
+- [docs/linker.md](./docs/linker.md)
+- [src/core/core.md](./src/core/core.md)
+- [src/utils/utils.md](./src/utils/utils.md)
 
 ## License
 

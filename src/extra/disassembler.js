@@ -81,6 +81,9 @@ class Disassembler {
                 }
                 this.startAddress = buffer.readUInt16LE(offset);
                 offset += 2;
+            // @todo #46:30m/DEV Validate the null terminator on G/E/V entries (OB-014):
+            //   the inner while loop scans until 0 or EOF; premature EOF silently
+            //   corrupts label data. Raise a typed error on malformed input.
             } else if (['G', 'E', 'V'].includes(entryType)) {
                 // Skip address (2 bytes) and null-terminated string
                 offset += 2; // Skip address
@@ -186,6 +189,9 @@ class Disassembler {
     }
 
     // Adjusts .zero directives to account for labels within the zero range
+    // @todo #47:30m/DEV Harden .zero adjustment (OB-015):
+    //   the inner loop breaks on first label found; doesn't handle multiple
+    //   labels in one zero block or validate adjusted count > 0.
     adjustZeroDirectives() {
         const addresses = Object.keys(this.WIPDisassembly).map(Number).sort((a, b) => a - b);
         const labelAddresses = Object.keys(this.labels).map(Number).sort((a, b) => a - b);
@@ -416,6 +422,9 @@ class Disassembler {
 
     disassembleMVI(word) {
         const dr = (word >> 9) & 0x7;
+        // @todo #32:15m/DEV Mask should be 0x1FF, not 0xFF (OB-002):
+        //   9-bit imm9 field loses bit 8 with current mask; round-trip test against
+        //   `mov r0, -15 → d1f1` will surface the regression.
         const imm9 = this.signExtend(word & 0xFF, 9);
         const operands = `${this.registerNames[dr]}, ${imm9}`;
         const mnemonic = 'mvi';
@@ -725,6 +734,9 @@ class Disassembler {
         let str = ''; // String accumulator
         let zeroCount = 0; // Counter for zeros
         let strStartAddress = null; // Starting address of a string
+        // @todo #48:30m/DEV Cap unbounded string accumulation (OB-016):
+        //   processData reads bytes until null terminator with no length cap;
+        //   a blob of printable ASCII can exhaust memory before termination.
         let zeroStartAddress = null; // Starting address of zeros
         let justFinishedString = false; // Flag to skip null terminator
 

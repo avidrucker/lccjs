@@ -498,6 +498,9 @@ class LinkerStepsPrinter {
       console.log(`  adjusted word = word pre-adjustment + global address`);
       console.log(`  adjusted word = ${this.formatHex(preAdjustmentWord,4)} + ${this.formatHex(globalAddr,4)}`);
 
+      // @todo #49:30m/DEV Check V-table overflow before store (OB-017):
+      //   newVal is stored into a Uint16Array slot; sums > 0xFFFF wrap silently.
+      //   Emit a typed error before storing.
       let newVal = preAdjustmentWord + globalAddr;
 
       console.log(`  adjusted word = ${this.formatHex(newVal,4)}`);
@@ -564,6 +567,9 @@ class LinkerStepsPrinter {
   /**
    * Step 4: Write out the final "link.e" file with the reconstructed header + code.
    */
+  // @todo #50:20m/DEV Add try/finally around fd ops (OB-018):
+  //   openSync + writeSync without try/finally leaks the fd and leaves a
+  //   half-written file on partial-write failure. Close fd; unlink partial.
   writeExecutable() {
     const outFileName = this.outputFileName;
     let outFd;

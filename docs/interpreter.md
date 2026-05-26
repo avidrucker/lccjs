@@ -148,9 +148,9 @@ The interpreter is still a large stateful class, but the architecture already ha
 
 ## Related Files
 
-- [interpreter.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/interpreter.js)
-- [reportArtifacts.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/reportArtifacts.js)
-- [errors.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/errors.js)
-- [interpreter.unit.spec.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/tests/new/interpreter.unit.spec.js)
-- [interpreter.integration.spec.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/tests/new/interpreter.integration.spec.js)
-- [interpreter.oracle.e2e.spec.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/tests/new/interpreter.oracle.e2e.spec.js)
+- [interpreter.js](../src/core/interpreter.js)
+- [reportArtifacts.js](../src/utils/reportArtifacts.js)
+- [errors.js](../src/utils/errors.js)
+- [interpreter.unit.spec.js](../tests/new/interpreter.unit.spec.js)
+- [interpreter.integration.spec.js](../tests/new/interpreter.integration.spec.js)
+- [interpreter.oracle.e2e.spec.js](../tests/new/interpreter.oracle.e2e.spec.js)

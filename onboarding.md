@@ -98,7 +98,7 @@
 - **Memory and Registers**: Simulates memory and CPU registers.
 - **Instruction Execution**: Implements the instruction set, including arithmetic, logic, control flow, and I/O operations.
 - **Input/Output Handling**: Manages user input and program output.
-- **Debugging Features**: Can be extended to include debugging capabilities like step execution (not yet implemented as of 11/21/2024) and state inspection.
+- **Debugging Features**: A symbolic debugger is partially implemented (`Interpreter.debug()` in `src/core/interpreter.js`); step execution, breakpoints, and richer state inspection are still in progress.
 
 **Key Concepts**:
 
@@ -143,14 +143,14 @@
 
 ### **Current Limitations**
 
-- **Linker Test Suite Not Implemented**: The `linker.js` module is functional but not yet have any tests to ensure its reliability.
+- **Linker Test Coverage**: Linker unit and oracle-e2e suites exist (`tests/new/linker.unit.spec.js`, `tests/new/linker.oracle.e2e.spec.js`); direct linker integration coverage is still thin.
 - **Incomplete Instruction Set**: Some instructions and features are not yet implemented.
 - **Error Handling**: Can be enhanced for better user feedback. Some errors are not yet caught, and error behavior (stderr, exit codes) is inconsistent.
-- **Debugging Tools**: Debugging is not yet supported. A symbolic debugger would be a valuable addition, and is planned for future development.
+- **Debugging Tools**: A symbolic debugger is partially in place; full breakpoint/step semantics and parity with the oracle debugger are still open work (see `TODOS.md`).
 
 ### **Opportunities for Contribution**
 
-- **Implementing the Linker Test Suite**: Help develop `linker.test.js` to support the testing of linking multiple object `.o` files into a single `.e` file that matches the LCC `.e` file creation output behavior.
+- **Expanding Linker Test Coverage**: Add direct linker integration tests beyond the existing unit and oracle-e2e suites — e.g. multi-module `.o` linking edge cases, duplicate-`.start` detection, and A/V-table adjustment correctness.
 - **Extending the Instruction Set**: Add support for additional instructions (e.g., multiplication, shift left logical, etc..)
 - **Improving Documentation**: Enhance the README and code comments for better clarity.
 - **Building a Debugger**: Create tools for stepping through code, inspecting memory, and setting breakpoints.

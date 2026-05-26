@@ -92,7 +92,7 @@ These structures are still maintained directly inside the class rather than in e
 
 ## Related Files
 
-- [linker.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/core/linker.js)
-- [errors.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/src/utils/errors.js)
-- [linker.unit.spec.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/tests/new/linker.unit.spec.js)
-- [linker.oracle.e2e.spec.js](/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/tests/new/linker.oracle.e2e.spec.js)
+- [linker.js](../src/core/linker.js)
+- [errors.js](../src/utils/errors.js)
+- [linker.unit.spec.js](../tests/new/linker.unit.spec.js)
+- [linker.oracle.e2e.spec.js](../tests/new/linker.oracle.e2e.spec.js)

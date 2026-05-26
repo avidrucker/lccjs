@@ -304,9 +304,9 @@ describe('Interpreter Integration Tests', () => {
     expect(interpreter.output).toBe('42');
   });
 
-  // TODO: rewrite this test using a 2 line .a program with the commands
-  //       `    br cheese` and `    halt` (turned into .e hex) to test runtime error
-  //       see example below:
+  // @todo #65:30m/DEV Rewrite using a minimal .a-to-.e hex fixture (OB-032):
+  //       `    br cheese` + `    halt` → pre-compute .e hex, inline as a hex
+  //       string, drop the longer fixture below. Example below:
   //   ```bash
   // ~/avi_tests$ cat scratch105.a
   //    br cheese

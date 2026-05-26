@@ -16,8 +16,6 @@ const {
   writeText,
 } = require('../helpers/fileHelpers');
 const {
-  bstDiff,
-  compareBstFiles,
   compareLstFiles,
   fileBytesEqual,
   lstDiff,
@@ -129,13 +127,11 @@ describe('LCC (Assemble + Interpret) vs Oracle with golden cache', () => {
     const goldenA = path.join(GOLDEN_DIR, aFile);
     const goldenE = path.join(GOLDEN_DIR, eFile);
     const goldenLst = path.join(GOLDEN_DIR, `${base}.lst`);
-    const goldenBst = path.join(GOLDEN_DIR, `${base}.bst`);
 
     const aBytes = readBytes(demoAPath);
     let haveGoldenA = fs.existsSync(goldenA);
     let haveGoldenE = fs.existsSync(goldenE);
     let haveGoldenLst = fs.existsSync(goldenLst);
-    let haveGoldenBst = fs.existsSync(goldenBst);
     let sameA = haveGoldenA && fileBytesEqual(demoAPath, goldenA);
 
     // Step 1: Ensure golden .a matches current demo (or update/fail/skip)
@@ -150,17 +146,18 @@ describe('LCC (Assemble + Interpret) vs Oracle with golden cache', () => {
       }
     }
 
-    // Step 2: Ensure golden .e, .lst, .bst exist (or regenerate/skip)
-    const needsRegen = !haveGoldenE || !haveGoldenLst || !haveGoldenBst;
+    // Step 2: Ensure golden .e and .lst exist (or regenerate/skip).
+    // .bst is intentionally not compared — its content is identical to
+    // .lst except machine code is rendered in binary instead of hex, so
+    // any divergence visible in .bst is already visible in .lst.
+    const needsRegen = !haveGoldenE || !haveGoldenLst;
     if (needsRegen) {
       if (cfg.goldenAutoUpdate && assertOracleConfigured()) {
-        const { bytes: eBytes, lst, bst } = runOracleOnDemo(demoAPath, inputs, opts);
+        const { bytes: eBytes, lst } = runOracleOnDemo(demoAPath, inputs, opts);
         writeBytes(goldenE, eBytes);
         writeText(goldenLst, lst);
-        writeText(goldenBst, bst);
         haveGoldenE = true;
         haveGoldenLst = true;
-        haveGoldenBst = true;
       } else if (!cfg.goldenAutoUpdate) {
         test.skip(`${base} — ${comment} (skipped: missing golden files)`, () => {});
         continue;
@@ -172,20 +169,14 @@ describe('LCC (Assemble + Interpret) vs Oracle with golden cache', () => {
 
     // Step 3: Run the actual test
     test(`${base} — ${comment}`, () => {
-      const { lstFile: jsLstPath, bstFile: jsBstPath } = runJSLCC(demoAPath, inputs);
+      const { lstFile: jsLstPath } = runJSLCC(demoAPath, inputs);
 
       const lstMatch = compareLstFiles(jsLstPath, goldenLst, xstCompareOptions);
-      const bstMatch = compareBstFiles(jsBstPath, goldenBst, xstCompareOptions);
 
-      if (!lstMatch || !bstMatch) {
-        let msg = `\n=== ${base} mismatch ===\n`;
-        if (!lstMatch) {
-          msg += `--- .lst diff ---\n${lstDiff(jsLstPath, goldenLst, xstCompareOptions)}\n\n`;
-        }
-        if (!bstMatch) {
-          msg += `--- .bst diff ---\n${bstDiff(jsBstPath, goldenBst, xstCompareOptions)}\n`;
-        }
-        throw new Error(msg);
+      if (!lstMatch) {
+        throw new Error(
+          `\n=== ${base} mismatch ===\n--- .lst diff ---\n${lstDiff(jsLstPath, goldenLst, xstCompareOptions)}\n`
+        );
       }
     });
   }
