@@ -189,10 +189,10 @@ class Disassembler {
         }
     }
 
-    // Adjusts .zero directives to account for labels within the zero range
-    // @todo #47:30m/DEV Harden .zero adjustment (OB-015):
-    //   the inner loop breaks on first label found; doesn't handle multiple
-    //   labels in one zero block or validate adjusted count > 0.
+    // Adjusts .zero directives to account for labels within the zero range.
+    // Labels are sorted ascending; updating zeroCount on each match means each
+    // subsequent label is re-checked against the already-reduced range, so multiple
+    // labels in one block are all handled without a break.
     adjustZeroDirectives() {
         const addresses = Object.keys(this.WIPDisassembly).map(Number).sort((a, b) => a - b);
         const labelAddresses = Object.keys(this.labels).map(Number).sort((a, b) => a - b);
@@ -207,10 +207,11 @@ class Disassembler {
                 for (let labelAddr of labelAddresses) {
                     if (labelAddr > zeroStart && labelAddr < zeroStart + zeroCount) {
                         // Adjust zeroCount to stop before the label
-                        let adjustedCount = labelAddr - zeroStart;
-                        entry.count = adjustedCount;
-                        zeroCount = adjustedCount;
-                        break; // Assuming no overlapping labels within zero range
+                        const adjustedCount = labelAddr - zeroStart;
+                        if (adjustedCount > 0) {
+                            entry.count = adjustedCount;
+                            zeroCount = adjustedCount;
+                        }
                     }
                 }
             }
