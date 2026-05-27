@@ -285,8 +285,15 @@ class Interpreter {
     // Run the interpreter
     try {
       this.run();
-      // @todo #74:30m/DEV Wire -m: post-run memory display (OB-034)
-      // After run(), if options.memDisplay, print all words [loadPoint..memMax]
+      // Post-run displays (oracle parity: -m and -r flags)
+      if (runtimeOptions.memDisplay) {
+        this.writeOutput('\n---------------------------------------------- Memory display\n');
+        for (let addr = this.loadPoint; addr <= this.memMax; addr++) {
+          const word = this.mem[addr];
+          this.writeOutput(`${addr.toString(16).padStart(4, '0')}: ${word.toString(16).padStart(4, '0')}\n`);
+        }
+        this.writeOutput('--------------------------------------- End of memory display\n');
+      }
       // @todo #75:30m/DEV Wire -r: post-run register display (OB-035)
       // After run(), if options.regDisplay, print pc/ir/NZCV/r0-r4/fp/sp/lr
     } finally {

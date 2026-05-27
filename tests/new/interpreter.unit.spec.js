@@ -305,4 +305,51 @@ describe('Interpreter Unit Tests', () => {
 
     expect(result.output).toBe('0\nfffc\nfff4\n4\n');
   });
+
+  // OB-034: -m flag post-run memory display
+  describe('-m flag (post-run memory display)', () => {
+    // demoA: mvi r0, 5 / dout / nl / halt — 4 words at 0000-0003
+    const demoA = Buffer.from([0x6f, 0x43, 0x05, 0xd0, 0x02, 0xf0, 0x01, 0xf0, 0x00, 0xf0]);
+
+    test('executeBuffer() without memDisplay: no memory display block in output', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(demoA, { inputFileName: 'demoA.e' });
+      expect(result.output).not.toContain('Memory display');
+    });
+
+    test('executeBuffer() with memDisplay: output contains memory display banners', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(demoA, {
+        inputFileName: 'demoA.e',
+        runtimeOptions: { memDisplay: true },
+      });
+      expect(result.output).toContain('Memory display');
+      expect(result.output).toContain('End of memory display');
+    });
+
+    test('executeBuffer() with memDisplay: shows loaded words at correct hex addresses', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(demoA, {
+        inputFileName: 'demoA.e',
+        runtimeOptions: { memDisplay: true },
+      });
+      // 4 instructions: mvi r0,5 (d005) / dout (f002) / nl (f001) / halt (f000)
+      expect(result.output).toContain('0000: d005');
+      expect(result.output).toContain('0001: f002');
+      expect(result.output).toContain('0002: f001');
+      expect(result.output).toContain('0003: f000');
+    });
+
+    test('executeBuffer() with memDisplay and loadPoint: memory addresses offset by loadPoint', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(demoA, {
+        inputFileName: 'demoA.e',
+        loadPoint: 0x10,
+        runtimeOptions: { memDisplay: true },
+      });
+      expect(result.output).toContain('0010: d005');
+      expect(result.output).toContain('0013: f000');
+      expect(result.output).not.toContain('0000: d005');
+    });
+  });
 });
