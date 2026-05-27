@@ -176,9 +176,8 @@ class Linker {
     // LCC.js invoked via `lcc.js` always receives an explicit outputFileName, so
     // this fallback only applies to standalone `linker.js` invocations — where it
     // should say 'linktest.e' to match the oracle standalone linker.
-    // @todo #67:15m/DEV Change standalone fallback from 'link.e' to 'linktest.e' (OB-033)
     // See core-behavior-matrix.md § "Linker output location and default name".
-    this.outputFileName = outputFileName || 'link.e'; // Save output filename
+    this.outputFileName = outputFileName || 'linktest.e'; // Standalone fallback matches oracle standalone linker
 
     // Read all object modules
     for (let filename of filenames) {

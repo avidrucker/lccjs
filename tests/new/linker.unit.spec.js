@@ -101,7 +101,7 @@ describe('Linker Unit Tests', () => {
     expect(console.error).toHaveBeenCalledWith('missing is an undefined external reference');
   });
 
-  test('link() should default to link.e when no output file name is provided', () => {
+  test('link() should default to linktest.e when no output file name is provided', () => {
     const linker = new Linker();
     jest.spyOn(linker, 'readObjectModule').mockImplementation(() => {
       linker.objectModules.push({
@@ -113,7 +113,7 @@ describe('Linker Unit Tests', () => {
 
     linker.link(['module.o']);
 
-    expect(linker.outputFileName).toBe('link.e');
+    expect(linker.outputFileName).toBe('linktest.e'); // OB-033: standalone fallback matches oracle standalone linker
     expect(linker.createExecutable).toHaveBeenCalledTimes(1);
   });
 
