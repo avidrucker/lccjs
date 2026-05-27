@@ -1897,9 +1897,6 @@ class Assembler {
     return macword;
   }
 
-  // @todo #31:30m/DEV Validate `mov` immediate to spec range -256..+255 (OB-001):
-  //   currently accepts out-of-spec values and silently wraps via 9-bit signed
-  //   encoding. Route through the same validator `mvi` already uses.
   assembleMOV(mnemonic, operands) {
     let dr = this.getRegister(operands[0]);
     if (dr === null) {
@@ -1915,9 +1912,10 @@ class Assembler {
         let macword = 0xA000 | (dr << 9) | (sr << 6) | 0x000C;
         return macword;
       } else {
-
-        // Translate to 'mvi dr, imm9'
-        let imm9 = this.evaluateImmediateNaive(operands[1]); // this.evaluateImmediate(operands[1], -256, 255);
+        // Translate to 'mvi dr, imm9' — same range (-256..255) and machine code as mvi.
+        // Charlie confirmed: mov dr, imm9 is a pseudo-instruction for mvi dr, imm9.
+        // The oracle's rejection of negatives is a known oracle bug (OB-001 / #31).
+        let imm9 = this.evaluateImmediate(operands[1], -256, 255, "mov immediate value");
         if (imm9 === null) {
           this.failAssembly('Missing number', 1);
         };

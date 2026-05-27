@@ -1,4 +1,4 @@
-LCC Assemble/Link/Interpret/Debug Ver 6.3  Sat Oct 25 10:49:02 2025
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Wed May 27 13:20:18 2026
 TestUser
 
 Header
@@ -23,7 +23,7 @@ Loc   Code           Source Code
 000b  d0ff                 mov r0, 0x00ff
 000c  f004                 hout ; same as `hout r0`
 000d  f001                 nl
-000e  d100                 mov r0, 0xff00
+000e  d100                 mvi r0, -256  ; was mov r0, 0xff00 — i
 000f  102f                 add r0, r0, 0xf
 0010  f004                 hout r0
 0011  f001                 nl
@@ -46,7 +46,7 @@ ff0f
 -241
 ffff
 ========================================== Program statistics
-Input file name       =      demoX1.a
+Input file name       =      demoX.a
 Instructions executed =   1a (hex)    26 (dec)
 Program size          =   1b (hex)    27 (dec)
 Max stack size        =    2 (hex)     2 (dec)

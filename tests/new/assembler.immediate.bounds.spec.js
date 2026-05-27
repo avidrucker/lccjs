@@ -146,4 +146,51 @@ describe('evaluateImmediate boundary tests', () => {
       asmExpectError('  mvi r0, 256\n  halt', 'mvi immediate out of range');
     });
   });
+
+  // ── mov imm9: [-256..255] — pseudo-instruction for mvi (#31 / OB-001) ────
+  // Charlie confirmed: mov dr, imm9 must accept exactly the same range as mvi.
+  // The oracle's rejection of negatives for mov is a known oracle bug.
+
+  describe('mov imm9 [-256..255] (pseudo-instruction for mvi, #31)', () => {
+    test('below min (-257) → mov immediate value out of range', () => {
+      asmExpectError('  mov r0, -257\n  halt', 'mov immediate value out of range');
+    });
+
+    test('min (-256) → no error (was wrongly rejected before #31 fix)', () => {
+      asm('  mov r0, -256\n  halt');
+    });
+
+    test('max (255) → no error', () => {
+      asm('  mov r0, 255\n  halt');
+    });
+
+    test('above max (256) → mov immediate value out of range', () => {
+      asmExpectError('  mov r0, 256\n  halt', 'mov immediate value out of range');
+    });
+
+    test('large out-of-range hex (0xff00) → mov immediate value out of range', () => {
+      // Previously accepted via silent 9-bit wrap; now correctly rejected.
+      asmExpectError('  mov r0, 0xff00\n  halt', 'mov immediate value out of range');
+    });
+
+    test('mov r0, -256 produces same machine code as mvi r0, -256', () => {
+      const movResult = assembler.assembleSource('  mov r0, -256\n  halt\n', {
+        inputFileName: 'mov_neg.a',
+        outputFileName: 'mov_neg.e',
+        throwOnAssemblyError: true,
+      });
+      assembler.resetAssemblyState();
+      const mviResult = assembler.assembleSource('  mvi r0, -256\n  halt\n', {
+        inputFileName: 'mvi_neg.a',
+        outputFileName: 'mvi_neg.e',
+        throwOnAssemblyError: true,
+      });
+      expect(movResult.outputBytes).toEqual(mviResult.outputBytes);
+    });
+
+    test('mov dr, sr (register form) still works after #31 fix', () => {
+      // Register form of mov should be unaffected.
+      asm('  mvi r1, 5\n  mov r0, r1\n  halt');
+    });
+  });
 });

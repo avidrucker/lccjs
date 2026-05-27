@@ -15,7 +15,7 @@ main:           push lr
                 mov r0, 0x00ff
                 hout ; same as `hout r0`
                 nl
-                mov r0, 0xff00
+                mvi r0, -256  ; was mov r0, 0xff00 — invalid (>imm9 range); mvi -256 produces same machine code
                 add r0, r0, 0xf
                 hout r0
                 nl
