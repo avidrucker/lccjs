@@ -163,19 +163,32 @@ When `lcc foo.a bar.a` is invoked with multiple non-`.o` source files:
 
 ## Linker
 
+### Linker output location and default name
+
+Oracle research (2026-05-26) — both oracle tools write the output to the **CWD**,
+not to the directory of the first `.o` file:
+
+| Invocation | Oracle default name | LCC.js default name | Matches? |
+|---|---|---|---|
+| `lcc foo.o bar.o` | `link.e` in CWD | `link.e` in CWD | ✅ |
+| `linker foo.o bar.o` | `linktest.e` in CWD | `link.e` in CWD | ❌ name differs |
+
+- `Preserve`: when linking via `lcc.js`, default output is `link.e` in the CWD — matches oracle `lcc`
+- `Preserve`: output is always in the CWD, regardless of where the `.o` files are located — matches both oracle tools (issue #3 requested the `.o` dir; that would diverge from oracle)
+- `Preserve`: `-o` overrides the default output name and location
+- `Research`: standalone `linker.js` default name is `link.e`; oracle standalone `linker` binary defaults to `linktest.e` — a name-only parity gap for the standalone path
+
 ### Current stable behavior
 
 - `Preserve`: object modules are expected to begin with `o`
 - `Preserve`: duplicate global symbols are errors
 - `Preserve`: undefined external references are errors
-- `Preserve`: default output file name is `link.e`
 - `Preserve`: `-o` overrides the default linker output name
 - `Pure API`: `parseObjectModuleBuffer(buffer, filename)` parses object-module bytes and throws typed `LinkerError` failures
 
 ### Current limitations
 
 - `Preserve`: the main linker flow is still more wrapper-oriented than assembler/interpreter
-- `Research`: output location behavior when linking object files from different directories
 - `Research`: whether to add more pure seams or keep the linker mostly wrapper-oriented in the short term
 
 ## Testing Implications

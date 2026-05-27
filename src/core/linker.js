@@ -169,6 +169,15 @@ class Linker {
   link(filenames, outputFileName) {
     this.resetState();
     this.inputFiles = filenames; // Save input files
+    // Oracle research (2026-05-26): the oracle `lcc` binary defaults to `link.e`
+    // in the CWD; the oracle standalone `linker` binary defaults to `linktest.e`
+    // in the CWD.  Both oracle tools use CWD, not the directory of the first .o
+    // file (issue #3 requested the latter, but that would diverge from oracle).
+    // LCC.js invoked via `lcc.js` always receives an explicit outputFileName, so
+    // this fallback only applies to standalone `linker.js` invocations — where it
+    // should say 'linktest.e' to match the oracle standalone linker.
+    // @todo #67:15m/DEV Change standalone fallback from 'link.e' to 'linktest.e' (OB-033)
+    // See core-behavior-matrix.md § "Linker output location and default name".
     this.outputFileName = outputFileName || 'link.e'; // Save output filename
 
     // Read all object modules
