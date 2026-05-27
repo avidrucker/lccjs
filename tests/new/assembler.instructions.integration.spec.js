@@ -582,9 +582,10 @@ data: .word 10
     `;
     virtualFs[aFilePath] = source;
 
+    // cuh63 6.3 oracle: "Missing operand" (not "Missing register")
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing register');
+    }).toThrow('Missing operand');
   });
 
   test('71. should assemble jmp instruction with extra operands without throwing error', () => {

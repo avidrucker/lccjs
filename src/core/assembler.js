@@ -1419,7 +1419,9 @@ class Assembler {
 
     let address = this.evaluateOperand(label, 'e');
     if (address === null) {
-      this.failAssembly('Bad label', 1); // @todo #60:45m/QA Verify this error wording matches cuh63 6.3 (OB-027)
+      // Dead in single-error mode: evaluateOperand already throws 'Undefined label'
+      // before returning null. Kept as guard for any future multi-error-mode path.
+      this.failAssembly('Undefined label', 1);
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1839,10 +1841,10 @@ class Assembler {
   assembleJMP(operands) {
     let baser = this.getRegister(operands[0]);
     if (baser === null) {
-      // Note: as of 12/2024, the official LCC behavior here is to segfault
-      // so, this is currently "custom" LCC.js behavior
-      // @todo #60:45m/QA Verify "Missing register" error matches cuh63 6.3 (OB-027)
-      this.failAssembly('Missing register', 1);
+      // Oracle (cuh63 6.3) says "Missing operand" for 'jmp' with no register.
+      // Earlier notes said oracle segfaults here; oracle testing confirms it prints
+      // "Missing operand". Our behavior now matches.
+      this.failAssembly('Missing operand', 1);
     };
     let offset6 = 0;
     if (operands[1]) {

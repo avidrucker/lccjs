@@ -975,7 +975,8 @@ class Interpreter {
         this.setNZ(this.r[this.dr]);
         break;
       default:
-        // @todo #60:45m/QA Compare unknown-eopcode error wording with cuh63 6.3 (OB-027)
+        // Oracle (cuh63 6.3): silently exits (undefined behavior) for unknown eocodes.
+        // LCC.js intentionally throws to surface invalid binaries rather than silently ignoring.
         this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown extended opcode: ${this.eopcode}`));
     }
   }
