@@ -104,13 +104,9 @@ class LCC {
    */
   linkObjectFiles(objectFiles) {
     // If user provided `-o <outfile>` on the command line, we'll have it in this.outputFileName
-    // Otherwise default to `link.e` just like original LCC (output goes to CWD).
-    // @todo #68:30m/DEV Clarify + implement call-site output for link.e:
-    //   Avi+Charlie prefer link.e goes to the "call site". If that means the
-    //   CWD (where lcc is invoked), it already matches oracle and nothing
-    //   changes. If it means the directory of the first .o argument, that
-    //   diverges from oracle and needs: path.join(path.dirname(objectFiles[0]), 'link.e').
-    //   Resolve the ambiguity with Charlie before implementing.
+    // Otherwise default to `link.e` in the CWD — matches oracle behavior.
+    // If Charlie later prefers the output next to the first .o file, use:
+    //   path.join(path.dirname(objectFiles[0]), 'link.e')
     let outputFile = this.outputFileName || 'link.e';
 
     // Create the Linker
