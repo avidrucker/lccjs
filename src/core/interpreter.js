@@ -285,6 +285,10 @@ class Interpreter {
     // Run the interpreter
     try {
       this.run();
+      // @todo #74:30m/DEV Wire -m: post-run memory display (OB-034)
+      // After run(), if options.memDisplay, print all words [loadPoint..memMax]
+      // @todo #75:30m/DEV Wire -r: post-run register display (OB-035)
+      // After run(), if options.regDisplay, print pc/ir/NZCV/r0-r4/fp/sp/lr
     } finally {
       this.allowRuntimeDebugging = false;
     }
@@ -1335,6 +1339,8 @@ class Interpreter {
         this.writeDebugOutputOrElse(udoutStr);
         break;
       case 4: // HOUT
+        // @todo #76:30m/DEV Wire -x: hout 4-digit hex when options.hexOutput (OB-036)
+        // With -x: houtStr.padStart(4, '0'); without: 2-digit (current behavior)
         // print as hexadecimal
         const houtStr = this.r[this.sr].toString(16).toLowerCase();
         this.writeDebugOutputOrElse(houtStr);
