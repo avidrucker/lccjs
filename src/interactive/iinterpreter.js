@@ -298,10 +298,40 @@ class IInterpreter extends Interpreter {
     return output;
   }
 
-  // @todo #95:60m/DEV Implement displayCodeSnippet(sourceMap, contextRows): show current PC + N lines of context from sourceMap (OB-043)
-  // BLOCKED by #77 (PC→source-line map must be built by assembler pass 2 and passed in)
-  displayCodeSnippet(sourceMap, contextRows) {
-    throw new Error('OB-043 not yet implemented (blocked by #77) — see @todo #95');
+  // displayCodeSnippet(sourceMap, contextRows)
+  //   sourceMap — { addressToLine: Map<number, {lineNumber, sourceLine}>, allLines: string[] }
+  //               Built by assembler after pass 2; null when running a pre-assembled .e file.
+  //   contextRows — number of lines to show above and below the current PC line (default 3).
+  //
+  // Returns a formatted string showing source context around the current PC.
+  // Lines are 0-indexed in allLines; lineNumber from listing is 1-indexed.
+  // The current-PC line is prefixed with "-> "; surrounding lines with "   ".
+  displayCodeSnippet(sourceMap, contextRows = 3) {
+    if (!sourceMap || !sourceMap.addressToLine || !sourceMap.allLines) {
+      return `   [no source — PC: ${this.pc.toString(16).padStart(4, '0')}]\n`;
+    }
+
+    const entry = sourceMap.addressToLine.get(this.pc);
+    if (!entry) {
+      // PC is between code-producing lines (e.g. data word, or past end of program)
+      return `   [source unknown — PC: ${this.pc.toString(16).padStart(4, '0')}]\n`;
+    }
+
+    const { lineNumber } = entry; // 1-indexed
+    const allLines = sourceMap.allLines;
+    const totalLines = allLines.length;
+
+    const firstLine = Math.max(0, lineNumber - 1 - contextRows);     // 0-indexed
+    const lastLine  = Math.min(totalLines - 1, lineNumber - 1 + contextRows); // 0-indexed
+
+    let output = '';
+    for (let i = firstLine; i <= lastLine; i++) {
+      const lineNum1 = i + 1; // back to 1-indexed for display
+      const marker   = (lineNum1 === lineNumber) ? '->' : '  ';
+      const lineStr  = (allLines[i] !== undefined) ? allLines[i] : '';
+      output += `${marker} ${String(lineNum1).padStart(4)}: ${lineStr}\n`;
+    }
+    return output;
   }
 
   // runInteractive(sourceMap) — main interactive prompt loop.
@@ -318,8 +348,9 @@ class IInterpreter extends Interpreter {
   //   h         show this help
   //   q         quit
   //
-  // sourceMap (optional) — Map<pc, {lineNumber, sourceLine}> for the code snippet pane;
-  // passed to displayCodeSnippet() once OB-043 / #95 is resolved.
+  // sourceMap (optional) — { addressToLine: Map<pc, {lineNumber, sourceLine}>, allLines: string[] }
+  // Passed to displayCodeSnippet(), which shows source context around the current PC.
+  // null when running a pre-assembled .e file directly (no assembler in session).
   runInteractive(sourceMap) {
     this.initSnapshot();
     this.spInitial = this.r[6];
@@ -331,6 +362,9 @@ class IInterpreter extends Interpreter {
       process.stdout.write(this.displayRegisters(prev, curr) + '\n');
       process.stdout.write(this.displayMemory(this.memDisplayBase, this.memDisplayRows) + '\n');
       process.stdout.write(this.displayStack(this.stackAnchor) + '\n');
+      if (sourceMap) {
+        process.stdout.write(this.displayCodeSnippet(sourceMap) + '\n');
+      }
       if (!this.running) {
         process.stdout.write('--- Program halted. Step back with -N, or quit with q. ---\n');
       }

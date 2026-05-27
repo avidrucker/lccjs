@@ -171,6 +171,12 @@ class Assembler {
      * Whether reusable assembly paths should throw typed errors instead of exiting
      */
     this.throwOnAssemblyError = false;
+
+    /**
+     * sourceMap: { addressToLine: Map<number, {lineNumber, sourceLine}>, allLines: string[] }
+     * Built after pass 2 for .a files; null for .bin/.hex/object modules.
+     */
+    this.sourceMap = null;
   }
 
   /**
@@ -208,6 +214,7 @@ class Assembler {
     this.externalReferences = [];
     this.adjustmentEntries = [];
     this.throwOnAssemblyError = false;
+    this.sourceMap = null;
   }
 
   createAssemblyError(message, exitCode = 1) {
@@ -265,6 +272,7 @@ class Assembler {
       outputBuffer: this.outputBuffer.slice(),
       outputBytes: this.toOutputBuffer(),
       reports,
+      sourceMap: this.sourceMap,
     };
   }
 
@@ -348,6 +356,21 @@ class Assembler {
       this.locCtr = 0;
       this.lineNum = 0;
       this.performPass();
+
+      // Build sourceMap: address → {lineNumber, sourceLine} for every code-producing line.
+      // Used by IInterpreter.displayCodeSnippet() to show source context around the current PC.
+      this.sourceMap = {
+        addressToLine: new Map(),
+        allLines: this.sourceLines.slice(),
+      };
+      for (const entry of this.listing) {
+        if (entry.codeWords && entry.codeWords.length > 0) {
+          this.sourceMap.addressToLine.set(entry.locCtr, {
+            lineNumber: entry.lineNum,
+            sourceLine: entry.sourceLine,
+          });
+        }
+      }
 
       // After Pass 2, object modules switch from .e output to .o output.
       if (this.isObjectModule) {

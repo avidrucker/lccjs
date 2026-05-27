@@ -103,8 +103,9 @@ class ILCC {
     // Load executable (sets initialMem internally)
     interpreter.loadExecutableFile(this.outputFileName);
 
-    // sourceMap: PC → {sourceLine, lineNumber} — null until OB-043 (#95) is resolved
-    const sourceMap = null; // OB-043 (#95): wire assembler listing → sourceMap once #77 is resolved
+    // sourceMap: { addressToLine: Map, allLines: string[] } — built by assembler after pass 2.
+    // null when the .e was loaded directly (no assembler ran in this session).
+    const sourceMap = (this.assembler && this.assembler.sourceMap) ? this.assembler.sourceMap : null;
 
     // Enter the interactive prompt loop
     interpreter.runInteractive(sourceMap);

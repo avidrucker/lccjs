@@ -125,4 +125,73 @@ describe('Assembler', () => {
     }).not.toThrow();
   });
 
+  // -------------------------------------------------------------------------
+  // sourceMap — built after pass 2 for .a files (#77 / OB-043)
+  // -------------------------------------------------------------------------
+  describe('assembler.sourceMap — built after pass 2 for .a files (#77)', () => {
+    test('sourceMap is null before any assembly', () => {
+      expect(assembler.sourceMap).toBeNull();
+    });
+
+    test('sourceMap.addressToLine is a Map after assembling a .a file', () => {
+      const aFilePath = 'sourceMapTest.a';
+      // Instructions must be indented (column 0 = label in LCC assembly)
+      virtualFs[aFilePath] = `  mvi r0, 5\n  halt\n`;
+      assembler.main([aFilePath]);
+      expect(assembler.sourceMap).not.toBeNull();
+      expect(assembler.sourceMap.addressToLine).toBeInstanceOf(Map);
+    });
+
+    test('sourceMap.allLines contains all source lines', () => {
+      const aFilePath = 'sourceMapLines.a';
+      const source = `  mvi r0, 5\n  halt\n`;
+      virtualFs[aFilePath] = source;
+      assembler.main([aFilePath]);
+      // allLines is this.sourceLines.slice() — includes the trailing empty entry from split('\n')
+      expect(assembler.sourceMap.allLines.length).toBeGreaterThanOrEqual(2);
+      expect(assembler.sourceMap.allLines[0]).toContain('mvi');
+    });
+
+    test('address 0 maps to the first code-producing line', () => {
+      const aFilePath = 'sourceMapAddr0.a';
+      virtualFs[aFilePath] = `  mvi r0, 5\n  halt\n`;
+      assembler.main([aFilePath]);
+      const entry = assembler.sourceMap.addressToLine.get(0);
+      expect(entry).toBeDefined();
+      expect(entry.lineNumber).toBe(1);
+      expect(entry.sourceLine).toContain('mvi');
+    });
+
+    test('address 1 maps to the second code-producing line (halt)', () => {
+      const aFilePath = 'sourceMapAddr1.a';
+      virtualFs[aFilePath] = `  mvi r0, 5\n  halt\n`;
+      assembler.main([aFilePath]);
+      const entry = assembler.sourceMap.addressToLine.get(1);
+      expect(entry).toBeDefined();
+      expect(entry.sourceLine).toContain('halt');
+    });
+
+    test('comment-only lines are not in addressToLine', () => {
+      const aFilePath = 'sourceMapComments.a';
+      // Line 1: comment, Line 2: mvi (addr 0), Line 3: halt (addr 1)
+      virtualFs[aFilePath] = `; this is a comment\n  mvi r0, 1\n  halt\n`;
+      assembler.main([aFilePath]);
+      // address 0 → mvi (line 2), address 1 → halt (line 3); no address for the comment
+      expect(assembler.sourceMap.addressToLine.size).toBe(2);
+      const lineNumbers = Array.from(assembler.sourceMap.addressToLine.values()).map(e => e.lineNumber);
+      expect(lineNumbers).not.toContain(1); // line 1 is the comment
+    });
+
+    test('sourceMap is reset to null between assemblies', () => {
+      const a1 = 'sm1.a';
+      virtualFs[a1] = `  mvi r0, 5\n  halt\n`;
+      assembler.main([a1]);
+      expect(assembler.sourceMap).not.toBeNull();
+
+      // resetAssemblyState() clears it
+      assembler.resetAssemblyState();
+      expect(assembler.sourceMap).toBeNull();
+    });
+  });
+
 });

@@ -462,3 +462,146 @@ describe('IInterpreter.runInteractive() — prompt loop (OB-044)', () => {
     expect(allOutput).toContain('NZCV:');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Helper: build a minimal sourceMap for use in displayCodeSnippet tests.
+// ---------------------------------------------------------------------------
+function makeSourceMap(lines, codeAddresses) {
+  // lines: array of source line strings (0-indexed = line 1 in listing)
+  // codeAddresses: array of { address, lineIndex } (lineIndex is 0-based → lineNumber = lineIndex+1)
+  const addressToLine = new Map();
+  for (const { address, lineIndex } of codeAddresses) {
+    addressToLine.set(address, {
+      lineNumber: lineIndex + 1,
+      sourceLine: lines[lineIndex],
+    });
+  }
+  return { addressToLine, allLines: lines };
+}
+
+describe('IInterpreter.displayCodeSnippet() — source pane (OB-043/#95)', () => {
+  test('returns fallback when sourceMap is null', () => {
+    const interp = loadedInterp();
+    const out = interp.displayCodeSnippet(null);
+    expect(out).toContain('no source');
+    expect(out).toContain('PC:');
+  });
+
+  test('returns fallback when addressToLine has no entry for current PC', () => {
+    const interp = loadedInterp();
+    const sm = makeSourceMap(['mvi r0, 5', 'halt'], [{ address: 0x10, lineIndex: 0 }]);
+    // interp.pc = 0 by default (not 0x10)
+    const out = interp.displayCodeSnippet(sm);
+    expect(out).toContain('source unknown');
+  });
+
+  test('current PC line is marked with "->"', () => {
+    const interp = loadedInterp();
+    // PC is 0 after load; map address 0 → line 1
+    const sm = makeSourceMap(['mvi r0, 5', 'dout', 'halt'], [
+      { address: 0, lineIndex: 0 },
+      { address: 1, lineIndex: 1 },
+      { address: 2, lineIndex: 2 },
+    ]);
+    const out = interp.displayCodeSnippet(sm, 1);
+    expect(out).toContain('-> ');
+    // The "->" line should contain "mvi r0, 5"
+    const arrowLine = out.split('\n').find(l => l.startsWith('->'));
+    expect(arrowLine).toContain('mvi r0, 5');
+  });
+
+  test('surrounding lines are not marked with "->"', () => {
+    const interp = loadedInterp();
+    const sm = makeSourceMap(['; preamble', 'mvi r0, 5', 'halt'], [
+      { address: 0, lineIndex: 1 },
+      { address: 1, lineIndex: 2 },
+    ]);
+    const out = interp.displayCodeSnippet(sm, 1);
+    const lines = out.split('\n').filter(Boolean);
+    const arrowLines = lines.filter(l => l.startsWith('->'));
+    const nonArrowLines = lines.filter(l => !l.startsWith('->'));
+    expect(arrowLines).toHaveLength(1);
+    expect(nonArrowLines.length).toBeGreaterThan(0);
+    nonArrowLines.forEach(l => expect(l.startsWith('  ')).toBe(true));
+  });
+
+  test('contextRows=0 shows only the current line', () => {
+    const interp = loadedInterp();
+    const sm = makeSourceMap(['a', 'b', 'c', 'd', 'e'], [
+      { address: 0, lineIndex: 0 },
+      { address: 1, lineIndex: 1 },
+      { address: 2, lineIndex: 2 },
+      { address: 3, lineIndex: 3 },
+      { address: 4, lineIndex: 4 },
+    ]);
+    const out = interp.displayCodeSnippet(sm, 0);
+    const lines = out.split('\n').filter(Boolean);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain('->');
+  });
+
+  test('contextRows clamps at start of file (no negative indices)', () => {
+    const interp = loadedInterp();
+    const sm = makeSourceMap(['first', 'second', 'third'], [
+      { address: 0, lineIndex: 0 },
+      { address: 1, lineIndex: 1 },
+      { address: 2, lineIndex: 2 },
+    ]);
+    // PC=0 is at line 1 — contextRows=5 asks for 5 lines before, but we're at start
+    const out = interp.displayCodeSnippet(sm, 5);
+    const lines = out.split('\n').filter(Boolean);
+    // Should show lines 1, 2, 3 (no negative lines)
+    expect(lines.length).toBeLessThanOrEqual(3 + 5); // at most 3 lines above + current + 5 below
+    expect(out).not.toMatch(/undefined/);
+  });
+
+  test('line numbers are shown in the output', () => {
+    const interp = loadedInterp();
+    const sm = makeSourceMap(['mvi r0, 5', 'halt'], [
+      { address: 0, lineIndex: 0 },
+      { address: 1, lineIndex: 1 },
+    ]);
+    const out = interp.displayCodeSnippet(sm, 1);
+    expect(out).toMatch(/\d+:/); // line number followed by colon
+  });
+
+  test('runInteractive calls displayCodeSnippet when sourceMap is provided', () => {
+    const interp = loadedInterp();
+    interp.initialMem = interp.mem.slice();
+    interp.inputBuffer = 'q\n';
+    const sm = makeSourceMap(['mvi r0, 5', 'halt'], [
+      { address: 0, lineIndex: 0 },
+      { address: 1, lineIndex: 1 },
+    ]);
+    const spy = jest.spyOn(interp, 'displayCodeSnippet');
+    const stdoutMock = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+    const logMock = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const errMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    interp.runInteractive(sm);
+
+    expect(spy).toHaveBeenCalledWith(sm);
+    spy.mockRestore();
+    stdoutMock.mockRestore();
+    logMock.mockRestore();
+    errMock.mockRestore();
+  });
+
+  test('runInteractive does NOT call displayCodeSnippet when sourceMap is null', () => {
+    const interp = loadedInterp();
+    interp.initialMem = interp.mem.slice();
+    interp.inputBuffer = 'q\n';
+    const spy = jest.spyOn(interp, 'displayCodeSnippet');
+    const stdoutMock = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+    const logMock = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const errMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    interp.runInteractive(null);
+
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+    stdoutMock.mockRestore();
+    logMock.mockRestore();
+    errMock.mockRestore();
+  });
+});
