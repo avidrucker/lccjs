@@ -104,7 +104,7 @@ class ILCC {
     interpreter.loadExecutableFile(this.outputFileName);
 
     // sourceMap: PC → {sourceLine, lineNumber} — null until OB-043 (#95) is resolved
-    const sourceMap = null; // @todo #95 will wire assembler listing → sourceMap
+    const sourceMap = null; // OB-043 (#95): wire assembler listing → sourceMap once #77 is resolved
 
     // Enter the interactive prompt loop
     interpreter.runInteractive(sourceMap);
