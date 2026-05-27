@@ -192,19 +192,107 @@ class IInterpreter extends Interpreter {
     }
   }
 
-  // @todo #98:30m/DEV Implement displayRegisters(prevSnapshot, currSnapshot): show all 8 registers + flags; highlight changed values (OB-040)
+  // displayRegisters(prevSnapshot, currSnapshot) — render the register pane.
+  // Returns a multi-line string.
+  //
+  // Format (one line per row):
+  //   r0: XXXX  r1: XXXX  r2: XXXX  r3: XXXX
+  //   r4: XXXX  fp: XXXX  sp: XXXX  lr: XXXX
+  //   pc: XXXX  ir: XXXX
+  //   NZCV: NZCV
+  //
+  // Changed registers are highlighted: ANSI green in normal mode;
+  // '*' prefix in colorblind mode (-c).
   displayRegisters(prevSnapshot, currSnapshot) {
-    throw new Error('OB-040 not yet implemented — see @todo #98');
+    const prev = prevSnapshot;
+    const curr = currSnapshot;
+    const h4 = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
+
+    const fmt = (name, idx) => {
+      const val = h4(curr.registers[idx]);
+      if (prev && prev.registers[idx] !== curr.registers[idx]) {
+        return this.colorblindMode
+          ? `*${name}: ${val}`
+          : `${name}: \x1b[92m${val}\x1b[0m`;
+      }
+      return `${name}: ${val}`;
+    };
+
+    const fmtFlag = (name, oldVal, newVal) => {
+      if (prev && oldVal !== newVal) {
+        return this.colorblindMode
+          ? `*${name}:${newVal}`
+          : `${name}:\x1b[92m${newVal}\x1b[0m`;
+      }
+      return `${name}:${newVal}`;
+    };
+
+    const lines = [
+      `${fmt('r0',0)}  ${fmt('r1',1)}  ${fmt('r2',2)}  ${fmt('r3',3)}`,
+      `${fmt('r4',4)}  ${fmt('fp',5)}  ${fmt('sp',6)}  ${fmt('lr',7)}`,
+      `pc: ${h4(curr.pc)}  ir: ${h4(curr.ir)}`,
+    ];
+
+    const prevFlags = prev ? prev.flags : curr.flags;
+    const nzcv = ['n','z','c','v']
+      .map((f) => fmtFlag(f.toUpperCase(), prevFlags[f], curr.flags[f]))
+      .join(' ');
+    lines.push(`NZCV: ${nzcv}`);
+
+    return lines.join('\n');
   }
 
-  // @todo #89:30m/DEV Implement displayMemory(baseAddr, rows): show rows×8 memory words as 'ADDR: w0 w1 ... w7'; highlight PC row (OB-041)
+  // displayMemory(baseAddr, rows) — render the memory pane.
+  // Returns a multi-line string. Each output line shows 8 words:
+  //   ADDR: w0 w1 w2 w3 w4 w5 w6 w7
+  // All values are zero-padded 4-digit hex. Addresses wrap at 0xFFFF.
   displayMemory(baseAddr, rows) {
-    throw new Error('OB-041 not yet implemented — see @todo #89');
+    const h4 = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
+    let output = '';
+    for (let row = 0; row < rows; row++) {
+      const rowAddr = baseAddr + row * 8;
+      if (rowAddr > 0xFFFF) break;
+      const words = [];
+      for (let col = 0; col < 8; col++) {
+        const addr = rowAddr + col;
+        if (addr > 0xFFFF) break;
+        words.push(h4(this.mem[addr]));
+      }
+      output += `${h4(rowAddr)}: ${words.join(' ')}\n`;
+    }
+    return output;
   }
 
-  // @todo #92:30m/DEV Implement displayStack(anchor): show N words around anchor (hex addr or register name); mark SP position (OB-042)
+  // displayStack(anchor) — render the stack pane showing 8 words around the anchor.
+  // anchor may be: a register name ('sp', 'fp', 'r0'–'r7') or a hex string ('fff2').
+  // The current SP position is marked with '>'.
+  // Returns a multi-line string.
   displayStack(anchor) {
-    throw new Error('OB-042 not yet implemented — see @todo #92');
+    const h4 = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
+    const REG_ALIASES = { r0:0, r1:1, r2:2, r3:3, r4:4, fp:5, r5:5, sp:6, r6:6, lr:7, r7:7 };
+
+    let baseAddr;
+    if (typeof anchor === 'number') {
+      baseAddr = anchor & 0xFFFF;
+    } else if (Object.prototype.hasOwnProperty.call(REG_ALIASES, anchor)) {
+      baseAddr = this.r[REG_ALIASES[anchor]] & 0xFFFF;
+    } else {
+      baseAddr = parseInt(anchor, 16) & 0xFFFF;
+    }
+
+    const sp = this.r[6] & 0xFFFF;
+    const DISPLAY_ROWS = 8;
+    const startAddr = Math.max(0, baseAddr - Math.floor(DISPLAY_ROWS / 2));
+    let output = `Stack @ ${anchor} (${h4(baseAddr)}):\n`;
+    for (let i = 0; i < DISPLAY_ROWS; i++) {
+      const addr = startAddr + i;
+      if (addr > 0xFFFF) break;
+      const val = h4(this.mem[addr]);
+      const marker = addr === sp ? '>' : ' ';
+      const label = addr === sp ? '  <- sp' : '';
+      output += `${marker} ${h4(addr)}: ${val}${label}\n`;
+    }
+    return output;
   }
 
   // @todo #95:60m/DEV Implement displayCodeSnippet(sourceMap, contextRows): show current PC + N lines of context from sourceMap (OB-043)
