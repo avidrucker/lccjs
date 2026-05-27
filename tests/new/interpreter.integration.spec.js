@@ -304,55 +304,22 @@ describe('Interpreter Integration Tests', () => {
     expect(interpreter.output).toBe('42');
   });
 
-  // @todo #65:30m/DEV Rewrite using a minimal .a-to-.e hex fixture (OB-032):
-  //       `    br cheese` + `    halt` → pre-compute .e hex, inline as a hex
-  //       string, drop the longer fixture below. Example below:
-  //   ```bash
-  // ~/avi_tests$ cat scratch105.a
-  //    br cheese
-  //    halt
-  // ~/avi_tests$ ../lcc scratch105.a
-  // Starting assembly pass 1
-  // Starting assembly pass 2
-  // Error on line 1 of scratch105.a:
-  //    br cheese
-  // Undefined label
-  
-  // ~/avi_tests$ ../lcc scratch105.e
-  // Starting interpretation of scratch105.e
-  // lst file = scratch105.lst
-  // bst file = scratch105.bst
-  // ====================================================== Output
-  // Possible infinite loop
-  // a120: 0000     ; brz
-  // brz>>>q
-  // ```
-  // Removed from the active suite:
-  // "Undefined label at runtime" is the wrong abstraction boundary. Undefined
-  // labels are assembler errors, not interpreter errors. If we want bad
-  // control-flow coverage here, it should be replaced with a real executable
-  // that triggers a known interpreter runtime fault.
-  //
   // -----------------------------------------------------------------------------
-  // 12. (Potentially) referencing an undefined label at runtime => 
-  //     Typically the interpreter expects a fully assembled .e, 
-  //     so "undefined label" might not occur. This might be an assembler-level error. 
-  //     We'll simulate a jump to a nonsense address to see if interpreter complains.
+  // 12. Unsupported trap vector causes a runtime error (OB-032)
+  //     Fixture: oC signature (0x6F 0x43) + word 0xF00F + word 0xF000 (halt,
+  //     unreachable). Word 0xF00F = TRAP with vector 15; trap vectors 0–14
+  //     are handled; 15+ hit the default → 'Trap vector out of range'.
+  //     Words stored little-endian: 0xF00F → [0x0F, 0xF0].
   // -----------------------------------------------------------------------------
-  /*
-  test.skip('12. should fail if code tries to jump to an invalid address (simulate undefined label)', () => {
-    const eFilePath = 'undefinedLabel.e';
-    // 'oC' + something that jumps to address 0x270F + halt
-    // e.g. 0xC000 270F => This is purely hypothetical; your interpreter might differ.
-    const test12Bytes = [0x6F, 0x43, 0xC0, 0x00, 0x27, 0x0F, 0x00, 0xF0];
-    virtualFs[eFilePath] = Buffer.from(test12Bytes);
+  test('12. should throw a runtime error for an unsupported trap vector', () => {
+    const eFilePath = 'badTrap.e';
+    // trap vector 15 (0x0F) — unsupported → 'Trap vector out of range'
+    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x0F, 0xF0, 0x00, 0xF0]);
 
-    // Adjust the expected error message to match your interpreter's runtime error
     expect(() => {
       interpreter.main([eFilePath]);
-    }).toThrow('Runtime Error:');
+    }).toThrow('Trap vector out of range');
   });
-  */
 
   // -----------------------------------------------------------------------------
   // 13. Test multiple .e files each with name.nnn 
