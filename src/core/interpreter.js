@@ -1353,10 +1353,9 @@ class Interpreter {
         this.writeDebugOutputOrElse(udoutStr);
         break;
       case 4: // HOUT
-        // @todo #76:30m/DEV Wire -x: hout 4-digit hex when options.hexOutput (OB-036)
-        // With -x: houtStr.padStart(4, '0'); without: 2-digit (current behavior)
-        // print as hexadecimal
-        const houtStr = this.r[this.sr].toString(16).toLowerCase();
+        // print as hexadecimal; -x flag (options.hexOutput) forces 4-digit zero-padded output
+        const houtRaw = this.r[this.sr].toString(16).toLowerCase();
+        const houtStr = this.options.hexOutput ? houtRaw.padStart(4, '0') : houtRaw;
         this.writeDebugOutputOrElse(houtStr);
         break;
       case 5: // AOUT

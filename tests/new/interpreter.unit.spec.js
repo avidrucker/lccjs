@@ -400,4 +400,42 @@ describe('Interpreter Unit Tests', () => {
       expect(result.output).toContain('r0 = 0005');
     });
   });
+
+  // OB-036: -x flag hout 4-digit hex output
+  describe('-x flag (hout 4-digit hex)', () => {
+    // mvi r0, 255 / hout / nl / halt
+    const hout255 = Buffer.from([0x6F, 0x43, 0xFF, 0xD0, 0x04, 0xF0, 0x01, 0xF0, 0x00, 0xF0]);
+    // mvi r0, 16 / hout / nl / halt
+    const hout16  = Buffer.from([0x6F, 0x43, 0x10, 0xD0, 0x04, 0xF0, 0x01, 0xF0, 0x00, 0xF0]);
+
+    test('hout without -x: prints 2-digit hex (no leading zeros)', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(hout255, { inputFileName: 'hout.e' });
+      expect(result.output).toBe('ff\n');
+    });
+
+    test('hout with -x: prints 4-digit hex (leading zeros)', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(hout255, {
+        inputFileName: 'hout.e',
+        runtimeOptions: { hexOutput: true },
+      });
+      expect(result.output).toBe('00ff\n');
+    });
+
+    test('hout with -x: 16 (0x10) prints as 0010', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(hout16, {
+        inputFileName: 'hout.e',
+        runtimeOptions: { hexOutput: true },
+      });
+      expect(result.output).toBe('0010\n');
+    });
+
+    test('hout without -x: 16 (0x10) prints as 10', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(hout16, { inputFileName: 'hout.e' });
+      expect(result.output).toBe('10\n');
+    });
+  });
 });
