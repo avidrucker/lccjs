@@ -56,9 +56,76 @@ class IInterpreter extends Interpreter {
     this.snapshot.push(logEntry);
   }
 
-  // @todo #93:45m/DEV Override step(): save pre-step state, call super.step(), detect memory change, push logEntry to snapshot[] (OB-038)
+  // step() — execute one instruction and record a state delta in snapshot[].
+  // Overrides Interpreter.step() to add snapshot logging.
+  //
+  // Memory-change detection: scans loadPoint..memMax before and after execution
+  // to find the first word that changed. Covers ST/STR/LD-style writes within
+  // the loaded program region; stack writes (outside memMax) are not tracked here.
+  //
+  // Snapshot indexing:
+  //   - snapshot[0] = initial state (from initSnapshot())
+  //   - snapshot[N] = state after step N
+  //   - currentIteration tracks which snapshot index is the current position
+  //   - In efficient mode: only the two most-recent entries are kept
   step() {
-    throw new Error('OB-038 not yet implemented — see @todo #93');
+    // 1. Capture pre-step state
+    const preRegs = Array.from(this.r);
+    const preFlags = { c: this.c, v: this.v, n: this.n, z: this.z };
+    const loadPt = this.loadPoint;
+    const scanMax = this.memMax;
+    const preMem = this.mem.slice(loadPt, scanMax + 1);
+
+    // 2. Reset memory-change tracking for this instruction
+    this.memoryChange = {
+      hasChanged: false,
+      address: null,
+      old: null,
+      new: null,
+    };
+
+    // 3. Execute the instruction
+    super.step();
+
+    // 4. Detect first changed address in the loaded program region
+    for (let i = 0; i < preMem.length; i++) {
+      if (this.mem[loadPt + i] !== preMem[i]) {
+        this.memoryChange.hasChanged = true;
+        this.memoryChange.address = loadPt + i;
+        this.memoryChange.old = [preMem[i]];
+        this.memoryChange.new = [this.mem[loadPt + i]];
+        break;
+      }
+    }
+
+    // 5. Build the log entry for this step
+    const logEntry = {
+      pc: this.pc,
+      ir: this.ir,
+      registers: Array.from(this.r),
+      flags: { c: this.c, v: this.v, n: this.n, z: this.z },
+      memory: { ...this.memoryChange },
+    };
+
+    // 6. Append / overwrite snapshot at the next position
+    const nextIdx = this.currentIteration + 1;
+    if (!this.efficientMode) {
+      if (nextIdx >= this.snapshot.length) {
+        this.snapshot.push(logEntry);
+      } else {
+        // Re-stepping already-snapshotted territory (after backward step + re-forward)
+        this.snapshot[nextIdx] = logEntry;
+      }
+    } else {
+      // Efficient mode: keep only the two most-recent entries (prev + current)
+      if (this.snapshot.length < 2) {
+        this.snapshot.push(logEntry);
+      } else {
+        this.snapshot[0] = this.snapshot[1];
+        this.snapshot[1] = logEntry;
+      }
+    }
+    this.currentIteration = nextIdx;
   }
 
   // @todo #96:60m/DEV Implement handleSteps(N): forward N via step(); backward N via restoreFromTo() using snapshot deltas (OB-039)

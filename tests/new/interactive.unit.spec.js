@@ -22,11 +22,27 @@ const IInterpreter = require('../../src/interactive/iinterpreter');
 // Same buffer used in interpreter.unit.spec.js; verified to run correctly.
 const MIN_EXE = Buffer.from([0x6f, 0x43, 0x05, 0xd0, 0x02, 0xf0, 0x01, 0xf0, 0x00, 0xf0]);
 
-/** Load MIN_EXE into a fresh IInterpreter without running it. */
-function loadedInterp() {
+// ST executable: mvi r0, 99  →  st r0, val  →  halt  →  val:.fill 0
+// Used to test memory-write detection in step().
+// Encoding:
+//   0xD063 = MVI r0, 99  (opcode=13, dr=0, imm8=0x63)
+//   0x3001 = ST r0, +1   (opcode=3, sr=0, pcoffset9=1 → addr = PC_after_ST + 1 = 2+1 = 3)
+//   0xF000 = HALT
+//   0x0000 = val (data, initial=0)
+const ST_EXE = Buffer.from([0x6f, 0x43, 0x63, 0xd0, 0x01, 0x30, 0x00, 0xf0, 0x00, 0x00]);
+
+/** Load an executable buffer into a fresh IInterpreter without running it. */
+function loadedInterp(exe = MIN_EXE) {
   const interp = new IInterpreter();
-  interp.loadExecutableBuffer(MIN_EXE);
+  interp.loadExecutableBuffer(exe);
   interp.initialMem = interp.mem.slice();
+  return interp;
+}
+
+/** Load an executable, call initSnapshot(), and return the interpreter. */
+function snapshotInterp(exe = MIN_EXE) {
+  const interp = loadedInterp(exe);
+  interp.initSnapshot();
   return interp;
 }
 
@@ -108,6 +124,90 @@ describe('IInterpreter.initSnapshot()', () => {
     interp.initSnapshot();
     interp.initSnapshot();
     expect(interp.snapshot).toHaveLength(1);
+  });
+});
+
+describe('IInterpreter.step() — snapshot logging', () => {
+  beforeAll(() => {
+    // Suppress stdout/stderr from DOUT, NL, and internal console calls
+    jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    process.stdout.write.mockRestore();
+    console.log.mockRestore();
+    console.error.mockRestore();
+  });
+
+  test('one step: currentIteration becomes 1', () => {
+    const interp = snapshotInterp();
+    interp.step(); // MVI r0, 5
+    expect(interp.currentIteration).toBe(1);
+  });
+
+  test('one step: snapshot grows to length 2', () => {
+    const interp = snapshotInterp();
+    interp.step();
+    expect(interp.snapshot).toHaveLength(2);
+  });
+
+  test('two steps: currentIteration becomes 2', () => {
+    const interp = snapshotInterp();
+    interp.step(); // MVI r0, 5
+    interp.step(); // DOUT
+    expect(interp.currentIteration).toBe(2);
+  });
+
+  test('after MVI r0, 5: snapshot[1].registers[0] === 5', () => {
+    const interp = snapshotInterp();
+    interp.step(); // MVI r0, 5
+    expect(interp.snapshot[1].registers[0]).toBe(5);
+  });
+
+  test('after MVI r0, 5: snapshot[1].ir is the MVI instruction word', () => {
+    const interp = snapshotInterp();
+    interp.step();
+    // 0xD005: opcode=13 MVI, dr=0, imm8=5
+    expect(interp.snapshot[1].ir).toBe(0xD005);
+  });
+
+  test('after non-memory-writing step: memory.hasChanged is false', () => {
+    const interp = snapshotInterp();
+    interp.step(); // MVI r0, 5 — no memory write
+    expect(interp.snapshot[1].memory.hasChanged).toBe(false);
+  });
+
+  test('after ST: memory.hasChanged is true', () => {
+    const interp = snapshotInterp(ST_EXE);
+    interp.step(); // MVI r0, 99
+    interp.step(); // ST r0, 3
+    expect(interp.snapshot[2].memory.hasChanged).toBe(true);
+  });
+
+  test('after ST: memory.address points to the written location', () => {
+    const interp = snapshotInterp(ST_EXE);
+    interp.step(); // MVI r0, 99
+    interp.step(); // ST r0, 3
+    expect(interp.snapshot[2].memory.address).toBe(3);
+  });
+
+  test('after ST: memory.old was 0, memory.new is 99', () => {
+    const interp = snapshotInterp(ST_EXE);
+    interp.step(); // MVI r0, 99
+    interp.step(); // ST r0, 3
+    expect(interp.snapshot[2].memory.old).toEqual([0]);
+    expect(interp.snapshot[2].memory.new).toEqual([99]);
+  });
+
+  test('efficient mode: snapshot never exceeds length 2', () => {
+    const interp = snapshotInterp();
+    interp.efficientMode = true;
+    interp.step(); // MVI
+    interp.step(); // DOUT
+    interp.step(); // NL
+    expect(interp.snapshot.length).toBeLessThanOrEqual(2);
   });
 });
 
