@@ -211,6 +211,80 @@ describe('IInterpreter.step() — snapshot logging', () => {
   });
 });
 
+describe('IInterpreter.handleSteps() — forward/backward navigation', () => {
+  beforeAll(() => {
+    jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    process.stdout.write.mockRestore();
+    console.log.mockRestore();
+    console.error.mockRestore();
+  });
+
+  test('handleSteps(0) is a no-op', () => {
+    const interp = snapshotInterp();
+    interp.handleSteps(0);
+    expect(interp.currentIteration).toBe(0);
+    expect(interp.snapshot).toHaveLength(1);
+  });
+
+  test('handleSteps(3): currentIteration === 3 and snapshot.length === 4', () => {
+    const interp = snapshotInterp();
+    interp.handleSteps(3);
+    expect(interp.currentIteration).toBe(3);
+    expect(interp.snapshot).toHaveLength(4);
+  });
+
+  test('forward 3 then backward 2: currentIteration === 1', () => {
+    const interp = snapshotInterp();
+    interp.handleSteps(3);
+    interp.handleSteps(-2);
+    expect(interp.currentIteration).toBe(1);
+  });
+
+  test('forward 3 then backward 2: registers match snapshot[1]', () => {
+    const interp = snapshotInterp();
+    interp.handleSteps(3); // MVI r0,5 / DOUT / NL
+    const savedRegs = interp.snapshot[1].registers.slice();
+    interp.handleSteps(-2);
+    expect(Array.from(interp.r)).toEqual(savedRegs);
+  });
+
+  test('backward 5 from iteration 3: clamps to currentIteration 0', () => {
+    const interp = snapshotInterp();
+    interp.handleSteps(3);
+    interp.handleSteps(-5);
+    expect(interp.currentIteration).toBe(0);
+  });
+
+  test('backward to 0: registers match snapshot[0] (initial state)', () => {
+    const interp = snapshotInterp();
+    interp.handleSteps(3);
+    interp.handleSteps(-5);
+    expect(Array.from(interp.r)).toEqual(interp.snapshot[0].registers);
+  });
+
+  test('ST then backward: memory correctly restored', () => {
+    const interp = snapshotInterp(ST_EXE);
+    interp.handleSteps(2); // MVI r0, 99  →  ST r0, 3
+    expect(interp.mem[3]).toBe(99); // confirm write happened
+    interp.handleSteps(-1); // undo ST
+    expect(interp.mem[3]).toBe(0);  // memory restored to pre-ST value
+  });
+
+  test('efficient mode: backward step is ignored', () => {
+    const interp = snapshotInterp();
+    interp.efficientMode = true;
+    interp.handleSteps(3);
+    const iterBefore = interp.currentIteration;
+    interp.handleSteps(-1);
+    expect(interp.currentIteration).toBe(iterBefore); // unchanged
+  });
+});
+
 describe('IInterpreter unimplemented stubs', () => {
   // OB-046 (#91): backward stepping correctness
   // OB-047 (#94): display pane format correctness

@@ -128,9 +128,68 @@ class IInterpreter extends Interpreter {
     this.currentIteration = nextIdx;
   }
 
-  // @todo #96:60m/DEV Implement handleSteps(N): forward N via step(); backward N via restoreFromTo() using snapshot deltas (OB-039)
+  // handleSteps(N) — step forward N instructions (N > 0) or backward N (N < 0); N=0 is a no-op.
+  //
+  // Forward: calls step() N times while this.running; each call advances currentIteration
+  //   and appends/overwrites snapshot at currentIteration+1.
+  //
+  // Backward: restores state from snapshot[currentIteration - |N|] (clamped to 0).
+  //   Uses restorePrevState() which replays memory deltas in reverse without touching
+  //   the snapshot array, so a subsequent forward step can overwrite cleanly.
+  //
+  // Efficient mode: backward stepping is disabled (snapshot only has 1-2 entries);
+  //   a negative stepNumber is ignored silently.
   handleSteps(stepNumber) {
-    throw new Error('OB-039 not yet implemented — see @todo #96');
+    if (stepNumber === 0) return; // re-display without stepping
+
+    if (stepNumber > 0) {
+      for (let i = 0; i < stepNumber && this.running; i++) {
+        this.step();
+      }
+    } else {
+      if (this.efficientMode) return; // backward not supported in efficient mode
+      const newIteration = Math.max(this.currentIteration + stepNumber, 0);
+      this.restorePrevState(newIteration);
+      this.currentIteration = newIteration;
+    }
+  }
+
+  // restorePrevState(targetIteration) — restore CPU and memory to the state recorded
+  // in snapshot[targetIteration].
+  //
+  // CPU (pc, flags, registers) is read directly from the snapshot entry.
+  // Memory is restored by replaying memory deltas in reverse: for each step from
+  // currentIteration down to targetIteration+1, undo the memory write if hasChanged.
+  // We stop at targetIteration+1 (not targetIteration) because the delta recorded in
+  // snapshot[N] was the write that PRODUCED state N; it should remain applied.
+  restorePrevState(targetIteration) {
+    const log = this.snapshot[targetIteration];
+
+    // Restore CPU
+    this.pc = log.pc;
+    this.c = log.flags.c;
+    this.v = log.flags.v;
+    this.n = log.flags.n;
+    this.z = log.flags.z;
+    for (let i = 0; i < 8; i++) this.r[i] = log.registers[i];
+
+    // Restore memory by undoing writes from currentIteration down to targetIteration+1
+    for (let i = this.currentIteration; i > targetIteration; i--) {
+      if (this.snapshot[i] && this.snapshot[i].memory.hasChanged) {
+        this.restorePrevMemory(i);
+      }
+    }
+  }
+
+  // restorePrevMemory(state) — undo the memory write recorded in snapshot[state]
+  // by writing snapshot[state].memory.old back into this.mem.
+  restorePrevMemory(state) {
+    const delta = this.snapshot[state].memory;
+    if (delta.address != null) {
+      for (let i = 0; i < delta.old.length; i++) {
+        this.mem[delta.address + i] = delta.old[i];
+      }
+    }
   }
 
   // @todo #98:30m/DEV Implement displayRegisters(prevSnapshot, currSnapshot): show all 8 registers + flags; highlight changed values (OB-040)
