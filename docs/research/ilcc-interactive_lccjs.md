@@ -174,13 +174,36 @@ In rough ROI order:
 
 ---
 
-## Open Questions
+## Open Questions — RESOLVED 2026-05-27
 
-1. Does Charlie want `ilcc` as a separate binary (`ilcc.js`) or integrated into `lcc.js` as a mode flag (`lcc -i`)?
-2. Does the snapshot memory footprint cause problems for large programs? (Efficient mode exists but trades off time-travel.)
-3. Should LCC+ instructions stay in a separate assemblerplus/interpreterplus or be unified into the main modules behind a feature flag?
-4. Does Charlie's `iassembler.js` differ meaningfully from lccjs's `assembler.js`? (Need diff to find any divergences.)
-5. What is Charlie's `mvr` instruction? (Not in lccjs docs — need to check.)
+### #79 — ilcc as separate binary vs `lcc -i` mode flag
+**Decision: Separate binary (`ilcc.js`).** The interactive interpreter has a fundamentally different
+execution model (prompt-driven vs run-to-halt). Integrating as a flag would require messy branching.
+Mirrors the existing pattern: `lccplus.js` is separate from `lcc.js`. If Charlie wants `lcc -i`, it
+can be a thin alias later.
+
+### #85 — Does `iassembler.js` differ from lccjs's `assembler.js`?
+**No meaningful divergences.** `iassembler.js` is a near-copy of Charlie's `src/core/assembler.js`
+(tabs vs spaces only). lccjs's assembler is the more evolved version — adds `assembleSource()`,
+`resetAssemblyState()`, `createAssemblyResult()`, `AssemblerError`. When porting ilcc, use lccjs's
+assembler directly; retire `iassembler.js`.
+
+### #86 — What is `mvr`?
+**`mvr dr, sr1`** copies sr1 into dr. Encoding: `0xA000 | (dr<<9) | (sr1<<6) | 0x000C` (opcode A,
+eopcode 12). Oracle-confirmed (outputs correctly). **Already in lccjs at `assembler.js:1216`.**
+Nothing to port.
+
+### #80 — Snapshot memory footprint: is efficient mode (`-e`) sufficient?
+**Yes.** Each snapshot entry ≈ 120–150 bytes. At lccjs's 20K instruction cap: ~3 MB (negligible).
+At 100K: ~15 MB (fine). Efficient mode (`-e`, forward-only) is the correct escape hatch for
+long-running programs. Document this in `ilcc --help`. Future option: sliding window (keep last K
+snapshots) if the instruction cap is ever lifted.
+
+### #87 — LCC+ unification: separate files vs feature flag?
+**Keep separate (Option A).** LCC+ instructions are not in OG LCC (oracle rejects `nbain`, `rand`).
+The `extends Assembler` / `extends Interpreter` inheritance pattern is clean and protects oracle
+parity tests. LCC+ code is small (195 + 418 lines) — not worth merging into core. When porting
+ilcc, `IInterpreter extends Interpreter` (not InterpreterPlus).
 
 ---
 
