@@ -2063,9 +2063,15 @@ class Assembler {
     return value;
   }
 
-  // @todo #61:60m/DEV Add undefined-label detection here (OB-028)
   handleExternalReference(label, usageType) {
-    // Check if we've already created an entry for this label and usage type
+    // Records an external label reference for the linker to resolve.
+    // Callers guard with `externLabels.has(label)` before calling here, so
+    // `label` is always a declared .extern symbol at this point.
+    //
+    // Undefined-label detection for non-extern operands is handled in
+    // evaluateOperand (throws 'Undefined label').
+    // Undefined external symbols (used but never defined in any linked module)
+    // is a linker-level concern, not detectable here.
     if (!this.externalReferences.some(ref => ref.label === label && ref.type === usageType)) {
       this.externalReferences.push({
         label: label,
@@ -2075,12 +2081,42 @@ class Assembler {
     }
   }
 
-  // @todo #61:60m/DEV Implement systematic operand type checking (OB-028): {valid: ["num", "char", "label"]} schema per mnemonic
+  /**
+   * Classifies the raw syntactic type of an operand token WITHOUT evaluating it.
+   * This is the foundation for per-mnemonic type-validation schemas.
+   *
+   * Returned types:
+   *   'char'  – character literal, e.g. 'a' or '\n'
+   *   'num'   – numeric literal (decimal or hex), e.g. 42 or 0x2a or -3
+   *   'star'  – current-PC marker, * or *+N / *-N
+   *   'label' – symbolic label reference, possibly with offset (e.g. foo, foo+3)
+   *
+   * Future: callers may pass an `allowedTypes` array (e.g. ['num', 'char', 'label'])
+   * built from a per-mnemonic schema; evaluateOperand would call this method and
+   * throw a typed error on mismatch. This requires oracle research to determine
+   * which operand type mismatches the LCC rejects. See core-behavior-matrix.md
+   * → "Operand type checking" for the current Research status.
+   *
+   * @param {string} operand - The raw operand token (not yet evaluated).
+   * @returns {'char' | 'num' | 'star' | 'label'}
+   */
+  determineOperandType(operand) {
+    if (this.isCharLiteral(operand)) return 'char';
+    if (operand.length > 0 && operand[0] === '*') return 'star';
+    const n = this.parseNumber(operand);
+    if (n !== null && !isNaN(n)) return 'num';
+    return 'label';
+  }
+
   /**
    * Evaluates an operand and returns its corresponding value.
    * The operand can be a pure number, a label with an optional offset, or a plain label.
    * Additionally, the operand can be a location marker indicated with the '*' character.
-   * 
+   *
+   * Currently accepts any syntactic form (num, char, label, star) for any mnemonic.
+   * Use determineOperandType() before calling here to inspect the raw form when
+   * per-mnemonic type schemas are eventually enforced.
+   *
    * @param {string} operand - The operand to evaluate.
    * @param {string} usageType - The context in which the operand is used (e.g., for external references).
    * @returns {number|null} - The evaluated value of the operand, or null if the operand is undefined.

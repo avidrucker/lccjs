@@ -242,4 +242,66 @@ describe('Assembler Unit Tests', () => {
       assembler.assembleSource(source, { inputFileName: 'longLine.a' });
     }).toThrow(AssemblerError);
   });
+
+  // --- determineOperandType() ---
+  // Classifies the raw syntactic type of a token without evaluating it.
+  // This is the foundation for future per-mnemonic operand-type schemas.
+  // See docs/core-behavior-matrix.md → "Operand type checking" for Research status.
+
+  describe('determineOperandType()', () => {
+    let a;
+    beforeEach(() => { a = new Assembler(); });
+
+    test('classifies a decimal number as num', () => {
+      expect(a.determineOperandType('42')).toBe('num');
+    });
+
+    test('classifies a negative decimal number as num', () => {
+      expect(a.determineOperandType('-3')).toBe('num');
+    });
+
+    test('classifies a positive-prefixed number as num', () => {
+      expect(a.determineOperandType('+5')).toBe('num');
+    });
+
+    test('classifies a hex literal as num', () => {
+      expect(a.determineOperandType('0xFF')).toBe('num');
+    });
+
+    test('classifies a zero as num', () => {
+      expect(a.determineOperandType('0')).toBe('num');
+    });
+
+    test("classifies a char literal as char", () => {
+      expect(a.determineOperandType("'a'")).toBe('char');
+    });
+
+    test("classifies a newline escape char literal as char", () => {
+      expect(a.determineOperandType("'\\n'")).toBe('char');
+    });
+
+    test('classifies a bare symbol name as label', () => {
+      expect(a.determineOperandType('foo')).toBe('label');
+    });
+
+    test('classifies a symbol+offset as label', () => {
+      expect(a.determineOperandType('foo+3')).toBe('label');
+    });
+
+    test('classifies a symbol-offset as label', () => {
+      expect(a.determineOperandType('foo-1')).toBe('label');
+    });
+
+    test('classifies * as star', () => {
+      expect(a.determineOperandType('*')).toBe('star');
+    });
+
+    test('classifies *+N as star', () => {
+      expect(a.determineOperandType('*+2')).toBe('star');
+    });
+
+    test('classifies *-N as star', () => {
+      expect(a.determineOperandType('*-1')).toBe('star');
+    });
+  });
 });

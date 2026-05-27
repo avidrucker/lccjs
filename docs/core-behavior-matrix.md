@@ -70,6 +70,12 @@ The tokenizer splits on whitespace and commas; `+` and `-` are not delimiters.
 - `Preserve`: `ret N`, `ret +N`, `ret -N` are the accepted offset forms (N in [-32..31])
 - `Preserve`: `ret+N` (no space) is rejected as an unknown mnemonic, not a spacing variant
 
+### Operand type checking
+
+- `Preserve`: `evaluateOperand` currently accepts any syntactic form (num, char, label, star) for any mnemonic — no per-instruction type restrictions are enforced at the assembler level
+- `Pure API`: `determineOperandType(operand)` classifies a raw operand token as `'num'`, `'char'`, `'label'`, or `'star'` without evaluating it; this is the foundation for future per-mnemonic schemas
+- `Research`: which operand type mismatches the oracle actually rejects (e.g., char literal as branch target, raw number as the only operand to a branch) — required before per-mnemonic schemas can be safely enforced without oracle parity risk
+
 ### Object modules and output
 
 - `Preserve`: `.global` / `.extern` can cause `.o` output
