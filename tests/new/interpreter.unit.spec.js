@@ -352,4 +352,52 @@ describe('Interpreter Unit Tests', () => {
       expect(result.output).not.toContain('0000: d005');
     });
   });
+
+  // OB-035: -r flag post-run register display
+  describe('-r flag (post-run register display)', () => {
+    // demoA: mvi r0, 5 / dout / nl / halt
+    const demoA = Buffer.from([0x6f, 0x43, 0x05, 0xd0, 0x02, 0xf0, 0x01, 0xf0, 0x00, 0xf0]);
+
+    test('executeBuffer() without regDisplay: no register display block in output', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(demoA, { inputFileName: 'demoA.e' });
+      expect(result.output).not.toContain('Register display');
+    });
+
+    test('executeBuffer() with regDisplay: output contains register display banners', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(demoA, {
+        inputFileName: 'demoA.e',
+        runtimeOptions: { regDisplay: true },
+      });
+      expect(result.output).toContain('Register display');
+      expect(result.output).toContain('End of register display');
+    });
+
+    test('executeBuffer() with regDisplay: shows all register names', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(demoA, {
+        inputFileName: 'demoA.e',
+        runtimeOptions: { regDisplay: true },
+      });
+      expect(result.output).toContain('pc =');
+      expect(result.output).toContain('ir =');
+      expect(result.output).toContain('NZCV =');
+      expect(result.output).toContain('r0 =');
+      expect(result.output).toContain('r4 =');
+      expect(result.output).toContain('fp =');
+      expect(result.output).toContain('sp =');
+      expect(result.output).toContain('lr =');
+    });
+
+    test('executeBuffer() with regDisplay: r0 shows 5 after mvi r0, 5', () => {
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(demoA, {
+        inputFileName: 'demoA.e',
+        runtimeOptions: { regDisplay: true },
+      });
+      // r0 should be 0x0005 after mvi r0, 5
+      expect(result.output).toContain('r0 = 0005');
+    });
+  });
 });

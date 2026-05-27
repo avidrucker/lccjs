@@ -294,8 +294,15 @@ class Interpreter {
         }
         this.writeOutput('--------------------------------------- End of memory display\n');
       }
-      // @todo #75:30m/DEV Wire -r: post-run register display (OB-035)
-      // After run(), if options.regDisplay, print pc/ir/NZCV/r0-r4/fp/sp/lr
+      if (runtimeOptions.regDisplay) {
+        const h = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
+        const nzcv = `${this.n}${this.z}${this.c}${this.v}`;
+        this.writeOutput('\n-------------------------------------------- Register display\n');
+        this.writeOutput(`pc = ${h(this.pc)}  ir = ${h(this.ir)}  NZCV = ${nzcv}\n`);
+        this.writeOutput(`r0 = ${h(this.r[0])}  r1 = ${h(this.r[1])}  r2 = ${h(this.r[2])}  r3 = ${h(this.r[3])}  \n`);
+        this.writeOutput(`r4 = ${h(this.r[4])}  fp = ${h(this.r[5])}  sp = ${h(this.r[6])}  lr = ${h(this.r[7])}  \n`);
+        this.writeOutput('------------------------------------- End of register display\n');
+      }
     } finally {
       this.allowRuntimeDebugging = false;
     }
