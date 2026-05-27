@@ -15,11 +15,45 @@
 const Interpreter = require('../core/interpreter');
 
 class IInterpreter extends Interpreter {
-  // @todo #90:45m/DEV Create IInterpreter constructor; init snapshot[], currentIteration, memoryChange; implement initSnapshot() (OB-037)
   constructor() {
     super();
-    // snapshot system and efficient-mode flag go here
-    throw new Error('OB-037 not yet implemented — see @todo #90');
+
+    // Snapshot / time-travel state
+    this.snapshot = [];           // Per-instruction state deltas; index 0 = initial state
+    this.currentIteration = 0;   // Which snapshot index is currently active (≥ 0)
+    this.memoryChange = null;     // Most-recent memory delta; set by initSnapshot() and step()
+
+    // Mode flags (set from CLI options in runInteractive)
+    this.efficientMode = false;   // -e: disable snapshot logging (forward-only, lower memory)
+    this.colorblindMode = false;  // -c: alternate ANSI color palette
+
+    // Display configuration — mutable at runtime via prompt commands
+    this.memDisplayBase = 0;      // a{hex}: base address for the memory pane
+    this.memDisplayRows = 2;      // m{int}: number of rows (8 words each) in the memory pane
+    this.stackAnchor = 'sp';      // s{hex|register}: anchor for the stack pane
+  }
+
+  // initSnapshot() — capture the pre-execution initial machine state as snapshot[0].
+  // Must be called AFTER loadExecutableBuffer() and this.initialMem = this.mem.slice()
+  // so that this.loadPoint, this.memMax, this.pc, this.r, this.initialMem are all set.
+  // Analogous to Charlie's initializeLog() in interactive_lccjs/src/interactive/iinterpreter.js.
+  initSnapshot() {
+    this.snapshot = [];
+    this.currentIteration = 0;
+    this.memoryChange = {
+      hasChanged: false,
+      address: this.loadPoint,
+      old: Array(this.memMax + 1 - this.loadPoint).fill(0),
+      new: Array.from(this.initialMem.slice(this.loadPoint, this.memMax + 1)),
+    };
+    const logEntry = {
+      pc: this.pc,
+      ir: 0,
+      registers: Array.from(this.r),
+      flags: { c: this.c, v: this.v, n: this.n, z: this.z },
+      memory: this.memoryChange,
+    };
+    this.snapshot.push(logEntry);
   }
 
   // @todo #93:45m/DEV Override step(): save pre-step state, call super.step(), detect memory change, push logEntry to snapshot[] (OB-038)
