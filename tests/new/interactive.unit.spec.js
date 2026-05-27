@@ -285,9 +285,116 @@ describe('IInterpreter.handleSteps() — forward/backward navigation', () => {
   });
 });
 
-describe('IInterpreter unimplemented stubs', () => {
-  // OB-046 (#91): backward stepping correctness
-  // OB-047 (#94): display pane format correctness
-  test.todo('OB-046: backward stepping — resolve #93/#96 first');
-  test.todo('OB-047: display format — resolve #98/#89/#92 first');
+describe('IInterpreter.displayRegisters() — register pane format (OB-047)', () => {
+  function mkSnapshot(regs, flags, pc = 0, ir = 0) {
+    return {
+      registers: regs || [0, 0, 0, 0, 0, 0, 0, 0],
+      flags: flags || { n: 0, z: 0, c: 0, v: 0 },
+      pc,
+      ir,
+    };
+  }
+
+  test('output contains r0:', () => {
+    const interp = new IInterpreter();
+    const s = mkSnapshot();
+    expect(interp.displayRegisters(s, s)).toContain('r0:');
+  });
+
+  test('output contains fp:', () => {
+    const interp = new IInterpreter();
+    const s = mkSnapshot();
+    expect(interp.displayRegisters(s, s)).toContain('fp:');
+  });
+
+  test('output contains sp:', () => {
+    const interp = new IInterpreter();
+    const s = mkSnapshot();
+    expect(interp.displayRegisters(s, s)).toContain('sp:');
+  });
+
+  test('output contains lr:', () => {
+    const interp = new IInterpreter();
+    const s = mkSnapshot();
+    expect(interp.displayRegisters(s, s)).toContain('lr:');
+  });
+
+  test('output contains NZCV:', () => {
+    const interp = new IInterpreter();
+    const s = mkSnapshot();
+    expect(interp.displayRegisters(s, s)).toContain('NZCV:');
+  });
+
+  test('changed r0 is visually marked (colorblind mode uses * prefix)', () => {
+    const interp = new IInterpreter();
+    interp.colorblindMode = true;
+    const prev = mkSnapshot([0, 0, 0, 0, 0, 0, 0, 0]);
+    const curr = mkSnapshot([5, 0, 0, 0, 0, 0, 0, 0]);
+    const out = interp.displayRegisters(prev, curr);
+    expect(out).toContain('*r0:');   // marked
+    expect(out).toContain('r1:');    // unchanged (no *)
+    expect(out).not.toContain('*r1:');
+  });
+
+  test('unchanged registers show no * marker in colorblind mode', () => {
+    const interp = new IInterpreter();
+    interp.colorblindMode = true;
+    const s = mkSnapshot([7, 7, 7, 7, 7, 7, 7, 7]);
+    const out = interp.displayRegisters(s, s);
+    expect(out).not.toContain('*');
+  });
+});
+
+describe('IInterpreter.displayMemory() — memory pane format (OB-047)', () => {
+  test('displayMemory(0, 1) contains "0000:"', () => {
+    const interp = new IInterpreter();
+    expect(interp.displayMemory(0, 1)).toContain('0000:');
+  });
+
+  test('displayMemory(0, 1) shows 8 hex words on the first row', () => {
+    const interp = new IInterpreter();
+    const line = interp.displayMemory(0, 1).trim();
+    // format: "0000: w0 w1 w2 w3 w4 w5 w6 w7"
+    const words = line.split(' ');
+    // words[0] = "0000:", words[1..8] are the 8 memory values
+    expect(words.length).toBe(9); // "0000:" + 8 words
+  });
+
+  test('displayMemory(0x10, 1) starts with "0010:"', () => {
+    const interp = new IInterpreter();
+    expect(interp.displayMemory(0x10, 1)).toMatch(/^0010:/);
+  });
+
+  test('displayMemory(0, 2) has two address rows', () => {
+    const interp = new IInterpreter();
+    const output = interp.displayMemory(0, 2);
+    expect(output).toContain('0000:');
+    expect(output).toContain('0008:');
+  });
+});
+
+describe('IInterpreter.displayStack() — stack pane format (OB-047)', () => {
+  test('output contains the word at the SP address', () => {
+    const interp = new IInterpreter();
+    // sp = 0 (default), mem[0] = 0 → should show "0000: 0000" in the output
+    const out = interp.displayStack('sp');
+    expect(out).toContain('0000: 0000');
+  });
+
+  test('output marks SP position with ">"', () => {
+    const interp = new IInterpreter();
+    expect(interp.displayStack('sp')).toContain('> 0000:');
+  });
+
+  test('output includes "-> sp" label at SP row', () => {
+    const interp = new IInterpreter();
+    expect(interp.displayStack('sp')).toContain('<- sp');
+  });
+
+  test('hex string anchor sets base address correctly', () => {
+    const interp = new IInterpreter();
+    // Passing hex address '0010' with sp=0 (not in view) → anchor shown in header
+    const out = interp.displayStack('0010');
+    expect(out).toContain('(0010)');
+  });
 });
