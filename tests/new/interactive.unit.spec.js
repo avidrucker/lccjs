@@ -384,3 +384,81 @@ describe('IInterpreter.displayStack() — stack pane format (OB-047)', () => {
     expect(out).toContain('(0010)');
   });
 });
+
+describe('IInterpreter.runInteractive() — prompt loop (OB-044)', () => {
+  let stdoutSpy;
+
+  beforeEach(() => {
+    stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    stdoutSpy.mockRestore();
+    console.log.mockRestore();
+    console.error.mockRestore();
+  });
+
+  function runWithInput(exe, inputStr) {
+    const interp = loadedInterp(exe);
+    interp.initialMem = interp.mem.slice();
+    interp.inputBuffer = inputStr;
+    interp.runInteractive(null);
+    return interp;
+  }
+
+  test('q immediately quits without stepping', () => {
+    const interp = runWithInput(MIN_EXE, 'q\n');
+    expect(interp.currentIteration).toBe(0);
+  });
+
+  test('stepping forward: 1 step changes currentIteration to 1', () => {
+    const interp = runWithInput(MIN_EXE, '1\nq\n');
+    expect(interp.currentIteration).toBe(1);
+  });
+
+  test('stepping forward: after MVI r0,5, r0 === 5', () => {
+    const interp = runWithInput(MIN_EXE, '1\nq\n');
+    expect(interp.r[0]).toBe(5);
+  });
+
+  test('step + backward: returns to initial state', () => {
+    const interp = runWithInput(MIN_EXE, '1\n-1\nq\n');
+    expect(interp.currentIteration).toBe(0);
+    expect(interp.r[0]).toBe(0);
+  });
+
+  test('memory command a{hex} updates memDisplayBase', () => {
+    const interp = runWithInput(MIN_EXE, 'a0010\nq\n');
+    expect(interp.memDisplayBase).toBe(0x10);
+  });
+
+  test('row command m{N} updates memDisplayRows', () => {
+    const interp = runWithInput(MIN_EXE, 'm4\nq\n');
+    expect(interp.memDisplayRows).toBe(4);
+  });
+
+  test('stack command s{anchor} updates stackAnchor', () => {
+    const interp = runWithInput(MIN_EXE, 'sfp\nq\n');
+    expect(interp.stackAnchor).toBe('fp');
+  });
+
+  test('h command writes help text to stdout', () => {
+    runWithInput(MIN_EXE, 'h\nq\n');
+    const allOutput = stdoutSpy.mock.calls.map((c) => c[0]).join('');
+    expect(allOutput).toContain('ilcc interactive commands');
+  });
+
+  test('0 command redisplays without stepping', () => {
+    const interp = runWithInput(MIN_EXE, '0\nq\n');
+    expect(interp.currentIteration).toBe(0);
+  });
+
+  test('output pane shows registers on each render', () => {
+    runWithInput(MIN_EXE, 'q\n');
+    const allOutput = stdoutSpy.mock.calls.map((c) => c[0]).join('');
+    expect(allOutput).toContain('r0:');
+    expect(allOutput).toContain('NZCV:');
+  });
+});

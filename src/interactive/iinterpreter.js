@@ -49,6 +49,7 @@ class IInterpreter extends Interpreter {
     const logEntry = {
       pc: this.pc,
       ir: 0,
+      running: this.running,
       registers: Array.from(this.r),
       flags: { c: this.c, v: this.v, n: this.n, z: this.z },
       memory: this.memoryChange,
@@ -102,6 +103,7 @@ class IInterpreter extends Interpreter {
     const logEntry = {
       pc: this.pc,
       ir: this.ir,
+      running: this.running,
       registers: Array.from(this.r),
       flags: { c: this.c, v: this.v, n: this.n, z: this.z },
       memory: { ...this.memoryChange },
@@ -167,6 +169,7 @@ class IInterpreter extends Interpreter {
 
     // Restore CPU
     this.pc = log.pc;
+    this.running = log.running !== undefined ? log.running : true;
     this.c = log.flags.c;
     this.v = log.flags.v;
     this.n = log.flags.n;
@@ -301,9 +304,123 @@ class IInterpreter extends Interpreter {
     throw new Error('OB-043 not yet implemented (blocked by #77) — see @todo #95');
   }
 
-  // @todo #97:45m/DEV Implement runInteractive(sourceMap): prompt loop — renderDisplay, read command, dispatch handleSteps/config/quit (OB-044)
+  // runInteractive(sourceMap) — main interactive prompt loop.
+  // Called after the executable is loaded (loadExecutableBuffer) and
+  // this.initialMem is set. Renders state after each command.
+  //
+  // Commands (entered at "Input: " prompt):
+  //   {N}       step forward N instructions
+  //   {-N}      step backward N instructions (time-travel)
+  //   0         re-display current state without stepping
+  //   a{hex}    set memory display base address (e.g. a0010)
+  //   m{N}      set memory display row count (e.g. m4)
+  //   s{anchor} set stack anchor: register name or hex addr (e.g. ssp, s0ff0)
+  //   h         show this help
+  //   q         quit
+  //
+  // sourceMap (optional) — Map<pc, {lineNumber, sourceLine}> for the code snippet pane;
+  // passed to displayCodeSnippet() once OB-043 / #95 is resolved.
   runInteractive(sourceMap) {
-    throw new Error('OB-044 not yet implemented — see @todo #97');
+    this.initSnapshot();
+    this.spInitial = this.r[6];
+
+    const renderDisplay = () => {
+      const prevIdx = Math.max(0, this.currentIteration - 1);
+      const prev = this.snapshot[prevIdx];
+      const curr = this.snapshot[this.currentIteration];
+      process.stdout.write(this.displayRegisters(prev, curr) + '\n');
+      process.stdout.write(this.displayMemory(this.memDisplayBase, this.memDisplayRows) + '\n');
+      process.stdout.write(this.displayStack(this.stackAnchor) + '\n');
+      if (!this.running) {
+        process.stdout.write('--- Program halted. Step back with -N, or quit with q. ---\n');
+      }
+    };
+
+    renderDisplay();
+    process.stdout.write("Enter 'h' for help.\n");
+
+    let lastStep = 1; // remembered across prompts
+
+    while (true) {
+      process.stdout.write('Input: ');
+      const { inputLine } = this.readLineFromStdin();
+      const cmd = inputLine.trim();
+
+      if (cmd === 'q') break;
+
+      if (cmd === 'h') {
+        process.stdout.write(this.displayHelp());
+        continue;
+      }
+
+      if (cmd === '0') {
+        renderDisplay();
+        continue;
+      }
+
+      if (cmd.startsWith('a')) {
+        const addr = parseInt(cmd.slice(1), 16);
+        if (!isNaN(addr)) this.memDisplayBase = addr & 0xFFFF;
+        renderDisplay();
+        continue;
+      }
+
+      if (cmd.startsWith('m')) {
+        const n = parseInt(cmd.slice(1));
+        if (!isNaN(n) && n >= 0) this.memDisplayRows = n;
+        renderDisplay();
+        continue;
+      }
+
+      if (cmd.startsWith('s') && cmd.length > 1) {
+        this.stackAnchor = cmd.slice(1);
+        renderDisplay();
+        continue;
+      }
+
+      // Numeric step command (may be negative)
+      const n = parseInt(cmd, 10);
+      if (!isNaN(n)) {
+        if (n !== 0) lastStep = n;
+        const steps = n;
+        if (steps > 0 && !this.running) {
+          process.stdout.write('Program has halted. Step back with -N first.\n');
+          continue;
+        }
+        this.handleSteps(steps);
+        renderDisplay();
+        continue;
+      }
+
+      // Empty input: repeat last step count
+      if (cmd === '') {
+        if (lastStep > 0 && !this.running) {
+          process.stdout.write('Program has halted. Step back with -N first.\n');
+          continue;
+        }
+        this.handleSteps(lastStep);
+        renderDisplay();
+        continue;
+      }
+
+      process.stdout.write(`Unknown command: ${cmd}. Enter 'h' for help.\n`);
+    }
+  }
+
+  // displayHelp() — return the interactive mode help text.
+  displayHelp() {
+    return [
+      'ilcc interactive commands:',
+      '  {N}       step forward N instructions',
+      '  {-N}      step backward N instructions',
+      '  0         re-display without stepping',
+      '  <enter>   repeat last step count',
+      '  a{hex}    set memory base address (e.g. a0010)',
+      '  m{N}      set memory row count    (e.g. m4)',
+      '  s{anchor} set stack anchor        (e.g. ssp, sfff2)',
+      '  h         show this help',
+      '  q         quit',
+    ].join('\n') + '\n';
   }
 }
 
