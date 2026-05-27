@@ -47,11 +47,9 @@ The design goal is:
 
 ## Installation
 
-Requirements:
+LCC.js has **no runtime dependencies** — Node.js is all you need to use the CLI tools directly.
 
-- Node.js
-
-Install dependencies:
+`npm install` is only needed for development and testing (installs `jest` for the test suite and `dotenv` for oracle-parity tests):
 
 ```bash
 npm install
