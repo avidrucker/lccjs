@@ -163,15 +163,50 @@ exit-0 outcome must be preserved whenever the error-handling path is changed.
 
 ---
 
+### 9. Empty / whitespace-only `.a`: LCC.js exits 0 with no artifacts; OG LCC exits 1 with header-only listings
+
+| | cuh63 6.3 | LCC.js |
+|---|---|---|
+| stdout | `Starting assembly pass 1` then `Empty file` | `Starting assembly pass 1` only |
+| exit code | `1` | `0` |
+| `.lst` / `.bst` | written, header-only (82 bytes: version/date header + author line + trailing blank line) | **not** written |
+| `.e` | not written | not written |
+
+**Cause (LCC.js):** after Pass 1, when `locCtr === 0` (no instructions or data
+emitted), `assembler.js` calls `abortAssembly('Empty file', 0)`. In CLI mode
+`abortAssembly` routes to `fatalExit(message, 0)`, which calls `process.exit(0)`
+and **discards the message** (the text only surfaces in test mode). Because the
+abort short-circuits Pass 2 and the post-execution report step in `lcc.js`, no
+`.lst`/`.bst`/`.e` files are generated.
+
+**OG LCC behavior:** prints `Empty file`, exits `1`, but still emits header-only
+`.lst` and `.bst` reports. (Note: the original #106 premise said "no error is
+reported" — in fact OG LCC prints `Empty file` and exits non-zero; only the
+listing files are header-only.)
+
+**Why BY DESIGN:** the exit code `0` is a deliberate LCC.js choice — the
+empty-input handling is annotated "custom LCC.js behavior in 12/2024" in the
+sibling `.hex`/`.bin` paths (`assembler.js:833`, `:905`). LCC.js treats a
+degenerate empty/whitespace source as a clean no-op rather than an error.
+
+**Note for future parity work:** if strict CLI parity is ever required, two
+sub-divergences remain — (a) exit code `0` vs `1` (flip the code at
+`assembler.js:368`), and (b) LCC.js emits no header-only listings. Both are
+currently intentional no-ops; neither is tracked as a bug.
+
+**Source:** `src/core/assembler.js:367–369` (`abortAssembly('Empty file', 0)`),
+`src/core/assembler.js:47–53` (`fatalExit` drops the message at code 0)
+
+**Repro:** `node src/core/lcc.js empty.a` on a 0-byte or whitespace-only `.a`;
+oracle `lcc empty1.a` for comparison.
+
+---
+
 ## Pending parity investigations (stubs)
 
 <!-- @todo #105:45m/DEV Characterize lccjs behavior for undefined-label `br` (oracle produces blank .e); replace this stub with a full deviation entry. See #105 -->
 
 ### (pending #105) Undefined-label `br` — oracle produces blank `.e`
-
-<!-- @todo #106:30m/DEV Characterize lccjs behavior for empty `.a` input (oracle produces header-only .bst/.lst); replace this stub with a full deviation entry. See #106 -->
-
-### (pending #106) Empty `.a` — oracle produces header-only `.bst`/`.lst`
 
 ---
 
@@ -181,3 +216,4 @@ exit-0 outcome must be preserved whenever the error-handling path is changed.
 |---|---|---|
 | 2026-05-26 | Initial creation | Deviations 1–8 documented |
 | 2026-05-27 | Pending stubs added | Reserved sections for #105, #106 (split from #29) |
+| 2026-05-28 | Deviation 9 added | Characterized empty/whitespace `.a` (#106): LCC.js exit 0 + no artifacts vs OG exit 1 + header-only listings; classified BY DESIGN |
