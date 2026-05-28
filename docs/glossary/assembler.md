@@ -6,7 +6,6 @@ The original spike (#108) has been decomposed into 5 sub-spikes, each covering a
 coherent section of the file. The write phase (#111) consolidates the
 inventoried terms into definitions once all 5 spikes have closed.
 
-<!-- @todo #122:60m/WRITER Spike (d): inventory LCC-specific terms in per-instruction encoders (lines 1408-1980). See #122 -->
 <!-- @todo #123:60m/WRITER Spike (e): inventory LCC-specific terms in operand parsing helpers (lines 1985-2290). See #123 -->
 <!-- @todo #111:60m/WRITER Write definitions for each inventoried term; LCC-specific angle only. Blocked by spikes (a)-(e). See #111 -->
 
@@ -59,7 +58,14 @@ area. Terms only — definitions land in the section below.
 <!-- @todo #124:30m/ARC design glossary entry shape — one consolidated entry vs per-marker split. See #124 -->
 - `'o'` intro header byte (ASCII signature)
 - Second intro header (extension hook — `'p'` for LCC+ `.ep`)
-- Header entry types (typed records, sorted by address): `'S'`, `'G'`, `'E'`, `'e'`, `'V'`, `'A'` <!-- @todo #125:30m/WRITER differentiate 'E' / 'e' / 'V' (check linker.js for consumer semantics). See #125 -->
+- Header entry types (typed records, sorted by address) — resolved per #125:
+  - `'S'` — start address (from `.start`)
+  - `'G'` — global label export (from `.global`)
+  - `'E'` (uppercase) — external reference for `bl` (`pcoffset11` fixup)
+  - `'e'` (lowercase) — external reference for `ld` / `st` / `lea` / `br` (`pcoffset9` fixup)
+  - `'V'` (uppercase) — external reference for `.word` (full 16-bit value fixup)
+  - `'A'` — adjustment entry (local label+offset, signals the linker to relocate)
+  - The `usageType` parameter to `evaluateOperand(label, usageType)` selects which fixup kind to record (`'e'` / `'E'` / `'V'`); the linker reads the header-entry type byte and applies the matching fixup
 - `'C'` code start marker
 - UInt16LE encoding for addresses and machine words
 - Null-terminated label strings in label-bearing entries
@@ -204,7 +210,98 @@ area. Terms only — definitions land in the section below.
 
 ### (d) Per-instruction encoders — populated by #122
 
-_To be filled in._
+**16-bit instruction word field layout:**
+
+| Bits | Field |
+|---|---|
+| 15-12 | opcode nibble (4 bits) |
+| 11-9 | `dr` / `sr` / branch condition `cc` (3 bits) |
+| 8-6 | `sr1` / `baser` (3 bits) |
+| 5 | "form bit" — 0 = register form, 1 = immediate form (ADD/SUB/AND/CMP) |
+| 4-0 | `imm5` / `sr2` / shift count / eopcode-low (5 bits) |
+
+**Immediate field widths and ranges:**
+
+| Name | Width | Range |
+|---|---|---|
+| `imm5` | 5-bit signed | -16..15 |
+| `imm9` | 9-bit signed | -256..255 |
+| `offset6` | 6-bit signed | -32..31 |
+| `pcoffset9` | 9-bit signed | -256..255 |
+| `pcoffset11` | 11-bit signed | -1024..1023 (BL only) |
+| `ct` (shift count) | 4 bits | 0..15 (SRA strict; SRL/SLL/ROL/ROR naive) |
+
+- **PC-relative target arithmetic:** `pcoffsetN = address - locCtr - 1` (PC has already advanced by 1)
+
+**Extended-opcode group (`OP_EXT = 0xA000`, opcode 10) — eopcode in low 4 bits:**
+
+| eopcode | Mnemonic | Notes |
+|---|---|---|
+| 0 | PUSH | sr in bits 11-9 |
+| 1 | POP | dr in bits 11-9 |
+| 2 | SRL | naive shift count |
+| 3 | SRA | strict shift count 0..15 |
+| 4 | SLL | naive shift count |
+| 5 | ROL | naive shift count |
+| 6 | ROR | naive shift count |
+| 7 | MUL | |
+| 8 | DIV | encoded as raw `0xa008`, not `OP_EXT \| 8` |
+| 9 | REM | |
+| A | OR | |
+| B | XOR | |
+| C | MVR | register-to-register move |
+| D | SEXT | sign-extend |
+
+**Pseudo-instructions (encoded as something else):**
+
+| Pseudo | Actual encoding |
+|---|---|
+| `mov dr, imm` | `mvi dr, imm9` |
+| `mov dr, sr` | `mvr dr, sr` (eopcode 12) |
+| `cea dr, imm5` | `add dr, fp, imm5` (computed effective address; `fp` is sr1) |
+| `ret` | `jmp lr` (`baser = r7 = lr`) |
+| `bral` | `br` (always; condition code 7) |
+
+**External-label fixup convention (asymmetries):**
+- `assembleLD` honors `externLabels` (emits `'e'` entry with placeholder `pcoffset9 = 0`)
+- `assembleST` and `assembleLea` do **not** honor externals (would fail with "Bad label")
+- `assembleBL` honors externals (emits `'E'` entry with placeholder `pcoffset11 = 0`)
+- No `'A'` adjustment entry added for external references (only for local label+offset uses)
+
+**Per-instruction encoders (terms only):**
+- `assembleCMP` — reg-reg vs reg-imm5 forms; bit-5 selects (`0x0020` set for imm form)
+- `assembleBR(mnemonic, operands)` — branch condition lookup table; pcoffset9
+- `assembleADD` / `assembleSUB` / `assembleAND` — dr/sr1/[sr2|imm5] shape; bit-5 distinguishes form
+- `assembleCEA` — delegates to `assembleADD(dr, 'fp', imm5)`
+- `assemblePUSH` / `assemblePOP`
+- `assembleROL` / `assembleROR` / `assembleSRL` / `assembleSLL` — naive shift count; default 1
+- `assembleSRA` — strict shift count 0..15 (uses `evaluateImmediate`, not `evaluateImmediateNaive`)
+- `assembleDIV` — raw `0xa008` encoding (special-cased)
+- `assembleMUL` / `assembleREM` / `assembleOR` / `assembleXOR` / `assembleSEXT`
+- `assembleLD` / `assembleST` / `assembleLea` — pcoffset9; same `label` / `label+N` / `label + N` / `label +N`-gap operand forms as `.word`
+- `assembleBL` — pcoffset11 (±1024)
+- `assembleBLR` — register-indirect call: `OP_BL | (baser << 6) | offset6`
+- `assembleLDR` / `assembleSTR` — base+offset6 memory access
+- `assembleJMP` — `OP_JMP | baser | offset6`
+- `assembleRET` — `assembleJMP` with `baser = 7`
+- `assembleNOT`
+- `assembleMOV(mnemonic, operands)` — multi-mnemonic; `mov` auto-detects register vs immediate
+- `assembleTrap(operands, trapVector)` — `OP_TRAP | (sr << 9) | (trapVector & 0xFF)`; default `sr = r0`
+
+**Error wording (LCC-specific catalog):**
+- "Missing operand", "Missing register", "Missing number"
+- "Bad number", "Bad label", "Bad register", "Bad operand--not a valid label"
+- "Undefined label", "Invalid operation", "Invalid mnemonic: <m>"
+- "pcoffset9 out of range" / "pcoffset9 out of range for ld" / "pcoffset9 out of range for st"
+- "pcoffset11 out of range"
+
+**Oracle parity notes embedded in code:**
+- Cuh63 6.3: `jmp` with no operand prints "Missing operand" (was thought to segfault; now matches)
+- OB-001 / #31: oracle rejects negative `mov` immediates (LCC.js accepts them; Charlie: `mov dr, imm` is a pseudo for `mvi dr, imm`)
+
+**Register conventions referenced here:**
+- `r7` = `lr` (link register; used by `ret`)
+- `fp` = ??? (used by `cea`; the symbolic-to-numeric mapping is in section (e))
 
 ### (e) Operand parsing helpers — populated by #123
 
