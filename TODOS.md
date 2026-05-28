@@ -95,6 +95,17 @@ Charlie's textbook-demo conventions (#104) are an input to the design.
 - [ ] validate the skill: end-to-end + known-pitfall coverage (blocked by #116)
   <!-- @todo #117:60m/TEST validate the LCCjs assembly Claude skill — blocked by #116; see #117 -->
 
+## Docs Presentation / Syntax Highlighting
+
+GitHub.com renders `.a`/`.ap` with a remapped stock grammar (`asm`/NASM, see
+`.gitattributes`) — consistent but LCC-unaware, and there's no per-repo
+custom-grammar hook. Spike whether to surface the real `lcc-tools` TextMate
+grammar via Shiki, on a public GitHub Pages site and/or a Tampermonkey
+userscript.
+
+- [ ] spike Shiki + custom-grammar approaches for LCC highlighting (Pages site and/or Tampermonkey userscript)
+  <!-- @todo #127:60m/DEV spike beautiful LCC highlighting via Shiki + lcc-tools .tmLanguage — evaluate GitHub Pages docs site vs Tampermonkey userscript (or both), then decompose the chosen path into build puzzles. See #127 -->
+
 ## Nice-to-Have Cleanup
 
 - [x] refactor mnemonic / machine-word constants into clearer shared definitions where it improves readability (16 base opcode constants in assembler.js)
