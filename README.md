@@ -120,6 +120,8 @@ Test organization under `tests/new/`:
 | [docs/status.md](./docs/status.md) | Current status, parity areas, known gaps |
 | [docs/core-behavior-matrix.md](./docs/core-behavior-matrix.md) | Behavior contracts and oracle-vs-lccjs matrix |
 | [docs/parity_deviations.md](./docs/parity_deviations.md) | Documented intentional deviations from oracle behavior |
+| [docs/lcc-isa.md](./docs/lcc-isa.md) | LCC instruction set summary (instructions, traps, directives, branch codes) |
+| [docs/lccplus-isa.md](./docs/lccplus-isa.md) | LCC+ instruction set addendum (new instructions, trap vectors, `.lccplus` directive) |
 | [docs/assembler.md](./docs/assembler.md) | Assembler internals |
 | [docs/interpreter.md](./docs/interpreter.md) | Interpreter internals |
 | [docs/lcc.md](./docs/lcc.md) | `lcc.js` orchestrator internals |
