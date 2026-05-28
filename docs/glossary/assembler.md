@@ -55,12 +55,13 @@ area. Terms only — definitions land in the section below.
 - `.hex` (raw hex input)
 - `.ap` (LCC+ source — explicitly rejected; belongs to `assemblerPlus.js`)
 - `.lst` (listing report)
-- `.bst` (report sibling)
+- `.bst` (report sibling) <!-- @todo #126:30m/WRITER research .bst format / purpose (read reportArtifacts.js, distinguish from .lst). See #126 -->
 
 **`.e` / `.o` file format:**
+<!-- @todo #124:30m/ARC design glossary entry shape — one consolidated entry vs per-marker split. See #124 -->
 - `'o'` intro header byte (ASCII signature)
 - Second intro header (extension hook — `'p'` for LCC+ `.ep`)
-- Header entry types (typed records, sorted by address): `'S'`, `'G'`, `'E'`, `'e'`, `'V'`, `'A'`
+- Header entry types (typed records, sorted by address): `'S'`, `'G'`, `'E'`, `'e'`, `'V'`, `'A'` <!-- @todo #125:30m/WRITER differentiate 'E' / 'e' / 'V' (check linker.js for consumer semantics). See #125 -->
 - `'C'` code start marker
 - UInt16LE encoding for addresses and machine words
 - Null-terminated label strings in label-bearing entries
