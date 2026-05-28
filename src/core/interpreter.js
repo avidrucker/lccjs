@@ -201,6 +201,12 @@ class Interpreter {
      * Only populated by lcc.js when -t is used and an assembler ran first.
      */
     this.sourceMap = null;
+
+    /**
+     * Active breakpoint address (null = no breakpoint).
+     * Set by the 'b {addr}' debugger command; cleared on hit or 'b' (no arg).
+     */
+    this.debugBreakpoint = null;
   }
 
   // Reset all per-run execution state so the interpreter core can be reused
@@ -620,6 +626,12 @@ class Interpreter {
       process.stdout.write(`${addr.toString(16).padStart(3, ' ')}:   ${sourceLine}\n`);
     }
 
+    // Breakpoint check: if a breakpoint is set and current PC matches, re-enter
+    // the interactive debugger (even if debugMode was disabled by 'g').
+    if (this.debugBreakpoint !== null && (this.pc - 1) === this.debugBreakpoint) {
+      this.debugMode = true;
+    }
+
     if (this.debugMode) {
       // debugMode is safe in tests: readLineFromStdin() reads from inputBuffer
       // when set, so tests can drive the debugger by pre-loading inputBuffer
@@ -856,6 +868,15 @@ class Interpreter {
     const addr = this.pc - 1;
     const mnemonic = this.hexToMnemonic(this.ir);
 
+    // Breakpoint banner: printed once when execution stops at the breakpoint address.
+    if (addr === this.debugBreakpoint) {
+      this.writeDebugOutput('Breakpoint at');
+      const bpEntry = this.sourceMap && this.sourceMap.addressToLine.get(addr);
+      const bpText  = bpEntry ? bpEntry.sourceLine : this.mem[addr].toString(16).padStart(4, '0');
+      this.writeDebugOutput(`    ${bpText}`);
+      this.debugBreakpoint = null; // clear breakpoint after first hit
+    }
+
     while (true) {
       process.stdout.write(`${mnemonic.toLowerCase()}>>> `);
       const { inputLine } = this.readLineFromStdin();
@@ -878,6 +899,17 @@ class Interpreter {
       if (cmd === 'g') {
         this.debugMode = false;
         return; // execute instruction; loop won't call debug() again
+      }
+
+      // ── breakpoint: b {addr} = set; b = cancel ────────────────────────
+      if (cmd === 'b') {
+        this.debugBreakpoint = null;
+        continue;
+      }
+      const bMatch = cmd.match(/^b\s+([0-9a-f]+)$/);
+      if (bMatch) {
+        this.debugBreakpoint = parseInt(bMatch[1], 16);
+        continue;
       }
 
       // ── display registers ──────────────────────────────────────────────

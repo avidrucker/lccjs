@@ -440,6 +440,82 @@ describe('Interpreter Unit Tests', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // Debugger Phase 2 parity (#103): breakpoint b set/cancel
+  // ---------------------------------------------------------------------------
+
+  describe('-d flag debugger Phase 2 — breakpoints (#103)', () => {
+    // demoA: mvi r0, 5 / dout / nl / halt  (4 words at 0x0000..0x0003)
+    const demoA = Buffer.from([0x6f, 0x43, 0x05, 0xd0, 0x02, 0xf0, 0x01, 0xf0, 0x00, 0xf0]);
+
+    function captureStdout(fn) {
+      const parts = [];
+      process.stdout.write.mockImplementation((msg) => parts.push(msg));
+      try { fn(); } finally {
+        process.stdout.write.mockImplementation(() => {});
+      }
+      return parts.join('');
+    }
+
+    test('debugBreakpoint defaults to null', () => {
+      const interpreter = new Interpreter();
+      expect(interpreter.debugBreakpoint).toBeNull();
+    });
+
+    test('b {addr} in debug session sets breakpoint; shows Breakpoint-at banner when hit', () => {
+      // Set breakpoint at 3 (halt), then g to continue; halt should trigger banner
+      const interpreter = new Interpreter();
+      interpreter.debugMode = true;
+      interpreter.allowRuntimeDebugging = false;
+      interpreter.inputBuffer = 'b 3\ng\n';
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(demoA, { inputFileName: 'demoA.e' });
+      });
+      expect(out).toContain('Breakpoint at');
+    });
+
+    test('Breakpoint-at banner shows source text when sourceMap present', () => {
+      const source = '  mvi r0, 5\n  dout\n  nl\n  halt\n';
+      const assembler = new Assembler();
+      const assembly  = assembler.assembleSource(source, { inputFileName: 'demoA.a' });
+      const interpreter = new Interpreter();
+      interpreter.debugMode = true;
+      interpreter.allowRuntimeDebugging = false;
+      interpreter.sourceMap = assembler.sourceMap;
+      interpreter.inputBuffer = 'b 3\ng\nq\n';
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'demoA.e' });
+      });
+      expect(out).toContain('Breakpoint at');
+      expect(out).toContain('halt');
+    });
+
+    test('b (no arg) cancels active breakpoint', () => {
+      // Set breakpoint at 3, cancel it, then g; no banner should appear
+      const interpreter = new Interpreter();
+      interpreter.debugMode = true;
+      interpreter.allowRuntimeDebugging = false;
+      interpreter.inputBuffer = 'b 3\nb\ng\n';
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(demoA, { inputFileName: 'demoA.e' });
+      });
+      expect(out).not.toContain('Breakpoint at');
+    });
+
+    test('breakpoint fires during g continue and re-enters debugger', () => {
+      // After g, at halt (addr 3), debug prompt should re-appear
+      const interpreter = new Interpreter();
+      interpreter.debugMode = true;
+      interpreter.allowRuntimeDebugging = false;
+      interpreter.inputBuffer = 'b 3\ng\nq\n';
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(demoA, { inputFileName: 'demoA.e' });
+      });
+      // halt>>> prompt appears after breakpoint fires and user types q
+      expect(out).toContain('halt>>>');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Debugger Phase 1 parity (#102): debug() oracle format + g/r/m commands
   // ---------------------------------------------------------------------------
 
