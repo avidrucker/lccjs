@@ -82,6 +82,53 @@ deviation is beneficial and preserved.
 
 ---
 
+### 10. Failed assembly (undefined label) still leaves a runnable blank `.e` in OG LCC; LCC.js leaves nothing
+
+Repro — `br` to a label that is never defined:
+
+```asm
+    br cheese
+    halt
+```
+
+| | cuh63 6.3 | LCC.js |
+|---|---|---|
+| diagnostic | `Undefined label` (line 1) | `Undefined label` (line 1) |
+| exit code | `1` | `1` |
+| `.e` | written — 2 bytes, header-only/blank (`6f 43`) | **not written** |
+| `.lst` / `.bst` | written | not written |
+| executing the leftover `.e` | hangs — "Possible infinite loop"; zero-filled image decodes as `brz` offset 0 (self-jump) | n/a — no `.e` exists |
+
+**Cause (OG LCC):** the assembler reports the undefined-label error and exits
+`1`, but has already written a header-only `.e` (plus `.lst`/`.bst`) and leaves
+it on disk. The 2-byte `.e` holds only the file magic, no code; when executed,
+the zero words decode as a chain of `brz` (opcode `0`) with offset `0` — an
+infinite self-loop (OG LCC's own detector prints "Possible infinite loop").
+
+**LCC.js behavior:** an undefined label calls `failAssembly('Undefined label', 1)`
+in Pass 2 (`assembler.js:417`), which aborts **before** `writeOutputFile()`
+(`assembler.js:569`). No `.e`/`.lst`/`.bst` is produced, so there is no orphan
+artifact to accidentally run. Same `Undefined label` diagnostic, same exit `1`.
+
+**Premise correction:** the original #105 report said OG LCC's assembler "reports
+no error" and silently produces the blank `.e`. In fact OG LCC *does* report
+`Undefined label` and exit `1` — identical to LCC.js. The only divergence is the
+leftover blank `.e`/listings, and the infinite-loop hazard arises only if that
+orphan `.e` is subsequently executed.
+
+**Why OG BUG:** emitting a runnable executable for a *failed* assembly is a
+footgun — a build step that ignores the exit code and runs `prog.e` will hang.
+LCC.js's all-or-nothing output is the safer, correct behavior.
+
+**Source:** `src/core/assembler.js:417` (`failAssembly('Undefined label', 1)`),
+aborting before `src/core/assembler.js:569` (`writeOutputFile`).
+
+**Repro:** `printf '    br cheese\n    halt\n' > undef.a`; `node src/core/lcc.js
+undef.a` (errors, no `.e`) vs oracle `lcc undef1.a` (errors but leaves a 2-byte
+`undef1.e`; `lcc undef1.e` then infinite-loops).
+
+---
+
 ## LCC.js BUG — LCC.js deviates from OG LCC (fix pending)
 
 ### 4. `mov` out-of-spec immediates silently wrap (OB-001)
@@ -204,9 +251,7 @@ oracle `lcc empty1.a` for comparison.
 
 ## Pending parity investigations (stubs)
 
-<!-- @todo #105:45m/DEV Characterize lccjs behavior for undefined-label `br` (oracle produces blank .e); replace this stub with a full deviation entry. See #105 -->
-
-### (pending #105) Undefined-label `br` — oracle produces blank `.e`
+_None pending._
 
 ---
 
@@ -217,3 +262,4 @@ oracle `lcc empty1.a` for comparison.
 | 2026-05-26 | Initial creation | Deviations 1–8 documented |
 | 2026-05-27 | Pending stubs added | Reserved sections for #105, #106 (split from #29) |
 | 2026-05-28 | Deviation 9 added | Characterized empty/whitespace `.a` (#106): LCC.js exit 0 + no artifacts vs OG exit 1 + header-only listings; classified BY DESIGN |
+| 2026-05-28 | Deviation 10 added | Characterized undefined-label `br` (#105): both error + exit 1, but OG leaves a runnable blank `.e` (infinite-loops if run) while LCC.js writes nothing; classified OG BUG. All pending stubs now cleared |
