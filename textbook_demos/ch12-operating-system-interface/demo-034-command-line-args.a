@@ -37,9 +37,10 @@ main:     push lr
           add  r0, r0, -1  ; i = argc - 1
           push r0            ; fp-1 = i
 
-@loop:    ldr  r0, fp, -1  ; r0 = i
+@L0:      ; @loop
+          ldr  r0, fp, -1  ; r0 = i
           cmp  r0, 0
-          brn  @done        ; while (i >= 0)
+          brn  @L1          ; while (i >= 0)
 
           ; printf("%s\n", argv[i])
           ldr  r0, fp, 3   ; r0 = argv (pointer array base)
@@ -53,9 +54,10 @@ main:     push lr
           ldr  r0, fp, -1
           sub  r0, r0, 1
           str  r0, fp, -1
-          br   @loop
+          br   @L0
 
-@done:    mov  r0, 0
+@L1:      ; @done
+          mov  r0, 0
           mov  sp, fp
           pop  fp
           pop  lr

@@ -29,9 +29,10 @@ countdown:
           push fp
           mov  fp, sp
 
-@top:     ldr  r0, fp, 2   ; r0 = x  (the argument lives at fp+2)
+@L0:      ; @top — test condition at top of loop
+          ldr  r0, fp, 2   ; r0 = x  (the argument lives at fp+2)
           cmp  r0, 0        ; test x != 0
-          brz  @exit        ; if x == 0, exit the loop
+          brz  @L1          ; if x == 0, exit the loop
 
           dout r0            ; printf("%d\n", x)
           nl
@@ -40,8 +41,8 @@ countdown:
           sub  r0, r0, 1    ; x = x - 1
           str  r0, fp, 2    ; store back (modifying the stack copy of the arg)
 
-          br   @top          ; go back to test
-@exit:
+          br   @L0           ; go back to test
+@L1:      ; @exit
           mov  sp, fp
           pop  fp
           pop  lr

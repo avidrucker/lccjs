@@ -30,6 +30,9 @@ startup:  bl main
 ; ---- global x ----
 x:        .word 5           ; global int x = 5
 
+; ---- static local for f (Charlie's pref: above the function) ----
+@s0_x:    .word 0           ; static int x inside f  (zero-initialized)
+
 ; ---- f(): displays its own static x ----
 f:        push lr
           push fp
@@ -58,6 +61,9 @@ g:        push lr
           pop  lr
           ret
 
+; ---- static local for main (Charlie's pref: above the function) ----
+@s1_x:    .word 3           ; static int x inside main (initialized to 3)
+
 ; ---- main ----
 main:     push lr
           push fp
@@ -75,7 +81,3 @@ main:     push lr
           pop  fp
           pop  lr
           ret
-
-; ---- static variable storage (at file scope, but logically local) ----
-@s0_x:    .word 0           ; static int x inside f  (zero-initialized)
-@s1_x:    .word 3           ; static int x inside main (initialized to 3)

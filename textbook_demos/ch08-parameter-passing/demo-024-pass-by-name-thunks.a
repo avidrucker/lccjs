@@ -74,7 +74,7 @@ main:     push lr
           push r0            ; fp-1 = b = 2
 
           ; branch over thunk (thunk is inline in main's body)
-          br   @call
+          br   @L0
 
           ; --- thunk: evaluates a+b in main's environment ---
 @thunk:   ld   r0, a        ; a  (global)
@@ -85,7 +85,7 @@ main:     push lr
           add  r0, fp, -2   ; return address of temp
           ret               ; return to f (via blr in f's body)
 
-@call:    ; calling sequence: allocate a temp slot for thunk, push thunk address
+@L0:      ; @call — calling sequence: allocate a temp slot for thunk, push thunk address
           sub  sp, sp, 1    ; temp slot for thunk result (fp-2)
           lea  r0, @thunk
           push r0            ; push thunk address as the "name" argument

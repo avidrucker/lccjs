@@ -23,16 +23,17 @@
           mov  r3, 2       ; r3 = step (always 2, to get next odd)
           mov  r4, 10      ; r4 = loop counter (10 iterations)
 
-loop:     add  r1, r1, r2  ; sum += current odd number
+@L0:      ; loop
+          add  r1, r1, r2  ; sum += current odd number
           add  r2, r2, r3  ; advance to next odd number (odd += 2)
           sub  r4, r4, 1   ; count--
-          brp  loop         ; repeat while count > 0
+          brp  @L0          ; repeat while count > 0
 
-          lea  r0, msg     ; print "Sum = "
+          lea  r0, @M0     ; print "Sum = "
           sout r0
           dout r1           ; print the sum (100)
           nl
           halt
 
 ; ---- data section ----
-msg:      .string "Sum = "
+@M0:      .string "Sum = "  ; msg

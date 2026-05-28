@@ -23,7 +23,7 @@
 ;   else if (a == b) printf("Numbers equal\n");
 ;   else             printf("First number greater\n");
 
-          lea  r0, prompt
+          lea  r0, @M0
           sout r0
 
           din  r0             ; read first number into r0
@@ -31,21 +31,25 @@
           din  r0             ; read second number into r0
 
           sub  r0, r1, r0     ; r0 = first - second (sets NZCV flags)
-          brlt less
-          bre  equal
-          brgt greater        ; (unconditional br also works here)
+          brlt @L0
+          bre  @L1
+          brgt @L2             ; (unconditional br also works here)
 
-less:     lea  r0, msg_lt
-          br   display
-equal:    lea  r0, msg_eq
-          br   display
-greater:  lea  r0, msg_gt
+@L0:      ; less
+          lea  r0, @M1
+          br   @L3
+@L1:      ; equal
+          lea  r0, @M2
+          br   @L3
+@L2:      ; greater
+          lea  r0, @M3
 
-display:  sout r0
+@L3:      ; display
+          sout r0
           halt
 
 ; ---- data section ----
-prompt:   .string "Enter two signed integers\n"
-msg_lt:   .string "First number is less\n"
-msg_eq:   .string "Numbers are equal\n"
-msg_gt:   .string "First number is greater\n"
+@M0:      .string "Enter two signed integers\n"  ; prompt
+@M1:      .string "First number is less\n"       ; msg_lt
+@M2:      .string "Numbers are equal\n"          ; msg_eq
+@M3:      .string "First number is greater\n"    ; msg_gt

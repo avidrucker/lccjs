@@ -31,7 +31,7 @@ countdown:
 
           ldr  r0, fp, 2    ; r0 = x
           cmp  r0, 0
-          brz  @done        ; if x == 0, nothing to do
+          brz  @L0          ; if x == 0, nothing to do
 
           dout r0            ; printf("%d\n", x)
           nl
@@ -42,7 +42,7 @@ countdown:
           bl   countdown    ; countdown(x - 1)  ← tail call
           add  sp, sp, 1
 
-@done:
+@L0:      ; @done
           mov  sp, fp
           pop  fp
           pop  lr

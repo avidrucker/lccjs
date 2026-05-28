@@ -22,12 +22,13 @@
 
           .start main      ; <-- entry point declaration
 
+; ---- string constants used by greet ----
+@M0:      .string "Hello\n"  ; msg
+
 ; ---- subroutine (defined BEFORE main — safe only because of .start) ----
-greet:    lea  r0, msg
+greet:    lea  r0, @M0
           sout r0
           ret
-
-msg:      .string "Hello\n"
 
 ; ---- main (entry point) ----
 main:     bl   greet

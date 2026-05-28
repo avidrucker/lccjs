@@ -57,9 +57,10 @@ add:      push lr
           add  r0, fp, 3
           str  r0, fp, -2   ; p = fp+3
 
-@loop:    ldr  r0, fp, 2    ; r0 = argnum
+@L0:      ; @loop
+          ldr  r0, fp, 2    ; r0 = argnum
           cmp  r0, 0
-          brz  @done        ; while (argnum != 0)
+          brz  @L1          ; while (argnum != 0)
 
           ; sum += va_arg(p, int)
           ldr  r0, fp, -2   ; r0 = p
@@ -75,8 +76,8 @@ add:      push lr
           sub  r0, r0, 1
           str  r0, fp, 2
 
-          br   @loop
-@done:
+          br   @L0
+@L1:      ; @done
           ldr  r0, fp, -1   ; return sum in r0
 
           mov  sp, fp

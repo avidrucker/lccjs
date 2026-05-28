@@ -27,12 +27,8 @@
 startup:  bl main
           halt
 
-; ---- form 1: global char array ----
-g:        .string "AX"
-
-; ---- form 2: global pointer to a string literal ----
-p:        .word @lit_BX
-@lit_BX:  .string "BX"
+; ---- form 2 global pointer (string itself lives below as @M1) ----
+p:        .word @M1
 
 ; ---- mystrcpy(char *dst, char *src) ----
 mystrcpy: push lr
@@ -62,6 +58,13 @@ mystrcpy: push lr
           pop  lr
           ret
 
+; ---- string constants used by main ----
+@M0:      .string "AX"  ; g       (form 1: global char array)
+@M1:      .string "BX"  ; @lit_BX (form 2: literal pointed to by p)
+@M2:      .string "DX"  ; @lit_DX (form 4: stack pointer to literal)
+@M3:      .string "EX"  ; @lit_EX (form 5: pointer assigned later)
+@M4:      .string "FX"  ; @lit_FX (mystrcpy source)
+
 main:     push lr
           push fp
           mov  fp, sp
@@ -81,16 +84,16 @@ main:     push lr
           ; So &c[0] = fp-3 (the 'C'), c is at fp-3
 
           ; ---- form 4: stack pointer to a literal ----
-          lea  r0, @lit_DX
+          lea  r0, @M2
           push r0            ; fp-4 = pointer to "DX"
 
           ; ---- form 5: pointer assigned later ----
           sub  sp, sp, 1    ; fp-5 = r (uninitialized)
-          lea  r0, @lit_EX
+          lea  r0, @M3
           str  r0, fp, -5   ; r = "EX"
 
           ; print all five
-          lea  r0, g        ; form 1
+          lea  r0, @M0      ; form 1
           sout r0  nl
           ld   r0, p        ; form 2
           sout r0  nl
@@ -102,14 +105,14 @@ main:     push lr
           sout r0  nl
 
           ; mystrcpy(g, "FX")
-          lea  r0, @lit_FX
+          lea  r0, @M4
           push r0
-          lea  r0, g
+          lea  r0, @M0
           push r0
           bl   mystrcpy
           add  sp, sp, 2
 
-          lea  r0, g
+          lea  r0, @M0
           sout r0  nl       ; prints "FX"
 
           mov  r0, 0
@@ -117,7 +120,3 @@ main:     push lr
           pop  fp
           pop  lr
           ret
-
-@lit_DX:  .string "DX"
-@lit_EX:  .string "EX"
-@lit_FX:  .string "FX"

@@ -19,10 +19,10 @@ main:     bl   greet       ; call greet; lr = address of next instruction
           bl   greet       ; call again
           halt
 
+; ---- string constants used by greet ----
+@M0:      .string "Hello\n"  ; msg
+
 ; ---- subroutine ----
-greet:    lea  r0, msg     ; r0 = address of "Hello\n"
+greet:    lea  r0, @M0     ; r0 = address of "Hello\n"
           sout r0           ; print it
           ret               ; pc = lr  (return to caller)
-
-; ---- data section ----
-msg:      .string "Hello\n"
