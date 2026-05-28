@@ -125,3 +125,18 @@ related concepts share a demo (e.g. 005 shows both the problem and the fix for `
 | ID | File | cuh63 source | Concept |
 |----|------|-------------|---------|
 | 044 | [demo-044-address-semantics.a](ch19-address-semantics/demo-044-address-semantics.a) | ex1901 | Address creation (`.word label`), propagation (`ld`/`st`), destruction (overwrite) |
+
+---
+
+## Conventions (in-progress)
+
+A label-naming and data-layout convention is being rolled out across the
+demos, starting with [demo-017](ch06-control-flow-and-recursion/demo-017-recursion-non-tail.a):
+
+- Branch labels → `@L0`, `@L1`, `@L2`, ... per file, in order of first appearance
+- String constants → `@M0`, `@M1`, ... per file
+- String constants (and static locals) stored ABOVE the function that uses them
+- Numerical constants when needed → `@1000: .word 1000`, `@_1000: .word -1000`
+- Definition-site `; comment` preserves the prior semantic name for readability
+
+<!-- @todo #104:30m/ARC Confirm Charlie's textbook-demo conventions: function-vs-branch label boundary, top-level demos (no function), per-file vs per-function @L/@M numbering — see #104 -->

@@ -36,6 +36,11 @@
 startup:  bl main
           halt
 
+; ---- string constants used by descend ----
+@M0:      .string "bottom\n"  ; msg_bottom
+@M1:      .string "down\n"    ; msg_down
+@M2:      .string "up\n"      ; msg_up
+
 ; ---- descend(int x) ----
 descend:  push lr           ; MUST save lr: we call bl again, which overwrites it
           push fp
@@ -43,15 +48,15 @@ descend:  push lr           ; MUST save lr: we call bl again, which overwrites i
 
           ldr  r0, fp, 2   ; r0 = x
           cmp  r0, 0
-          brnz @else
+          brnz @L0
 
           ; base case: x == 0
-          lea  r0, msg_bottom
+          lea  r0, @M0
           sout r0
-          br   @end_if
+          br   @L1
 
-@else:    ; recursive case
-          lea  r0, msg_down
+@L0:      ; @else — recursive case
+          lea  r0, @M1
           sout r0
 
           ldr  r0, fp, 2   ; x - 1
@@ -60,10 +65,10 @@ descend:  push lr           ; MUST save lr: we call bl again, which overwrites i
           bl   descend      ; recurse
           add  sp, sp, 1
 
-          lea  r0, msg_up   ; this runs AFTER the recursion unwinds
+          lea  r0, @M2     ; this runs AFTER the recursion unwinds
           sout r0
 
-@end_if:
+@L1:      ; @end_if
           mov  sp, fp
           pop  fp
           pop  lr
@@ -84,8 +89,3 @@ main:     push lr
           pop  fp
           pop  lr
           ret
-
-; ---- data section ----
-msg_bottom: .string "bottom\n"
-msg_down:   .string "down\n"
-msg_up:     .string "up\n"
