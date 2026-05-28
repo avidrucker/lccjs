@@ -80,6 +80,20 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] custom-named output report behavior
 - [ ] keep research-marked tests current with oracle findings
 
+## Claude Skills
+
+A Claude skill that teaches Claude (and other LLM agents) to write idiomatic,
+correct LCCjs assembly. Base LCC ISA first; LCC+ deferred. Sequenced as
+research → build → validate so the design is pinned down before implementation.
+Charlie's textbook-demo conventions (#104) are an input to the design.
+
+- [ ] research the skill: scope, source materials, structure, evaluation criteria
+  <!-- @todo #115:60m/ARC research scope/design of the LCCjs assembly Claude skill — see #115 -->
+- [ ] build the skill per the research design (blocked by #115)
+  <!-- @todo #116:60m/DEV implement the LCCjs assembly Claude skill — blocked by #115; see #116 -->
+- [ ] validate the skill: end-to-end + known-pitfall coverage (blocked by #116)
+  <!-- @todo #117:60m/TEST validate the LCCjs assembly Claude skill — blocked by #116; see #117 -->
+
 ## Nice-to-Have Cleanup
 
 - [x] refactor mnemonic / machine-word constants into clearer shared definitions where it improves readability (16 base opcode constants in assembler.js)
