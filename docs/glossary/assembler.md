@@ -53,8 +53,7 @@ area. Terms only — definitions land in the section below.
 - `.lst` (listing report)
 - `.bst` (report sibling) <!-- @todo #126:30m/WRITER research .bst format / purpose (read reportArtifacts.js, distinguish from .lst). See #126 -->
 
-**`.e` / `.o` file format:**
-<!-- @todo #124:30m/ARC design glossary entry shape — one consolidated entry vs per-marker split. See #124 -->
+**`.e` / `.o` file format** (per #124: write as **hybrid** — one overview entry showing the full layout + per-marker stubs that link back to it):
 - `'o'` intro header byte (ASCII signature)
 - Second intro header (extension hook — `'p'` for LCC+ `.ep`)
 - Header entry types (typed records, sorted by address) — resolved per #125:
