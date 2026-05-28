@@ -6,7 +6,6 @@ The original spike (#108) has been decomposed into 5 sub-spikes, each covering a
 coherent section of the file. The write phase (#111) consolidates the
 inventoried terms into definitions once all 5 spikes have closed.
 
-<!-- @todo #120:60m/WRITER Spike (b): inventory LCC-specific terms in pass model + file parsing (lines 617-915). See #120 -->
 <!-- @todo #121:60m/WRITER Spike (c): inventory LCC-specific terms in tokenization + directive/instruction dispatch (lines 916-1397). See #121 -->
 <!-- @todo #122:60m/WRITER Spike (d): inventory LCC-specific terms in per-instruction encoders (lines 1408-1980). See #122 -->
 <!-- @todo #123:60m/WRITER Spike (e): inventory LCC-specific terms in operand parsing helpers (lines 1985-2290). See #123 -->
@@ -92,7 +91,53 @@ area. Terms only — definitions land in the section below.
 
 ### (b) Pass model + file parsing — populated by #120
 
-_To be filled in._
+**Label rules:**
+- Label syntax: starts with `[A-Za-z_$@]`, followed by `[A-Za-z0-9_$@]*`
+- Trailing colon allowed (`label:`)
+- Mid-line label detection (whitespace at column 0 means "no label here")
+- `@`-prefixed labels (compiler-mangled — `@L0`, `@M0`, `@s0_x`)
+- `$` permitted in label names (likely C++ name-mangling separator; cf. `@A@set$ii`, `@f$ri`)
+- Duplicate label detection (pass 1)
+- Error messages: "Bad label", "Duplicate label"
+
+**Two-pass mechanics:**
+- Pass 1 — build symbol table (label → `locCtr`); no code emission
+- Pass 2 — emit code into `outputBuffer`, populate full listing entries
+- `loadPoint = defaultLoadPoint` set at pass-1 start (so non-zero-`.org` programs still compute `programSize` correctly)
+- `outputBuffer` reset at pass-2 start
+- `programSize = locCtr - loadPoint` computed at pass-2 end
+- 65536-word maximum address space ("Program too big" error)
+- Trailing empty-line removal from listing at pass-2 end (annotated as "possible bug / strange lcc behavior")
+
+**Listing entry shapes (two variants):**
+- Assembly path: `{lineNum, locCtr, sourceLine, codeWords, label, mnemonic, operands, comment}`
+- Raw `.hex` / `.bin` path: `{lineNum, locCtr, sourceLine, macWord, comment}`
+
+**Source-line processing:**
+- `;` as comment delimiter — comment substring stored separately on the entry
+- Whitespace-trim after comment stripping
+- Empty lines (after comment strip) still produce a listing entry in pass 2
+- Mnemonic lowercased; routing: `.<x>` → `handleDirective`, otherwise → `handleInstruction`
+- `currentLine` / `currentListingEntry` — error-message context handles
+
+**`.hex` file format:**
+- One 4-nibble hex word per line
+- Comments allowed (`;`)
+- Whitespace (including internal) stripped before validation
+- Validation: `^[0-9A-Fa-f]+$` regex + exactly 4 nibbles
+- Empty file → exit code 0 (custom LCC.js behavior, not in original LCC as of 12/2024)
+- `startAddress` defaulted to 0; `startLabel` null (no `.start` honored)
+
+**`.bin` file format:**
+- One 16-bit binary word per line
+- Same comment / whitespace rules as `.hex`
+- Validation: `^[01]+$` regex + exactly 16 bits
+- Empty file → exit code 0 (custom LCC.js behavior)
+- Same `startAddress` / `startLabel` defaults as `.hex`
+
+**Error helpers (defined elsewhere in the file):**
+- `this.error(...)` — accumulates / reports per current context
+- Distinct abort messages per raw file type ("not purely hexadecimal", "not purely binary", "does not have exactly 4 nibbles", "does not have exactly 16 bits")
 
 ### (c) Tokenization + directive/instruction dispatch — populated by #121
 
