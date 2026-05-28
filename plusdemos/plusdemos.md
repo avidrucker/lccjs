@@ -54,7 +54,12 @@ The LCC+js demos showcase the capabilities of the LCC+js toolchain as a real-tim
 10. **Tic-Tac-Toe (Two-Player Hot-Seat)**
 
     - **Description:** A complete two-player Tic-Tac-Toe game. Players take turns pressing a digit `1`-`9` to place their mark; the program detects win lines and draws, then offers a `y`/`n` play-again prompt.
-    - **Highlights:** A turn-based counterpart to the real-time game demos. Showcases `.lccplus` + `clear`/`resetc` redraw, blocking line input via `sin`, table-driven win detection over an 8-triplet `winLines` array, and a clean function decomposition (`printBoard`, `promptMove`, `applyMove`, `checkWin`, `checkDraw`, `togglePlayer`, `playOne`, `main`). A worked example of working around LCC's 9-bit pc-offset range using pointer aliases (`@xxxP: .word xxx`) when shared state sits far from its consumer.
+    - **Highlights:** A turn-based counterpart to the real-time game demos. Showcases `.lccplus` + `clear` redraw, single-keypress input via `nbain` polling (with `sleep` throttle), table-driven win detection over an 8-triplet `winLines` array, and a clean function decomposition (`printBoard`, `promptMove`, `applyMove`, `checkWin`, `checkDraw`, `togglePlayer`, `playOne`, `main`). A worked example of working around LCC's 9-bit pc-offset range using pointer aliases (`@xxxP: .word xxx`) when shared state sits far from its consumer.
+
+11. **Rock-Paper-Scissors (Human vs Computer)**
+
+    - **Description:** A one-shot single-round Rock-Paper-Scissors game. The player presses `1`/`2`/`3` to choose Rock/Paper/Scissors; the computer's choice is sampled uniformly via `rand 1, 3` (seeded with `millis` at startup); the program prints both choices and the winner, then offers a `y`/`n` play-again prompt.
+    - **Highlights:** The simplest "vs computer" demo — exercises the LCC+ RNG (`millis` + `srand` + `rand`) for the AI move, `nbain` polling for blocking single-key input, and `clear` for the per-round redraw. Win detection uses the `(player - computer) mod 3` trick: tie if 0, player wins if 1, computer wins if 2.
 
 ---
 

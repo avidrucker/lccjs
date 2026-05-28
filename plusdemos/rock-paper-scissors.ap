@@ -1,0 +1,268 @@
+; rock-paper-scissors.ap
+; Human vs computer Rock-Paper-Scissors in LCC+ assembly.
+;
+; Showcases LCC+ extensions: .lccplus, clear, sleep, nbain, rand, srand+millis.
+;
+; CONTROLS
+;   Each round: press 1 for Rock, 2 for Paper, 3 for Scissors — single keypress.
+;   After result: 'y' (or 'Y') to play again; any other key to quit.
+;
+; Register convention used throughout:
+;   r0-r4 scratch / argument / return.   r5/r6/r7 = fp/sp/lr only — never reused.
+
+          .lccplus
+          .start startup
+
+;----------------------------------------------------------------
+; startup: clear, seed RNG from millis, run main, halt
+;----------------------------------------------------------------
+startup:  clear
+          millis r0
+          srand  r0
+          bl     main
+          halt
+
+;================================================================
+; Section A: printName helper + its strings
+;================================================================
+@M_rock:     .string "Rock"
+@M_paper:    .string "Paper"
+@M_scissors: .string "Scissors"
+
+;----------------------------------------------------------------
+; printName: takes choice (1, 2, or 3) in r0; prints the name + newline.
+;            Clobbers r0.
+;----------------------------------------------------------------
+printName:
+          push lr
+          push fp
+          mov  fp, sp
+
+          cmp  r0, 1
+          brnz @pn_check2
+          lea  r0, @M_rock
+          br   @pn_print
+@pn_check2:
+          cmp  r0, 2
+          brnz @pn_three
+          lea  r0, @M_paper
+          br   @pn_print
+@pn_three:
+          lea  r0, @M_scissors
+@pn_print:
+          sout r0
+          nl
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;================================================================
+; Section B: getPlayerChoice + its strings
+;================================================================
+@M_prompt:   .string "Your choice (1-3): "
+@M_invalid:  .string "Invalid! Press 1, 2, or 3."
+
+;----------------------------------------------------------------
+; getPlayerChoice: prompt + poll until a valid '1'/'2'/'3' arrives.
+;                  Returns the choice (1..3) in r0. Echoes the keypress.
+;----------------------------------------------------------------
+getPlayerChoice:
+          push lr
+          push fp
+          mov  fp, sp
+
+@gpc_ask:
+          lea  r0, @M_prompt
+          sout r0
+
+@gpc_poll:
+          nbain r4
+          cmp  r4, 0
+          brnz @gpc_got
+          mov  r3, 16
+          sleep r3
+          br   @gpc_poll
+
+@gpc_got:
+          ; range check '1' <= r4 <= '3'
+          mov  r0, '1'
+          cmp  r4, r0
+          brlt @gpc_invalid
+          mov  r0, '3'
+          cmp  r4, r0
+          brgt @gpc_invalid
+
+          ; echo the keypress on its own line
+          aout r4
+          nl
+
+          ; convert '1'..'3' → 1..3
+          mov  r0, '1'
+          sub  r0, r4, r0       ; r0 = r4 - '1' (0..2)
+          add  r0, r0, 1        ; r0 = 1..3
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+@gpc_invalid:
+          lea  r0, @M_invalid
+          sout r0
+          nl
+          br   @gpc_ask
+
+;================================================================
+; Section C: playRound + its strings
+;================================================================
+@M_title:    .string "=== Rock-Paper-Scissors ==="
+@M_menu1:    .string "  1) Rock"
+@M_menu2:    .string "  2) Paper"
+@M_menu3:    .string "  3) Scissors"
+@M_you:      .string "You chose:      "
+@M_comp:     .string "Computer chose: "
+@M_tie:      .string "Tie!"
+@M_youWin:   .string "You win!"
+@M_compWin:  .string "Computer wins!"
+
+;----------------------------------------------------------------
+; playRound: one full round — title, menu, prompt, draw, result.
+;   Local frame:
+;     fp-1 = playerChoice (1..3)
+;     fp-2 = compChoice   (1..3)
+;----------------------------------------------------------------
+playRound:
+          push lr
+          push fp
+          mov  fp, sp
+          sub  sp, sp, 2
+
+          clear
+          lea  r0, @M_title
+          sout r0
+          nl
+          nl
+          lea  r0, @M_menu1
+          sout r0
+          nl
+          lea  r0, @M_menu2
+          sout r0
+          nl
+          lea  r0, @M_menu3
+          sout r0
+          nl
+          nl
+
+          bl   getPlayerChoice  ; r0 = player choice
+          str  r0, fp, -1
+
+          ; computer chooses uniformly from 1..3
+          mov  r0, 1
+          mov  r1, 3
+          rand r0, r1
+          str  r0, fp, -2
+
+          nl
+          ; "You chose: <name>"
+          lea  r0, @M_you
+          sout r0
+          ldr  r0, fp, -1
+          bl   printName
+
+          ; "Computer chose: <name>"
+          lea  r0, @M_comp
+          sout r0
+          ldr  r0, fp, -2
+          bl   printName
+
+          nl
+
+          ; --- determine outcome ---
+          ; diff = player - computer; tie if 0.
+          ; Else add 3 if negative; result is 1 (player wins) or 2 (computer wins).
+          ldr  r0, fp, -1
+          ldr  r1, fp, -2
+          cmp  r0, r1
+          bre  @pr_tie
+
+          sub  r2, r0, r1       ; -2..-1, 1..2
+          brp  @pr_posDiff      ; if r2 > 0, skip the wrap
+          add  r2, r2, 3
+@pr_posDiff:
+          cmp  r2, 1
+          bre  @pr_playerWins
+
+          ; r2 = 2 → computer wins
+          lea  r0, @M_compWin
+          sout r0
+          nl
+          br   @pr_done
+
+@pr_tie:
+          lea  r0, @M_tie
+          sout r0
+          nl
+          br   @pr_done
+
+@pr_playerWins:
+          lea  r0, @M_youWin
+          sout r0
+          nl
+
+@pr_done:
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;================================================================
+; Section D: main + its strings
+;================================================================
+@M_replay:   .string "Play again? (y/n): "
+@M_bye:      .string "Thanks for playing!"
+
+;----------------------------------------------------------------
+; main: play-again loop
+;----------------------------------------------------------------
+main:
+          push lr
+          push fp
+          mov  fp, sp
+
+@m_again:
+          bl   playRound
+          nl
+          lea  r0, @M_replay
+          sout r0
+
+@m_poll:
+          nbain r4
+          cmp  r4, 0
+          brnz @m_got
+          mov  r3, 16
+          sleep r3
+          br   @m_poll
+
+@m_got:
+          mov  r0, 'y'
+          cmp  r4, r0
+          bre  @m_replay
+          mov  r0, 'Y'
+          cmp  r4, r0
+          bre  @m_replay
+
+          ; anything else → quit
+          nl
+          lea  r0, @M_bye
+          sout r0
+          nl
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+@m_replay:
+          nl
+          br   @m_again
