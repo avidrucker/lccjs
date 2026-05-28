@@ -846,6 +846,7 @@ class Interpreter {
     return `${line.toString(16).padStart(3, ' ')}: ${source.toString(16).padStart(4, '0')}`;
   }
 
+  // @todo #102:1.5h/DEV Switch state format from hex to source text (g/r/m commands also)
   debug() {
     const line = this.pc - 1;
     const source = this.mem[line] || '(unknown)';
