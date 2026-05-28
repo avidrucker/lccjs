@@ -1,0 +1,67 @@
+; demo-027-struct-dynamic-malloc.a
+; Chapter 9: Structures
+; Concept: Dynamically allocating a struct at runtime using a bump allocator (malloc).
+;
+; CONCEPT:
+;   malloc(size) returns a pointer to a newly allocated block of 'size' words.
+;   The calling convention used here (register-based):
+;     r1 = number of words to allocate
+;     bl malloc
+;     r0 = start address of the allocated block
+;
+;   The bump allocator:
+;     @avail points to the next free word.
+;     malloc: r0 = *@avail; *@avail += size; return r0
+;     .word *+1  makes @avail initially point to the word immediately after itself.
+;
+;   After malloc, use ldr/str with offsets to access struct fields:
+;     p->y = str r0, r1, 1  (r1 = p, offset 1 = y field)
+;
+; C equivalent:
+;   struct Point { int x; int y; };
+;   struct Point *p;
+;   int main() {
+;       p = malloc(sizeof(struct Point));  // allocate 2 words
+;       p->y = 5;
+;       printf("%d\n", p->y);  // 5
+;   }
+
+startup:  bl main
+          halt
+
+p:        .word 0           ; struct Point *p;
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; p = malloc(sizeof(struct Point))  — sizeof = 2 words
+          mov  r1, 2        ; allocation size in r1
+          bl   malloc
+          st   r0, p        ; p = returned address
+
+          ; p->y = 5  (y is field offset 1)
+          mov  r0, 5
+          ld   r1, p
+          str  r0, r1, 1   ; mem[r1 + 1] = 5
+
+          ; printf("%d\n", p->y)
+          ld   r0, p
+          ldr  r0, r0, 1   ; r0 = p->y
+          dout r0            ; prints 5
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- malloc: bump allocator ----
+; r1 = words to allocate; returns start address in r0
+malloc:   ld   r0, @avail   ; r0 = current free pointer
+          add  r1, r0, r1   ; r1 = new free pointer (old + size)
+          st   r1, @avail   ; advance the free pointer
+          ret               ; return old free pointer in r0
+
+@avail:   .word *+1         ; initially: @avail points to the word after itself

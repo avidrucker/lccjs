@@ -1,0 +1,124 @@
+; demo-042-cpp-virtual-functions.a
+; Chapter 16: Inheritance and Polymorphism
+; Concept: Virtual functions — dispatch through a vtable pointer stored in each object.
+;
+; VIRTUAL DISPATCH MECHANISM:
+;   Each object's first word is a vtable pointer.
+;   The vtable is a static array of function pointers, one per virtual function.
+;
+;   Object layout for A (vtable + x):     [vtptr | x]
+;   Object layout for B (vtable + x + y): [vtptr | x | y]
+;
+;   Calling a virtual function:
+;     ldr r0, fp, -1    ; r0 = object pointer (aptr)
+;     push r0           ; push this
+;     ldr r0, r0, 0     ; r0 = vtable pointer (object[0])
+;     ldr r0, r0, 0     ; r0 = vtable[0] = first virtual function address
+;     blr r0            ; indirect call through vtable entry
+;     add sp, sp, 1
+;
+;   After aptr = bptr, aptr->display() now calls B::display because the
+;   vtable pointer in the object points to B's vtable — DYNAMIC dispatch.
+;
+; C++ equivalent:
+;   class A { public: void set(int n); virtual void display(); protected: int x; };
+;   class B: public A { public: void set(int n,int m); void display(); private: int y; };
+;   int main() {
+;       A *aptr = new A;  aptr->set(1);   aptr->display();  // A::display → 1
+;       B *bptr = new B;  bptr->set(2,3); bptr->display();  // B::display → 2 3
+;       aptr = bptr;      aptr->display();  // B::display → 2 3  (dynamic dispatch!)
+;   }
+
+startup:  bl main
+          halt
+
+; ---- A::set(this, n) — sets x (offset 1, because offset 0 is vtptr) ----
+@A@set$i: push lr  push fp  mov fp, sp
+          ldr r0, fp, 3   ldr r1, fp, 2   str r0, r1, 1   ; this->x (offset 1, vtptr at 0)
+          mov sp, fp  pop fp  pop lr  ret
+
+; ---- A::display(this) ----
+@A@display$v:
+          push lr  push fp  mov fp, sp
+          ldr r0, fp, 2   ldr r0, r0, 1   dout r0  nl   ; this->x
+          mov sp, fp  pop fp  pop lr  ret
+
+; ---- B::set(this, n, m) ----
+@B@set$ii:
+          push lr  push fp  mov fp, sp
+          ldr r0, fp, 3  ldr r1, fp, 2  str r0, r1, 1   ; x at offset 1
+          ldr r0, fp, 4  ldr r1, fp, 2  str r0, r1, 2   ; y at offset 2
+          mov sp, fp  pop fp  pop lr  ret
+
+; ---- B::display(this) ----
+@B@display$v:
+          push lr  push fp  mov fp, sp
+          ldr r0, fp, 2  ldr r0, r0, 1  dout r0   ; x
+          mov r0, ' '  aout r0
+          ldr r0, fp, 2  ldr r0, r0, 2  dout r0  nl   ; y
+          mov sp, fp  pop fp  pop lr  ret
+
+; ---- vtables ----
+@A@vtbl:  .word @A@display$v
+@B@vtbl:  .word @B@display$v
+
+malloc:   ld r0, @avail  add r1, r0, r1  st r1, @avail  ret
+@avail:   .word *+1
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          sub  sp, sp, 1   ; fp-1 = aptr
+          sub  sp, sp, 1   ; fp-2 = bptr
+
+          ; aptr = new A  (2 words: vtptr + x)
+          mov  r1, 2  bl malloc  str r0, fp, -1
+          lea  r1, @A@vtbl
+          ldr  r2, fp, -1
+          str  r1, r2, 0   ; object[0] = &A_vtable
+
+          ; aptr->set(1)
+          mov  r0, 1  push r0
+          ldr  r0, fp, -1  push r0
+          bl   @A@set$i  add sp, sp, 2
+
+          ; aptr->display()  — virtual dispatch → A::display → prints 1
+          ldr  r0, fp, -1   push r0
+          ldr  r0, r0, 0    ; vtable ptr
+          ldr  r0, r0, 0    ; vtable[0]
+          blr  r0
+          add  sp, sp, 1
+
+          ; bptr = new B  (3 words: vtptr + x + y)
+          mov  r1, 3  bl malloc  str r0, fp, -2
+          lea  r1, @B@vtbl
+          ldr  r2, fp, -2
+          str  r1, r2, 0   ; object[0] = &B_vtable
+
+          ; bptr->set(2, 3)
+          mov  r0, 3  push r0
+          mov  r0, 2  push r0
+          ldr  r0, fp, -2  push r0
+          bl   @B@set$ii  add sp, sp, 3
+
+          ; bptr->display()  → B::display → prints 2 3
+          ldr  r0, fp, -2   push r0
+          ldr  r0, r0, 0    ldr r0, r0, 0
+          blr  r0
+          add  sp, sp, 1
+
+          ; aptr = bptr
+          ldr  r0, fp, -2  str r0, fp, -1
+
+          ; aptr->display()  — vtable dispatch now follows B's vtable → 2 3
+          ldr  r0, fp, -1   push r0
+          ldr  r0, r0, 0    ldr r0, r0, 0
+          blr  r0
+          add  sp, sp, 1
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

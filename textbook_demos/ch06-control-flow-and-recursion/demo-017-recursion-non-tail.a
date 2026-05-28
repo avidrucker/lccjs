@@ -1,0 +1,91 @@
+; demo-017-recursion-non-tail.a
+; Chapter 6: Control Flow and Recursion
+; Concept: Non-tail recursion — work happens BEFORE and AFTER the recursive call.
+;
+; CONCEPT:
+;   When code executes after a recursive call, the current frame must stay alive
+;   on the stack until the recursion unwinds. This is why push lr / pop lr is
+;   essential: we need to preserve the return address across the inner bl.
+;
+;   The output pattern shows the "descent" (pre-call prints) and "ascent"
+;   (post-call prints), forming a symmetric trace:
+;
+;     descend(2)
+;       prints "down"
+;       descend(1)
+;         prints "down"
+;         descend(0)
+;           prints "bottom"
+;         returns → prints "up"
+;       returns → prints "up"
+;
+; C equivalent:
+;   void descend(int x) {
+;       if (x == 0) { printf("bottom\n"); }
+;       else        { printf("down\n"); descend(x-1); printf("up\n"); }
+;   }
+;   int main() { descend(2); return 0; }
+;
+; Output:
+;   down
+;   down
+;   bottom
+;   up
+;   up
+
+startup:  bl main
+          halt
+
+; ---- descend(int x) ----
+descend:  push lr           ; MUST save lr: we call bl again, which overwrites it
+          push fp
+          mov  fp, sp
+
+          ldr  r0, fp, 2   ; r0 = x
+          cmp  r0, 0
+          brnz @else
+
+          ; base case: x == 0
+          lea  r0, msg_bottom
+          sout r0
+          br   @end_if
+
+@else:    ; recursive case
+          lea  r0, msg_down
+          sout r0
+
+          ldr  r0, fp, 2   ; x - 1
+          sub  r0, r0, 1
+          push r0
+          bl   descend      ; recurse
+          add  sp, sp, 1
+
+          lea  r0, msg_up   ; this runs AFTER the recursion unwinds
+          sout r0
+
+@end_if:
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          mov  r0, 2
+          push r0
+          bl   descend
+          add  sp, sp, 1
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- data section ----
+msg_bottom: .string "bottom\n"
+msg_down:   .string "down\n"
+msg_up:     .string "up\n"

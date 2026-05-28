@@ -1,0 +1,68 @@
+; demo-035-cpp-reference-parameters.a
+; Chapter 14: C++ References
+; Concept: C++ reference parameters compile as hidden pointers —
+;          the compiler inserts lea at the call site and ldr in the callee.
+;
+; CONCEPT:
+;   void f(int &a) means "a is an alias for the caller's variable."
+;   At the machine level this is IDENTICAL to void f(int *p):
+;     Call site:  lea r0, x; push r0   (pass address, not value)
+;     Callee:     ldr r0, fp, 2        (r0 = pointer)
+;                 ldr r0, r0, 0        (r0 = *pointer = current value)
+;                 ...
+;                 str r0, r1, 0        (write back through pointer)
+;   The programmer writes "a" but the compiler generates pointer code.
+;
+;   Name mangling: f(int&) becomes @f$ri  ($ separates name from signature,
+;   'r' = reference, 'i' = int).
+;
+; C++ equivalent:
+;   int x = 5;
+;   void f(int &a) { a = a + 1; }   // reference parameter
+;   int main() {
+;       cout << x;  // 5
+;       f(x);
+;       cout << x;  // 6  (x modified via reference)
+;   }
+
+startup:  bl main
+          halt
+
+x:        .word 5
+
+; ---- f(int &a): increment the referenced variable ----
+@f$ri:    push lr
+          push fp
+          mov  fp, sp
+
+          ldr  r0, fp, 2   ; r0 = the pointer (address of a)
+          ldr  r0, r0, 0   ; r0 = *pointer = current value of a
+          add  r0, r0, 1   ; a + 1
+          ldr  r1, fp, 2   ; r1 = pointer (reload)
+          str  r0, r1, 0   ; *pointer = a + 1  (writes to x in caller)
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ld   r0, x
+          dout r0  nl       ; prints 5
+
+          lea  r0, x        ; pass ADDRESS of x (not its value)
+          push r0
+          bl   @f$ri
+          add  sp, sp, 1
+
+          ld   r0, x
+          dout r0  nl       ; prints 6
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

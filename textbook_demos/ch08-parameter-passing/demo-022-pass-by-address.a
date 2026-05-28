@@ -1,0 +1,63 @@
+; demo-022-pass-by-address.a
+; Chapter 8: Parameter Passing
+; Concept: Pass by address (C pointer semantics) — callee modifies the caller's variable.
+;
+; CONCEPT:
+;   Instead of pushing the VALUE, push the ADDRESS of the variable (lea r0, x).
+;   The callee receives a pointer and dereferences it to read/write the original.
+;
+;   Dereference pattern inside callee:
+;     ldr r0, fp, 2    ; r0 = the pointer (address of x)
+;     ldr r0, r0, 0    ; r0 = *p = value at that address
+;     add r0, r0, 1
+;     ldr r1, fp, 2    ; reload pointer
+;     str r0, r1, 0    ; *p = r0  → writes to x in the caller
+;
+; C equivalent:
+;   int x = 7;
+;   void f(int *p) { *p = *p + 1; }   // modifies x via pointer
+;   int main() {
+;       f(&x);
+;       printf("%d\n", x);  // 8 — x WAS changed
+;   }
+
+startup:  bl main
+          halt
+
+x:        .word 7           ; global int x = 7
+
+; ---- f(int *p): increments the value at *p ----
+f:        push lr
+          push fp
+          mov  fp, sp
+
+          ldr  r0, fp, 2   ; r0 = p  (the pointer/address passed in)
+          ldr  r0, r0, 0   ; r0 = *p  (dereference: load from that address)
+          add  r0, r0, 1   ; *p + 1
+          ldr  r1, fp, 2   ; reload p (pointer)
+          str  r0, r1, 0   ; *p = r0  (write through pointer → modifies x)
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          lea  r0, x        ; r0 = &x  (address of x, not its value)
+          push r0            ; push the ADDRESS
+          bl   f
+          add  sp, sp, 1
+
+          ld   r0, x        ; x is now 8
+          dout r0            ; prints 8
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

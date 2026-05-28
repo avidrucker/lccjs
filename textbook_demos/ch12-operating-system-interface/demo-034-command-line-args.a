@@ -1,0 +1,62 @@
+; demo-034-command-line-args.a
+; Chapter 12: Operating System Interface
+; Concept: Accessing command-line arguments (argc, argv) passed by the OS to main.
+;
+; CONCEPT:
+;   When the OS calls main, it pushes argv (pointer to array of string pointers)
+;   and argc (argument count) onto the stack before the call.
+;   Inside main these live at fp+3 (argv) and fp+2 (argc).
+;
+;   Using .global main (instead of startup: bl main) tells the linker to
+;   expose main as the program entry point so the OS/startup stub can call it
+;   with argc and argv.
+;
+;   Accessing argv[i]:
+;     ldr r0, fp, 3    ; r0 = argv (base of pointer array)
+;     ldr r1, fp, -1   ; r1 = i
+;     add r0, r0, r1   ; r0 = &argv[i]
+;     ldr r0, r0, 0    ; r0 = argv[i]  (the string pointer)
+;     sout r0           ; print the string
+;
+; C equivalent:
+;   int main(int argc, char *argv[]) {
+;       int i = argc - 1;
+;       while (i >= 0) { printf("%s\n", argv[i]); i--; }
+;       return 0;
+;   }
+;   // Prints arguments in reverse order (including argv[0] = program name)
+
+          .global main      ; expose main to linker/OS startup
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; int i = argc - 1
+          ldr  r0, fp, 2   ; r0 = argc
+          add  r0, r0, -1  ; i = argc - 1
+          push r0            ; fp-1 = i
+
+@loop:    ldr  r0, fp, -1  ; r0 = i
+          cmp  r0, 0
+          brn  @done        ; while (i >= 0)
+
+          ; printf("%s\n", argv[i])
+          ldr  r0, fp, 3   ; r0 = argv (pointer array base)
+          ldr  r1, fp, -1  ; r1 = i
+          add  r0, r0, r1  ; r0 = &argv[i]
+          ldr  r0, r0, 0   ; r0 = argv[i]  (string pointer)
+          sout r0
+          nl
+
+          ; i--
+          ldr  r0, fp, -1
+          sub  r0, r0, 1
+          str  r0, fp, -1
+          br   @loop
+
+@done:    mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

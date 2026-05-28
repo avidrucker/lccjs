@@ -1,0 +1,109 @@
+; demo-037-cpp-struct-free-functions.a
+; Chapter 15: Classes and Objects
+; Concept: C-style OOP — a struct with free functions that take an explicit pointer.
+;          This is the predecessor to member functions; no hidden 'this' pointer yet.
+;
+; CONCEPT:
+;   Before classes, OOP was done by passing the struct pointer explicitly:
+;     set(&a, 5, 6)  →  push 6; push 5; lea r0,a; push r0; bl @set$p1Aii
+;
+;   Name mangling: @set$p1Aii = set(pointer-to-A, int, int)
+;                  @display$p1A = display(pointer-to-A)
+;
+;   Stack frame layout for set(A *r, int n, int m):
+;     fp+4 → m
+;     fp+3 → n
+;     fp+2 → r (pointer to struct)
+;
+;   Field access via pointer r with offset:
+;     r->x:  ldr r0, r1, 0   (r1 = r, offset 0)
+;     r->y:  ldr r0, r1, 1   (offset 1)
+;
+; C++ equivalent:
+;   struct A { int x; int y; };
+;   void set(A *r, int n, int m) { r->x = n; r->y = m; }
+;   void display(A *r)           { cout << r->x << r->y; }
+;   int main() { A a, b; set(&a,5,6); display(&a); set(&b,10,11); display(&b); }
+;
+; Output:
+;   5 6
+;   10 11
+
+startup:  bl main
+          halt
+
+; ---- set(A *r, int n, int m) ----
+@set$p1Aii:
+          push lr
+          push fp
+          mov  fp, sp
+
+          ldr  r0, fp, 3   ; n
+          ldr  r1, fp, 2   ; r (pointer to struct)
+          str  r0, r1, 0   ; r->x = n
+
+          ldr  r0, fp, 4   ; m
+          ldr  r1, fp, 2
+          str  r0, r1, 1   ; r->y = m
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- display(A *r) ----
+@display$p1A:
+          push lr
+          push fp
+          mov  fp, sp
+
+          ldr  r1, fp, 2   ; r
+          ldr  r0, r1, 0   ; r->x
+          dout r0
+          mov  r0, ' '
+          aout r0
+          ldr  r0, r1, 1   ; r->y
+          dout r0  nl
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; A a, b  — stack-allocated (2 words each)
+          sub  sp, sp, 2    ; a: fp-2=a.x, fp-1=a.y  (then b below)
+          sub  sp, sp, 2    ; b: fp-4=b.x, fp-3=b.y
+
+          ; set(&a, 5, 6)
+          mov  r0, 6   push r0
+          mov  r0, 5   push r0
+          add  r0, fp, -2  push r0   ; &a = fp-2
+          bl   @set$p1Aii
+          add  sp, sp, 3
+
+          ; display(&a)
+          add  r0, fp, -2  push r0
+          bl   @display$p1A
+          add  sp, sp, 1
+
+          ; set(&b, 10, 11)
+          mov  r0, 11  push r0
+          mov  r0, 10  push r0
+          add  r0, fp, -4  push r0   ; &b = fp-4
+          bl   @set$p1Aii
+          add  sp, sp, 3
+
+          ; display(&b)
+          add  r0, fp, -4  push r0
+          bl   @display$p1A
+          add  sp, sp, 1
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

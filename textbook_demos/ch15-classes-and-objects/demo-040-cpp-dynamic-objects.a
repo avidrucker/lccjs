@@ -1,0 +1,82 @@
+; demo-040-cpp-dynamic-objects.a
+; Chapter 15: Classes and Objects
+; Concept: Dynamic objects — heap-allocating class instances (new A, new B) and
+;          calling member functions through the 'this' pointer.
+;
+; CONCEPT:
+;   Combines demo-038 (member functions / this) with heap allocation.
+;   The only difference from stack objects:
+;     Stack:  add r0, fp, -2; push r0   (this = &stack_obj)
+;     Heap:   ldr r0, fp, -1; push r0   (this = heap pointer from malloc)
+;
+; C++ equivalent:
+;   class A { public: void set(int n, int m); void display();
+;              private: int x, y; };
+;   void A::set(int n, int m)  { x = n; y = m; }
+;   void A::display()          { cout << x << " " << y << endl; }
+;   int main() {
+;       A *p = new A;  A *q = new A;
+;       p->set(5, 6);   p->display();
+;       q->set(10, 11); q->display();
+;   }
+
+startup:  bl main
+          halt
+
+; ---- A::set(this, n, m) ----
+@A@set$ii:
+          push lr   push fp   mov fp, sp
+          ldr r0, fp, 3   ldr r1, fp, 2   str r0, r1, 0   ; this->x = n
+          ldr r0, fp, 4   ldr r1, fp, 2   str r0, r1, 1   ; this->y = m
+          mov sp, fp   pop fp   pop lr   ret
+
+; ---- A::display(this) ----
+@A@display$v:
+          push lr   push fp   mov fp, sp
+          ldr r0, fp, 2   ldr r0, r0, 0   dout r0
+          mov r0, ' '   aout r0
+          ldr r0, fp, 2   ldr r0, r0, 1   dout r0   nl
+          mov sp, fp   pop fp   pop lr   ret
+
+; ---- malloc ----
+malloc:   ld r0, @avail   add r1, r0, r1   st r1, @avail   ret
+@avail:   .word *+1
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          sub  sp, sp, 1   ; fp-1 = p
+          sub  sp, sp, 1   ; fp-2 = q
+
+          ; p = new A  (allocate 2 words for x and y)
+          mov  r1, 2  bl malloc   str r0, fp, -1
+
+          ; q = new A
+          mov  r1, 2  bl malloc   str r0, fp, -2
+
+          ; p->set(5, 6)
+          mov  r0, 6   push r0
+          mov  r0, 5   push r0
+          ldr  r0, fp, -1  push r0   ; push this = p
+          bl   @A@set$ii   add sp, sp, 3
+
+          ; p->display()
+          ldr  r0, fp, -1  push r0
+          bl   @A@display$v   add sp, sp, 1
+
+          ; q->set(10, 11)
+          mov  r0, 11  push r0
+          mov  r0, 10  push r0
+          ldr  r0, fp, -2  push r0
+          bl   @A@set$ii   add sp, sp, 3
+
+          ; q->display()
+          ldr  r0, fp, -2  push r0
+          bl   @A@display$v   add sp, sp, 1
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

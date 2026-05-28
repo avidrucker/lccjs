@@ -1,0 +1,51 @@
+; demo-007-signed-comparison.a
+; Chapter 3: Assembly Language Basics
+; Concept: Read two signed integers, compare them, branch on the result.
+;
+; NEW CONCEPTS:
+;   din  dr     — read a signed decimal integer from stdin into dr
+;   cmp  sr1, sr2  — set flags based on sr1 - sr2 (does NOT store result)
+;   brlt label  — branch if less than    (N ≠ V, i.e. signed first < second)
+;   bre  label  — branch if equal        (Z = 1)
+;   brgt label  — branch if greater than (N = V and Z = 0)
+;   br   label  — branch always (unconditional jump)
+;
+; Three-way signed comparison pattern:
+;   sub  r0, r1, r0   ; compute difference (sets flags)
+;   brlt less          ; first < second
+;   bre  equal         ; first == second
+;   brgt greater       ; first > second  (can also use plain br here)
+;
+; C equivalent:
+;   int a, b;
+;   scanf("%d %d", &a, &b);
+;   if      (a < b) printf("First number less\n");
+;   else if (a == b) printf("Numbers equal\n");
+;   else             printf("First number greater\n");
+
+          lea  r0, prompt
+          sout r0
+
+          din  r0             ; read first number into r0
+          mov  r1, r0         ; save first number in r1
+          din  r0             ; read second number into r0
+
+          sub  r0, r1, r0     ; r0 = first - second (sets NZCV flags)
+          brlt less
+          bre  equal
+          brgt greater        ; (unconditional br also works here)
+
+less:     lea  r0, msg_lt
+          br   display
+equal:    lea  r0, msg_eq
+          br   display
+greater:  lea  r0, msg_gt
+
+display:  sout r0
+          halt
+
+; ---- data section ----
+prompt:   .string "Enter two signed integers\n"
+msg_lt:   .string "First number is less\n"
+msg_eq:   .string "Numbers are equal\n"
+msg_gt:   .string "First number is greater\n"

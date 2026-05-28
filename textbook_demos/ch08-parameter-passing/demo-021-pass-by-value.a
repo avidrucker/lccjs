@@ -1,0 +1,55 @@
+; demo-021-pass-by-value.a
+; Chapter 8: Parameter Passing
+; Concept: Pass by value — the callee receives a COPY; the original is unchanged.
+;
+; CONCEPT:
+;   When you push a value and call a function, the function operates on
+;   the copy that sits in its stack frame (at fp+2). Writing back to fp+2
+;   modifies only that copy — the caller's variable is completely unaffected.
+;
+; C equivalent:
+;   int x = 7;
+;   void f(int a) { a = a + 1; }   // modifies copy only
+;   int main() {
+;       f(x);
+;       printf("%d\n", x);  // still 7 — x was NOT changed
+;   }
+
+startup:  bl main
+          halt
+
+x:        .word 7           ; global int x = 7
+
+; ---- f(int a): increments its local copy — caller's x unchanged ----
+f:        push lr
+          push fp
+          mov  fp, sp
+
+          ldr  r0, fp, 2   ; r0 = a  (the copy)
+          add  r0, r0, 1   ; a = a + 1  (modifies only the stack copy)
+          str  r0, fp, 2   ; write back to the stack slot (NOT to x in memory)
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ld   r0, x        ; r0 = x = 7
+          push r0            ; push the VALUE (a copy of x)
+          bl   f             ; f operates on the copy
+          add  sp, sp, 1
+
+          ld   r0, x        ; reload x from memory — still 7
+          dout r0            ; prints 7
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

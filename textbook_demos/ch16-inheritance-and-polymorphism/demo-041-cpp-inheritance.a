@@ -1,0 +1,101 @@
+; demo-041-cpp-inheritance.a
+; Chapter 16: Inheritance and Polymorphism
+; Concept: Single inheritance with static dispatch — B inherits from A.
+;          The compiler knows the exact type at each call site and calls directly.
+;
+; OBJECT LAYOUT for B (inherits A's field x, adds its own y):
+;   offset 0 → x  (inherited from A)
+;   offset 1 → y  (B's own field)
+;
+; STATIC DISPATCH:
+;   aptr->display() where aptr is typed as A* always calls @A@display$v,
+;   even if the object is actually a B.  This is the key limitation that
+;   virtual functions (demo-042) solve.
+;
+; C++ equivalent:
+;   class A { public: void set(int n); void display(); protected: int x; };
+;   class B: public A { public: void set(int n,int m); void display(); private: int y; };
+;   int main() {
+;       A *aptr = new A;  aptr->set(1);   aptr->display();   // prints: 1
+;       B *bptr = new B;  bptr->set(2,3); bptr->display();   // prints: 2 3
+;       aptr = bptr;      aptr->display();  // still calls A::display → prints: 2 only
+;   }
+
+startup:  bl main
+          halt
+
+; ---- A::set(this, int n) ----
+@A@set$i: push lr  push fp  mov fp, sp
+          ldr r0, fp, 3   ldr r1, fp, 2   str r0, r1, 0   ; this->x = n
+          mov sp, fp  pop fp  pop lr  ret
+
+; ---- A::display(this) ----
+@A@display$v:
+          push lr  push fp  mov fp, sp
+          ldr r0, fp, 2   ldr r0, r0, 0   ; this->x
+          dout r0  nl
+          mov sp, fp  pop fp  pop lr  ret
+
+; ---- B::set(this, int n, int m) ----
+@B@set$ii:
+          push lr  push fp  mov fp, sp
+          ldr r0, fp, 3  ldr r1, fp, 2  str r0, r1, 0   ; this->x = n
+          ldr r0, fp, 4  ldr r1, fp, 2  str r0, r1, 1   ; this->y = m
+          mov sp, fp  pop fp  pop lr  ret
+
+; ---- B::display(this) ----
+@B@display$v:
+          push lr  push fp  mov fp, sp
+          ldr r0, fp, 2   ldr r0, r0, 0   dout r0   ; x
+          mov r0, ' '  aout r0
+          ldr r0, fp, 2   ldr r0, r0, 1   dout r0  nl   ; y
+          mov sp, fp  pop fp  pop lr  ret
+
+malloc:   ld r0, @avail  add r1, r0, r1  st r1, @avail  ret
+@avail:   .word *+1
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          sub  sp, sp, 1   ; fp-1 = aptr
+          sub  sp, sp, 1   ; fp-2 = bptr
+
+          ; aptr = new A  (1 word: x only)
+          mov  r1, 1  bl malloc  str r0, fp, -1
+
+          ; aptr->set(1)
+          mov  r0, 1   push r0
+          ldr  r0, fp, -1  push r0
+          bl   @A@set$i   add sp, sp, 2
+
+          ; aptr->display()  → prints 1
+          ldr  r0, fp, -1  push r0
+          bl   @A@display$v   add sp, sp, 1
+
+          ; bptr = new B  (2 words: x + y)
+          mov  r1, 2  bl malloc  str r0, fp, -2
+
+          ; bptr->set(2, 3)
+          mov  r0, 3   push r0
+          mov  r0, 2   push r0
+          ldr  r0, fp, -2  push r0
+          bl   @B@set$ii   add sp, sp, 3
+
+          ; bptr->display()  → prints 2 3
+          ldr  r0, fp, -2  push r0
+          bl   @B@display$v   add sp, sp, 1
+
+          ; aptr = bptr  (pointer reassignment)
+          ldr  r0, fp, -2
+          str  r0, fp, -1
+
+          ; aptr->display()  — static dispatch: calls A::display → prints 2 only
+          ldr  r0, fp, -1  push r0
+          bl   @A@display$v   add sp, sp, 1
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

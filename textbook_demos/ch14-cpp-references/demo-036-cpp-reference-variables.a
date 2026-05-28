@@ -1,0 +1,69 @@
+; demo-036-cpp-reference-variables.a
+; Chapter 14: C++ References
+; Concept: C++ reference variables are stored as pointers — every read/write
+;          goes through an implicit dereference.
+;
+; CONCEPT:
+;   int &xr = x;   →  xr: .word x   (xr holds the ADDRESS of x)
+;
+;   Reading xr:    ld r0, xr; ldr r0, r0, 0   (load pointer, then deref)
+;   Reading x:     ld r0, x                    (direct load)
+;
+;   For a local reference:
+;   int &yr = y;   →  add r0, fp, -1; push r0  (push address of y)
+;
+;   Reading yr:    ldr r0, fp, -2; ldr r0, r0, 0
+;
+; C++ equivalent:
+;   int x = 5;
+;   int &xr = x;          // global reference to x
+;   int main() {
+;       int y = 7;
+;       int &yr = y;      // local reference to y
+;       cout << x;        // 5   (direct)
+;       cout << xr;       // 5   (via reference → deref)
+;       cout << y;        // 7   (direct)
+;       cout << yr;       // 7   (via reference → deref)
+;   }
+
+startup:  bl main
+          halt
+
+x:        .word 5
+xr:       .word x           ; xr = &x  (stores the address of x)
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; int y = 7
+          mov  r0, 7
+          push r0            ; fp-1 = y
+
+          ; int &yr = y  (yr = &y, stored as a pointer on the stack)
+          add  r0, fp, -1   ; r0 = address of y  (fp-1)
+          push r0            ; fp-2 = yr  (pointer to y)
+
+          ; cout << x   — direct load
+          ld   r0, x
+          dout r0  nl        ; 5
+
+          ; cout << xr  — load pointer, then dereference
+          ld   r0, xr       ; r0 = xr = &x
+          ldr  r0, r0, 0   ; r0 = *xr = x
+          dout r0  nl        ; 5
+
+          ; cout << y   — direct fp-relative load
+          ldr  r0, fp, -1
+          dout r0  nl        ; 7
+
+          ; cout << yr  — load pointer (fp-2), then dereference
+          ldr  r0, fp, -2   ; r0 = yr = &y
+          ldr  r0, r0, 0   ; r0 = *yr = y
+          dout r0  nl        ; 7
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

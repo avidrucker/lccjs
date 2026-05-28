@@ -1,0 +1,61 @@
+; demo-018-pointer-to-global.a
+; Chapter 7: Pointers
+; Concept: Taking the address of a global variable, storing it in a pointer,
+;          reading through the pointer, and writing through the pointer.
+;
+; NEW CONCEPTS:
+;   lea  dr, label     — dr = &label  (load address, not value)
+;   ldr  dr, baser, 0  — dr = mem[baser]  (dereference: *ptr)
+;   str  sr, baser, 0  — mem[baser] = sr  (write through pointer: *ptr = val)
+;
+; Three pointer operations:
+;   1. Take address:   lea r0, x; st r0, p       p = &x
+;   2. Read through:   ld r0, p; ldr r0, r0, 0   r0 = *p
+;   3. Write through:  mov r0, 8; ld r1, p; str r0, r1, 0   *p = 8
+;
+; C equivalent:
+;   int *p, x = 7;
+;   int main() {
+;       p = &x;
+;       printf("%d\n", *p);  // 7
+;       *p = 8;
+;       printf("%d\n", x);   // 8  (x changed via the pointer)
+;   }
+
+startup:  bl main
+          halt
+
+; ---- globals ----
+p:        .word 0           ; int *p = NULL;
+x:        .word 7           ; int x = 7;
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; p = &x
+          lea  r0, x        ; r0 = address of x
+          st   r0, p        ; p = &x
+
+          ; printf("%d\n", *p)
+          ld   r0, p        ; r0 = p (the address)
+          ldr  r0, r0, 0   ; r0 = mem[r0 + 0] = *p = 7
+          dout r0
+          nl
+
+          ; *p = 8
+          mov  r0, 8
+          ld   r1, p        ; r1 = p
+          str  r0, r1, 0   ; mem[r1] = 8 → x is now 8
+
+          ; printf("%d\n", x)
+          ld   r0, x        ; x is now 8
+          dout r0
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

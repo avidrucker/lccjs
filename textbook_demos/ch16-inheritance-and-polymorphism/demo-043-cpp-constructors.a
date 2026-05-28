@@ -1,0 +1,125 @@
+; demo-043-cpp-constructors.a
+; Chapter 16: Inheritance and Polymorphism
+; Concept: Constructors — name-mangled initializer functions called automatically
+;          at object creation; base constructors chained from derived constructors.
+;
+; CONCEPT:
+;   A constructor is a regular member function with a mangled name:
+;     A::A(int n)    → @A@A$i    (class A, constructor, one int parameter)
+;     B::B(int n, m) → @B@B$ii   (class B, constructor, two int params)
+;
+;   Derived constructor calls base constructor explicitly:
+;     B::B(n, m) : A(n) { ... }
+;     → inside @B@B$ii: push n; push this; bl @A@A$i; add sp,sp,2
+;
+;   Stack objects: allocate space, then call constructor with &obj as 'this'.
+;   Heap objects:  malloc, then call constructor with returned pointer as 'this'.
+;
+;   Object layout (no vtable in this example):
+;     A: [x]         (1 word)
+;     B: [x | y]     (2 words; x inherited, y added by B)
+;
+; C++ equivalent:
+;   class A { public: A(int n); void display(); protected: int x; };
+;   class B: public A { public: B(int n, int m); void display(); private: int y; };
+;   A::A(int n)       { x = n; }
+;   B::B(int n, int m): A(n) { y = m; }
+;   int main() {
+;       A a(1);          a.display();    // 1
+;       B b(2, 3);       b.display();    // 2 3
+;       A *ap = new A(4); ap->display(); // 4
+;       B *bp = new B(5, 6); bp->display(); // 5 6
+;   }
+
+startup:  bl main
+          halt
+
+; ---- A::A(this, n): constructor ----
+@A@A$i:   push lr  push fp  mov fp, sp
+          ldr r0, fp, 3   ldr r1, fp, 2   str r0, r1, 0   ; this->x = n
+          mov sp, fp  pop fp  pop lr  ret
+
+; ---- A::display(this) ----
+@A@display$v:
+          push lr  push fp  mov fp, sp
+          ldr r0, fp, 2   ldr r0, r0, 0   dout r0  nl
+          mov sp, fp  pop fp  pop lr  ret
+
+; ---- B::B(this, n, m): constructor — chains to A::A(n) ----
+@B@B$ii:  push lr  push fp  mov fp, sp
+
+          ; call A::A(n) — initialize inherited x
+          ldr  r0, fp, 3   push r0   ; n
+          ldr  r0, fp, 2   push r0   ; this (B object also IS an A subobject)
+          bl   @A@A$i
+          add  sp, sp, 2
+
+          ; initialize y
+          ldr  r0, fp, 4   ; m
+          ldr  r1, fp, 2   ; this
+          str  r0, r1, 1   ; this->y = m
+
+          mov sp, fp  pop fp  pop lr  ret
+
+; ---- B::display(this) ----
+@B@display$v:
+          push lr  push fp  mov fp, sp
+          ldr r0, fp, 2  ldr r0, r0, 0  dout r0   ; x
+          mov r0, ' '  aout r0
+          ldr r0, fp, 2  ldr r0, r0, 1  dout r0  nl   ; y
+          mov sp, fp  pop fp  pop lr  ret
+
+malloc:   ld r0, @avail  add r1, r0, r1  st r1, @avail  ret
+@avail:   .word *+1
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          sub  sp, sp, 1   ; fp-1 = aptr
+          sub  sp, sp, 1   ; fp-2 = bptr
+
+          ; A a(1)  — stack object
+          sub  sp, sp, 1   ; fp-3 = a.x
+          mov  r0, 1   push r0
+          add  r0, fp, -3  push r0   ; this = &a
+          bl   @A@A$i   add sp, sp, 2
+          add  r0, fp, -3  push r0
+          bl   @A@display$v   add sp, sp, 1   ; prints 1
+
+          ; B b(2, 3)  — stack object (2 words)
+          sub  sp, sp, 2   ; fp-5=b.x, fp-4... actually fp-4 comes first pushed
+          ; b is at fp-5 (x) and fp-4 (y)... Let me place:
+          ; after sub sp,sp,2: sp is 2 below current fp-3 slot
+          ; b.x is at fp-5, b.y is at fp-4? No:
+          ; fp-3 already taken by a.x.
+          ; sub sp,sp,2 allocates 2 more: fp-4 and fp-5. b starts at fp-5.
+          mov  r0, 3  push r0   ; m
+          mov  r0, 2  push r0   ; n
+          add  r0, fp, -5  push r0   ; this = &b
+          bl   @B@B$ii   add sp, sp, 3
+          add  r0, fp, -5  push r0
+          bl   @B@display$v   add sp, sp, 1   ; prints 2 3
+
+          ; aptr = new A(4)  — heap object
+          mov  r1, 1  bl malloc  str r0, fp, -1
+          mov  r0, 4  push r0
+          ldr  r0, fp, -1  push r0
+          bl   @A@A$i   add sp, sp, 2
+          ldr  r0, fp, -1  push r0
+          bl   @A@display$v   add sp, sp, 1   ; prints 4
+
+          ; bptr = new B(5, 6)  — heap object
+          mov  r1, 2  bl malloc  str r0, fp, -2
+          mov  r0, 6  push r0
+          mov  r0, 5  push r0
+          ldr  r0, fp, -2  push r0
+          bl   @B@B$ii   add sp, sp, 3
+          ldr  r0, fp, -2  push r0
+          bl   @B@display$v   add sp, sp, 1   ; prints 5 6
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

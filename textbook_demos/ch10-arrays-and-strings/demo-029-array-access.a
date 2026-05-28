@@ -1,0 +1,73 @@
+; demo-029-array-access.a
+; Chapter 10: Arrays and Strings
+; Concept: Accessing array elements — both global and local arrays,
+;          using both compile-time (constant) and runtime (variable) indices.
+;
+; FOUR COMBINATIONS:
+;   1. Global array, constant index  → label+n  resolved at assemble time
+;   2. Global array, variable index  → lea base + runtime add
+;   3. Local array,  constant index  → fp+offset  (fp-relative constant)
+;   4. Local array,  variable index  → add base-reg + runtime add
+;
+; C equivalent:
+;   int ga[10], x = 3;
+;   int main() {
+;       int la[10];
+;       ga[2] = 10;   ga[x] = 11;   // global, constant then variable index
+;       la[2] = 12;   la[x] = 13;   // local,  constant then variable index
+;       printf("%d %d %d %d\n", ga[2], ga[3], la[2], la[3]);
+;   }
+; Output: 10 11 12 13
+
+startup:  bl main
+          halt
+
+; ---- global data ----
+ga:       .zero 10          ; int ga[10];
+x:        .word 3           ; int x = 3;
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; -- local array la[10] on the stack --
+          ; la[0] is at fp-10, la[1] at fp-9, ..., la[9] at fp-1
+          sub  sp, sp, 10
+
+          ; 1. ga[2] = 10  (constant index: assembler computes ga+2)
+          mov  r0, 10
+          st   r0, ga+2
+
+          ; 2. ga[x] = 11  (variable index: base + runtime offset)
+          mov  r0, 11
+          lea  r1, ga       ; r1 = &ga[0]
+          ld   r2, x        ; r2 = x = 3
+          add  r1, r1, r2   ; r1 = &ga[x]
+          str  r0, r1, 0   ; ga[x] = 11 → ga[3]
+
+          ; 3. la[2] = 12  (constant index: fp - 10 + 2 = fp-8)
+          mov  r0, 12
+          str  r0, fp, -8  ; la[2] lives at fp-8
+
+          ; 4. la[x] = 13  (variable index: base = fp-10, add x)
+          mov  r0, 13
+          add  r1, fp, -10  ; r1 = &la[0]
+          ld   r2, x        ; r2 = 3
+          add  r1, r1, r2   ; r1 = &la[3]
+          str  r0, r1, 0   ; la[3] = 13
+
+          ; print ga[2], ga[3], la[2], la[3]
+          ld   r0, ga+2
+          dout r0  nl
+          ld   r0, ga+3
+          dout r0  nl
+          ldr  r0, fp, -8
+          dout r0  nl
+          ldr  r0, fp, -7
+          dout r0  nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

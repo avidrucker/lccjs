@@ -1,0 +1,35 @@
+; demo-006-word-label-vs-literal.a
+; Chapter 3: Assembly Language Basics
+; Concept: .word stores either an address (when given a label) or a literal value.
+;
+; KEY DISTINCTION:
+;   y: .word x    → y holds the ADDRESS of x (the location counter value at x)
+;   z: .word 7    → z holds the LITERAL VALUE 7
+;
+; This is a critical source of confusion: the assembler resolves label operands
+; to their assembly-time addresses, not to the values stored at those addresses.
+;
+; C equivalent (rough analogy):
+;   int x = 7;
+;   int *y = &x;   // y holds the address of x
+;   int  z = 7;    // z holds the value 7
+
+          ld   r0, ptr_to_x  ; r0 = address of x (e.g. 0x0005)
+          dout r0             ; display that address
+          nl
+
+          ld   r1, literal_7 ; r1 = 7 (the literal value)
+          dout r1             ; display 7
+          nl
+
+          ; now use the pointer: dereference ptr_to_x to get x's value
+          ldr  r2, r0, 0     ; r2 = mem[r0 + 0] = value at address of x = 7
+          dout r2             ; display 7
+          nl
+
+          halt
+
+; ---- data section ----
+literal_7: .word 7            ; stores the value 7
+x:         .word 7            ; stores the value 7
+ptr_to_x:  .word x            ; stores the ADDRESS of x  (not the value 7!)

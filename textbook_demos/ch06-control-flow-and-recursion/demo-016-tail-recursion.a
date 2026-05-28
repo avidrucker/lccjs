@@ -1,0 +1,65 @@
+; demo-016-tail-recursion.a
+; Chapter 6: Control Flow and Recursion
+; Concept: Tail recursion — the recursive call is the last action before return.
+;
+; CONCEPT:
+;   In tail recursion, no work happens AFTER the recursive call.
+;   Each stack frame is still fully allocated (bl + prologue/epilogue), but
+;   the call depth equals the initial argument value.
+;
+;   The 's' debug trap instruction displays the current call stack — use it
+;   with 'node ./src/core/lcc.js demos/ch06.../demo-016.a' to watch depth grow.
+;
+; C equivalent:
+;   void countdown(int x) {
+;       if (x != 0) { printf("%d\n", x); countdown(x - 1); }
+;   }
+;   int main() { countdown(3); return 0; }
+;
+; Output: 3 2 1
+
+startup:  bl main
+          halt
+
+; ---- countdown(int x): tail-recursive ----
+countdown:
+          push lr
+          push fp
+          mov  fp, sp
+
+          s                  ; DEBUG: display call stack (remove for production)
+
+          ldr  r0, fp, 2    ; r0 = x
+          cmp  r0, 0
+          brz  @done        ; if x == 0, nothing to do
+
+          dout r0            ; printf("%d\n", x)
+          nl
+
+          ldr  r0, fp, 2    ; reload x
+          sub  r0, r0, 1    ; x - 1
+          push r0
+          bl   countdown    ; countdown(x - 1)  ← tail call
+          add  sp, sp, 1
+
+@done:
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          mov  r0, 3
+          push r0
+          bl   countdown
+          add  sp, sp, 1
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

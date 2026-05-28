@@ -1,0 +1,79 @@
+; demo-030-array-passing.a
+; Chapter 10: Arrays and Strings
+; Concept: Arrays decay to pointers when passed — int z[] and int *z are identical
+;          as parameter types; z[1] and *(z+1) generate the same machine code.
+;
+; CONCEPT:
+;   Passing an array means passing a pointer to its first element.
+;   Inside the callee, regardless of whether the parameter is declared
+;   int z[] or int *z, and regardless of whether you write z[1] or *(z+1),
+;   the machine code is identical:
+;     ldr r0, fp, 2    ; r0 = z (base pointer)
+;     ldr r0, r0, 1    ; r0 = *(z + 1) = z[1]
+;
+; C equivalent:
+;   int a[2] = {?, 99};
+;   void f1(int z[])  { printf("%d\n", z[1]); }    // array notation
+;   void f2(int *z)   { printf("%d\n", *(z+1)); }   // pointer notation
+;   int main() { a[1]=99; f1(a); f2(a); f1(a); f2(a); }
+;   // all 4 calls print 99
+
+startup:  bl main
+          halt
+
+a:        .zero 2           ; int a[2];
+
+; helper macro: all 4 functions share this body
+; (shown as 4 separate functions to emphasize they produce identical code)
+
+f1:       push lr           ; void f1(int z[]) — access with z[1]
+          push fp
+          mov  fp, sp
+          ldr  r0, fp, 2   ; r0 = z  (pointer to array base)
+          ldr  r0, r0, 1   ; r0 = z[1]  (offset 1 in ldr)
+          dout r0  nl
+          mov  sp, fp  pop fp  pop lr  ret
+
+f2:       push lr           ; void f2(int *z) — access with *(z+1)
+          push fp
+          mov  fp, sp
+          ldr  r0, fp, 2   ; r0 = z
+          ldr  r0, r0, 1   ; r0 = *(z+1)  — same instruction as z[1]
+          dout r0  nl
+          mov  sp, fp  pop fp  pop lr  ret
+
+f3:       push lr           ; void f3(int z[]) — access with *(z+1)
+          push fp
+          mov  fp, sp
+          ldr  r0, fp, 2
+          ldr  r0, r0, 1
+          dout r0  nl
+          mov  sp, fp  pop fp  pop lr  ret
+
+f4:       push lr           ; void f4(int *z) — access with z[1]
+          push fp
+          mov  fp, sp
+          ldr  r0, fp, 2
+          ldr  r0, r0, 1
+          dout r0  nl
+          mov  sp, fp  pop fp  pop lr  ret
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; a[1] = 99
+          mov  r0, 99
+          st   r0, a+1
+
+          ; all four calls — passing &a[0] as the array pointer
+          lea  r0, a  push r0  bl f1  add sp, sp, 1
+          lea  r0, a  push r0  bl f2  add sp, sp, 1
+          lea  r0, a  push r0  bl f3  add sp, sp, 1
+          lea  r0, a  push r0  bl f4  add sp, sp, 1
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

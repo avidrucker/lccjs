@@ -1,0 +1,44 @@
+; demo-008-label-arithmetic.a
+; Chapter 3: Assembly Language Basics
+; Concept: Labels can be used in arithmetic expressions resolved at assembly time.
+;
+; CONCEPT:
+;   label+n  — the address n words AFTER label
+;   label-n  — the address n words BEFORE label
+;
+;   These offsets are computed by the ASSEMBLER (not at runtime). They are
+;   simply constants equal to (address_of_label ± n).
+;
+;   This lets you access adjacent words without giving each one its own label.
+;
+; C equivalent (rough):
+;   int arr[] = {5, 11, 17};
+;   printf("%d %d %d\n", arr[0], arr[1], arr[2]);
+
+          ld   r0, x        ; loads 5    (x+0)
+          dout r0
+          nl
+
+          ld   r0, x+1      ; loads 11   (one word after x)
+          dout r0
+          nl
+
+          ld   r0, x+2      ; loads 17   (two words after x, same as y)
+          dout r0
+          nl
+
+          ld   r0, y-1      ; loads 11   (one word before y — same as x+1)
+          dout r0
+          nl
+
+          halt
+
+; ---- data section ----
+; These three .word directives are laid out consecutively in memory.
+; x is at some address A; x+1 is at A+1; y is at A+2.
+x:        .word 5
+          .word 11           ; no label needed; accessed as x+1 or y-1
+y:        .word 17
+
+; z holds the assembly-time address of x+2, which equals y's address:
+z:        .word x+2          ; z = address of y (demonstrating .word label arithmetic)

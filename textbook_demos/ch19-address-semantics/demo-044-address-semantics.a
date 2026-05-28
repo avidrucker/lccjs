@@ -1,0 +1,54 @@
+; demo-044-address-semantics.a
+; Chapter 19: Address Semantics
+; Concept: How addresses are CREATED, PROPAGATED, and DESTROYED at the machine level.
+;
+; KEY INSIGHT:
+;   An address is just a 16-bit word — there is NO runtime tag that distinguishes
+;   a pointer from a plain integer. Once overwritten, an address is gone forever.
+;
+; THREE OPERATIONS ON ADDRESSES:
+;   1. CREATION:     .word <label>  → allocates a word initialized to <label>'s address
+;                    lea dr, label  → loads <label>'s address into a register at runtime
+;
+;   2. PROPAGATION:  ld r0, a       → r0 now holds the address (copied from memory)
+;                    st r0, b       → b now also holds that address
+;
+;   3. DESTRUCTION:  ld r1, c       → r1 holds a plain integer (not an address)
+;                    st r1, a       → a is overwritten with the integer; address is GONE
+;
+; Memory layout and trace:
+;   Label  Addr  Initial value        After program
+;   a      0004  &d (address of d)   5  (overwritten — address destroyed)
+;   b      0005  3                   &d (address propagated from a)
+;   c      0006  5                   5  (unchanged)
+;   d      0008  17                  17 (the original target; unchanged)
+;
+; C equivalent (rough):
+;   int d = 17;
+;   int *a = &d;   // a holds address of d
+;   int  b = 3;
+;   int  c = 5;
+;   int main() {
+;       b = a;     // propagate: b now also points to d
+;       a = c;     // destroy:   a overwritten with 5 (not a valid pointer)
+;       halt;
+;   }
+
+          ; CREATION (at assemble time):
+          ;   a: .word d  → a is assembled to hold the address of d
+
+          ; PROPAGATION (at runtime):
+          ld   r0, a        ; r0 = address of d  (loaded from a)
+          st   r0, b        ; b = &d  (address propagated to b)
+
+          ; DESTRUCTION (at runtime):
+          ld   r1, c        ; r1 = 5  (a plain integer — NOT an address)
+          st   r1, a        ; a = 5   (address of d is gone — a no longer points to d)
+
+          halt
+
+; ---- data section ----
+a:        .word d           ; CREATED here: a holds the address of d
+b:        .word 3           ; plain integer (becomes a propagated address after runtime)
+c:        .word 5           ; plain integer (used to destroy the address in a)
+d:        .word 17          ; the target word that a originally pointed to

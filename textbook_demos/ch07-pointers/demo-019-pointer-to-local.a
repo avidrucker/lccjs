@@ -1,0 +1,68 @@
+; demo-019-pointer-to-local.a
+; Chapter 7: Pointers
+; Concept: Taking the address of a stack-allocated (local) variable.
+;
+; CONCEPT:
+;   Local variables live at fp-relative offsets. Their absolute address is
+;   computed at runtime as:  address_of_local = fp + offset
+;
+;   Pattern to get &local_x (at fp-2):
+;     add r0, fp, -2    ; r0 = fp + (-2) = address of local_x
+;
+;   This address can be stored in a pointer and used to read/write the local
+;   through the pointer — even from another function.
+;
+; Stack layout inside main:
+;   fp+1  → saved fp
+;   fp+0  → saved lr
+;   fp-1  → local p  (the pointer; allocated second)
+;   fp-2  → local x = 7  (the integer; allocated first via push)
+;
+; C equivalent:
+;   int main() {
+;       int x = 7;
+;       int *p = &x;
+;       printf("%d\n", *p);   // 7
+;       *p = 8;
+;       printf("%d\n", x);    // 8
+;   }
+
+startup:  bl main
+          halt
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; allocate x = 7  (fp-2 after p is pushed below)
+          mov  r0, 7
+          push r0            ; fp-1 = x initially (will shift when p is pushed)
+
+          ; allocate p (uninitialized slot)
+          sub  sp, sp, 1    ; now: fp-1 = p, fp-2 = x
+
+          ; p = &x  (x is at fp-2)
+          add  r0, fp, -2   ; r0 = address of x
+          str  r0, fp, -1   ; p = &x  (store into fp-1)
+
+          ; printf("%d\n", *p)
+          ldr  r0, fp, -1   ; r0 = p  (the address)
+          ldr  r0, r0, 0    ; r0 = *p = x = 7
+          dout r0
+          nl
+
+          ; *p = 8
+          mov  r0, 8
+          ldr  r1, fp, -1   ; r1 = p
+          str  r0, r1, 0    ; *p = 8  (x is now 8)
+
+          ; printf("%d\n", x)
+          ldr  r0, fp, -2   ; r0 = x directly (now 8)
+          dout r0
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

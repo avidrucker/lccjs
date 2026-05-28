@@ -1,0 +1,81 @@
+; demo-014-local-variables-static.a
+; Chapter 5: Variable Storage Classes
+; Concept: Static local variables — persist between calls, allocated at file scope
+;          with compiler-generated (mangled) label names.
+;
+; CONCEPT:
+;   A static local variable is NOT on the stack. It behaves like a global
+;   (fixed address, persists for the program's lifetime) but is scoped to the
+;   function that declares it.
+;
+;   The assembler represents them as ordinary .word labels at file scope, using
+;   a mangled name (e.g. @s0_x, @s1_x) to distinguish multiple statics with
+;   the same source name in different scopes.
+;
+;   Access uses ld/st by the mangled label — exactly like global access.
+;
+; C equivalent:
+;   int x = 5;                   // global x
+;   void f()  { static int x;    printf("%d\n", x); }  // static x in f (= 0)
+;   int main() { static int x=3; printf("%d\n", x); f(); return 0; }
+;
+; Output:
+;   3      ← static x in main
+;   0      ← static x in f (zero-initialized)
+;   5      ← global x  (displayed last, in g)
+
+startup:  bl main
+          halt
+
+; ---- global x ----
+x:        .word 5           ; global int x = 5
+
+; ---- f(): displays its own static x ----
+f:        push lr
+          push fp
+          mov  fp, sp
+
+          ld   r0, @s0_x   ; r0 = static x inside f (= 0)
+          dout r0
+          nl
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- g(): displays the global x ----
+g:        push lr
+          push fp
+          mov  fp, sp
+
+          ld   r0, x        ; r0 = global x (= 5)
+          dout r0
+          nl
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ld   r0, @s1_x   ; r0 = static x in main (= 3)
+          dout r0
+          nl
+
+          bl   f            ; prints 0
+          bl   g            ; prints 5
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- static variable storage (at file scope, but logically local) ----
+@s0_x:    .word 0           ; static int x inside f  (zero-initialized)
+@s1_x:    .word 3           ; static int x inside main (initialized to 3)

@@ -1,0 +1,35 @@
+; demo-005-start-directive.a
+; Chapter 3: Assembly Language Basics
+; Concept: Using .start to specify the entry point when layout order matters.
+;
+; NEW CONCEPTS:
+;   .start <label>  — tell the assembler where execution should begin.
+;                     Without .start, execution begins at address 0 (first
+;                     instruction in the file). If a subroutine comes first,
+;                     the CPU will execute it before main — usually a bug.
+;
+; PROBLEM (without .start):
+;   If greet is defined before main, the CPU starts at greet, executes ret
+;   with an uninitialized lr, and jumps to a garbage address → crash/loop.
+;
+; SOLUTION: .start main tells the assembler to record main as the entry point
+;   in the .e file header, so execution always begins there regardless of
+;   where main sits in the file.
+;
+; C equivalent:
+;   void greet() { printf("Hello\n"); }
+;   int main() { greet(); greet(); }
+
+          .start main      ; <-- entry point declaration
+
+; ---- subroutine (defined BEFORE main — safe only because of .start) ----
+greet:    lea  r0, msg
+          sout r0
+          ret
+
+msg:      .string "Hello\n"
+
+; ---- main (entry point) ----
+main:     bl   greet
+          bl   greet
+          halt

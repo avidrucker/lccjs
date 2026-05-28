@@ -1,0 +1,74 @@
+; demo-026-struct-static.a
+; Chapter 9: Structures
+; Concept: Static struct — allocated as consecutive .word/.zero slots at a label;
+;          field access via label+offset and pointer dereference with offset.
+;
+; CONCEPT:
+;   A struct { int x; int y; } takes 2 consecutive words.
+;   If the struct starts at label 'a', then:
+;     a   = a.x   (offset 0)
+;     a+1 = a.y   (offset 1)
+;
+;   Via a pointer p = &a:
+;     p->x = ldr r0, p, 0   (offset 0 in ldr)
+;     p->y = ldr r0, p, 1   (offset 1 in ldr)
+;
+;   .zero 1 allocates one zero-initialized word (useful for uninit struct fields).
+;
+; C equivalent:
+;   struct Point { int x; int y; };
+;   struct Point a;
+;   struct Point *p;
+;   int main() {
+;       a.x = 1;  a.y = 2;
+;       p = &a;
+;       printf("%d\n", a.y);    // 2
+;       printf("%d\n", p->y);   // 2  (via pointer)
+;       printf("%d\n", (*p).y); // 2  (same)
+;   }
+
+startup:  bl main
+          halt
+
+; ---- global struct and pointer ----
+a:        .zero 2           ; struct Point a;  (2 words: a.x at a, a.y at a+1)
+p:        .word 0           ; struct Point *p = NULL;
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; a.x = 1
+          mov  r0, 1
+          st   r0, a        ; mem[a+0] = 1
+
+          ; a.y = 2
+          mov  r0, 2
+          st   r0, a+1      ; mem[a+1] = 2  (label arithmetic)
+
+          ; p = &a
+          lea  r0, a
+          st   r0, p
+
+          ; printf("%d\n", a.y)  — direct label+offset access
+          ld   r0, a+1
+          dout r0
+          nl
+
+          ; printf("%d\n", p->y)  — pointer + field offset in ldr
+          ld   r0, p        ; r0 = p (address of a)
+          ldr  r0, r0, 1   ; r0 = *(p + 1) = p->y = 2
+          dout r0
+          nl
+
+          ; printf("%d\n", (*p).y)  — same machine code as p->y
+          ld   r0, p
+          ldr  r0, r0, 1
+          dout r0
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

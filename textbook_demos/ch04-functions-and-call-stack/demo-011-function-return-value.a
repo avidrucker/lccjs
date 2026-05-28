@@ -1,0 +1,43 @@
+; demo-011-function-return-value.a
+; Chapter 4: Functions and the Call Stack
+; Concept: A function returns a value to its caller via register r0.
+;
+; CONVENTION:
+;   The return value is placed in r0 before the callee restores its frame.
+;   The caller reads r0 immediately after bl returns.
+;   No special instruction is needed — r0 is the agreed-upon return register.
+;
+; C equivalent:
+;   int f() { return 5; }
+;   int main() { printf("%d\n", f()); }
+
+startup:  bl main
+          halt
+
+; ---- function f(): returns the value 5 ----
+f:        push lr
+          push fp
+          mov  fp, sp
+
+          mov  r0, 5        ; r0 = return value (5)
+                            ; r0 is NOT saved/restored — it carries the return value out
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret               ; caller will read r0 after bl f
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          bl   f            ; call f(); return value now in r0
+          dout r0           ; print it (5)
+          nl
+
+          mov  r0, 0        ; main returns 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

@@ -1,0 +1,123 @@
+; demo-031-strings.a
+; Chapter 10: Arrays and Strings
+; Concept: The five ways to declare a string in C, and implementing strcpy.
+;
+; FIVE STRING ALLOCATION FORMS:
+;   1. char g[] = "AX"   →  g: .string "AX"          (global char array)
+;   2. char *p = "BX"    →  p: .word @lit; @lit: .string "BX"  (ptr to literal)
+;   3. char c[] = "CX"   →  push each char individually onto the stack
+;   4. char *q = "DX"    →  lea r0, @lit; push r0     (stack pointer to literal)
+;   5. char *r;  r="EX"  →  lea r0, @lit; str r0, fp, -5  (assigned later)
+;
+; mystrcpy(p, q): copy null-terminated string q into buffer p
+;   Loop: *p = *q; if (*q == 0) break; p++; q++;
+;
+; C equivalent:
+;   char g[] = "AX";
+;   char *p = "BX";
+;   void mystrcpy(char *dst, char *src) { while ((*dst++ = *src++) != 0); }
+;   int main() {
+;       char c[] = "CX"; char *q = "DX"; char *r; r = "EX";
+;       printf("%s\n", g); printf("%s\n", p); printf("%s\n", c);
+;       printf("%s\n", q); printf("%s\n", r);
+;       mystrcpy(g, "FX");
+;       printf("%s\n", g);  // FX
+;   }
+
+startup:  bl main
+          halt
+
+; ---- form 1: global char array ----
+g:        .string "AX"
+
+; ---- form 2: global pointer to a string literal ----
+p:        .word @lit_BX
+@lit_BX:  .string "BX"
+
+; ---- mystrcpy(char *dst, char *src) ----
+mystrcpy: push lr
+          push fp
+          mov  fp, sp
+
+@L0:      ldr  r0, fp, 3   ; r0 = src pointer
+          ldr  r0, r0, 0   ; r0 = *src
+          ldr  r1, fp, 2   ; r1 = dst pointer
+          str  r0, r1, 0   ; *dst = *src
+
+          cmp  r0, 0
+          brz  @L1         ; if (*src == 0), done
+
+          ldr  r0, fp, 2   ; dst++
+          add  r0, r0, 1
+          str  r0, fp, 2
+
+          ldr  r0, fp, 3   ; src++
+          add  r0, r0, 1
+          str  r0, fp, 3
+
+          br   @L0
+@L1:
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; ---- form 3: stack-allocated char array c[] = "CX" ----
+          ; push chars right-to-left: null terminator, then 'X', then 'C'
+          mov  r0, 0
+          push r0            ; '\0'
+          mov  r0, 'X'
+          push r0
+          mov  r0, 'C'
+          push r0            ; fp-3 = 'C', fp-2 = 'X', fp-1 = '\0' ... no
+
+          ; fp-1 = 'C' (pushed last), fp-2 = 'X', fp-3 = '\0'
+          ; address of c = fp-1 (the 'C' is the start)
+          ; Actually with push: first push 0 (fp-1=0), then 'X' (fp-2='X'), then 'C' (fp-3='C')
+          ; So &c[0] = fp-3 (the 'C'), c is at fp-3
+
+          ; ---- form 4: stack pointer to a literal ----
+          lea  r0, @lit_DX
+          push r0            ; fp-4 = pointer to "DX"
+
+          ; ---- form 5: pointer assigned later ----
+          sub  sp, sp, 1    ; fp-5 = r (uninitialized)
+          lea  r0, @lit_EX
+          str  r0, fp, -5   ; r = "EX"
+
+          ; print all five
+          lea  r0, g        ; form 1
+          sout r0  nl
+          ld   r0, p        ; form 2
+          sout r0  nl
+          add  r0, fp, -3   ; form 3: address of c[0] on stack
+          sout r0  nl
+          ldr  r0, fp, -4   ; form 4: q pointer
+          sout r0  nl
+          ldr  r0, fp, -5   ; form 5: r pointer
+          sout r0  nl
+
+          ; mystrcpy(g, "FX")
+          lea  r0, @lit_FX
+          push r0
+          lea  r0, g
+          push r0
+          bl   mystrcpy
+          add  sp, sp, 2
+
+          lea  r0, g
+          sout r0  nl       ; prints "FX"
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+@lit_DX:  .string "DX"
+@lit_EX:  .string "EX"
+@lit_FX:  .string "FX"

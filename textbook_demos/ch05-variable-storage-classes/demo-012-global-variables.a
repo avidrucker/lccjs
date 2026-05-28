@@ -1,0 +1,37 @@
+; demo-012-global-variables.a
+; Chapter 5: Variable Storage Classes
+; Concept: Global variables — allocated as .word labels at file scope.
+;
+; CONCEPT:
+;   Global variables exist for the lifetime of the program.
+;   They are accessed by label name using ld (load) and st (store).
+;   No stack frame is needed to access them from any function.
+;
+; C equivalent:
+;   int x = 2, y = 0;
+;   int main() { y = x; printf("%d\n", y); return 0; }
+
+startup:  bl main
+          halt
+
+; ---- global variables (allocated at file scope, before any code) ----
+x:        .word 2           ; int x = 2;
+y:        .word 0           ; int y = 0;
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ld   r0, x        ; r0 = x  (load global)
+          st   r0, y        ; y = r0  (store to global)
+
+          ld   r0, y        ; r0 = y  (load it back to display)
+          dout r0           ; prints 2
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

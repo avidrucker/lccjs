@@ -1,0 +1,109 @@
+; demo-025-variadic-arguments.a
+; Chapter 8: Parameter Passing
+; Concept: Variable-length argument lists — manual implementation of va_list/va_arg.
+;          (ex0805 is absent from the cuh63 package; ex0806 is the variadic example.)
+;
+; CONCEPT:
+;   va_start(p, last_named)  →  initialize p to point to the FIRST variadic arg
+;                               (one slot past the last named arg on the stack)
+;   va_arg(p, type)          →  dereference p to get the next arg, then advance p
+;
+;   Since args are pushed right-to-left and the stack grows downward, the
+;   variadic args sit at fp+3, fp+4, ... (above the named args at fp+2).
+;
+;   va_start implementation:
+;     add r0, fp, 3      ; address of first variadic arg = fp + 2 + 1
+;     str r0, fp, -2     ; store in p (the va_list)
+;
+;   va_arg implementation:
+;     ldr r0, fp, -2     ; r0 = p (current pointer)
+;     ldr r2, r0, 0      ; r2 = *p  (next arg value)
+;     add r0, r0, 1      ; p++  (advance to next arg)
+;     str r0, fp, -2     ; update p
+;
+; C equivalent:
+;   int add(int argnum, ...) {
+;       int sum = 0;
+;       va_list p;
+;       va_start(p, argnum);
+;       while (argnum--) sum += va_arg(p, int);
+;       return sum;
+;   }
+;   int main() { printf("%d\n", add(2, 5, 7)); }  // prints 12
+
+startup:  bl main
+          halt
+
+; ---- add(int argnum, ...): sum argnum variadic integers ----
+; Stack frame inside add:
+;   fp+4, fp+3 → variadic args (7, 5 — pushed right-to-left)
+;   fp+2        → argnum = 2  (named arg)
+;   fp+1        → saved fp
+;   fp+0        → saved lr
+;   fp-1        → sum  (local)
+;   fp-2        → p    (va_list pointer)
+add:      push lr
+          push fp
+          mov  fp, sp
+
+          ; int sum = 0
+          mov  r0, 0
+          push r0            ; fp-1 = sum
+
+          ; va_list p;  (allocate slot)
+          sub  sp, sp, 1    ; fp-2 = p
+
+          ; va_start(p, argnum):  p = &(fp+3) = first variadic arg
+          add  r0, fp, 3
+          str  r0, fp, -2   ; p = fp+3
+
+@loop:    ldr  r0, fp, 2    ; r0 = argnum
+          cmp  r0, 0
+          brz  @done        ; while (argnum != 0)
+
+          ; sum += va_arg(p, int)
+          ldr  r0, fp, -2   ; r0 = p
+          ldr  r2, r0, 0    ; r2 = *p  (next variadic arg)
+          add  r0, r0, 1    ; p++
+          str  r0, fp, -2   ; update p
+
+          ldr  r0, fp, -1   ; r0 = sum
+          add  r0, r0, r2   ; sum += *p
+          str  r0, fp, -1   ; update sum
+
+          ldr  r0, fp, 2    ; argnum--
+          sub  r0, r0, 1
+          str  r0, fp, 2
+
+          br   @loop
+@done:
+          ldr  r0, fp, -1   ; return sum in r0
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; add(2, 5, 7)  — push right-to-left: 7 first, then 5, then argnum=2
+          mov  r0, 7
+          push r0
+          mov  r0, 5
+          push r0
+          mov  r0, 2        ; argnum
+          push r0
+          bl   add
+          add  sp, sp, 3
+
+          dout r0            ; prints 12  (5 + 7)
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

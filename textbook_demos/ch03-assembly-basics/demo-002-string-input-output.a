@@ -1,0 +1,27 @@
+; demo-002-string-input-output.a
+; Chapter 3: Assembly Language Basics
+; Concept: Display a string prompt, read a string from the user, echo it back.
+;
+; NEW CONCEPTS:
+;   lea  dr, label    — load the ADDRESS of label into dr (not the value there)
+;   sout sr            — display the null-terminated string sr points to
+;   sin  sr            — read a line from stdin into the buffer sr points to
+;   .string "..."      — allocate a null-terminated ASCII string
+;   .zero  <n>         — allocate n words, all initialized to 0 (used for buffers)
+;
+; C equivalent:
+;   char buffer[100];
+;   printf("Enter string\n");
+;   fgets(buffer, 100, stdin);
+;   printf("%s", buffer);
+
+          lea  r0, prompt   ; r0 = address of prompt string
+          sout r0            ; display "Enter string\n"
+          lea  r0, buffer    ; r0 = address of input buffer
+          sin  r0            ; read a line of text from stdin into buffer
+          sout r0            ; echo the string back to stdout
+          halt
+
+; ---- data section ----
+prompt:   .string "Enter string\n"
+buffer:   .zero 100          ; 100-word buffer for input (sin reads into here)

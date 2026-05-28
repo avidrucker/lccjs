@@ -1,0 +1,110 @@
+; demo-038-cpp-class-member-functions.a
+; Chapter 15: Classes and Objects
+; Concept: C++ class member functions — 'this' pointer passed as hidden first arg.
+;
+; CONCEPT:
+;   A member function a.set(5, 6) compiles to: push 6; push 5; push &a; bl @A@set$ii
+;   The object's address ('this') is the FIRST argument pushed (but last in the
+;   push sequence since args are pushed right-to-left).
+;
+;   Inside the member function:
+;     fp+2 → this  (object pointer — the hidden first argument)
+;     fp+3 → first explicit arg
+;     fp+4 → second explicit arg
+;
+;   Member variable access:
+;     x = n:  ldr r1, fp, 2; str r0, r1, 0   (this->x at offset 0)
+;     y = m:  ldr r1, fp, 2; str r0, r1, 1   (this->y at offset 1)
+;
+;   Name mangling: @A@set$ii  = A::set(int, int)
+;                  @A@display$v = A::display()
+;
+; C++ equivalent:
+;   class A { public: void set(int n, int m); void display(); private: int x, y; };
+;   void A::set(int n, int m) { x = n; y = m; }
+;   void A::display() { cout << x << " " << y << endl; }
+;   int main() { A a, b; a.set(5,6); a.display(); b.set(10,11); b.display(); }
+;
+; Output:
+;   5 6
+;   10 11
+
+startup:  bl main
+          halt
+
+; ---- A::set(this, int n, int m) ----
+@A@set$ii:
+          push lr
+          push fp
+          mov  fp, sp
+
+          ldr  r0, fp, 3   ; n  (first explicit arg)
+          ldr  r1, fp, 2   ; this
+          str  r0, r1, 0   ; this->x = n
+
+          ldr  r0, fp, 4   ; m  (second explicit arg)
+          ldr  r1, fp, 2
+          str  r0, r1, 1   ; this->y = m
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- A::display(this) ----
+@A@display$v:
+          push lr
+          push fp
+          mov  fp, sp
+
+          ldr  r0, fp, 2   ; this
+          ldr  r0, r0, 0   ; this->x
+          dout r0
+          mov  r0, ' '
+          aout r0
+          ldr  r0, fp, 2
+          ldr  r0, r0, 1   ; this->y
+          dout r0  nl
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; A a, b  — stack-allocated (2 words each)
+          sub  sp, sp, 2   ; a at fp-2 (x) and fp-1 (y)
+          sub  sp, sp, 2   ; b at fp-4 (x) and fp-3 (y)
+
+          ; a.set(5, 6)  — push: m=6, n=5, this=&a
+          mov  r0, 6   push r0
+          mov  r0, 5   push r0
+          add  r0, fp, -2  push r0
+          bl   @A@set$ii
+          add  sp, sp, 3
+
+          ; a.display()
+          add  r0, fp, -2  push r0
+          bl   @A@display$v
+          add  sp, sp, 1
+
+          ; b.set(10, 11)
+          mov  r0, 11  push r0
+          mov  r0, 10  push r0
+          add  r0, fp, -4  push r0
+          bl   @A@set$ii
+          add  sp, sp, 3
+
+          ; b.display()
+          add  r0, fp, -4  push r0
+          bl   @A@display$v
+          add  sp, sp, 1
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

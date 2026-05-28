@@ -1,0 +1,68 @@
+; demo-023-pass-by-value-result.a
+; Chapter 8: Parameter Passing
+; Concept: Pass by value-result — value is copied IN and copied back OUT on return.
+;          (Not a C mechanism — shown for comparison with pass-by-value and pass-by-address.)
+;
+; CONCEPT:
+;   The argument is passed by value (a copy is pushed, callee modifies it).
+;   But on return, the CALLER pops the final value back and writes it to the original.
+;   This differs from pass-by-address: aliasing can produce different results.
+;
+;   Calling sequence:
+;     push value of x      ; copy in
+;     bl f
+;     pop r0               ; retrieve callee's final value
+;     st r0, x             ; copy OUT → x is updated
+;
+;   This differs from pass-by-value (caller never copies back)
+;   and from pass-by-address (caller passes pointer, callee writes immediately).
+;
+; NOT supported by C. Shown here to expose the calling-convention mechanic.
+;
+; C equivalent (conceptual — not valid C):
+;   int x = 7;
+;   void f(value-result int a) { a = a + 1; }
+;   int main() {
+;       f(x);               // x becomes 8 at call's end
+;       printf("%d\n", x);  // 8
+;   }
+
+startup:  bl main
+          halt
+
+x:        .word 7
+
+; ---- f: increments its copy of a ----
+f:        push lr
+          push fp
+          mov  fp, sp
+
+          ldr  r0, fp, 2
+          add  r0, r0, 1
+          str  r0, fp, 2    ; write back to the stack copy
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ld   r0, x
+          push r0            ; push copy of x
+          bl   f
+          pop  r0            ; pop callee's final value (NOT add sp,sp,1)
+          st   r0, x         ; write back to x  ← this is the "result" copy-out
+
+          ld   r0, x
+          dout r0            ; prints 8
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

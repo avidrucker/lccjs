@@ -1,0 +1,28 @@
+; demo-004-subroutine-call.a
+; Chapter 3: Assembly Language Basics
+; Concept: Calling a subroutine with bl and returning with ret.
+;
+; NEW CONCEPTS:
+;   bl   label  — Branch and Link: lr = pc (return address); pc = label
+;   ret         — Return: pc = lr  (jump back to caller)
+;   lr (r7)     — link register, holds the return address after bl
+;
+; NOTE: The .start directive (see demo-005) is required when the subroutine
+; is defined BEFORE main in the file, otherwise execution starts at the
+; subroutine. Here we place main first so no .start is needed.
+;
+; C equivalent:
+;   void greet() { printf("Hello\n"); }
+;   int main() { greet(); greet(); }
+
+main:     bl   greet       ; call greet; lr = address of next instruction
+          bl   greet       ; call again
+          halt
+
+; ---- subroutine ----
+greet:    lea  r0, msg     ; r0 = address of "Hello\n"
+          sout r0           ; print it
+          ret               ; pc = lr  (return to caller)
+
+; ---- data section ----
+msg:      .string "Hello\n"

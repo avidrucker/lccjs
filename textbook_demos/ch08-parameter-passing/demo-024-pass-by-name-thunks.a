@@ -1,0 +1,99 @@
+; demo-024-pass-by-name-thunks.a
+; Chapter 8: Parameter Passing
+; Concept: Pass by name via thunks — each argument becomes a small function
+;          that evaluates the expression in the CALLER's environment.
+;          (Not supported by C or C++ — an Algol 60 mechanism.)
+;
+; CONCEPT:
+;   A thunk is a small code fragment that:
+;   1. Evaluates the argument expression using the CALLER's frame pointer
+;   2. Stores the result in a temp slot
+;   3. Returns the ADDRESS of that temp slot
+;
+;   The callee:
+;   1. Saves its own fp, restores the caller's fp
+;   2. Calls the thunk (blr r0) to evaluate the arg
+;   3. Restores its own fp
+;   4. Dereferences the returned address (ldr r0, r0, 0) to get the value
+;
+;   This means the argument is re-evaluated on EVERY ACCESS, and changes to
+;   other variables (like 'a') affect the argument's value on subsequent reads.
+;
+; C equivalent (conceptual — Algol 60 style):
+;   int a = 1;
+;   void f(name int y) { print(y); a=a+2; print(y); }  // y re-evals each time
+;   int main() { int b = 2; f(a + b); }
+;   // prints: 3 (a+b = 1+2), then 5 (a+b = 3+2 after a+=2)
+
+startup:  bl main
+          halt
+
+a:        .word 1           ; global int a = 1
+
+; ---- f(name int y): display y, modify a, display y again ----
+f:        push lr
+          push fp
+          mov  fp, sp
+
+          ; --- first access to y ---
+          ldr  r0, fp, 2   ; r0 = thunk address (the "name" argument)
+          push fp            ; save f's fp
+          ldr  fp, fp, 0   ; restore caller's fp (fp of main)
+          blr  r0           ; call thunk → evaluates a+b in main's environment
+          pop  fp            ; restore f's fp
+          ldr  r0, r0, 0   ; dereference returned address to get value
+          dout r0            ; prints 3  (a=1, b=2, a+b=3)
+          nl
+
+          ; --- modify a ---
+          ld   r0, a
+          add  r0, r0, 2
+          st   r0, a        ; a = 3
+
+          ; --- second access to y (re-evaluates a+b with new a=3) ---
+          ldr  r0, fp, 2
+          push fp
+          ldr  fp, fp, 0
+          blr  r0
+          pop  fp
+          ldr  r0, r0, 0
+          dout r0            ; prints 5  (a=3, b=2, a+b=5)
+          nl
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          mov  r0, 2
+          push r0            ; fp-1 = b = 2
+
+          ; branch over thunk (thunk is inline in main's body)
+          br   @call
+
+          ; --- thunk: evaluates a+b in main's environment ---
+@thunk:   ld   r0, a        ; a  (global)
+          ldr  r1, fp, -1   ; b  (main's local at fp-1)
+          add  r0, r0, r1   ; a + b
+          sub  sp, sp, 1    ; allocate temp slot below b
+          str  r0, fp, -2   ; store result in temp
+          add  r0, fp, -2   ; return address of temp
+          ret               ; return to f (via blr in f's body)
+
+@call:    ; calling sequence: allocate a temp slot for thunk, push thunk address
+          sub  sp, sp, 1    ; temp slot for thunk result (fp-2)
+          lea  r0, @thunk
+          push r0            ; push thunk address as the "name" argument
+          bl   f
+          add  sp, sp, 2    ; pop thunk addr + temp slot
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

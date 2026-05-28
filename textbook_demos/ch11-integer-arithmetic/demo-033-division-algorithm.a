@@ -1,0 +1,48 @@
+; demo-033-division-algorithm.a
+; Chapter 11: Integer Arithmetic
+; Concept: Integer division by repeated subtraction.
+;
+; CONCEPT:
+;   Divide x by y by subtracting y from x repeatedly, counting each subtraction.
+;   Stop when x goes negative — the count is the quotient.
+;
+;   This is the simplest correct implementation; the LCC ISA does have a
+;   hardware 'div' instruction, but this example shows the algorithm explicitly.
+;
+; Register convention (no stack frame):
+;   r1 = x (dividend), r2 = y (divisor), r0 = quotient on return.
+;
+; C equivalent:
+;   int div(int x, unsigned int y) {
+;       int q = 0;
+;       while (1) { x -= y; if (x < 0) break; q++; }
+;       return q;
+;   }
+;   int main() { printf("%d\n", div(77, 7)); }  // prints 11
+
+startup:  bl main
+          halt
+
+; ---- div: r1=x, r2=y → r0=x/y ----
+div:      mov  r0, 0        ; quotient = 0
+@L0:      sub  r1, r1, r2   ; x -= y
+          brn  @L1          ; if x < 0 (N flag set), we've overshot — stop
+          add  r0, r0, 1    ; quotient++
+          br   @L0
+@L1:      ret               ; return quotient in r0
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          mov  r1, 77
+          mov  r2, 7
+          bl   div
+          dout r0            ; prints 11
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

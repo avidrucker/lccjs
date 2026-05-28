@@ -1,0 +1,92 @@
+; demo-020-pointer-to-function.a
+; Chapter 7: Pointers
+; Concept: Storing a function's address in a pointer and calling it indirectly.
+;
+; NEW CONCEPTS:
+;   lea  dr, func_label  — dr = address of the function (code address)
+;   blr  baser           — indirect call: lr = pc; pc = baser  (branch-and-link-to-register)
+;   blr  is the indirect counterpart of  bl  (direct call)
+;
+; Pattern for function pointer call:
+;   lea r0, f           ; r0 = &f   (load function's address)
+;   st  r0, p           ; p = &f    (store into pointer variable)
+;   ...
+;   ld  r0, p           ; r0 = p    (load the address back)
+;   blr r0              ; call through pointer: lr = pc; pc = r0
+;
+; C equivalent:
+;   int f(int x, int y) { return x + y; }
+;   int main() {
+;       int sum;
+;       int (*p)(int, int);
+;
+;       sum = f(1, 2);         // direct call
+;       printf("%d\n", sum);   // 3
+;
+;       p = f;                 // store function address
+;       sum = p(1, 2);         // indirect call via function pointer
+;       printf("%d\n", sum);   // 3
+;   }
+
+startup:  bl main
+          halt
+
+; ---- globals ----
+sum:      .word 0
+p:        .word 0           ; function pointer
+
+; ---- f(int x, int y): returns x + y ----
+f:        push lr
+          push fp
+          mov  fp, sp
+
+          ldr  r0, fp, 2   ; x
+          ldr  r1, fp, 3   ; y
+          add  r0, r0, r1  ; return x + y  (in r0)
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; sum = f(1, 2)  via direct call
+          mov  r0, 2
+          push r0
+          mov  r0, 1
+          push r0
+          bl   f
+          add  sp, sp, 2
+          st   r0, sum
+
+          ld   r0, sum
+          dout r0            ; prints 3
+          nl
+
+          ; p = f  (store function address)
+          lea  r0, f
+          st   r0, p
+
+          ; sum = p(1, 2)  via indirect call (blr)
+          mov  r0, 2
+          push r0
+          mov  r0, 1
+          push r0
+          ld   r0, p        ; load the function pointer into r0
+          blr  r0            ; call f through p:  lr = pc; pc = r0
+          add  sp, sp, 2
+          st   r0, sum
+
+          ld   r0, sum
+          dout r0            ; prints 3
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

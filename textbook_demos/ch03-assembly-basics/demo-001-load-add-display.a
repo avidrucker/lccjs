@@ -1,0 +1,26 @@
+; demo-001-load-add-display.a
+; Chapter 3: Assembly Language Basics
+; Concept: Load values from memory, add them, display the result.
+;
+; NEW CONCEPTS:
+;   ld   dr, label    — load a 16-bit word from memory into dr
+;   add  dr, sr1, sr2 — dr = sr1 + sr2
+;   dout sr            — display the signed decimal value in sr
+;   nl                 — output a newline character
+;   halt               — stop execution
+;   .word <value>      — allocate one word and initialize it to <value>
+;
+; C equivalent:
+;   int x = 2, y = 3;
+;   printf("%d\n", x + y);   // prints 5
+
+          ld   r0, x     ; r0 = 2
+          ld   r1, y     ; r1 = 3
+          add  r0, r0, r1 ; r0 = 2 + 3 = 5
+          dout r0         ; print 5
+          nl
+          halt
+
+; ---- data section ----
+x:        .word 2
+y:        .word 3

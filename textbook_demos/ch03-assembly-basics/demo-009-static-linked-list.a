@@ -1,0 +1,62 @@
+; demo-009-static-linked-list.a
+; Chapter 3: Assembly Language Basics
+; Concept: Build a singly-linked list in static memory using .word pointers.
+;
+; CONCEPT:
+;   Each record has a data field and a "next" pointer (.word next_label).
+;   The last record's next pointer is 0 (null pointer).
+;   Records can have different sizes — .zero pads each one to its full allocation.
+;
+; This demonstrates:
+;   - .word <label>  stores the address of the next record
+;   - .zero <n>      allocates n zero-initialized words (struct padding)
+;   - Null pointer as .word 0
+;   - Traversing the list: ld r0, first; loop: ldr r1, r0, 0 (data); ldr r0, r0, 1 (next)
+;
+; C equivalent:
+;   struct Node { int data; struct Node *next; int pad[variable]; };
+;   Node *first = &n1;
+;   Node n1 = {10, &n2, {0,0,0,0,0}};
+;   Node n2 = {20, &n3, {0,0}};   ...
+
+; ---- list head pointer ----
+first:    .word n1           ; points to the first record
+
+; ---- record 1: data=10, 5 words of padding ----
+n1:       .word 10           ; data field
+          .word n2           ; next pointer → n2
+          .zero 5            ; 5 words of padding (variable-size struct)
+
+; ---- record 2: data=20, 2 words of padding ----
+n2:       .word 20
+          .word n3
+          .zero 2
+
+; ---- record 3: data=30, 7 words of padding ----
+n3:       .word 30
+          .word n4
+          .zero 7
+
+; ---- record 4: data=40, 3 words of padding ----
+n4:       .word 40
+          .word n5
+          .zero 3
+
+; ---- record 5: data=50, null next pointer ----
+n5:       .word 50
+          .word 0            ; null pointer (end of list)
+
+; ---- traversal: walk the list, printing each data value ----
+          ld   r0, first     ; r0 = pointer to current record
+
+loop:     cmp  r0, 0         ; while (r0 != null)
+          brz  done
+
+          ldr  r1, r0, 0     ; r1 = current->data
+          dout r1
+          nl
+
+          ldr  r0, r0, 1     ; r0 = current->next
+          br   loop
+
+done:     halt

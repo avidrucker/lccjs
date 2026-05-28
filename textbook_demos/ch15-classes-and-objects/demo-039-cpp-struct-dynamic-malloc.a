@@ -1,0 +1,90 @@
+; demo-039-cpp-struct-dynamic-malloc.a
+; Chapter 15: Classes and Objects
+; Concept: Heap-allocating structs with malloc, then using free functions
+;          (the C++ struct equivalent of operator new with explicit pointer passing).
+;
+; CONCEPT:
+;   Combines demo-037 (struct + free functions) and demo-027 (malloc).
+;   p = malloc(sizeof(A)) returns a pointer; then pass it as the first
+;   argument to each free function just like &a was passed for stack objects.
+;
+;   The only difference from stack allocation (demo-037):
+;     Stack:  add r0, fp, -2; push r0    (&a = known fp offset at compile time)
+;     Heap:   ldr r0, fp, -1; push r0    (pointer stored in a local variable)
+;
+; C++ equivalent:
+;   struct A { int x; int y; };
+;   void set(A *r, int n, int m) { r->x = n; r->y = m; }
+;   void display(A *r) { cout << r->x << " " << r->y << endl; }
+;   int main() {
+;       A *p = new A;  A *q = new A;
+;       set(p, 5, 6);   display(p);
+;       set(q, 10, 11); display(q);
+;   }
+
+startup:  bl main
+          halt
+
+; ---- set(A *r, int n, int m) ----
+@set$p1Aii:
+          push lr
+          push fp
+          mov  fp, sp
+          ldr  r0, fp, 3   ldr r1, fp, 2   str r0, r1, 0   ; r->x = n
+          ldr  r0, fp, 4   ldr r1, fp, 2   str r0, r1, 1   ; r->y = m
+          mov  sp, fp  pop fp  pop lr  ret
+
+; ---- display(A *r) ----
+@display$p1A:
+          push lr
+          push fp
+          mov  fp, sp
+          ldr  r1, fp, 2
+          ldr  r0, r1, 0   dout r0
+          mov  r0, ' '     aout r0
+          ldr  r0, r1, 1   dout r0  nl
+          mov  sp, fp  pop fp  pop lr  ret
+
+; ---- malloc: r1=size → r0=address ----
+malloc:   ld r0, @avail   add r1, r0, r1   st r1, @avail   ret
+@avail:   .word *+1
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; A *p, *q  — two pointer locals
+          sub  sp, sp, 1   ; fp-1 = p
+          sub  sp, sp, 1   ; fp-2 = q
+
+          ; p = new A  (malloc 2 words)
+          mov  r1, 2  bl malloc   str r0, fp, -1
+
+          ; q = new A
+          mov  r1, 2  bl malloc   str r0, fp, -2
+
+          ; set(p, 5, 6)
+          mov  r0, 6   push r0
+          mov  r0, 5   push r0
+          ldr  r0, fp, -1  push r0
+          bl   @set$p1Aii   add sp, sp, 3
+
+          ; display(p)
+          ldr  r0, fp, -1  push r0
+          bl   @display$p1A   add sp, sp, 1
+
+          ; set(q, 10, 11)
+          mov  r0, 11  push r0
+          mov  r0, 10  push r0
+          ldr  r0, fp, -2  push r0
+          bl   @set$p1Aii   add sp, sp, 3
+
+          ; display(q)
+          ldr  r0, fp, -2  push r0
+          bl   @display$p1A   add sp, sp, 1
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

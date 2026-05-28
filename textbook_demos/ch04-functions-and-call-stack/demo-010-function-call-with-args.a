@@ -1,0 +1,65 @@
+; demo-010-function-call-with-args.a
+; Chapter 4: Functions and the Call Stack
+; Concept: The full LCC calling convention for passing arguments and using a stack frame.
+;
+; NEW CONCEPTS:
+;   push sr         — mem[--sp] = sr    (push register onto stack)
+;   pop  dr         — dr = mem[sp++]    (pop register from stack)
+;   mov  fp, sp     — copy sp into fp to establish the frame pointer
+;   ldr  dr, baser, offset6  — dr = mem[baser + offset6]  (register-relative load)
+;   str  sr, baser, offset6  — mem[baser + offset6] = sr  (register-relative store)
+;   fp (r5)         — frame pointer: base address of the current stack frame
+;   sp (r6)         — stack pointer: grows downward as items are pushed
+;   lr (r7)         — link register: holds return address after bl
+;
+; CALLING CONVENTION (LCC standard):
+;   Caller:  push args RIGHT-TO-LEFT, then bl callee, then add sp,sp,n to clean up
+;   Callee:  push lr; push fp; mov fp, sp  ← prologue
+;            ... body: access args at fp+2, fp+3, ...
+;            mov sp, fp; pop fp; pop lr; ret  ← epilogue
+;
+; STACK FRAME LAYOUT (inside f, looking at fp):
+;   fp+3  → y  (second arg, pushed first)
+;   fp+2  → x  (first arg, pushed second)
+;   fp+1  → saved fp
+;   fp+0  → saved lr
+;
+; C equivalent:
+;   void f(int x, int y) { printf("%d\n", x + y); }
+;   int main() { f(1, 2); }
+
+startup:  bl main
+          halt
+
+; ---- function f(int x, int y): prints x + y ----
+f:        push lr           ; save return address
+          push fp           ; save caller's frame pointer
+          mov  fp, sp       ; fp = current top of stack (frame base)
+
+          ldr  r0, fp, 2   ; r0 = x  (first arg: fp+2)
+          ldr  r1, fp, 3   ; r1 = y  (second arg: fp+3)
+          add  r0, r0, r1  ; r0 = x + y
+          dout r0
+          nl
+
+          mov  sp, fp       ; restore sp (discard locals, if any)
+          pop  fp           ; restore caller's fp
+          pop  lr           ; restore return address
+          ret               ; pc = lr
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          mov  r0, 2        ; push y = 2 first (rightmost arg)
+          push r0
+          mov  r0, 1        ; push x = 1 second
+          push r0
+          bl   f            ; call f(1, 2)  → prints 3
+          add  sp, sp, 2    ; pop the 2 args we pushed
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

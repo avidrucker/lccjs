@@ -1,0 +1,97 @@
+; demo-028-struct-passing.a
+; Chapter 9: Structures
+; Concept: Passing a struct to a function — by value (copy all fields)
+;          versus by pointer (pass one address).
+;
+; CONCEPT:
+;   Pass by value: push each field individually (grows with struct size).
+;   Pass by pointer: push &struct (always one word, regardless of struct size).
+;
+;   By-value callee accesses fields as fp+2 (first field) and fp+3 (second).
+;   By-pointer callee gets base address at fp+2, then uses ldr r0, r1, 0/1.
+;
+; C equivalent:
+;   struct Point { int x; int y; };
+;   struct Point a = {1, 2};
+;
+;   void f(struct Point s)   { printf("%d %d\n", s.x, s.y); }  // pass by value
+;   void g(struct Point *p)  { printf("%d %d\n", p->x, p->y); } // pass by pointer
+;
+;   int main() { f(a); g(&a); }
+;
+; Output (both lines):
+;   1 2
+;   1 2
+
+startup:  bl main
+          halt
+
+a:        .zero 2           ; struct Point a;
+
+; ---- f(struct Point s): receive struct BY VALUE ----
+f:        push lr
+          push fp
+          mov  fp, sp
+
+          ; s.x is at fp+2, s.y is at fp+3
+          ldr  r0, fp, 2   ; s.x
+          dout r0
+          mov  r0, ' '
+          aout r0
+          ldr  r0, fp, 3   ; s.y
+          dout r0
+          nl
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+; ---- g(struct Point *p): receive struct BY POINTER ----
+g:        push lr
+          push fp
+          mov  fp, sp
+
+          ldr  r1, fp, 2   ; r1 = p (base pointer)
+          ldr  r0, r1, 0   ; r0 = p->x  (offset 0)
+          dout r0
+          mov  r0, ' '
+          aout r0
+          ldr  r0, r1, 1   ; r0 = p->y  (offset 1)
+          dout r0
+          nl
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          ; initialize a.x=1, a.y=2
+          mov  r0, 1
+          st   r0, a
+          mov  r0, 2
+          st   r0, a+1
+
+          ; f(a)  — push all fields right-to-left: y first, then x
+          ld   r0, a+1     ; a.y
+          push r0
+          ld   r0, a       ; a.x
+          push r0
+          bl   f
+          add  sp, sp, 2   ; pop 2 words (one per field)
+
+          ; g(&a)  — push just the address
+          lea  r0, a
+          push r0
+          bl   g
+          add  sp, sp, 1
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
