@@ -1,0 +1,10 @@
+# Override GitHub Linguist's default detection so .a / .ap files render with
+# Assembly (NASM) syntax highlighting in the GitHub web UI. By default GitHub
+# treats `.a` as a GNU ar archive (binary) and won't render it at all.
+#
+# linguist-detectable=false keeps these files out of the repo's "Languages"
+# bar — this is a JavaScript project; the .a/.ap files are study material.
+*.a  linguist-language=Assembly
+*.a  linguist-detectable=false
+*.ap linguist-language=Assembly
+*.ap linguist-detectable=false
