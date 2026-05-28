@@ -6,6 +6,7 @@ const path = require('path');
 const Assembler = require('./assembler');
 const Interpreter = require('./interpreter');
 const Linker = require('./linker');
+const ILCC = require('../interactive/ilcc');
 const { LinkerError } = require('../utils/errors');
 const nameHandler = require('../utils/name.js');
 const { buildReportArtifacts } = require('../utils/reportArtifacts');
@@ -83,6 +84,14 @@ class LCC {
     // If multiple inputs were supplied, the "main input file" is the first one
     this.inputFileName = this.args[0];
 
+    // -i flag: delegate entirely to the interactive debugger (ILCC).
+    // Supported: .a (assemble then debug) and .e (debug directly).
+    // .bin/.hex deferred to proposals #99/#100.
+    if (this.options.interactive) {
+      this.runInteractiveMode();
+      return;
+    }
+
     // Dispatch strategy: if the first arg is a .o file, link all args as object modules.
     // Otherwise, process only the first arg as a source/executable/binary file.
     // Multiple .a files: only args[0] is assembled; remaining .a args are silently ignored.
@@ -97,6 +106,38 @@ class LCC {
       // The default code path: assemble or execute depending on extension
       this.handleSingleFile(this.inputFileName);
     }
+  }
+
+  /**
+   * Delegate to ILCC for interactive stepping-debugger mode (-i flag).
+   * Forwards -e (efficient), -c (colorblind), -d (debug), -l<hex>, -o flags.
+   * ilcc.js stays as a thin standalone wrapper; this method is the canonical
+   * path reached via `lcc -i`.
+   */
+  runInteractiveMode() {
+    const ilcc = new ILCC();
+
+    // Forward relevant options
+    ilcc.options.efficientMode  = !!this.options.efficientMode;
+    ilcc.options.colorblindMode = !!this.options.colorblindMode;
+    ilcc.options.debug          = !!this.options.debug;
+    if (this.options.loadPoint !== undefined) {
+      ilcc.options.loadPoint = this.options.loadPoint;
+    }
+    if (this.outputFileName) {
+      ilcc.outputFileName = this.outputFileName;
+    }
+
+    // Forward inputBuffer (used in tests to simulate stdin)
+    if (this.inputBuffer) {
+      ilcc.inputBuffer = this.inputBuffer;
+    }
+
+    // Run ILCC with the input file (already parsed into this.inputFileName)
+    ilcc.main([this.inputFileName]);
+
+    // Expose ilcc internals so callers (tests) can inspect state
+    this.ilcc = ilcc;
   }
 
   /**
@@ -160,9 +201,12 @@ class LCC {
 
   printHelp() {
     console.log('Usage: lcc.js <infile>');
-    console.log('Optional args: -d -m -r -t -f -x -l<hex loadpt> -o <outfile> -h');
+    console.log('Optional args: -d -m -r -t -f -x -i -e -c -l<hex loadpt> -o <outfile> -h');
     console.log('   -d:   debug, -m mem display at end, -r: reg display at end');
     console.log('   -f:   full line display, -x: 4 digit hout, -h: help');
+    console.log('   -i:   interactive stepping debugger mode (.a and .e files only)');
+    console.log('   -e:   efficient mode (with -i: forward-only stepping, lower memory)');
+    console.log('   -c:   colorblind mode (with -i: alternate ANSI palette)');
     console.log('What lcc.js does depends on the extension in the input file name:');
     console.log('   .hex: execute and output .lst, .bst files');
     console.log('   .bin: execute and output .lst, .bst files');
@@ -205,6 +249,15 @@ class LCC {
             break;
           case '-t':
             this.options.trace = true;
+            break;
+          case '-i':
+            this.options.interactive = true;
+            break;
+          case '-e':
+            this.options.efficientMode = true;
+            break;
+          case '-c':
+            this.options.colorblindMode = true;
             break;
           case '-nostats':
             this.options.noStats = true;

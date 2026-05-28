@@ -1,5 +1,6 @@
 const Assembler = require('../../src/core/assembler');
 const Interpreter = require('../../src/core/interpreter');
+const ILCC = require('../../src/interactive/ilcc');
 const LCC = require('../../src/core/lcc');
 
 describe('LCC Unit Tests', () => {
@@ -132,6 +133,145 @@ describe('LCC Unit Tests', () => {
     expect(() => {
       lcc.parseArguments(['-o']);
     }).toThrow('Missing output file name after -o flag');
+  });
+
+  // ---------------------------------------------------------------------------
+  // -i flag: interactive mode delegation (#101 / OB-048)
+  // ---------------------------------------------------------------------------
+
+  describe('parseArguments() — -i, -e, -c flags', () => {
+    test('-i sets options.interactive', () => {
+      const lcc = new LCC();
+      lcc.parseArguments(['-i', 'demo.a']);
+      expect(lcc.options.interactive).toBe(true);
+    });
+
+    test('-e sets options.efficientMode', () => {
+      const lcc = new LCC();
+      lcc.parseArguments(['-e', 'demo.a']);
+      expect(lcc.options.efficientMode).toBe(true);
+    });
+
+    test('-c sets options.colorblindMode', () => {
+      const lcc = new LCC();
+      lcc.parseArguments(['-c', 'demo.a']);
+      expect(lcc.options.colorblindMode).toBe(true);
+    });
+
+    test('-i -e -c can be combined', () => {
+      const lcc = new LCC();
+      lcc.parseArguments(['-i', '-e', '-c', 'demo.a']);
+      expect(lcc.options.interactive).toBe(true);
+      expect(lcc.options.efficientMode).toBe(true);
+      expect(lcc.options.colorblindMode).toBe(true);
+    });
+  });
+
+  describe('runInteractiveMode() — delegation to ILCC', () => {
+    test('creates an ILCC instance and exposes it as this.ilcc', () => {
+      const lcc = new LCC();
+      lcc.inputFileName = 'demo.a';
+      jest.spyOn(ILCC.prototype, 'main').mockImplementation(() => {});
+      lcc.runInteractiveMode();
+      expect(lcc.ilcc).toBeInstanceOf(ILCC);
+      ILCC.prototype.main.mockRestore();
+    });
+
+    test('forwards efficientMode to ILCC', () => {
+      const lcc = new LCC();
+      lcc.inputFileName = 'demo.a';
+      lcc.options.efficientMode = true;
+      jest.spyOn(ILCC.prototype, 'main').mockImplementation(() => {});
+      lcc.runInteractiveMode();
+      expect(lcc.ilcc.options.efficientMode).toBe(true);
+      ILCC.prototype.main.mockRestore();
+    });
+
+    test('forwards colorblindMode to ILCC', () => {
+      const lcc = new LCC();
+      lcc.inputFileName = 'demo.a';
+      lcc.options.colorblindMode = true;
+      jest.spyOn(ILCC.prototype, 'main').mockImplementation(() => {});
+      lcc.runInteractiveMode();
+      expect(lcc.ilcc.options.colorblindMode).toBe(true);
+      ILCC.prototype.main.mockRestore();
+    });
+
+    test('forwards inputBuffer to ILCC', () => {
+      const lcc = new LCC();
+      lcc.inputFileName = 'demo.a';
+      lcc.inputBuffer = 'q\n';
+      jest.spyOn(ILCC.prototype, 'main').mockImplementation(() => {});
+      lcc.runInteractiveMode();
+      expect(lcc.ilcc.inputBuffer).toBe('q\n');
+      ILCC.prototype.main.mockRestore();
+    });
+
+    test('calls ILCC.main with this.inputFileName', () => {
+      const lcc = new LCC();
+      lcc.inputFileName = 'demo.a';
+      const mainSpy = jest.spyOn(ILCC.prototype, 'main').mockImplementation(() => {});
+      lcc.runInteractiveMode();
+      expect(mainSpy).toHaveBeenCalledWith(['demo.a']);
+      mainSpy.mockRestore();
+    });
+  });
+
+  describe('main() — -i routes to runInteractiveMode()', () => {
+    test('-i flag causes runInteractiveMode() to be called instead of handleSingleFile()', () => {
+      const lcc = new LCC();
+      const interactiveSpy = jest.spyOn(lcc, 'runInteractiveMode').mockImplementation(() => {});
+      const handleSpy = jest.spyOn(lcc, 'handleSingleFile').mockImplementation(() => {});
+      lcc.main(['-i', 'demo.a']);
+      expect(interactiveSpy).toHaveBeenCalledTimes(1);
+      expect(handleSpy).not.toHaveBeenCalled();
+      interactiveSpy.mockRestore();
+      handleSpy.mockRestore();
+    });
+
+    test('without -i, handleSingleFile() is called as normal', () => {
+      const lcc = new LCC();
+      const interactiveSpy = jest.spyOn(lcc, 'runInteractiveMode').mockImplementation(() => {});
+      const handleSpy = jest.spyOn(lcc, 'handleSingleFile').mockImplementation(() => {});
+      lcc.main(['demo.a']);
+      expect(interactiveSpy).not.toHaveBeenCalled();
+      expect(handleSpy).toHaveBeenCalledTimes(1);
+      interactiveSpy.mockRestore();
+      handleSpy.mockRestore();
+    });
+  });
+
+  describe('integration: lcc -i demoA.a runs interactively', () => {
+    const DEMOS_DIR = require('path').join(__dirname, '..', '..', 'demos');
+    const DEMO_A = require('path').join(DEMOS_DIR, 'demoA.a');
+
+    test('q immediately: ilcc.interpreter.currentIteration === 0', () => {
+      const lcc = new LCC();
+      lcc.inputBuffer = 'q\n';
+      lcc.main(['-i', DEMO_A]);
+      expect(lcc.ilcc.interpreter.currentIteration).toBe(0);
+    });
+
+    test('1 step then q: r0 === 5 after MVI r0, 5', () => {
+      const lcc = new LCC();
+      lcc.inputBuffer = '1\nq\n';
+      lcc.main(['-i', DEMO_A]);
+      expect(lcc.ilcc.interpreter.r[0]).toBe(5);
+    });
+
+    test('-i -e: efficientMode is set on interpreter', () => {
+      const lcc = new LCC();
+      lcc.inputBuffer = 'q\n';
+      lcc.main(['-i', '-e', DEMO_A]);
+      expect(lcc.ilcc.interpreter.efficientMode).toBe(true);
+    });
+
+    test('-i -c: colorblindMode is set on interpreter', () => {
+      const lcc = new LCC();
+      lcc.inputBuffer = 'q\n';
+      lcc.main(['-i', '-c', DEMO_A]);
+      expect(lcc.ilcc.interpreter.colorblindMode).toBe(true);
+    });
   });
 
   test('executeFile() should enable CLI-only runtime debugging on the wrapped interpreter', () => {
