@@ -130,3 +130,19 @@ For each experiment:
 - `sext_boundaries.a`
 - `infinite_loop_demoJ.a`
 - `infinite_loop_silent.a`
+
+## Demonstrations (not oracle parity experiments)
+
+These are illustrative programs, run directly with LCC.js — not oracle parity probes.
+
+- `turnstile_interactive.a` — a minimal **statechart** (the canonical turnstile FSM)
+  in plain LCC assembly, driven interactively from the keyboard. Shows how statechart
+  ideas map onto assembly: the active state lives in a register (the "configuration"),
+  a typed char is the event, transitions are "branch on state, then on event", and the
+  printed message is the entry action. Related research: a statechart for the
+  interactive debugger itself — `../docs/research/xstate-iinterpreter.md`.
+
+  ```bash
+  node src/core/lcc.js experiments/turnstile_interactive.a
+  # then type c (coin), p (push), q (quit) and press Enter
+  ```

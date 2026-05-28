@@ -105,6 +105,20 @@ userscript.
 - [ ] spike Shiki + custom-grammar approaches for LCC highlighting (Pages site and/or Tampermonkey userscript)
   <!-- @todo #127:60m/DEV spike beautiful LCC highlighting via Shiki + lcc-tools .tmLanguage — evaluate GitHub Pages docs site vs Tampermonkey userscript (or both), then decompose the chosen path into build puzzles. See #127 -->
 
+## Interactive Debugger Architecture
+
+The interactive stepping debugger keeps its "what mode are we in?" state in several
+independent flags (`running`, `debugMode`, `efficientMode`, `currentIteration`,
+`stackAnchor`, `memDisplay*`, …) reconstructed ad hoc at each prompt. Statechart
+modeling (likely XState, the JS-native SCXML-lineage library) could make the active
+state the single source of truth — with an orthogonal region for display config — so
+illegal mode combinations become unrepresentable and the debugger becomes unit-testable
+by replaying events. Scope the idea (adopt XState vs. hand-roll vs. keep flags) before
+committing. Full context in `docs/research/xstate-iinterpreter.md`.
+
+- [ ] research a statechart for `iinterpreter.js` modes/UI; decide adopt-XState vs hand-roll vs keep-flags, then decompose into build puzzles
+  <!-- @todo #134:60m/ARC research an XState (or hand-rolled) statechart for the interactive debugger's modes/UI in src/interactive/iinterpreter.js — exec region + orthogonal display region; assess dependency cost and snapshot/time-travel coupling; keep the per-opcode step() switch out of scope. Design in docs/research/xstate-iinterpreter.md; see #134 -->
+
 ## Nice-to-Have Cleanup
 
 - [x] refactor mnemonic / machine-word constants into clearer shared definitions where it improves readability (16 base opcode constants in assembler.js)

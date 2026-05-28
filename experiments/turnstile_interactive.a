@@ -1,0 +1,101 @@
+; turnstile_interactive.a
+; ---------------------------------------------------------------------------
+; A minimal STATECHART (finite state machine) in plain LCC assembly, driven
+; interactively from the keyboard. This is the canonical "simplest statechart"
+; (a turnstile) and shows how statechart concepts map onto bare assembly:
+;
+;   configuration : the active state, held in r4   (0 = LOCKED, 1 = UNLOCKED)
+;   event         : one typed char                 (c = coin, p = push, q = quit)
+;   transition    : "branch on state, then on event, then update state"
+;   action/entry  : the sout message printed on a transition
+;   run-to-compl. : the loop: ... br loop event-processing cycle
+;
+; The chart:
+;     LOCKED   + coin -> UNLOCKED   (coin -> UNLOCKED)
+;     LOCKED   + push -> LOCKED     (push denied)
+;     UNLOCKED + push -> LOCKED     (push -> LOCKED, you pass)
+;     UNLOCKED + coin -> UNLOCKED   (already unlocked)
+;
+; Unrecognized input is ignored and re-prompts. That also harmlessly swallows
+; the newline left in the input buffer after you press Enter, so you may see the
+; state line reprinted once between events.
+;
+; Run:  node src/core/lcc.js experiments/turnstile_interactive.a
+; (then type c / p / q and press Enter)
+; ---------------------------------------------------------------------------
+
+        lea r0, banner
+        sout r0
+        ld  r2, CCH          ; r2 = 'c'  (coin event)
+        ld  r3, PCH          ; r3 = 'p'  (push event)
+        and r4, r4, 0        ; r4 = state = LOCKED (0)
+
+loop:   bl  show_state       ; print the current state (the configuration)
+        lea r0, prompt
+        sout r0
+        ain r1               ; read one event char
+
+        ld  r0, QCH          ; q -> quit
+        cmp r1, r0
+        brz done
+        cmp r1, r2           ; c -> coin
+        brz on_coin
+        cmp r1, r3           ; p -> push
+        brz on_push
+        br  loop             ; anything else (incl. newline): ignore, re-prompt
+
+on_coin:                     ; LOCKED -> UNLOCKED, else stay UNLOCKED
+        cmp r4, 0
+        brz c_locked
+        lea r0, m_already
+        sout r0
+        br  loop
+c_locked:
+        add r4, r4, 1        ; -> UNLOCKED
+        lea r0, m_unlock
+        sout r0
+        br  loop
+
+on_push:                     ; UNLOCKED -> LOCKED, else denied
+        cmp r4, 0
+        brz p_locked
+        and r4, r4, 0        ; -> LOCKED
+        lea r0, m_pass
+        sout r0
+        br  loop
+p_locked:
+        lea r0, m_denied
+        sout r0
+        br  loop
+
+done:   lea r0, m_bye
+        sout r0
+        halt
+
+; --- subroutine: print "state: LOCKED" / "state: UNLOCKED" ---
+show_state:
+        lea r0, s_pre
+        sout r0
+        cmp r4, 0
+        brz s_locked
+        lea r0, n_unlocked
+        sout r0
+        ret
+s_locked:
+        lea r0, n_locked
+        sout r0
+        ret
+
+CCH:        .word 'c'
+PCH:        .word 'p'
+QCH:        .word 'q'
+banner:     .string "== turnstile statechart (interactive) ==\n  c = coin, p = push, q = quit\n"
+prompt:     .string "event> "
+s_pre:      .string "state: "
+n_locked:   .string "LOCKED\n"
+n_unlocked: .string "UNLOCKED\n"
+m_unlock:   .string "  coin -> UNLOCKED\n"
+m_already:  .string "  (already unlocked)\n"
+m_pass:     .string "  push -> LOCKED (you pass)\n"
+m_denied:   .string "  push denied (still locked)\n"
+m_bye:      .string "bye\n"
