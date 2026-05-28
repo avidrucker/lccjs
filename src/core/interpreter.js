@@ -846,22 +846,135 @@ class Interpreter {
     return `${line.toString(16).padStart(3, ' ')}: ${source.toString(16).padStart(4, '0')}`;
   }
 
-  // @todo #102:1.5h/DEV Switch state format from hex to source text (g/r/m commands also)
+  // Phase 1 of oracle debugger parity (#102):
+  //   - State format: source text (from sourceMap) instead of hex machine word
+  //   - Commands: Enter=step, q=quit, g=continue, r=regs, m/m addr [n]=memory,
+  //               i=next-instr, h=help, s=stack
+  //   - Loop: non-step commands repeat the prompt; only Enter or an unrecognized
+  //     input advances execution
   debug() {
-    const line = this.pc - 1;
-    const source = this.mem[line] || '(unknown)';
+    const addr = this.pc - 1;
     const mnemonic = this.hexToMnemonic(this.ir);
-    process.stdout.write(`${mnemonic.toLowerCase()}>>> `); // we don't want a newline here
 
-    const { inputLine, isSimulated } = this.readLineFromStdin();
+    while (true) {
+      process.stdout.write(`${mnemonic.toLowerCase()}>>> `);
+      const { inputLine } = this.readLineFromStdin();
+      const input  = inputLine.trim();
+      const cmd    = input.toLowerCase();
 
-    const trimmedInput = inputLine.trim().toLowerCase();
-    if (trimmedInput === 'q') {
-      // this.writeDebugOutput('Exiting debugger...');
-      this.running = false;
-    } else {
-      const state = this.formatDebugState(line, source);
-      this.writeDebugOutput(`${state}     ; ${mnemonic.toLowerCase()} \n`);
+      // ── step (empty Enter) ─────────────────────────────────────────────
+      if (cmd === '') {
+        this._debugShowState(addr);
+        return; // execute the instruction
+      }
+
+      // ── quit ───────────────────────────────────────────────────────────
+      if (cmd === 'q') {
+        this.running = false;
+        return;
+      }
+
+      // ── continue to end without further debug prompts ──────────────────
+      if (cmd === 'g') {
+        this.debugMode = false;
+        return; // execute instruction; loop won't call debug() again
+      }
+
+      // ── display registers ──────────────────────────────────────────────
+      if (cmd === 'r') {
+        this._debugShowRegs();
+        continue;
+      }
+
+      // ── display memory (m, m addr, m addr n) ──────────────────────────
+      if (cmd === 'm') {
+        this._debugShowAllMem();
+        continue;
+      }
+      const mMatch = cmd.match(/^m\s+([0-9a-f]+)(?:\s+(\d+))?$/);
+      if (mMatch) {
+        const memAddr = parseInt(mMatch[1], 16);
+        const count   = mMatch[2] ? parseInt(mMatch[2]) : 1;
+        this._debugShowMem(memAddr, count);
+        continue;
+      }
+
+      // ── display next instruction source text (no exec) ─────────────────
+      if (cmd === 'i') {
+        const entry = this.sourceMap && this.sourceMap.addressToLine.get(addr);
+        const text  = entry ? entry.sourceLine : this.mem[addr].toString(16).padStart(4, '0');
+        this.writeDebugOutput(`    ${text}`);
+        continue;
+      }
+
+      // ── help ───────────────────────────────────────────────────────────
+      if (cmd === 'h') {
+        this.writeDebugOutput('hit Enter key              run step-count instructions');
+        this.writeDebugOutput('integer n                  set step count to n, run');
+        this.writeDebugOutput('b <label|addr> or b        set brkpt at <label|addr> or cancel brkpt');
+        this.writeDebugOutput('c <regname|lab|addr> val   set <reg|loc at label|loc at addr> to val');
+        this.writeDebugOutput('g                          set step count to infinity, run');
+        this.writeDebugOutput('h                          help screen');
+        this.writeDebugOutput('i                          display next instruction');
+        this.writeDebugOutput('m                          display all memory');
+        this.writeDebugOutput('m <label|label n>          display <one word|n words> at label|');
+        this.writeDebugOutput('m <addr|<addr n>           display <one word|n words> at addr');
+        this.writeDebugOutput('q                          quit');
+        this.writeDebugOutput('r                          display all regs');
+        continue;
+      }
+
+      // ── display stack (s) ──────────────────────────────────────────────
+      if (cmd === 's') {
+        const sp = this.r[6] & 0xFFFF;
+        if (sp === 0) {
+          this.writeDebugOutput('Stack empty');
+        } else {
+          this.writeDebugOutput('Stack:');
+          for (let a = 0xFFFF; a >= sp; a--) {
+            this.writeDebugOutput(`${a.toString(16).padStart(4, '0')}: ${this.mem[a].toString(16).padStart(4, '0')}`);
+          }
+        }
+        continue;
+      }
+
+      // ── step with state (unrecognized input, for backward compat) ───────
+      this._debugShowState(addr);
+      return;
+    }
+  }
+
+  // Show the current instruction in oracle debug format:
+  //   "{addr padded 2}:     {source text}"
+  // Falls back to hex machine word if no sourceMap or PC not in map.
+  _debugShowState(addr) {
+    const entry = this.sourceMap && this.sourceMap.addressToLine.get(addr);
+    const text  = entry ? entry.sourceLine : this.mem[addr].toString(16).padStart(4, '0');
+    this.writeDebugOutput(`${addr.toString(16).padStart(2, ' ')}:     ${text}`);
+  }
+
+  // Display all registers in oracle format.
+  _debugShowRegs() {
+    const h    = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
+    const nzcv = `${this.n}${this.z}${this.c}${this.v}`;
+    this.writeDebugOutput(`pc = ${h(this.pc)}  ir = ${h(this.ir)}  NZCV = ${nzcv}`);
+    this.writeDebugOutput(`r0 = ${h(this.r[0])}  r1 = ${h(this.r[1])}  r2 = ${h(this.r[2])}  r3 = ${h(this.r[3])}  `);
+    this.writeDebugOutput(`r4 = ${h(this.r[4])}  fp = ${h(this.r[5])}  sp = ${h(this.r[6])}  lr = ${h(this.r[7])}  `);
+  }
+
+  // Display all used memory words in oracle format.
+  _debugShowAllMem() {
+    const base = this.loadPoint || 0;
+    for (let a = base; a <= this.memMax; a++) {
+      this.writeDebugOutput(`${a.toString(16).padStart(4, '0')}: ${this.mem[a].toString(16).padStart(4, '0')}`);
+    }
+  }
+
+  // Display `count` memory words starting at `addr`.
+  _debugShowMem(addr, count) {
+    for (let i = 0; i < count; i++) {
+      const a = (addr + i) & 0xFFFF;
+      this.writeDebugOutput(`${a.toString(16).padStart(4, '0')}: ${this.mem[a].toString(16).padStart(4, '0')}`);
     }
   }
 

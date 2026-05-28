@@ -440,6 +440,104 @@ describe('Interpreter Unit Tests', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // Debugger Phase 1 parity (#102): debug() oracle format + g/r/m commands
+  // ---------------------------------------------------------------------------
+
+  describe('-d flag debugger (Phase 1 oracle parity)', () => {
+    // demoA: mvi r0, 5 / dout / nl / halt
+    const demoA = Buffer.from([0x6f, 0x43, 0x05, 0xd0, 0x02, 0xf0, 0x01, 0xf0, 0x00, 0xf0]);
+
+    // Capture stdout.write during fn(); restore silent mock after.
+    function captureStdout(fn) {
+      const parts = [];
+      process.stdout.write.mockImplementation((msg) => parts.push(msg));
+      try { fn(); } finally {
+        process.stdout.write.mockImplementation(() => {});
+      }
+      return parts.join('');
+    }
+
+    function runDebug(inputBuffer) {
+      const interpreter = new Interpreter();
+      interpreter.debugMode = true;
+      interpreter.allowRuntimeDebugging = false; // keep test-safe
+      interpreter.inputBuffer = inputBuffer;
+      return captureStdout(() => {
+        interpreter.executeBuffer(demoA, { inputFileName: 'demoA.e' });
+      });
+    }
+
+    test('Empty Enter steps and shows source-text state format', () => {
+      const source = '  mvi r0, 5\n  dout\n  nl\n  halt\n';
+      const assembler = new Assembler();
+      const assembly  = assembler.assembleSource(source, { inputFileName: 'demoA.a' });
+      const interpreter = new Interpreter();
+      interpreter.debugMode = true;
+      interpreter.allowRuntimeDebugging = false;
+      interpreter.sourceMap = assembler.sourceMap;
+      interpreter.inputBuffer = '\nq\n';
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'demoA.e' });
+      });
+      // After Enter, state line should contain the raw source text, not hex
+      expect(out).toContain('mvi r0, 5');
+      expect(out).not.toContain('; mvi'); // old format
+    });
+
+    test('State format without sourceMap falls back to hex machine word', () => {
+      const out = runDebug('\nq\n');
+      // demoA first instruction = 0xd005 (mvi r0, 5)
+      expect(out).toContain('d005');
+    });
+
+    test('State address field is 2-char right-justified hex', () => {
+      const out = runDebug('\nq\n');
+      // addr=0 → " 0:     " (space-0-colon-5spaces)
+      expect(out).toMatch(/ 0:     /);
+    });
+
+    test('q quits without stepping', () => {
+      const out = runDebug('q\n');
+      // After q, no state line should appear
+      expect(out).not.toContain(':     ');
+    });
+
+    test('g disables debugMode and lets execution continue', () => {
+      // After g at mvi, execution continues to dout → output includes '5'
+      const out = runDebug('g\n');
+      expect(out).toContain('5');
+    });
+
+    test('r shows register display without stepping', () => {
+      // r at mvi>>> should show regs, then re-prompt;
+      // we follow with q to quit.
+      const out = runDebug('r\nq\n');
+      expect(out).toContain('pc = ');
+      expect(out).toContain('r0 = ');
+      expect(out).toContain('NZCV = ');
+    });
+
+    test('m shows all used memory without stepping', () => {
+      const out = runDebug('m\nq\n');
+      // demoA loads at 0x0000; 4 words (d005, f002, f001, f000)
+      expect(out).toContain('0000: d005');
+      expect(out).toContain('0003: f000');
+    });
+
+    test('m addr shows single word at that address', () => {
+      const out = runDebug('m 1\nq\n');
+      // addr 1 = f002 (dout)
+      expect(out).toContain('0001: f002');
+    });
+
+    test('i shows next instruction source without stepping (hex fallback)', () => {
+      const out = runDebug('i\nq\n');
+      // Without sourceMap, shows hex machine word indented 4 spaces
+      expect(out).toMatch(/    d005/);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // -t flag: per-step trace output (#77)
   // ---------------------------------------------------------------------------
 
