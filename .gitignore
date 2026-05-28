@@ -21,6 +21,7 @@ demos/ptest.o
 test/*.bin
 scratch/
 plusdemos/*.ep
+plusdemos_tests/*.ep
 cit118demos/
 lccjs.zip
 .env
