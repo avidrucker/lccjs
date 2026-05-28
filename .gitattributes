@@ -5,49 +5,43 @@
 # linguist-detectable=false keeps these files out of the repo's "Languages"
 # bar — this is a JavaScript project; the .a/.ap files are study material.
 #
-# A/B/C/D/E grammar comparison: each top-level folder uses a different
-# Linguist assembly grammar so we can visually compare which reads best for
-# LCC syntax. Note that "riscv" and "mips" are not Linguist languages, and
-# "asm"/"nasm" are aliases for the same grammar — those slots use distinct
-# alternatives below. (LCC isn't a real ISA so no grammar is perfect; we're
-# comparing how the surrounding scaffolding — comments, .directives, labels,
-# register-name heuristics — renders.)
+# GRAMMAR DECISION: an A/B/C/D/E comparison (each top-level folder forced to a
+# different Linguist assembly grammar) found `asm` (Assembly, NASM grammar) the
+# best fit for LCC, so it's now the global default for all .a/.ap files. LCC
+# isn't a real ISA, so no stock grammar is perfect; `asm` just reads best for
+# the surrounding scaffolding (comments, .directives, labels, register-name
+# heuristics). For pixel-accurate LCC highlighting use the lcc-tools VS Code
+# grammar (or feed that .tmLanguage to Shiki on a GitHub Pages docs site);
+# GitHub.com itself has no per-repo custom-grammar hook.
 #
-# Attribute values cannot contain spaces, so we use Linguist's single-word
-# aliases:
-#   asm  = Assembly             (source.assembly, NASM grammar)
+# Linguist single-word aliases (attribute values can't contain spaces):
+#   asm  = Assembly             (source.assembly, NASM grammar)  <-- chosen
 #   gas  = Unix Assembly        (source.x86, GNU AS)
 #   arm  = ARM Assembly         (source.asm.arm)
 #   m68k = Motorola 68K Assembly(source.m68k)
 #   LLVM = LLVM IR              (source.llvm)
+#
+# Per-grammar findings from the comparison (rating + how LCC code rendered):
+#
+#   m68k — OKAY. Some mnemonics are not highlighted (mov, ld, bre ignored;
+#     cmp, add are not). Label definitions seem nicely labeled, but label
+#     references are ignored. Comments are good.
+#
+#   gas — BAD. Labels look fine and mnemonics are mostly good, but comments
+#     are ignored and inconsistent (highlighting on seemingly random words in
+#     a comment line). Label defs are good, label refs ignored. Directives,
+#     strings, and numbers are nice; chars are ignored.
+#
+#   asm — BETTER (chosen). Mnemonics aren't consistently rendered in the same
+#     color (mov, cmp, add are good; bre, aout, hout, nl are not). Label defs
+#     are highlighted but not differently from the later group of mnemonics
+#     and registers. Numbers, chars, and strings are okay.
+#
+#   LLVM — OK. Label defs look okay, and some mnemonics are highlighted (sub,
+#     br, ret) while others are ignored (ldr, str, mov). Comments are good.
 
-# --- catch-all default: gas (Unix Assembly) ---
-*.a   linguist-language=gas
+# --- global default: asm (Assembly, NASM grammar) for all .a / .ap files ---
+*.a   linguist-language=asm
 *.a   linguist-detectable=false
-*.ap  linguist-language=gas
+*.ap  linguist-language=asm
 *.ap  linguist-detectable=false
-
-# --- per-folder overrides (later patterns override earlier ones) ---
-# Two patterns each: `folder/*.a` for direct children, `folder/**/*.a` for
-# any nested depth. `**` in gitattributes only matches when there's at least
-# one path component, so the direct-child form is needed separately.
-
-# demos/              → asm   (Assembly, NASM grammar)
-demos/*.a                       linguist-language=asm
-demos/**/*.a                    linguist-language=asm
-
-# docs/               → gas   (same as catch-all; listed for clarity)
-docs/*.a                        linguist-language=gas
-docs/**/*.a                     linguist-language=gas
-
-# experiments/        → m68k  (substitute for "riscv" — no Linguist grammar)
-experiments/*.a                 linguist-language=m68k
-experiments/**/*.a              linguist-language=m68k
-
-# public_experiments/ → arm   (ARM Assembly)
-public_experiments/*.a          linguist-language=arm
-public_experiments/**/*.a       linguist-language=arm
-
-# textbook_demos/     → LLVM  (substitute for "mips" — no Linguist grammar)
-textbook_demos/*.a              linguist-language=LLVM
-textbook_demos/**/*.a           linguist-language=LLVM
