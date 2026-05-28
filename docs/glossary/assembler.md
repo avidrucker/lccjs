@@ -6,7 +6,6 @@ The original spike (#108) has been decomposed into 5 sub-spikes, each covering a
 coherent section of the file. The write phase (#111) consolidates the
 inventoried terms into definitions once all 5 spikes have closed.
 
-<!-- @todo #121:60m/WRITER Spike (c): inventory LCC-specific terms in tokenization + directive/instruction dispatch (lines 916-1397). See #121 -->
 <!-- @todo #122:60m/WRITER Spike (d): inventory LCC-specific terms in per-instruction encoders (lines 1408-1980). See #122 -->
 <!-- @todo #123:60m/WRITER Spike (e): inventory LCC-specific terms in operand parsing helpers (lines 1985-2290). See #123 -->
 <!-- @todo #111:60m/WRITER Write definitions for each inventoried term; LCC-specific angle only. Blocked by spikes (a)-(e). See #111 -->
@@ -141,7 +140,67 @@ area. Terms only — definitions land in the section below.
 
 ### (c) Tokenization + directive/instruction dispatch — populated by #121
 
-_To be filled in._
+**Tokenization rules:**
+- Whitespace **AND** `,` both split tokens (so `add r0,r1,r2` and `add r0 r1 r2` tokenize identically)
+- `:` stays attached to the preceding label token (`label:` → one token `"label:"`)
+- String delimiters: `"` and `'` both supported; the delimiter chars are preserved **in** the token
+- Escape sequences inside strings: `\n`, `\t`, `\\`, `\"`, `\r` only (no `\0`, `\b`, `\f`, etc.)
+- Unknown escape → "Unknown escape sequence" error (non-fatal)
+- "Missing terminating quote" — escape `\` at end of string content
+
+**Directive vocabulary (synonyms grouped):**
+
+| Mnemonic(s) | Operand | Purpose |
+|---|---|---|
+| `.start <label>` | label | entry-point declaration; resolved after pass 2; sets `startLabel` |
+| `.org` / `.orig <addr>` | 0..0xFFFF | set `locCtr` forward (no backward); pass 2 zero-pads the gap |
+| `.globl` / `.global <label>` | label | export; forces `isObjectModule`; adds to `globalLabels` |
+| `.extern <label>` | label | import; forces `isObjectModule`; adds to `externLabels` |
+| `.blkw` / `.space` / `.zero <n>` | 1..(65536-locCtr) | reserve N zero-init words |
+| `.fill` / `.word <expr>` | literal / label / `label±N` | emit one 16-bit word |
+| `.stringz` / `.asciz` / `.string "<text>"` | quoted string | emit null-terminated string |
+
+- Custom LCC.js behavior on `.zero`: negativity is rejected (original LCC as of 12/2024 does not check)
+- `.word` accepted operand forms — tokenizer splits on whitespace/comma but **not** on `+`/`-`:
+  - `.word N` — literal
+  - `.word label` — label address
+  - `.word label+N` — single token, handled by `parseLabelWithOffset`
+  - `.word label + N` — three tokens, joined manually
+  - `.word label +N` — **known parsing gap**: `+N` silently dropped, only `label` is used
+- `.word label±N` against a **local** symbol records an `'A'` adjustment entry
+- Offset range for `.word label±N`: -32768..65535
+- `.string` emits **one 16-bit word per character** (not per byte) — LCC's word-addressable memory convention
+- Errors: "String constant missing leading quote", "Missing terminating quote"
+- Default directive case → "Invalid operation"
+
+**Instruction dispatch (`handleInstruction`):**
+
+- Pass 1: each instruction bumps `locCtr` by 1 (LCC is **exactly one 16-bit word per instruction**); no encoding
+- Pass 2: mnemonic-lookup switch dispatches to per-instruction encoder (`assembleADD`, `assembleBR`, etc. — see section (d))
+- Final step: `writeMachineWord(word)` emits to `outputBuffer` and updates the listing entry's `codeWords`
+
+**Instruction mnemonics seen at dispatch level:**
+
+- **Branches:** `br` / `bral`, `brz` / `bre`, `brnz` / `brne`, `brn`, `brp`, `brlt`, `brgt`, `brc`
+- **Arithmetic:** `add`, `sub`, `cmp`, `mul`, `div`, `rem`, `not`, `sext`
+- **Logic / shifts / rotates:** `and`, `or`, `xor`, `srl`, `sra`, `sll`, `rol`, `ror`
+- **Move:** `mov` / `mvi` (immediate) / `mvr` (register)
+- **Stack:** `push`, `pop`
+- **Memory (pc-relative offset9):** `ld`, `st`, `lea`, `cea`
+- **Memory (base+offset6):** `ldr`, `str`
+- **Flow:** `call` / `jsr` / `bl` (direct), `jsrr` / `blr` (register-indirect), `jmp`, `ret`
+- **Traps** (trap vector hardcoded in dispatch):
+  - `halt` (0x00) — encoded as raw `OP_TRAP`; `nl` (0x01) — encoded as raw `0xF001` (special-cased, bypasses `assembleTrap`)
+  - I/O: `dout` (0x02), `udout` (0x03), `hout` (0x04), `aout` (0x05), `sout` (0x06), `din` (0x07), `hin` (0x08), `ain` (0x09), `sin` (0x0A)
+  - Debug: `m` (0x0B) memory display, `r` (0x0C) register display, `s` (0x0D) stack display, `bp` (0x0E) breakpoint
+- Default instruction case → "Invalid operation"
+
+**Dispatch / emission helpers:**
+- `writeMachineWord(word)` — appends to `outputBuffer`; updates the current listing entry's `codeWords`
+- `isOperator(token)` — distinguishes `+` / `-` from operands
+- `parseNumber`, base-10 `parseInt`
+- `parseLabelWithOffset` — extracts `{label, offset}` from `label±N` single-token form
+- `failAssembly` / `this.error` — error reporting paths used by directives
 
 ### (d) Per-instruction encoders — populated by #122
 
