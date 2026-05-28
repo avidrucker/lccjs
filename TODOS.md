@@ -27,6 +27,7 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] `fileArtifacts.js`
   - [ ] `reportArtifacts.js`
 - [ ] label any `progress-report.md` snapshots as historical when they exist
+- [ ] writer task: per-module glossary for `assembler.js`, `interpreter.js`, `linker.js` (parent #107; spike+write puzzles #108–#113; stubs in `docs/glossary/`)
 
 ## Oracle Parity and Research
 
