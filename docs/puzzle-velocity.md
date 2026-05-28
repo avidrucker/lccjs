@@ -1,98 +1,131 @@
-# Puzzle Velocity Log
+# Puzzle Velocity — Data & Explainer
 
-Tracking estimated vs actual time per puzzle / ticket so we can calibrate
-estimates over time.
+Tracks estimated vs actual time per puzzle / ticket so we can calibrate
+forward-looking estimates over time. Raw data lives in
+[`puzzle-velocity.csv`](./puzzle-velocity.csv); this doc explains the columns,
+the protocol, and the jargon.
 
-## Two estimates per puzzle
+## Where the data is
 
-Going forward each puzzle carries **two** estimates:
+[`puzzle-velocity.csv`](./puzzle-velocity.csv) — one row per closed
+ticket / puzzle. Empty fields mean "not tracked" (most commonly for rows
+logged retroactively before the protocol existed).
 
-- **H (human)** — what a human would budget for the task. This is the Yegor
-  60m-capped estimate that governs decomposition. It still drives the
-  discipline (puzzles ≤60m, decompose if larger).
-- **C (Claude)** — my forward-looking guess for my own wall-clock on the task.
-  Tracked so we can see how my self-estimates compare to actuals over time and
-  improve calibration.
+## Column reference
 
-For tickets filed before this protocol existed, **C** is added at the time I
-pick up the ticket as my own prediction, before doing the work.
+| Column | Type | Meaning |
+|---|---|---|
+| `ticket` | int | GitHub issue number (e.g. `124` = `#124`) |
+| `title` | string | short ticket title |
+| `role` | string | role tag (see below) |
+| `h_min` | number | **H**uman time estimate in minutes — drives Yegor 60m cap |
+| `c_min` | number / empty | **C**laude time estimate in minutes — my forward-looking prediction |
+| `actual_min` | number | wall-clock minutes from start to closing commit |
+| `delta_h_min` | number | `actual_min − h_min` (negative = under estimate) |
+| `delta_c_min` | number | `actual_min − c_min` (negative = under estimate) |
+| `started_iso` | ISO 8601 / empty | timestamp when I began work (re-reading the issue counts as start); empty for retroactive rows |
+| `finished_iso` | ISO 8601 | timestamp of the commit that closed the ticket |
+| `closed_commit` | git short SHA | short SHA of the closing commit |
+| `notes` | string | free-text notes (anomalies, context, what was hard/easy) |
 
-## What "actual" means
+## Role codes
 
-Wall-clock elapsed from when I began work on a ticket (re-reading the issue
-for context) to the commit closing it.
+| Code | Meaning |
+|---|---|
+| `DEV` | code change — implementation work |
+| `TEST` | test writing or test-only work |
+| `ARC` | architect / design decision — chooses a path; does not implement |
+| `WRITER` | documentation / glossary writing |
+| `PM` | project management work (tracker updates, issue triage) |
 
-The interesting trends to track:
-- **Do my Claude estimates (C) match my actuals?** This is the calibration loop.
-- **How often do I overrun?** Overruns under either H or C are worth flagging.
-- **Slice-by-role variance** — DEV vs WRITER vs ARC vs TEST estimates
-  probably age differently, and the velocity will too.
+## The two estimates
+
+Each puzzle going forward carries:
+
+- **H (human)** — a human's time budget. Governs the Yegor ≤60m hard cap;
+  if a puzzle would exceed 60m, it must be decomposed. **H is for discipline,
+  not forecasting.**
+- **C (Claude)** — my own forward-looking estimate for *my* wall-clock on the
+  task. **C is for forecasting.** Tracked so we can see whether my self-
+  predictions get more accurate over time.
+
+For tickets filed before this protocol existed, **C** is captured at the time
+I pick up the ticket as my prediction *before* doing the work.
+
+## Concept reference (LCCjs-specific or PDD jargon)
+
+- **PDD (Puzzle-Driven Development)** — Yegor Bugayenko's discipline where
+  unfinished work lives as a `@todo` comment ("puzzle") in code, tied to a
+  GitHub issue. Each puzzle is ≤60m and has format
+  `@todo #N:Est/ROLE description`.
+- **Yegor discipline** — broader conventions around PDD: ≤60m cap, research
+  tickets labeled `research` (not `pdd-tracked`), parent/child trackers,
+  decompose only what's about to be implemented.
+- **Spike** — a bounded ≤60m **research** session that produces findings
+  (term inventory, scope notes) rather than working code. Labeled `research`
+  on the GH issue, *not* `pdd-tracked`.
+- **Tracker** — a GH issue that doesn't represent a single piece of work but
+  tracks N child puzzles. Example: #108 tracked the 5 assembler.js inventory
+  spikes #119–#123. Closing a tracker means all children closed.
+- **Term inventory** — first phase of glossary writing: list term names only,
+  no definitions. Definitions land in a separate, later ticket (typically
+  blocked by all the inventory spikes).
+- **Section (a)-(e)** — the assembler.js glossary was decomposed into 5
+  sections by file structure: (a) lifecycle, (b) pass model, (c) tokenization,
+  (d) per-instruction encoders, (e) operand helpers. The interpreter and
+  linker glossaries may use similar but not identical letterings.
+- **Oracle / cuh63** — the reference LCC implementation
+  (`~/Documents/Study/Assembly/cuh63/lcc`) used to verify LCC.js parity. See
+  the `lcc_oracle_install` memory.
 
 ## Protocol
 
-At the start of a new ticket / puzzle:
-1. Capture start timestamp via `date '+%Y-%m-%d %H:%M:%S'`.
-2. Stash it (task metadata or a note).
-3. If only H is recorded on the ticket, set **C** now (forward-looking).
-4. Do the work.
+When I pick up a ticket:
 
-At commit-close:
-5. Capture finish timestamp.
-6. Compute actuals and Δ vs both H and C.
-7. Append a row to the log below.
-8. Include this file in the same commit that closes the ticket.
+1. **Start** — capture `date '+%Y-%m-%dT%H:%M:%S%z'` *before* reading the issue.
+2. **Predict** — if the ticket has no C estimate yet, set one now.
+3. **Work** — do the puzzle.
+4. **Finish** — capture finish timestamp before the closing commit.
+5. **Record** — compute actuals + ΔH + ΔC; append a row to the CSV;
+   include the CSV update in the closing commit.
 
-## Log
+## Reading the data
 
-| Ticket | Title | Role | H | C | Actual | ΔH | ΔC | Started | Finished | Notes |
-|---|---|---|---|---|---|---|---|---|---|---|
-| [#119](https://github.com/avidrucker/lccjs/issues/119) | assembler.js (a) lifecycle/output term inventory | WRITER | 60m | — | ~10m | −50m | — | — | 2026-05-28 11:58 | C not yet tracked; first spike with warm-up cost |
-| [#120](https://github.com/avidrucker/lccjs/issues/120) | assembler.js (b) pass model + file parsing term inventory | WRITER | 60m | — | ~16m | −44m | — | — | 2026-05-28 12:14 | included filing 3 follow-up puzzles for #119 findings |
-| [#121](https://github.com/avidrucker/lccjs/issues/121) | assembler.js (c) tokens + dispatch term inventory | WRITER | 60m | — | ~2m | −58m | — | — | 2026-05-28 12:16 | densest section by directive count but mechanical |
-| [#122](https://github.com/avidrucker/lccjs/issues/122) | assembler.js (d) per-instruction encoders term inventory | WRITER | 60m | — | ~3m | −57m | — | — | 2026-05-28 12:19 | bonus: also closed #125 (E/e/V disambiguation) |
-| [#123](https://github.com/avidrucker/lccjs/issues/123) | assembler.js (e) operand helpers term inventory | WRITER | 60m | — | ~2m | −58m | — | — | 2026-05-28 12:21 | smallest section; finally documented fp/sp/lr → r5/r6/r7 |
-| [#124](https://github.com/avidrucker/lccjs/issues/124) | .e/.o glossary entry shape design | ARC | 30m | 4m | 1.5m | −28.5m | −2.5m | 2026-05-28 12:31:56 | 2026-05-28 12:33:28 | first dual-estimate row; first ARC puzzle; my C estimate ran ~2.5× too high |
+Quick stats with `awk` (zero-dependencies):
 
-## Running stats
+```bash
+# average ΔH across all rows
+awk -F, 'NR>1 && $7!="" {sum += $7; n++} END {print sum/n}' docs/puzzle-velocity.csv
 
-| | All puzzles | WRITER only | ARC only |
-|---|---|---|---|
-| Count | 6 | 5 | 1 |
-| Sum of H | 330m | 300m | 30m |
-| Sum of C | 4m (only #124 tracked) | — | 4m |
-| Sum of actuals | ~34.5m | ~33m | 1.5m |
-| Average ΔH | −49m | −53m | −28.5m |
-| Average ΔC | −2.5m (n=1) | — | −2.5m |
-| H-to-actual ratio | ~10× | ~9× | 20× |
-| C-to-actual ratio | n=1 (~2.5×) | — | ~2.5× |
-| Overruns vs H | 0/6 | 0/5 | 0/1 |
-| Overruns vs C | 0/1 | — | 0/1 |
+# rows where I overran my C estimate
+awk -F, 'NR>1 && $8>0 {print $1, $2, $8}' docs/puzzle-velocity.csv
 
-## Calibration takeaways
+# group by role
+awk -F, 'NR>1 {n[$3]++; sa[$3]+=$6} END {for (r in n) print r, n[r], sa[r]/n[r]}' docs/puzzle-velocity.csv
+```
+
+Or just open the CSV in any spreadsheet.
+
+## Calibration takeaways so far
 
 After 5 WRITER spikes + 1 ARC design call:
 
-- **H (human) cap is wildly over-budgeted for AI**, confirmed across two roles
-  (WRITER ~9× margin, ARC ~6× margin). The 60m cap still drives decomposition
-  discipline — that's its job — but isn't a predictor of actuals.
-- **C (Claude) is the right input to forecast** when we want to know how long
-  *I* will take. First data point: my own estimate (4m) ran ~2.5× too high on
-  a 1.5m-actual ARC ticket. Either I overweight uncertainty for new task
-  shapes, or I needed to budget for filing-the-decision-comment ceremony but
-  it was faster than I thought. Need more samples before declaring a pattern.
-- **Warm-up cost is real** — first spike of a streak runs longer than
-  subsequent ones (#119 took ~10m, then #121-#123 dropped to 2-3m once the
-  pattern was established).
-- **Process overhead bleeds in** — #120 was longer largely because of filing
-  3 follow-up puzzles. Worth distinguishing "task work" from "process work" in
-  future estimates if the gap matters.
+- **H is structurally over-budgeted for AI work** (~9-20× across both roles).
+  Expected — reinforces that H is for discipline, not forecasting.
+- **C-vs-actual** has only 1 data point: my C ran ~2.5× too high on a small
+  ARC ticket. Watching whether that pattern (over-padding for new task
+  shapes) holds as more samples arrive.
+- **Warm-up cost** on the first puzzle of a streak is real: #119 (10m)
+  versus #121-#123 (2-3m) once the pattern was established.
+- **Process overhead bleeds in** — e.g. #120 was longer largely because of
+  filing 3 follow-up puzzles, not because the inventory work itself was
+  harder. Worth distinguishing "task" from "process" work in future estimates
+  if the gap matters.
 
 ## Open questions to revisit
 
-- Do **DEV** puzzles (actual code changes with edit/test loops) follow the
-  same ratio, or does the loop dominate?
-- How does the C estimate hold up across role kinds? Need DEV + TEST samples.
-- Does this calibration hold for **less familiar** codebases or denser file
-  types (e.g., a 2000-line file with no comments)?
-- Does C systematically drift over time (overconfidence after a streak of
-  underruns)?
+- Do DEV puzzles (actual code changes with edit/test loops) follow the same
+  ratios, or does the loop dominate and pull actuals closer to H?
+- How does C calibrate across role kinds? Need DEV + TEST data points.
+- Does this hold for less familiar code or sparsely-commented files?
+- Does C drift over time (over-confidence after a streak of underruns)?

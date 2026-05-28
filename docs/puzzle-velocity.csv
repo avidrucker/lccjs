@@ -1,0 +1,7 @@
+ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,finished_iso,closed_commit,notes
+119,"assembler.js (a) lifecycle/output term inventory",WRITER,60,,10,-50,,,2026-05-28T11:58:35-10:00,cad1755,"first spike; warm-up cost; read 600L + populated section (a)"
+120,"assembler.js (b) pass model + file parsing term inventory",WRITER,60,,16,-44,,,2026-05-28T12:14:10-10:00,cfe2348,"included filing 3 follow-up puzzles for #119 findings"
+121,"assembler.js (c) tokens + dispatch term inventory",WRITER,60,,2,-58,,,2026-05-28T12:16:35-10:00,cac9c84,"densest section by directive count but mechanical"
+122,"assembler.js (d) per-instruction encoders term inventory",WRITER,60,,3,-57,,,2026-05-28T12:19:40-10:00,7129c56,"bonus: also closed #125 (E/e/V disambiguation)"
+123,"assembler.js (e) operand helpers term inventory",WRITER,60,,2,-58,,,2026-05-28T12:21:17-10:00,43937c5,"smallest section; finally documented fp/sp/lr -> r5/r6/r7"
+124,".e/.o glossary entry shape design",ARC,30,4,1.5,-28.5,-2.5,2026-05-28T12:31:56-10:00,2026-05-28T12:33:28-10:00,4eed817,"first dual-estimate row; first ARC puzzle; my C ran ~2.5x too high"
