@@ -108,24 +108,30 @@ Or just open the CSV in any spreadsheet.
 
 ## Calibration takeaways so far
 
-After 5 WRITER spikes + 1 ARC design call:
+After 5 WRITER spikes + 1 ARC + 1 WRITER write-phase:
 
 - **H is structurally over-budgeted for AI work** (~9-20× across both roles).
   Expected — reinforces that H is for discipline, not forecasting.
-- **C-vs-actual** has only 1 data point: my C ran ~2.5× too high on a small
-  ARC ticket. Watching whether that pattern (over-padding for new task
-  shapes) holds as more samples arrive.
-- **Warm-up cost** on the first puzzle of a streak is real: #119 (10m)
-  versus #121-#123 (2-3m) once the pattern was established.
-- **Process overhead bleeds in** — e.g. #120 was longer largely because of
-  filing 3 follow-up puzzles, not because the inventory work itself was
-  harder. Worth distinguishing "task" from "process" work in future estimates
-  if the gap matters.
+- **C runs systematically high too**, even after deliberate calibration. 5 C-tracked rows: 2.67× / 3.0× / 3.0× / 2.4× / **3.6×** (mean ≈ 2.9×). On #113 I explicitly halved my gut C from ~20m to 10m and *still* came in at 2.78m actual (3.6× over) — calibration didn't track.
+- **Warm-up cost** on the first puzzle of a streak is real: #119 (10m) versus #121-#123 (2-3m) once the pattern was established.
+- **Process overhead bleeds in** — e.g. #120 was longer because of filing 3 follow-up puzzles, not because the inventory work was harder. Worth distinguishing "task work" from "process work" in future estimates.
+
+### Hypotheses on the persistent C over-pad
+
+Logged here for later study; not actively investigating yet.
+
+1. **"Weightier" tasks attract more padding regardless of actual difficulty.** #113 was definition-*writing* not term-*inventorying*, and felt like real prose work; I padded C accordingly. Actual wall-clock was similar to the spike rows. The padding is psychological, not predictive.
+2. **I'm calibrating in the wrong direction.** With 5 underruns and 0 overruns, conservative calibration tightens nothing. To close the loop I'd need to halve C aggressively until I start *occasionally* overrunning. Right now overrun rate is 0% and that's the wrong target — somewhere around 40-50% overrun rate is where the median is well-calibrated.
+3. **Sample size still small (n=5).** 3.6× could be inside the noise band; need more data before declaring a real pattern shift.
+4. **Cross-role contamination.** I might be conflating "write some prose" with "diagnose a bug" or "design a refactor" — all of which I'd see as "weighty" but which actually have very different wall-clock profiles for an AI.
+
+User has explicitly said calibration isn't the priority right now — keep predicting as-is, study the data later when there's more of it.
 
 ## Open questions to revisit
 
 - Do DEV puzzles (actual code changes with edit/test loops) follow the same
   ratios, or does the loop dominate and pull actuals closer to H?
-- How does C calibrate across role kinds? Need DEV + TEST data points.
+- How does C calibrate across role kinds? Still need DEV + TEST samples.
 - Does this hold for less familiar code or sparsely-commented files?
 - Does C drift over time (over-confidence after a streak of underruns)?
+- Is "amount of prose to type" a better predictor than "amount of code to read"?
