@@ -108,11 +108,12 @@ Or just open the CSV in any spreadsheet.
 
 ## Calibration takeaways so far
 
-After 5 WRITER spikes + 1 ARC + 1 WRITER write-phase:
+After 5 WRITER spikes + 1 ARC + 1 WRITER write-phase + 1 DEV parity char.:
 
 - **H is structurally over-budgeted for AI work** (~9-20× across both roles).
   Expected — reinforces that H is for discipline, not forecasting.
-- **C runs systematically high too**, even after deliberate calibration. 5 C-tracked rows: 2.67× / 3.0× / 3.0× / 2.4× / **3.6×** (mean ≈ 2.9×). On #113 I explicitly halved my gut C from ~20m to 10m and *still* came in at 2.78m actual (3.6× over) — calibration didn't track.
+- **C runs systematically high too**, even after deliberate calibration. 6 C-tracked rows: 2.67× / 3.0× / 3.0× / 2.4× / 3.6× / **2.4×** (mean ≈ 2.8×). On #113 I explicitly halved my gut C from ~20m to 10m and *still* came in at 2.78m actual (3.6× over) — calibration didn't track.
+- **First DEV row holds the WRITER pattern**: #106 (parity characterization — run the repro, then write the deviation entry) came in at **2.4× over C** (C=12m, actual 4.95m), squarely in the WRITER band. Caveat: this was a research-flavored DEV task, *not* a heavy edit→test→rerun loop — so the open question below (does the test loop pull DEV actuals toward H?) is still open.
 - **Warm-up cost** on the first puzzle of a streak is real: #119 (10m) versus #121-#123 (2-3m) once the pattern was established.
 - **Process overhead bleeds in** — e.g. #120 was longer because of filing 3 follow-up puzzles, not because the inventory work was harder. Worth distinguishing "task work" from "process work" in future estimates.
 
