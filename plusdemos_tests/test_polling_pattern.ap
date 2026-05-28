@@ -1,0 +1,39 @@
+; test_polling_pattern.ap
+; Same nbain + sleep polling pattern used in tictactoe.ap promptMove.
+; Prints "Frame N:" each iteration. Press 'q' to quit.
+;
+; If you see one frame, type, see the next frame — polling works.
+; If you see a wall of frames without typing — phantom input is the culprit.
+        .lccplus
+        mov r2, 0           ; frame counter
+@frame: lea r0, framemsg
+        sout r0
+        mov r0, r2
+        dout r0
+        lea r0, prompt
+        sout r0
+        nl
+@poll:  nbain r4
+        cmp r4, 0
+        brnz @gotKey
+        mov r3, 16
+        sleep r3
+        br @poll
+@gotKey:
+        mov r0, 'q'
+        cmp r4, r0
+        bre @done
+        lea r0, pressed
+        sout r0
+        aout r4
+        nl
+        add r2, r2, 1
+        br @frame
+@done:  lea r0, bye
+        sout r0
+        nl
+        halt
+framemsg: .string "Frame "
+prompt:   .string " > press a key (q to quit):"
+pressed:  .string "you pressed: "
+bye:      .string "Bye!"

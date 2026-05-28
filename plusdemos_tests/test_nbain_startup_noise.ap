@@ -1,0 +1,32 @@
+; test_nbain_startup_noise.ap
+; Diagnostic: at startup, poll nbain 50 times (10ms between each = 500ms total)
+; to detect whether stdin already has bytes queued from terminal init.
+;
+; Clean startup: only prints the two msg lines.
+; Noisy startup: also prints "Got byte: N" lines for each non-zero byte seen.
+        .lccplus
+        lea r0, msg1
+        sout r0
+        nl
+        mov r2, 50          ; iteration count
+@check: cmp r2, 0
+        brz @done
+        nbain r4
+        cmp r4, 0
+        brz @noKey
+        lea r0, gotmsg
+        sout r0
+        mov r0, r4
+        dout r0
+        nl
+@noKey: mov r3, 10
+        sleep r3
+        sub r2, r2, 1
+        br @check
+@done:  lea r0, msg2
+        sout r0
+        nl
+        halt
+msg1:   .string "Polling nbain for 500ms at startup..."
+gotmsg: .string "Got byte: "
+msg2:   .string "Done. (clean if nothing else printed above)"

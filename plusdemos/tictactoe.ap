@@ -9,13 +9,13 @@
 ; (`@xxxP: .word xxx`) and local copies of read-only constants.
 ;
 ; CONTROLS
-;   Each turn: press a digit 1-9 to mark that cell, then <enter>.
+;   Each turn: press a digit 1-9 to mark that cell — single keypress, no Enter.
 ;     1 | 2 | 3
 ;    ---+---+---
 ;     4 | 5 | 6
 ;    ---+---+---
 ;     7 | 8 | 9
-;   After game ends: 'y' + <enter> to play again, any other key to quit.
+;   After game ends: 'y' to play again, any other key to quit.
 
           .lccplus
           .start startup
@@ -33,7 +33,6 @@ startup:  clear
 board:    .zero 9              ; cells: ' ' empty, else 'X' or 'O'
 current:  .word 88             ; current player; 'X' (88) initially
 move_idx: .word 0
-inbuf:    .zero 16             ; sin buffer
 
 xchar:    .word 88             ; 'X'
 ochar:    .word 79             ; 'O'
@@ -79,7 +78,7 @@ printBoard:
           mov  fp, sp
           sub  sp, sp, 1        ; fp-1 = row counter
 
-          resetc
+          clear
           lea  r0, @M_title
           sout r0
           nl
@@ -199,7 +198,6 @@ initBoard:
 @boardP_b:    .word board
 @currentP_b:  .word current
 @move_idxP_b: .word move_idx
-@inbufP_b:    .word inbuf
 @winLinesP_b: .word winLines
 
 xchar_b:      .word 88
@@ -231,9 +229,15 @@ promptMove:
           lea  r0, @M_prompt
           sout r0
 
-          ld   r0, @inbufP_b
-          sin  r0
-          ldr  r0, r0, 0        ; r0 = first char of line
+@pollMove:
+          nbain r4
+          cmp  r4, 0
+          brnz @gotMove
+          mov  r3, 16          ; ~60 Hz poll rate
+          sleep r3
+          br   @pollMove
+@gotMove:
+          mov  r0, r4           ; r0 = keypress
 
           ld   r1, ch1_b
           cmp  r0, r1
@@ -324,41 +328,47 @@ checkWin:
           push lr
           push fp
           mov  fp, sp
+          sub  sp, sp, 1        ; fp-1 = lines-remaining counter (was r4)
 
-          ld   r5, @winLinesP_b ; r5 = &winLines
-          mov  r4, 8
-          ld   r6, @currentP_b
-          ldr  r6, r6, 0        ; r6 = current
+          ld   r4, @winLinesP_b ; r4 = &winLines (was r5 — clobbered fp!)
+          mov  r0, 8
+          str  r0, fp, -1       ; counter = 8
 
 @winLineLoop:
-          cmp  r4, 0
+          ldr  r0, fp, -1
+          cmp  r0, 0
           brz  @winNoMatch
 
-          ldr  r0, r5, 0
-          ldr  r1, r5, 1
-          ldr  r2, r5, 2
+          ldr  r0, r4, 0        ; idx0
+          ldr  r1, r4, 1        ; idx1
+          ldr  r2, r4, 2        ; idx2
 
           ld   r3, @boardP_b
           add  r0, r3, r0
-          ldr  r0, r0, 0
+          ldr  r0, r0, 0        ; board[idx0]
           add  r1, r3, r1
           ldr  r1, r1, 0
           add  r2, r3, r2
           ldr  r2, r2, 0
 
-          cmp  r0, r6
+          ld   r3, @currentP_b ; r3 = current (was r6 — clobbered sp!)
+          ldr  r3, r3, 0
+
+          cmp  r0, r3
           brnz @winNext
-          cmp  r1, r6
+          cmp  r1, r3
           brnz @winNext
-          cmp  r2, r6
+          cmp  r2, r3
           brnz @winNext
 
           mov  r0, 1
           br   @winRet
 
 @winNext:
-          add  r5, r5, 3
-          sub  r4, r4, 1
+          add  r4, r4, 3
+          ldr  r0, fp, -1
+          sub  r0, r0, 1
+          str  r0, fp, -1
           br   @winLineLoop
 
 @winNoMatch:
@@ -406,7 +416,6 @@ checkDraw:
 ; Section C: orchestration + own pointer aliases
 ;================================================================
 @currentP_c: .word current
-@inbufP_c:   .word inbuf
 ychar_c:     .word 121
 
 @M_player2: .string "Player "
@@ -435,6 +444,8 @@ playOne:
           bl   checkDraw
           cmp  r0, 1
           bre  @gameDraw
+          mov  r3, 60          ; throttle turn loop
+          sleep r3
           bl   togglePlayer
           br   @turnLoop
 
@@ -476,9 +487,16 @@ main:     push lr
           nl
           lea  r0, @M_replay
           sout r0
-          ld   r0, @inbufP_c
-          sin  r0
-          ldr  r0, r0, 0
+@pollReply:
+          nbain r4
+          cmp  r4, 0
+          brnz @gotReply
+          mov  r3, 16
+          sleep r3
+          br   @pollReply
+@gotReply:
+          mov  r0, r4
+          nl
           ld   r1, ychar_c
           cmp  r0, r1
           bre  @gameStart
