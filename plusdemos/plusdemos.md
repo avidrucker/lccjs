@@ -51,6 +51,11 @@ The LCC+js demos showcase the capabilities of the LCC+js toolchain as a real-tim
    - **Description:** An assembly-based implementation of the classic Snake game. Features include player movement, fruit placement, snake growth, and initial groundwork for snake body rendering and collision detection.
    - **Highlights:** Showcases advanced game logic, dynamic data structures for the snake's body, real-time input handling, collision mechanics, and iterative development with planned feature enhancements.
 
+10. **Tic-Tac-Toe (Two-Player Hot-Seat)**
+
+    - **Description:** A complete two-player Tic-Tac-Toe game. Players take turns pressing a digit `1`-`9` to place their mark; the program detects win lines and draws, then offers a `y`/`n` play-again prompt.
+    - **Highlights:** A turn-based counterpart to the real-time game demos. Showcases `.lccplus` + `clear`/`resetc` redraw, blocking line input via `sin`, table-driven win detection over an 8-triplet `winLines` array, and a clean function decomposition (`printBoard`, `promptMove`, `applyMove`, `checkWin`, `checkDraw`, `togglePlayer`, `playOne`, `main`). A worked example of working around LCC's 9-bit pc-offset range using pointer aliases (`@xxxP: .word xxx`) when shared state sits far from its consumer.
+
 ---
 
 ### **Overarching Goal of the Demos**

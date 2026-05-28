@@ -1,0 +1,492 @@
+; tictactoe.ap
+; Two-player hot-seat Tic-Tac-Toe in LCC+ assembly.
+;
+; Showcases LCC+ extensions: .lccplus directive, clear/resetc for redraw,
+; and a turn-based game loop. Uses plusdemos-style semantic labels.
+;
+; LCC's ld/lea use a 9-bit pc-offset (±256 words). The shared state lives at
+; the top of the file; far-away functions reach it through pointer aliases
+; (`@xxxP: .word xxx`) and local copies of read-only constants.
+;
+; CONTROLS
+;   Each turn: press a digit 1-9 to mark that cell, then <enter>.
+;     1 | 2 | 3
+;    ---+---+---
+;     4 | 5 | 6
+;    ---+---+---
+;     7 | 8 | 9
+;   After game ends: 'y' + <enter> to play again, any other key to quit.
+
+          .lccplus
+          .start startup
+
+;----------------------------------------------------------------
+; startup
+;----------------------------------------------------------------
+startup:  clear
+          bl   main
+          halt
+
+;----------------------------------------------------------------
+; Globals (single small block at the top)
+;----------------------------------------------------------------
+board:    .zero 9              ; cells: ' ' empty, else 'X' or 'O'
+current:  .word 88             ; current player; 'X' (88) initially
+move_idx: .word 0
+inbuf:    .zero 16             ; sin buffer
+
+xchar:    .word 88             ; 'X'
+ochar:    .word 79             ; 'O'
+spchar:   .word 32             ; ' '
+ychar:    .word 121            ; 'y'
+ch1:      .word 49             ; '1'
+ch9:      .word 57             ; '9'
+
+winLines: .word 0               ; row 0
+          .word 1
+          .word 2
+          .word 3               ; row 1
+          .word 4
+          .word 5
+          .word 6               ; row 2
+          .word 7
+          .word 8
+          .word 0               ; col 0
+          .word 3
+          .word 6
+          .word 1               ; col 1
+          .word 4
+          .word 7
+          .word 2               ; col 2
+          .word 5
+          .word 8
+          .word 0               ; diag \
+          .word 4
+          .word 8
+          .word 2               ; diag /
+          .word 4
+          .word 6
+
+;================================================================
+; Section A: rendering — close enough to globals to use direct lea/ld
+;================================================================
+@M_title:   .string "=== Tic-Tac-Toe ==="
+@M_rowsep:  .string "---+---+---"
+
+printBoard:
+          push lr
+          push fp
+          mov  fp, sp
+          sub  sp, sp, 1        ; fp-1 = row counter
+
+          resetc
+          lea  r0, @M_title
+          sout r0
+          nl
+          nl
+
+          mov  r0, 0
+          str  r0, fp, -1
+
+@rowLoop:
+          ldr  r0, fp, -1
+          cmp  r0, 3
+          brz  @rowEnd
+
+          add  r1, r0, r0
+          add  r1, r1, r0       ; r1 = 3*row
+
+          mov  r0, 32
+          aout r0
+          bl   printCell
+
+          mov  r0, 32
+          aout r0
+          mov  r0, 124
+          aout r0
+          mov  r0, 32
+          aout r0
+
+          add  r1, r1, 1
+          bl   printCell
+
+          mov  r0, 32
+          aout r0
+          mov  r0, 124
+          aout r0
+          mov  r0, 32
+          aout r0
+
+          add  r1, r1, 1
+          bl   printCell
+          nl
+
+          ldr  r0, fp, -1
+          cmp  r0, 2
+          brz  @noSep
+          lea  r0, @M_rowsep
+          sout r0
+          nl
+@noSep:
+          ldr  r0, fp, -1
+          add  r0, r0, 1
+          str  r0, fp, -1
+          br   @rowLoop
+
+@rowEnd:
+          nl
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;----------------------------------------------------------------
+; printCell: r1 = idx; print X / O / digit
+;----------------------------------------------------------------
+printCell:
+          push lr
+          push fp
+          mov  fp, sp
+
+          lea  r2, board
+          add  r2, r2, r1
+          ldr  r0, r2, 0
+          ld   r3, spchar
+          cmp  r0, r3
+          brnz @cellMark
+          mov  r0, 49
+          add  r0, r0, r1
+@cellMark:
+          aout r0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;----------------------------------------------------------------
+; initBoard: still close to top — direct lea/ld work
+;----------------------------------------------------------------
+initBoard:
+          push lr
+          push fp
+          mov  fp, sp
+
+          lea  r1, board
+          mov  r2, 9
+          ld   r3, spchar
+@initLoop:
+          cmp  r2, 0
+          brz  @initDone
+          str  r3, r1, 0
+          add  r1, r1, 1
+          sub  r2, r2, 1
+          br   @initLoop
+@initDone:
+          ld   r0, xchar
+          st   r0, current
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;================================================================
+; Section B: pointer aliases + state-mutating subroutines
+;
+; From here on, the top globals are out of pc-offset range. Each access
+; goes through a local pointer alias (`@xP: .word x`) or a duplicated
+; read-only char constant.
+;================================================================
+@boardP_b:    .word board
+@currentP_b:  .word current
+@move_idxP_b: .word move_idx
+@inbufP_b:    .word inbuf
+@winLinesP_b: .word winLines
+
+xchar_b:      .word 88
+ochar_b:      .word 79
+spchar_b:     .word 32
+ch1_b:        .word 49
+ch9_b:        .word 57
+
+@M_player:  .string "Player "
+@M_prompt:  .string "'s move (1-9): "
+@M_invalid: .string "Invalid! Choose 1-9.  "
+@M_taken:   .string "Cell taken!  "
+
+;----------------------------------------------------------------
+; promptMove: ask current player; loop until valid; store 0..8 in move_idx
+;----------------------------------------------------------------
+promptMove:
+          push lr
+          push fp
+          mov  fp, sp
+
+@askAgain:
+          lea  r0, @M_player
+          sout r0
+          ; print current player's mark
+          ld   r0, @currentP_b
+          ldr  r0, r0, 0
+          aout r0
+          lea  r0, @M_prompt
+          sout r0
+
+          ld   r0, @inbufP_b
+          sin  r0
+          ldr  r0, r0, 0        ; r0 = first char of line
+
+          ld   r1, ch1_b
+          cmp  r0, r1
+          brlt @askInvalid
+          ld   r2, ch9_b
+          cmp  r0, r2
+          brgt @askInvalid
+
+          sub  r0, r0, r1       ; r0 = char - '1'  (0..8)
+
+          ; cell must be empty
+          ld   r1, @boardP_b
+          add  r1, r1, r0
+          ldr  r2, r1, 0
+          ld   r3, spchar_b
+          cmp  r2, r3
+          brnz @askTaken
+
+          ; valid — store r0 into move_idx
+          ld   r1, @move_idxP_b
+          str  r0, r1, 0
+          br   @promptDone
+
+@askInvalid:
+          lea  r0, @M_invalid
+          sout r0
+          br   @askAgain
+@askTaken:
+          lea  r0, @M_taken
+          sout r0
+          br   @askAgain
+
+@promptDone:
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;----------------------------------------------------------------
+; applyMove: board[move_idx] = current
+;----------------------------------------------------------------
+applyMove:
+          push lr
+          push fp
+          mov  fp, sp
+
+          ld   r1, @move_idxP_b
+          ldr  r0, r1, 0        ; r0 = move_idx
+          ld   r1, @boardP_b    ; r1 = &board
+          add  r1, r1, r0       ; r1 = &board[move_idx]
+          ld   r2, @currentP_b
+          ldr  r2, r2, 0        ; r2 = current
+          str  r2, r1, 0
+
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;----------------------------------------------------------------
+; togglePlayer: swap X/O in current
+;----------------------------------------------------------------
+togglePlayer:
+          push lr
+          push fp
+          mov  fp, sp
+
+          ld   r4, @currentP_b
+          ldr  r0, r4, 0        ; r0 = current
+          ld   r1, xchar_b
+          cmp  r0, r1
+          brnz @toX
+          ld   r0, ochar_b
+          br   @toggleDone
+@toX:
+          ld   r0, xchar_b
+@toggleDone:
+          str  r0, r4, 0        ; current = r0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;----------------------------------------------------------------
+; checkWin: r0 = 1 if `current` has three-in-a-row, else 0
+;----------------------------------------------------------------
+checkWin:
+          push lr
+          push fp
+          mov  fp, sp
+
+          ld   r5, @winLinesP_b ; r5 = &winLines
+          mov  r4, 8
+          ld   r6, @currentP_b
+          ldr  r6, r6, 0        ; r6 = current
+
+@winLineLoop:
+          cmp  r4, 0
+          brz  @winNoMatch
+
+          ldr  r0, r5, 0
+          ldr  r1, r5, 1
+          ldr  r2, r5, 2
+
+          ld   r3, @boardP_b
+          add  r0, r3, r0
+          ldr  r0, r0, 0
+          add  r1, r3, r1
+          ldr  r1, r1, 0
+          add  r2, r3, r2
+          ldr  r2, r2, 0
+
+          cmp  r0, r6
+          brnz @winNext
+          cmp  r1, r6
+          brnz @winNext
+          cmp  r2, r6
+          brnz @winNext
+
+          mov  r0, 1
+          br   @winRet
+
+@winNext:
+          add  r5, r5, 3
+          sub  r4, r4, 1
+          br   @winLineLoop
+
+@winNoMatch:
+          mov  r0, 0
+@winRet:
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;----------------------------------------------------------------
+; checkDraw: r0 = 1 if no empty cells, else 0
+;----------------------------------------------------------------
+checkDraw:
+          push lr
+          push fp
+          mov  fp, sp
+
+          ld   r1, @boardP_b
+          mov  r2, 9
+          ld   r3, spchar_b
+
+@drawLoop:
+          cmp  r2, 0
+          brz  @drawFull
+          ldr  r0, r1, 0
+          cmp  r0, r3
+          brz  @drawNotFull
+          add  r1, r1, 1
+          sub  r2, r2, 1
+          br   @drawLoop
+
+@drawNotFull:
+          mov  r0, 0
+          br   @drawRet
+@drawFull:
+          mov  r0, 1
+@drawRet:
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;================================================================
+; Section C: orchestration + own pointer aliases
+;================================================================
+@currentP_c: .word current
+@inbufP_c:   .word inbuf
+ychar_c:     .word 121
+
+@M_player2: .string "Player "
+@M_wins:    .string " wins!"
+@M_draw:    .string "Draw!"
+@M_replay:  .string "Play again? (y/n): "
+@M_bye:     .string "Thanks for playing!"
+
+;----------------------------------------------------------------
+; playOne: run one complete game (init → loop → win/draw)
+;----------------------------------------------------------------
+playOne:
+          push lr
+          push fp
+          mov  fp, sp
+
+          bl   initBoard
+
+@turnLoop:
+          bl   printBoard
+          bl   promptMove
+          bl   applyMove
+          bl   checkWin
+          cmp  r0, 1
+          bre  @gameWon
+          bl   checkDraw
+          cmp  r0, 1
+          bre  @gameDraw
+          bl   togglePlayer
+          br   @turnLoop
+
+@gameWon:
+          bl   printBoard
+          nl
+          lea  r0, @M_player2
+          sout r0
+          ld   r0, @currentP_c
+          ldr  r0, r0, 0
+          aout r0
+          lea  r0, @M_wins
+          sout r0
+          nl
+          br   @playOneRet
+
+@gameDraw:
+          bl   printBoard
+          nl
+          lea  r0, @M_draw
+          sout r0
+          nl
+
+@playOneRet:
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
+
+;----------------------------------------------------------------
+; main: play-again loop
+;----------------------------------------------------------------
+main:     push lr
+          push fp
+          mov  fp, sp
+
+@gameStart:
+          bl   playOne
+          nl
+          lea  r0, @M_replay
+          sout r0
+          ld   r0, @inbufP_c
+          sin  r0
+          ldr  r0, r0, 0
+          ld   r1, ychar_c
+          cmp  r0, r1
+          bre  @gameStart
+
+          lea  r0, @M_bye
+          sout r0
+          nl
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret
