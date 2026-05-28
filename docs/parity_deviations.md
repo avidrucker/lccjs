@@ -163,8 +163,21 @@ exit-0 outcome must be preserved whenever the error-handling path is changed.
 
 ---
 
+## Pending parity investigations (stubs)
+
+<!-- @todo #105:45m/DEV Characterize lccjs behavior for undefined-label `br` (oracle produces blank .e); replace this stub with a full deviation entry. See #105 -->
+
+### (pending #105) Undefined-label `br` — oracle produces blank `.e`
+
+<!-- @todo #106:30m/DEV Characterize lccjs behavior for empty `.a` input (oracle produces header-only .bst/.lst); replace this stub with a full deviation entry. See #106 -->
+
+### (pending #106) Empty `.a` — oracle produces header-only `.bst`/`.lst`
+
+---
+
 ## Changelog
 
 | Date | Entry | Change |
 |---|---|---|
 | 2026-05-26 | Initial creation | Deviations 1–8 documented |
+| 2026-05-27 | Pending stubs added | Reserved sections for #105, #106 (split from #29) |
