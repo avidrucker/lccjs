@@ -333,6 +333,12 @@ class LCC {
     interpreter.debugMode = !!this.options.debug;
     interpreter.allowRuntimeDebugging = true;
 
+    // Wire -t flag: enable per-step trace output and attach sourceMap when available
+    interpreter.traceMode = !!this.options.trace;
+    if (this.assembler && this.assembler.sourceMap) {
+      interpreter.sourceMap = this.assembler.sourceMap;
+    }
+
     // Pass inputBuffer to interpreter
     if (this.inputBuffer) {
       interpreter.inputBuffer = this.inputBuffer;

@@ -187,6 +187,20 @@ class Interpreter {
      * spurious "Possible infinite loop" error.
      */
     this.disableInfiniteLoopDetection = false;
+
+    /**
+     * When true, emit a trace line (address + source text) before each
+     * instruction and a diff line (changed registers/flags/pc) after it.
+     * Controlled by the -t CLI flag.  Parallel to debugMode but non-interactive.
+     */
+    this.traceMode = false;
+
+    /**
+     * PC-to-source-line map produced by the assembler after pass 2.
+     * Shape: { addressToLine: Map<addr, {lineNumber, sourceLine}>, allLines: string[] }
+     * Only populated by lcc.js when -t is used and an assembler ran first.
+     */
+    this.sourceMap = null;
   }
 
   // Reset all per-run execution state so the interpreter core can be reused
@@ -597,6 +611,15 @@ class Interpreter {
     this.eopcode = this.ir & 0x1F; // eopcode (bits 4-0)
     this.trapvec = this.ir & 0xFF; // trap vector (bits 7-0)
 
+    if (this.traceMode) {
+      // Emit "  addr:   source text" before executing the instruction.
+      // this.pc already points past the fetched word (pc - 1 = instruction address).
+      const addr = this.pc - 1;
+      const entry = this.sourceMap && this.sourceMap.addressToLine.get(addr);
+      const sourceLine = entry ? entry.sourceLine : '(unknown)';
+      process.stdout.write(`${addr.toString(16).padStart(3, ' ')}:   ${sourceLine}\n`);
+    }
+
     if (this.debugMode) {
       // debugMode is safe in tests: readLineFromStdin() reads from inputBuffer
       // when set, so tests can drive the debugger by pre-loading inputBuffer
@@ -662,7 +685,9 @@ class Interpreter {
     }
 
     // if any registers changed or flags were set, print them out
-    if (this.debugMode && this.running) {
+    // traceMode uses the same diff format as debugMode but writes to stdout only
+    // (not to this.output, which is reserved for program I/O in the .lst reports)
+    if ((this.debugMode || this.traceMode) && this.running) {
       let regsOrFlagsOutput = '';
 
       for (let i = 0; i < 8; i++) {
@@ -674,9 +699,9 @@ class Interpreter {
           regsOrFlagsOutput += `     <r${i} = ${hexOld}/${hexNew}>`;
         }
       }
-    
+
       const [n, z, c, v] = [this.n, this.z, this.c, this.v];
-      
+
       if (this.flagsSet) {
         if (regsOrFlagsOutput.trim() !== '') {
           regsOrFlagsOutput += ' '; // a 1 space inbetween regs and flags
@@ -696,7 +721,12 @@ class Interpreter {
       }
 
       if (regsOrFlagsOutput.trim() !== '') {
-        this.writeDebugOutput(regsOrFlagsOutput);
+        if (this.debugMode) {
+          this.writeDebugOutput(regsOrFlagsOutput);
+        } else {
+          // traceMode: stdout only — don't accumulate in this.output
+          process.stdout.write(regsOrFlagsOutput + '\n');
+        }
       }
 
     }

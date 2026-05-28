@@ -294,4 +294,56 @@ describe('LCC Unit Tests', () => {
       runSpy.mockRestore();
     }
   });
+
+  // ---------------------------------------------------------------------------
+  // -t flag wiring: lcc.js → interpreter (#77)
+  // ---------------------------------------------------------------------------
+
+  describe('executeFile() — -t flag wiring to interpreter', () => {
+    // Each test manages its own spies via try/finally to avoid polluting the
+    // outer beforeAll console mocks (jest.restoreAllMocks() would kill them).
+
+    function runWithCapture(options, assembler) {
+      const lcc = new LCC();
+      lcc.outputFileName = 'demo.e';
+      lcc.generateStats = false;
+      lcc.options = options;
+      if (assembler !== undefined) lcc.assembler = assembler;
+
+      let capturedInterpreter = null;
+      const loadSpy = jest.spyOn(Interpreter.prototype, 'loadExecutableFile').mockImplementation(() => {});
+      const runSpy  = jest.spyOn(Interpreter.prototype, 'run').mockImplementation(function () {
+        capturedInterpreter = this;
+        this.running = false;
+      });
+      try {
+        lcc.executeFile(false, false);
+      } finally {
+        loadSpy.mockRestore();
+        runSpy.mockRestore();
+      }
+      return capturedInterpreter;
+    }
+
+    test('options.trace=true sets interpreter.traceMode to true', () => {
+      const interpreter = runWithCapture({ trace: true });
+      expect(interpreter.traceMode).toBe(true);
+    });
+
+    test('options.trace absent leaves interpreter.traceMode false', () => {
+      const interpreter = runWithCapture({});
+      expect(interpreter.traceMode).toBe(false);
+    });
+
+    test('assembler.sourceMap is forwarded to interpreter.sourceMap when assembler present', () => {
+      const fakeSourceMap = { addressToLine: new Map(), allLines: [] };
+      const interpreter = runWithCapture({ trace: true }, { sourceMap: fakeSourceMap });
+      expect(interpreter.sourceMap).toBe(fakeSourceMap);
+    });
+
+    test('interpreter.sourceMap stays null when no assembler is present', () => {
+      const interpreter = runWithCapture({ trace: true }, null);
+      expect(interpreter.sourceMap).toBeNull();
+    });
+  });
 });

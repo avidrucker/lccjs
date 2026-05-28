@@ -438,4 +438,160 @@ describe('Interpreter Unit Tests', () => {
       expect(result.output).toBe('10\n');
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // -t flag: per-step trace output (#77)
+  // ---------------------------------------------------------------------------
+
+  describe('-t flag (trace mode)', () => {
+    // demoA: mvi r0, 5 / dout / nl / halt
+    const demoA = Buffer.from([0x6f, 0x43, 0x05, 0xd0, 0x02, 0xf0, 0x01, 0xf0, 0x00, 0xf0]);
+
+    // Temporarily redirect stdout.write into a buffer; restore silent mock afterward.
+    function captureStdout(fn) {
+      const written = [];
+      process.stdout.write.mockImplementation((msg) => written.push(msg));
+      try { fn(); } finally {
+        process.stdout.write.mockImplementation(() => {});
+      }
+      return written.join('');
+    }
+
+    test('traceMode defaults to false', () => {
+      const interpreter = new Interpreter();
+      expect(interpreter.traceMode).toBe(false);
+    });
+
+    test('sourceMap defaults to null on a new Interpreter', () => {
+      const interpreter = new Interpreter();
+      expect(interpreter.sourceMap).toBeNull();
+    });
+
+    test('traceMode=false produces no trace lines', () => {
+      const interpreter = new Interpreter();
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(demoA, { inputFileName: 'demoA.e' });
+      });
+      // No trace-style address:source lines
+      expect(out).not.toMatch(/^\s+\w+:/m);
+    });
+
+    test('pre-instruction line without sourceMap uses (unknown) fallback', () => {
+      const interpreter = new Interpreter();
+      interpreter.traceMode = true;
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(demoA, { inputFileName: 'demoA.e' });
+      });
+      // First instruction is at address 0x000 → "  0:   (unknown)"
+      expect(out).toContain('  0:   (unknown)');
+    });
+
+    test('pre-instruction line with sourceMap shows raw source text', () => {
+      const source = '  mvi r0, 5\n  dout\n  nl\n  halt\n';
+      const assembler = new Assembler();
+      const assembly = assembler.assembleSource(source, { inputFileName: 'trace.a' });
+      const interpreter = new Interpreter();
+      interpreter.traceMode = true;
+      interpreter.sourceMap = assembler.sourceMap;
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'trace.e' });
+      });
+      // First instruction line: address 0 + raw source text
+      expect(out).toContain('  0:   ');
+      expect(out).toContain('mvi r0, 5');
+    });
+
+    test('register diff line has correct <rN = old/new> format', () => {
+      const source = '  mvi r0, 5\n  halt\n';
+      const assembler = new Assembler();
+      const assembly = assembler.assembleSource(source, { inputFileName: 'trace.a' });
+      const interpreter = new Interpreter();
+      interpreter.traceMode = true;
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'trace.e' });
+      });
+      // r0 changes from 0 to 5 (0 → 5 in hex: "0/5")
+      expect(out).toContain('<r0 = 0/5>');
+    });
+
+    test('flag diff line has correct <NZCV = nzcv> format', () => {
+      const source = '  mvi r0, 1\n  cmp r0, r0\n  halt\n';
+      const assembler = new Assembler();
+      const assembly = assembler.assembleSource(source, { inputFileName: 'trace.a' });
+      const interpreter = new Interpreter();
+      interpreter.traceMode = true;
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'trace.e' });
+      });
+      // cmp r0, r0 → 1-1=0 → N=0 Z=1 C=1 V=0 → <NZCV = 0110>
+      // (C=1 because 1 + (-1) has a borrow-complement carry in this ISA)
+      expect(out).toContain('<NZCV = 0110>');
+    });
+
+    test('branch-taken shows <pc = old/new> diff', () => {
+      // A minimal program: brz to halt so branch fires on first cmp
+      // mvi r0, 0  → r0=0, zero flag might not be set yet (mvi sets flags?)
+      // Actually: cmp r0, r0 → Z=1; brz label → taken
+      const source = '  mvi r0, 0\n  cmp r0, r0\n  brz end\n  halt\nend: halt\n';
+      const assembler = new Assembler();
+      const assembly = assembler.assembleSource(source, { inputFileName: 'trace.a' });
+      const interpreter = new Interpreter();
+      interpreter.traceMode = true;
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'trace.e' });
+      });
+      // brz is at address 2, end: halt is at address 4 (0-based)
+      // pc before brz = 3 (incremented past brz fetch); pc after = 4 (end)
+      expect(out).toMatch(/<pc = \w+\/\w+>/);
+    });
+
+    test('branch not taken produces no <pc = ...> diff', () => {
+      // brz fires only when Z=1; if Z=0, no branch
+      // mvi r0, 1 → r0=1; cmp r0, r0 → Z=1, brz fires... use brnz instead
+      // brnz fires when N|Z != 1 (i.e. result non-zero). cmp 1,1 = 0 so Z=1 → brnz not taken
+      const source = '  mvi r0, 1\n  cmp r0, r0\n  brnz skip\n  halt\nskip: halt\n';
+      const assembler = new Assembler();
+      const assembly = assembler.assembleSource(source, { inputFileName: 'trace.a' });
+      const interpreter = new Interpreter();
+      interpreter.traceMode = true;
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'trace.e' });
+      });
+      expect(out).not.toMatch(/<pc = /);
+    });
+
+    test('halt produces no register/flag diff line', () => {
+      const source = '  halt\n';
+      const assembler = new Assembler();
+      const assembly = assembler.assembleSource(source, { inputFileName: 'trace.a' });
+      const interpreter = new Interpreter();
+      interpreter.traceMode = true;
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'trace.e' });
+      });
+      // Only trace header line; no diff output after halt
+      expect(out).not.toContain('<r');
+      expect(out).not.toContain('<NZCV');
+      expect(out).not.toContain('<pc');
+    });
+
+    test('program output (dout) is interspersed between trace lines naturally', () => {
+      const source = '  mvi r0, 7\n  dout\n  halt\n';
+      const assembler = new Assembler();
+      const assembly = assembler.assembleSource(source, { inputFileName: 'trace.a' });
+      const interpreter = new Interpreter();
+      interpreter.traceMode = true;
+      const out = captureStdout(() => {
+        interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'trace.e' });
+      });
+      // dout line should appear after the mvi trace + diff, before halt trace
+      const mviPos = out.indexOf('<r0 = 0/7>');
+      const doutPos = out.indexOf('7');
+      const haltPos = out.lastIndexOf('  1:');
+      expect(mviPos).toBeGreaterThanOrEqual(0);
+      expect(doutPos).toBeGreaterThan(mviPos);
+      // The dout value appears before the next (dout) trace line
+      expect(doutPos).toBeLessThanOrEqual(haltPos);
+    });
+  });
 });
