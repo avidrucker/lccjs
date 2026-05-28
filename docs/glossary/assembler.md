@@ -6,7 +6,6 @@ The original spike (#108) has been decomposed into 5 sub-spikes, each covering a
 coherent section of the file. The write phase (#111) consolidates the
 inventoried terms into definitions once all 5 spikes have closed.
 
-<!-- @todo #123:60m/WRITER Spike (e): inventory LCC-specific terms in operand parsing helpers (lines 1985-2290). See #123 -->
 <!-- @todo #111:60m/WRITER Write definitions for each inventoried term; LCC-specific angle only. Blocked by spikes (a)-(e). See #111 -->
 
 Parent: #107 · Tracker: #108 · See [README](./README.md) for entry conventions.
@@ -305,7 +304,73 @@ area. Terms only — definitions land in the section below.
 
 ### (e) Operand parsing helpers — populated by #123
 
-_To be filled in._
+**Register parsing (`getRegister`, `isRegister`):**
+- Register name patterns: `r0..r7`, `fp`, `sp`, `lr` (case-insensitive regex `^(r[0-7]|fp|sp|lr)$/i`)
+- **Symbolic-to-numeric aliases:**
+  - `fp` → `r5` (frame pointer)
+  - `sp` → `r6` (stack pointer)
+  - `lr` → `r7` (link register)
+- Error: "Bad register"
+
+**Char literals:**
+- `isCharLiteral` — regex `^'(?:\\.|[^\\])'$`
+- `parseCharLiteral` — extracts ASCII codepoint; handles escapes `\n`, `\t`, `\r`, `\\`, `\'`, `\"`
+- Errors: "Invalid escape sequence: <X>", "Invalid character literal: <X>"
+
+**Number parsing (`parseNumber`):**
+- Char literal → ASCII codepoint
+- Hex prefix `0x` / `0X` → base-16 `parseInt`
+- **Negative hex literals not supported** (`-0x...` won't parse — explicit code comment)
+- Decimal → base-10 `parseInt`
+
+**Operand expressions:**
+- Operators (`isOperator`): only `+` and `-`
+- `parseLabelWithOffset` — regex `^([A-Za-z_$@][A-Za-z0-9_$@]*)\s*([+\-]\s*\d+)?$`
+- Accepts: `label`, `label+N`, `label - N` (whitespace permitted between sign and digits)
+
+**`*` location-counter operand:**
+- `*` alone — current `locCtr`
+- `*+N` / `*-N` — `locCtr ± N`
+- Classified as `'star'` by `determineOperandType`
+
+**Operand evaluation (`evaluateOperand(operand, usageType)`):**
+- Tries in order: pure number → label-with-offset → plain label → `*` marker
+- For known local labels: returns `symbolTable[label] + offset`
+- For external labels: calls `handleExternalReference(label, usageType)`, returns `0 + offset` placeholder
+- Error progression: "Bad number" (invalid hex) → "Bad label" (invalid syntax) → "Undefined label" (valid syntax, not defined, not external) → "Unspecified label error for: <X>"
+
+**`determineOperandType(operand)`:**
+- Syntactic classification only (no evaluation): `'char'`, `'star'`, `'num'`, `'label'`
+- Future: per-mnemonic operand-type schemas (current code does not enforce; needs oracle research — see `core-behavior-matrix.md`)
+
+**`handleExternalReference(label, usageType)`:**
+- Dedups by `(label, type)` pair
+- Adds `{label, type, address: locCtr}` to `externalReferences`
+- Caller guards with `externLabels.has(label)` check
+
+**Immediate evaluation:**
+- `evaluateImmediate(valueStr, min, max, type)` — strict range check; emits "<type> out of range" or "Bad number"
+- `evaluateImmediateNaive(valueStr)` — no range check; masks with `0xFFFF` (used by ROL / SRL / SLL / ROR shift counts)
+
+**Number-form predicates:**
+- `isNumLiteral(operand)` — true if char literal OR valid number OR valid hex
+- `isValidHexNumber(str)` — regex `^0x[0-9A-Fa-f]+$`
+
+**Error reporting plumbing (final piece):**
+- `failAssembly(message, code)` — calls `error()`; aborts only if `REPORT_MULTI_ERRORS`
+- `error(message)` — emits LCC-style error to stderr, pushes to `errors[]`, sets `errorFlag = true`; if `!REPORT_MULTI_ERRORS`, aborts immediately
+
+**LCC error message format:**
+
+```
+Error on line <lineNum> of <inputFileName>:
+    <currentLine>
+<message>
+```
+
+**Module export + CLI auto-instantiation:**
+- `module.exports = Assembler;`
+- `if (require.main === module)` — auto-instantiates and runs when invoked directly
 
 ---
 
