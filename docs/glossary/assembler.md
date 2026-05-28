@@ -51,7 +51,7 @@ area. Terms only — definitions land in the section below.
 - `.hex` (raw hex input)
 - `.ap` (LCC+ source — explicitly rejected; belongs to `assemblerPlus.js`)
 - `.lst` (listing report)
-- `.bst` (report sibling) <!-- @todo #126:30m/WRITER research .bst format / purpose (read reportArtifacts.js, distinguish from .lst). See #126 -->
+- `.bst` — **binary listing** (resolved per #126): same content as `.lst` (header, source-code column, program statistics) but the machine words are printed in **binary** (16 bits split into 4-bit nibbles with spaces between, e.g. `1111 0000 0000 0001`) instead of hex. Same generator as `.lst` — only the `isBST` flag in `generateBSTLSTContent` toggles the encoding
 
 **`.e` / `.o` file format** (per #124: write as **hybrid** — one overview entry showing the full layout + per-marker stubs that link back to it):
 - `'o'` intro header byte (ASCII signature)
