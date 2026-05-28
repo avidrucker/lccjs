@@ -5,12 +5,12 @@
 # linguist-detectable=false keeps these files out of the repo's "Languages"
 # bar — this is a JavaScript project; the .a/.ap files are study material.
 
-# Default for all .a / .ap files: Assembly (NASM grammar).
-*.a  linguist-language=Assembly
+# Default for all .a / .ap files: GAS (GNU Assembler grammar).
+*.a  linguist-language=GAS
 *.a  linguist-detectable=false
-*.ap linguist-language=Assembly
+*.ap linguist-language=GAS
 *.ap linguist-detectable=false
 
-# Override: demos/*.a uses GAS (GNU Assembler) grammar — A/B comparison with
-# textbook_demos/, which stays on the default NASM grammar above.
-demos/*.a linguist-language=GAS
+# Note: a per folder basis can be applied to give different directories 
+# different syntax highlighting. I've already tried 'Assembly' and it
+# seems to not highlight as nicely as GAS, so, for now, GAS it is.
