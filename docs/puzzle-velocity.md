@@ -86,8 +86,15 @@ When I pick up a ticket:
 2. **Predict** — if the ticket has no C estimate yet, set one now.
 3. **Work** — do the puzzle.
 4. **Finish** — capture finish timestamp before the closing commit.
-5. **Record** — compute actuals + ΔH + ΔC; append a row to the CSV;
-   include the CSV update in the closing commit.
+5. **Close** — `git commit -m "... Closes #N"` (commit 1).
+6. **Sync** — `git pull --rebase`. **This step is critical when other agents may have pushed in parallel** — rebase rewrites your commit's SHA, so the SHA must be captured *after* this step. If the rebase hits a CSV conflict (both agents appended a row), resolve manually and `git rebase --continue`.
+7. **Record** — `git rev-parse --short HEAD` is now stable; append a CSV row with that SHA + the actuals + ΔH + ΔC.
+8. **Log** — `git commit -m "docs(velocity): log #N — …"` (commit 2).
+9. **Push** — `git push`.
+
+Why `pull --rebase` at step 6 and not earlier: rebasing rewrites the commit SHA captured at step 5. If you logged the velocity row first, that SHA would point at a now-orphan commit that doesn't exist on `main`. By rebasing between commit 1 and the SHA capture, the SHA is stable through the push.
+
+Same reason: **do not `git commit --amend`** to backfill a SHA. Amend also orphans the original.
 
 ## Reading the data
 
