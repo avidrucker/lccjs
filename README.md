@@ -1,55 +1,46 @@
 # LCC.js
 
-LCC.js is a JavaScript implementation of the LCC assembler / linker / interpreter toolchain for a simple 16-bit educational machine. The project now supports both file-oriented CLI usage and in-memory programmatic usage, with a growing test suite and oracle-driven parity work against the original LCC.
+> 16-bit educational assembler / linker / interpreter toolchain in JavaScript.
 
-## What This Repo Contains
+LCC.js is a JavaScript implementation of the LCC toolchain — the assembler, linker, and interpreter for a simple 16-bit educational ISA. It supports both file-oriented CLI usage and in-memory programmatic usage, with a growing test suite and oracle-driven parity work against the original LCC.
 
-- `src/core`
-  - `assembler.js`: assembles `.a`, `.bin`, and `.hex`
-  - `interpreter.js`: executes `.e`
-  - `linker.js`: links `.o` files into `.e`
-  - `lcc.js`: top-level orchestrator for assemble / link / execute flows
-- `src/utils`
-  - shared report generation, file artifact helpers, typed errors, `name.nnn` handling, and analysis utilities
-- `src/plus`
-  - LCC+ variants for the extended `.ap` / `.ep` toolchain
-- `tests/new`
-  - current unit, integration, oracle/e2e, and research-marked tests
-- `experiments`
-  - focused oracle experiments for ambiguous or parity-sensitive behavior such as `.org`, `bp`, and `sext`
+## Contents
 
-## Current Architecture
+- [Quick Start](#quick-start)
+- [What's In This Repo](#whats-in-this-repo)
+- [Installation](#installation)
+- [CLI Usage](#cli-usage)
+- [Testing](#testing)
+- [Further Reading](#further-reading)
 
-The core refactor has already established a clean split between reusable logic and CLI wrappers.
+## Quick Start
 
-Current reusable in-memory APIs:
+```bash
+npm install                            # dev/test deps only; no runtime deps
+node ./src/core/lcc.js demos/demoA.a  # assemble + run
+node ./src/core/lcc.js demos/demoA.e  # run executable directly
+```
 
-- `Assembler#assembleSource(sourceText, options)`
-- `Assembler#toOutputBuffer()`
-- `Assembler#buildReportArtifacts(userName, includeComments, now)`
-- `Interpreter#executeBuffer(buffer, options)`
-- `Interpreter#buildReportArtifacts(userName, inputFileName, now)`
-- `Linker#parseObjectModuleBuffer(buffer, filename)`
+## What's In This Repo
 
-Current wrapper entrypoints:
-
-- `node ./src/core/assembler.js file.a`
-- `node ./src/core/interpreter.js file.e`
-- `node ./src/core/linker.js file1.o file2.o`
-- `node ./src/core/lcc.js file.a`
-
-The design goal is:
-
-- pure APIs throw typed errors
-- wrappers own console output, exit behavior, and file I/O
-- report generation is centralized
-- `name.nnn` is a wrapper/report concern, not a pure execution concern
+| Path | Purpose |
+|------|---------|
+| `src/core/assembler.js` | Assembles `.a`, `.bin`, `.hex` → `.e` or `.o` |
+| `src/core/interpreter.js` | Executes `.e` files |
+| `src/core/linker.js` | Links `.o` files → `.e` |
+| `src/core/lcc.js` | Top-level CLI orchestrator |
+| `src/interactive/ilcc.js` | Interactive stepping debugger (`-i` mode) |
+| `src/utils/` | Report generation, file helpers, typed errors, name handling |
+| `src/plus/` | LCC+ variants for the extended `.ap`/`.ep` toolchain |
+| `tests/new/` | Unit, integration, oracle/e2e, and research tests |
+| `experiments/` | Focused oracle experiments for ambiguous behavior |
+| `docs/` | Architecture, parity, and per-module documentation |
 
 ## Installation
 
-LCC.js has **no runtime dependencies** — Node.js is all you need to use the CLI tools directly.
+LCC.js has **no runtime dependencies** — Node.js is all you need to run the CLI tools.
 
-`npm install` is only needed for development and testing (installs `jest` for the test suite and `dotenv` for oracle-parity tests):
+`npm install` installs dev/test dependencies only (`jest`, `dotenv`):
 
 ```bash
 npm install
@@ -59,285 +50,84 @@ npm install
 
 ### `lcc.js`
 
-Assemble and run an assembly program:
+```bash
+node ./src/core/lcc.js <infile> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-d` | Debug mode — enter debugger at first instruction |
+| `-m` | Display memory at end of run |
+| `-r` | Display registers at end of run |
+| `-f` | Full line display |
+| `-x` | 4-digit hex output |
+| `-t` | Trace mode — print per-step source text + register diffs |
+| `-i` | Interactive stepping debugger (`.a` and `.e` files) |
+| `-e` | Efficient mode (use with `-i`: forward-only stepping, lower memory) |
+| `-c` | Colorblind mode (use with `-i`: alternate ANSI palette) |
+| `-l<hex>` | Load point (hex address offset for `.lst`/`.bst` display) |
+| `-o <outfile>` | Output file name (for linking) |
+| `-nostats` | Skip `.lst`/`.bst` report generation |
+| `-h` | Print help |
+
+**Examples:**
 
 ```bash
-node ./src/core/lcc.js demos/demoA.a
+node ./src/core/lcc.js demos/demoA.a          # assemble + run
+node ./src/core/lcc.js demos/demoA.e          # run .e directly
+node ./src/core/lcc.js -t demos/demoA.a       # assemble + run with per-step trace
+node ./src/core/lcc.js -i demos/demoA.a       # assemble + interactive debugger
+node ./src/core/lcc.js module1.o module2.o    # link .o files → link.e
+node ./src/core/lcc.js -o prog.e m1.o m2.o   # link with custom output name
 ```
 
-Run an executable directly:
+### Other entrypoints
 
 ```bash
-node ./src/core/lcc.js demos/demoA.e
+node ./src/core/assembler.js demos/demoA.a    # assemble only
+node ./src/core/interpreter.js demos/demoA.e  # interpret only
+node ./src/core/linker.js module1.o module2.o # link only
 ```
-
-Link object modules:
-
-```bash
-node ./src/core/lcc.js module1.o module2.o
-node ./src/core/lcc.js -o custom.e module1.o module2.o
-```
-
-Supported options currently include:
-
-- `-d`
-- `-m`
-- `-r`
-- `-f`
-- `-x`
-- `-t`
-- `-l<hexloadpoint>`
-- `-o <outfile>`
-- `-h`
-- `-nostats`
-
-### `assembler.js`
-
-```bash
-node ./src/core/assembler.js demos/demoA.a
-node ./src/core/assembler.js somefile.hex
-node ./src/core/assembler.js somefile.bin
-```
-
-Output is written beside the input file as `.e` or `.o`. Object-module assembly also writes `.lst` and `.bst`.
-
-### `interpreter.js`
-
-```bash
-node ./src/core/interpreter.js demos/demoA.e
-node ./src/core/interpreter.js demos/demoA.e -nostats
-```
-
-When stats are enabled, the wrapper writes sibling `.lst` and `.bst` files.
-
-### `linker.js`
-
-```bash
-node ./src/core/linker.js module1.o module2.o
-node ./src/core/linker.js -o program.e module1.o module2.o
-```
-
-If no output file is provided, the default is `link.e`.
-
-## Programmatic Usage
-
-### Assemble in memory
-
-```js
-const Assembler = require('./src/core/assembler');
-
-const assembler = new Assembler();
-const result = assembler.assembleSource(`
-  mov r0, 5
-  dout r0
-  halt
-`, {
-  inputFileName: 'demoA.a',
-  buildReports: true,
-  userName: 'Drucker, Avi',
-});
-
-console.log(result.outputBytes);
-console.log(result.reports.lst);
-```
-
-`assembleSource(...)` returns structured data including:
-
-- `inputFileName`
-- `outputFileName`
-- `isObjectModule`
-- `startAddress`
-- `loadPoint`
-- `symbolTable`
-- `listing`
-- `outputBuffer`
-- `outputBytes`
-- `reports`
-
-### Execute in memory
-
-```js
-const Interpreter = require('./src/core/interpreter');
-
-const interpreter = new Interpreter();
-const result = interpreter.executeBuffer(executableBuffer, {
-  inputFileName: 'demoA.e',
-  inputBuffer: 'hello\n',
-  buildReports: true,
-  userName: 'Drucker, Avi',
-});
-
-console.log(result.output);
-console.log(result.instructionsExecuted);
-```
-
-`executeBuffer(...)` returns structured runtime state including:
-
-- `inputFileName`
-- `output`
-- `mem`
-- `registers`
-- `pc`
-- `instructionsExecuted`
-- `maxStackSize`
-- `loadPoint`
-- `memMax`
-- `headerLines`
-- `reports`
 
 ## Testing
 
-Primary test suite:
-
 ```bash
-npm test
+npm test              # primary suite
+npm run test:all      # full suite including slow tests
+npm run test:oracle   # oracle parity suite (requires oracle binary — see docs/oracle-setup.md)
 ```
 
-Other useful commands:
-
-```bash
-npm run test:all
-npm run test:oracle
-```
-
-Current test organization under `tests/new` includes:
-
-- unit tests for pure helpers and pure APIs
-- integration tests for wrapper behavior and file artifacts
-- oracle/e2e tests for compatibility checks
-- research-marked tests for ambiguous behavior still under investigation
-
-Examples:
+Run a single file:
 
 ```bash
 npm test -- --runTestsByPath tests/new/assembler.unit.spec.js
 npm test -- --runTestsByPath tests/new/lcc.oracle.e2e.spec.js
 ```
 
-### Running oracle-parity tests
+Test organization under `tests/new/`:
 
-The `*.oracle.e2e.spec.js` suites (and `npm run test:oracle`) drive the
-original LCC ("the oracle") and diff its output against LCC.js. They are
-skipped if the oracle is not configured, so you can run `npm test` without
-this setup; only the oracle suites need it.
+- **unit** — pure helpers and pure APIs
+- **integration** — wrapper behavior and file artifacts
+- **oracle/e2e** — compatibility checks against the original LCC binary
+- **research** — ambiguous behavior under investigation
 
-**1. Obtain the LCC package** from Prof. Anthony Dos Reis. The canonical
-distribution is the `cuh` zip (e.g. `cuh63.zip`, the "Computing Unsaturated
-Hex" 6.3 edition) that ships alongside his textbook. The package contains
-prebuilt `lcc`, `linker`, `sim`, etc. binaries for Windows, Linux,
-Raspberry Pi, pre-m1 Mac (top-level), and Apple Silicon Mac (`macm/`).
+## Further Reading
 
-**2. Install it to a folder of your choice.** Per the package's
-`0READFIRST.txt`, no system install is required — just unzip and use the
-files in place. On Linux:
-
-```bash
-mkdir -p ~/Documents/Study/Assembly/cuh63
-unzip ~/Downloads/cuh63.zip -d ~/Documents/Study/Assembly/cuh63
-cd ~/Documents/Study/Assembly/cuh63
-cp lnx/* .              # overlay the Linux binaries on the pre-m1 Mac ones
-chmod 755 lcc linker sim b basic comment h2b hexbin micro o optimal r register s see stack tiny
-./lcc                   # sanity-check; should print "Usage: lcc <infile>"
-```
-
-On Apple Silicon Mac, use `cp macm/* .` instead. On Raspberry Pi,
-`cp rasp/* .`. On Windows and pre-m1 Mac, no copy is needed.
-
-**3. Point LCC.js at the binary.** Copy `.env.example` to `.env` and set
-`LCC_ORACLE` to the absolute path of the `lcc` binary you just installed:
-
-```bash
-cp .env.example .env
-# then edit .env so LCC_ORACLE points at e.g. /home/you/.../cuh63/lcc
-```
-
-`.env` is gitignored; `.env.example` is the checked-in template.
-
-**4. Run the oracle suites:**
-
-```bash
-npm run test:oracle
-```
-
-Optional knobs (see `.env.example`):
-
-- `LCC_TIMEOUT_MS` — per-oracle-invocation timeout in ms (default 20000).
-- `GOLDEN_AUTO_UPDATE=1` — refresh the golden caches when oracle output
-  legitimately changes. Leave off in normal runs.
-- `KEEP_ORACLE_TMP=1`, `DEBUG_ORACLE=1` — debugging knobs for
-  `tests/helpers/runOracle.js`.
-
-## Oracle Parity Work
-
-The repo contains oracle-driven research tooling under `experiments/`.
-
-Use it when behavior is ambiguous or not yet fully matched:
-
-- `.org`
-- `bp`
-- `sext`
-- debugger-related behavior
-- other original-LCC drift questions
-
-See:
-
-- [experiments/README.md](./experiments/README.md)
-- [experiments/results.md](./experiments/results.md)
-- [experiments/debugger-results.md](./experiments/debugger-results.md)
-
-## `name.nnn` Behavior
-
-LCC.js now matches oracle behavior here:
-
-- `name.nnn` is resolved from the current working directory
-- it is only required when `.lst` / `.bst` reports are actually being written
-- pure in-memory APIs do not require `name.nnn`
-
-This matters for CLI use, tests, and oracle comparisons.
-
-## Current Status
-
-The codebase is mid-refactor, but already in a usable state.
-
-Implemented and stable enough to rely on:
-
-- in-memory assembly and execution seams
-- centralized report generation
-- centralized file artifact helpers
-- typed error classes for pure reusable paths
-- categorized assembler integration coverage
-- oracle-backed research workflow
-
-Still actively being refined:
-
-- deeper decomposition of `src/core/assembler.js`
-- deeper decomposition of `src/core/interpreter.js`
-- remaining linker boundary cleanup and modularity work
-- exact oracle parity for some behaviors such as `sext`
-- full symbolic debugger parity
-
-## Known Parity / Research Areas
-
-Areas that still require active research or refinement:
-
-- exact oracle `sext` semantics
-- final `bp` parity and debugger interaction details
-- some original-LCC edge cases around line-length parsing
-- some linker output-location behavior
-- whether to match oracle’s exact artifact behavior on certain assembly failures
-
-The current source of truth for active behavior contracts is:
-
-- [docs/core-behavior-matrix.md](./docs/core-behavior-matrix.md)
-
-## Additional Docs
-
-- [docs/assembler.md](./docs/assembler.md)
-- [docs/interpreter.md](./docs/interpreter.md)
-- [docs/lcc.md](./docs/lcc.md)
-- [docs/linker.md](./docs/linker.md)
-- [src/core/core.md](./src/core/core.md)
-- [src/utils/utils.md](./src/utils/utils.md)
+| Doc | Contents |
+|-----|---------|
+| [docs/api.md](./docs/api.md) | Programmatic API — `assembleSource`, `executeBuffer`, return value shapes |
+| [docs/oracle-setup.md](./docs/oracle-setup.md) | Oracle binary install, `.env` config, env knobs |
+| [docs/status.md](./docs/status.md) | Current status, parity areas, known gaps |
+| [docs/core-behavior-matrix.md](./docs/core-behavior-matrix.md) | Behavior contracts and oracle-vs-lccjs matrix |
+| [docs/parity_deviations.md](./docs/parity_deviations.md) | Documented intentional deviations from oracle behavior |
+| [docs/assembler.md](./docs/assembler.md) | Assembler internals |
+| [docs/interpreter.md](./docs/interpreter.md) | Interpreter internals |
+| [docs/lcc.md](./docs/lcc.md) | `lcc.js` orchestrator internals |
+| [docs/linker.md](./docs/linker.md) | Linker internals |
+| [src/core/core.md](./src/core/core.md) | Core module design notes |
+| [src/utils/utils.md](./src/utils/utils.md) | Utils module design notes |
+| [experiments/README.md](./experiments/README.md) | Oracle experiment tooling |
+| [experiments/debugger-results.md](./experiments/debugger-results.md) | Debugger oracle command set and parity gaps |
 
 ## License
 

@@ -9,7 +9,7 @@ snapshot. For planned refactor / parity / feature work in flight, see
 [`TODOS.md`](./TODOS.md). For higher-level direction, see
 [`ROADMAP.md`](./ROADMAP.md).
 
-Last updated: 2026-05-25.
+Last updated: 2026-05-27.
 
 ## Known bugs (correctness)
 
@@ -47,10 +47,13 @@ Prof. Dos Reis.
   - a `linkerplus.js` implementation that mirrors `linker.js`'s wrapper
     structure but routes through the plus-aware assembler/interpreter; and
   - unit and oracle-e2e suites under `tests/new/`.
-- **Symbolic debugger is partial.** `Interpreter.debug()` and `debugMode`
-  exist (`src/core/interpreter.js`), but full breakpoint/step semantics and
-  oracle-parity behavior are still open. Tracked in `TODOS.md` and the
-  `branch-feat-debugger` branch.
+- **Symbolic debugger — Phase 1+2 complete.** `Interpreter.debug()` now
+  implements oracle-parity commands: Enter/step-count (step), `g` (continue),
+  `q` (quit), `r` (registers), `m [addr [n]]` (memory), `b [addr]`
+  (set/cancel breakpoint), `i` (next instruction), `h` (help), `s` (stack).
+  Per-step trace (`-t`) and interactive mode (`-i`) are both wired end-to-end.
+  Remaining open work: step-count command, final infinite-loop-to-debugger
+  semantics for CLI mode. See `TODOS.md` "Core Behavior and Features".
 - **Incomplete instruction set.** Some standard and extended instructions are
   not yet implemented; see `TODOS.md` and `docs/core-behavior-matrix.md`
   Research entries for specifics.

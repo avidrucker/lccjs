@@ -26,7 +26,7 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] `errors.js`
   - [ ] `fileArtifacts.js`
   - [ ] `reportArtifacts.js`
-- [ ] label `progress-report.md`, `progress-report-2.md`, and `progress-report-3.md` as historical snapshots
+- [ ] label any `progress-report.md` snapshots as historical when they exist
 
 ## Oracle Parity and Research
 
@@ -55,12 +55,13 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] verify `-d`
   - [ ] verify `-m`
   - [ ] verify `-r`
-  - [ ] verify `-t`
+  - [x] verify `-t` (implemented and tested)
   - [ ] verify `-f`
   - [ ] verify `-x`
   - [ ] verify `-l<loadpt>`
 - [ ] continue symbolic debugger work
-  - [ ] implement more debugger commands
+  - [x] implement more debugger commands (Phase 1+2 complete: g/q/r/m/b/i/h/s)
+  - [ ] implement numeric step-count command (Phase 3)
   - [ ] decide the intended breakpoint/watchpoint scope for LCC.js
   - [ ] decide final infinite-loop-to-debugger behavior for CLI mode
 - [ ] finish linker modernization
@@ -81,6 +82,6 @@ This file is the current actionable backlog. Completed historical refactor steps
 
 ## Nice-to-Have Cleanup
 
-- [ ] refactor mnemonic / machine-word constants into clearer shared definitions where it improves readability
+- [x] refactor mnemonic / machine-word constants into clearer shared definitions where it improves readability (16 base opcode constants in assembler.js)
 - [ ] add a lightweight benchmark script for large assembly / interpretation runs
 - [ ] add optional observability hooks for parse/runtime counters if they can stay low-noise
