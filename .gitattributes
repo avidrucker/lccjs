@@ -4,13 +4,50 @@
 #
 # linguist-detectable=false keeps these files out of the repo's "Languages"
 # bar — this is a JavaScript project; the .a/.ap files are study material.
+#
+# A/B/C/D/E grammar comparison: each top-level folder uses a different
+# Linguist assembly grammar so we can visually compare which reads best for
+# LCC syntax. Note that "riscv" and "mips" are not Linguist languages, and
+# "asm"/"nasm" are aliases for the same grammar — those slots use distinct
+# alternatives below. (LCC isn't a real ISA so no grammar is perfect; we're
+# comparing how the surrounding scaffolding — comments, .directives, labels,
+# register-name heuristics — renders.)
+#
+# Attribute values cannot contain spaces, so we use Linguist's single-word
+# aliases:
+#   asm  = Assembly             (source.assembly, NASM grammar)
+#   gas  = Unix Assembly        (source.x86, GNU AS)
+#   arm  = ARM Assembly         (source.asm.arm)
+#   m68k = Motorola 68K Assembly(source.m68k)
+#   LLVM = LLVM IR              (source.llvm)
 
-# Default for all .a / .ap files: GAS (GNU Assembler grammar).
-*.a  linguist-language=GAS
-*.a  linguist-detectable=false
-*.ap linguist-language=GAS
-*.ap linguist-detectable=false
+# --- catch-all default: gas (Unix Assembly) ---
+*.a   linguist-language=gas
+*.a   linguist-detectable=false
+*.ap  linguist-language=gas
+*.ap  linguist-detectable=false
 
-# Note: a per folder basis can be applied to give different directories 
-# different syntax highlighting. I've already tried 'Assembly' and it
-# seems to not highlight as nicely as GAS, so, for now, GAS it is.
+# --- per-folder overrides (later patterns override earlier ones) ---
+# Two patterns each: `folder/*.a` for direct children, `folder/**/*.a` for
+# any nested depth. `**` in gitattributes only matches when there's at least
+# one path component, so the direct-child form is needed separately.
+
+# demos/              → asm   (Assembly, NASM grammar)
+demos/*.a                       linguist-language=asm
+demos/**/*.a                    linguist-language=asm
+
+# docs/               → gas   (same as catch-all; listed for clarity)
+docs/*.a                        linguist-language=gas
+docs/**/*.a                     linguist-language=gas
+
+# experiments/        → m68k  (substitute for "riscv" — no Linguist grammar)
+experiments/*.a                 linguist-language=m68k
+experiments/**/*.a              linguist-language=m68k
+
+# public_experiments/ → arm   (ARM Assembly)
+public_experiments/*.a          linguist-language=arm
+public_experiments/**/*.a       linguist-language=arm
+
+# textbook_demos/     → LLVM  (substitute for "mips" — no Linguist grammar)
+textbook_demos/*.a              linguist-language=LLVM
+textbook_demos/**/*.a           linguist-language=LLVM
