@@ -166,7 +166,7 @@ removeSnakeTail:
             ; push r1
             ; bl myFreeStub
             ; add sp, sp, 1
-            ; @todo #144:30m/DEV research question, does this create a memory leak in LCC 
+            ; @todo #153:30m/DEV research question, does this create a memory leak in LCC 
             ;       assembly, and if so, why?
     @skip:
             mov r0, 0
