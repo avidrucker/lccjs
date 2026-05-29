@@ -764,7 +764,201 @@ Builds the `.lst` and `.bst` content strings in memory without touching the file
 
 ### (b) — populated by #129
 
-_To be filled in._
+#### Label syntax
+
+A label is `[A-Za-z_$@][A-Za-z0-9_$@]*` (one alphabetic / `_` / `$` / `@` head character, then any number of those plus digits). The trailing colon in a definition is optional — both `label:` and `label` are accepted at column 0, since `[isValidLabelDef]` treats either form (and any line without column-0 whitespace) as a label-bearing line. The `$` / `@` characters exist for compiler-mangled identifiers (`@L0`, `@M0`, `@s0_x`, `@A@set$ii`, `@f$ri`); LCC.js doesn't restrict their use to compiler-generated code.
+
+**Source:** `src/core/assembler.js:617-626`
+**See also:** [isValidLabel], [isValidLabelDef], [labels]
+
+#### `isValidLabelDef`
+
+A two-condition heuristic: a line starts with a label if **either** the first token ends with `:` **or** the original line's first character isn't whitespace. The "no whitespace at column 0" branch is what makes the assembler accept old-style labels without colons — a convention preserved for parity with the original LCC.
+
+**Source:** `src/core/assembler.js:617-619`
+**See also:** [Label syntax], [isValidLabel], [performPass]
+
+#### `isValidLabel`
+
+Pure regex check (`^[A-Za-z_$@][A-Za-z0-9_$@]*$`) used after `[isValidLabelDef]` has spotted a label-bearing line. Catches malformed labels (digits at the head, illegal characters) and triggers the `"Bad label"` error.
+
+**Source:** `src/core/assembler.js:623-626`
+**See also:** [Label syntax], [isValidLabelDef]
+
+#### Mid-line label detection
+
+A consequence of `[isValidLabelDef]`'s rules: when a line has column-0 whitespace, the first token is *not* treated as a label, even if it would otherwise be a valid identifier. This lets the assembler parse mnemonics directly without ambiguity — `   add r0, r1, r2` is unambiguously an instruction line, not a label `add` followed by garbage.
+
+**Source:** `src/core/assembler.js:617-618, 703`
+**See also:** [isValidLabelDef], [performPass]
+
+#### `@`-prefixed labels (compiler-mangled)
+
+LCC's compiler emits identifiers like `@L0`, `@M0`, `@s0_x`, `@f$ri`, `@A@set$ii` for branch targets, string literals, static locals, and C++ name-mangled symbols respectively. The assembler doesn't distinguish them from any other label — the `@` prefix is just there to keep compiler-generated names from colliding with user-written ones. Treat them as plain labels in any analysis.
+
+**Source:** `src/core/assembler.js:624-625` (regex permits)
+**See also:** [Label syntax]
+
+#### `$` in label names (C++ name-mangling separator)
+
+The `$` character is permitted in label names primarily so LCC's C++ frontend can emit mangled names like `@f$ri` (function `f` taking `int&`) or `@A@set$ii` (method `A::set(int, int)`). LCC.js doesn't enforce a specific mangling scheme — it just allows `$` in identifiers and lets the compiler use it however.
+
+**Source:** `src/core/assembler.js:624-625` (regex permits)
+**See also:** [Label syntax], [@-prefixed labels (compiler-mangled)]
+
+#### Duplicate label detection
+
+Performed in pass 1 only, via the `[labels]` set. If a label has already been added to the set when a definition is encountered, `[error]` is called with `"Duplicate label"`. Pass 2 doesn't re-check — it trusts pass 1 to have caught all duplicates and only updates `[symbolTable]` on first sight.
+
+**Source:** `src/core/assembler.js:712-718`
+**See also:** [labels], [symbolTable]
+
+#### `"Bad label"` / `"Duplicate label"`
+
+The two label-specific error wordings. `"Bad label"` fires whenever `[isValidLabel]` rejects an identifier (illegal characters, leading digit). `"Duplicate label"` fires on the second pass-1 sighting of a name. Both are raised through `[error]` and so trip `[errorFlag]`.
+
+**Source:** `src/core/assembler.js:710, 714`
+**See also:** [isValidLabel], [Duplicate label detection], [errorFlag]
+
+#### Pass 1 — symbol table build
+
+The first traversal of `[sourceLines]`. Reads each line, tokenizes, records any label at `locCtr` into `[symbolTable]` + `[labels]`, then increments `locCtr` by whatever the directive or instruction would emit (without actually emitting anything). No machine code, no listing entries — just label addresses + an aggregate `locCtr`. Errors raised here come from bad labels, malformed directives, and out-of-range operands.
+
+**Source:** `src/core/assembler.js:635-770`, dispatched from `[performPass]`
+**See also:** [performPass], [Pass 2 — code emission], [locCtr]
+
+#### Pass 2 — code emission
+
+The second traversal, with `locCtr` reset to `[loadPoint]` and `[outputBuffer]` reset to `[]`. Re-tokenizes each line, dispatches to `[handleDirective]` or `[handleInstruction]`, and accumulates emitted words into `outputBuffer` + per-line entries into `[listing]`. Operand resolution can now look up labels in `[symbolTable]` (built in pass 1), so forward references just work.
+
+**Source:** `src/core/assembler.js:644-645, 752-755, 760-768`
+**See also:** [performPass], [Pass 1 — symbol table build], [outputBuffer], [listing]
+
+#### `performPass`
+
+The single method that drives both passes. Branches on `[pass]` to skip code emission (pass 1) or actually emit (pass 2) at the lowest level — most of the per-line tokenize / dispatch / locCtr-bump logic is shared between passes. Called twice from `[assembleSource]` with the `pass` field toggled between calls.
+
+**Source:** `src/core/assembler.js:635-770`
+**See also:** [Pass 1 — symbol table build], [Pass 2 — code emission]
+
+#### `loadPoint` discipline at pass-1 start
+
+`[loadPoint]` is explicitly set to `[defaultLoadPoint]` (= 0) at the top of pass 1. Without this reset, a program that uses `.org N` (jumping `locCtr` forward) would compute `[programSize] = locCtr - loadPoint` incorrectly on a re-run of the same `[Assembler]` instance. The reset matters because reusable in-process callers (`[assembleSource]`) may run the same instance multiple times.
+
+**Source:** `src/core/assembler.js:640-642`
+**See also:** [loadPoint], [programSize], [.org / .orig]
+
+#### `outputBuffer` reset at pass-2 start
+
+`[outputBuffer]` is set to `[]` at the top of pass 2. Pass 1 doesn't emit, so the buffer is empty at that point regardless; but pass 2 needs a clean slate before re-walking the source. This reset means the same `[Assembler]` instance can be reused across runs.
+
+**Source:** `src/core/assembler.js:644-645`
+**See also:** [outputBuffer], [Pass 2 — code emission]
+
+#### 65536-word maximum address space
+
+Hard cap. After each line is processed in either pass, `locCtr` is checked against `65536`; exceeding it triggers `[error]` with `"Program too big"`. Reflects LCC's 16-bit word-addressable memory model — the executable can't have more code or data than will fit in `mem[0..65535]`.
+
+**Source:** `src/core/assembler.js:747-750`
+**See also:** [locCtr]
+
+#### Trailing empty-line removal
+
+At the end of pass 2, if the last entry in `[listing]` has a `sourceLine` that trims to empty, it's popped. The code comment annotates this as `"possible bug / strange lcc behavior"` — the rule was reverse-engineered from the original LCC's output and may not be deliberate behavior on that side. Worth folding into the oracle parity research.
+
+**Source:** `src/core/assembler.js:766-768`
+**See also:** [listing], [Pass 2 — code emission]
+
+#### Listing entry — assembly path shape
+
+For lines processed by the normal two-pass `.a` flow, each `[listing]` entry has shape `{lineNum, locCtr, sourceLine, codeWords, label, mnemonic, operands, comment}`. `codeWords` is the array of machine words emitted by this line (often one, sometimes more for `.string` / `.zero`); `label`, `mnemonic`, `operands` are the tokenized form. Consumed by `[buildReportArtifacts]` and by `[sourceMap]` construction.
+
+**Source:** `src/core/assembler.js:654-665, 734-755`
+**See also:** [listing], [Listing entry — raw .hex / .bin path shape]
+
+#### Listing entry — raw `.hex` / `.bin` path shape
+
+For lines processed by `[parseHexFile]` or `[parseBinFile]`, the shape is `{lineNum, locCtr, sourceLine, macWord, comment}` — no tokenization, no label / mnemonic / operands, and code is a single `macWord` (the parsed value) rather than a `codeWords` array. The same `[listing]` array holds both shapes; downstream code branches on which field is present.
+
+**Source:** `src/core/assembler.js:782-788, 854-860`
+**See also:** [listing], [Listing entry — assembly path shape], [parseHexFile], [parseBinFile]
+
+#### `;` as comment delimiter
+
+Anywhere on a line, everything from `;` to end-of-line is a comment. `[performPass]` extracts the comment substring (everything after the first `;`) into the listing entry's `comment` field, then strips it from the line before tokenisation. Same convention in `[parseHexFile]` and `[parseBinFile]`. There is no block-comment form.
+
+**Source:** `src/core/assembler.js:668-678, 791-803, 863-875`
+**See also:** [Source-line processing], [tokenizeLine]
+
+#### Source-line processing pipeline
+
+The fixed sequence in `[performPass]`: capture `originalLine` and `currentLine`, validate length, extract comment, strip comment + trim, tokenize, peel off optional label, peel off mnemonic, send the rest to `[handleDirective]` (mnemonic starts with `.`) or `[handleInstruction]`. Empty post-strip lines still produce a listing entry in pass 2 (so the listing reports show blank source lines aligned with the original file).
+
+**Source:** `src/core/assembler.js:648-756`
+**See also:** [performPass], [handleDirective], [handleInstruction]
+
+#### Mnemonic routing (`.` vs other)
+
+After tokenisation, the mnemonic is lowercased. If it starts with `.`, `[handleDirective]` runs (directives manage their own locCtr bumps); otherwise `[handleInstruction]` runs (which always bumps `locCtr` by 1 — every instruction is exactly one 16-bit word). This single-character dispatch is the boundary between "directive vocabulary" and "instruction vocabulary."
+
+**Source:** `src/core/assembler.js:723, 738-745`
+**See also:** [handleDirective], [handleInstruction], [Pass 1 — symbol table build]
+
+#### `currentLine` / `currentListingEntry`
+
+Two error-message context handles maintained as side effects of the source-line loop. `currentLine` is the original (pre-strip) source for the line being processed; `currentListingEntry` is the in-progress entry. `[error]` formats `currentLine` into the standard `"Error on line N of file:\n    <line>\n<message>"` wording, so the user sees the literal source that failed.
+
+**Source:** `src/core/assembler.js:651, 665, 2276`
+**See also:** [error], [performPass]
+
+#### `.hex` file format
+
+One 4-nibble hexadecimal word per source line. The assembler treats each line as `<comment? ; …> <0-3 whitespace> <4 hex digits>`: comments are stripped (`;` delimiter), all whitespace (including internal) is removed via `s.replace(/\s+/g, '')`, then the regex `^[0-9A-Fa-f]+$` plus a length-equals-4 check validates. Parsed words land in `[outputBuffer]` and the per-line listing.
+
+**Source:** `src/core/assembler.js:772-842`
+**See also:** [parseHexFile], [.bin file format], [Listing entry — raw .hex / .bin path shape]
+
+#### `parseHexFile`
+
+The bespoke parser for `.hex` files. Runs entirely separately from the two-pass assembly flow — it has no labels, no directives, no instructions. Just a per-line "read 4 nibbles → 1 word" loop. Behaviour deviations from the oracle (empty-file error, line-length cap) are noted inline in the code.
+
+**Source:** `src/core/assembler.js:772-842`
+**See also:** [.hex file format], [parseBinFile]
+
+#### `.bin` file format
+
+One 16-bit binary word per source line — 16 literal `0`/`1` characters. Same comment / whitespace rules as `[.hex file format]`. Validation regex is `^[01]+$` plus length-equals-16. Parsed words land in `[outputBuffer]` and the per-line listing.
+
+**Source:** `src/core/assembler.js:844-914`
+**See also:** [parseBinFile], [.hex file format]
+
+#### `parseBinFile`
+
+Sibling of `[parseHexFile]` for the `.bin` extension. Same shape, same line-by-line loop, same listing-entry shape. The only differences are `parseInt(line, 2)` instead of `parseInt(line, 16)`, the `^[01]+$` regex, and 16-char length check.
+
+**Source:** `src/core/assembler.js:844-914`
+**See also:** [.bin file format], [parseHexFile]
+
+#### Empty-`.hex` / Empty-`.bin` exit-code-0
+
+Custom LCC.js behaviour (does not match the original LCC as of 12/2024): if `parseHexFile` or `parseBinFile` finishes the source with `locCtr === 0`, it raises `"Empty file"` and exits with status 0. The annotation in the code is explicit about this being a divergence — a follow-up parity decision is open.
+
+**Source:** `src/core/assembler.js:833-837, 905-909`
+**See also:** [.hex file format], [.bin file format], ["Empty file" exit-code-0]
+
+#### Raw-file abort messages
+
+`parseHexFile` and `parseBinFile` raise distinct error wordings to make malformed raw input visible:
+
+- `"Error: line N in .hex file is not purely hexadecimal: '...'"` (regex mismatch)
+- `"Error: line N in .hex file does not have exactly 4 nibbles: '...'"` (length mismatch)
+- `"Error: line N in .bin file is not purely binary: '...'"` (regex mismatch)
+- `"Error: line N in .bin file does not have exactly 16 bits: '...'"` (length mismatch)
+
+All four go through `[abortAssembly]`, so they CLI-exit (or throw under `throwOnAssemblyError`) immediately rather than accumulating in `[errors]`.
+
+**Source:** `src/core/assembler.js:812-817, 884-889`
+**See also:** [parseHexFile], [parseBinFile], [abortAssembly]
 
 ### (c) — populated by #130
 
