@@ -97,4 +97,73 @@ function runOracleOnDemo(demoPath, userInputs = [], opts = {}) {
   };
 }
 
-module.exports = { runOracleOnDemo };
+// Run the oracle as an INTERPRETER on a `.e` executable (not the assemble path).
+// The oracle interprets `base1.e` and emits `base1.lst` (the hex-only `.e`-path
+// listing). Returns the listing text. Sibling to runOracleOnDemo (which only
+// assembles a `.a`). Extracted from interpreter.oracle.e2e.spec.js so multiple
+// specs can drive the oracle on an executable (see #156).
+function runOracleInterpreterOnExecutable(eFile, userInputs = [], opts = {}) {
+  const {
+    tolerateNonZeroExit = false,
+    keepTmp = process.env.KEEP_ORACLE_TMP === '1',
+    debug = process.env.DEBUG_ORACLE === '1',
+  } = opts;
+
+  if (!cfg.lccPath) throw new Error('LCC_ORACLE is not set (see .env)');
+  if (!fs.existsSync(cfg.lccPath)) throw new Error(`LCC oracle not found: ${cfg.lccPath}`);
+
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-oracle-interp-'));
+  const base = path.basename(eFile, '.e');
+
+  // Oracle naming: base1.e -> base1.lst
+  const oracleInBase = `${base}1.e`;
+  const oracleOutBase = `${base}1.lst`;
+  const oracleIn = path.join(tmp, oracleInBase);
+  const oracleOut = path.join(tmp, oracleOutBase);
+
+  fs.copyFileSync(eFile, oracleIn);
+
+  // Oracle expects name.nnn in the working directory.
+  const nameFile = path.join(tmp, 'name.nnn');
+  fs.writeFileSync(nameFile, 'TestUser\n');
+
+  const spawnOpts = {
+    cwd: tmp,
+    encoding: 'utf8',
+    timeout: cfg.lccTimeoutMs,
+  };
+
+  if (userInputs && userInputs.length) {
+    spawnOpts.input = userInputs.join('\n') + '\n';
+  } else {
+    spawnOpts.stdio = ['ignore', 'pipe', 'pipe'];
+  }
+
+  const res = spawnSync(cfg.lccPath, [oracleInBase], spawnOpts);
+
+  if (res.error) throw res.error;
+
+  const hasLst = fs.existsSync(oracleOut);
+
+  if (debug) {
+    // eslint-disable-next-line no-console
+    console.warn(`[oracle] exit=${res.status} hasLst=${hasLst} tmp=${tmp}\nstdout:\n${res.stdout || ''}\nstderr:\n${res.stderr || ''}`);
+  }
+
+  if (res.status !== 0) {
+    if (!(tolerateNonZeroExit && hasLst)) {
+      throw new Error(
+        `Oracle lcc (interpreter) exited with ${res.status}\nstdout:\n${res.stdout || ''}\nstderr:\n${res.stderr || ''}`
+      );
+    }
+  }
+
+  if (!hasLst) {
+    throw new Error(`Oracle did not produce expected .lst file: ${oracleOut}`);
+  }
+
+  const lstText = fs.readFileSync(oracleOut, 'utf8');
+  return { lstText, outPath: oracleOut, tmpDir: tmp, kept: keepTmp ? tmp : null };
+}
+
+module.exports = { runOracleOnDemo, runOracleInterpreterOnExecutable };
