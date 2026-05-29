@@ -253,6 +253,63 @@ describe('Linker Unit Tests', () => {
     });
   });
 
+  // #171 spike: multi-module mcaIndex/GTable threading was only checked
+  // indirectly via the 3-demo oracle e2e (which detects but can't localize a
+  // wrong relocation). processModule() appends each module's code at the running
+  // mcaIndex and records every symbol/reference at (local address + mcaIndex),
+  // so addresses reflect the concatenation order.
+  describe('multi-module address threading via processModule() (#183)', () => {
+    const mod = (headers, size, fillFirst) => {
+      const code = new Array(size).fill(0);
+      if (fillFirst !== undefined) code[0] = fillFirst;
+      return { headers, code };
+    };
+
+    test('GTable global addresses reflect code concatenation (sizes 10/20/15)', () => {
+      const linker = new Linker();
+      linker.processModule(mod([{ type: 'G', address: 0, label: 'foo' }], 10));
+      linker.processModule(mod([{ type: 'G', address: 5, label: 'bar' }], 20));
+      linker.processModule(mod([{ type: 'G', address: 3, label: 'baz' }], 15));
+
+      // foo: 0+0 | bar: 5+10 | baz: 3+(10+20)
+      expect(linker.GTable).toEqual({ foo: 0, bar: 15, baz: 33 });
+      expect(linker.mcaIndex).toBe(45);
+      expect(linker.mca).toHaveLength(45);
+    });
+
+    test('each module code lands at its concatenated offset', () => {
+      const linker = new Linker();
+      linker.processModule(mod([], 10, 0x1111));
+      linker.processModule(mod([], 20, 0x2222));
+      linker.processModule(mod([], 15, 0x3333));
+
+      expect(linker.mca[0]).toBe(0x1111);  // module A @ 0
+      expect(linker.mca[10]).toBe(0x2222); // module B @ 10
+      expect(linker.mca[30]).toBe(0x3333); // module C @ 30
+    });
+
+    test('S start address is threaded by the owning module offset', () => {
+      const linker = new Linker();
+      linker.processModule(mod([], 10));                              // no start
+      linker.processModule(mod([{ type: 'S', address: 2 }], 5));      // start in module B
+
+      expect(linker.start).toBe(12); // 2 + moduleStart(10)
+      expect(linker.gotStart).toBe(true);
+    });
+
+    test('E (11-bit) and A (local) reference addresses are threaded by module offset', () => {
+      const linker = new Linker();
+      linker.processModule(mod([], 10));
+      linker.processModule(
+        mod([{ type: 'E', address: 3, label: 'x' }, { type: 'A', address: 7 }], 5),
+      );
+
+      expect(linker.ETable).toEqual([{ address: 13, label: 'x' }]); // 3 + 10
+      // A entries also record the module start for the later local relocation
+      expect(linker.ATable).toEqual([{ address: 17, moduleStart: 10 }]); // 7 + 10
+    });
+  });
+
   test('link() should default to linktest.e when no output file name is provided', () => {
     const linker = new Linker();
     jest.spyOn(linker, 'readObjectModule').mockImplementation(() => {
