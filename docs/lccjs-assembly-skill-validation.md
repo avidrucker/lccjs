@@ -17,6 +17,32 @@ to `experiments/skill-validation/`. Each `.a` file was then assembled
 (`node src/core/lcc.js`) and run (`node src/core/interpreter.js`), with output
 compared to the spec.
 
+**Prompt discipline (lesson from this pass).** The six prompts constrained the
+*response format* ("return ONLY the raw `.a` contents — no prose, no markdown
+fences") but did **not** forbid disk writes. Two agents (P2, N1) obeyed the
+format yet *also* wrote their `.a` files into the repo working directory
+(`compute_six.*`, `sum_with_local.*`), which had to be `rm -f`'d in cleanup. A
+data-producing subagent must be told **both** how to format the reply **and**
+not to touch the filesystem — the two are independent constraints. Future
+fan-out passes (§3.4, §3.5) should reuse the template below.
+
+### Subagent prompt template (reusable)
+
+For any fan-out pass that wants *data, not artifacts* back, end the prompt with
+both constraint lines:
+
+> \<task instructions…\>
+>
+> **Output:** Return ONLY the raw contents of the `.a` file — no prose before or
+> after, no markdown fences.
+> **Do not write any files to disk.** Create no artifacts in the working
+> directory; the assembly text in your reply is the entire deliverable.
+
+Without the second line, an agent that reaches for the Write tool mid-task
+leaves stray files behind — each one `git status` noise during a parallel-agent
+session and a candidate `puzzle:status` STALE source if it happens to contain a
+marker shape (`npm run puzzle:status`).
+
 ---
 
 ## 1. How the skill is supposed to work
