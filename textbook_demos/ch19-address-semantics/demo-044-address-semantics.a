@@ -18,10 +18,10 @@
 ;
 ; Memory layout and trace:
 ;   Label  Addr  Initial value        After program
-;   a      0004  &d (address of d)   5  (overwritten — address destroyed)
-;   b      0005  3                   &d (address propagated from a)
-;   c      0006  5                   5  (unchanged)
-;   d      0008  17                  17 (the original target; unchanged)
+;   a      0000  &d (address of d)   5  (overwritten — address destroyed)
+;   b      0001  3                   &d (address propagated from a)
+;   c      0002  5                   5  (unchanged)
+;   d      0003  17                  17 (the original target; unchanged)
 ;
 ; C equivalent (rough):
 ;   int d = 17;
@@ -34,11 +34,20 @@
 ;       halt;
 ;   }
 
+          .start main
+
+; ---- data section ----
+a:        .word d           ; CREATED here: a holds the address of d
+b:        .word 3           ; plain integer (becomes a propagated address after runtime)
+c:        .word 5           ; plain integer (used to destroy the address in a)
+d:        .word 17          ; the target word that a originally pointed to
+
+; ---- code section ----
           ; CREATION (at assemble time):
           ;   a: .word d  → a is assembled to hold the address of d
 
           ; PROPAGATION (at runtime):
-          ld   r0, a        ; r0 = address of d  (loaded from a)
+main:     ld   r0, a        ; r0 = address of d  (loaded from a)
           st   r0, b        ; b = &d  (address propagated to b)
 
           ; DESTRUCTION (at runtime):
@@ -46,9 +55,3 @@
           st   r1, a        ; a = 5   (address of d is gone — a no longer points to d)
 
           halt
-
-; ---- data section ----
-a:        .word d           ; CREATED here: a holds the address of d
-b:        .word 3           ; plain integer (becomes a propagated address after runtime)
-c:        .word 5           ; plain integer (used to destroy the address in a)
-d:        .word 17          ; the target word that a originally pointed to

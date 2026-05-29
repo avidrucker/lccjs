@@ -19,6 +19,8 @@
 ;   Node n1 = {10, &n2, {0,0,0,0,0}};
 ;   Node n2 = {20, &n3, {0,0}};   ...
 
+          .start main
+
 ; ---- list head pointer ----
 first:    .word n1           ; points to the first record
 
@@ -47,7 +49,7 @@ n5:       .word 50
           .word 0            ; null pointer (end of list)
 
 ; ---- traversal: walk the list, printing each data value ----
-          ld   r0, first     ; r0 = pointer to current record
+main:     ld   r0, first     ; r0 = pointer to current record
 
 @L0:      ; loop
           cmp  r0, 0         ; while (r0 != null)
