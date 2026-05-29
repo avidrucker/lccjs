@@ -173,8 +173,12 @@ One row per closed puzzle in [`puzzle-velocity.csv`](./puzzle-velocity.csv). Col
 | `started_iso` / `finished_iso` | ISO 8601 with timezone |
 | `closed_commit` | git short SHA, captured *after* `pull --rebase` |
 | `notes` | free-text — anomalies, context, surprises |
+| `agent` | which agent did it — the worktree fruit identity, uppercased (e.g. `APPLE`); trailing column. Empty if unknown. |
 
-Empty cells = "not tracked" (common for rows logged retroactively).
+Empty cells = "not tracked" (common for rows logged retroactively, or — for
+`agent` — work done before #180 or by an unidentified agent). **Log the `agent`
+on every new row** (it's the fruit you claimed with `npm run claim`); don't
+backfill historical rows whose agent you can't verify.
 
 ---
 

@@ -27,6 +27,7 @@ logged retroactively before the protocol existed).
 | `finished_iso` | ISO 8601 | timestamp of the commit that closed the ticket |
 | `closed_commit` | git short SHA | short SHA of the closing commit |
 | `notes` | string | free-text notes (anomalies, context, what was hard/easy) |
+| `agent` | string / empty | which agent did the work — the worktree fruit identity, uppercased (e.g. `APPLE`); see [`design-agent-worktree-identity.md`](./design-agent-worktree-identity.md). Empty for rows logged before #180 / for work whose agent is unknown. Trailing column so the positional `awk` examples below keep their `$1..$12`. |
 
 ## Role codes
 
