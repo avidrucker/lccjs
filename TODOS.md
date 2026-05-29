@@ -88,8 +88,7 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] `-o` edge cases
   - [ ] custom-named output report behavior
 - [ ] keep research-marked tests current with oracle findings
-- [ ] lock in `.e`-path LST hex-only parity vs oracle (no source/comments), whitespace-lenient
-  <!-- @todo #156:45m/DEV add a whitespace-lenient TDD parity test: extend the oracle helper to run on a .e, run lccjs interpreter.js vs oracle on the same .e; assert machine words match AND no .a comment/mnemonic text leaks into the .e .lst. Closes the .e-path oracle-coverage gap noted in #145. See #156 -->
+- [x] lock in `.e`-path LST hex-only parity vs oracle (no source/comments), whitespace-lenient (#156, closed in 048bff4)
 - [ ] establish first test coverage for `src/plus/*` and `src/extra/*` (0% today; ~2k LOC) — scope ticket, spawns per-file child puzzles
   <!-- @todo #166:60m/QA SCOPE: src/plus (assemblerplus, interpreterplus, lccplus) + src/extra (disassembler 915L, linkerStepsPrinter 709L) have zero tests; this is where unverified bugs OB-002/009/011/012/013/017/018 live. Define the per-file seams and spawn one <=60m child puzzle each (smoke + a bug repro), mirroring tests/new/*.unit.spec.js + golden-cache oracle e2e patterns. Do NOT attempt all 5 files in one puzzle. See #166 -->
 
