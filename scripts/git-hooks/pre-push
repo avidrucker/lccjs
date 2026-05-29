@@ -45,3 +45,10 @@ if [ -f puzzles.xml ]; then
   count=$(grep -c "<puzzle>" puzzles.xml || echo 0)
   echo "[pre-push] PDD scan OK — $count puzzle(s) tracked."
 fi
+
+# Reconcile markers against worktrees + GitHub issues (stale / claimed / available).
+# Non-blocking: this is a heartbeat, it makes a network `gh` call and must never
+# fail a push. Run `npm run puzzle:status -- --strict` manually to gate on stale.
+if command -v node >/dev/null 2>&1; then
+  npm run --silent puzzle:status 2>/dev/null | tail -n 2 || true
+fi

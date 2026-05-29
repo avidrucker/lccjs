@@ -2,8 +2,6 @@
 
 Glossary of LCC-specific terms used in `src/core/interpreter.js`.
 
-<!-- @todo #112:60m/WRITER Write definitions for each inventoried term; LCC-specific angle only. Blocked by #109. See #112 -->
-
 Parent: #107 · See [README](./README.md) for entry conventions.
 
 ---

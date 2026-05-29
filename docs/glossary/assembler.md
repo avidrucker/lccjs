@@ -6,12 +6,6 @@ The original spike (#108) has been decomposed into 5 sub-spikes, each covering a
 coherent section of the file. The write phase (#111) consolidates the
 inventoried terms into definitions once all 5 spikes have closed.
 
-<!-- @todo #128:60m/WRITER Write section (a) lifecycle/output definitions. Parent tracker #111. See #128 -->
-<!-- @todo #129:60m/WRITER Write section (b) pass model + file parsing definitions. Parent tracker #111. See #129 -->
-<!-- @todo #130:60m/WRITER Write section (c) tokenization + dispatch definitions. Parent tracker #111. See #130 -->
-<!-- @todo #131:60m/WRITER Write section (d) per-instruction encoders definitions. Parent tracker #111. See #131 -->
-<!-- @todo #132:60m/WRITER Write section (e) operand parsing helpers definitions. Parent tracker #111. See #132 -->
-
 Parent: #107 · Tracker: #108 · See [README](./README.md) for entry conventions.
 
 ---

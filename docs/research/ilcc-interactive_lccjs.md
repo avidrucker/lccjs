@@ -160,8 +160,6 @@ Things charlie has that lccjs doesn't, and vice versa:
 
 ---
 
-<!-- @todo #78:60m/DEV Spike: diff iassembler.js vs lccjs assembler.js; answer open questions with Charlie; decompose ilcc incorporation into @todos -->
-
 ## Priority Features to Incorporate into lccjs
 
 In rough ROI order:
