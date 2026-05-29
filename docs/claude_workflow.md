@@ -1,5 +1,13 @@
 # Claude Workflow — what an AI agent does for each puzzle
 
+**Why this file exists (vs. `CLAUDE.md`):** `CLAUDE.md` is the lean, always-in-context
+orientation loaded every session — it points here but deliberately does *not* duplicate
+the protocol. This doc is the full, on-demand reference for the project's
+Puzzle-Driven-Development process: read it before doing puzzle work, and treat it
+as the authority when a quick summary and the detail disagree. It also serves human
+reviewers asking "what happened / what should happen next." When the protocol changes,
+this doc is the single source of truth to update (see "When this document is wrong" below).
+
 This doc describes what a Claude (or any AI agent following the project's
 conventions) does at each phase of working on a "puzzle" — a single bounded
 piece of work tied to a GitHub issue and time-tracked in
