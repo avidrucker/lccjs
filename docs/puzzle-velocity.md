@@ -11,6 +11,8 @@ the protocol, and the jargon.
 ticket / puzzle. Empty fields mean "not tracked" (most commonly for rows
 logged retroactively before the protocol existed).
 
+<!-- @todo #186:60m/RESEARCH this append-only CSV is a single hot file: concurrent closes by parallel agents conflict on every `git pull --rebase` and the rebase rewrites closed_commit. Evaluate a merge-friendly store (.gitattributes merge=union / per-ticket files / SQLite local+export) and recommend one in docs/research/velocity-log-storage.md; see #186 -->
+
 ## Column reference
 
 | Column | Type | Meaning |
