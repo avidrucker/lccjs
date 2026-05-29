@@ -129,7 +129,7 @@ still missing.
 | ✅ Works today | 🚧 Not yet (open work) |
 |---|---|
 | Full base ISA: arithmetic, I/O, strings, control flow, stack (`demos/demoA.a`…`demoZ.a` + tutorial) | Hangman, Tiny Roguelike (planned in [ROADMAP](../ROADMAP.md)) |
-| LCC+ interactivity: non-blocking input, cursor control, screen clear, `rand`, `sleep` | Symbolic debugger — partial; full breakpoints/stepping still open ([#13](https://github.com/avidrucker/lccjs/issues/13)) |
+| LCC+ interactivity (non-blocking input, cursor, screen clear, `rand`, `sleep`) + a symbolic/stepping debugger (`-d`, interactive `ilcc`, 500k-instruction auto-activation) | Game niceties: pause, win-state, replay, high-score ([gameSnake backlog #143](https://github.com/avidrucker/lccjs/issues/143)) |
 | Playable games: Snake, Flappy Bird, Rock-Paper-Scissors, Tic-Tac-Toe (in `plusdemos/`) | Terminal graphics utilities (sprite/tile rendering) |
 | Interactive demos: 1D/2D player walk, find-the-fruit, typewriters, char polling | Browser playground / browserified interpreter ([#12](https://github.com/avidrucker/lccjs/issues/12)) |
 | Single-file assemble → link → run for both `.a` and `.ap` | Multi-file `.a` source input; `.ap` multi-module linking (`linkerplus.js`) |
