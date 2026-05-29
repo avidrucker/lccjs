@@ -128,15 +128,26 @@ related concepts share a demo (e.g. 005 shows both the problem and the fix for `
 
 ---
 
-## Conventions (in-progress)
+## Conventions (confirmed — ratified in #104)
 
-A label-naming and data-layout convention is being rolled out across the
-demos, starting with [demo-017](ch06-control-flow-and-recursion/demo-017-recursion-non-tail.a):
+The label-naming and data-layout convention applied across the demos, starting
+with [demo-017](ch06-control-flow-and-recursion/demo-017-recursion-non-tail.a):
 
-- Branch labels → `@L0`, `@L1`, `@L2`, ... per file, in order of first appearance
-- String constants → `@M0`, `@M1`, ... per file
+- Branch labels → `@L0`, `@L1`, `@L2`, ... **per file**, in order of first appearance
+- String constants → `@M0`, `@M1`, ... **per file**
+- **Numbering is per-file, not per-function** — one `@L*`/`@M*` sequence increments
+  across all functions in a file (avoids the `@f_L0` mangling a per-function scheme
+  would require)
+- **Function / subroutine call targets keep their semantic names** (`startup:`,
+  `main:`, `descend:`, ...). `@L*` is only for in-function jump targets, never for
+  `bl`/`blr`/`call` destinations
 - String constants (and static locals) stored ABOVE the function that uses them
+- **Top-level demos with no function structure** (straight-line code, no `bl main`
+  pattern — e.g. demo-002, demo-007): string constants move to the **top** of the
+  file with an explicit `.start` entry point, mirroring the above-the-code layout
+  used for function demos
 - Numerical constants when needed → `@1000: .word 1000`, `@_1000: .word -1000`
 - Definition-site `; comment` preserves the prior semantic name for readability
 
-<!-- @todo #104:30m/ARC Confirm Charlie's textbook-demo conventions: function-vs-branch label boundary, top-level demos (no function), per-file vs per-function @L/@M numbering — see #104 -->
+> The top-level-demo layout change (ratified in #104) is being applied to the
+> existing straight-line demos under a separate refactor puzzle (#135).
