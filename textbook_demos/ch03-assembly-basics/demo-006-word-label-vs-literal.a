@@ -14,7 +14,14 @@
 ;   int *y = &x;   // y holds the address of x
 ;   int  z = 7;    // z holds the value 7
 
-          ld   r0, ptr_to_x  ; r0 = address of x (e.g. 0x0005)
+          .start main
+
+; ---- data section ----
+literal_7: .word 7            ; stores the value 7
+x:         .word 7            ; stores the value 7
+ptr_to_x:  .word x            ; stores the ADDRESS of x  (not the value 7!)
+
+main:     ld   r0, ptr_to_x  ; r0 = address of x (e.g. 0x0005)
           dout r0             ; display that address
           nl
 
@@ -28,8 +35,3 @@
           nl
 
           halt
-
-; ---- data section ----
-literal_7: .word 7            ; stores the value 7
-x:         .word 7            ; stores the value 7
-ptr_to_x:  .word x            ; stores the ADDRESS of x  (not the value 7!)

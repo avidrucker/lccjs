@@ -23,7 +23,15 @@
 ;   else if (a == b) printf("Numbers equal\n");
 ;   else             printf("First number greater\n");
 
-          lea  r0, @M0
+          .start main
+
+; ---- data section ----
+@M0:      .string "Enter two signed integers\n"  ; prompt
+@M1:      .string "First number is less\n"       ; msg_lt
+@M2:      .string "Numbers are equal\n"          ; msg_eq
+@M3:      .string "First number is greater\n"    ; msg_gt
+
+main:     lea  r0, @M0
           sout r0
 
           din  r0             ; read first number into r0
@@ -47,9 +55,3 @@
 @L3:      ; display
           sout r0
           halt
-
-; ---- data section ----
-@M0:      .string "Enter two signed integers\n"  ; prompt
-@M1:      .string "First number is less\n"       ; msg_lt
-@M2:      .string "Numbers are equal\n"          ; msg_eq
-@M3:      .string "First number is greater\n"    ; msg_gt

@@ -14,13 +14,15 @@
 ;   int x = 2, y = 3;
 ;   printf("%d\n", x + y);   // prints 5
 
-          ld   r0, x     ; r0 = 2
+          .start main
+
+; ---- data section ----
+x:        .word 2
+y:        .word 3
+
+main:     ld   r0, x     ; r0 = 2
           ld   r1, y     ; r1 = 3
           add  r0, r0, r1 ; r0 = 2 + 3 = 5
           dout r0         ; print 5
           nl
           halt
-
-; ---- data section ----
-x:        .word 2
-y:        .word 3

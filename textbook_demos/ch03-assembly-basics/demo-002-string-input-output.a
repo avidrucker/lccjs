@@ -15,13 +15,15 @@
 ;   fgets(buffer, 100, stdin);
 ;   printf("%s", buffer);
 
-          lea  r0, @M0      ; r0 = address of prompt string
+          .start main
+
+; ---- data section ----
+@M0:      .string "Enter string\n"  ; prompt
+buffer:   .zero 100          ; 100-word buffer for input (sin reads into here)
+
+main:     lea  r0, @M0      ; r0 = address of prompt string
           sout r0            ; display "Enter string\n"
           lea  r0, buffer    ; r0 = address of input buffer
           sin  r0            ; read a line of text from stdin into buffer
           sout r0            ; echo the string back to stdout
           halt
-
-; ---- data section ----
-@M0:      .string "Enter string\n"  ; prompt
-buffer:   .zero 100          ; 100-word buffer for input (sin reads into here)

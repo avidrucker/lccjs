@@ -149,5 +149,6 @@ with [demo-017](ch06-control-flow-and-recursion/demo-017-recursion-non-tail.a):
 - Numerical constants when needed → `@1000: .word 1000`, `@_1000: .word -1000`
 - Definition-site `; comment` preserves the prior semantic name for readability
 
-> The top-level-demo layout change (ratified in #104) is being applied to the
-> existing straight-line demos under a separate refactor puzzle (#135).
+> The top-level-demo layout change (ratified in #104) was applied to the six
+> uniform ch03 demos in #135 (001, 002, 003, 006, 007, 008); demo-009 (inverted
+> layout) and demo-044 (ch19) are finished in #136.

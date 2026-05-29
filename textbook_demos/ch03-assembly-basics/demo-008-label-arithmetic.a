@@ -15,7 +15,19 @@
 ;   int arr[] = {5, 11, 17};
 ;   printf("%d %d %d\n", arr[0], arr[1], arr[2]);
 
-          ld   r0, x        ; loads 5    (x+0)
+          .start main
+
+; ---- data section ----
+; These three .word directives are laid out consecutively in memory.
+; x is at some address A; x+1 is at A+1; y is at A+2.
+x:        .word 5
+          .word 11           ; no label needed; accessed as x+1 or y-1
+y:        .word 17
+
+; z holds the assembly-time address of x+2, which equals y's address:
+z:        .word x+2          ; z = address of y (demonstrating .word label arithmetic)
+
+main:     ld   r0, x        ; loads 5    (x+0)
           dout r0
           nl
 
@@ -32,13 +44,3 @@
           nl
 
           halt
-
-; ---- data section ----
-; These three .word directives are laid out consecutively in memory.
-; x is at some address A; x+1 is at A+1; y is at A+2.
-x:        .word 5
-          .word 11           ; no label needed; accessed as x+1 or y-1
-y:        .word 17
-
-; z holds the assembly-time address of x+2, which equals y's address:
-z:        .word x+2          ; z = address of y (demonstrating .word label arithmetic)
