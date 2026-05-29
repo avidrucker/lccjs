@@ -27,12 +27,6 @@ Usage:  python3 stats/enrich.py   (run from repo root or anywhere)
 
 from __future__ import annotations
 
-# @todo #174:45m/ARC review + expand this velocity analysis into a calibration
-#  model future C-estimates start from instead of gut: derive per-role over-pad
-#  multipliers (median ~2.5x; ARC worst), add a test-loop overrun adjustment
-#  (#135/#141 shape), check whether cumulative-mean C-ratio converges to 1.0 as
-#  rows accrue, and consider the deferred enrichments listed in stats/README.md.
-
 import csv
 import json
 import re
