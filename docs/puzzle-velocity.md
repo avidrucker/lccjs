@@ -87,7 +87,10 @@ When I pick up a ticket:
 3. **Work** — do the puzzle.
 4. **Finish** — capture finish timestamp before the closing commit.
 5. **Close** — `git commit -m "... Closes #N"` (commit 1).
-6. **Sync** — `git pull --rebase`. **This step is critical when other agents may have pushed in parallel** — rebase rewrites your commit's SHA, so the SHA must be captured *after* this step. If the rebase hits a CSV conflict (both agents appended a row), resolve manually and `git rebase --continue`.
+6. **Sync** — `git pull --rebase`. **This step is critical when other agents may have pushed in parallel** — rebase rewrites your commit's SHA, so the SHA must be captured *after* this step. If the rebase hits a CSV conflict (both agents appended a row):
+   - Resolve manually (edit the file, remove `<<<<<<<` / `=======` / `>>>>>>>` markers, keep all rows).
+   - **Verify markers are gone before `git add`:** `grep -c '^<<<<<<<\|^=======\|^>>>>>>>' <file>` must print `0`. This guard catches two real failure modes: the resolution edit being applied to the wrong region (markers left behind), or the Edit tool erroring silently and the file still having raw markers — `git add` + `git rebase --continue` will happily ship a broken file. (Happened on the #139 close — followup commit `a19d115` cleaned it up.) Treat any non-zero count as a hard block.
+   - `git add <file>`, then `git rebase --continue`.
 7. **Record** — `git rev-parse --short HEAD` is now stable; append a CSV row with that SHA + the actuals + ΔH + ΔC.
 8. **Log** — `git commit -m "docs(velocity): log #N — …"` (commit 2).
 9. **Push** — `git push`.
