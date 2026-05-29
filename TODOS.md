@@ -46,7 +46,7 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] whether comments count
   - [ ] whether there is a separate true label-length limit
 - [ ] compare symbolic-debugger output — `.a`-run (lcc.js assemble+interpret) vs `.e`-run (interpreter.js) — against oracle LCC; find the missing/wrong BST/LST artifact and scope #13's remainder
-  <!-- @todo #145:60m/ARC spike: run the symbolic debugger on a .a (lcc.js) and its .e (interpreter.js) against LCC_ORACLE; diff .lst/.bst + stepping output; pin the missing/wrong artifact and confirm whether the .a source-line display is the same gap. Findings in docs/research/debugger-oracle-parity.md; decompose fixes onto #13. See #145 -->
+  <!-- @inprogress #145:60m/ARC spike: run the symbolic debugger on a .a (lcc.js) and its .e (interpreter.js) against LCC_ORACLE; diff .lst/.bst + stepping output; pin the missing/wrong artifact and confirm whether the .a source-line display is the same gap. Findings in docs/research/debugger-oracle-parity.md; decompose fixes onto #13. See #145 -->
 
 ## Core Behavior and Features
 
