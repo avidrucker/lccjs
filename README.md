@@ -115,6 +115,7 @@ Test organization under `tests/new/`:
 
 | Doc | Contents |
 |-----|---------|
+| [docs/who_lccjs_is_for.md](./docs/who_lccjs_is_for.md) | Persona-based "start here" guide — learners, teachers, and hobbyists each get a first-steps path into LCC.js |
 | [docs/api.md](./docs/api.md) | Programmatic API — `assembleSource`, `executeBuffer`, return value shapes |
 | [docs/oracle-setup.md](./docs/oracle-setup.md) | Oracle binary install, `.env` config, env knobs |
 | [docs/status.md](./docs/status.md) | Current status, parity areas, known gaps |

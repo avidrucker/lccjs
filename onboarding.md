@@ -7,6 +7,8 @@
 
 **LCC.js** is a JavaScript implementation of a simple assembler, linker, and interpreter for a virtual assembly language and machine architecture. It's inspired by educational projects like the Low-Cost Computer (LCC) by Professor Anthony Dos Reis. The project aims to provide a learning tool for understanding the fundamentals of assembly language programming, machine code generation, and instruction execution within a high-level language environment.
 
+> **Not sure where to start?** See [docs/who_lccjs_is_for.md](./docs/who_lccjs_is_for.md) — a persona-based guide that routes learners, teachers, and hobbyists to their first steps.
+
 **Key Project Goals:**
 
 - **Educational Focus**: Designed to help users learn how assemblers and interpreters work.
