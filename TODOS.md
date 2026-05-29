@@ -80,6 +80,10 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] `-o` edge cases
   - [ ] custom-named output report behavior
 - [ ] keep research-marked tests current with oracle findings
+- [ ] lock in `.a`-path LST source-text parity vs oracle (mnemonics + same-line + standalone comments), whitespace-lenient
+  <!-- @todo #155:45m/DEV add a whitespace-lenient TDD parity test: lccjs lcc.js vs oracle on a comment-rich .a (e.g. demos/demoQ.a); normalize banner/date + whitespace; assert every source line (incl. comments) survives in the .lst. Tolerate deviation 11 (oracle truncates, lccjs full). Proven in #145. See #155 -->
+- [ ] lock in `.e`-path LST hex-only parity vs oracle (no source/comments), whitespace-lenient
+  <!-- @todo #156:45m/DEV add a whitespace-lenient TDD parity test: extend the oracle helper to run on a .e, run lccjs interpreter.js vs oracle on the same .e; assert machine words match AND no .a comment/mnemonic text leaks into the .e .lst. Closes the .e-path oracle-coverage gap noted in #145. See #156 -->
 
 ## Claude Skills
 
