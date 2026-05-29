@@ -1162,7 +1162,253 @@ Regex-based parser for the single-token label-arithmetic form: `label`, `label+N
 
 ### (d) — populated by #131
 
-_To be filled in._
+#### 16-bit instruction word field layout
+
+Every LCC instruction encodes to exactly one 16-bit word divided into fixed-width fields:
+
+| Bits | Field | Used by |
+|---|---|---|
+| 15-12 | `opcode` nibble (4 bits) | every instruction (selects top-level dispatch) |
+| 11-9 | `dr` / `sr` / condition `cc` (3 bits) | destination or source register; branch condition |
+| 8-6 | `sr1` / `baser` (3 bits) | first source register; base register for `ldr`/`str`/`jmp`/`blr` |
+| 5 | form bit | 0 = register-form (`sr2` in bits 2-0); 1 = immediate-form (`imm5` in bits 4-0). Only ADD / SUB / AND / CMP |
+| 4-0 | `imm5` / `sr2` / `ct` / eopcode-low | varies by instruction |
+
+The same field positions are decoded on the interpreter side — see [step / decoded instruction fields](interpreter.md#step--decoded-instruction-fields).
+
+**Source:** `src/core/assembler.js:23-43` (opcode constants), per-instruction encoders below
+**See also:** [Immediate field widths and ranges], [Opcode dispatch table (interpreter)](interpreter.md#opcode-dispatch-table)
+
+#### Immediate field widths and ranges
+
+LCC uses five different immediate-field widths depending on the instruction:
+
+| Name | Width | Range | Used by |
+|---|---|---|---|
+| `imm5` | 5-bit signed | -16..15 | ADD / SUB / AND / CMP immediate forms |
+| `imm9` | 9-bit signed | -256..255 | MVI / MOV |
+| `offset6` | 6-bit signed | -32..31 | LDR / STR / JMP / RET / BLR |
+| `pcoffset9` | 9-bit signed | -256..255 | BR / LD / ST / LEA / CEA |
+| `pcoffset11` | 11-bit signed | -1024..1023 | BL only |
+| `ct` | 4-bit unsigned | 0..15 | shift count for SRL / SRA / SLL / ROL / ROR |
+
+Range checks: `imm5` / `imm9` / `offset6` / `pcoffset9` / `pcoffset11` go through `[evaluateImmediate]` with strict min/max bounds; `ct` uses `[evaluateImmediateNaive]` for SRL / SLL / ROL / ROR but the strict version for SRA.
+
+**Source:** per-instruction encoders + `src/core/assembler.js:2239-2265`
+**See also:** [evaluateImmediate], [evaluateImmediateNaive]
+
+#### PC-relative target arithmetic
+
+The pcoffset fields all use the same formula: `pcoffsetN = address - locCtr - 1`. The `-1` accounts for the fact that the LCC interpreter has already advanced PC past the instruction word being executed by the time the offset is applied, so the effective branch target is "this instruction + 1 + offset". Out-of-range offsets are caught at assembly time with `"pcoffsetN out of range"` errors.
+
+**Source:** `src/core/assembler.js:1471, 1730, 1771, 1812, 1839`
+**See also:** [pcoffset9 in interpreter executeBR](interpreter.md#executebr), [Immediate field widths and ranges]
+
+#### Extended-opcode group (`OP_EXT = 0xA000`)
+
+Opcode 10 is multiplexed across 14 sub-instructions via a 4-bit `eopcode` in the low bits. Lets LCC fit shifts, rotates, stack ops, and multi-precision arithmetic into a single opcode slot:
+
+| eopcode | Mnemonic | Notes |
+|---|---|---|
+| 0 | PUSH | `sr` in bits 11-9 |
+| 1 | POP | `dr` in bits 11-9 |
+| 2 | SRL | naive `ct` |
+| 3 | SRA | strict `ct` 0..15 |
+| 4 | SLL | naive `ct` |
+| 5 | ROL | naive `ct` |
+| 6 | ROR | naive `ct` |
+| 7 | MUL | |
+| 8 | DIV | encoded as raw `0xa008` (not `OP_EXT \| 8`) |
+| 9 | REM | |
+| A | OR | |
+| B | XOR | |
+| C | MVR | register-to-register move |
+| D | SEXT | sign-extend |
+
+DIV's `0xa008` is intentional — it bypasses the usual `OP_EXT | eopcode` build because the encoder uses a hardcoded literal. The result is identical, just stylistically inconsistent.
+
+**Source:** `src/core/assembler.js:38, 1532-1668` (encoders), `src/core/interpreter.js:1071-1175` (decoder)
+**See also:** [executeCase10 (interpreter)](interpreter.md#executecase10-extended-opcode-dispatch)
+
+#### Pseudo-instructions
+
+Five mnemonics encode to a different machine instruction than their name suggests:
+
+| Pseudo | Actual encoding | Why |
+|---|---|---|
+| `mov dr, imm9` | `mvi dr, imm9` (opcode 13) | mov-with-immediate has no native opcode; reuses MVI |
+| `mov dr, sr` | `mvr dr, sr` (eopcode 12 in OP_EXT) | mov-between-registers has no native opcode; reuses MVR |
+| `cea dr, imm5` | `add dr, fp, imm5` | "compute effective address" — useful for stack-frame offsets; just an ADD with `fp` as base |
+| `ret` | `jmp lr` (`baser = r7`) | RET is just an indirect jump through the link register |
+| `bral` | `br` with cc=7 (always) | "branch unconditional, always-link"; same encoding as `br` |
+
+Each one exists because the source mnemonic is convenient for assembly programmers even though the machine doesn't need a separate opcode for it.
+
+**Source:** `src/core/assembler.js:1504-1509, 1820-1846, 1902-1910, 1922-1969`
+**See also:** [assembleCEA], [assembleRET], [assembleMOV], [Register conventions]
+
+#### External-label fixup asymmetries
+
+Three encoders honor `[externLabels]` and emit external-reference records when the operand resolves to an undefined symbol; three others don't. The asymmetry is structural, not a bug:
+
+- **Honor externals** — `[assembleLD]` (emits `'e'`), `[assembleBL]` (emits `'E'`)
+- **Don't honor externals** — `[assembleST]`, `[assembleLEA]` (would fail with `"Bad label"`)
+
+The asymmetry exists because `ST`/`LEA` to an external symbol doesn't have a sensible runtime semantic — you can't reasonably store to an unresolved symbol or take its address before linking. `LD` and `BL` make sense (load-from / call-to an external target). The `'A'` adjustment-entry mechanism is also asymmetric: it fires only for **local** label+offset references; external references use `'e'` / `'E'` / `'V'` instead.
+
+**Source:** `src/core/assembler.js:1723-1735, 1832-1844`
+**See also:** [externLabels], [externalReferences entry types]
+
+#### `assembleCMP`
+
+Encodes CMP — set flags from `sr1 - <sr2|imm5>` without writing a destination. Register form: `1000 000 sr1 0 00 sr2`. Immediate form: `1000 000 sr1 1 imm5` (bit 5 set). The `dr` bits are zeroed because CMP discards the result.
+
+**Source:** `src/core/assembler.js:1408-1428`
+**See also:** [Immediate field widths and ranges], [executeCMP (interpreter)](interpreter.md#executeadd--executesub--executecmp)
+
+#### `assembleBR`
+
+Encodes all branches. Looks up a 3-bit condition code from a small table (`brz/bre=0`, `brnz/brne=1`, `brn=2`, `brp=3`, `brlt=4`, `brgt=5`, `brc=6`, `br/bral=7`), packs it into bits 11-9, then computes the pcoffset9 target offset. Out-of-range branches trigger `"pcoffset9 out of range"`.
+
+**Source:** `src/core/assembler.js:1430-1478`
+**See also:** [PC-relative target arithmetic], [executeBR (interpreter)](interpreter.md#executebr)
+
+#### `assembleADD` / `assembleSUB` / `assembleAND`
+
+The three-operand arithmetic / logic triplet. Same shape: `<opcode> dr sr1 <0 00 sr2 | 1 imm5>`. Each encoder reads `dr`, `sr1`, then inspects the third operand: if `[isRegister]`, encodes the register form (bit 5 = 0, `sr2` in bits 2-0); otherwise treats it as an `imm5` literal (bit 5 = 1, `0x0020` set).
+
+**Source:** `src/core/assembler.js:1480-1502, 1511-1530, 1670-1689`
+**See also:** [Immediate field widths and ranges], [isRegister]
+
+#### `assembleCEA`
+
+Encodes the `cea dr, imm5` pseudo-instruction by reusing `[assembleADD]`: passes `['fp', imm5]` as the source operand pair, so it produces an `add dr, fp, imm5`. Useful for computing stack-frame addresses (`cea r0, -4` lands `r0 = fp + (-4)`).
+
+**Source:** `src/core/assembler.js:1504-1509`
+**See also:** [Pseudo-instructions], [assembleADD]
+
+#### `assemblePUSH` / `assemblePOP`
+
+Both encoded via the extended-opcode group (`OP_EXT`). PUSH: `1010 sr 0000 00000` — eopcode 0, sr in bits 11-9. POP: `1010 dr 0000 00001` — eopcode 1, dr in bits 11-9. The destination/source semantic is just the field name; the machine treats them as opcode-decode demuxers, not separate field types.
+
+**Source:** `src/core/assembler.js:1532-1548`
+**See also:** [Extended-opcode group (OP_EXT)]
+
+#### Shift / rotate encoders (`assembleSRL` / `assembleSRA` / `assembleSLL` / `assembleROL` / `assembleROR`)
+
+All five take `sr` (the register to shift) and `ct` (a 4-bit shift count in bits 8-5). If `ct` is omitted at the assembly level, it defaults to 1. Eopcode distinguishes: SRL=2, SRA=3, SLL=4, ROL=5, ROR=6. The strict-vs-naive split: **SRA** uses `[evaluateImmediate]` with range 0..15 (out-of-range fails); the other four use `[evaluateImmediateNaive]` (no range check — the result is masked into bits 8-5 by the encoder).
+
+**Source:** `src/core/assembler.js:1560-1668`
+**See also:** [Extended-opcode group (OP_EXT)], [evaluateImmediate], [evaluateImmediateNaive]
+
+#### `assembleDIV` / `assembleMUL` / `assembleREM`
+
+Three-register multi-precision arithmetic. All take `dr` (destination, bits 11-9) and `sr1` (first source, bits 8-6). DIV: encoded as raw `0xa008` (eopcode 8). MUL: eopcode 7. REM: eopcode 9. DIV / REM by zero is detected at runtime, not assembly time — the encoders just lay down the bits and the interpreter handles divide-by-zero with `"Floating point exception"`.
+
+**Source:** `src/core/assembler.js:1550-1558, 1572-1590`
+**See also:** [Extended-opcode group (OP_EXT)], [executeCase10 (interpreter)](interpreter.md#executecase10-extended-opcode-dispatch)
+
+#### `assembleOR` / `assembleXOR` / `assembleSEXT`
+
+Three-register logic and sign-extend. OR: eopcode A. XOR: eopcode B. SEXT: eopcode D. Same `OP_EXT | dr | sr1 | eopcode` shape. SEXT's runtime behavior depends on a quirky parity-table for small field selectors — see [executeSEXT (interpreter)](interpreter.md#executesext--sext_parity_table).
+
+**Source:** `src/core/assembler.js:1592-1620`
+**See also:** [Extended-opcode group (OP_EXT)]
+
+#### `assembleLD` / `assembleST` / `assembleLEA`
+
+PC-relative memory access trio. Same operand shape as `[.fill / .word]`: `<reg>, <expr>` where `<expr>` is `label`, `label+N`, `label - N`, or a literal. The encoder resolves the address via `[evaluateOperand]`, computes `pcoffset9 = address - locCtr - 1`, and packs it into the low 9 bits with the appropriate opcode. `assembleLD` honors `[externLabels]` (emits an `'e'` external reference); `assembleST` and `assembleLEA` do not — see [External-label fixup asymmetries].
+
+**Source:** `src/core/assembler.js:1691-1818`
+**See also:** [PC-relative target arithmetic], [External-label fixup asymmetries]
+
+#### `assembleBL`
+
+Direct call: `0100 1 pcoffset11`. The `bit11 = 1` distinguishes BL from BLR at the same base opcode (4). The pcoffset11 range is ±1024 — wider than pcoffset9 because subroutine targets can be further from the call site than typical branches. Honors `[externLabels]` (emits an `'E'` external reference for unresolved targets).
+
+**Source:** `src/core/assembler.js:1820-1847`
+**See also:** [PC-relative target arithmetic], [External-label fixup asymmetries], [executeBLorBLR (interpreter)](interpreter.md#executeblorblr--executejmp)
+
+#### `assembleBLR`
+
+Register-indirect call: `0100 000 baser offset6`. The `bit11 = 0` distinguishes BLR from BL. Used for calls through function pointers — base register holds the target address; offset6 is added to it. Common pattern: `blr lr` to return-and-recall, though `ret` is more idiomatic.
+
+**Source:** `src/core/assembler.js:1849-1860`
+**See also:** [assembleBL], [Pseudo-instructions]
+
+#### `assembleLDR` / `assembleSTR`
+
+Base+offset memory access pair. LDR: `0110 dr baser offset6` (load). STR: `0111 sr baser offset6` (store). Used for stack-frame access and array indexing — `ldr r0, fp, -4` reads four bytes below the frame pointer. `offset6` is a strict-range immediate (-32..31).
+
+**Source:** `src/core/assembler.js:1862-1884`
+**See also:** [Immediate field widths and ranges]
+
+#### `assembleJMP` / `assembleRET`
+
+Indirect-jump primitives. JMP: `1100 000 baser offset6` — unconditional jump to `r[baser] + offset6`. RET: same encoding with `baser = 7` (= lr), so the jump goes wherever the linker register points. The CLI parses `ret` as a separate mnemonic for ergonomics, but at the machine level it's just a JMP through r7.
+
+**Source:** `src/core/assembler.js:1886-1910`
+**See also:** [Pseudo-instructions], [executeJMP (interpreter)](interpreter.md#executeblorblr--executejmp)
+
+#### `assembleNOT`
+
+Bitwise complement: `1001 dr sr1 111111`. The low 6 bits are all 1s — that's not a meaningful sr2 field, just historical encoding padding. The decode side (`[executeNOT]`) ignores them; the assembler emits them for `.lst` / `.bst` parity with the original LCC.
+
+**Source:** `src/core/assembler.js:1912-1920`
+**See also:** [executeNOT (interpreter)](interpreter.md#executenot)
+
+#### `assembleMOV`
+
+Multi-mnemonic encoder — handles `mov`, `mvi`, and `mvr`. For `mov dr, X`, the encoder peeks at `X`: if `[isRegister]`, emits MVR (eopcode 12 in OP_EXT); otherwise treats `X` as a 9-bit signed immediate and emits MVI. Explicit `mvi` / `mvr` mnemonics let the user force one encoding when they want to. Oracle parity note: the oracle rejects negative immediates to `mov` (OB-001 / #31) but LCC.js accepts them — Charlie confirmed `mov dr, imm` is just a pseudo for `mvi dr, imm9`.
+
+**Source:** `src/core/assembler.js:1922-1970`
+**See also:** [Pseudo-instructions]
+
+#### `assembleTrap`
+
+Trap encoder: `1111 sr 0 trapvec` where `trapvec` is the 8-bit trap number. Default `sr = r0` if no operand is given (most traps don't actually use a source register — the source-register field is just a vestigial holding pen). Called from `[handleInstruction]`'s trap-vector cases for everything except `halt` (raw `OP_TRAP`) and `nl` (special-cased to `0xF001`).
+
+**Source:** `src/core/assembler.js:1972-1982`
+**See also:** [Trap vector table], [Trap dispatch in handleInstruction]
+
+#### Error wording catalog (section d)
+
+Concrete wordings raised by per-instruction encoders:
+
+- **Missing-operand family:** `"Missing operand"`, `"Missing register"`, `"Missing number"` — distinguished by which slot is missing
+- **Bad-form family:** `"Bad number"`, `"Bad label"`, `"Bad register"`, `"Bad operand--not a valid label"` — operand has the wrong shape
+- **Resolution failures:** `"Undefined label"` — operand-as-label didn't find a `[symbolTable]` entry
+- **Dispatch fall-throughs:** `"Invalid operation"`, `"Invalid mnemonic: <m>"` — unknown directive / instruction
+- **Range overflows:** `"pcoffset9 out of range"`, `"pcoffset9 out of range for ld"`, `"pcoffset9 out of range for st"`, `"pcoffset11 out of range"` — target too far from `locCtr`
+
+The slight variation in pcoffset9 wording (with/without "for X") reflects where the error is raised — `[assembleBR]`'s wording is the bare form, `[assembleLD]` and `[assembleST]` append "for ld" / "for st" so the user knows which encoder rejected the operand.
+
+**Source:** per-instruction encoders, lines 1408-1980
+**See also:** [error]
+
+#### Oracle parity notes
+
+Two LCC.js-vs-oracle deviations annotated in the per-instruction encoder code:
+
+- **Cuh63 6.3 `jmp` with no operand** — formerly thought to segfault on the oracle; current behaviour is `"Missing operand"` on both sides.
+- **OB-001 / issue #31** — oracle rejects negative immediates to `mov` (treats them as illegal); LCC.js accepts them because `mov dr, imm` is a pseudo for `mvi dr, imm` and `mvi`'s `imm9` is signed. Charlie confirmed the LCC.js interpretation is correct.
+
+These notes live in the encoder source rather than a separate ADR because they're highly localised — a future re-reader of `assembleMOV` benefits more from seeing the rationale inline than from a "see ADR-007" footnote.
+
+**Source:** `src/core/assembler.js:1889-1891, 1937-1939`
+**See also:** [assembleMOV], [assembleJMP]
+
+#### Register conventions referenced by encoders
+
+Two registers have symbolic aliases honored by the per-instruction encoders:
+
+- `lr` = `r7` (link register; baked into `[assembleRET]`)
+- `fp` = `r5` (frame pointer; baked into `[assembleCEA]`)
+
+A third (`sp` = `r6`) is used by `[assemblePUSH]` and `[assemblePOP]` at runtime but doesn't appear in the encoders — push/pop are register-only and the stack pointer is implicit. The symbolic-to-numeric translation itself lives in `[getRegister]` (section e), not here.
+
+**Source:** `src/core/assembler.js:1508, 1903`
+**See also:** [getRegister], [executeBLorBLR (interpreter)](interpreter.md#executeblorblr--executejmp)
 
 ### (e) — populated by #132
 
