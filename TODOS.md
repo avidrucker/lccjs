@@ -45,6 +45,8 @@ This file is the current actionable backlog. Completed historical refactor steps
 - [ ] research the original 300-character line-length rule more precisely
   - [ ] whether comments count
   - [ ] whether there is a separate true label-length limit
+- [ ] compare symbolic-debugger output — `.a`-run (lcc.js assemble+interpret) vs `.e`-run (interpreter.js) — against oracle LCC; find the missing/wrong BST/LST artifact and scope #13's remainder
+  <!-- @todo #145:60m/ARC spike: run the symbolic debugger on a .a (lcc.js) and its .e (interpreter.js) against LCC_ORACLE; diff .lst/.bst + stepping output; pin the missing/wrong artifact and confirm whether the .a source-line display is the same gap. Findings in docs/research/debugger-oracle-parity.md; decompose fixes onto #13. See #145 -->
 
 ## Core Behavior and Features
 
@@ -118,6 +120,8 @@ committing. Full context in `docs/research/xstate-iinterpreter.md`.
 
 - [ ] research a statechart for `iinterpreter.js` modes/UI; decide adopt-XState vs hand-roll vs keep-flags, then decompose into build puzzles
   <!-- @todo #134:60m/ARC research an XState (or hand-rolled) statechart for the interactive debugger's modes/UI in src/interactive/iinterpreter.js — exec region + orthogonal display region; assess dependency cost and snapshot/time-travel coupling; keep the per-opcode step() switch out of scope. Design in docs/research/xstate-iinterpreter.md; see #134 -->
+- [ ] DRY the core symbolic debugger (`interpreter.js` debugMode) vs the `ilcc`/`iinterpreter` extension; ROI-rank reimplemented step/diff/dispatch logic, propose shared modules (do before #134 so the statechart targets consolidated code)
+  <!-- @todo #146:60m/ARC research: map overlapping logic between interpreter.js debugMode (step loop, <reg=old/new>/<NZCV>/<pc> diff render) and src/interactive/ilcc.js + iinterpreter.js (prompt dispatch, mode flags); ROI-rank, propose shared module(s). Findings in docs/research/debugger-ilcc-dry.md; hand module boundaries to #134. See #146 -->
 
 ## Nice-to-Have Cleanup
 
