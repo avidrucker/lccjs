@@ -138,7 +138,31 @@ still missing.
 > "planned," but both already ship in `plusdemos/` — when in doubt, trust the
 > `demos/` and `plusdemos/` folders over the roadmap.
 
-<!-- @todo #178:30m/WRITER add a per-demo index here — one line per plusdemos/*.ap naming the LCC+ capability/technique it demonstrates — so a builder picks the nearest starting template fast; see #178 -->
+#### Pick a starting template
+
+Every game and demo lives in `plusdemos/`. Find the closest one to what you want
+to build and start from its source:
+
+**Building blocks (one technique each)**
+- `charCycling.ap` — timed single-character loop (`cursor`, `clear`, `sleep`)
+- `charTypewriter.ap` / `stringTypewriter.ap` — typewriter-style timed output (`sleep`)
+- `charPolling.ap` — non-blocking key polling, echo until Enter (`nbain`)
+- `randDeterministic.ap` — reproducible RNG from a fixed seed (`srand` + `rand`)
+- `randNondeterministic.ap` — time-seeded RNG, varies each run (`millis` + `srand` + `rand`)
+
+**Movement & rendering**
+- `playerWalk1D.ap` — left/right movement with redraw-only-on-move optimization (`resetc`)
+- `playerWalk2D.ap` — `wasd` movement on a 2D board (`nbain` + `resetc` + `sleep`)
+
+**Full game loops (least → most scaffolding)**
+- `findTheFruitStep.ap` — step movement + collision + random fruit placement (Snake precursor)
+- `findTheFruitSlide.ap` — same idea, with continuous/animated movement
+- `gameflappyBird.ap` — Flappy Bird: flap/gravity and smooth side-scroll render
+- `tictactoe.ap` — turn-based hot-seat: `clear` redraw, single-key `nbain`, table-driven win detection, clean function decomposition, the pointer-alias idiom
+- `rock-paper-scissors.ap` — human vs computer: `clear`/`sleep`/`nbain`/`rand`/`srand`+`millis`
+- `gameSnake.ap` — full Snake: linked-list body, growth, collision, complete game loop
+
+> Fuller prose descriptions of each demo: [plusdemos/plusdemos.md](../plusdemos/plusdemos.md).
 
 
 ### Open-source contributor
