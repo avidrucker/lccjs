@@ -360,6 +360,59 @@ describe('Linker Unit Tests', () => {
     });
   });
 
+  // #171 spike: createExecutable() was mocked in the existing tests, so the real
+  // .e byte layout was never asserted. These drive it through the mock fs (which
+  // concatenates every writeSync into state.files[out]) and check exact bytes.
+  describe('createExecutable() byte format (#185)', () => {
+    test('emits o-signature, S/G headers, A entries, C terminator, then little-endian code', () => {
+      const linker = new Linker();
+      linker.outputFileName = 'out.e';
+      linker.gotStart = true;
+      linker.start = 2;
+      linker.GTable = { main: 0 };           // 'main' = 6d 61 69 6e
+      linker.VTable = [{ address: 7, label: 'v' }]; // written as an 'A' entry (address only)
+      linker.ATable = [{ address: 9, moduleStart: 0 }];
+      linker.mca = [0x1234, 0x5678];
+
+      linker.createExecutable();
+
+      const expected = Buffer.from([
+        0x6f,                               // 'o' signature
+        0x53, 0x02, 0x00,                   // 'S' + start=2 (uint16 LE)
+        0x47, 0x00, 0x00, 0x6d, 0x61, 0x69, 0x6e, 0x00, // 'G' + addr=0 + "main" + NUL
+        0x41, 0x07, 0x00,                   // VTable 'A' + addr=7
+        0x41, 0x09, 0x00,                   // ATable 'A' + addr=9
+        0x43,                               // 'C' terminator
+        0x34, 0x12, 0x78, 0x56,             // code: 0x1234, 0x5678 little-endian
+      ]);
+      expect(Buffer.compare(state.files['out.e'], expected)).toBe(0);
+    });
+
+    test('VTable A-entries precede ATable A-entries, and no S entry is written without a start', () => {
+      const linker = new Linker();
+      linker.outputFileName = 'out.e';
+      linker.gotStart = false;              // no start → no 'S' entry
+      linker.GTable = {};
+      linker.VTable = [{ address: 0x11, label: 'v' }];
+      linker.ATable = [{ address: 0x22, moduleStart: 0 }];
+      linker.mca = [];
+
+      linker.createExecutable();
+
+      const out = state.files['out.e'];
+      const expected = Buffer.from([
+        0x6f,             // 'o'
+        0x41, 0x11, 0x00, // VTable 'A' @ 0x11  ← before ATable
+        0x41, 0x22, 0x00, // ATable 'A' @ 0x22
+        0x43,             // 'C'
+      ]);
+      expect(Buffer.compare(out, expected)).toBe(0);
+      expect(out.indexOf(0x53)).toBe(-1); // 'S' absent when gotStart is false
+      // ordering, stated directly: the V address byte appears before the A address byte
+      expect(out.indexOf(0x11)).toBeLessThan(out.indexOf(0x22));
+    });
+  });
+
   test('link() should default to linktest.e when no output file name is provided', () => {
     const linker = new Linker();
     jest.spyOn(linker, 'readObjectModule').mockImplementation(() => {
