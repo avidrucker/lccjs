@@ -173,12 +173,49 @@ Empty cells = "not tracked" (common for rows logged retroactively).
 
 ---
 
+## PDD scan coverage & the `at_todo` placeholder
+
+`npm run puzzles` runs the `pdd` gem over the repo to enforce that every real
+puzzle marker is backed by a GitHub issue. **What it scans is controlled by
+[`.pddignore`](../.pddignore)** (root) — a gitignore-style file, one exclude glob
+per line, read by `scripts/run-pdd.sh` and translated into `pdd --exclude`
+arguments. To change what's scanned, edit `.pddignore`; nothing is hardcoded in
+`package.json` anymore.
+
+The default policy is **scan all source, blacklist the rest**: code under `src/**`
+and friends is scanned; `docs/**`, all `*.md`, fixtures, generated trees,
+throwaway/experiment dirs, and the scanner's own files are excluded.
+
+**The substring trap.** `pdd` is a dumb, case-sensitive *substring* matcher. It
+flags the bare uppercase keyword (`@todo`'s uppercase form, or `TODO` / `TODO:`)
+**anywhere** in a scanned file — even buried inside a larger token. A stray
+mention with no leading space aborts the *entire* scan with a parse error, not
+just that line. So in a scanned (code) file you can never write the uppercase
+keyword unless you mean a real puzzle.
+
+**The `at_todo` placeholder (code files only).** When you need to *talk about*
+the marker concept in a scanned code file — a comment explaining the puzzle
+system, a variable, a doc-comment — write it lowercase: **`at_todo`**. Lowercase
+is invisible to the matcher (verified: lowercase passes, uppercase aborts even
+inside a token like `AT_TODO`). Rules:
+
+- Use `at_todo` **only in scanned code files**, and only to *discuss* the concept
+  — never as an actual obligation. A real puzzle is always the uppercase
+  `@todo #N:Est/ROLE` form with a backing issue.
+- In **non-scanned files** (`docs/**`, `*.md` — this very document) there's no
+  matcher to dodge, so write the real keyword normally for readability.
+- Don't invent uppercase variants (`AT_TODO`, `AT-TODO`, …) to "escape" the
+  scanner — they all contain the uppercase keyword as a substring and will trip
+  it. Lowercase `at_todo` is the one safe spelling.
+
 ## Concept glossary (one-liners)
 
 - **PDD** — Puzzle-Driven Development. Unfinished work lives as a `@todo #N:Est/ROLE description` comment in code, tied to a GitHub issue.
 - **Puzzle** — one such `@todo` + ticket pair. Cap is 60m human time.
 - **`@inprogress`** — a `@todo` that's been checked out into a worktree. Same shape (`@inprogress #N:Est/ROLE`), but signals "claimed, don't grab." Invisible to the `pdd` gem; surfaced by `npm run puzzle:status`. Flip back to `@todo` if abandoned, delete on close.
 - **`puzzle:status`** — `scripts/puzzle-status.js`, run via `npm run puzzle:status`. Joins markers × worktrees × issue state into AVAILABLE / CLAIMED / IN-PROGRESS / STALE. The authority on "what's safe to grab" and "what marker is orphaned."
+- **`.pddignore`** — root file (gitignore-style) listing the globs the puzzle scanner skips. Read by `scripts/run-pdd.sh`; the single source of truth for scan coverage.
+- **`at_todo`** — lowercase placeholder for *discussing* the marker concept inside a scanned code file without tripping the case-sensitive `pdd` substring matcher. Never an actual obligation; see "PDD scan coverage" above.
 - **Spike** — a bounded research puzzle that produces findings, not code. Labeled `research` (not `pdd-tracked`).
 - **Tracker** — a GitHub issue that doesn't represent a single work unit but tracks N child puzzles. Example: #108 tracked the 5 assembler.js spikes.
 - **H / C** — Human / Claude time estimates. H drives the Yegor cap (discipline). C is my forward-looking forecast (calibration).
