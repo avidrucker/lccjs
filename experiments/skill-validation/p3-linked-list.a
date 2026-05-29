@@ -1,0 +1,40 @@
+; demo-linked-list-1234.a
+; Static singly-linked list with 4 nodes (values 1,2,3,4).
+; Each node is 2 words: [value, next]. Last node's next is 0 (null).
+; Traverses from head, printing each value followed by a newline.
+
+          .start main
+
+; ---- list head pointer ----
+first:    .word n1           ; points to the first node
+
+; ---- node 1: value=1, next=n2 ----
+n1:       .word 1
+          .word n2
+
+; ---- node 2: value=2, next=n3 ----
+n2:       .word 2
+          .word n3
+
+; ---- node 3: value=3, next=n4 ----
+n3:       .word 3
+          .word n4
+
+; ---- node 4: value=4, next=null ----
+n4:       .word 4
+          .word 0            ; null pointer (end of list)
+
+; ---- traversal ----
+main:     ld   r0, first     ; r0 = pointer to current node
+
+@L0:      cmp  r0, 0         ; while (r0 != null)
+          brz  @L1
+
+          ldr  r1, r0, 0     ; r1 = current->value
+          dout r1
+          nl
+
+          ldr  r0, r0, 1     ; r0 = current->next
+          br   @L0
+
+@L1:      halt

@@ -1,0 +1,68 @@
+; compute_six.a
+; Function compute_six holds six distinct intermediate values (10,20,30,40,50,60)
+; live simultaneously, then returns their sum (210) in r0.
+;
+; Storage layout inside compute_six (after prologue + local allocation):
+;   fp+1  → saved fp
+;   fp+0  → saved lr
+;   fp-1  → local v6 = 60         (only one stack local; r0..r4 hold the other 5)
+;
+; Live state at the "all six alive" point:
+;   r0 = 10, r1 = 20, r2 = 30, r3 = 40, r4 = 50, (fp-1) = 60
+;
+; Scratch registers are r0..r4 only. r5/r6/r7 are fp/sp/lr — never touched.
+
+startup:  bl   main
+          halt
+
+; ---- compute_six() -> sum in r0 ----
+compute_six:
+          push lr
+          push fp
+          mov  fp, sp
+
+          ; Reserve one stack local at fp-1 and seed it with 60.
+          ; We build 60 in r0 first, store it, then load the rest.
+          sub  sp, sp, 1    ; allocate local v6 at fp-1
+          mov  r0, 60
+          str  r0, fp, -1   ; (fp-1) = 60
+
+          ; Now materialize the other five values into r0..r4.
+          mov  r0, 10
+          mov  r1, 20
+          mov  r2, 30
+          mov  r3, 40
+          mov  r4, 50
+
+          ; --- ALL SIX VALUES NOW SIMULTANEOUSLY ALIVE ---
+          ;   r0=10, r1=20, r2=30, r3=40, r4=50, (fp-1)=60
+          ; -----------------------------------------------
+
+          ; Sum them: accumulate into r0.
+          add  r0, r0, r1   ; r0 = 10 + 20 = 30
+          add  r0, r0, r2   ; r0 = 30 + 30 = 60
+          add  r0, r0, r3   ; r0 = 60 + 40 = 100
+          add  r0, r0, r4   ; r0 = 100 + 50 = 150
+          ldr  r1, fp, -1   ; r1 = 60 (the sixth value, from stack)
+          add  r0, r0, r1   ; r0 = 150 + 60 = 210
+
+          ; Epilogue
+          mov  sp, fp       ; discard locals
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          bl   compute_six  ; r0 = 210
+          dout r0           ; print 210
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

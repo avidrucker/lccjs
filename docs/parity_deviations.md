@@ -249,6 +249,40 @@ oracle `lcc empty1.a` for comparison.
 
 ---
 
+### 11. `.a` listing Source-Code column: LCC.js prints full source lines; OG LCC truncates
+
+In the `.lst`/`.bst` reports produced from a `.a` (assemble path), OG LCC clamps
+the rendered **Source Code** column to a fixed listing width — long lines are cut
+mid-token. LCC.js appends the source line verbatim, untruncated.
+
+| | cuh63 6.3 | LCC.js |
+|---|---|---|
+| long comment line | truncated (~67-col line cap; e.g. `…next pointer (.`) | full line preserved (e.g. `…next pointer (.word next_label).`) |
+| longest emitted line (demo-009 `.lst`) | 67 chars | 109 chars |
+| `.lst` size (demo-009) | 3141 bytes | 4020 bytes |
+
+Applies only to artifacts that carry source text (the `.a` path); `.e`-path reports
+have no Source Code column, so there is no divergence there.
+
+**Why BY DESIGN:** truncating the listing discards information (the tail of long
+comments and source lines). LCC.js favors a faithful, complete listing over
+byte-for-byte column parity. A deliberate readability choice, not a parity
+commitment — surfaced as the owner decision in the #145 spike and resolved in
+favor of full lines.
+
+**Source:** `src/utils/genStats.js:73` (code-bearing rows) and `:82` (comment-only
+rows) append `entry.sourceLine` with no width clamp.
+
+**Reference:** `docs/research/debugger-oracle-parity.md` (deviation **E**) and the
+probe `experiments/debugger-report-parity-probe.sh`.
+
+**Note:** the sibling column-geometry/whitespace deltas from the same spike (header
+`A`/`S` padding, stats-block alignment, `Loc/Code` widths, BST trailing space,
+banner date format) are *unresolved* formatting differences — not yet classified
+here; tracked for decision on #13.
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -263,3 +297,4 @@ _None pending._
 | 2026-05-27 | Pending stubs added | Reserved sections for #105, #106 (split from #29) |
 | 2026-05-28 | Deviation 9 added | Characterized empty/whitespace `.a` (#106): LCC.js exit 0 + no artifacts vs OG exit 1 + header-only listings; classified BY DESIGN |
 | 2026-05-28 | Deviation 10 added | Characterized undefined-label `br` (#105): both error + exit 1, but OG leaves a runnable blank `.e` (infinite-loops if run) while LCC.js writes nothing; classified OG BUG. All pending stubs now cleared |
+| 2026-05-28 | Deviation 11 added | `.a` listing Source-Code column: LCC.js prints full source lines, OG LCC truncates to listing width; classified BY DESIGN (from the #145 report-parity spike) |

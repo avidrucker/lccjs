@@ -1,0 +1,54 @@
+; sum_with_local.a
+; sum_with_local(a, b) stores a+b in a stack local at fp-1,
+; then returns it via r0.
+;
+; Stack frame inside sum_with_local (after prologue + local alloc):
+;   fp+3  → b   (second arg)
+;   fp+2  → a   (first arg)
+;   fp+1  → saved fp
+;   fp+0  → saved lr
+;   fp-1  → local sum
+
+startup:  bl   main
+          halt
+
+; ---- int sum_with_local(int a, int b) ----
+sum_with_local:
+          push lr
+          push fp
+          mov  fp, sp
+
+          sub  sp, sp, 1    ; allocate one local at fp-1
+
+          ldr  r0, fp, 2    ; r0 = a
+          ldr  r1, fp, 3    ; r1 = b
+          add  r0, r0, r1   ; r0 = a + b
+          str  r0, fp, -1   ; store sum into local at fp-1
+
+          ldr  r0, fp, -1   ; load return value from local
+
+          mov  sp, fp       ; discard locals
+          pop  fp
+          pop  lr
+          ret
+
+; ---- main ----
+main:     push lr
+          push fp
+          mov  fp, sp
+
+          mov  r0, 11       ; push b = 11 first (rightmost arg)
+          push r0
+          mov  r0, 7        ; push a = 7
+          push r0
+          bl   sum_with_local
+          add  sp, sp, 2    ; pop the 2 args
+
+          dout r0           ; print returned value (18)
+          nl
+
+          mov  r0, 0
+          mov  sp, fp
+          pop  fp
+          pop  lr
+          ret

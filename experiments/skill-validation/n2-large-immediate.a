@@ -1,0 +1,19 @@
+; Read integer from stdin, compare against 1000, print match/different.
+        ld    r1, @THOUSAND
+        din                 ; r0 <- input
+        cmp   r0, r1
+        bre   @MATCH
+        lea   r0, @MDIFF
+        sout
+        lea   r0, @NL
+        sout
+        halt
+@MATCH: lea   r0, @MMATCH
+        sout
+        lea   r0, @NL
+        sout
+        halt
+@THOUSAND: .word 1000
+@MMATCH:   .string "match"
+@MDIFF:    .string "different"
+@NL:       .string "\n"

@@ -1,0 +1,8 @@
+; Print integers 10 down to 1, one per line
+        ld    r0, @TEN
+@loop   dout  r0
+        nl
+        sub   r0, r0, 1
+        brp   @loop
+        halt
+@TEN    .word 10
