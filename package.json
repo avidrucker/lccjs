@@ -6,7 +6,8 @@
     "test": "jest --runInBand tests/new",
     "test:all": "jest --runInBand",
     "test:oracle": "jest --runInBand --testPathPattern oracle.e2e",
-    "puzzles": "pdd --source . --file puzzles.xml --skip-gitignore --exclude 'docs/**' --exclude '*.md' --exclude 'node_modules/**' --exclude 'coverage/**' --exclude 'scratch/**' --exclude 'experiments/**' --exclude 'tests/goldens/**' --exclude 'public_experiments/**' --exclude 'demos/**' --exclude 'plusdemos/**' --exclude 'cit118demos/**' --exclude 'package-lock.json' --exclude '.claude/**'"
+    "puzzle:status": "node scripts/puzzle-status.js",
+    "puzzles": "pdd --source . --file puzzles.xml --skip-gitignore --exclude 'docs/**' --exclude '*.md' --exclude 'node_modules/**' --exclude 'coverage/**' --exclude 'scratch/**' --exclude 'experiments/**' --exclude 'tests/goldens/**' --exclude 'public_experiments/**' --exclude 'demos/**' --exclude 'plusdemos/**' --exclude 'cit118demos/**' --exclude 'package-lock.json' --exclude '.claude/**' --exclude 'scripts/puzzle-status.js'"
   },
   "devDependencies": {
     "dotenv": "^17.2.3",
