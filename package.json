@@ -7,7 +7,8 @@
     "test:all": "jest --runInBand",
     "test:oracle": "jest --runInBand --testPathPattern oracle.e2e",
     "puzzle:status": "node scripts/puzzle-status.js",
-    "puzzles": "bash scripts/run-pdd.sh"
+    "puzzles": "bash scripts/run-pdd.sh",
+    "claim": "node scripts/claim.js"
   },
   "devDependencies": {
     "dotenv": "^17.2.3",

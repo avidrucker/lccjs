@@ -18,6 +18,10 @@ This file is the current actionable backlog. Completed historical refactor steps
 - [ ] extract duplicated CLI scaffolding (`isTestMode` + `fatalExit`/`cliErrorExit`/`cliWrappedErrorExit`) into `src/utils/cliExit.js`
   <!-- @todo #167:60m/DEV create src/utils/cliExit.js exporting isTestMode + the three exit helpers; rewrite all 8 src/ sites to import it (grep "typeof global.it === 'function'" -> 8 hits). No behavior change, suite stays green, preserve the wrapper-vs-pure-API boundary. If src/plus migration overruns 60m, split it to a follow-up puzzle. Marker at src/core/lcc.js. See #167 -->
 
+## Parallel-Agent Coordination
+
+- [x] agent identity on worktree branches: self-assigned fruit names for parallel-agent visibility (#179 closed — `scripts/claim.js` / `npm run claim`, `puzzle-status.js` agent attribution, convention in `docs/claude_workflow.md` + `docs/design-agent-worktree-identity.md`)
+
 ## Documentation
 
 - [ ] rewrite `docs/assembler.md` to match the current pure-API plus wrapper architecture

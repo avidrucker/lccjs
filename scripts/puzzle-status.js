@@ -87,10 +87,13 @@ function findWorktrees() {
   let cur = null;
   for (const line of out.split('\n')) {
     if (line.startsWith('worktree ')) {
-      cur = { path: line.slice('worktree '.length), branch: null };
+      cur = { path: line.slice('worktree '.length), branch: null, agent: null };
       worktrees.push(cur);
     } else if (line.startsWith('branch ') && cur) {
       cur.branch = line.slice('branch '.length).replace('refs/heads/', '');
+      // Agent identity = the fruit prefix of a `<fruit>/issue-N-…` branch (see
+      // docs/design-agent-worktree-identity.md). Absent on legacy/flat branches.
+      if (cur.branch.includes('/')) cur.agent = cur.branch.split('/')[0];
     }
   }
   // issue N is claimed by a worktree whose branch or path mentions issue-N.
@@ -133,12 +136,12 @@ function classify(marker, byIssue, issues) {
   }
   // @inprogress must have a live worktree backing it.
   if (marker.keyword === 'inprogress') {
-    if (wt) return { status: 'IN-PROGRESS', stale: false, detail: `claimed in ${shortPath(wt.path)} (${wt.branch})` };
+    if (wt) return { status: 'IN-PROGRESS', stale: false, detail: `${by(wt)}claimed in ${shortPath(wt.path)} (${wt.branch})` };
     return { status: 'STALE', stale: true, detail: '@inprogress but no matching worktree — re-grab (@todo) or finish it' };
   }
   // @todo with a worktree on it: someone is (or was) working it.
   if (wt) {
-    return { status: 'CLAIMED', stale: false, detail: `worktree ${shortPath(wt.path)} (${wt.branch}) — consider flipping to @inprogress` };
+    return { status: 'CLAIMED', stale: false, detail: `${by(wt)}worktree ${shortPath(wt.path)} (${wt.branch}) — consider flipping to @inprogress` };
   }
   if (issue && issue.blocked) {
     return { status: 'BLOCKED', stale: false, detail: 'open but labeled `blocked` — not grabbable yet' };
@@ -148,6 +151,11 @@ function classify(marker, byIssue, issues) {
 
 function shortPath(p) {
   return p.replace(process.env.HOME || '~', '~');
+}
+
+// Attribute a claim to its agent (fruit) when the branch carries an identity.
+function by(wt) {
+  return wt && wt.agent ? `by ${wt.agent} · ` : '';
 }
 
 const ICON = {

@@ -86,12 +86,13 @@ next," start here.
 
 **If I'm working in a `git worktree`** (because of parallel-agent activity):
 
-- The worktree lives at `.claude/worktrees/issue-<N>/` on branch `worktree-issue-<N>`.
+- **I claim under a self-assigned agent identity** so `git worktree list` shows *who* is working *what*. I run `npm run claim -- <issue>` instead of bare `git worktree add`; it picks the lowest free **fruit** name (apple, banana, …), stakes the worktree at `.claude/worktrees/<fruit>-issue-<N>/` on branch `<fruit>/issue-<N>-<slug>`, and prints the name. **My fruit is stable for the whole session** — for any *further* worktree I open I pass `--as <fruit>` to reuse it (`auto` is for the first claim only; it returns a brand-new fruit and is race-safe via detect-and-rollback). See `docs/design-agent-worktree-identity.md`.
+- The worktree lives at `.claude/worktrees/<fruit>-issue-<N>/` on branch `<fruit>/issue-<N>-<slug>`. (Legacy worktrees used `worktree-issue-<N>`; both still carry `issue-<N>`, so `puzzle:status` recognises either — it just can't attribute the legacy ones to an agent.)
 - I work in the worktree, not in the main checkout.
 - All file edits and commits happen in the worktree.
 - I push using the trunk-based pattern: `git push origin HEAD:main` (after rebase).
 - **I flip the puzzle's marker from `@todo` to `@inprogress`** the moment I check it out, so the marker on `main` reads as *claimed*, not idle. `pdd` ignores `@inprogress` (it matches only `@todo`), so this keeps the gem's count clean while signalling other agents to keep off. At close the marker is deleted as usual; if I abandon the work, I flip it back to `@todo`.
-- **`npm run puzzle:status`** reconciles every marker against live worktrees and GitHub issue state — it shows each puzzle as `AVAILABLE` / `CLAIMED` / `IN-PROGRESS` / `STALE`. Run it before grabbing a puzzle (don't grab a `CLAIMED`/`IN-PROGRESS` one) and after closing (a `STALE` row means a marker outlived its closed issue — delete it). `-- --strict` exits non-zero on any stale marker, for gating.
+- **`npm run puzzle:status`** reconciles every marker against live worktrees and GitHub issue state — it shows each puzzle as `AVAILABLE` / `CLAIMED` / `IN-PROGRESS` / `STALE`, and attributes claimed/in-progress rows to the owning agent (`… by apple`) when the worktree branch carries a fruit identity. Run it before grabbing a puzzle (don't grab a `CLAIMED`/`IN-PROGRESS` one) and after closing (a `STALE` row means a marker outlived its closed issue — delete it). `-- --strict` exits non-zero on any stale marker, for gating.
 - **I remove my worktree when I finish** (this is mandatory, not optional — see "At close" below). A worktree left on disk after the issue is closed is cruft: it looks like a live claim to other agents and to `puzzle:status`, but no one is in it. The owning agent cleans up its own worktree; do not assume someone else will.
 
 ---
@@ -223,7 +224,7 @@ inside a token like `AT_TODO`). Rules:
 - **Spike** — a bounded research puzzle that produces findings, not code. Labeled `research` (not `pdd-tracked`).
 - **Tracker** — a GitHub issue that doesn't represent a single work unit but tracks N child puzzles. Example: #108 tracked the 5 assembler.js spikes.
 - **H / C** — Human / Claude time estimates. H drives the Yegor cap (discipline). C is my forward-looking forecast (calibration).
-- **Worktree** — a separate working directory + branch for parallel-agent work. Lives at `.claude/worktrees/issue-<N>/`.
+- **Worktree** — a separate working directory + branch for parallel-agent work. Lives at `.claude/worktrees/<fruit>-issue-<N>/` on branch `<fruit>/issue-<N>-<slug>`, claimed via `npm run claim`. The fruit (apple, banana, …) is the **agent identity** for the session. See `docs/design-agent-worktree-identity.md`.
 - **Trunk-based** — agents push directly to `main` (with `git push origin HEAD:main` from a feature branch). No PRs by default.
 
 ---
