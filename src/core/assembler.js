@@ -1428,6 +1428,7 @@ class Assembler {
   }
 
   assembleBR(mnemonic, operands) {
+    // @todo #190:45m/RESEARCH audit every branch mnemonic in this map for OG-LCC parity — assemble each on the oracle + lccjs, confirm identical encoding incl. alias pairs (brz==bre, brc==brb, br==bral), lock in a parity test; brb's dispatch gap is #187; see #190
     let codes = {
       'brz': 0,
       'bre': 0,
