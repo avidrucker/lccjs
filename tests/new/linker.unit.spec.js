@@ -198,6 +198,61 @@ describe('Linker Unit Tests', () => {
     });
   });
 
+  // #171 spike: adjustLocalReferences() (A-table relocation) was never called by
+  // a unit test. It relocates a module-local reference to its global position by
+  // adding the module's start offset: mca[addr] += moduleStart.
+  describe('adjustLocalReferences() ATable relocation (#182)', () => {
+    test('adds moduleStart to the referenced word in place', () => {
+      const linker = new Linker();
+      linker.mca = [];
+      linker.mca[10] = 5; // module-local address 5
+      linker.ATable = [{ address: 10, moduleStart: 100 }];
+
+      linker.adjustLocalReferences();
+
+      expect(linker.mca[10]).toBe(105); // 5 + moduleStart(100)
+    });
+
+    test('relocates multiple entries by their own moduleStart in one pass', () => {
+      // Three modules concatenated at offsets 0 / 10 / 30.
+      const linker = new Linker();
+      linker.mca = [2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 1];
+      linker.ATable = [
+        { address: 0, moduleStart: 0 },
+        { address: 5, moduleStart: 10 },
+        { address: 12, moduleStart: 30 },
+      ];
+
+      linker.adjustLocalReferences();
+
+      expect(linker.mca[0]).toBe(2);   // 2 + 0
+      expect(linker.mca[5]).toBe(13);  // 3 + 10
+      expect(linker.mca[12]).toBe(31); // 1 + 30
+      expect(linker.mca[3]).toBe(0);   // untouched index unchanged
+    });
+
+    test('moduleStart of 0 (first module) leaves the word unchanged', () => {
+      const linker = new Linker();
+      linker.mca = [];
+      linker.mca[3] = 7;
+      linker.ATable = [{ address: 3, moduleStart: 0 }];
+
+      linker.adjustLocalReferences();
+
+      expect(linker.mca[3]).toBe(7);
+    });
+
+    test('empty ATable is a no-op', () => {
+      const linker = new Linker();
+      linker.mca = [11, 22, 33];
+      linker.ATable = [];
+
+      linker.adjustLocalReferences();
+
+      expect(linker.mca).toEqual([11, 22, 33]);
+    });
+  });
+
   test('link() should default to linktest.e when no output file name is provided', () => {
     const linker = new Linker();
     jest.spyOn(linker, 'readObjectModule').mockImplementation(() => {
