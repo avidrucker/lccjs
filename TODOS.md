@@ -28,6 +28,8 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] `reportArtifacts.js`
 - [ ] label any `progress-report.md` snapshots as historical when they exist
 - [ ] writer task: per-module glossary for `assembler.js`, `interpreter.js`, `linker.js` (parent #107; spike+write puzzles #108–#113; stubs in `docs/glossary/`)
+- [ ] QC pass on `docs/glossary/*` — make them focused/clear/accessible: drop the redundant "Candidate term inventory" spike sections, strip ticket-ref/provenance noise from prose, slim headers, fix README Status column (parent #107)
+  <!-- @todo #162:60m/WRITER QC pass on all glossary files: delete redundant spike "Candidate term inventory" sections, strip PDD ticket numbers/provenance from reader-facing prose (keep Source + cross-file links), slim headers, replace README Status column with plain descriptions. docs/ only. See #162 -->
 - [ ] document the cross-repo `closed_commit` convention in `docs/puzzle-velocity.md` (5 rows so far reference claude-config SHAs)
   <!-- @todo #161:15m/WRITER add a sentence to the closed_commit row in docs/puzzle-velocity.md noting cross-repo SHAs (claude-config skill closes); see #161 -->
 
@@ -95,9 +97,9 @@ Charlie's textbook-demo conventions (#104) are an input to the design.
 - [x] research the skill: scope, source materials, structure, evaluation criteria — design in `docs/lccjs-assembly-skill-design.md` (#115 closed)
 - [x] build the skill per the design — split into #116a–d (see design §7) (#116 closed)
 - [x] validate the skill: end-to-end + known-pitfall coverage — first-pass validation in `docs/lccjs-assembly-skill-validation.md`; 5/6 assembled, all 4 pitfall classes steered correctly; one different-axis miss (N3 invented `puts`) filed as follow-up #148 (#117 closed)
-- [ ] incorporate #117 validation findings into the skill — refine SKILL.md based on observed failures and reasonable-but-suboptimal patterns
+- [x] incorporate #117 validation findings into the skill — refine SKILL.md based on observed failures and reasonable-but-suboptimal patterns (skill 0.6.0, both children closed)
   - [x] enumerate legal LCC trap set in SKILL.md so agents stop inventing `puts`/`printf` (#148 closed; skill 0.5.0)
-  <!-- @todo #149:30m/DEV surface `nl` as the canonical newline idiom + tighten house-style scoping language in SKILL.md; see #149 -->
+  - [x] surface `nl` as the canonical newline idiom + tighten house-style scoping language (#149 closed; skill 0.6.0)
 - [ ] tighten validation methodology — make future fan-out passes leave a cleaner working tree
   <!-- @todo #160:15m/WRITER add 'do not write files to disk; return text only' to subagent validation prompts in docs/lccjs-assembly-skill-validation.md; see #160 -->
 - [ ] build a sibling `lccplus-assembly` skill for `.ap` programs — stub scaffolded at `claude-config/skills/lccplus-assembly/` (v0.0.1); follow the same research → build → validate pipeline as the base skill
