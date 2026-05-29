@@ -79,10 +79,10 @@ inspectable.
 
 ### Common challenges for first-time learners
 
-<!-- @todo #176:40m/WRITER expand this into a fuller first-timer pitfall catalog (from the lccjs-assembly skill's pitfalls reference + parity_deviations.md), and add per-demo capability walkthroughs to the game/demo-maker section; see #176 -->
-The recurring surprises, worth flagging early (full catalog in the paired
-[`lccjs-assembly` skill's `pitfalls` reference](./lccjs-assembly-skill-design.md)
-and in [parity_deviations.md](./parity_deviations.md)):
+<!-- @todo #176:45m/WRITER author a canonical in-repo docs/pitfalls.md (single source of truth, built from parity_deviations.md + lcc-isa.md), link it here, and collapse this list to a teaser; also add per-demo capability walkthroughs to the game/demo-maker section; see #176 -->
+The recurring surprises, worth flagging early (the canonical behavioral details
+live in [parity_deviations.md](./parity_deviations.md) and the
+[LCC ISA summary](./lcc-isa.md)):
 
 - **`mov dr, imm` is really `mvi`** — the immediate is a 9-bit signed value
   (≈ −256…255). Bigger constants need `.word` + a label, not `mov`.
