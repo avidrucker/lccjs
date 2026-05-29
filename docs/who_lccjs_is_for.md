@@ -79,23 +79,17 @@ inspectable.
 
 ### Common challenges for first-time learners
 
-<!-- @todo #176:45m/WRITER author a canonical in-repo docs/pitfalls.md (single source of truth, built from parity_deviations.md + lcc-isa.md), link it here, and collapse this list to a teaser; also add per-demo capability walkthroughs to the game/demo-maker section; see #176 -->
-The recurring surprises, worth flagging early (the canonical behavioral details
-live in [parity_deviations.md](./parity_deviations.md) and the
-[LCC ISA summary](./lcc-isa.md)):
+The full catalog lives in **[docs/pitfalls.md](./pitfalls.md)** — point students
+there. The recurring greatest hits, so you know what to watch for:
 
-- **`mov dr, imm` is really `mvi`** — the immediate is a 9-bit signed value
-  (≈ −256…255). Bigger constants need `.word` + a label, not `mov`.
-- **The string-escape set is small** — `\n`, `\t`, `\"`, `\\` work; `\0`, `\b`,
-  `\f`, `\v` do **not** and cause assembly errors.
-- **`.start <label>` is the only way to set the entry point** — omit it and
-  execution begins at address 0, usually not what the student intended.
-- **DIV / REM by zero reports "Floating point exception"** — the message is
-  inherited and confuses beginners; it just means divide-by-zero.
-- **Memory and the stack wrap silently at 65536 words** — runaway pushes or bad
-  addresses don't crash loudly; they wrap, producing baffling values.
-- **Branch conditions test the last flag-setting instruction**, not a comparison
-  written next to the branch — a classic source of "my `if` does the opposite."
+- **`mov` immediates are tiny** — 9-bit signed (≈ −256…255); bigger constants
+  need `.word` + `ld`, not `mov`.
+- **`.start <label>` is the only entry point** — omit it and execution begins at
+  address 0, usually not what was intended.
+- **Branch suffixes test flags, not English** — they read the flags set by the
+  *last* flag-setting instruction, a classic "my `if` does the opposite" trap.
+- **`r5`/`r6`/`r7` are reserved** (`fp`/`sp`/`lr`) — using them as scratch
+  corrupts the frame the moment a function is called from another.
 
 ---
 
@@ -143,6 +137,9 @@ still missing.
 > Note: the [ROADMAP](../ROADMAP.md) lists Rock-Paper-Scissors and Flappy Bird as
 > "planned," but both already ship in `plusdemos/` — when in doubt, trust the
 > `demos/` and `plusdemos/` folders over the roadmap.
+
+<!-- @todo #178:30m/WRITER add a per-demo index here — one line per plusdemos/*.ap naming the LCC+ capability/technique it demonstrates — so a builder picks the nearest starting template fast; see #178 -->
+
 
 ### Open-source contributor
 

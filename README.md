@@ -122,6 +122,7 @@ Test organization under `tests/new/`:
 | [docs/core-behavior-matrix.md](./docs/core-behavior-matrix.md) | Behavior contracts and oracle-vs-lccjs matrix |
 | [docs/parity_deviations.md](./docs/parity_deviations.md) | Documented intentional deviations from oracle behavior |
 | [docs/lcc-isa.md](./docs/lcc-isa.md) | LCC instruction set summary (instructions, traps, directives, branch codes) |
+| [docs/pitfalls.md](./docs/pitfalls.md) | Canonical catalog of LCC-assembly pitfalls — the surprises that bite first-timers (symptom → why → fix) |
 | [docs/lccplus-isa.md](./docs/lccplus-isa.md) | LCC+ instruction set addendum (new instructions, trap vectors, `.lccplus` directive) |
 | [docs/cuh63/](./docs/cuh63/README.md) | Annotated cuh63 exercise index — one doc per chapter (ch3–ch19), covering all `.a` examples from the textbook |
 | [docs/assembler.md](./docs/assembler.md) | Assembler internals |
