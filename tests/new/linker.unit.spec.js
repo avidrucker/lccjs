@@ -310,6 +310,56 @@ describe('Linker Unit Tests', () => {
     });
   });
 
+  // #171 spike: regression guard for OB-003 / #33-35. adjustExternalReferences()
+  // runs (and throws on an unresolved external) BEFORE createExecutable() in
+  // link(), so a bad link aborts without writing a partial/corrupt .e. The bug
+  // is already fixed; these lock that ordering against a future reorder.
+  describe('link() aborts before writing output on unresolved external (#184)', () => {
+    test('throws LinkerError, never calls createExecutable, writes no file', () => {
+      const linker = new Linker();
+      // Module references external 'missing'; nothing defines it (no G entry).
+      jest.spyOn(linker, 'readObjectModule').mockImplementation(() => {
+        linker.objectModules.push({
+          headers: [{ type: 'E', address: 0, label: 'missing' }],
+          code: [0x0000],
+        });
+      });
+      const createSpy = jest.spyOn(linker, 'createExecutable'); // pass-through: would write if reached
+
+      expect(() => linker.link(['module.o'], 'out.e')).toThrow(LinkerError);
+      expect(() => {
+        const l2 = new Linker();
+        jest.spyOn(l2, 'readObjectModule').mockImplementation(() => {
+          l2.objectModules.push({ headers: [{ type: 'E', address: 0, label: 'missing' }], code: [0x0000] });
+        });
+        l2.link(['module.o'], 'out.e');
+      }).toThrow('missing is an undefined external reference');
+
+      expect(createSpy).not.toHaveBeenCalled();
+      expect(state.files['out.e']).toBeUndefined();
+    });
+
+    test('completes and writes output when the external resolves (abort is conditional)', () => {
+      const linker = new Linker();
+      // 'foo' is both defined (G) and referenced (E) within the module.
+      jest.spyOn(linker, 'readObjectModule').mockImplementation(() => {
+        linker.objectModules.push({
+          headers: [
+            { type: 'G', address: 0, label: 'foo' },
+            { type: 'E', address: 1, label: 'foo' },
+          ],
+          code: [0xe000, 0x0000],
+        });
+      });
+      const createSpy = jest.spyOn(linker, 'createExecutable');
+
+      linker.link(['module.o'], 'out.e');
+
+      expect(createSpy).toHaveBeenCalledTimes(1);
+      expect(state.files['out.e']).toBeDefined();
+    });
+  });
+
   test('link() should default to linktest.e when no output file name is provided', () => {
     const linker = new Linker();
     jest.spyOn(linker, 'readObjectModule').mockImplementation(() => {
