@@ -86,6 +86,9 @@ next," start here.
 - I work in the worktree, not in the main checkout.
 - All file edits and commits happen in the worktree.
 - I push using the trunk-based pattern: `git push origin HEAD:main` (after rebase).
+- **I flip the puzzle's marker from `@todo` to `@inprogress`** the moment I check it out, so the marker on `main` reads as *claimed*, not idle. `pdd` ignores `@inprogress` (it matches only `@todo`), so this keeps the gem's count clean while signalling other agents to keep off. At close the marker is deleted as usual; if I abandon the work, I flip it back to `@todo`.
+- **`npm run puzzle:status`** reconciles every marker against live worktrees and GitHub issue state — it shows each puzzle as `AVAILABLE` / `CLAIMED` / `IN-PROGRESS` / `STALE`. Run it before grabbing a puzzle (don't grab a `CLAIMED`/`IN-PROGRESS` one) and after closing (a `STALE` row means a marker outlived its closed issue — delete it). `-- --strict` exits non-zero on any stale marker, for gating.
+- **I remove my worktree when I finish** (this is mandatory, not optional — see "At close" below). A worktree left on disk after the issue is closed is cruft: it looks like a live claim to other agents and to `puzzle:status`, but no one is in it. The owning agent cleans up its own worktree; do not assume someone else will.
 
 ---
 
@@ -135,7 +138,8 @@ The `git pull --rebase` step **must** happen between commit 1 and the SHA captur
 
 3. Update tracker checkbox **via an issue comment**, not a body edit. (Body edits race with parallel agents; comments are append-only.) If there's no tracker, this step is skipped.
 4. Mark any related TaskCreate tasks as complete via TaskUpdate.
-5. Report what changed in 1-2 sentences. Include the velocity Δ if it's interesting.
+5. **Remove my worktree** — `ExitWorktree --remove` (for one created via `EnterWorktree`) or `git worktree remove .claude/worktrees/issue-<N>` + `git worktree prune`. This is **mandatory**: confirm the commits are on `origin/main` first (`git branch -r --contains HEAD` → `origin/main`), then remove. Leaving a worktree behind after close is the #1 source of "is someone working on this?" confusion — it reads as a live claim when no agent is in it. Delete the throwaway `worktree-issue-<N>` branch too (it's merged and has no remote).
+6. Report what changed in 1-2 sentences. Include the velocity Δ if it's interesting.
 
 **What I do *not* do at close:**
 
@@ -143,6 +147,7 @@ The `git pull --rebase` step **must** happen between commit 1 and the SHA captur
 - I don't force-push to `main`, ever, without explicit user authorization.
 - I don't open a PR unless asked — the project uses trunk-based merges.
 - I don't gold-plate. Once the ticket scope is met, I stop.
+- I don't leave my worktree on disk after closing. Cleaning it up is part of closing (step 5), not a later chore for someone else.
 
 ---
 
@@ -172,6 +177,8 @@ Empty cells = "not tracked" (common for rows logged retroactively).
 
 - **PDD** — Puzzle-Driven Development. Unfinished work lives as a `@todo #N:Est/ROLE description` comment in code, tied to a GitHub issue.
 - **Puzzle** — one such `@todo` + ticket pair. Cap is 60m human time.
+- **`@inprogress`** — a `@todo` that's been checked out into a worktree. Same shape (`@inprogress #N:Est/ROLE`), but signals "claimed, don't grab." Invisible to the `pdd` gem; surfaced by `npm run puzzle:status`. Flip back to `@todo` if abandoned, delete on close.
+- **`puzzle:status`** — `scripts/puzzle-status.js`, run via `npm run puzzle:status`. Joins markers × worktrees × issue state into AVAILABLE / CLAIMED / IN-PROGRESS / STALE. The authority on "what's safe to grab" and "what marker is orphaned."
 - **Spike** — a bounded research puzzle that produces findings, not code. Labeled `research` (not `pdd-tracked`).
 - **Tracker** — a GitHub issue that doesn't represent a single work unit but tracks N child puzzles. Example: #108 tracked the 5 assembler.js spikes.
 - **H / C** — Human / Claude time estimates. H drives the Yegor cap (discipline). C is my forward-looking forecast (calibration).
