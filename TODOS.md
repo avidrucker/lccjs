@@ -89,9 +89,8 @@ research → build → validate so the design is pinned down before implementati
 Charlie's textbook-demo conventions (#104) are an input to the design.
 
 - [x] research the skill: scope, source materials, structure, evaluation criteria — design in `docs/lccjs-assembly-skill-design.md` (#115 closed)
-- [ ] build the skill per the design — split into #116a–d (see design §7); #116a–c unblocked, #116d blocked by #104
-  <!-- @todo #116:60m/DEV implement the LCCjs assembly Claude skill per docs/lccjs-assembly-skill-design.md — split per design §7; see #116 -->
-- [ ] validate the skill: end-to-end + known-pitfall coverage (blocked by #116)
+- [x] build the skill per the design — split into #116a–d (see design §7) (#116 closed)
+- [ ] validate the skill: end-to-end + known-pitfall coverage (was blocked by #116, now closed)
   <!-- @todo #117:60m/TEST validate the LCCjs assembly Claude skill — blocked by #116; see #117 -->
 
 ## Docs Presentation / Syntax Highlighting
