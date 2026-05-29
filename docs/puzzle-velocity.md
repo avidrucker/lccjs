@@ -11,8 +11,6 @@ the protocol, and the jargon.
 ticket / puzzle. Empty fields mean "not tracked" (most commonly for rows
 logged retroactively before the protocol existed).
 
-<!-- @todo #186:60m/RESEARCH this append-only CSV is a single hot file: concurrent closes by parallel agents conflict on every `git pull --rebase` and the rebase rewrites closed_commit. Evaluate a merge-friendly store (.gitattributes merge=union / per-ticket files / SQLite local+export) and recommend one in docs/research/velocity-log-storage.md; see #186 -->
-
 ## Column reference
 
 | Column | Type | Meaning |
@@ -27,7 +25,7 @@ logged retroactively before the protocol existed).
 | `delta_c_min` | number | `actual_min − c_min` (negative = under estimate) |
 | `started_iso` | ISO 8601 / empty | timestamp when I began work (re-reading the issue counts as start); empty for retroactive rows |
 | `finished_iso` | ISO 8601 | timestamp of the commit that closed the ticket |
-| `closed_commit` | git short SHA | short SHA of the closing commit |
+| `closed_commit` | git short SHA / empty | short SHA of the closing commit. Left **empty** at close time since the rebase rewrites it (#186); derive on demand: `git log --grep "Closes #N" -1 --format=%h`. |
 | `notes` | string | free-text notes (anomalies, context, what was hard/easy) |
 | `agent` | string / empty | which agent did the work — the worktree fruit identity, uppercased (e.g. `APPLE`); see [`design-agent-worktree-identity.md`](./design-agent-worktree-identity.md). Empty for rows logged before #180 / for work whose agent is unknown. Trailing column so the positional `awk` examples below keep their `$1..$12`. |
 
@@ -89,18 +87,36 @@ When I pick up a ticket:
 2. **Predict** — if the ticket has no C estimate yet, set one now.
 3. **Work** — do the puzzle.
 4. **Finish** — capture finish timestamp before the closing commit.
-5. **Close** — `git commit -m "... Closes #N"` (commit 1).
-6. **Sync** — `git pull --rebase`. **This step is critical when other agents may have pushed in parallel** — rebase rewrites your commit's SHA, so the SHA must be captured *after* this step. If the rebase hits a CSV conflict (both agents appended a row):
-   - Resolve manually (edit the file, remove `<<<<<<<` / `=======` / `>>>>>>>` markers, keep all rows).
-   - **Verify markers are gone before `git add`:** `grep -c '^<<<<<<<\|^=======\|^>>>>>>>' <file>` must print `0`. This guard catches two real failure modes: the resolution edit being applied to the wrong region (markers left behind), or the Edit tool erroring silently and the file still having raw markers — `git add` + `git rebase --continue` will happily ship a broken file. (Happened on the #139 close — followup commit `a19d115` cleaned it up.) Treat any non-zero count as a hard block.
-   - `git add <file>`, then `git rebase --continue`.
-7. **Record** — `git rev-parse --short HEAD` is now stable; append a CSV row with that SHA + the actuals + ΔH + ΔC.
-8. **Log** — `git commit -m "docs(velocity): log #N — …"` (commit 2).
-9. **Push** — `git push`.
+5. **Close + log in ONE commit** — delete the puzzle's source marker, append the
+   CSV row (with `closed_commit` left **empty** — see below), and
+   `git commit -m "… Closes #N"`.
+6. **Sync + push** — `git pull --rebase`, then `git push`.
 
-Why `pull --rebase` at step 6 and not earlier: rebasing rewrites the commit SHA captured at step 5. If you logged the velocity row first, that SHA would point at a now-orphan commit that doesn't exist on `main`. By rebasing between commit 1 and the SHA capture, the SHA is stable through the push.
+`docs/puzzle-velocity.csv` carries `merge=union` (see `.gitattributes`), so when
+other agents have appended rows in parallel, the rebase **auto-unions** both
+sides' rows with **no manual conflict** — the old hand-resolve + marker-guard
+dance is gone. (`union` fires under `rebase`, not just `merge` — verified;
+[`research/velocity-log-storage.md`](./research/velocity-log-storage.md).)
 
-Same reason: **do not `git commit --amend`** to backfill a SHA. Amend also orphans the original.
+If a *non-union* file conflicts during the rebase (e.g. two agents edited the
+same region of `TODOS.md`), resolve it manually and still run the guard before
+`git add`: `grep -c '^<<<<<<<\|^=======\|^>>>>>>>' <file>` must print `0` (a
+botched resolution once shipped raw markers — #139, fixed by `a19d115`).
+
+### `closed_commit`: derive, don't capture
+
+Leave `closed_commit` **empty** at close time. The rebase rewrites the closing
+commit's SHA, so any value captured before the push is fragile and orphans on
+every rebase round (the #160 close cycled `5c811f8 → 45f2654 → ab80bbc` for
+exactly this reason). The closing commit is always recoverable from its message:
+
+```bash
+git log --grep "Closes #<N>" -1 --format=%h
+```
+
+An empty `closed_commit` is the honest value at close. Bulk-backfilling empty
+SHAs from the git log (a reconciler run alongside `puzzle:status`) is a follow-up.
+**Do not `git commit --amend`** to backfill a SHA — amend orphans the original.
 
 ## Reading the data
 

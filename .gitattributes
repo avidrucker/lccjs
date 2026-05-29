@@ -45,3 +45,11 @@
 *.a   linguist-detectable=false
 *.ap  linguist-language=asm
 *.ap  linguist-detectable=false
+
+# --- append-only velocity log: auto-union concurrent appends (#186) ---
+# Parallel agents each append a row on close; without this, every `git pull
+# --rebase` conflicts on the shared last line. The built-in `union` merge driver
+# keeps BOTH sides' added rows automatically (fires under rebase too — verified).
+# Rows are unique (ticket + timestamps), so union never drops or dups a row.
+# See docs/research/velocity-log-storage.md.
+docs/puzzle-velocity.csv merge=union
