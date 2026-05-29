@@ -40,7 +40,6 @@ main:       push lr
             brlt @L0 
             brgt @L0
             brc @L0
-            ; @todo #187:30m/DEV brb errors 'Invalid operation' — it's in brCodes (assembler.js:1441) but missing from the case dispatch; test vs OG LCC + lccjs, then fix-or-document; see #187
             brb @L0
 
             ; all the branch mnemonic suffixes w/ integer offset
