@@ -38,6 +38,7 @@ logged retroactively before the protocol existed).
 | `ARC` | architect / design decision — chooses a path; does not implement |
 | `WRITER` | documentation / glossary writing |
 | `PM` | project management work (tracker updates, issue triage) |
+| `DATA` | data analysis — stats, notebooks, calibration of this very log |
 
 ## The two estimates
 
