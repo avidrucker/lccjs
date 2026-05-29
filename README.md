@@ -131,6 +131,7 @@ Test organization under `tests/new/`:
 | [src/utils/utils.md](./src/utils/utils.md) | Utils module design notes |
 | [experiments/README.md](./experiments/README.md) | Oracle experiment tooling |
 | [experiments/debugger-results.md](./experiments/debugger-results.md) | Debugger oracle command set and parity gaps |
+| [docs/lccjs-assembly-skill-design.md](./docs/lccjs-assembly-skill-design.md) | Design for the paired Claude skill that teaches AI agents to write idiomatic LCC assembly. The skill itself lives in [avidrucker/claude-config](https://github.com/avidrucker/claude-config) at `skills/lccjs-assembly/` (SKILL.md router + 4 on-demand references: `isa-quickref`, `calling-convention`, `pitfalls`, `idioms-and-patterns`, `house-style`). |
 
 ## License
 
