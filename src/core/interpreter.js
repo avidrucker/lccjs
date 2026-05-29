@@ -13,6 +13,7 @@ const {
 } = require('../utils/fileArtifacts');
 const nameHandler = require('../utils/name.js');
 const { h4 } = require('./debug/format');
+const { diffRegisters } = require('./debug/stateDelta');
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 
@@ -702,14 +703,10 @@ class Interpreter {
     if ((this.debugMode || this.traceMode) && this.running) {
       let regsOrFlagsOutput = '';
 
-      for (let i = 0; i < 8; i++) {
-        const oldVal = prevRegs[i];
-        const newVal = this.r[i];
-        if (oldVal !== newVal) {
-          const hexOld = oldVal.toString(16).padStart(1, '0');
-          const hexNew = newVal.toString(16).padStart(1, '0');
-          regsOrFlagsOutput += `     <r${i} = ${hexOld}/${hexNew}>`;
-        }
+      for (const { i, oldVal, newVal } of diffRegisters(prevRegs, this.r)) {
+        const hexOld = oldVal.toString(16).padStart(1, '0');
+        const hexNew = newVal.toString(16).padStart(1, '0');
+        regsOrFlagsOutput += `     <r${i} = ${hexOld}/${hexNew}>`;
       }
 
       const [n, z, c, v] = [this.n, this.z, this.c, this.v];

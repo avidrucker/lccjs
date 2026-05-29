@@ -14,6 +14,7 @@
 
 const Interpreter = require('../core/interpreter');
 const { h4, REG_ALIASES } = require('../core/debug/format');
+const { diffRegisters, diffFlags } = require('../core/debug/stateDelta');
 
 class IInterpreter extends Interpreter {
   constructor() {
@@ -216,9 +217,18 @@ class IInterpreter extends Interpreter {
     const prev = prevSnapshot;
     const curr = currSnapshot;
 
+    // Shared "what changed" computation (same as the core debugger). When there is
+    // no previous snapshot (initial state) nothing is highlighted.
+    const changedRegs = prev
+      ? new Set(diffRegisters(prev.registers, curr.registers).map((d) => d.i))
+      : new Set();
+    const changedFlags = prev
+      ? diffFlags(prev.flags, curr.flags)
+      : { n: false, z: false, c: false, v: false };
+
     const fmt = (name, idx) => {
       const val = h4(curr.registers[idx]);
-      if (prev && prev.registers[idx] !== curr.registers[idx]) {
+      if (changedRegs.has(idx)) {
         return this.colorblindMode
           ? `*${name}: ${val}`
           : `${name}: \x1b[92m${val}\x1b[0m`;
@@ -226,8 +236,8 @@ class IInterpreter extends Interpreter {
       return `${name}: ${val}`;
     };
 
-    const fmtFlag = (name, oldVal, newVal) => {
-      if (prev && oldVal !== newVal) {
+    const fmtFlag = (name, flagKey, newVal) => {
+      if (changedFlags[flagKey]) {
         return this.colorblindMode
           ? `*${name}:${newVal}`
           : `${name}:\x1b[92m${newVal}\x1b[0m`;
@@ -241,9 +251,8 @@ class IInterpreter extends Interpreter {
       `pc: ${h4(curr.pc)}  ir: ${h4(curr.ir)}`,
     ];
 
-    const prevFlags = prev ? prev.flags : curr.flags;
     const nzcv = ['n','z','c','v']
-      .map((f) => fmtFlag(f.toUpperCase(), prevFlags[f], curr.flags[f]))
+      .map((f) => fmtFlag(f.toUpperCase(), f, curr.flags[f]))
       .join(' ');
     lines.push(`NZCV: ${nzcv}`);
 
