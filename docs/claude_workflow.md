@@ -79,6 +79,10 @@ next," start here.
 - **Verify as I go.** For code changes: assemble, run tests, exercise the change. For doc changes: re-read for accuracy and link sanity. For research: cite source line numbers so the reasoning is checkable.
 - **Use TaskUpdate** to mark sub-steps complete if I created tasks. Cleaning up the task list is part of the work.
 - **Brief, accurate status updates** — one sentence at key moments, not a running monologue.
+- **Tool-failure discipline.** Any `tool_use_error` from Edit/Write/Bash means the operation **did not happen** — treat it as a hard block, not advice. Two real failure modes have shipped broken state in this project:
+  - *Stale read* (`File has been modified since read`) — another agent touched the file between my Read and Edit. The file is unchanged from its pre-Read state; my intended edit is lost.
+  - *Classifier outage* (`Opus temporarily unavailable, auto mode cannot determine safety`) — the Edit's safety check couldn't run. Write/Edit returns an error; the file is unchanged.
+  Do NOT `git add` a file I just edited unless I've confirmed the edit applied — re-read, grep for the new content, or check `git diff`. A successful tool result for the *next* call after an error does NOT retroactively apply the failed one. This pattern shipped raw conflict markers in lccjs commit `cb798a7` (#139 close); followup `a19d115` cleaned it up. The puzzle-velocity skill 0.4.0 has a grep guard for the rebase-conflict variant specifically; this rule is the general case.
 
 **If I'm working in a `git worktree`** (because of parallel-agent activity):
 
