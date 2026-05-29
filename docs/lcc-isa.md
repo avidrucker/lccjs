@@ -60,6 +60,12 @@ Reference for the LCC (Little Computer) instruction set from
 - `pcoffset9`, `pcoffset11`, `imm5`, `imm9`, `offset6` — signed number fields of the indicated length
 - `offset6` defaults to 0 if omitted in an assembly language instruction
 
+> **`jmp` takes no condition suffix.** Despite Appendix B p.276 ("same mnemonic
+> suffixes … on `jmp`"), condition-suffixed `jmp` forms (`jmpz`, `jmpn`, …) do
+> **not** exist — `jmp` is encoded with no `cc` field. Both lccjs and the
+> reference oracle reject them with `Invalid operation`; conditional control flow
+> is `br<cc>`. See [research/jmp-condition-suffix-mnemonics.md](./research/jmp-condition-suffix-mnemonics.md) (#151).
+
 ---
 
 ## Trap Instructions

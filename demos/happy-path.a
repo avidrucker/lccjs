@@ -278,12 +278,12 @@ main:       push lr
             ; all the jump mnemonic suffixes
             jmp r0
             jmp r0, 5
-            ; @todo #151:30m/DEV report/inquire about the following mnemonics
-            ;       pg. 276 of Appendix B states "same mnemonic 
-            ;       suffixes and code use on jmp instruction" as
-            ;       with the branch instructions, but the following
-            ;       mnemonics result in an error when assembled w/
-            ;       "Invalid operation"
+            ; RESOLVED #151 (research): Appendix B p.276 claims jmp takes the branch
+            ;   condition suffixes, but it does NOT — neither lccjs nor the reference
+            ;   oracle implements them; both error "Invalid operation" (textbook doc
+            ;   error, not an lccjs gap; lccjs is parity-correct). See
+            ;   docs/research/jmp-condition-suffix-mnemonics.md. The suffixed forms
+            ;   below all error on assembly:
             ; jmpz r0
             ; jmpe r0
             ; jmpnz r0
