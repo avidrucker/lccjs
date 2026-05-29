@@ -94,7 +94,7 @@ Charlie's textbook-demo conventions (#104) are an input to the design.
 - [x] build the skill per the design — split into #116a–d (see design §7) (#116 closed)
 - [x] validate the skill: end-to-end + known-pitfall coverage — first-pass validation in `docs/lccjs-assembly-skill-validation.md`; 5/6 assembled, all 4 pitfall classes steered correctly; one different-axis miss (N3 invented `puts`) filed as follow-up #148 (#117 closed)
 - [ ] incorporate #117 validation findings into the skill — refine SKILL.md based on observed failures and reasonable-but-suboptimal patterns
-  <!-- @todo #148:30m/DEV enumerate the legal LCC trap set in SKILL.md so agents stop inventing `puts`/`printf`; see #148 -->
+  - [x] enumerate legal LCC trap set in SKILL.md so agents stop inventing `puts`/`printf` (#148 closed; skill 0.5.0)
   <!-- @todo #149:30m/DEV surface `nl` as the canonical newline idiom + tighten house-style scoping language in SKILL.md; see #149 -->
 - [ ] build a sibling `lccplus-assembly` skill for `.ap` programs — stub scaffolded at `claude-config/skills/lccplus-assembly/` (v0.0.1); follow the same research → build → validate pipeline as the base skill
   <!-- @todo #154:60m/ARC research/scope the lccplus-assembly skill — LCC+ pitfalls beyond the base set, extra-trap idioms, design doc mirroring docs/lccjs-assembly-skill-design.md; see #154 -->
