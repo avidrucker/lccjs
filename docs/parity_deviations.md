@@ -278,8 +278,42 @@ probe `experiments/debugger-report-parity-probe.sh`.
 
 **Note:** the sibling column-geometry/whitespace deltas from the same spike (header
 `A`/`S` padding, stats-block alignment, `Loc/Code` widths, BST trailing space,
-banner date format) are *unresolved* formatting differences — not yet classified
-here; tracked for decision on #13.
+banner date format) are now classified together as **deviation 12** below.
+
+---
+
+### 12. Listing report-format cosmetic deltas: LCC.js does not chase byte-exact oracle parity
+
+The `.lst`/`.bst` reports differ from the oracle in five cosmetic ways. The #13
+spike refresh (2026-05-29) re-ran the parity probe against current `main` and
+confirmed all five still reproduce on demo-009:
+
+| id | where | cuh63 6.3 | LCC.js |
+|---|---|---|---|
+| A | banner date | `Fri May 29 11:12:41 2026` (ctime-style) | `Fri, May 29, 2026, 11:12:41` |
+| B | Header `A`/`S` lines | `A␣␣␣␣␣0000` (addr right-aligned, 5-wide) | `A␣0000` (single space) |
+| C | Program-statistics block | label padded ~22, value right-aligned | label padded wider, value left-set |
+| D | `Loc`/`Code` column geometry | `Loc␣␣␣␣␣␣␣␣␣␣Code` | `Loc␣␣␣Code` |
+| F | BST data rows | trailing space after the binary word | trimmed |
+
+(Delta **E** — the `.a` source-line truncation — is deviation 11 above. The
+product name/version, `LCC` vs `LCC.js` and `Ver 6.3` vs `0.1`, is intentionally
+different and is not a deviation.)
+
+**Why BY DESIGN:** these are pure whitespace / padding / date-shape differences in
+human-facing listing files. Per the same readability rationale as deviation 11,
+LCC.js favors its own consistent formatting over byte-for-byte oracle listing
+parity. Resolved as the owner decision on #13 (2026-05-29): accept as intentional
+divergence; the symbolic-debugger feature is complete.
+
+**Source:** `src/utils/genStats.js` (banner / header / statistics / row formatting).
+
+**Reference:** `docs/research/debugger-oracle-parity.md` (deltas **A**–**F**), the
+probe `experiments/debugger-report-parity-probe.sh`, spike #145, build issue #13.
+
+**Note for future parity work:** if byte-exact listing parity is ever required,
+these are the five sites — each a small (~15–30m) formatting puzzle, smallest-first
+**F → B → A → D → C**, every fix gated by re-running the probe.
 
 ---
 
@@ -298,3 +332,4 @@ _None pending._
 | 2026-05-28 | Deviation 9 added | Characterized empty/whitespace `.a` (#106): LCC.js exit 0 + no artifacts vs OG exit 1 + header-only listings; classified BY DESIGN |
 | 2026-05-28 | Deviation 10 added | Characterized undefined-label `br` (#105): both error + exit 1, but OG leaves a runnable blank `.e` (infinite-loops if run) while LCC.js writes nothing; classified OG BUG. All pending stubs now cleared |
 | 2026-05-28 | Deviation 11 added | `.a` listing Source-Code column: LCC.js prints full source lines, OG LCC truncates to listing width; classified BY DESIGN (from the #145 report-parity spike) |
+| 2026-05-29 | Deviation 12 added | Listing report-format cosmetic deltas (A banner date, B header A/S padding, C stats alignment, D Loc/Code geometry, F BST trailing space) classified BY DESIGN; closes #13 (symbolic debugger feature complete — #13 spike refresh confirmed all five still reproduce) |
