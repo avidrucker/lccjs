@@ -90,8 +90,8 @@ Charlie's textbook-demo conventions (#104) are an input to the design.
 
 - [x] research the skill: scope, source materials, structure, evaluation criteria — design in `docs/lccjs-assembly-skill-design.md` (#115 closed)
 - [x] build the skill per the design — split into #116a–d (see design §7) (#116 closed)
-- [ ] validate the skill: end-to-end + known-pitfall coverage (was blocked by #116, now closed)
-  <!-- @todo #117:60m/TEST validate the LCCjs assembly Claude skill — blocked by #116; see #117 -->
+- [ ] validate the skill: end-to-end + known-pitfall coverage (unblocked — #116 closed)
+  <!-- @todo #117:60m/TEST validate the LCCjs assembly Claude skill per docs/lccjs-assembly-skill-design.md eval criteria; see #117 -->
 
 ## Docs Presentation / Syntax Highlighting
 
