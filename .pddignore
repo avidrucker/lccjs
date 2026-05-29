@@ -30,8 +30,3 @@ scripts/puzzle-status.js
 #     keyword; the few real doc-puzzles are GitHub-tracked instead ---
 docs/**
 *.md
-
-# --- TEMPORARY (remove after #142): these hold informal todo-style comments
-#     that must first be formalized into real puzzle markers ---
-demos/**
-plusdemos/**

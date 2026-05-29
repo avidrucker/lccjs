@@ -259,7 +259,7 @@ main:       push lr
 
             ; sext
             ; mov r0, 0 ; it seems to not matter what is in r0
-            ; mov r1, 0 ; TODO: find out how sext is used in a LCC Assembly code context
+            ; mov r1, 0 ; @todo #144:30m/DEV find out how sext is used in a LCC Assembly code context
             ; sext r0, r1 ; sign extend
             ; dout r0
             ; nl
@@ -278,7 +278,7 @@ main:       push lr
             ; all the jump mnemonic suffixes
             jmp r0
             jmp r0, 5
-            ; TODO: report/inquire about the following mnemonics
+            ; @todo #144:30m/DEV report/inquire about the following mnemonics
             ;       pg. 276 of Appendix B states "same mnemonic 
             ;       suffixes and code use on jmp instruction" as
             ;       with the branch instructions, but the following
@@ -314,7 +314,7 @@ main:       push lr
             ; "Similar to lea, but to load the address of a dynamic local
             ; variable. Assembled to the add instruction, with sr1 as fp."
             ; my best guess is that this is useful for accessing local variables
-            ; TODO: validate and verify correct usage of cea in context
+            ; @todo #144:30m/DEV validate and verify correct usage of cea in context
             cea r0, 0; compute effective address, same as `add r0, fp, 0`
             dout r0
             nl
