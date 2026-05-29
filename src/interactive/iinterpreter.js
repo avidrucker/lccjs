@@ -13,6 +13,7 @@
 'use strict';
 
 const Interpreter = require('../core/interpreter');
+const { h4, REG_ALIASES } = require('../core/debug/format');
 
 class IInterpreter extends Interpreter {
   constructor() {
@@ -214,7 +215,6 @@ class IInterpreter extends Interpreter {
   displayRegisters(prevSnapshot, currSnapshot) {
     const prev = prevSnapshot;
     const curr = currSnapshot;
-    const h4 = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
 
     const fmt = (name, idx) => {
       const val = h4(curr.registers[idx]);
@@ -255,7 +255,6 @@ class IInterpreter extends Interpreter {
   //   ADDR: w0 w1 w2 w3 w4 w5 w6 w7
   // All values are zero-padded 4-digit hex. Addresses wrap at 0xFFFF.
   displayMemory(baseAddr, rows) {
-    const h4 = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
     let output = '';
     for (let row = 0; row < rows; row++) {
       const rowAddr = baseAddr + row * 8;
@@ -276,9 +275,6 @@ class IInterpreter extends Interpreter {
   // The current SP position is marked with '>'.
   // Returns a multi-line string.
   displayStack(anchor) {
-    const h4 = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
-    const REG_ALIASES = { r0:0, r1:1, r2:2, r3:3, r4:4, fp:5, r5:5, sp:6, r6:6, lr:7, r7:7 };
-
     let baseAddr;
     if (typeof anchor === 'number') {
       baseAddr = anchor & 0xFFFF;

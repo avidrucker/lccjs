@@ -12,6 +12,7 @@ const {
   writeReportFiles,
 } = require('../utils/fileArtifacts');
 const nameHandler = require('../utils/name.js');
+const { h4 } = require('./debug/format');
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 
@@ -315,12 +316,11 @@ class Interpreter {
         this.writeOutput('--------------------------------------- End of memory display\n');
       }
       if (runtimeOptions.regDisplay) {
-        const h = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
         const nzcv = `${this.n}${this.z}${this.c}${this.v}`;
         this.writeOutput('\n-------------------------------------------- Register display\n');
-        this.writeOutput(`pc = ${h(this.pc)}  ir = ${h(this.ir)}  NZCV = ${nzcv}\n`);
-        this.writeOutput(`r0 = ${h(this.r[0])}  r1 = ${h(this.r[1])}  r2 = ${h(this.r[2])}  r3 = ${h(this.r[3])}  \n`);
-        this.writeOutput(`r4 = ${h(this.r[4])}  fp = ${h(this.r[5])}  sp = ${h(this.r[6])}  lr = ${h(this.r[7])}  \n`);
+        this.writeOutput(`pc = ${h4(this.pc)}  ir = ${h4(this.ir)}  NZCV = ${nzcv}\n`);
+        this.writeOutput(`r0 = ${h4(this.r[0])}  r1 = ${h4(this.r[1])}  r2 = ${h4(this.r[2])}  r3 = ${h4(this.r[3])}  \n`);
+        this.writeOutput(`r4 = ${h4(this.r[4])}  fp = ${h4(this.r[5])}  sp = ${h4(this.r[6])}  lr = ${h4(this.r[7])}  \n`);
         this.writeOutput('------------------------------------- End of register display\n');
       }
     } finally {
@@ -987,11 +987,10 @@ class Interpreter {
 
   // Display all registers in oracle format.
   _debugShowRegs() {
-    const h    = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
     const nzcv = `${this.n}${this.z}${this.c}${this.v}`;
-    this.writeDebugOutput(`pc = ${h(this.pc)}  ir = ${h(this.ir)}  NZCV = ${nzcv}`);
-    this.writeDebugOutput(`r0 = ${h(this.r[0])}  r1 = ${h(this.r[1])}  r2 = ${h(this.r[2])}  r3 = ${h(this.r[3])}  `);
-    this.writeDebugOutput(`r4 = ${h(this.r[4])}  fp = ${h(this.r[5])}  sp = ${h(this.r[6])}  lr = ${h(this.r[7])}  `);
+    this.writeDebugOutput(`pc = ${h4(this.pc)}  ir = ${h4(this.ir)}  NZCV = ${nzcv}`);
+    this.writeDebugOutput(`r0 = ${h4(this.r[0])}  r1 = ${h4(this.r[1])}  r2 = ${h4(this.r[2])}  r3 = ${h4(this.r[3])}  `);
+    this.writeDebugOutput(`r4 = ${h4(this.r[4])}  fp = ${h4(this.r[5])}  sp = ${h4(this.r[6])}  lr = ${h4(this.r[7])}  `);
   }
 
   // Display all used memory words in oracle format.
