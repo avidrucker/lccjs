@@ -39,6 +39,9 @@ logged retroactively before the protocol existed).
 | `WRITER` | documentation / glossary writing |
 | `PM` | project management work (tracker updates, issue triage) |
 | `DATA` | data analysis — stats, notebooks, calibration of this very log |
+| `RESEARCH` | empirical investigation answering a question by experiment; no production code ships |
+| `SPIKE` | bounded ≤60m investigation to scope/refresh an epic before writing puzzles (per `yegor-spikes`) |
+| `COMBO` | a task that genuinely spanned 2+ roles; the notes name which (used over a forced single tag) |
 
 ## The two estimates
 
