@@ -1,0 +1,11 @@
+# Project-local venv (prefer the shared ~/.venvs/datasci — see requirements.txt)
+.venv/
+__pycache__/
+*.pyc
+
+# Rendered exports (regenerate with nbconvert). The .ipynb keeps its embedded
+# outputs, so the committed notebook already renders on GitHub.
+*.html
+
+# Notebook checkpoints
+.ipynb_checkpoints/

@@ -23,6 +23,11 @@ public_experiments/**
 # --- the scanner itself: its source must contain the literal marker to work ---
 scripts/puzzle-status.js
 
+# --- generated velocity dataset: copies the CSV notes column verbatim, which
+#     quotes the keyword while *describing* PDD mechanics (not real puzzles).
+#     The real stats puzzle lives in stats/enrich.py (a scanned .py file). ---
+stats/*.csv
+
 # --- this ignore-file: it is config, not source (and the wrapper feeds it in) ---
 .pddignore
 
