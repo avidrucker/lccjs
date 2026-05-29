@@ -9,27 +9,25 @@ snapshot. For planned refactor / parity / feature work in flight, see
 [`TODOS.md`](./TODOS.md). For higher-level direction, see
 [`ROADMAP.md`](./ROADMAP.md).
 
-Last updated: 2026-05-27.
+Last updated: 2026-05-28.
 
 ## Known bugs (correctness)
 
 **Bug entries live in [`open_bugs.md`](./open_bugs.md)** — that file
 has stable IDs (OB-001..), severity, location, reproduction notes, and
-suggested fixes. The headline items as of 2026-05-25 are:
+suggested fixes.
 
-- **OB-001** — LCC.js `mov` accepts out-of-spec immediates and
-  silently wraps (medium; affects `assembler.js`)
-- **OB-003** — Linker `error()` does not abort; `link()` writes a
-  broken `.e` (high; affects `linker.js`)
-- **OB-005** — `genStats.js` decimal/hex program-size inconsistency
-  on non-zero load points
-- **OB-002** — Disassembler decodes `mvi` imm9 with an 8-bit mask
-  (latent; `src/extra/` has 0% coverage)
+**Reconciled 2026-05-28 (#165):** the four former headline items —
+OB-001 (`mov` immediate), OB-003 (linker writes broken `.e`),
+OB-005 (genStats dec/hex), OB-002 (disassembler `mvi` mask) — plus
+OB-007 and OB-012 are all **FIXED on `main`**; see each entry's
+Status line in `open_bugs.md` for the resolving commit. The
+disassembler bug's *module* still has 0% test coverage (separate
+gap, tracked in #166).
 
-Plus another ~20 entries split across confirmed bugs, high-suspicion
-smells in `src/plus/` and `src/extra/`, and accumulated TODO debt
-(notably **OB-020**: `loadPoint = 0` hardcoded in 5 spots, so
-`-l<hex loadpt>` doesn't work as documented). One upstream bug
+The remaining `open_bugs.md` entries (OB-009..OB-026) also have
+resolution commits and are being reconciled in **#170**; until that
+lands, trust each entry's Status line over the count. One upstream bug
 report (**OB-008**, cuh63 6.3's `mov`/`mvi` discrepancy) is drafted
 in `docs/cuh63-mov-immediate-bug-report.md` and ready to send to
 Prof. Dos Reis.

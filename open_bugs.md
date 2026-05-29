@@ -15,7 +15,10 @@ suggested fix. Citations refer to the current `main`-relative state
 on branch `improve-docs-branch-2026-may-25-01`; verify file:line
 before fixing if the branch has moved on.
 
-Last updated: 2026-05-25.
+Last updated: 2026-05-28 — reconciled the eight verified core entries
+(OB-001..OB-007 + OB-012) against their resolution commits; all are
+fixed on `main`. Issue #165. The remaining entries (OB-009..OB-026)
+also have resolution commits and are reconciled separately — see #170.
 
 ---
 
@@ -24,7 +27,9 @@ Last updated: 2026-05-25.
 ### OB-001 — LCC.js `mov` accepts out-of-spec immediates and silently wraps
 - **GH:** [#31](https://github.com/avidrucker/lccjs/issues/31)
 - **Severity:** medium (silent miscompile, not a crash)
-- **Status:** open
+- **Status:** FIXED in `d39fe90` (verified 2026-05-28) — `mov` now
+  routes through `evaluateImmediate(-256,255)` at `assembler.js:1940`,
+  the same validator `mvi` uses.
 - **Where:** `src/core/assembler.js` (the `mov` parser path)
 - **Description:** The LCC ISA defines `mov dr, imm9` as a
   pseudo-instruction for `mvi dr, imm9`, with `imm9` a signed 9-bit
@@ -43,7 +48,9 @@ Last updated: 2026-05-25.
 ### OB-002 — Disassembler decodes `mvi` imm9 with an 8-bit mask
 - **GH:** [#32](https://github.com/avidrucker/lccjs/issues/32)
 - **Severity:** medium (latent — module has 0% coverage)
-- **Status:** open
+- **Status:** FIXED in `ee54749` (verified 2026-05-28) — mask
+  corrected to `word & 0x1FF` at `disassembler.js:427`. (Module still
+  has 0% test coverage — tracked separately in #166.)
 - **Where:** `src/extra/disassembler.js:419`
 - **Description:** `disassembleMVI` does `word & 0xFF` then
   sign-extends to 9 bits. The correct mask is `0x1FF`. For a
@@ -57,7 +64,10 @@ Last updated: 2026-05-25.
 ### OB-003 — Linker `error()` does not abort; `link()` writes broken `.e`
 - **GH:** [#33](https://github.com/avidrucker/lccjs/issues/33), [#34](https://github.com/avidrucker/lccjs/issues/34), [#35](https://github.com/avidrucker/lccjs/issues/35) (decomposed)
 - **Severity:** high (writes corrupt output silently)
-- **Status:** open
+- **Status:** FIXED in `2788fe2` (verified 2026-05-28) — `error()`
+  now throws `LinkerError` (`linker.js:356`); `adjustExternalReferences`
+  raises on an undefined symbol and `link()` aborts before
+  `createExecutable()`, so no broken `.e` is written.
 - **Where:** `src/core/linker.js:172-205, 363-366`
 - **Description:** `Linker.error()` sets `errorFlag` and logs but
   does not throw. After `adjustExternalReferences()` returns early
@@ -74,7 +84,9 @@ Last updated: 2026-05-25.
 ### OB-004 — `Interpreter.raiseRuntimeError` ignores `throwOnRuntimeError`
 - **GH:** [#36](https://github.com/avidrucker/lccjs/issues/36)
 - **Severity:** low (dead flag, no behavior change)
-- **Status:** open
+- **Status:** FIXED in `4d7f9de` (verified 2026-05-28) — the dead
+  `throwOnRuntimeError` flag was removed; `raiseRuntimeError` is now a
+  clean 3-liner (`interpreter.js:1735`).
 - **Where:** `src/core/interpreter.js:1542-1550` (raise path);
   `src/core/interpreter.js:271` (flag set in `executeBuffer`)
 - **Description:** `throwOnRuntimeError` is set on the instance but
@@ -88,7 +100,9 @@ Last updated: 2026-05-25.
 ### OB-005 — `genStats.js` decimal / hex program-size inconsistency
 - **GH:** [#37](https://github.com/avidrucker/lccjs/issues/37)
 - **Severity:** medium (silent numerical inconsistency in reports)
-- **Status:** open
+- **Status:** FIXED in `7285f56` (verified 2026-05-28) — both the
+  decimal and hex program-size forms now use
+  `memMax - loadPoint + 1` (`genStats.js:129`).
 - **Where:** `src/utils/genStats.js:125`
 - **Description:** Decimal program-size uses `interpreter.memMax + 1`;
   hex form uses `interpreter.memMax - interpreter.loadPoint + 1`.
@@ -99,7 +113,8 @@ Last updated: 2026-05-25.
 ### OB-006 — `interpreterplus.js` xorshift comments contradict the code
 - **GH:** [#38](https://github.com/avidrucker/lccjs/issues/38)
 - **Severity:** low (doc-only; code is correct classical xorshift)
-- **Status:** open
+- **Status:** FIXED in `047cfa6` (verified 2026-05-28) — the xorshift
+  step comments in `executeRand()` now match the actual shifts.
 - **Where:** `src/plus/interpreterplus.js:382-384`
 - **Description:** Comments say "XOR shift right by 7 / left by 9 /
   right by 13" but code performs `<< 13`, `>> 17`, `<< 5`. The
@@ -112,7 +127,8 @@ Last updated: 2026-05-25.
 ### OB-007 — Linker `link()` accumulates state across calls
 - **GH:** [#39](https://github.com/avidrucker/lccjs/issues/39)
 - **Severity:** low (latent; no current caller invokes twice)
-- **Status:** open
+- **Status:** FIXED in `16d98b1` (verified 2026-05-28) — `link()`
+  now calls `resetState()` at entry (`linker.js:170`).
 - **Where:** `src/core/linker.js` (`link()` method)
 - **Description:** `link()` does not reset `mca`, `mcaIndex`,
   `GTable`, etc. Calling `linker.link(...)` twice on the same
@@ -190,7 +206,8 @@ Last updated: 2026-05-25.
 ### OB-012 — `interpreterplus.js:167` magic batch size of 500
 - **GH:** [#44](https://github.com/avidrucker/lccjs/issues/44)
 - **Severity:** low (smell)
-- **Status:** open
+- **Status:** FIXED in `8c443a8` (verified 2026-05-28) — the magic
+  `500` was extracted to a named `ASYNC_BATCH_SIZE` constant.
 - **Where:** `src/plus/interpreterplus.js:167`
 - **Description:** `for (let i = 0; i < 500; i++)` processes 500
   instructions per tick with no rationale comment, constant, or
