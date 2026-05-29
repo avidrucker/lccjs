@@ -8,17 +8,15 @@ detection, etc.).
 
 ## Files
 
-| File | Source it documents | Status |
+| File | Source | What it covers |
 |---|---|---|
-| [`assembler.md`](./assembler.md) | `src/core/assembler.js` | ✅ complete — 147 entries (#108, #111) |
-| [`interpreter.md`](./interpreter.md) | `src/core/interpreter.js` | ✅ complete — 39 entries (#109, #112) |
-| [`linker.md`](./linker.md) | `src/core/linker.js` | ✅ complete — 26 entries (#110, #113) |
-
-Parent tracker: #107. Originally requested in #9.
+| [`assembler.md`](./assembler.md) | `src/core/assembler.js` | Two-pass assembler: state & lifecycle, the `.e` / `.o` object-file format, per-instruction encoders, and operand parsing (grouped into sections a–e) |
+| [`interpreter.md`](./interpreter.md) | `src/core/interpreter.js` | The VM: memory/register model, executable loading, the fetch–decode–execute loop, trap implementations, and the interactive debugger |
+| [`linker.md`](./linker.md) | `src/core/linker.js` | Multi-module linking: per-link state tables, the link pipeline, external / local reference fix-ups, and executable serialization |
 
 ## Entry convention
 
-Each term entry should follow this shape:
+Each term entry follows this shape:
 
 ```markdown
 ### term-name

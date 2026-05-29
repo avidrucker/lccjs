@@ -28,8 +28,7 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] `reportArtifacts.js`
 - [ ] label any `progress-report.md` snapshots as historical when they exist
 - [ ] writer task: per-module glossary for `assembler.js`, `interpreter.js`, `linker.js` (parent #107; spike+write puzzles #108–#113; stubs in `docs/glossary/`)
-- [ ] QC pass on `docs/glossary/*` — make them focused/clear/accessible: drop the redundant "Candidate term inventory" spike sections, strip ticket-ref/provenance noise from prose, slim headers, fix README Status column (parent #107)
-  <!-- @todo #162:60m/WRITER QC pass on all glossary files: delete redundant spike "Candidate term inventory" sections, strip PDD ticket numbers/provenance from reader-facing prose (keep Source + cross-file links), slim headers, replace README Status column with plain descriptions. docs/ only. See #162 -->
+- [x] QC pass on `docs/glossary/*` — focused/clear/accessible: dropped the redundant "Candidate term inventory" spike sections, stripped ticket-ref/provenance noise from prose, slimmed headers, rewrote README Files table (#162 closed; assembler/interpreter/linker + README)
 - [ ] document the cross-repo `closed_commit` convention in `docs/puzzle-velocity.md` (5 rows so far reference claude-config SHAs)
   <!-- @todo #161:15m/WRITER add a sentence to the closed_commit row in docs/puzzle-velocity.md noting cross-repo SHAs (claude-config skill closes); see #161 -->
 
