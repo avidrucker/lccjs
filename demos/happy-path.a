@@ -259,7 +259,7 @@ main:       push lr
 
             ; sext
             ; mov r0, 0 ; it seems to not matter what is in r0
-            ; mov r1, 0 ; @todo #150:30m/DEV find out how sext is used in a LCC Assembly code context
+            ; mov r1, 0 ; sext field-selector semantics: see docs/research/sext-semantics-report.md (#150 resolved)
             ; sext r0, r1 ; sign extend
             ; dout r0
             ; nl

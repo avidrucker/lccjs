@@ -1,0 +1,134 @@
+; sext_field_probe.a — fixed input 0x000A, sweep field-selector r1 = 0..15
+; Shows how oracle LCC interprets sext's 2nd operand. See #150.
+        lea r2, banner
+        sout r2
+        mov r0, 10
+        mov r1, 0
+        sext r0, r1
+        lea r2, l0
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 1
+        sext r0, r1
+        lea r2, l1
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 2
+        sext r0, r1
+        lea r2, l2
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 3
+        sext r0, r1
+        lea r2, l3
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 4
+        sext r0, r1
+        lea r2, l4
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 5
+        sext r0, r1
+        lea r2, l5
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 6
+        sext r0, r1
+        lea r2, l6
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 7
+        sext r0, r1
+        lea r2, l7
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 8
+        sext r0, r1
+        lea r2, l8
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 9
+        sext r0, r1
+        lea r2, l9
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 10
+        sext r0, r1
+        lea r2, l10
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 11
+        sext r0, r1
+        lea r2, l11
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 12
+        sext r0, r1
+        lea r2, l12
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 13
+        sext r0, r1
+        lea r2, l13
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 14
+        sext r0, r1
+        lea r2, l14
+        sout r2
+        hout r0
+        nl
+        mov r0, 10
+        mov r1, 15
+        sext r0, r1
+        lea r2, l15
+        sout r2
+        hout r0
+        nl
+        halt
+banner: .string "sext r0,r1 sweep:"
+l0:   .string "  r1= 0 -> "
+l1:   .string "  r1= 1 -> "
+l2:   .string "  r1= 2 -> "
+l3:   .string "  r1= 3 -> "
+l4:   .string "  r1= 4 -> "
+l5:   .string "  r1= 5 -> "
+l6:   .string "  r1= 6 -> "
+l7:   .string "  r1= 7 -> "
+l8:   .string "  r1= 8 -> "
+l9:   .string "  r1= 9 -> "
+l10:  .string "  r1=10 -> "
+l11:  .string "  r1=11 -> "
+l12:  .string "  r1=12 -> "
+l13:  .string "  r1=13 -> "
+l14:  .string "  r1=14 -> "
+l15:  .string "  r1=15 -> "
