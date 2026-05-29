@@ -90,8 +90,7 @@ Charlie's textbook-demo conventions (#104) are an input to the design.
 
 - [x] research the skill: scope, source materials, structure, evaluation criteria — design in `docs/lccjs-assembly-skill-design.md` (#115 closed)
 - [x] build the skill per the design — split into #116a–d (see design §7) (#116 closed)
-- [ ] validate the skill: end-to-end + known-pitfall coverage (unblocked — #116 closed)
-  <!-- @todo #117:60m/TEST validate the LCCjs assembly Claude skill per docs/lccjs-assembly-skill-design.md eval criteria; see #117 -->
+- [x] validate the skill: end-to-end + known-pitfall coverage — first-pass validation in `docs/lccjs-assembly-skill-validation.md`; 5/6 assembled, all 4 pitfall classes steered correctly; one different-axis miss (N3 invented `puts`) filed as follow-up #148 (#117 closed)
 
 ## Docs Presentation / Syntax Highlighting
 
