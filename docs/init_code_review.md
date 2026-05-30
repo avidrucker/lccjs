@@ -2,7 +2,7 @@
 
 A focused review of `/home/avi/Documents/Study/JavaScript/lccjs` as of commit `87f41d4` on branch `research-2026-may` (created 2026-05-24). The project is a JavaScript reimplementation of LCC's assembler / linker / interpreter, with a documented in-flight refactor toward a pure-API + CLI-wrapper split. Overall it is in surprisingly good shape for a learning project: the public surface is coherent, the test suite is large and intentional, and the docs spell out what is provisional. But there are several real bugs and a thick layer of doc drift worth fixing.
 
-> This document is the starting point for known bugs and code quality issues as of May 2026. It will grow stale as work is done — update or replace it rather than letting it drift.
+> **Frozen snapshot (May 2026).** This is a point-in-time review — the findings below describe the repo *as of commit `87f41d4`* and are **not** kept up to date; several have since been fixed. For current state, see [`current_issues.md`](../current_issues.md), [`open_bugs.md`](../open_bugs.md), and [`TODOS.md`](../TODOS.md). Treat the findings here as the historical baseline: annotate resolutions inline (as done below) rather than rewriting them.
 
 ## 1. Code clarity & correctness
 
@@ -34,7 +34,7 @@ The architecture story is told consistently across `README.md`, `ROADMAP.md`, `T
 - **`package.json` test scripts point to nonexistent paths.** `test:legacy` runs `jest test/` (there's no `test/`), and `test:oracle` runs `tests/new/integration.oracle.spec.js` (the file doesn't exist; the oracle suites are `assembler.oracle.e2e.spec.js`, `interpreter.oracle.e2e.spec.js`, `lcc.oracle.e2e.spec.js`, `linker.oracle.e2e.spec.js`). Anyone copy-pasting from the README's `npm run test:oracle` block will hit "no tests found."
 - **`onboarding.md` is dated.** Says `linker.js` has no tests ("Linker Test Suite Not Implemented"), dated 11/21/2024, while `tests/new/linker.unit.spec.js` and `tests/new/linker.oracle.e2e.spec.js` exist. README's `## Current Status` more accurately reflects today.
 - **`ROADMAP.md` "Remove Docker Dependency" is stale.** No Docker anywhere in the tree (`grep -i docker` returns nothing). That bullet should be marked done or removed.
-- **`docs/onboarding_strategy.md` is a seven-line skeleton** that adds nothing on top of `onboarding.md`. Either expand or delete.
+- **`docs/onboarding_strategy.md` is a seven-line skeleton** that adds nothing on top of `onboarding.md`. Either expand or delete. — *Resolved 2026-05-30 (#211): deleted; `onboarding.md` is the realized guide.*
 - **Per-module docs are consistent with code** for the most part (the assembler doc's `.orig` drift above is the main exception). The `core-behavior-matrix.md` Research markers correctly map to the still-open work in `TODOS.md`.
 
 ## 3. Test suite quality
@@ -96,7 +96,7 @@ Findings, with file:line citations:
 7. **Refactor the operand-parsing copy-paste.** Extract the `if (!isNumLiteral(operands[N]) && operands[N+1] && operands[N+2])` glue-operands pattern into a helper; reuse from `assembleLD`, `assembleST`, `assembleLea`, `assembleBR`, and `.word` handler in `src/core/assembler.js`. Eliminates ~60 lines and is a precondition for the TODOS.md decomposition work.
 8. **Fix the test harness's binary buffer handling.** `tests/helpers/assemblerIntegrationHarness.js:67-78` should use `Buffer.concat` like `tests/new/lcc.integration.spec.js:67-73` already does. Then add an integration test that verifies the bytes written to the virtual FS match `assembler.toOutputBuffer()`.
 9. **Replace the SEXT lookup table with the derived transform.** `TODOS.md` flags this; doing it would shrink `interpreter.js:23-40` from ~17 lines of opaque hex to a few lines of documented logic, and would make the "Research" item in `core-behavior-matrix.md` movable to "Preserve."
-10. **Update `onboarding.md` and `ROADMAP.md` for current reality.** Mark Docker work done/dropped; correct the linker-test claim; either expand or delete `docs/onboarding_strategy.md`. A short pass would remove the project's clearest stale-doc smells.
+10. **Update `onboarding.md` and `ROADMAP.md` for current reality.** Mark Docker work done/dropped; correct the linker-test claim; ~~either expand or delete `docs/onboarding_strategy.md`~~ *(done 2026-05-30, #211: deleted)*. A short pass would remove the project's clearest stale-doc smells.
 
 ---
 
