@@ -15,13 +15,25 @@
  * Both still contain `issue-<N>`, so the issue join in puzzle-status.js keeps
  * working; the fruit prefix is additive.
  *
- * Two modes:
- *   auto (default)   — "give me a brand-new fruit nobody is using." Picks the
- *                      lowest-indexed free fruit. Use ONCE, on the first claim of
- *                      a session. Race-safe via detect-and-rollback.
- *   --as <fruit>     — "reuse this identity." Use for every subsequent worktree
- *                      in the same session, passing the fruit auto gave you (or
- *                      one a human assigned). Same-fruit/different-issue is fine.
+ * Identity, in precedence order (highest first):
+ *   --as <fruit>             — "reuse this identity." Explicit per-call override.
+ *                              Use for every subsequent worktree in the same
+ *                              session, passing the fruit you were given (or one a
+ *                              human assigned). Same-fruit/different-issue is fine.
+ *   CLAUDE_AGENT_NAME=<name>  — human-directed default. When the human launches an
+ *                              agent under a chosen name (e.g. DRAGONFRUIT), they
+ *                              export this so a bare `npm run claim -- <N>` stakes
+ *                              under that name — no `--as` needed, and the script
+ *                              never silently auto-picks a different fruit (#212).
+ *                              Normalized to lowercase for the branch/path.
+ *   auto (no --as, no env)   — "give me a brand-new fruit nobody is using." Picks
+ *                              the lowest-indexed free fruit. Use ONCE, on the
+ *                              first claim of a session. Race-safe via
+ *                              detect-and-rollback.
+ *
+ * A "forced" identity (either --as or CLAUDE_AGENT_NAME) is a single candidate:
+ * it is never swapped for a different fruit, and a branch-exists collision is a
+ * hard error rather than a silent retry. Only auto walks the free-fruit list.
  *
  * A fruit is "taken" iff a `<fruit>/*` branch exists — git's branch namespace is
  * the single source of truth, no registry file.
@@ -29,6 +41,7 @@
  * Usage:
  *   node scripts/claim.js <issue> [slug]            # auto-pick a fresh fruit
  *   node scripts/claim.js <issue> [slug] --as apple # reuse a known identity
+ *   CLAUDE_AGENT_NAME=apple node scripts/claim.js <issue>   # human-directed default
  *   node scripts/claim.js <issue> --base origin/main
  *   node scripts/claim.js <issue> --dry-run         # show the plan, stake nothing
  *
@@ -133,6 +146,30 @@ function parseArgs(argv) {
   return opts;
 }
 
+// Normalize a human-supplied identity to a branch-safe fruit token. Env vars are
+// conventionally uppercase (CLAUDE_AGENT_NAME=DRAGONFRUIT) but the branch/path
+// component is lowercase, so we lowercase + trim. (--as is passed lowercase by
+// convention, so this only matters for the env path.)
+function normalizeIdentity(s) {
+  return String(s).trim().toLowerCase();
+}
+
+// Resolve the agent identity from flags + environment, in precedence order:
+//   --as <fruit>  >  CLAUDE_AGENT_NAME  >  auto (no forced identity).
+// Returns { name, source, modeLabel }. name === null means "auto-pick a fresh
+// fruit"; a non-null name is a *forced* identity (single candidate, never
+// silently swapped). `source`/`modeLabel` only drive the human-readable report.
+function resolveIdentity(opts, env) {
+  if (opts.as) {
+    return { name: opts.as, source: 'as', modeLabel: 'reuse (--as)' };
+  }
+  const envName = normalizeIdentity(env.CLAUDE_AGENT_NAME || '');
+  if (envName) {
+    return { name: envName, source: 'env', modeLabel: 'human-directed (env)' };
+  }
+  return { name: null, source: 'auto', modeLabel: 'auto' };
+}
+
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
@@ -140,8 +177,9 @@ function main() {
   }
   const issue = opts.issue;
 
-  if (opts.as && !FRUITS.includes(opts.as)) {
-    console.error(`[claim] note: "${opts.as}" is not in the known fruit list — using it anyway.`);
+  const identity = resolveIdentity(opts, process.env);
+  if (identity.name && !FRUITS.includes(identity.name)) {
+    console.error(`[claim] note: "${identity.name}" is not in the known fruit list — using it anyway.`);
   }
 
   // Derive a slug from the issue title if none was given (best-effort).
@@ -161,11 +199,12 @@ function main() {
   const mkBranch = (fruit) => `${fruit}/issue-${issue}${slug ? '-' + slug : ''}`;
   const mkPath = (fruit) => path.join(root, '.claude', 'worktrees', `${fruit}-issue-${issue}`);
 
-  // Pick the candidate fruit order: --as is a single forced candidate; auto walks
-  // the free fruits in index order, with a -2 suffix fallback if all are taken.
+  // Pick the candidate fruit order: a forced identity (--as or CLAUDE_AGENT_NAME)
+  // is a single candidate; auto walks the free fruits in index order, with a -2
+  // suffix fallback if all are taken.
   let candidates;
-  if (opts.as) {
-    candidates = [opts.as];
+  if (identity.name) {
+    candidates = [identity.name];
   } else {
     const taken = takenFruits();
     candidates = FRUITS.filter((f) => !taken.has(f));
@@ -179,7 +218,7 @@ function main() {
   if (opts.dryRun) {
     const fruit = candidates[0];
     console.log('[claim] --dry-run — nothing staked.');
-    report(fruit, mkBranch(fruit), mkPath(fruit), base, opts.as ? 'reuse (--as)' : 'auto', true);
+    report(fruit, mkBranch(fruit), mkPath(fruit), base, identity.modeLabel, true);
     return;
   }
 
@@ -188,7 +227,7 @@ function main() {
     const wtPath = mkPath(fruit);
 
     if (branchExists(branch)) {
-      if (opts.as) {
+      if (identity.name) {
         die(`branch ${branch} already exists — issue #${issue} is already claimed under "${fruit}". ` +
             `cd into ${wtPath}, or claim a different issue.`);
       }
@@ -197,13 +236,14 @@ function main() {
 
     const ok = sh(`git worktree add ${wtPath} -b ${branch} ${base} 2>&1`, true);
     if (ok === null) {
-      if (opts.as) die(`git worktree add failed for ${branch} (see git output).`);
+      if (identity.name) die(`git worktree add failed for ${branch} (see git output).`);
       continue; // auto: something raced us, try next fruit
     }
 
     // auto mode: detect-and-rollback if another agent also grabbed this fruit in
-    // the race window (a different <fruit>/* branch now exists).
-    if (!opts.as) {
+    // the race window (a different <fruit>/* branch now exists). A forced identity
+    // (--as / env) expects to share a fruit across issues, so it skips this check.
+    if (!identity.name) {
       const sameFruit = listWorktreeBranches().filter((b) => b.fruit === fruit);
       if (sameFruit.length > 1) {
         console.error(`[claim] race: "${fruit}" was taken by another agent — rolling back and retrying.`);
@@ -213,7 +253,7 @@ function main() {
       }
     }
 
-    report(fruit, branch, wtPath, base, opts.as ? 'reuse (--as)' : 'auto', false);
+    report(fruit, branch, wtPath, base, identity.modeLabel, false);
     return;
   }
 
@@ -243,4 +283,7 @@ function report(fruit, branch, wtPath, base, mode, dry) {
 
 if (require.main === module) main();
 
-module.exports = { FRUITS, slugify, listWorktreeBranches, takenFruits };
+module.exports = {
+  FRUITS, slugify, listWorktreeBranches, takenFruits,
+  parseArgs, normalizeIdentity, resolveIdentity,
+};

@@ -87,6 +87,50 @@ a fresh subprocess each time — the stability lives in the *agent's* context):
   the one a human assigned at launch). Same-fruit, different-issue branches are
   *expected* here.
 
+### Human-directed identity: `CLAUDE_AGENT_NAME` (#212)
+
+`auto` and `--as` both put the *agent* in charge of the name: either the script
+picks a fruit, or the agent must remember to pass `--as`. But often it is the
+**human** who decided the agent's name at launch (e.g. "you are DRAGONFRUIT").
+If the agent forgets `--as`, `auto` silently assigns a *different* fruit, and
+that wrong name then propagates into `git worktree list`, the branch, and the
+velocity CSV `agent` column. (This bit us live in #210: the human had named the
+agent DRAGONFRUIT, but a bare claim returned `apple (auto)`.)
+
+The fix is an environment variable the human sets at launch:
+
+```sh
+export CLAUDE_AGENT_NAME=dragonfruit   # in the shell that runs the agent
+```
+
+`claim.js` reads `process.env.CLAUDE_AGENT_NAME` and uses it as the **default
+forced identity** whenever `--as` is omitted. So a bare `npm run claim -- <N>`
+stakes under the human's chosen name and *never* silently auto-picks a different
+fruit. The value is normalized to lowercase (env names are conventionally
+uppercase; the branch/path component is lowercase).
+
+Precedence (highest first):
+
+| Source | Meaning | Forced? |
+|---|---|---|
+| `--as <fruit>` | explicit per-call override | yes |
+| `CLAUDE_AGENT_NAME` | human-directed session default | yes |
+| *(neither)* | `auto` — pick a fresh fruit | no |
+
+"Forced" means a single candidate that is never silently swapped: a branch-exists
+collision is a hard error, and the `auto`-only detect-and-rollback race check is
+skipped (a forced identity *expects* to share its fruit across issues).
+
+> **Mechanism note:** the variable is a plain shell export read via
+> `process.env`. `claim.js` does **not** load `.env` (it has no dotenv
+> dependency), so this is deliberately *not* a `.env.example` key — put it in the
+> launching shell, not in `.env`.
+>
+> Distinct from #194 (keeping an *auto*-assigned fruit stable mid-session). #212
+> is about letting the **human** choose the name in the first place. The two
+> compose: `CLAUDE_AGENT_NAME` sets the name, #194's session-scoping would keep
+> `auto` from reissuing it.
+
 ### Race safety
 
 The atomic operation is `git worktree add -b <branch>`: it fails if the branch
@@ -109,11 +153,14 @@ worktree+branch and retries with the next fruit. This is sound precisely because
 
 ```
 args: <issue-number> [slug] [--as <fruit>] [--base <ref=main>] [--dry-run]
+env:  CLAUDE_AGENT_NAME              # human-directed default identity
 
 taken = { branch.split('/')[0] for branch in `git worktree list --porcelain`
           if branch contains '/' }
 
-if --as F:
+forced = --as ?? lowercase(CLAUDE_AGENT_NAME) ?? none   # --as > env > auto
+
+if forced F:
     stake(F, issue, slug)            # branch-exists failure ⇒ hard error (this
                                      # issue already claimed under F)
 else:
