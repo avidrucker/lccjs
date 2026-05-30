@@ -103,6 +103,12 @@ function listWorktreeBranches() {
   return branches;
 }
 
+// @todo #194:45m/DEV takenFruits() is worktree-scoped: a fruit frees the instant
+//  its last worktree is removed, even while that agent's session is still alive (the
+//  #193 collision — apple reassigned mid-session). Make identity session-scoped via a
+//  persistent <fruit>/session sentinel branch + scan all <fruit>/* branches + a
+//  reflog-age staleness sweep. Scanning all branches alone is NOT enough (close
+//  deletes the branch too). See #194 and docs/research/claim-fruit-session-scope.md.
 function takenFruits() {
   return new Set(listWorktreeBranches().map((b) => b.fruit).filter(Boolean));
 }

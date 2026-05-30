@@ -20,6 +20,9 @@ This file is the current actionable backlog. Completed historical refactor steps
 ## Parallel-Agent Coordination
 
 - [x] agent identity on worktree branches: self-assigned fruit names for parallel-agent visibility (#179 closed — `scripts/claim.js` / `npm run claim`, `puzzle-status.js` agent attribution, convention in `docs/claude_workflow.md` + `docs/design-agent-worktree-identity.md`)
+- [ ] make claim auto session-scoped: stop reassigning a still-alive agent's fruit via a `<fruit>/session` sentinel branch (#194 — DEV, deferred; gate on recurrence; marker in `scripts/claim.js`). Surfaced by the #193 spike → `docs/research/claim-fruit-session-scope.md`.
+- [ ] document mandatory `--as` for concurrent fan-out + correct the "branch namespace is the source of truth" claim (#195 — WRITER)
+  <!-- @todo #195:15m/WRITER claude_workflow.md: bare `auto` is first-claim-of-a-solo-session only; concurrent fan-out pre-assigns `--as <fruit>`. Correct the claim.js header comment (l.26-27) + design-agent-worktree-identity.md (l.36) — takenFruits() is worktree-scoped, not branch-namespace. Cross-link docs/research/claim-fruit-session-scope.md. See #195 -->
 
 ## Documentation
 
