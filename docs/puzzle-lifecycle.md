@@ -106,7 +106,7 @@ the "work is done" signal — there is no fourth artifact.
 |---|---|---|
 | Issue creation | Bot files it when it sees a new `@todo` (marker-first) | You file it with `gh` first (issue-first) |
 | Issue closing | Bot closes it when the marker disappears | `Closes #N` in the commit (or `gh issue close`) |
-| Enforcement | Bot + scan | `pdd` scan in a pre-push hook + `puzzle:status` |
+| Enforcement | Bot + scan | pre-push hook — `pdd` scan **plus** a rebase/merge/conflict-marker gate (#205) — and `puzzle:status` |
 
 The marker format and the "resolution = deletion" idea are identical. Only the
 *who files/closes the issue* part is manual here, and that's why the issue exists

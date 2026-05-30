@@ -41,7 +41,7 @@ stayed stuck mid-rebase with conflict markers in the local tree.
 Outcome was benign (nothing broken shipped; the marker-guard caught it on the
 next step and the velocity row was resolved + pushed correctly), but it was a
 real near-miss. **Push must be gated on a clean, completed rebase
-(`grep -c '<<<<<<<' == 0`).**
+(`grep -c '<<<<<<<' == 0`)** — **now enforced by `scripts/git-hooks/pre-push` (#205).**
 
 ### 3. `closed_commit` is orphaned by concurrent rebases
 The velocity two-commit pattern captures the closing SHA, then logs it. But a
@@ -83,6 +83,13 @@ writers**, coordinated only by git's branch-level atomicity. Row-level merges
 aren't atomic, SHAs aren't stable under rebase, and there's no lock. Every
 symptom above traces back to this.
 
+## Shipped since this retro
+
+- **Gate push on a clean rebase — DONE (#205, `df6c1c2`).** `scripts/git-hooks/pre-push`
+  now blocks the push if a rebase/merge is in progress (`rebase-merge`/`rebase-apply`
+  dirs or `MERGE_HEAD`) or any tracked file carries a column-0 conflict marker; never
+  chain `rebase && push`. This closes failure mode #2.
+
 ## Candidate mitigations (to evaluate under #188)
 
 - **Replace the append-only CSV** with a concurrency-safer store:
@@ -92,8 +99,6 @@ symptom above traces back to this.
     `velocity/<ticket>.json`); independent paths never conflict; reduce to a CSV
     on demand.
   - Append-only log reconciled periodically rather than committed per close.
-- **Gate push on a clean rebase** — pre-push hook that aborts if conflict
-  markers are present or a rebase is in progress; never chain `rebase && push`.
 - **Stamp `closed_commit` after the final push** (or reference the GH close
   event instead of a SHA) so concurrent rebases can't orphan it.
 - **PR / merge-queue** instead of trunk-based `HEAD:main` if branch protection

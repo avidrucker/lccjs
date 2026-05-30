@@ -9,7 +9,7 @@ snapshot. For planned refactor / parity / feature work in flight, see
 [`TODOS.md`](./TODOS.md). For higher-level direction, see
 [`ROADMAP.md`](./ROADMAP.md).
 
-Last updated: 2026-05-28.
+Last updated: 2026-05-30.
 
 ## Known bugs (correctness)
 
@@ -63,8 +63,6 @@ Prof. Dos Reis.
 Most of the stale-reference items flagged in the May 2026 review were
 addressed on `improve-docs-branch-2026-may-25-01`. Remaining items:
 
-- **`docs/onboarding_strategy.md`** is a 7-line skeleton that adds nothing on
-  top of `onboarding.md` — expand-or-delete decision still open.
 - **`docs/example assembly programs.txt`** (15KB) is undocumented in
   `README.md`; its relationship to the curated `demos/` set is unclear.
 - **Per-module docs (`docs/assembler.md`, `interpreter.md`, `lcc.md`,
@@ -117,7 +115,7 @@ Confirmed by `npx jest --coverage` on 2026-05-25 (branch
   | | OG cuh63 6.3 | LCCjs | Spec |
   |---|---|---|---|
   | `mvi` range | -256..+255 | -256..+255 | -256..+255 ✓ |
-  | `mov` range | **0..255 only** | **unbounded, silently wraps** | -256..+255 |
+  | `mov` range | **0..255 only** | −256..+255 ✓ *(fixed: OB-001/#31)* | -256..+255 |
 
   Findings:
   1. **cuh63 6.3 has a regression in its `mov` parser** — it accepts a
@@ -128,16 +126,17 @@ Confirmed by `npx jest --coverage` on 2026-05-25 (branch
      against cuh63 6.3 — that would adopt cuh63's regression. This is
      why GOLDEN_AUTO_UPDATE=1 crashes on demoF/H/L/R/X: those demos use
      negative `mov` immediates that are spec-legal but cuh63 6.3 rejects.
-  3. **LCC.js has its own `mov` validation bug.** It treats `mov`
-     differently from `mvi` for range checking: `mvi r0, 256` is
-     correctly rejected, but `mov r0, 256` is accepted and silently
-     encoded as `mov r0, -256` (9-bit wraparound). `mov r0, 512` becomes
-     identical to `mov r0, 0` with no warning. Fix: route `mov` through
-     the same range-check `mvi` uses.
+  3. **LCC.js had its own `mov` validation bug — now FIXED (OB-001/#31,
+     `d39fe90`).** It used to treat `mov` differently from `mvi` for range
+     checking: `mvi r0, 256` was correctly rejected, but `mov r0, 256` was
+     accepted and silently encoded as `mov r0, -256` (9-bit wraparound), and
+     `mov r0, 512` became identical to `mov r0, 0` with no warning. `mov` now
+     routes through the same `-256..+255` range-check `mvi` uses.
 
   Action items:
-  - Fix LCC.js `mov` to share the `-256..+255` validation `mvi` already
-    enforces.
+  - ~~Fix LCC.js `mov` to share the `-256..+255` validation `mvi` already
+    enforces.~~ **DONE** — OB-001/#31 (`d39fe90`); `mov` now routes through
+    the shared range-check.
   - Document the cuh63 6.3 `mov` regression in
     `docs/core-behavior-matrix.md` as a deliberate divergence (LCC.js
     follows the spec; cuh63 6.3 is stricter on `mov` than spec).

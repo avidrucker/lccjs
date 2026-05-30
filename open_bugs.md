@@ -11,9 +11,8 @@ cuh63 6.3 that affects parity work). Distinct from:
 
 Each bug below has: **ID** (referenceable from commits and other
 docs), **severity**, **status**, **where**, a short description, and
-suggested fix. Citations refer to the current `main`-relative state
-on branch `improve-docs-branch-2026-may-25-01`; verify file:line
-before fixing if the branch has moved on.
+suggested fix. Citations are `main`-relative; line numbers drift as
+the code evolves, so verify file:line before fixing.
 
 Last updated: 2026-05-28 — reconciled the eight verified core entries
 (OB-001..OB-007 + OB-012) against their resolution commits; all are

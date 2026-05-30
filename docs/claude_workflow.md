@@ -154,7 +154,7 @@ The `git pull --rebase` step **must** happen between commit 1 and the SHA captur
 
 3. Update tracker checkbox **via an issue comment**, not a body edit. (Body edits race with parallel agents; comments are append-only.) If there's no tracker, this step is skipped.
 4. Mark any related TaskCreate tasks as complete via TaskUpdate.
-5. **Remove my worktree** — `ExitWorktree --remove` (for one created via `EnterWorktree`) or `git worktree remove .claude/worktrees/issue-<N>` + `git worktree prune`. This is **mandatory**: confirm the commits are on `origin/main` first (`git branch -r --contains HEAD` → `origin/main`), then remove. Leaving a worktree behind after close is the #1 source of "is someone working on this?" confusion — it reads as a live claim when no agent is in it. Delete the throwaway `worktree-issue-<N>` branch too (it's merged and has no remote).
+5. **Remove my worktree** — `ExitWorktree --remove` (for one created via `EnterWorktree`) or `git worktree remove .claude/worktrees/<fruit>-issue-<N>` + `git worktree prune`. This is **mandatory**: confirm the commits are on `origin/main` first (`git branch -r --contains HEAD` → `origin/main`), then remove. Leaving a worktree behind after close is the #1 source of "is someone working on this?" confusion — it reads as a live claim when no agent is in it. Delete the throwaway `<fruit>/issue-<N>-<slug>` branch too (it's merged and has no remote).
 6. Report what changed in 1-2 sentences. Include the velocity Δ if it's interesting.
 
 **What I do *not* do at close:**
