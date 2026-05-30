@@ -139,6 +139,12 @@ stake(F, N, slug):
 - **Fruit reuse after teardown:** if `apple` removes all its worktrees but is
   still alive, a later agent may `auto`-pick `apple`. Two apples then appear in
   *history* but never *concurrently*, which is all "who's working now" needs.
+  > ⚠️ **#193 falsified the "never concurrently" claim.** Identity here is
+  > worktree-scoped, not session-scoped: an agent sitting between puzzles is alive
+  > but invisible to `takenFruits()`, so auto handed a live apple's name to another
+  > agent. See [`research/claim-fruit-session-scope.md`](./research/claim-fruit-session-scope.md)
+  > for the analysis and the recommended fix (mandatory `--as` for concurrent
+  > fan-out now; a session-sentinel branch if it recurs).
 - **Fruit-list exhaustion:** with ~24 fruits, exhaustion is unlikely; fall back
   to a `-2` suffix and log it (no silent cap).
 
