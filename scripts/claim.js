@@ -131,13 +131,14 @@ function branchExists(branch) {
 }
 
 function parseArgs(argv) {
-  const opts = { issue: null, slug: null, as: null, base: 'main', dryRun: false };
+  const opts = { issue: null, slug: null, as: null, base: 'main', dryRun: false, allowStaleMain: false };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--as') opts.as = argv[++i];
     else if (a === '--base') opts.base = argv[++i];
     else if (a === '--dry-run') opts.dryRun = true;
+    else if (a === '--allow-stale-main') opts.allowStaleMain = true;
     else if (a.startsWith('--')) die(`unknown flag: ${a}`);
     else positionals.push(a);
   }
@@ -170,6 +171,17 @@ function resolveIdentity(opts, env) {
   return { name: null, source: 'auto', modeLabel: 'auto' };
 }
 
+// Pure decision seam for the stale-base guard (#228). `behind` = commits in
+// origin/main not in local main (0 when not applicable or un-knowable). Only the
+// default local `main` base can be stale relative to its remote; an explicit
+// origin/* base is already remote-fresh and is never flagged. Kept pure (no git
+// calls) so it is unit-testable without a repo; main() does the git I/O.
+function assessBaseStaleness(base, behind) {
+  const checksRemote = base === 'main' || base === 'refs/heads/main';
+  const n = Number(behind) || 0;
+  return { checksRemote, behind: n, stale: checksRemote && n > 0 };
+}
+
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
@@ -196,18 +208,25 @@ function main() {
     if (title) slug = slugify(title);
   }
 
-  // @todo #228:45m/DEV claim.js trusts whatever `main` the local checkout has. If
-  // local main is behind origin/main, the running script can predate #212 (no
-  // CLAUDE_AGENT_NAME support) so identity silently falls back to auto, AND the base
-  // below stakes from a stale tree (repro: #223 — env-var ignored on a pre-#212 main).
-  // Fetch + compare (git rev-list --count main..origin/main); if behind, warn/abort
-  // telling the agent to `git pull --ff-only origin main` first, or default --base
-  // origin/main. Caveat: only protects agents already on a guard-bearing main; the
-  // "sync main before claiming" process note rides #195/#230. See #228.
   const base = opts.base;
   // Verify the base ref resolves before we start staking.
   if (!sh(`git rev-parse --verify --quiet ${base}^{commit} && echo ok`, true)) {
     die(`base ref "${base}" does not resolve — pass --base <ref> (e.g. origin/main).`);
+  }
+
+  // Stale-main guard (#228): refuse to stake from a local `main` that is behind
+  // origin/main. A stale checkout silently runs an older claim.js (e.g. pre-#212,
+  // no CLAUDE_AGENT_NAME) AND stakes the worktree from an out-of-date tree. Best-
+  // effort: a single-ref fetch keeps the comparison honest; if it fails (offline)
+  // or origin/main is unknown, `behind` is 0 and we proceed. --allow-stale-main
+  // overrides. Caveat: only protects agents already running this guard-bearing
+  // script; the complementary "sync main before claiming" process note is #195/#230.
+  if (!opts.allowStaleMain) {
+    sh('git fetch origin main --quiet', true);
+    const behind = Number((sh('git rev-list --count main..origin/main', true) || '').trim()) || 0;
+    if (assessBaseStaleness(base, behind).stale) {
+      die(`local main is ${behind} commit(s) behind origin/main — run \`git pull --ff-only origin main\` first, then re-claim (stale main risks a wrong identity + an out-of-date base; pass --allow-stale-main to override). See #228.`);
+    }
   }
 
   const root = mainRoot();
@@ -300,5 +319,5 @@ if (require.main === module) main();
 
 module.exports = {
   FRUITS, slugify, listWorktreeBranches, takenFruits,
-  parseArgs, normalizeIdentity, resolveIdentity,
+  parseArgs, normalizeIdentity, resolveIdentity, assessBaseStaleness,
 };

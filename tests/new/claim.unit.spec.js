@@ -2,6 +2,7 @@ const {
   parseArgs,
   normalizeIdentity,
   resolveIdentity,
+  assessBaseStaleness,
 } = require('../../scripts/claim');
 
 // Pure identity-resolution seam from scripts/claim.js. These tests exercise the
@@ -58,6 +59,35 @@ describe('claim.js identity resolution', () => {
     test('leaves as null when --as is omitted', () => {
       const opts = parseArgs(['212']);
       expect(opts.as).toBeNull();
+    });
+
+    test('--allow-stale-main sets the bypass flag (default false)', () => {
+      expect(parseArgs(['228']).allowStaleMain).toBe(false);
+      expect(parseArgs(['228', '--allow-stale-main']).allowStaleMain).toBe(true);
+    });
+  });
+
+  // #228: the stale-main guard's decision logic, exercised without shelling out to
+  // git. main() does the fetch + rev-list; this pure seam decides on the count.
+  describe('assessBaseStaleness() — #228 stale-main guard', () => {
+    test('a local main base behind origin/main is flagged stale', () => {
+      expect(assessBaseStaleness('main', 3)).toMatchObject({ checksRemote: true, behind: 3, stale: true });
+    });
+
+    test('a local main base level with origin/main is fresh', () => {
+      expect(assessBaseStaleness('main', 0).stale).toBe(false);
+    });
+
+    test('an explicit origin/* base is never flagged (already remote-fresh)', () => {
+      expect(assessBaseStaleness('origin/main', 5)).toMatchObject({ checksRemote: false, stale: false });
+    });
+
+    test('a non-main base is not checked', () => {
+      expect(assessBaseStaleness('some-tag', 2).stale).toBe(false);
+    });
+
+    test('an un-knowable (non-numeric) behind count is treated as 0 → proceed', () => {
+      expect(assessBaseStaleness('main', NaN).stale).toBe(false);
     });
   });
 });
