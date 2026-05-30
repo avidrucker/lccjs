@@ -134,6 +134,8 @@ A pause happens in two shapes:
    ```
 2. Final verification — does the change actually do what it should?
 
+<!-- @todo #201:30m/WRITER this close sequence is STALE — it predates #186. The current protocol (docs/puzzle-velocity.md "Protocol" step 5 + "closed_commit: derive, don't capture") is a SINGLE commit with closed_commit left empty (CSV merge=union auto-resolves parallel rows), not the two-commit + capture-SHA flow shown below. Rewrite this section and the closed_commit row in "What I track in the CSV" to match #186; cross-reference it. See #201. -->
+
 **The close sequence** (full protocol in [`puzzle-velocity.md`](./puzzle-velocity.md)):
 
 ```bash
