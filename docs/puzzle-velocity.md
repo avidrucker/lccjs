@@ -113,6 +113,16 @@ sides' rows with **no manual conflict** — the old hand-resolve + marker-guard
 dance is gone. (`union` fires under `rebase`, not just `merge` — verified;
 [`research/velocity-log-storage.md`](./research/velocity-log-storage.md).)
 
+**Append with LF, never CRLF.** The CSV is LF-only. If you append the row with a
+tool that defaults to CRLF — notably Python `csv.writer`, whose default
+`lineterminator` is `\r\n` — pass `lineterminator='\n'` (or strip the trailing
+`\r` afterward). A stray CRLF row is *doubly* harmful under `merge=union`: a
+later LF-vs-CRLF edit of the **same** row does not dedup — union keeps both
+byte-variants — which is exactly how #210 got logged twice (#217). A plain-shell
+append (`>>` with an LF) is already safe; the trap is reaching for `csv.writer`.
+A regression test (`tests/new/puzzle-velocity-csv.unit.spec.js`) guards both
+invariants: no CR bytes, and no byte-identical duplicate rows.
+
 If a *non-union* file conflicts during the rebase (e.g. two agents edited the
 same region of `TODOS.md`), resolve it manually and still run the guard before
 `git add`: `grep -c '^<<<<<<<\|^=======\|^>>>>>>>' <file>` must print `0` (a
