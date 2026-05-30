@@ -313,8 +313,7 @@ main:       push lr
             ; cea compute effective address
             ; "Similar to lea, but to load the address of a dynamic local
             ; variable. Assembled to the add instruction, with sr1 as fp."
-            ; my best guess is that this is useful for accessing local variables
-            ; @todo #152:30m/DEV validate and verify correct usage of cea in context
+            ; verified (#152): this is exactly the intended use — the fp-relative analogue of lea
             cea r0, 0; compute effective address, same as `add r0, fp, 0`
             dout r0
             nl

@@ -51,6 +51,7 @@ Reference for the LCC (Little Computer) instruction set from
 
 - `mov dr, imm9` → `mvi dr, imm9`
 - `mov dr, sr` → `mvr dr, sr`
+- `cea dr, imm5` → `add dr, fp, imm5` (compute address of a stack-frame local; `fp` = `r5`. The fp-relative analogue of `lea`.)
 
 **Field sizes:**
 

@@ -820,10 +820,10 @@ LCC uses five different immediate-field widths depending on the instruction:
 
 | Name | Width | Range | Used by |
 |---|---|---|---|
-| `imm5` | 5-bit signed | -16..15 | ADD / SUB / AND / CMP immediate forms |
+| `imm5` | 5-bit signed | -16..15 | ADD / SUB / AND / CMP immediate forms; CEA (pseudo → ADD) |
 | `imm9` | 9-bit signed | -256..255 | MVI / MOV |
 | `offset6` | 6-bit signed | -32..31 | LDR / STR / JMP / RET / BLR |
-| `pcoffset9` | 9-bit signed | -256..255 | BR / LD / ST / LEA / CEA |
+| `pcoffset9` | 9-bit signed | -256..255 | BR / LD / ST / LEA |
 | `pcoffset11` | 11-bit signed | -1024..1023 | BL only |
 | `ct` | 4-bit unsigned | 0..15 | shift count for SRL / SRA / SLL / ROL / ROR |
 
@@ -873,7 +873,7 @@ Five mnemonics encode to a different machine instruction than their name suggest
 |---|---|---|
 | `mov dr, imm9` | `mvi dr, imm9` (opcode 13) | mov-with-immediate has no native opcode; reuses MVI |
 | `mov dr, sr` | `mvr dr, sr` (eopcode 12 in OP_EXT) | mov-between-registers has no native opcode; reuses MVR |
-| `cea dr, imm5` | `add dr, fp, imm5` | "compute effective address" — useful for stack-frame offsets; just an ADD with `fp` as base |
+| `cea dr, imm5` | `add dr, fp, imm5` | "compute effective address" of a stack-frame local — the **fp-relative** analogue of `lea` (which is **PC-relative**, for statics/labels). `cea r0, -3` → `r0 = &(local at fp-3)`. Because it's just an ADD with `fp` as base, the immediate is `imm5` (−16..15), **not** a pcoffset9. (Validated against cuh63 6.3 — #152.) |
 | `ret` | `jmp lr` (`baser = r7`) | RET is just an indirect jump through the link register |
 | `bral` | `br` with cc=7 (always) | "branch unconditional, always-link"; same encoding as `br` |
 
