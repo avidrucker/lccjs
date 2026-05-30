@@ -45,7 +45,7 @@ next," start here.
                         ▼
                 ┌──── At close ─────┐
                 │  capture t₁       │
-                │  two-commit close │
+                │  one-commit close │
                 │  velocity row     │
                 └────────┬──────────┘
                          ▼
@@ -136,20 +136,24 @@ A pause happens in two shapes:
    ```
 2. Final verification — does the change actually do what it should?
 
-<!-- @todo #201:30m/WRITER this close sequence is STALE — it predates #186. The current protocol (docs/puzzle-velocity.md "Protocol" step 5 + "closed_commit: derive, don't capture") is a SINGLE commit with closed_commit left empty (CSV merge=union auto-resolves parallel rows), not the two-commit + capture-SHA flow shown below. Rewrite this section and the closed_commit row in "What I track in the CSV" to match #186; cross-reference it. See #201. -->
-
-**The close sequence** (full protocol in [`puzzle-velocity.md`](./puzzle-velocity.md)):
+**The close sequence** (single commit — full protocol in [`puzzle-velocity.md`](./puzzle-velocity.md), changed in #186):
 
 ```bash
-git commit -m "... Closes #N"      # commit 1: closes the ticket
-git pull --rebase                  # critical: parallel agents may have pushed
-sha=$(git rev-parse --short HEAD)  # capture POST-rebase SHA
-# Append CSV row to docs/puzzle-velocity.csv with $sha
-git commit -m "docs(velocity): log #N — …"   # commit 2
+# One commit carries everything: delete the source marker, append the CSV row
+# (closed_commit left EMPTY), and close the ticket.
+git add -A
+git commit -m "... Closes #N"      # marker deletion + CSV row ride together (#186)
+git pull --rebase                  # parallel agents may have pushed; rebase before pushing
 git push
 ```
 
-The `git pull --rebase` step **must** happen between commit 1 and the SHA capture. This is the one parallel-agent gotcha worth memorizing — without it, the CSV ends up pointing at an unreachable commit.
+Close and velocity-log land in **one** commit (#186), not two. The CSV carries `merge=union` (in `.gitattributes`), so parallel row-appends auto-union on rebase — no manual conflict, no SHA to capture. **Leave `closed_commit` empty:** the `git pull --rebase` rewrites the closing commit's SHA, so any SHA captured before the push orphans (the old two-commit flow had to re-fix it on every rebase round). Recover it on demand instead:
+
+```bash
+git log --grep "Closes #N" -1 --format=%h
+```
+
+Do **not** `git commit --amend` to backfill the SHA — amend orphans the original.
 
 **After the push:**
 
@@ -183,7 +187,7 @@ One row per closed puzzle in [`puzzle-velocity.csv`](./puzzle-velocity.csv). Col
 | `delta_h_min` | `actual_min − h_min` |
 | `delta_c_min` | `actual_min − c_min` |
 | `started_iso` / `finished_iso` | ISO 8601 with timezone |
-| `closed_commit` | git short SHA, captured *after* `pull --rebase` |
+| `closed_commit` | left **empty** at close; derive on demand with `git log --grep "Closes #N" -1 --format=%h`. (The `pull --rebase` rewrites the closing SHA, so capturing it orphans — #186.) |
 | `notes` | free-text — anomalies, context, surprises |
 | `agent` | which agent did it — the worktree fruit identity, uppercased (e.g. `APPLE`); trailing column. Empty if unknown. |
 
