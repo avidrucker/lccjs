@@ -90,8 +90,7 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] custom-named output report behavior
 - [ ] keep research-marked tests current with oracle findings
 - [x] lock in `.e`-path LST hex-only parity vs oracle (no source/comments), whitespace-lenient (#156, closed in 048bff4)
-- [ ] establish first test coverage for `src/plus/*` and `src/extra/*` (0% today; ~2k LOC) — scope ticket, spawns per-file child puzzles
-  <!-- @todo #166:60m/QA SCOPE: src/plus (assemblerplus, interpreterplus, lccplus) + src/extra (disassembler 915L, linkerStepsPrinter 709L) have zero tests; this is where unverified bugs OB-002/009/011/012/013/017/018 live. Define the per-file seams and spawn one <=60m child puzzle each (smoke + a bug repro), mirroring tests/new/*.unit.spec.js + golden-cache oracle e2e patterns. Do NOT attempt all 5 files in one puzzle. See #166 -->
+- [x] establish first test coverage for `src/plus/*` and `src/extra/*` — scope ticket #166 decomposed into per-file children #196 (disassembler), #197 (assemblerplus), #198 (interpreterplus), #199 (lccplus), #200 (linkerStepsPrinter)
 
 ## Claude Skills
 
