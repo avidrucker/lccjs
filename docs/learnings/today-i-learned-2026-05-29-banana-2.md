@@ -77,6 +77,18 @@ rebase/merge is in progress or a tracked file has a column-0 conflict marker.
   the `pdd` scan + `gh`-calling `puzzle:status`), and make them gem-free so they fire
   for contributors without the Ruby toolchain.
 
+## 5b. `Resolves #N` in a commit body is a *close directive*, not prose (#188)
+
+My #205 hook commit body read `Resolves #188 failure mode #2` — meant descriptively.
+GitHub parsed `Resolves #188` as a closing keyword and **auto-closed the parent #188**
+(which I'd deliberately left open for the user-owned #4 decision). Had to reopen.
+
+- **Lesson:** the keywords `close/closes/closed`, `fix/fixes/fixed`,
+  `resolve/resolves/resolved` followed by `#N` **anywhere** in a commit body close
+  that issue on push. Never place one next to a *parent/tracker* number you intend to
+  keep open. To reference without closing, write `re #188`, `part of #188`, or
+  `#188 (mode #2)` — no close-verb adjacent to the number.
+
 ## 6. A stale marker I flagged was cleaned by another agent before I could act (#167)
 
 I flagged a `STALE` `@todo #167` marker; by the time I went to clean it, another agent
