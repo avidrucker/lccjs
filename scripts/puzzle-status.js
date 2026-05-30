@@ -37,6 +37,8 @@
 'use strict';
 
 const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 const STRICT = process.argv.includes('--strict');
 const AS_JSON = process.argv.includes('--json');
@@ -122,7 +124,41 @@ function findIssueStates() {
   return map;
 }
 
-function classify(marker, byIssue, issues) {
+// 4. Cluster manifest (derived-cluster availability, #222/#237). Optional file:
+//    structure is logged locally so reading it costs ZERO network. Membership lives
+//    in docs/puzzle-clusters.csv (`cluster,issue,blocked_by`); absent file => no locks,
+//    so puzzle-status stays backward-compatible on a repo without a manifest.
+function loadClusters(file) {
+  const f = file || path.join(__dirname, '..', 'docs', 'puzzle-clusters.csv');
+  let txt;
+  try { txt = fs.readFileSync(f, 'utf8'); } catch { return { clusterOf: new Map(), members: new Map() }; }
+  const clusterOf = new Map(); // issue -> cluster name
+  const members = new Map();   // cluster name -> Set(issue)
+  for (const line of txt.trim().split('\n').slice(1)) { // slice(1) drops the header
+    if (!line.trim()) continue;
+    const [cluster, issue] = line.split(',').map((s) => (s || '').trim());
+    if (!cluster || !/^\d+$/.test(issue)) continue;
+    const n = Number(issue);
+    clusterOf.set(n, cluster);
+    if (!members.has(cluster)) members.set(cluster, new Set());
+    members.get(cluster).add(n);
+  }
+  return { clusterOf, members };
+}
+
+// Derived soft-lock: a marker's issue is "locked" iff a *different* member of its
+// cluster is in progress right now (holds a live worktree). The lock is derived from
+// that live worktree, so it cannot outlive the work — no stored label, no reconciler.
+function clusterLockers(issue, clusters, inProgress) {
+  const cluster = clusters.clusterOf.get(issue);
+  if (!cluster) return null;
+  const mates = [...(clusters.members.get(cluster) || [])]
+    .filter((i) => i !== issue && inProgress.has(i))
+    .sort((a, b) => a - b);
+  return mates.length ? { cluster, mates } : null;
+}
+
+function classify(marker, byIssue, issues, clusters, inProgress) {
   const wt = byIssue.get(marker.issue);
   const issue = issues ? issues.get(marker.issue) : undefined;
   const state = issue ? issue.state : 'UNKNOWN';
@@ -146,6 +182,12 @@ function classify(marker, byIssue, issues) {
   if (issue && issue.blocked) {
     return { status: 'BLOCKED', stale: false, detail: 'open but labeled `blocked` — not grabbable yet' };
   }
+  // Derived-cluster soft-lock (#222): grabbable on its own, but a clustermate is being
+  // worked right now, so its code-area is hands-off. Distinct from BLOCKED (a label).
+  const lock = clusters && inProgress && clusterLockers(marker.issue, clusters, inProgress);
+  if (lock) {
+    return { status: 'LOCKED', stale: false, detail: `cluster \`${lock.cluster}\` — clustermate ${lock.mates.map((i) => '#' + i).join(' ')} in progress` };
+  }
   return { status: 'AVAILABLE', stale: false, detail: state === 'UNKNOWN' ? 'open (issue state unknown)' : 'open, unclaimed' };
 }
 
@@ -162,6 +204,7 @@ const ICON = {
   AVAILABLE: '🟢',
   CLAIMED: '🟡',
   'IN-PROGRESS': '🔵',
+  LOCKED: '🔒',
   BLOCKED: '⚪',
   STALE: '🔴',
 };
@@ -170,8 +213,10 @@ function main() {
   const markers = findMarkers();
   const { byIssue } = findWorktrees();
   const issues = findIssueStates();
+  const clusters = loadClusters();
+  const inProgress = new Set(byIssue.keys()); // issues with a live worktree = in progress
 
-  const rows = markers.map((m) => ({ ...m, ...classify(m, byIssue, issues) }));
+  const rows = markers.map((m) => ({ ...m, ...classify(m, byIssue, issues, clusters, inProgress) }));
 
   if (AS_JSON) {
     process.stdout.write(JSON.stringify({ ghAvailable: !!issues, rows }, null, 2) + '\n');
@@ -183,7 +228,7 @@ function main() {
     console.log('[puzzle-status] gh unavailable — issue state shown as UNKNOWN; staleness limited to worktree checks.\n');
   }
 
-  const order = ['STALE', 'IN-PROGRESS', 'CLAIMED', 'AVAILABLE', 'BLOCKED'];
+  const order = ['STALE', 'IN-PROGRESS', 'CLAIMED', 'LOCKED', 'AVAILABLE', 'BLOCKED'];
   rows.sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status) || a.issue - b.issue);
 
   for (const r of rows) {
@@ -204,4 +249,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { findMarkers, findWorktrees, findIssueStates, classify };
+module.exports = { findMarkers, findWorktrees, findIssueStates, classify, loadClusters, clusterLockers };
