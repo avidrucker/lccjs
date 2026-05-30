@@ -9,8 +9,6 @@
 
 'use strict';
 
-// @todo #168:30m/TEST red-green unit tests for h4/REG_NAMES/REG_ALIASES — see #168
-
 // Format a value as zero-padded, 4-digit, 16-bit hex (e.g. 5 -> "0005").
 const h4 = (v) => (v & 0xFFFF).toString(16).padStart(4, '0');
 
