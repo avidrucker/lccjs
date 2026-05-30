@@ -211,6 +211,20 @@ The default policy is **scan all source, blacklist the rest**: code under `src/*
 and friends is scanned; `docs/**`, all `*.md`, fixtures, generated trees,
 throwaway/experiment dirs, and the scanner's own files are excluded.
 
+**Path-robustness (#224).** `pdd` compiles each `.pddignore` exclude into a
+regexp built from the repo's *absolute* path and never escapes literal chars, so
+a regex-special char in that path (notably the `+` that `EnterWorktree` puts in
+`.claude/worktrees/<fruit>+<slug>` dir names) used to silently void *every*
+exclude — the gate would then scan `docs/**`/`*.md` and false-fail on the first
+uppercase keyword, forcing `git push --no-verify` (which also skips the #205
+conflict-marker gate). `scripts/run-pdd.sh` now detects such a path and scans
+through a special-char-free symlink instead, so the gate is correct from any
+worktree (it prints a one-line `[run-pdd] note:` when it does). If it can't build
+a safe path (e.g. a hostile `TMPDIR`) it fails loudly rather than mis-scan in
+silence. So `+` in a worktree name no longer defeats this gate — though keeping
+worktree/claim names to `[A-Za-z0-9._-]` is still good hygiene for other tooling
+(see #195).
+
 **The substring trap.** `pdd` is a dumb, case-sensitive *substring* matcher. It
 flags the bare uppercase keyword (`@todo`'s uppercase form, or `TODO` / `TODO:`)
 **anywhere** in a scanned file — even buried inside a larger token. A stray
