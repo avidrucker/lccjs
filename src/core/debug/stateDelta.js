@@ -17,8 +17,6 @@
 
 'use strict';
 
-// @todo #169:30m/TEST red-green unit tests for diffRegisters/diffFlags/pcChanged — see #169
-
 // diffRegisters(prevRegs, currRegs) — compare two 8-element register arrays.
 // Returns the changed registers in index order: [{ i, oldVal, newVal }].
 function diffRegisters(prevRegs, currRegs) {
