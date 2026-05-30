@@ -131,13 +131,14 @@ function branchExists(branch) {
 }
 
 function parseArgs(argv) {
-  const opts = { issue: null, slug: null, as: null, base: 'main', dryRun: false, allowStaleMain: false };
+  const opts = { issue: null, slug: null, as: null, base: 'main', dryRun: false, allowStaleMain: false, force: false };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--as') opts.as = argv[++i];
     else if (a === '--base') opts.base = argv[++i];
     else if (a === '--dry-run') opts.dryRun = true;
+    else if (a === '--force') opts.force = true;
     else if (a === '--allow-stale-main') opts.allowStaleMain = true;
     else if (a.startsWith('--')) die(`unknown flag: ${a}`);
     else positionals.push(a);
@@ -182,10 +183,33 @@ function assessBaseStaleness(base, behind) {
   return { checksRemote, behind: n, stale: checksRemote && n > 0 };
 }
 
+// Read an issue's title + state in one best-effort gh round-trip (#227). Returns
+// { title, state } with state upper-cased, or null when gh is unavailable / the
+// issue is unknown -- callers MUST treat null as "proceed", never as a block.
+function readIssue(issue) {
+  const out = sh(`gh issue view ${issue} --json title,state`, true);
+  if (!out) return null;
+  try {
+    const j = JSON.parse(out);
+    return { title: j.title || null, state: String(j.state || '').toUpperCase() };
+  } catch {
+    return null;
+  }
+}
+
+// Pure decision seam (#227): block a claim ONLY on a *definitive* CLOSED state.
+// A missing/unknown issue or an unavailable gh (info === null) is NOT a block --
+// the workflow stays offline-first. --force bypasses entirely. Kept pure (no I/O)
+// so it is unit-testable without shelling out, like assessBaseStaleness (#228).
+function shouldBlockClaim(info, force) {
+  if (force) return false;
+  return !!(info && info.state === 'CLOSED');
+}
+
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
-    die('usage: node scripts/claim.js <issue-number> [slug] [--as <fruit>] [--base <ref>] [--dry-run]');
+    die('usage: node scripts/claim.js <issue-number> [slug] [--as <fruit>] [--base <ref>] [--dry-run] [--force]');
   }
   const issue = opts.issue;
 
@@ -194,19 +218,18 @@ function main() {
     console.error(`[claim] note: "${identity.name}" is not in the known fruit list — using it anyway.`);
   }
 
-  // @todo #227:20m/DEV claim.js stakes a worktree without checking issue state — it
-  // will happily claim an already-CLOSED issue. The slug gh call below already fetches
-  // the issue JSON; extend it to `--json title,state` and, when state is CLOSED, warn
-  // and abort (non-zero) unless an explicit --force is passed, so an agent racing a
-  // concurrent close (cf. #223) finds out before doing redundant work. Keep best-effort
-  // when gh is unavailable / the issue is unknown. See #227.
+  // One gh round-trip serves both the slug and the open/closed guard (#227).
+  // Best-effort: gh may be absent/offline (info === null) -> proceed; only a
+  // *definitive* CLOSED aborts, so a typo'd or just-closed number (cf. #223) is
+  // caught before we stake a phantom worktree. --force bypasses.
+  const info = readIssue(issue);
+  if (shouldBlockClaim(info, opts.force)) {
+    die(`#${issue} is CLOSED -- nothing to claim (raced a concurrent close? cf. #223). Pass --force to claim it anyway.`);
+  }
 
   // Derive a slug from the issue title if none was given (best-effort).
   let slug = opts.slug ? slugify(opts.slug) : null;
-  if (!slug) {
-    const title = sh(`gh issue view ${issue} --json title -q .title`, true);
-    if (title) slug = slugify(title);
-  }
+  if (!slug && info && info.title) slug = slugify(info.title);
 
   const base = opts.base;
   // Verify the base ref resolves before we start staking.
@@ -320,4 +343,5 @@ if (require.main === module) main();
 module.exports = {
   FRUITS, slugify, listWorktreeBranches, takenFruits,
   parseArgs, normalizeIdentity, resolveIdentity, assessBaseStaleness,
+  readIssue, shouldBlockClaim,
 };
