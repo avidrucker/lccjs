@@ -229,8 +229,12 @@ class Assembler {
 
   /**
    * Validates the raw source line length before any comment stripping or tokenization.
-   * For now, the 300-character limit includes comments until the original LCC behavior
-   * is researched and specified more precisely.
+   * The 300-character limit counts the raw line including comments — confirmed correct
+   * by the #244 oracle probe (docs/research/line-length-limit.md): OG LCC has no
+   * length diagnostic and instead silently splits lines past its 298-char buffer,
+   * parsing the overflow as bogus source. This explicit cap is an intentional,
+   * fail-fast deviation (docs/parity_deviations.md BY DESIGN #7), not a port of an
+   * oracle limit; keeping 300 over the oracle's 298 is deliberate.
    *
    * @param {string} line - The raw source line.
    */

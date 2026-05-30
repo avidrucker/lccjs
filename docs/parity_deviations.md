@@ -129,6 +129,34 @@ undef.a` (errors, no `.e`) vs oracle `lcc undef1.a` (errors but leaves a 2-byte
 
 ---
 
+### 13. Long source lines silently split into bogus source (no length guard) (#244)
+
+OG LCC has no line-length check. It reads each source line into a fixed buffer
+that holds **298 characters**; a line of length ≥ 299 is **silently split** at the
+boundary and the overflow tail is fed back to the assembler as the next source
+line(s). Consequences are content-dependent and never mention line length:
+
+- A single over-long line whose tail parses cleanly → **exit 0, `.e` written**,
+  with a bogus label silently injected into the symbol table (silent corruption).
+- Two over-long lines with matching tails → misleading `Duplicate label` error on a
+  spurious line number.
+- Failure is non-monotonic in length (e.g. a whitespace-padded line errors at 900
+  chars but assembles at 1000) — the signature of an unchecked fixed buffer.
+
+LCC.js is intentionally correct here: it rejects lines > 300 chars with a clear
+diagnostic (see BY DESIGN #7) rather than silently splitting them.
+
+**Source (oracle):** line-read buffer in cuh63 6.3 `lcc` (298-char capacity).
+
+**Repro:** `lcc` on a file whose first line is `;` + 398 `a`s then `\thalt` →
+exit 0, `.e` written (tail swallowed as a label). Two such comment lines →
+`Duplicate label`. Full evidence: `docs/research/line-length-limit.md`.
+
+**Bug report to Prof. Dos Reis:** conditional / not yet filed — decision tracked
+in #244 (this is the candidate OG bug from that probe).
+
+---
+
 ## LCC.js BUG — LCC.js deviates from OG LCC (fix pending)
 
 ### 4. `mov` out-of-spec immediates silently wrap (OB-001)
@@ -180,17 +208,27 @@ multiple `.a` files are given, only the first is assembled.
 
 ## BY DESIGN — Intentional, documented divergences
 
-### 7. Source line length limit: LCC.js enforces 300 chars
+### 7. Source line length limit: LCC.js enforces 300 chars (researched, #244)
 
-LCC.js rejects source lines longer than 300 raw characters. OG LCC's limit
-is unresearched (see `core-behavior-matrix.md` Research entry). The 300-char
-cap is a defensive guard and not a parity commitment — if oracle research
-reveals a different limit, this should be updated.
+LCC.js rejects source lines longer than 300 raw characters (incl. comment and
+whitespace) with a clear `Line exceeds maximum length of 300 characters` abort.
 
-**Source:** `src/core/assembler.js` (line-length validation)
+**Researched against the oracle (#244):** OG LCC has **no explicit line-length
+limit and no diagnostic.** It reads each line into a fixed buffer holding **298
+chars**; lines ≥ 299 are **silently split**, and the overflow tail is parsed as
+the next source line(s) — see the OG BUG entry below. LCC.js's 300-char cap is
+therefore a **safer, fail-fast** replacement for the oracle's silent corruption,
+not a port of any oracle limit. Counting the **raw line including comments** is
+confirmed correct (the oracle's buffer fills the same way). The off-by-two
+(LCC.js accepts 299–300-char lines the oracle would split) favors LCC.js; keeping
+300 over 298 is intentional.
 
-**Reference:** `docs/core-behavior-matrix.md` ("Research: original LCC behavior
-for the 300-character limit")
+**Status:** resolved — BY DESIGN, no change planned. The old "if research reveals
+a different limit, update this" caveat is discharged.
+
+**Source:** `src/core/assembler.js` (`validateLineLength`)
+
+**Reference:** `docs/research/line-length-limit.md` (full probe + evidence)
 
 ---
 
