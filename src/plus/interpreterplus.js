@@ -7,7 +7,8 @@ const path = require('path');
 // const ansiEscapes = require('ansi-escapes');
 const Interpreter = require('../core/interpreter.js');
 
-const isTestMode = (typeof global.it === 'function'); // crude check for Jest
+// Shared exit logic (isTestMode throw-vs-exit); wrapped below to add stdin cleanup.
+const { fatalExit: exitProcess } = require('../utils/cliExit');
 
 // Number of interpreter steps executed per setImmediate tick in runAsync().
 // Tuned for reasonable UI responsiveness in .ap games; adjust if lag is observed.
@@ -21,14 +22,8 @@ function resetProcessStdin() {
   }
 
 function fatalExit(message, code = 1) {
-
   resetProcessStdin();
-
-  if (isTestMode) {
-    throw new Error(message);
-  } else {
-    process.exit(code);
-  }
+  exitProcess(message, code);
 }
 
 class InterpreterPlus extends Interpreter {

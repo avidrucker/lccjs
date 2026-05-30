@@ -42,25 +42,7 @@ const OP_MVI  = 0xD000; // opcode 13 — MVI
 const OP_LEA  = 0xE000; // opcode 14 — LEA
 const OP_TRAP = 0xF000; // opcode 15 — TRAP (HALT, NL, DOUT, …)
 
-const isTestMode = (typeof global.it === 'function'); // crude check for Jest
-
-function fatalExit(message, code = 1) {
-  if (isTestMode) {
-    throw new Error(message);
-  } else {
-    process.exit(code);
-  }
-}
-
-function cliErrorExit(message, code = 1) {
-  console.error(message);
-  fatalExit(message, code);
-}
-
-function cliWrappedErrorExit(prefix, error, code = 1) {
-  console.error(prefix, error.message);
-  fatalExit(`${prefix} ${error.message}`, code);
-}
+const { fatalExit, cliErrorExit, cliWrappedErrorExit } = require('../utils/cliExit');
 
 /**
  * Set to false to match original LCC behavior of reporting only 

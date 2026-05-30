@@ -4,15 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const Assembler = require('../core/assembler.js');
 
-const isTestMode = (typeof global.it === 'function'); // crude check for Jest
-
-function fatalExit(message, code = 1) {
-  if (isTestMode) {
-    throw new Error(message);
-  } else {
-    process.exit(code);
-  }
-}
+const { fatalExit } = require('../utils/cliExit');
 
 class AssemblerPlus extends Assembler {
   constructor() {

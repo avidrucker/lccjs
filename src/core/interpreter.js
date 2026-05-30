@@ -41,25 +41,7 @@ const SEXT_PARITY_TABLE = [
   [0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0xfff8, 0xfff9, 0xfffa, 0xfffb, 0xfffc, 0xfffd, 0xfffe, 0xffff, 0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0xfff8, 0xfff9, 0xfffa, 0xfffb, 0xfffc, 0xfffd, 0xfffe, 0xffff],
 ];
 
-const isTestMode = (typeof global.it === 'function'); // crude check for Jest
-
-function fatalExit(message, code = 1) {
-  if (isTestMode) {
-    throw new Error(message);
-  } else {
-    process.exit(code);
-  }
-}
-
-function cliErrorExit(message, code = 1) {
-  console.error(message);
-  fatalExit(message, code);
-}
-
-function cliWrappedErrorExit(prefix, error, code = 1) {
-  console.error(prefix, error.message);
-  fatalExit(`${prefix} ${error.message}`, code);
-}
+const { isTestMode, fatalExit, cliErrorExit, cliWrappedErrorExit } = require('../utils/cliExit');
 
 class Interpreter {
   constructor() {

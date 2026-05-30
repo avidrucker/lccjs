@@ -19,20 +19,7 @@ const Assembler = require('../core/assembler');
 const IInterpreter = require('./iinterpreter');
 const { constructSiblingFileName } = require('../utils/fileArtifacts');
 
-const isTestMode = (typeof global.it === 'function'); // crude check for Jest
-
-function fatalExit(message, code = 1) {
-  if (isTestMode) {
-    throw new Error(message);
-  } else {
-    process.exit(code);
-  }
-}
-
-function cliErrorExit(message, code = 1) {
-  console.error(message);
-  fatalExit(message, code);
-}
+const { fatalExit, cliErrorExit } = require('../utils/cliExit');
 
 class ILCC {
   constructor() {

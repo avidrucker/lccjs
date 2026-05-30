@@ -14,29 +14,7 @@ const { constructSiblingFileName, writeReportFiles } = require('../utils/fileArt
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 
-// @todo #167:60m/DEV extract this isTestMode check and the fatalExit/cliErrorExit/cliWrappedErrorExit
-//  helpers below into a shared src/utils/cliExit.js; this same block is copy-pasted across 8 files in
-//  src/ (assembler, interpreter, linker, lcc, plus/*). No behavior change; keep the suite green and
-//  preserve the wrapper-vs-pure-API boundary from core-behavior-matrix.md. See #167
-const isTestMode = (typeof global.it === 'function'); // crude check for Jest
-
-function fatalExit(message, code = 1) {
-  if (isTestMode) {
-    throw new Error(message);
-  } else {
-    process.exit(code);
-  }
-}
-
-function cliErrorExit(message, code = 1) {
-  console.error(message);
-  fatalExit(message, code);
-}
-
-function cliWrappedErrorExit(prefix, error, code = 1) {
-  console.error(prefix, error.message);
-  fatalExit(`${prefix} ${error.message}`, code);
-}
+const { fatalExit, cliErrorExit, cliWrappedErrorExit } = require('../utils/cliExit');
 
 class LCC {
   constructor() {

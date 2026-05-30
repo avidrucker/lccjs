@@ -8,14 +8,7 @@ const path = require('path');
 const AssemblerPlus = require('./assemblerplus.js');
 const InterpreterPlus = require('./interpreterplus.js');
 
-const isTestMode = (typeof global.it === 'function'); // crude check for Jest
-function fatalExit(message, code = 1) {
-  if (isTestMode) {
-    throw new Error(message);
-  } else {
-    process.exit(code);
-  }
-}
+const { fatalExit } = require('../utils/cliExit');
 
 class LCCPlus {
     constructor() {
