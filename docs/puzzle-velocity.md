@@ -96,6 +96,17 @@ When I pick up a ticket:
    `git commit -m "… Closes #N"`.
 6. **Sync + push** — `git pull --rebase`, then `git push`.
 
+### What gets logged (and what's skipped)
+
+A row tracks **work/time, not file changes.** Tasks that ship **no code** —
+`PM` (tracker updates, issue triage), `RESEARCH`, `SPIKE` — still get a row; the
+CSV already has many (PM #143/#204, RESEARCH #203, SPIKE #193/#166). The only
+skips are: (a) no `puzzle-velocity.*` files exist *and* you haven't been asked to
+set them up, or (b) a **sub-minute** fast-clarification turn. "No repo files
+changed" means only that no worktree was needed for the *work itself* — it never
+means "no CSV row." If such a task lacks a ticket to key the row to, file one (the
+#204 retroactive-ticket precedent). See #216.
+
 `docs/puzzle-velocity.csv` carries `merge=union` (see `.gitattributes`), so when
 other agents have appended rows in parallel, the rebase **auto-unions** both
 sides' rows with **no manual conflict** — the old hand-resolve + marker-guard
