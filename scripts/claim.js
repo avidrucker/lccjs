@@ -196,6 +196,14 @@ function main() {
     if (title) slug = slugify(title);
   }
 
+  // @todo #228:45m/DEV claim.js trusts whatever `main` the local checkout has. If
+  // local main is behind origin/main, the running script can predate #212 (no
+  // CLAUDE_AGENT_NAME support) so identity silently falls back to auto, AND the base
+  // below stakes from a stale tree (repro: #223 — env-var ignored on a pre-#212 main).
+  // Fetch + compare (git rev-list --count main..origin/main); if behind, warn/abort
+  // telling the agent to `git pull --ff-only origin main` first, or default --base
+  // origin/main. Caveat: only protects agents already on a guard-bearing main; the
+  // "sync main before claiming" process note rides #195/#230. See #228.
   const base = opts.base;
   // Verify the base ref resolves before we start staking.
   if (!sh(`git rev-parse --verify --quiet ${base}^{commit} && echo ok`, true)) {
