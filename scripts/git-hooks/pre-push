@@ -10,6 +10,9 @@
 # `ln -sf`.
 #
 # Behavior:
+#   - Push-gating (#188): BLOCKS the push if a rebase/merge is in progress or
+#     any tracked file still has conflict markers. Pushing partial state to main
+#     corrupts every parallel agent's next rebase. Runs first; needs no gem.
 #   - If `pdd` is not installed, prints a one-line note and exits 0 (don't
 #     block the push for contributors who don't have the Ruby gem).
 #   - If `pdd` is installed but `npm run puzzles` errors, prints the error
@@ -19,6 +22,33 @@
 
 set -e
 
+cd "$(git rev-parse --show-toplevel)"
+
+# --- Push-gating (#188, failure mode #2): never ship partial/in-progress state ---
+# A push fired mid-rebase/merge, or with raw conflict markers still in tracked
+# files, lands a broken tree on main and corrupts every parallel agent's next
+# rebase. This guard needs no gem and runs first. Conflict markers at column 0
+# never occur outside an unresolved conflict — prose that discusses them indents
+# or quotes them, so the anchored grep won't false-trip on docs (e.g. this repo's
+# own claude_workflow.md, which mentions the markers mid-line).
+if [ -d "$(git rev-parse --git-path rebase-merge)" ] || [ -d "$(git rev-parse --git-path rebase-apply)" ]; then
+  echo "[pre-push] BLOCKED — a rebase is in progress. Finish it (git rebase --continue / --abort) before pushing."
+  echo "Bypass with: git push --no-verify"
+  exit 1
+fi
+if [ -f "$(git rev-parse --git-path MERGE_HEAD)" ]; then
+  echo "[pre-push] BLOCKED — an unfinished merge is in progress (MERGE_HEAD present). Commit or abort it first."
+  echo "Bypass with: git push --no-verify"
+  exit 1
+fi
+if markers=$(git grep -nE '^(<<<<<<<|>>>>>>>)' -- 2>/dev/null) && [ -n "$markers" ]; then
+  echo "[pre-push] BLOCKED — conflict markers in tracked files:"
+  echo "$markers" | head -20
+  echo "Resolve the conflict before pushing. Bypass with: git push --no-verify"
+  exit 1
+fi
+
+# --- PDD puzzle scan (gem-gated) ---
 if ! command -v pdd >/dev/null 2>&1; then
   echo "[pre-push] pdd not installed; skipping puzzle scan. (gem install pdd to enable.)"
   exit 0
@@ -28,8 +58,6 @@ if ! command -v npm >/dev/null 2>&1; then
   echo "[pre-push] npm not installed; skipping puzzle scan."
   exit 0
 fi
-
-cd "$(git rev-parse --show-toplevel)"
 
 echo "[pre-push] scanning for PDD puzzles..."
 if ! out=$(npm run --silent puzzles 2>&1); then
