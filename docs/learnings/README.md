@@ -50,6 +50,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-05-29 CHERRY](./today-i-learned-2026-05-29-cherry.md) | 2026-05-29 | CHERRY | `merge=union` fires under rebase too; derive rebased values, don't store them; prefer the project's claim tooling; trust VERSION/CHANGELOG over loaded frontmatter; close a process-changing ticket *using* the new process. |
 | [TIL 2026-05-29 CHERRY s2](./today-i-learned-2026-05-29-cherry-2.md) | 2026-05-29 | CHERRY | Live data is the tiebreaker when docs disagree (and the disagreement is a bug); a scope ticket is done when it spawns grabbable children; a guardrail stop means confirm not circumvent; verify outward effects landed; log live repros of documented bugs. |
 | [TIL 2026-05-29 DRAGONFRUIT](./today-i-learned-2026-05-29-dragonfruit.md) | 2026-05-29 | DRAGONFRUIT | Triage ranks importance, not what's already taken; precedent ≠ authorization for an external write; closing a ticket has a footprint beyond the tracker; a velocity row belongs to its own unit's ticket; `wontfix` with a forward path. |
+| [TIL 2026-05-30 CHERRY](./today-i-learned-2026-05-30-cherry.md) | 2026-05-30 | CHERRY | A tool living on `main` is silently stale on an un-synced checkout (the #212 fix ran inert → #228 guard); "no files changed" ≠ "no logging"; sharpen an existing complaint, don't duplicate it; a guard needs both its decision *and* its trigger proven; logging is data, commentary is noise. |
 
 ## Recurring threads (informal — #207 will formalize)
 
