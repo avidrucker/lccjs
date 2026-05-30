@@ -15,6 +15,7 @@ piece of work tied to a GitHub issue and time-tracked in
 
 It is intentionally short. Detailed protocols live in their own files:
 
+- [`puzzle-lifecycle.md`](./puzzle-lifecycle.md) — the plain, step-by-step lifecycle: how a puzzle becomes a GitHub issue here (issue-first, not 0pdd) and how the `@todo` marker signals "done"
 - [`puzzle-velocity.md`](./puzzle-velocity.md) — the time-tracking protocol + column reference + calibration history
 - `~/.claude/skills/puzzle-velocity/SKILL.md` — the skill that auto-triggers the protocol when an agent picks up or closes a puzzle
 - [`glossary/README.md`](./glossary/README.md) — the entry conventions for writing glossary definitions
