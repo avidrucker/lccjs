@@ -30,18 +30,10 @@
 ;; DONE: implement scoreboard that displays the snake's length
 ;; DONE: implement 'dev mode' which prints the board, registers,
 ;;       waits for a key press before continuing to next frame
-;; @todo #143:30m/DEV prevent movement in opposite direction when snake is of
-;;       length 2 or longer (this is typical in most snake games)
-;; @todo #143:30m/DEV implement type 'p' for pause in the snake game, show
-;;       "Paused" on the screen until the p key is pressed again,
-;;       then resume play
-;; @todo #143:45m/DEV implement win condition for when snake fills entire 
-;;       board & there is no place for the fruit to respawn
-;; @todo #143:45m/DEV implement a variable width board that can go up to size 15x15
-;; @todo #143:30m/DEV implement a variable width board that can go up to size 31x31
-;; @todo #143:30m/DEV implement replaying option
-;; @todo #143:30m/DEV implement high score tracking
-;; @todo #143:20m/DEV implement alt controls HJKL (vim style)
+;; Feature backlog (opposite-direction guard, pause, win condition, variable
+;; board sizes, replay, high-score, vim-style HJKL controls) was tracked in
+;; #143 — closed wontfix 2026-05-29 (priority too low). See #202 for a
+;; code-quality assessment of this file that may re-surface some of these.
 
 
         .lccplus
@@ -166,8 +158,9 @@ removeSnakeTail:
             ; push r1
             ; bl myFreeStub
             ; add sp, sp, 1
-            ; @todo #153:30m/DEV research question, does this create a memory leak in LCC 
-            ;       assembly, and if so, why?
+            ; The memory-leak question for this free-stub pattern was tracked in
+            ; #153 — closed wontfix 2026-05-29; the same question lives on in #144
+            ; and feeds the #202 code-quality pass.
     @skip:
             mov r0, 0
             mov sp, fp
