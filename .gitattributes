@@ -53,3 +53,7 @@
 # Rows are unique (ticket + timestamps), so union never drops or dups a row.
 # See docs/research/velocity-log-storage.md.
 docs/puzzle-velocity.csv merge=union
+
+# --- append-friendly cluster manifest (#233 prototype; design #222): same rationale ---
+# Agents append cluster/blocked_by rows as they group issues; union keeps both sides.
+docs/puzzle-clusters.csv merge=union
