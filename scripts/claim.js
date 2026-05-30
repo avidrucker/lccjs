@@ -182,6 +182,13 @@ function main() {
     console.error(`[claim] note: "${identity.name}" is not in the known fruit list — using it anyway.`);
   }
 
+  // @todo #227:20m/DEV claim.js stakes a worktree without checking issue state — it
+  // will happily claim an already-CLOSED issue. The slug gh call below already fetches
+  // the issue JSON; extend it to `--json title,state` and, when state is CLOSED, warn
+  // and abort (non-zero) unless an explicit --force is passed, so an agent racing a
+  // concurrent close (cf. #223) finds out before doing redundant work. Keep best-effort
+  // when gh is unavailable / the issue is unknown. See #227.
+
   // Derive a slug from the issue title if none was given (best-effort).
   let slug = opts.slug ? slugify(opts.slug) : null;
   if (!slug) {
