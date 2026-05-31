@@ -14,7 +14,11 @@ handlers, and the oracle's full supported escape set.
   `Missing terminating quote`; it outputs `hi\n`. Shipped demos already depend on
   this (`demos/demoP.a` `"Hi\n"`, `demos/happy-path.a` `"A\nmulti-line\nstring"`),
   and a pre-existing test (#209 in `assembler.directives.integration.spec.js`)
-  already pins escaped-newline assembly. The #150 report was a **misdiagnosis**.
+  already pins escaped-newline assembly. **#157's premise was a misdiagnosis** —
+  the side-observation, carried over from the #150 sext probe, that a `.string`
+  banner's `\n` "had to be removed to assemble" simply does not reproduce. (#150
+  itself is a separate, valid ticket about `sext` sign-extend semantics — *not*
+  about string escapes.)
 - The escape-handling code has been correct since commit `8639411` (**2024-12-30**),
   ~17 months *before* #157 was filed (2026-05-29) — so this was never a regression
   that got fixed; the premise was wrong at filing time.
