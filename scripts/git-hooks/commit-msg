@@ -25,7 +25,7 @@ errors=0
 if echo "$subject" | grep -qE "^\w+\(#[0-9]+\):"; then
   echo "[commit-msg] ERROR: issue number used as scope — put #N in the description instead."
   echo "  Got: $subject"
-  echo "  Fix: research: graduate @todo (#208)"
+  echo "  Fix: research: de-confound velocity drift (#208)"
   errors=$((errors + 1))
 fi
 
