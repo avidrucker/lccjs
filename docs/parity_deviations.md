@@ -14,15 +14,24 @@ Three categories are used:
 
 ## OG BUG — OG LCC is wrong; LCC.js is correct
 
-### 1. `ldr`/`str` no-comma syntax: negative `offset6` silently encodes as 0
+### 1. no-comma syntax: negative `offset6` silently encodes as 0 (whole `baser,offset6` family)
 
 | | cuh63 6.3 | LCC.js |
 |---|---|---|
 | `ldr r1 fp -1` | `6340` (offset=0) ✗ | `637f` (offset=-1) ✓ |
 | `str r1 fp -1` | `7340` (offset=0) ✗ | `737f` (offset=-1) ✓ |
-| `ldr r1, fp, -1` (comma) | `637f` ✓ | `637f` ✓ |
+| `jmp r1 -1` | `c040` (offset=0) ✗ | `c07f` (offset=-1) ✓ |
+| `blr r1 -1` / `jsrr r1 -1` | `4040` (offset=0) ✗ | `407f` (offset=-1) ✓ |
+| comma forms (`ldr r1, fp, -1` …) | correct ✓ | correct ✓ |
 
-**Cause:** OG LCC's tokenizer splits `ldr r1 fp -1` on whitespace; the
+**Scope (broadened by probe #257):** this is NOT limited to `ldr`/`str` — it
+affects **every** instruction taking a `baser, offset6` operand pair: `ldr`,
+`str`, `jmp`, `blr`/`jsrr`. A negative no-comma offset silently encodes as 0 on
+all of them (verified for −1 and −32). Single-operand `ret offset6` (`ret -1`) is
+**not** affected. The `imm5`/`imm9` instructions hit the same parser limitation
+but fail loud instead — see OG BUG #14.
+
+**Cause:** OG LCC's tokenizer splits e.g. `ldr r1 fp -1` on whitespace; the
 `-1` token is not recognized as a signed integer in the no-comma parser path,
 and the offset is silently set to 0. The comma path goes through a different
 signed-integer validator and works correctly.
@@ -34,7 +43,9 @@ Result: all valid offsets (positive, zero, negative) encode correctly.
 **Source:** `src/core/assembler.js:1797–1818` (`assembleLDR`, `assembleSTR`)
 
 **Reference:** `public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/`
-and `docs/cuh63-ldr-str-silent-miscompile-bug-report.md`
+and `docs/cuh63-ldr-str-silent-miscompile-bug-report.md`; the `jmp`/`blr`/`jsrr`
+extension is probed in `public_experiments/nocomma_negative_immediate_family/`
+(#257). Summarized in `reports_summary.md`.
 
 ---
 
@@ -154,6 +165,31 @@ exit 0, `.e` written (tail swallowed as a label). Two such comment lines →
 
 **Bug report to Prof. Dos Reis:** conditional / not yet filed — decision tracked
 in #244 (this is the candidate OG bug from that probe).
+
+---
+
+### 14. no-comma syntax: negative `imm5`/`imm9` is rejected, not encoded (#257)
+
+| | cuh63 6.3 | LCC.js |
+|---|---|---|
+| `add r0 r0 -1` (no-comma, neg) | `Error on line 1` + blank `.e` ✗ | `103f` (imm5=-1) ✓ |
+| `add r0 r0 1` (no-comma, **pos**) | `1021` ✓ | `1021` ✓ |
+| `add r0, r0, -1` (comma) | `103f` ✓ | `103f` ✓ |
+
+Same family as OG BUG #1, same root cause (the no-comma operand parser cannot read
+a negative integer), but for the immediate-field instructions — `add`, `sub`,
+`and`, `cmp` (`imm5`) and `mvi` (`imm9`) — it manifests as a **hard error** rather
+than a silent drop. OG LCC accepts the comma form **and** no-comma *positive*
+immediates, but rejects no-comma *negative* immediates with a generic
+`Error on line 1` (and the OG BUG #10 blank-`.e` footgun fires). LCC.js accepts all
+forms and encodes correctly.
+
+This is less dangerous than #1 (it fails loud rather than miscompiling) but is a
+real inconsistency. Verified by `public_experiments/nocomma_negative_immediate_family/`.
+
+**Bug report to Prof. Dos Reis:** candidate; fold into the OG BUG #1 no-comma
+report as the "fails-loud" half of the same parser defect. Summarized in
+`reports_summary.md`.
 
 ---
 
@@ -371,3 +407,4 @@ _None pending._
 | 2026-05-28 | Deviation 10 added | Characterized undefined-label `br` (#105): both error + exit 1, but OG leaves a runnable blank `.e` (infinite-loops if run) while LCC.js writes nothing; classified OG BUG. All pending stubs now cleared |
 | 2026-05-28 | Deviation 11 added | `.a` listing Source-Code column: LCC.js prints full source lines, OG LCC truncates to listing width; classified BY DESIGN (from the #145 report-parity spike) |
 | 2026-05-29 | Deviation 12 added | Listing report-format cosmetic deltas (A banner date, B header A/S padding, C stats alignment, D Loc/Code geometry, F BST trailing space) classified BY DESIGN; closes #13 (symbolic debugger feature complete — #13 spike refresh confirmed all five still reproduce) |
+| 2026-05-30 | OG BUG #1 broadened; #14 added (#257) | No-comma negative-offset silent-drop confirmed to span the whole `baser,offset6` family (`jmp`/`blr`/`jsrr`, not just `ldr`/`str`); new OG BUG #14 records the `imm5`/`imm9` fails-loud half of the same no-comma parser defect. Both summarized in `reports_summary.md`; evidence in `public_experiments/nocomma_negative_immediate_family/` |
