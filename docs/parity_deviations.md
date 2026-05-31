@@ -422,6 +422,55 @@ an oracle bug — no report to Prof. Dos Reis.
 
 ---
 
+### 16. Object-module output atomicity: name-failure aborts before the `.o` is written (#269)
+
+LCC.js now resolves the author name **before** writing any object-module output,
+so a name-resolution failure (empty input / EOF on a non-TTY) aborts before the
+`.o` exists — matching OG LCC's all-or-nothing behavior.
+
+Repro — clean dir, no `name.nnn` in cwd, stdin closed (`< /dev/null`):
+
+| stdin `/dev/null` | cuh63 6.3 | LCC.js (pre-#269) | LCC.js (post-#269) |
+|---|---|---|---|
+| diagnostic | `Unable to read name` | `Name cannot be empty` | `Name cannot be empty` |
+| exit code | `1` | `1` | `1` |
+| `.o` on disk | not written | **written** ✗ | not written ✓ |
+
+**Cause (pre-fix):** `assembler.js` called `writeOutputFile()` (`:555`) **before**
+`nameHandler.createNameFile()` (`:561`). On a name-only failure the `.o` was
+already on disk when the process exited non-zero — a half-finished build (a `.o`
+with no `.lst`/`.bst`), a footgun for any pipeline that ignores the exit code.
+
+**Fix (#269):** the object-module branch resolves the author name first; only on
+success does `writeOutputFile()` run. A name failure therefore writes nothing,
+same as the oracle. The pre-existing diagnostic text (`Name cannot be empty` vs
+the oracle's `Unable to read name`) is unchanged — a separate, pre-existing
+wording difference, not addressed here.
+
+**Why BY DESIGN / parity-correct:** all-or-nothing output is the safer behavior
+and now agrees with the oracle. Documented here because the ordering
+(resolve-name-before-write) must be **preserved** whenever the object-module
+write path is refactored — reverting it silently reintroduces the non-atomic
+build. Same posture as deviation #8 (parity-correct, preserve-on-change).
+
+**Source:** `src/core/assembler.js` — object-module branch in `main()`
+(name resolution moved ahead of `writeOutputFile()`).
+
+**Test:** `tests/new/assembler.object-modules.integration.spec.js` (test 269 —
+"should write no .o/.lst/.bst when the author name cannot be resolved").
+
+**Decision status — provisional:** #269 carried the `decision` label; the
+parity-policy call is the owner's (Charlie / Prof. Dos Reis). This fix was applied
+under provisional owner direction and awaits formal ratification — tracked in
+**#298** (report + sign-off). If overturned, this entry is re-classified as a
+documented BY-DESIGN *divergence* (keep the `.o` on name-only failure) and the
+code reverted.
+
+**Reference:** `docs/research/og-lcc-author-name-noninteractive.md` (delta **A**),
+sibling of #241.
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -440,3 +489,4 @@ _None pending._
 | 2026-05-29 | Deviation 12 added | Listing report-format cosmetic deltas (A banner date, B header A/S padding, C stats alignment, D Loc/Code geometry, F BST trailing space) classified BY DESIGN; closes #13 (symbolic debugger feature complete — #13 spike refresh confirmed all five still reproduce) |
 | 2026-05-30 | OG BUG #1 broadened; #14 added (#257) | No-comma negative-offset silent-drop confirmed to span the whole `baser,offset6` family (`jmp`/`blr`/`jsrr`, not just `ldr`/`str`); new OG BUG #14 records the `imm5`/`imm9` fails-loud half of the same no-comma parser defect. Both summarized in `reports_summary.md`; evidence in `public_experiments/nocomma_negative_immediate_family/` |
 | 2026-05-30 | Deviation 15 added (#157) | `.string` escape set is identical to the oracle (`\n \t \r \\ \"`); they diverge only on UNKNOWN escapes — LCC.js rejects with `Unknown escape sequence` while OG silently drops the backslash. Classified BY DESIGN (lccjs stricter-is-safer). The #157 headline (`\n` rejected) is non-reproducible. Evidence: `docs/research/string-escape-parity.md` |
+| 2026-05-31 | Deviation 16 added (#269) | Object-module output atomicity: assembler now resolves the author name BEFORE `writeOutputFile()`, so a name-only failure aborts before the `.o` is written (matches oracle all-or-nothing); pre-fix LCC.js left an orphan `.o`. Classified BY DESIGN / parity-correct (preserve-on-change). Decision is provisional pending owner ratification — tracked in #298 |

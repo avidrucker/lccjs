@@ -551,10 +551,9 @@ class Assembler {
       throwOnAssemblyError: false,
     });
 
-    // Write the assembled output file after the in-memory assembly pass completes.
-    this.writeOutputFile();
-
-    // After writing the output file, handle the additional object-module artifacts.
+    // For object modules, resolve the author name BEFORE writing any output so a
+    // name-resolution failure (empty input / EOF on a non-TTY) aborts atomically,
+    // leaving nothing on disk — matching OG LCC's all-or-nothing behavior. (#269)
     if (this.isObjectModule) {
       // Get the userName using nameHandler so the generated reports match current behavior.
       try {
@@ -562,7 +561,13 @@ class Assembler {
       } catch (error) {
         cliWrappedErrorExit('Error handling name file:', error, 1);
       }
+    }
 
+    // Write the assembled output file after the in-memory assembly pass completes.
+    this.writeOutputFile();
+
+    // After writing the output file, handle the additional object-module artifacts.
+    if (this.isObjectModule) {
       console.log(`Output file ${this.outputFileName} needs linking`);
 
       // Generate .lst and .bst files.

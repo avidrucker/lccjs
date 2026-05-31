@@ -207,4 +207,44 @@ var1: .word 10
       assembler.main([aFilePath]);
     }).not.toThrow();
   });
+
+  // -------------------------------------------------------------------------
+  // 269. Output atomicity: a name-resolution failure must abort BEFORE any
+  // .o is written, matching OG LCC's all-or-nothing behavior. Regression for
+  // the non-atomic-output bug where assembler.js wrote the .o, then resolved
+  // the author name, leaving a half-finished build on a non-zero exit. (#269)
+  // -------------------------------------------------------------------------
+  test('269. should write no .o/.lst/.bst when the author name cannot be resolved', () => {
+    const aFilePath = 'atomicNameFail.a';
+    const source = `
+      .global foo
+      mov r0, 123
+      halt
+foo:  .word 456
+    `;
+    virtualFs[aFilePath] = source;
+    // No name.nnn present → createNameFile prompts and reads stdin.
+
+    // Simulate EOF on a non-TTY (e.g. `< /dev/null`): readSync returns 0, so the
+    // resolved name is empty and name.js calls process.exit(1).
+    const readSyncSpy = jest.spyOn(fs, 'readSync').mockReturnValue(0);
+    const exitSpy = jest.spyOn(process, 'exit').mockImplementation((code) => {
+      throw new Error(`process.exit(${code})`);
+    });
+
+    try {
+      expect(() => {
+        assembler.main([aFilePath]);
+      }).toThrow('process.exit(1)');
+
+      expect(assembler.isObjectModule).toBe(true);
+      // The crux: the .o (and its reports) must never have been opened/written.
+      expect(virtualFs['atomicNameFail.o']).toBeUndefined();
+      expect(virtualFs['atomicNameFail.lst']).toBeUndefined();
+      expect(virtualFs['atomicNameFail.bst']).toBeUndefined();
+    } finally {
+      readSyncSpy.mockRestore();
+      exitSpy.mockRestore();
+    }
+  });
 });
