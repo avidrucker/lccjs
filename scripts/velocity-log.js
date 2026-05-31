@@ -5,7 +5,7 @@
  * Accepts a JSON object as a positional argument, validates required fields,
  * INSERTs into the velocity table, then auto-exports docs/puzzle-velocity.csv.
  *
- * Required fields: ticket, role, agent
+ * Required fields: role, agent (ticket is nullable — valid to omit for issueless PM/triage rows)
  * All other fields are optional (NULL if omitted).
  *
  * Usage:
@@ -24,7 +24,7 @@ const Database = require('better-sqlite3');
 const { exportCSV } = require('./velocity-export');
 
 const DB_PATH  = path.join(os.homedir(), '.lccjs', 'velocity.db');
-const REQUIRED = ['ticket', 'role', 'agent'];
+const REQUIRED = ['role', 'agent'];
 
 const VALID_ROLES = new Set([
   'DEV', 'TEST', 'WRITER', 'RESEARCH', 'SPIKE', 'ARC', 'PM', 'COMBO',
@@ -52,9 +52,8 @@ try {
 for (const f of REQUIRED) {
   if (input[f] == null || input[f] === '') die(`Missing required field: "${f}"`);
 }
-// @todo #299:15m/DEV allow null ticket — schema marks it nullable; remove from REQUIRED + guard only when provided
-if (typeof input.ticket !== 'number' || !Number.isInteger(input.ticket) || input.ticket <= 0) {
-  die('"ticket" must be a positive integer');
+if (input.ticket != null && (typeof input.ticket !== 'number' || !Number.isInteger(input.ticket) || input.ticket <= 0)) {
+  die('"ticket" must be a positive integer when provided');
 }
 if (VALID_ROLES.size > 0 && !VALID_ROLES.has(input.role)) {
   // Warn but don't block — role taxonomy may expand (#284 Q3)
@@ -101,7 +100,8 @@ try {
   db.close();
 }
 
-console.log(`Inserted row id=${result.lastInsertRowid} (ticket #${input.ticket})`);
+const ticketLabel = input.ticket != null ? `ticket #${input.ticket}` : 'no ticket';
+console.log(`Inserted row id=${result.lastInsertRowid} (${ticketLabel})`);
 
 // --- Auto-export CSV ---
 exportCSV();
