@@ -1,15 +1,18 @@
 # stats/ — puzzle-velocity analysis
 
-A Python/Jupyter analysis of [`docs/puzzle-velocity.csv`](../docs/puzzle-velocity.csv),
-the per-ticket time log for this project's Yegor-style microtask workflow (dual
-**H**ard-cap / **C**alibrated estimates vs actuals). See the
-[puzzle-velocity skill](../.claude) for how the CSV is produced.
+A Python/Jupyter analysis of the velocity log for this project's Yegor-style
+microtask workflow (dual **H**ard-cap / **C**alibrated estimates vs actuals).
+
+**Data source:** `~/.lccjs/velocity.db` (SQLite, local-only).
+Seeded from [`docs/puzzle-velocity.csv`](../docs/puzzle-velocity.csv) via
+`npm run velocity:seed`. New rows are appended via `npm run velocity:log`.
+See [`docs/velocity-schema.md`](../docs/velocity-schema.md) for the full schema.
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `enrich.py` | Reads the raw CSV, adds three enrichment layers, writes `puzzle-velocity-enriched.csv` |
+| `enrich.py` | Reads `~/.lccjs/velocity.db`, adds three enrichment layers, writes `puzzle-velocity-enriched.csv` atomically |
 | `puzzle-velocity-enriched.csv` | Generated dataset the notebook reads — **local-only, gitignored** (re-generate with `enrich.py` before running notebooks; see #286) |
 | `puzzle_velocity_analysis.ipynb` | Day-one analysis notebook (committed **with** embedded outputs/plots → renders on GitHub) |
 | `day-two-analysis.ipynb` | Day-two re-run — adds the over-time axis (HST day-bucketing) + auto-graduating power gates |
@@ -28,7 +31,10 @@ dotfiles `datascience` section (a shared `~/.venvs/datasci` venv with `jupyter` 
 Then, from the repo root:
 
 ```bash
-# 1. refresh the enriched dataset (needs git + gh; degrades gracefully offline)
+# 0. ensure the DB is seeded (one-time, or after git clean)
+npm run velocity:seed          # imports docs/puzzle-velocity.csv → ~/.lccjs/velocity.db
+
+# 1. refresh the enriched dataset (reads SQLite; needs git + gh; degrades offline)
 ~/.venvs/datasci/bin/python stats/enrich.py
 
 # 2. open the notebook interactively...
