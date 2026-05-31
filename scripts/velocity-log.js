@@ -52,6 +52,7 @@ try {
 for (const f of REQUIRED) {
   if (input[f] == null || input[f] === '') die(`Missing required field: "${f}"`);
 }
+// @todo #299:15m/DEV allow null ticket — schema marks it nullable; remove from REQUIRED + guard only when provided
 if (typeof input.ticket !== 'number' || !Number.isInteger(input.ticket) || input.ticket <= 0) {
   die('"ticket" must be a positive integer');
 }
