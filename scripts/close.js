@@ -126,34 +126,18 @@ function parseArgs(argv) {
 // reasons FIRST, then the race reasons, and only trust success once both are
 // ruled out. An unrecognized failure defaults to 'rejected-other' (don't loop
 // blindly on something we don't understand).
+// IMPORTANT: only call this on a FAILED push (git exited non-zero). Push
+// success is decided by the exit code, NOT by this function — the pre-push hook
+// prints its banner ("[pre-push] scanning…") on every push including successful
+// ones, so no string can reliably distinguish success from failure. The caller
+// (tryLand) returns 'ok' on exit 0 and only consults this on a real failure to
+// decide race-vs-abort. Given that, this returns 'race' or 'rejected-other'.
 function classifyPushError(output) {
   const s = String(output || '');
-  // 1. Definitively un-retryable: never clears by re-fetching. Abort.
-  // Includes BOTH server-side refusals (auth, protected branch, pre-receive)
-  // and a LOCAL pre-push hook rejection — the latter is the lccjs pdd/conflict
-  // gate, which prints its reason then lets git emit the generic "failed to push
-  // some refs" summary. Retrying a hook failure is pointless; the fix is to
-  // correct the puzzle/conflict and re-run.
-  const FATAL = [
-    /authentication failed/i,
-    /could not read Username/i,
-    /permission denied/i,
-    /protected branch/i,
-    /\bGH006\b/i,
-    /hook declined/i,
-    /pre-receive hook/i,
-    /\bpre-push\b/i,                 // local pre-push hook (#188/#205/pdd gate)
-    /PDD scan FAILED/i,
-    /repository not found/i,
-    /does not appear to be a git repository/i,
-    /no configured push destination|no upstream/i,
-  ];
-  if (FATAL.some((re) => re.test(s))) return 'rejected-other';
-  // 2. Retryable race: ref-lock contention (the #200 incident) + non-ff family.
-  // NOTE: deliberately does NOT key on the bare "failed to push some refs" line
-  // — that is git's generic summary for ANY push failure (including a local hook
-  // reject), not a race cause. A real race always carries a specific ref-status
-  // marker below, so we match those, not the summary.
+  // Retryable race: ref-lock contention (the #200 incident) + the non-ff family.
+  // These clear by re-fetch/rebase, so loop. Checked FIRST because the #200
+  // message literally reads "! [remote rejected] … (cannot lock ref …)" — the
+  // "[remote rejected]" prefix is NOT itself a fatal signal; the reason is.
   const RACE = [
     /cannot lock ref/i,
     /non-fast-forward/i,
@@ -162,11 +146,11 @@ function classifyPushError(output) {
     /\[rejected\]/i,
   ];
   if (RACE.some((re) => re.test(s))) return 'race';
-  // 3. Success markers — trusted only after rejections are ruled out.
-  if (/Everything up-to-date|->\s*\S*main\b|\b[0-9a-f]{7,}\.\.[0-9a-f]{7,}\b/.test(s)) {
-    return 'ok';
-  }
-  // 4. Unknown failure — don't retry something we can't classify.
+  // Everything else that failed is un-retryable: a local pre-push hook rejection
+  // (pdd/conflict gate — "PDD scan FAILED", "[pre-push] BLOCKED"), a server-side
+  // refusal (auth, protected branch, pre-receive/hook declined), or anything we
+  // don't recognize. Retrying won't help; surface it. Note we key on the hook's
+  // FAILURE words, never the bare "[pre-push]" banner (which prints on success).
   return 'rejected-other';
 }
 
@@ -254,6 +238,10 @@ function tryLand() {
         'Your commit is safe and local.');
   }
   const push = shCapture('git push origin HEAD:main');
+  // Exit code is the source of truth for success: a failing pre-push hook makes
+  // git exit non-zero, so exit 0 unambiguously means the push landed. Only on a
+  // real failure do we classify race-vs-abort.
+  if (push.ok) return 'ok';
   return classifyPushError(push.out);
 }
 
