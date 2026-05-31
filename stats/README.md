@@ -10,7 +10,7 @@ the per-ticket time log for this project's Yegor-style microtask workflow (dual
 | File | What it is |
 |---|---|
 | `enrich.py` | Reads the raw CSV, adds three enrichment layers, writes `puzzle-velocity-enriched.csv` |
-| `puzzle-velocity-enriched.csv` | Generated dataset the notebook reads (committed so the notebook renders without a rebuild) |
+| `puzzle-velocity-enriched.csv` | Generated dataset the notebook reads — **local-only, gitignored** (re-generate with `enrich.py` before running notebooks; see #286) |
 | `puzzle_velocity_analysis.ipynb` | Day-one analysis notebook (committed **with** embedded outputs/plots → renders on GitHub) |
 | `day-two-analysis.ipynb` | Day-two re-run — adds the over-time axis (HST day-bucketing) + auto-graduating power gates |
 | `day-three-analysis.ipynb` | Day-three re-run — 🆕 3-day calibration trend + per-agent cut; repairs a CSV-escaping corruption **in-memory** (committed CSV untouched) |
