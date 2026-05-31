@@ -391,6 +391,37 @@ these are the five sites — each a small (~15–30m) formatting puzzle, smalles
 
 ---
 
+### 15. `.string` unknown escapes: LCC.js rejects with a clear error; OG LCC silently drops the backslash (#157)
+
+The supported escape set is **identical** in both toolchains — `\n \t \r \\ \"`
+map byte-for-byte the same. They diverge only on escapes *outside* that set:
+
+| `.string "[\X]"` | cuh63 6.3 | LCC.js |
+|---|---|---|
+| `\0` `\a` `\b` `\f` `\v` `\'` | drops `\`, emits the literal char (`[0]`, `[a]`, …) ✗ | `Unknown escape sequence: \X`, exit 1 ✓ |
+| `\x41` (hex), `\101` (octal) | emits `x41` / `101` literally (no C numeric escape) | `Unknown escape sequence` |
+
+**Why BY DESIGN:** LCC.js failing loud on an unrecognized escape is *safer* than
+the oracle's silent backslash-drop — a typo like `"\march"` becomes a clear
+diagnostic instead of silently assembling as `march`. This is the same
+stricter-than-oracle posture as deviation #7 (line length).
+
+**Note — #157 headline is non-reproducible:** the issue claimed LCC.js rejects a
+`\n` escape with `Missing terminating quote`. It does not; `\n` (and the whole
+supported set) assembles correctly, shipped demos rely on it, and the error for an
+*unknown* escape is `Unknown escape sequence`, never `Missing terminating quote`.
+
+**Source:** `src/core/assembler.js` — `parseString` (escape→byte, default branch
+~`:992`) and the tokenizer `escape` flag (~`:938`). Tests:
+`tests/new/assembler.directives.integration.spec.js` (describe "Assembler .string
+escape sequences (#157)").
+
+**Reference:** `docs/research/string-escape-parity.md`, probe
+`public_experiments/string_escape_parity/`. This is a leniency difference, **not**
+an oracle bug — no report to Prof. Dos Reis.
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -408,3 +439,4 @@ _None pending._
 | 2026-05-28 | Deviation 11 added | `.a` listing Source-Code column: LCC.js prints full source lines, OG LCC truncates to listing width; classified BY DESIGN (from the #145 report-parity spike) |
 | 2026-05-29 | Deviation 12 added | Listing report-format cosmetic deltas (A banner date, B header A/S padding, C stats alignment, D Loc/Code geometry, F BST trailing space) classified BY DESIGN; closes #13 (symbolic debugger feature complete — #13 spike refresh confirmed all five still reproduce) |
 | 2026-05-30 | OG BUG #1 broadened; #14 added (#257) | No-comma negative-offset silent-drop confirmed to span the whole `baser,offset6` family (`jmp`/`blr`/`jsrr`, not just `ldr`/`str`); new OG BUG #14 records the `imm5`/`imm9` fails-loud half of the same no-comma parser defect. Both summarized in `reports_summary.md`; evidence in `public_experiments/nocomma_negative_immediate_family/` |
+| 2026-05-30 | Deviation 15 added (#157) | `.string` escape set is identical to the oracle (`\n \t \r \\ \"`); they diverge only on UNKNOWN escapes — LCC.js rejects with `Unknown escape sequence` while OG silently drops the backslash. Classified BY DESIGN (lccjs stricter-is-safer). The #157 headline (`\n` rejected) is non-reproducible. Evidence: `docs/research/string-escape-parity.md` |

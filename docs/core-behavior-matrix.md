@@ -53,6 +53,24 @@ Tokenizer splits on whitespace and commas; `+`/`-` are NOT delimiters.
 - `Preserve`: `.word N`, `.word label`, `.word label+N`, `.word label + N` are accepted
 - `Research`: `.word label +N` (spaced unary) silently ignores the `+N` suffix — not guarded
 
+### `.string` escape sequences (#157)
+
+Supported escape set is identical to the oracle's; the divergence is in how
+*unknown* escapes are handled. Full evidence: `docs/research/string-escape-parity.md`.
+
+| Escape | Accepted | Byte | Notes |
+|--------|----------|------|-------|
+| `\n` `\t` `\r` `\\` `\"` | ✓ | `0a 09 0d 5c 22` | byte-for-byte identical to oracle |
+| `\0` `\a` `\b` `\f` `\v` `\'` | ✗ | — | `Unknown escape sequence: \X` (oracle: silently drops the `\`, keeps the literal char) |
+| `\x41` (hex), `\101` (octal) | ✗ | — | neither toolchain honors C numeric escapes; oracle emits `x41`/`101` literally |
+
+- `Preserve`: the `\n \t \r \\ \"` set (matches oracle; shipped demos rely on `\n`).
+  The #157 headline ("`.string` rejects `\n`") is **non-reproducible**.
+- `By design`: lccjs **rejects** unknown escapes with a clear diagnostic where the
+  oracle silently drops the backslash — lccjs stricter-is-safer (see
+  `docs/parity_deviations.md` BY DESIGN). The error is `Unknown escape sequence`,
+  never `Missing terminating quote`.
+
 ### `ret` offset-operand spacing
 
 The tokenizer splits on whitespace and commas; `+` and `-` are not delimiters.

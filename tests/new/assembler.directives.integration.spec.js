@@ -385,3 +385,42 @@ x: .zero +
     expect(assembler.errorFlag).toBe(false);
   });
 });
+
+// Regression for #157: the issue's headline claim — that `.string` rejects a `\n`
+// escape with "Missing terminating quote" — does NOT reproduce. lccjs accepts the
+// escape set `\n \t \r \\ \"`, matching the oracle byte-for-byte (probe in
+// docs/research/string-escape-parity.md). Shipped demos (demoP.a, happy-path.a)
+// already rely on `\n` in `.string`. The genuine lccjs↔oracle divergence is the
+// OPPOSITE: lccjs rejects UNKNOWN escapes with a clear "Unknown escape sequence"
+// error, while the oracle silently drops the backslash. These tests pin both.
+describe('Assembler .string escape sequences (#157)', () => {
+  let assembler;
+  const { getAssembler, getVirtualFs } = setupAssemblerIntegrationHarness(Assembler);
+  let virtualFs;
+  beforeEach(() => { assembler = getAssembler(); virtualFs = getVirtualFs(); });
+
+  const assemble = (src) => {
+    virtualFs['esc.a'] = src;
+    assembler.main(['esc.a']);
+  };
+
+  test('a `\\n` escape in .string assembles and emits a 0x0a byte (the #157 headline is non-reproducible)', () => {
+    expect(() => assemble(`      .string "A\\nB"\n      halt\n`)).not.toThrow();
+    expect(assembler.errorFlag).toBe(false);
+    // 'A', '\n', 'B', NUL  → 0x41, 0x0a, 0x42, 0x00
+    expect(assembler.outputBuffer.slice(0, 4)).toEqual([0x41, 0x0a, 0x42, 0x00]);
+  });
+
+  test('the full supported escape set (\\n \\t \\r \\\\ \\") maps to the expected bytes', () => {
+    expect(() => assemble(`      .string "\\n\\t\\r\\\\\\""\n      halt\n`)).not.toThrow();
+    expect(assembler.errorFlag).toBe(false);
+    // \n \t \r \\ \"  → 0x0a 0x09 0x0d 0x5c 0x22, then NUL
+    expect(assembler.outputBuffer.slice(0, 6)).toEqual([0x0a, 0x09, 0x0d, 0x5c, 0x22, 0x00]);
+  });
+
+  test('an UNKNOWN escape raises a clear "Unknown escape sequence" error (not "Missing terminating quote")', () => {
+    // This is the real lccjs↔oracle divergence: lccjs is stricter (fails loud),
+    // the oracle silently drops the backslash. Pin lccjs\'s clear diagnostic.
+    expect(() => assemble(`      .string "A\\qB"\n      halt\n`)).toThrow(/Unknown escape sequence/);
+  });
+});
