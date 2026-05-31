@@ -52,7 +52,9 @@
 # keeps BOTH sides' added rows automatically (fires under rebase too — verified).
 # Rows are unique (ticket + timestamps), so union never drops or dups a row.
 # See docs/research/velocity-log-storage.md.
-docs/puzzle-velocity.csv merge=union
+# docs/puzzle-velocity.csv merge=union — REMOVED (#290): CSV is now auto-generated
+# by scripts/velocity-export.js (full-file export from ~/.lccjs/velocity.db).
+# Two agents exporting the same DB snapshot produce an identical file; no conflict.
 
 # --- append-friendly cluster manifest (#233 prototype; design #222): same rationale ---
 # Agents append cluster/blocked_by rows as they group issues; union keeps both sides.

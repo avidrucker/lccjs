@@ -1,20 +1,29 @@
 # Puzzle Velocity — Data & Explainer
 
 Tracks estimated vs actual time per puzzle / ticket so we can calibrate
-forward-looking estimates over time. Raw data lives in
-[`puzzle-velocity.csv`](./puzzle-velocity.csv); this doc explains the columns,
-the protocol, and the jargon.
+forward-looking estimates over time.
+
+> **Do not edit `puzzle-velocity.csv` directly.** It is auto-generated.
+> To log a new row, use:
+> ```bash
+> npm run velocity:log -- '{"ticket":N,"role":"DEV","agent":"BANANA",...}'
+> ```
+> See the close sequence in `docs/claude_workflow.md` for the full protocol.
 
 ## Where the data is
 
-[`puzzle-velocity.csv`](./puzzle-velocity.csv) — one row per closed
-ticket / puzzle. Empty fields mean "not tracked" (most commonly for rows
-logged retroactively before the protocol existed).
+**Canonical store:** `~/.lccjs/velocity.db` (SQLite, local-only, not git-tracked).
+See [`docs/velocity-schema.md`](./velocity-schema.md) for the full schema reference.
+
+**Read-only export:** [`puzzle-velocity.csv`](./puzzle-velocity.csv) — auto-generated
+by `scripts/velocity-export.js` from the SQLite DB. One row per closed ticket /
+puzzle, plus a comment header line. Empty fields mean "not tracked".
 
 ## Column reference
 
 | Column | Type | Meaning |
 |---|---|---|
+| `id` | int | SQLite surrogate key (auto-increment); first column in the CSV export |
 | `ticket` | int | GitHub issue number (e.g. `124` = `#124`) |
 | `title` | string | short ticket title |
 | `role` | string | role tag (see below) |
