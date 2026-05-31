@@ -100,37 +100,27 @@ When I pick up a ticket:
 2. **Predict** — if the ticket has no C estimate yet, set one now.
 3. **Work** — do the puzzle.
 4. **Finish** — capture finish timestamp before the closing commit.
-5. **Close + log in ONE commit** — delete the puzzle's source marker, append the
-   CSV row (with `closed_commit` left **empty** — see below), and
-   `git commit -m "… Closes #N"`.
-6. **Sync + push** — `git pull --rebase`, then `git push`.
+5. **Log the row** — run `npm run velocity:log -- '{"ticket":N,"role":"...","agent":"...",...}'`
+   (validates, INSERTs into `~/.lccjs/velocity.db`, auto-exports `docs/puzzle-velocity.csv`).
+6. **Close in ONE commit** — delete the puzzle's source marker and commit:
+   `git commit -m "… Closes #N"`. The exported CSV rides along automatically.
+7. **Sync + push** — `git pull --rebase`, then `git push`.
 
 ### What gets logged (and what's skipped)
 
 A row tracks **work/time, not file changes.** Tasks that ship **no code** —
 `PM` (tracker updates, issue triage), `RESEARCH`, `SPIKE` — still get a row; the
-CSV already has many (PM #143/#204, RESEARCH #203, SPIKE #193/#166). The only
-skips are: (a) no `puzzle-velocity.*` files exist *and* you haven't been asked to
-set them up, or (b) a **sub-minute** fast-clarification turn. "No repo files
+DB already has many (PM #143/#204, RESEARCH #203, SPIKE #193/#166). The only
+skips are: (a) `~/.lccjs/velocity.db` doesn't exist *and* you haven't been asked to
+set it up, or (b) a **sub-minute** fast-clarification turn. "No repo files
 changed" means only that no worktree was needed for the *work itself* — it never
-means "no CSV row." If such a task lacks a ticket to key the row to, file one (the
-#204 retroactive-ticket precedent). See #216.
+means "no velocity row." If such a task lacks a ticket to key the row to, file one
+(the #204 retroactive-ticket precedent). See #216.
 
-`docs/puzzle-velocity.csv` carries `merge=union` (see `.gitattributes`), so when
-other agents have appended rows in parallel, the rebase **auto-unions** both
-sides' rows with **no manual conflict** — the old hand-resolve + marker-guard
-dance is gone. (`union` fires under `rebase`, not just `merge` — verified;
-[`research/velocity-log-storage.md`](./research/velocity-log-storage.md).)
-
-**Append with LF, never CRLF.** The CSV is LF-only. If you append the row with a
-tool that defaults to CRLF — notably Python `csv.writer`, whose default
-`lineterminator` is `\r\n` — pass `lineterminator='\n'` (or strip the trailing
-`\r` afterward). A stray CRLF row is *doubly* harmful under `merge=union`: a
-later LF-vs-CRLF edit of the **same** row does not dedup — union keeps both
-byte-variants — which is exactly how #210 got logged twice (#217). A plain-shell
-append (`>>` with an LF) is already safe; the trap is reaching for `csv.writer`.
-A regression test (`tests/new/puzzle-velocity-csv.unit.spec.js`) guards both
-invariants: no CR bytes, and no byte-identical duplicate rows.
+`docs/puzzle-velocity.csv` is now a **generated read-only export** — `velocity-log.js`
+writes to SQLite and auto-exports the full CSV after every INSERT. Format details
+(LF endings, quote-doubling) are handled by the export script; manual editing is
+not needed and not safe.
 
 If a *non-union* file conflicts during the rebase (e.g. two agents edited the
 same region of `TODOS.md`), resolve it manually and still run the guard before
