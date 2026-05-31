@@ -7,12 +7,17 @@ LCC.js is a JavaScript implementation of the LCC toolchain — assembler, linker
 ## Commands
 
 ```bash
+# First-time setup (run once after cloning)
+npm run setup                                 # install git hooks (commit-msg + pre-push)
+
+# Toolchain
 node ./src/core/lcc.js <infile> [options]   # assemble+run a .a, or run a .e directly, or link .o files
 node ./src/core/assembler.js  <file>         # assemble only
 node ./src/core/interpreter.js <file.e>      # interpret only
 node ./src/core/linker.js m1.o m2.o          # link only
 node ./src/plus/lccplus.js <file.ap>         # LCC+ pipeline (see "Two toolchains" below)
 
+# Tests
 npm test                                      # primary suite (tests/new, --runInBand)
 npm run test:all                              # full suite incl. slow tests
 npm run test:oracle                           # oracle-parity suite (needs oracle binary; see below)
@@ -108,3 +113,14 @@ Scopes are optional but should come from this list when used:
 | `claim` / `close` / `scripts` | Toolchain script changes |
 
 Code-area scopes (assembler, interpreter, linker, plus, jest, cli, debug, etc.) are always valid — they map directly to source modules.
+
+### Git hooks
+
+`npm run setup` (run once after cloning) installs two hooks via symlink from `scripts/git-hooks/`:
+
+| Hook | Enforces | Bypass |
+|------|----------|--------|
+| `commit-msg` | No issue-ID scopes; no compound types | `git commit --no-verify` |
+| `pre-push` | PDD puzzle scan; no conflict markers; no push mid-rebase | `git push --no-verify` |
+
+Both hooks are in `scripts/git-hooks/` and stay current as the branch evolves (symlink, not a copy).
