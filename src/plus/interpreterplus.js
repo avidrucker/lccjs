@@ -14,8 +14,11 @@ const { fatalExit: exitProcess } = require('../utils/cliExit');
 // Tuned for reasonable UI responsiveness in .ap games; adjust if lag is observed.
 const ASYNC_BATCH_SIZE = 500;
 
-// @inprogress #259:30m/DEV off-TTY crash: setRawMode is TTY-only -- guard BOTH calls behind process.stdin.isTTY (here, and the main() setup at the `if (this.nonBlockingInput)` block below). This chokepoint is reached via fatalExit/exit-handler/HALT/Ctrl-C, so guarding only main() is insufficient. Off-TTY the keyQueue never fills so nbain already returns 0 ("no key") -- no new semantics. Add an off-TTY write-only e2e smoke (pipe /dev/null into randDeterministic.ep, assert exit 0 + stdout). Optional: also isTTY-guard the cursor escapes (?25h/?25l/H) so they don't leak into piped output. See docs/research/interpreterplus-off-tty-stdin-contract.md (#240).
 function resetProcessStdin() {
+  // setRawMode is TTY-only; off a TTY there is no raw mode to leave and no
+  // terminal cursor to restore (the escape would leak into piped output).
+  // This chokepoint is reached via fatalExit/exit-handler/HALT/Ctrl-C. (#259)
+  if (!process.stdin.isTTY) return;
   process.stdin.setRawMode(false);
   process.stdin.pause();
   // process.stdout.write(ansiEscapes.cursorShow); // show cursor
@@ -121,7 +124,12 @@ class InterpreterPlus extends Interpreter {
     this.initialMem = this.mem.slice(); // copy memory
 
     // set up input
-    if (this.nonBlockingInput) {
+    // Off a TTY (piped input, redirect, CI), setRawMode does not exist and there
+    // is no live keyboard to read. Skip raw-mode + the data listener entirely;
+    // the keyQueue then stays empty, so nbain returns 0 ("no key") on every poll
+    // (its existing empty-queue branch). Write-only programs run to completion;
+    // input-driven programs simply see no keypresses. (#259)
+    if (this.nonBlockingInput && process.stdin.isTTY) {
       // set up raw mode for non-blocking input
       process.stdin.setRawMode(true);
       process.stdin.setEncoding('utf8');
@@ -358,6 +366,7 @@ class InterpreterPlus extends Interpreter {
     // by default, in the beginning of all programs, the cursor is visible
     // if the passed in register is 0, hide the cursor
     // if the passed in register is non-zero, show the cursor
+    if (!process.stdin.isTTY) return; // no terminal cursor off-TTY; don't leak the escape into piped output (#259)
     if (this.r[this.dr] === 0) {
       process.stdout.write('\u001B[?25l');
       //process.stdout.write(ansiEscapes.cursorHide); // hide cursor
@@ -401,6 +410,7 @@ class InterpreterPlus extends Interpreter {
   }
 
   executeResetCursor() {
+    if (!process.stdin.isTTY) return; // no terminal to home off-TTY; don't leak the escape into piped output (#259)
     process.stdout.write('\u001B[H'); // move cursor to home
   }
 }

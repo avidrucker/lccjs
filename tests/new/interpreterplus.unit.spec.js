@@ -1,11 +1,12 @@
 const InterpreterPlus = require('../../src/plus/interpreterplus');
 
 // First coverage for src/plus/interpreterplus.js (413 LOC, was 0% — child of #166).
-// main() puts the terminal in raw mode and runs an async batch loop, so it can't
-// be driven off-TTY (it throws "process.stdin.setRawMode is not a function" when
-// stdin is piped — surfaced as a follow-up finding on #198). The rand/srand LCG,
-// though, is *the* reason src/plus exists and the highest-signal seam: pure
-// methods over instance state (this.seed / this.r), exercised here directly.
+// main() runs an async batch loop and (on a TTY) puts the terminal in raw mode.
+// It used to throw "process.stdin.setRawMode is not a function" whenever stdin was
+// piped — the #198 follow-up finding, now fixed in #259 (setRawMode is guarded
+// behind process.stdin.isTTY). The off-TTY CLI run lives in interpreterplus.e2e.spec.js;
+// this file stays on the rand/srand LCG, *the* reason src/plus exists and the
+// highest-signal seam: pure methods over instance state (this.seed / this.r).
 
 // Build an interpreter seeded like randDeterministic.ap (srand r0), returning a
 // roll(min,max) that mimics `rand r0, r1` with r0=min, r1=max.
