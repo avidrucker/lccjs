@@ -23,6 +23,7 @@ class Linker {
     this.outputFileName = null; // Output file name
   }
 
+  // @todo #254:30m/DEV decomplect: the constructor (above) and resetState() init the same 11 fields -- make resetState() the single source of truth and have the constructor call it, so adding a field can't leak state across reused link() runs. See #246 H3 + docs/research/codebase-quality-hotspots.md
   // Reset all per-link state so the same Linker instance can be reused across
   // multiple link() calls without state leaking from one run into the next.
   resetState() {

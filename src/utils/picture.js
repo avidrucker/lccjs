@@ -6,6 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 
+// @todo #172:30m/DEV decomplect/testability: split a pure formatPicture() -> string from the console output sink so the picture builder is unit-testable -- this is the refactor the 0% coverage in #172 is gated on. See #246 H6 + docs/research/codebase-quality-hotspots.md
+
 // Check command-line arguments
 if (process.argv.length !== 3) {
     console.error('Usage: node picture.js <filename>');

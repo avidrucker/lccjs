@@ -5,6 +5,8 @@
 
 const fs = require('fs');
 
+// @todo #256:45m/DEV decomplect: flatten this file's deep nesting (~14 levels) with guard clauses / early returns and extract the per-opcode format arms; no behavior change, oracle-diff verify. See #246 H5 + docs/research/codebase-quality-hotspots.md
+
 // Main Disassembler Class
 class Disassembler {
     constructor() {

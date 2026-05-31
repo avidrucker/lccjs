@@ -44,6 +44,7 @@ const SEXT_PARITY_TABLE = [
 const { isTestMode, fatalExit, cliErrorExit, cliWrappedErrorExit } = require('../utils/cliExit');
 
 class Interpreter {
+  // @todo #255:45m/DEV decomplect: group these ~50 flat fields into cohesive sub-objects (this.cpu = regs+flags+pc, this.io = buffers, this.diag = trace/debug/breakpoint) so machine-state, run-options, and diagnostics stop sharing one namespace. See #246 H4 + docs/research/codebase-quality-hotspots.md
   constructor() {
     /**
      * Memory (16-bit unsigned integers)
@@ -582,6 +583,8 @@ class Interpreter {
     }
   }
 
+  // @todo #251:45m/DEV decomplect: extract a pure decode(ir) -> {opcode,dr,sr1,imm5,...} that returns a value and writes nothing to this, so decode is unit-testable without running a full step(). See #246 H1a + docs/research/codebase-quality-hotspots.md
+  // @todo #252:45m/DEV decomplect: lift traceMode source-emit + the post-execute register/flag diff printer (diffRegisters) out of this execution core into an observer that step() calls (step returns a delta). Blocked by #251. See #246 H1b
   step() {
     // Fetch instruction
     this.ir = this.mem[this.pc++];
