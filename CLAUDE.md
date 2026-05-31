@@ -62,3 +62,49 @@ This repo runs a **Puzzle-Driven Development** discipline with multiple agents w
 ## Git identity
 
 Inherited from the parent `~/Documents/Study/CLAUDE.md`: GitHub `avidrucker`, commit email `6962664+avidrucker@users.noreply.github.com`. Don't override per-repo.
+
+## Commit conventions
+
+Format: `type(optional-scope): description` — [Conventional Commits](https://www.conventionalcommits.org/).
+
+**Two rules that are easy to get wrong:**
+
+1. **Never use an issue number as a scope.** Put `#N` in the description body or a `Closes #N` footer instead.
+   ```
+   # Wrong
+   research(#208): graduate @todo — de-confound velocity drift
+   # Right
+   research: graduate @todo — de-confound velocity drift (#208)
+   ```
+2. **One type per commit.** `test+fix:` is invalid — pick the dominant type or split the commit.
+
+### Type vocabulary
+
+Standard types (per spec): `feat`, `fix`, `refactor`, `perf`, `style`, `test`, `docs`, `build`, `ops`, `chore`
+
+Project extensions (use exactly as shown):
+
+| Type | When to use |
+|------|-------------|
+| `research` | Research-only deliverable (no production code change) |
+| `data` | Data re-runs, CSV updates, notebook analysis |
+| `stats` | Statistical analysis output commits |
+| `pdd` | Adding or removing `@todo`/`@inprogress` puzzle markers at code sites |
+
+### Scope vocabulary
+
+Scopes are optional but should come from this list when used:
+
+| Scope | Meaning |
+|-------|---------|
+| `velocity` | `puzzle-velocity.csv` row logging |
+| `pm` | Project-management / issue-filing cycles |
+| `pdd` | PDD marker edits (when `pdd` type doesn't apply) |
+| `todos` | `TODOS.md` housekeeping |
+| `learnings` | Entries in `docs/learnings/` |
+| `parity` | Oracle parity deviation docs |
+| `workflow` | `claude_workflow.md` edits |
+| `glossary` | `docs/glossary/` changes |
+| `claim` / `close` / `scripts` | Toolchain script changes |
+
+Code-area scopes (assembler, interpreter, linker, plus, jest, cli, debug, etc.) are always valid — they map directly to source modules.
