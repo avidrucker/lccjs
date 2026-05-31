@@ -1,60 +1,90 @@
 # Today I Learned — 2026-05-31 (DRAGONFRUIT)
 
-A short morning session: identify and remove two stale `puzzle:status` markers,
-post GitHub comments on the closed issues, and retrospect on the three protocol
-misses that turned a five-minute cleanup into a corrective loop.
+A short morning session: find and remove two false-alarm "open puzzle" detections
+that were clogging the project board, post GitHub comments explaining what happened,
+then get corrected on three process steps I skipped.
 
-## 1. Pre-flight start timestamp is not optional — I proved it by skipping it
+---
 
-The velocity protocol says: `date '+%Y-%m-%dT%H:%M:%S%z'` is the *first* action
-before reading the issue or writing a line of code. I skipped it, did the whole
-stale-marker cleanup, and ended up with an empty `started_iso` in the velocity row.
-The user caught both the missing row *and* the missing timestamp in the same
-correction.
+*For readers new to this repo: every piece of work gets a row in a time-tracking
+spreadsheet (`docs/puzzle-velocity.csv`) recording what was done and how long it
+took. Code changes go on a separate Git branch ("worktree") so multiple agents can
+work in parallel without clobbering each other. A scanner (`npm run puzzle:status`)
+searches every file in the repo for `@todo` markers to show which tickets are still
+in progress.*
 
-There's no reconstruction path once the window closes. A retroactively guessed start
-time is worse than an empty field — it's invented data. The protocol step is cheap;
-the honesty tax of skipping it is paid in permanent holes in the calibration record.
+---
 
-## 2. The `at_todo` trap is meta-recursive in velocity notes
+## 1. Capture the start time before doing anything else
 
-The #259 velocity row's notes described the work done: "Dropped one
-`at_todo #259:30m/DEV` marker above `resetProcessStdin`." That description *was*
-the live marker form. `puzzle:status`'s `git grep` found it and flagged #259 as a
-phantom open marker — even though #259 was closed and the actual code-site marker
-had been deleted.
+**What happened:** I forgot to record when I started the task. I did the whole
+cleanup, then went to fill in the time-tracking row — and found I had no start time
+to put there. That field is permanently blank for this session.
 
-The 2026-05-30 DRAGONFRUIT TIL (lesson 4) already documented this trap biting CSV
-*data*. Today's case is one level deeper: it's a notes field whose subject is the
-act of dropping a marker. The trap doesn't care about context or intent — any
-substring matching `@(todo|inprogress) #[0-9]+:[0-9]` fires. Known surfaces so far:
-code comments, TIL prose, velocity CSV notes, shell `echo` strings (APPLE, 2026-05-31).
+**Why it matters:** You can't reconstruct the start time after the fact. Guessing
+is worse than leaving it blank, because a guessed time is invented data.
 
-> Recurring thread: this is the third DRAGONFRUIT encounter with the scanner (once
-> in the TIL doc itself, once here). At four documented surfaces it belongs in the
-> authority doc, not just TILs.
+**What to do:** Run `date` as the literal first action when picking up a ticket —
+before reading the issue, before writing any code. It takes two seconds and can't
+be recovered later.
 
-## 3. Two omissions, not one — the row and the worktree are separate obligations
+## 2. Writing *about* a marker accidentally becomes a marker
 
-The cleanup needed a worktree for the file edits (used correctly) and a velocity
-row (skipped entirely). The user caught the row. When I added the row, it also
-needed its own worktree — the row-append itself is a tracked file change. These are
-two independent obligations, not one bundled thing. Treating them as one ("I'll log
-it when I close") is what made the first omission invisible until called out.
+**What happened:** The scanner looks for `@todo #<number>:<estimate>` anywhere in
+any file. BANANA had finished ticket #259 and written a note in the spreadsheet:
+*"Dropped one `at_todo #259:30m/DEV` marker above resetProcessStdin."* That sentence
+— describing a marker BANANA had just removed from the code — itself matched the
+scanner. The scanner reported #259 as an unfinished open puzzle, even though the
+issue was closed and the real marker was gone.
 
-## 4. `puzzle:status` and `git worktree list` are complements, not alternatives
+**Why it matters:** The scanner has no sense of context. It doesn't know whether
+the pattern appears in a code comment, a doc, a spreadsheet note, or a shell
+script. Any text matching `@todo #<number>:<digit>` fires it.
 
-`puzzle:status` only sees `@todo` / `@inprogress` marker-backed work. A RESEARCH
-task with no code-site marker (or one just started, marker not yet dropped) is
-invisible to it. APPLE's `APPLE-issue-280` worktree showed nothing on
-`puzzle:status` — every puzzle read AVAILABLE — while `git worktree list` showed
-the live worktree. The complete board picture requires both.
+**What to do:** When writing about a marker in prose or notes, use `at_todo`
+instead of `@todo`. This breaks the pattern without changing the meaning to a human
+reader. This has now bitten the project in four different places (code comments,
+a TIL doc, a spreadsheet notes field, a shell script string) — it belongs in the
+main workflow doc.
 
-## 5. Stale worktrees outlive closed issues
+## 3. Logging the work is a separate task from doing the work
 
-APPLE closed #280, committed the findings doc, pushed the velocity row — and left
-the worktree behind. `git worktree list` showed it still registered; the branch was
-still local. The close tool gates on push success before running cleanup, but the
-cleanup step still has to be explicitly invoked. A successful close that stops before
-`worktree remove` + `branch -d` leaves a registry entry and a local branch that
-will silently diverge as `main` moves on.
+**What happened:** The cleanup had two chores: (1) edit the files, and (2) log the
+work in the spreadsheet. I did (1) on a separate branch as required. I forgot (2)
+entirely. The user caught the missing log row. Then when I went to add it, that
+spreadsheet edit also needed its own separate branch, because the spreadsheet is a
+tracked file that multiple agents may write to at the same time.
+
+**Why it matters:** Thinking of the log row as part of "closing the ticket" makes
+it easy to skip, because you feel done once the real work is committed. But the log
+entry is an independent obligation with its own commit and its own branch.
+
+**What to do:** After finishing the work commit, explicitly ask: "Did I open a
+separate branch and write the time-tracking row?" — not "did I close the ticket?"
+
+## 4. Two commands together show who is actually working on what
+
+**What happened:** `npm run puzzle:status` showed every ticket as available.
+But `git worktree list` showed APPLE had a live working branch for ticket #280.
+APPLE was already working on it — the board just couldn't see it because APPLE
+hadn't yet placed a `@todo` marker in the code.
+
+**Why it matters:** `puzzle:status` only knows about work that has a marker placed
+in a source file. A research task, or any task whose marker hasn't been dropped yet,
+is invisible to it. `git worktree list` shows every active branch regardless of
+markers. Reading only one gives a false picture.
+
+**What to do:** Run both before deciding what's available to grab.
+
+## 5. Finishing a ticket isn't the same as cleaning up the branch
+
+**What happened:** APPLE closed ticket #280, pushed the work, and closed the issue
+— but left the working branch checked out on disk. `git worktree list` still
+showed it; the local branch still existed.
+
+**Why it matters:** A working branch left behind silently falls out of date as
+`main` moves on. It clutters the branch list and confuses the board check above.
+
+**What to do:** The close sequence has a cleanup step — `worktree remove` and
+`branch -d` — that still has to be explicitly run even after a successful push.
+Done pushing ≠ done closing.
