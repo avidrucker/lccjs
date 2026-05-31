@@ -10,9 +10,11 @@
     "puzzles": "bash scripts/run-pdd.sh",
     "claim": "node scripts/claim.js",
     "close": "node scripts/close.js",
-    "setup": "bash scripts/setup-hooks.sh"
+    "setup": "bash scripts/setup-hooks.sh",
+    "velocity:seed": "node scripts/velocity-seed.js"
   },
   "devDependencies": {
+    "better-sqlite3": "^12.10.0",
     "dotenv": "^17.2.3",
     "jest": "^29.7.0"
   }
