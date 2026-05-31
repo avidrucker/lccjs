@@ -136,18 +136,22 @@ A pause happens in two shapes:
    ```
 2. Final verification — does the change actually do what it should?
 
-**The close sequence** (single commit — full protocol in [`puzzle-velocity.md`](./puzzle-velocity.md), changed in #186):
+**The close sequence** (full protocol in [`puzzle-velocity.md`](./puzzle-velocity.md)):
 
 ```bash
-# One commit carries everything: delete the source marker, append the CSV row
-# (closed_commit left EMPTY), and close the ticket.
+# 1. Log the velocity row (validates + inserts into ~/.lccjs/velocity.db,
+#    then auto-exports docs/puzzle-velocity.csv)
+npm run velocity:log -- '{"ticket":N,"role":"DEV","agent":"BANANA",...}'
+
+# 2. One commit carries everything: delete the source marker + the exported CSV
 git add -A
-git commit -m "... Closes #N"      # marker deletion + CSV row ride together (#186)
-git pull --rebase                  # parallel agents may have pushed; rebase before pushing
+git commit -m "... Closes #N"
+git pull --rebase                  # parallel agents may have pushed
 git push
 ```
 
-Close and velocity-log land in **one** commit (#186), not two. The CSV carries `merge=union` (in `.gitattributes`), so parallel row-appends auto-union on rebase — no manual conflict, no SHA to capture. **Leave `closed_commit` empty:** the `git pull --rebase` rewrites the closing commit's SHA, so any SHA captured before the push orphans (the old two-commit flow had to re-fix it on every rebase round). Recover it on demand instead:
+**Leave `closed_commit` empty** in the velocity row — the `git pull --rebase` rewrites
+the closing commit's SHA, so any SHA captured before the push orphans. Recover on demand:
 
 ```bash
 git log --grep "Closes #N" -1 --format=%h
