@@ -85,6 +85,7 @@ next," start here.
 
 - **Stay in scope.** Anything outside the ticket gets logged as a finding, not pursued.
 - **Surface findings as I notice them.** Open questions, unexpected behaviour, brittle code — these become candidate follow-up puzzles. I usually mention them at close so the user decides whether to file new tickets.
+- **Correcting a sibling issue's description.** If I find a factual error in *another* issue's description (wrong cross-ref, stale dependency, outdated premise), I do **not** silently rewrite the body. I redline it: `~~strikethrough~~` the wrong text in place, add a `> ⚠️ **SEE COMMENTS FOR CORRECTIONS**` banner at the top, and post the correction as a comment — so the original stays visible and the fix is additive. The `yegor-tickets` skill owns this convention (#300).
 - **Verify as I go.** For code changes: assemble, run tests, exercise the change. For doc changes: re-read for accuracy and link sanity. For research: cite source line numbers so the reasoning is checkable.
 - **Use TaskUpdate** to mark sub-steps complete if I created tasks. Cleaning up the task list is part of the work.
 - **Brief, accurate status updates** — one sentence at key moments, not a running monologue.

@@ -63,6 +63,7 @@ This repo runs a **Puzzle-Driven Development** discipline with multiple agents w
 
 - **Worktree-per-task is the expected default**, even for small/docs edits — multiple agents touch this repo at once. Run `git worktree list` first to avoid clobbering, and close trunk-based via `git push origin HEAD:main`.
 - `npm run claim` stakes a worktree under a per-session agent identity; `npm run puzzle:status` shows what's safe to grab; `npm run puzzles` runs the `pdd` scan.
+- **Correcting an issue description:** redline, don't rewrite — `~~strikethrough~~` the error in place, add a `SEE COMMENTS FOR CORRECTIONS` banner, and post the fix as a comment. The `yegor-tickets` skill owns the convention; see `docs/claude_workflow.md` "While continuing" (#300).
 
 ## Git identity
 
