@@ -14,7 +14,7 @@ const { fatalExit: exitProcess } = require('../utils/cliExit');
 // Tuned for reasonable UI responsiveness in .ap games; adjust if lag is observed.
 const ASYNC_BATCH_SIZE = 500;
 
-// @todo #259:30m/DEV off-TTY crash: setRawMode is TTY-only -- guard BOTH calls behind process.stdin.isTTY (here, and the main() setup at the `if (this.nonBlockingInput)` block below). This chokepoint is reached via fatalExit/exit-handler/HALT/Ctrl-C, so guarding only main() is insufficient. Off-TTY the keyQueue never fills so nbain already returns 0 ("no key") -- no new semantics. Add an off-TTY write-only e2e smoke (pipe /dev/null into randDeterministic.ep, assert exit 0 + stdout). Optional: also isTTY-guard the cursor escapes (?25h/?25l/H) so they don't leak into piped output. See docs/research/interpreterplus-off-tty-stdin-contract.md (#240).
+// @inprogress #259:30m/DEV off-TTY crash: setRawMode is TTY-only -- guard BOTH calls behind process.stdin.isTTY (here, and the main() setup at the `if (this.nonBlockingInput)` block below). This chokepoint is reached via fatalExit/exit-handler/HALT/Ctrl-C, so guarding only main() is insufficient. Off-TTY the keyQueue never fills so nbain already returns 0 ("no key") -- no new semantics. Add an off-TTY write-only e2e smoke (pipe /dev/null into randDeterministic.ep, assert exit 0 + stdout). Optional: also isTTY-guard the cursor escapes (?25h/?25l/H) so they don't leak into piped output. See docs/research/interpreterplus-off-tty-stdin-contract.md (#240).
 function resetProcessStdin() {
   process.stdin.setRawMode(false);
   process.stdin.pause();
