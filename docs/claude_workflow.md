@@ -176,29 +176,9 @@ Do **not** `git commit --amend` to backfill the SHA — amend orphans the origin
 
 ---
 
-## What I track in the CSV
+## What I track in the velocity log
 
-One row per closed puzzle in [`puzzle-velocity.csv`](./puzzle-velocity.csv). Columns:
-
-| Column | Meaning |
-|---|---|
-| `ticket` | GitHub issue number |
-| `title` | short title |
-| `role` | DEV / TEST / ARC / WRITER / PM |
-| `h_min` | Human time estimate (drives Yegor's ≤60m cap) |
-| `c_min` | Claude time estimate (for forecasting) |
-| `actual_min` | wall-clock from start to closing commit |
-| `delta_h_min` | `actual_min − h_min` |
-| `delta_c_min` | `actual_min − c_min` |
-| `started_iso` / `finished_iso` | ISO 8601 with timezone |
-| `closed_commit` | left **empty** at close; derive on demand with `git log --grep "Closes #N" -1 --format=%h`. (The `pull --rebase` rewrites the closing SHA, so capturing it orphans — #186.) |
-| `notes` | free-text — anomalies, context, surprises |
-| `agent` | which agent did it — the worktree fruit identity, uppercased (e.g. `APPLE`); trailing column. Empty if unknown. |
-
-Empty cells = "not tracked" (common for rows logged retroactively, or — for
-`agent` — work done before #180 or by an unidentified agent). **Log the `agent`
-on every new row** (it's the fruit you claimed with `npm run claim`); don't
-backfill historical rows whose agent you can't verify.
+One row per closed puzzle, written via `npm run velocity:log`. Full column reference: [`docs/velocity-schema.md`](./velocity-schema.md).
 
 ---
 
