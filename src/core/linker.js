@@ -9,36 +9,28 @@ const { fatalExit, cliErrorExit } = require('../utils/cliExit');
 
 class Linker {
   constructor() {
-    this.mca = []; // Machine Code Array
-    this.mcaIndex = 0;
-    this.GTable = {}; // Global symbols: label -> address
-    this.ETable = []; // External references with 11-bit addresses
-    this.eTable = []; // External references with 9-bit addresses
-    this.VTable = []; // External references with full addresses
-    this.ATable = []; // Local references
-    this.start = null;
-    this.gotStart = false;
-    this.objectModules = []; // List of object modules to process
-    this.inputFiles = []; // List of input files
-    this.outputFileName = null; // Output file name
+    // resetState() is the single source of truth for per-link instance fields;
+    // the constructor just delegates, so a field can't be added in one place and
+    // forgotten in the other (which would leak state across reused link() runs).
+    this.resetState();
   }
 
-  // @todo #254:30m/DEV decomplect: the constructor (above) and resetState() init the same 11 fields -- make resetState() the single source of truth and have the constructor call it, so adding a field can't leak state across reused link() runs. See #246 H3 + docs/research/codebase-quality-hotspots.md
   // Reset all per-link state so the same Linker instance can be reused across
   // multiple link() calls without state leaking from one run into the next.
+  // This is the single definition of the per-link field set (see #254 / #246 H3).
   resetState() {
-    this.mca = [];
+    this.mca = [];               // Machine Code Array
     this.mcaIndex = 0;
-    this.GTable = {};
-    this.ETable = [];
-    this.eTable = [];
-    this.VTable = [];
-    this.ATable = [];
+    this.GTable = {};            // Global symbols: label -> address
+    this.ETable = [];            // External references with 11-bit addresses
+    this.eTable = [];            // External references with 9-bit addresses
+    this.VTable = [];            // External references with full addresses
+    this.ATable = [];            // Local references
     this.start = null;
     this.gotStart = false;
-    this.objectModules = [];
-    this.inputFiles = [];
-    this.outputFileName = null;
+    this.objectModules = [];     // List of object modules to process
+    this.inputFiles = [];        // List of input files
+    this.outputFileName = null;  // Output file name
   }
 
   main(args) {

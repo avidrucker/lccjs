@@ -27,6 +27,42 @@ describe('Linker Unit Tests', () => {
     state = installMockFileSystem(fs);
   });
 
+  // #254 (decomplect H3): resetState() is the single source of truth for the
+  // per-link field set; the constructor delegates to it. These pin that contract
+  // so a future field added to one place but not the other (state leak across
+  // reused link() runs) is caught.
+  describe('per-link state is single-sourced in resetState() (#254)', () => {
+    const FRESH = {
+      mca: [], mcaIndex: 0, GTable: {}, ETable: [], eTable: [], VTable: [],
+      ATable: [], start: null, gotStart: false, objectModules: [],
+      inputFiles: [], outputFileName: null,
+    };
+    const snapshot = (l) => ({
+      mca: l.mca, mcaIndex: l.mcaIndex, GTable: l.GTable, ETable: l.ETable,
+      eTable: l.eTable, VTable: l.VTable, ATable: l.ATable, start: l.start,
+      gotStart: l.gotStart, objectModules: l.objectModules,
+      inputFiles: l.inputFiles, outputFileName: l.outputFileName,
+    });
+
+    test('a fresh Linker initializes every per-link field to its empty value', () => {
+      expect(snapshot(new Linker())).toEqual(FRESH);
+    });
+
+    test('resetState() clears accumulated state back to the fresh field set (no leak)', () => {
+      const linker = new Linker();
+      // dirty every field as a prior link() run would
+      linker.mca = [1, 2, 3]; linker.mcaIndex = 3; linker.GTable = { main: 7 };
+      linker.ETable.push({}); linker.eTable.push({}); linker.VTable.push({});
+      linker.ATable.push({}); linker.start = 99; linker.gotStart = true;
+      linker.objectModules.push({}); linker.inputFiles.push('m.o');
+      linker.outputFileName = 'out.e';
+
+      linker.resetState();
+
+      expect(snapshot(linker)).toEqual(FRESH);
+    });
+  });
+
   test('readObjectModule() should parse valid headers and code from an object module', () => {
     const linker = new Linker();
     state.files['module.o'] = Buffer.from([
