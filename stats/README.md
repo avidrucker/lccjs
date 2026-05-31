@@ -11,7 +11,9 @@ the per-ticket time log for this project's Yegor-style microtask workflow (dual
 |---|---|
 | `enrich.py` | Reads the raw CSV, adds three enrichment layers, writes `puzzle-velocity-enriched.csv` |
 | `puzzle-velocity-enriched.csv` | Generated dataset the notebook reads (committed so the notebook renders without a rebuild) |
-| `puzzle_velocity_analysis.ipynb` | The analysis notebook (committed **with** embedded outputs/plots → renders on GitHub) |
+| `puzzle_velocity_analysis.ipynb` | Day-one analysis notebook (committed **with** embedded outputs/plots → renders on GitHub) |
+| `day-two-analysis.ipynb` | Day-two re-run — adds the over-time axis (HST day-bucketing) + auto-graduating power gates |
+| `day-three-analysis.ipynb` | Day-three re-run — 🆕 3-day calibration trend + per-agent cut; repairs a CSV-escaping corruption **in-memory** (committed CSV untouched) |
 | `requirements.txt` | Python deps (prefer the shared venv below) |
 
 ## Running it
@@ -85,3 +87,16 @@ adds three derived layers — this answers the "how can we enrich the data?" bra
   edit→assemble→run→diff loop is the one shape that reliably eats budget.
 - **Research/ARC spikes are the most over-padded** (#146 at ~11x) — padding for unknowns
   that evaporate once context is warm.
+
+### Day three (105 calibration rows, 3 HST working days, 4 agents)
+
+- **The bias is now overwhelming:** **100/105** tasks finished faster than estimate
+  (sign test p ≈ 2.5e-24); median C-ratio **3.21x** (95% CI 2.76–3.75x).
+- **No learning curve yet:** per-day medians are flat/non-monotone (2.5x → 5.0x → 3.5x
+  over 05-28→05-29→05-30); no evidence the over-pad is shrinking with experience.
+- **Agents differ but it's confounded:** Kruskal-Wallis across the 4 agents is
+  significant (p < 0.001; APPLE ~5.3x highest, CHERRY ~2.3x lowest), but the spread
+  tracks each agent's RESEARCH/SPIKE share — not a clean skill ranking.
+- **Data-quality finding:** the shared CSV had 3 rows with invalid backslash-escaping
+  (`\"`/`\\` vs CSV `""`) + 1 accidental duplicate — enough to crash `enrich.py`. The
+  day-three notebook repairs this **in-memory**; the source needs a CSV-escaping guard.
