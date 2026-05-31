@@ -43,7 +43,9 @@ const DEFAULT_MAX_RETRIES = 5;
 // auto-resolve on rebase. A conflict touching ONLY these is a contradiction
 // (union never conflicts) and signals a bug; a conflict touching anything else
 // is a real, human-resolvable conflict. Keep in sync with .gitattributes.
-const UNION_FILES = ['docs/puzzle-velocity.csv', 'docs/puzzle-clusters.csv'];
+// Note: docs/puzzle-velocity.csv was removed from this list in #290 — the CSV
+// is now a full-file auto-export from SQLite; conflicts resolve via re-export.
+const UNION_FILES = ['docs/puzzle-clusters.csv'];
 
 function sh(cmd, allowFail = false) {
   try {

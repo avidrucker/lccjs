@@ -98,28 +98,24 @@ describe('close.js classifyRebaseConflict()', () => {
     expect(classifyRebaseConflict(undefined)).toBe('none');
   });
 
-  test('velocity CSV (union file) alone → union-only', () => {
-    expect(classifyRebaseConflict(['docs/puzzle-velocity.csv'])).toBe('union-only');
-  });
-
   test('cluster CSV (union file) alone → union-only', () => {
     expect(classifyRebaseConflict(['docs/puzzle-clusters.csv'])).toBe('union-only');
   });
 
-  test('both union files together → union-only', () => {
-    expect(classifyRebaseConflict(['docs/puzzle-velocity.csv', 'docs/puzzle-clusters.csv'])).toBe('union-only');
+  test('velocity CSV is no longer a union file (#290 removed merge=union) → blocking', () => {
+    expect(classifyRebaseConflict(['docs/puzzle-velocity.csv'])).toBe('blocking');
   });
 
   test('a source file → blocking', () => {
     expect(classifyRebaseConflict(['src/core/assembler.js'])).toBe('blocking');
   });
 
-  test('TODOS.md (non-union doc) → blocking', () => {
-    expect(classifyRebaseConflict(['TODOS.md'])).toBe('blocking');
+  test('README.md (non-union doc) → blocking', () => {
+    expect(classifyRebaseConflict(['README.md'])).toBe('blocking');
   });
 
-  test('union file + non-union file → blocking (any non-union is a blocker)', () => {
-    expect(classifyRebaseConflict(['docs/puzzle-velocity.csv', 'TODOS.md'])).toBe('blocking');
+  test('two non-union files → blocking', () => {
+    expect(classifyRebaseConflict(['docs/puzzle-velocity.csv', 'README.md'])).toBe('blocking');
   });
 
   test('custom unionFiles arg overrides the UNION_FILES default', () => {
@@ -127,12 +123,12 @@ describe('close.js classifyRebaseConflict()', () => {
   });
 
   test('path strings are trimmed before comparison', () => {
-    expect(classifyRebaseConflict(['  docs/puzzle-velocity.csv  '])).toBe('union-only');
+    expect(classifyRebaseConflict(['  docs/puzzle-clusters.csv  '])).toBe('union-only');
   });
 
-  test('UNION_FILES export matches the two .gitattributes merge=union entries', () => {
-    expect(UNION_FILES).toContain('docs/puzzle-velocity.csv');
+  test('UNION_FILES matches .gitattributes — only puzzle-clusters.csv (velocity CSV removed in #290)', () => {
     expect(UNION_FILES).toContain('docs/puzzle-clusters.csv');
+    expect(UNION_FILES).not.toContain('docs/puzzle-velocity.csv');
   });
 });
 
