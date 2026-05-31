@@ -9,7 +9,8 @@
     "puzzle:status": "node scripts/puzzle-status.js",
     "puzzles": "bash scripts/run-pdd.sh",
     "claim": "node scripts/claim.js",
-    "close": "node scripts/close.js"
+    "close": "node scripts/close.js",
+    "setup": "bash scripts/setup-hooks.sh"
   },
   "devDependencies": {
     "dotenv": "^17.2.3",

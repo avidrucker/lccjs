@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# commit-msg hook — enforces lccjs commit-message conventions.
+#
+# Install (one time, per clone):
+#   npm run setup
+# or manually:
+#   ln -sf ../../scripts/git-hooks/commit-msg .git/hooks/commit-msg
+#
+# Rejects:
+#   1. Issue IDs as scopes — type(#N): — the spec prohibits this; put #N in the description.
+#   2. Compound types — type+type: — pick one type or split the commit.
+#
+# Bypass with: git commit --no-verify
+
+msg=$(cat "$1")
+subject=$(echo "$msg" | head -1)
+
+# Allow merge commits and fixup!/squash! prefixes.
+if echo "$subject" | grep -qE "^(Merge |Revert |fixup! |squash! )"; then
+  exit 0
+fi
+
+errors=0
+
+if echo "$subject" | grep -qE "^\w+\(#[0-9]+\):"; then
+  echo "[commit-msg] ERROR: issue number used as scope — put #N in the description instead."
+  echo "  Got: $subject"
+  echo "  Fix: research: graduate @todo (#208)"
+  errors=$((errors + 1))
+fi
+
+if echo "$subject" | grep -qE "^\w+\+\w+:"; then
+  echo "[commit-msg] ERROR: compound type (e.g. test+fix) — pick one type or split the commit."
+  echo "  Got: $subject"
+  errors=$((errors + 1))
+fi
+
+if [ "$errors" -gt 0 ]; then
+  echo
+  echo "See CLAUDE.md §'Commit conventions'. Bypass: git commit --no-verify"
+  exit 1
+fi
