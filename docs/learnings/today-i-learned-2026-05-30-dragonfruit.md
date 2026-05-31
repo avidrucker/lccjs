@@ -44,7 +44,7 @@ CLOSED issue). The honest move on discovering the deliverable already on `main`:
 
 ## 4. The `at_todo` trap bites in *data*, not just code
 
-I wrote the literal string `@todo #227:20m/DEV` inside a `puzzle-velocity.csv` note
+I wrote the literal string `at_todo #227:20m/DEV` inside a `puzzle-velocity.csv` note
 describing the marker I'd placed. `puzzle:status`'s `git grep` matched it → a
 **phantom second marker** pointing at the CSV, miscounting the board. The documented
 trap ("don't write the live marker form in prose") applies to commit/CSV *data* just
