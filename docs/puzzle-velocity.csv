@@ -219,3 +219,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 226,363,Decide: claim --as with unrecognized fruit — reject vs warn-and-continue,RESEARCH,30,20,,,,,,,,DRAGONFRUIT,sonnet-4.6
 227,355,,RESEARCH,30,20,,,,,,,,FIG,
 228,360,npm run close exits 1 with getcwd error after worktree teardown,WRITER,,,,,,,,,inter-turn gap; close.sh wrapper already shipped but cannot fix npm process CWD; option 3 (docs): added cosmetic-error note to close.js output and claude_workflow.md step 5,BANANA,
+229,364,docs(parity): OB-001 §4 stale — mov silently wraps is fixed,WRITER,15,15,32,-17,-17,2026-06-01T07:08:48-1000,2026-06-01T07:40:45-1000,,Sibling entries §5 OB-002 and §6 OB-026 also stale (both CLOSED); fixed all three. §2 OB-008 cross-ref and source line updated. actual_min includes reading time for 3 GH issues + source verification,ELDERBERRY,claude-sonnet-4-6
