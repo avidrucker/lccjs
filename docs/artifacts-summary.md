@@ -16,7 +16,8 @@ Produced by the core assembler/linker/interpreter pipeline. All are **local-only
 | Object file | `*.o` | `assembler.js` with multi-module flag | Relocatable intermediate; input to the linker | Stale when source `.a` changes |
 | Listing file | `*.lst` | assembler/lcc (report path) | Human-readable source + hex + symbol table; oracle-parity reference | Regenerated on each assemble run |
 | BST (batch symbol table) | `*.bst` | interpreter (report path) | Execution trace with register states; oracle-parity reference | Regenerated on each interpreter run |
-| Hex dump | `*.hex` | assembler (hex output mode) | Raw hex for inspection/debugging | Regenerated on demand |
+
+**Supported inputs (not outputs):** `lcc.js` also accepts `*.hex` (raw machine code, one 4-digit hex word per line) and `*.bin` (raw binary) as direct-execution inputs, bypassing the assembler. These are input formats — the toolchain never writes them.
 
 ---
 
