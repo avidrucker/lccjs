@@ -90,7 +90,7 @@ All six concrete, agent-actionable mitigations from the original spike are now c
 | #1 — CSV append conflict | `merge=union` on `docs/puzzle-velocity.csv` + SQLite canonical store | #186, #290 |
 | #2 — partial-state push | `scripts/git-hooks/pre-push` gates on conflict markers + in-progress rebase; `npm run close` retry-loops fetch→rebase→push and gates cleanup | #205, #242 |
 | #3 — `closed_commit` orphaned | Protocol: always log `closed_commit` empty; derive with `git log --grep "Closes #N" -1 --format=%h` | #186 |
-| #4 — branch-protection enforcement | User-owned decision — see below | — |
+| #4 — branch-protection enforcement | **Option A: stay trunk-based.** `enforce_admins: false` means the owner bypasses PR review; warning is advisory only. Re-evaluate only if `enforce_admins` is set to `true` — see Layer 5. | #355 |
 | #5 — classifier outage stalls close | Infra, not ours; SOP: read-only-verify-then-retry | — |
 | #6 — claim/marker state half-visible | `npm run puzzle:status` shows AVAILABLE/CLAIMED/IN-PROGRESS/STALE without per-worktree greps; identity half addressed via fruit system | #179, #212 |
 | #7 — transient churn looks like lost work | Discipline: check `git worktree list` + `puzzle:status` before alarming | — |
@@ -127,19 +127,20 @@ This section is the deliverable of the spike: a layered, concurrency-safe protoc
 - Worktree/branch names should use only `[A-Za-z0-9._-]` (the `+` issue is handled, but clean names reduce friction in other tooling).
 - `commit-msg` hook enforces Conventional Commit format; reject if `--no-verify` is needed, investigate the hook failure instead.
 
-### Layer 5 — Branch-protection decision (user-owned, still open)
+### Layer 5 — Branch-protection decision (#355, decided)
 
-The remote currently emits a non-blocking "Changes must be made through a pull request" warning on every `git push origin HEAD:main`. If GitHub enforcement is ever turned on, the trunk-based flow breaks for **all agents simultaneously**.
+**Decision: Option A — stay trunk-based.**
 
-**Decision needed from `@avidrucker`:** choose one before protection is enforced:
+The remote emits a non-blocking "Changes must be made through a pull request" warning on every `git push origin HEAD:main`. The GitHub branch-protection API confirms `enforce_admins: false`, which means the repo owner is explicitly exempt from the PR-review rule. The warning is advisory; the push succeeds regardless.
 
-| Option | Mechanics | Trade-offs |
-|--------|-----------|------------|
-| **A — Stay trunk-based** | Keep `push origin HEAD:main`; ensure branch protection stays non-enforced (or add a ruleset bypass for the repo owner). | Simplest. Agents use the same protocol forever. Requires actively not enabling protection. |
-| **B — PR per close** | Each agent pushes to its fruit branch and opens a PR; `npm run close` would drive `gh pr merge --squash`. | Protection-proof; adds 1 GH API call per close; squash changes commit graph (rebase SHAs change again). |
-| **C — Merge queue** | PRs enter a queue; queue serializes rebases + merges. | Cleanest long-term; requires GitHub merge-queue setup; highest complexity change. |
+Option B (PR per close via `gh pr merge --squash`) was evaluated and rejected for now:
+- Squash merges produce a new SHA on `origin/main`, breaking `close.js` Guard 2, which verifies the close by checking local HEAD is reachable from `origin/main`.
+- Adds two GitHub API calls (pr create + pr merge) to every close, introducing a new failure mode with no existing retry logic.
+- The only benefit — protection against enforcement — isn't relevant while `enforce_admins` stays `false`.
 
-**Recommendation:** Option A for now — the current enforcement notice is non-blocking, and switching to PRs would require changes to the close tool and the workflow. File a separate ticket if protection enforcement becomes a real constraint.
+**Trigger to re-evaluate:** if `enforce_admins` is ever set to `true`, every `npm run close` push fails with a 403. That's an immediate, loud signal. At that point, the bounded migration is: push fruit branch → `gh pr create` → `gh pr merge --squash` → derive landed SHA via `gh pr view` (not local HEAD) for Guard 2. Estimated scope: ~30–40 lines in `close.js`.
+
+Full research in `docs/research/trunk-vs-pr-decision.md`.
 
 ## Related
 
