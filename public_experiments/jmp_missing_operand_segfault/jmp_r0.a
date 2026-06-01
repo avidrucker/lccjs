@@ -1,0 +1,2 @@
+    jmp r0
+    halt

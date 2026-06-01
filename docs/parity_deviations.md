@@ -77,20 +77,29 @@ was fixed in #31, closed).
 
 ---
 
-### 3. `jmp` with missing register: OG LCC segfaults; LCC.js errors cleanly
+### 3. `jmp` with missing operand: both tools error cleanly; oracle leaves artifacts; LCC.js does not
+
+> **CORRIGENDUM (#261, 2026-06-01):** ~~OG LCC segfaults on `jmp` (no operand).~~
+> Not reproducible in cuh63 6.3. See `docs/research/jmp-missing-operand-segfault.md`.
+> The entry below reflects the verified behavior.
 
 | | cuh63 6.3 | LCC.js |
 |---|---|---|
-| `jmp` (no operand) | Segmentation fault ✗ | `Missing register` error ✓ |
+| `jmp` bare | exit=1 `Missing operand` (pass 1 only); leaves `.e(1B)` `.lst` `.bst` | exit=1 `Missing operand` (pass 2); **no artifacts** ✓ |
+| `jmp ,` | exit=1 `Missing register` | exit=1 `Missing operand` |
+| `jmp notaregister` | exit=1 `Bad register` | exit=1 `Bad register` |
 
-**Cause:** OG LCC's `jmp` parser dereferences a null/uninitialized operand
-pointer. LCC.js explicitly validates that the register operand is present and
-returns a typed error.
+**Primary deviation:** Oracle leaves artifact files (`.e`, `.lst`, `.bst`) even
+when assembly fails — same "fail-with-artifacts" pattern as OG BUG #10. LCC.js
+leaves nothing on error (beneficial).
 
-**Source:** `src/core/assembler.js:1822–1828` (`assembleJMP`)
+**Secondary deviation:** Oracle detects the bare-operand error in pass 1 only;
+LCC.js runs both passes before erroring.
 
-**Note:** Parity not possible here without replicating a crash — this
-deviation is beneficial and preserved.
+**Source:** `src/core/assembler.js` (`assembleJMP`)
+
+**Classification:** BY DESIGN — LCC.js's no-artifact behavior is safer. No parity
+fix needed.
 
 ---
 
@@ -509,3 +518,4 @@ _None pending._
 | 2026-06-01 | §5 OB-002 removed (#32 closed) | Disassembler `mvi` imm9 mask corrected: `disassembleMVI` now uses `word & 0x1FF` (9-bit, correct). Removed from "LCC.js BUG" section. |
 | 2026-06-01 | §6 OB-026 → BY DESIGN §17 (#59 closed) | Multi-file `.a` input: decided — only `args[0]` is assembled, extras silently ignored. Moved from "LCC.js BUG (fix pending)" to BY DESIGN §17; full decision record in `docs/core-behavior-matrix.md`. |
 | 2026-06-01 | Deviation 18 added (#375) | Non-interactive stdin + absent `name.nnn`: LCC.js now exits immediately with a fatal diagnostic instead of hanging at ~100% CPU. OG LCC blocks indefinitely. Classified BY DESIGN (fail-fast is safer). |
+| 2026-06-01 | §3 OG BUG #3 corrigendum (#261) | Segfault claim not reproducible in cuh63 6.3. Oracle exits 1 with "Missing operand" and leaves `.e`/`.lst`/`.bst` artifact files (same pattern as OG BUG #10). Entry rewritten: BY DESIGN (no-artifact behavior beneficial). Full probe: `docs/research/jmp-missing-operand-segfault.md`. |
