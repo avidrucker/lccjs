@@ -5,8 +5,6 @@
 
 const fs = require('fs');
 
-// @inprogress #256:45m/DEV decomplect: flatten this file's deep nesting (~14 levels) with guard clauses / early returns and extract the per-opcode format arms; no behavior change, oracle-diff verify. See #246 H5 + docs/research/codebase-quality-hotspots.md
-
 // Main Disassembler Class
 class Disassembler {
     constructor() {
@@ -73,9 +71,12 @@ class Disassembler {
         // Read header entries until 'C' is encountered
         while (offset < fileSize) {
             const entryType = String.fromCharCode(buffer[offset++]);
+
             if (entryType === 'C') {
                 break;
-            } else if (entryType === 'S') {
+            }
+
+            if (entryType === 'S') {
                 // Read next 2 bytes as start address (little endian)
                 if (offset + 1 >= fileSize) {
                     console.error('Unexpected end of file while reading start address');
@@ -83,7 +84,10 @@ class Disassembler {
                 }
                 this.startAddress = buffer.readUInt16LE(offset);
                 offset += 2;
-            } else if (['G', 'E', 'V'].includes(entryType)) {
+                continue;
+            }
+
+            if (['G', 'E', 'V'].includes(entryType)) {
                 // Skip address (2 bytes) and null-terminated string
                 offset += 2; // Skip address
                 while (offset < fileSize && buffer[offset++] !== 0);
@@ -91,13 +95,17 @@ class Disassembler {
                     console.error(`Invalid file: ${entryType} entry label has no null terminator`);
                     process.exit(1);
                 }
-            } else if (entryType === 'A') {
+                continue;
+            }
+
+            if (entryType === 'A') {
                 // Skip address (2 bytes)
                 offset += 2;
-            } else {
-                console.error(`Unknown header entry type: ${entryType}`);
-                process.exit(1);
+                continue;
             }
+
+            console.error(`Unknown header entry type: ${entryType}`);
+            process.exit(1);
         }
 
         // Read Machine Words (16-bit, little endian)
@@ -199,23 +207,21 @@ class Disassembler {
         const addresses = Object.keys(this.WIPDisassembly).map(Number).sort((a, b) => a - b);
         const labelAddresses = Object.keys(this.labels).map(Number).sort((a, b) => a - b);
 
-        for (let addr of addresses) {
+        for (const addr of addresses) {
             const entry = this.WIPDisassembly[addr];
-            if (entry.mnemonic === '.zero') {
-                let zeroStart = addr;
-                let zeroCount = entry.count;
+            if (entry.mnemonic !== '.zero') continue;
 
-                // Check for labels within the zero range (excluding the starting address)
-                for (let labelAddr of labelAddresses) {
-                    if (labelAddr > zeroStart && labelAddr < zeroStart + zeroCount) {
-                        // Adjust zeroCount to stop before the label
-                        const adjustedCount = labelAddr - zeroStart;
-                        if (adjustedCount > 0) {
-                            entry.count = adjustedCount;
-                            zeroCount = adjustedCount;
-                        }
-                    }
-                }
+            const zeroStart = addr;
+            let zeroCount = entry.count;
+
+            // Check for labels within the zero range (excluding the starting address).
+            for (const labelAddr of labelAddresses) {
+                if (labelAddr <= zeroStart || labelAddr >= zeroStart + zeroCount) continue;
+                // Adjust zeroCount to stop before the label.
+                const adjustedCount = labelAddr - zeroStart;
+                if (adjustedCount <= 0) continue;
+                entry.count = adjustedCount;
+                zeroCount = adjustedCount;
             }
         }
     }
@@ -223,42 +229,12 @@ class Disassembler {
     // Outputs the final disassembled code
     outputDisassembledCode() {
         const finalDisassembly = [];
-
         const addresses = Object.keys(this.WIPDisassembly).map(Number).sort((a, b) => a - b);
 
-        for (let addr of addresses) {
+        for (const addr of addresses) {
             const entry = this.WIPDisassembly[addr];
-            let line = '';
-
-            if (entry.label) {
-                line += `${entry.label}:`.padEnd(7);
-            } else {
-                line += ''.padEnd(7);
-            }
-
-            if (entry.mnemonic) {
-                switch (entry.mnemonic) {
-                    case '.string':
-                        line += `.string ${JSON.stringify(entry.value)}`;
-                        break;
-                    case '.zero':
-                        line += `.zero ${entry.count}`;
-                        break;
-                    case '.word':
-                        line += `.word ${entry.value}`;
-                        break;
-                    default:
-                        line += entry.mnemonic;
-                }
-            } else if (entry.opcode) {
-                line += `${entry.opcode}`;
-                if (entry.operands) {
-                    line += ` ${entry.operands}`;
-                }
-            } else if (entry.label) {
-                line += '; Empty label';
-            }
-
+            const prefix = entry.label ? `${entry.label}:`.padEnd(7) : ''.padEnd(7);
+            const line = prefix + this.formatEntryBody(entry);
             if (line.trim() !== '') {
                 finalDisassembly.push(line);
             }
@@ -270,6 +246,27 @@ class Disassembler {
         }
         console.log('\nFinal Disassembled Code:');
         finalDisassembly.forEach(line => console.log(line));
+    }
+
+    // Formats the body of a disassembly line (the part after the label column):
+    // a directive (.string/.zero/.word), an opcode + optional operands, or the
+    // placeholder for a label-only address. Returns '' when there is no body.
+    formatEntryBody(entry) {
+        if (entry.mnemonic) {
+            switch (entry.mnemonic) {
+                case '.string': return `.string ${JSON.stringify(entry.value)}`;
+                case '.zero':   return `.zero ${entry.count}`;
+                case '.word':   return `.word ${entry.value}`;
+                default:        return entry.mnemonic;
+            }
+        }
+        if (entry.opcode) {
+            return entry.operands ? `${entry.opcode} ${entry.operands}` : `${entry.opcode}`;
+        }
+        if (entry.label) {
+            return '; Empty label';
+        }
+        return '';
     }
 
     // Assigns a label to an address based on its type ('code' or 'data')
@@ -731,7 +728,6 @@ class Disassembler {
     // Processes Data Sections (e.g., Strings)
     processData(address) {
         const MAX_STRING_LENGTH = 32768; // defensive cap: upper bound is the 16-bit address space
-        let currentAddress = address;
         const dataEntries = []; // Array to hold data entries
         let str = ''; // String accumulator
         let zeroCount = 0; // Counter for zeros
@@ -739,16 +735,27 @@ class Disassembler {
         let zeroStartAddress = null; // Starting address of zeros
         let justFinishedString = false; // Flag to skip null terminator
 
-        while (currentAddress < this.machineWords.length) {
-            // Check if we have reached a new label (excluding the starting address)
+        // Flush helpers close over the accumulators above so the several sites that
+        // need to "emit a pending string / zero run" don't each repeat push+reset.
+        const flushString = () => {
+            if (str.length === 0) return;
+            dataEntries.push({ type: '.string', value: str, address: strStartAddress });
+            str = '';
+            strStartAddress = null;
+        };
+        const flushZeros = () => {
+            if (zeroCount === 0) return;
+            dataEntries.push({ type: '.zero', count: zeroCount, address: zeroStartAddress });
+            zeroCount = 0;
+            zeroStartAddress = null;
+        };
+
+        // A `for` loop (not `while`) so guard-clause `continue`s still advance the
+        // address, while `break` exits without advancing — matching the original.
+        for (let currentAddress = address; currentAddress < this.machineWords.length; currentAddress++) {
+            // A new label (other than the starting one) ends this data run.
             if (this.labels[currentAddress] && currentAddress !== address) {
-                // Save any pending zeros
-                if (zeroCount > 0) {
-                    dataEntries.push({ type: '.zero', count: zeroCount, address: zeroStartAddress });
-                    zeroCount = 0;
-                    zeroStartAddress = null;
-                }
-                // Break the loop to process data starting from the new label separately
+                flushZeros();
                 break;
             }
 
@@ -756,68 +763,44 @@ class Disassembler {
             const lowByte = word & 0xFF;
 
             if (lowByte === 0) {
-                // Zero encountered
                 if (str.length > 0) {
-                    // Save the string
-                    dataEntries.push({ type: '.string', value: str, address: strStartAddress });
-                    str = '';
-                    strStartAddress = null;
+                    // A zero terminates the current string.
+                    flushString();
                     justFinishedString = true;
                     break;
-                } else if (justFinishedString) {
-                    // Skip the null terminator
+                }
+                if (justFinishedString) {
+                    // Skip the lone null terminator that followed a string.
                     justFinishedString = false;
-                } else {
-                    // Start counting zeros
-                    if (zeroCount === 0) {
-                        zeroStartAddress = currentAddress;
-                    }
-                    zeroCount++;
+                    continue;
                 }
-            } else {
-                // Non-zero encountered
-                if (zeroCount > 0) {
-                    // Save the zero entries
-                    dataEntries.push({ type: '.zero', count: zeroCount, address: zeroStartAddress });
-                    zeroCount = 0;
-                    zeroStartAddress = null;
-                }
-
-                if (this.isPrintableASCII(lowByte)) {
-                    if (strStartAddress === null) {
-                        strStartAddress = currentAddress;
-                    }
-                    str += String.fromCharCode(lowByte);
-                    // Flush when the string exceeds the cap to bound memory usage
-                    if (str.length >= MAX_STRING_LENGTH) {
-                        dataEntries.push({ type: '.string', value: str, address: strStartAddress });
-                        str = '';
-                        strStartAddress = null;
-                    }
-                } else {
-                    // Non-printable character; save as .word
-                    if (str.length > 0) {
-                        dataEntries.push({ type: '.string', value: str, address: strStartAddress });
-                        str = '';
-                        strStartAddress = null;
-                    }
-                    // Save the word, treating it as a signed 16-bit value
-                    dataEntries.push({ type: '.word', value: this.toSigned16Bit(word), address: currentAddress });
-                }
+                // Otherwise accumulate a run of zeros.
+                if (zeroCount === 0) zeroStartAddress = currentAddress;
+                zeroCount++;
+                continue;
             }
 
-            currentAddress++;
+            // Non-zero byte: any pending zero run ends here.
+            flushZeros();
+
+            if (this.isPrintableASCII(lowByte)) {
+                if (strStartAddress === null) strStartAddress = currentAddress;
+                str += String.fromCharCode(lowByte);
+                // Flush when the string exceeds the cap to bound memory usage.
+                if (str.length >= MAX_STRING_LENGTH) flushString();
+                continue;
+            }
+
+            // Non-printable byte: flush any pending string, emit a signed .word.
+            flushString();
+            dataEntries.push({ type: '.word', value: this.toSigned16Bit(word), address: currentAddress });
         }
 
-        // After the loop, save any pending data entries
-        if (str.length > 0) {
-            dataEntries.push({ type: '.string', value: str, address: strStartAddress });
-        }
-        if (zeroCount > 0) {
-            dataEntries.push({ type: '.zero', count: zeroCount, address: zeroStartAddress });
-        }
+        // After the loop, save any pending data entries (string before zeros, as before).
+        flushString();
+        flushZeros();
 
-        // Update WIPDisassembly with the data entries
+        // Update WIPDisassembly with the data entries.
         this.updateDisassemblyWithData(dataEntries);
     }
 
