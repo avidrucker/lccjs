@@ -9,7 +9,7 @@
     "puzzle:status": "node scripts/puzzle-status.js",
     "puzzles": "bash scripts/run-pdd.sh",
     "claim": "bash scripts/claim.sh",
-    "close": "node scripts/close.js",
+    "close": "bash scripts/close.sh",
     "setup": "bash scripts/setup-hooks.sh",
     "velocity:seed": "node scripts/velocity-seed.js",
     "velocity:log": "node scripts/velocity-log.js",
