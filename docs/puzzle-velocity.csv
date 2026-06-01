@@ -188,3 +188,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 195,335,Fix: add c_ratio definition markdown cell,WRITER,20,5,1,-19,-4,2026-05-31T16:46:29-1000,2026-05-31T16:47:42-1000,,,ELDERBERRY,sonnet-4.6
 196,336,Fix: strengthen Spearman n=4 underpowered caveat,WRITER,20,8,2,-18,-6,2026-05-31T16:49:13-1000,2026-05-31T16:51:21-1000,,,ELDERBERRY,sonnet-4.6
 197,338,Fix: define calibration-usable in prose,WRITER,15,5,1,-14,-4,2026-05-31T17:04:20-1000,2026-05-31T17:05:10-1000,,,ELDERBERRY,sonnet-4.6
+198,339,"Fix: soften narrows substantially — visual only, no numbers",WRITER,15,5,1,-14,-4,2026-05-31T17:06:21-1000,2026-05-31T17:07:19-1000,,,ELDERBERRY,sonnet-4.6
