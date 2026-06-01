@@ -178,6 +178,11 @@ describe('close.js parseArgs()', () => {
     expect(parseArgs(['311']).skipKeywordCheck).toBe(false);
     expect(parseArgs(['311', '--skip-keyword-check']).skipKeywordCheck).toBe(true);
   });
+
+  test('--branch sets branch (default null, #379)', () => {
+    expect(parseArgs(['379']).branch).toBe(null);
+    expect(parseArgs(['379', '--branch', 'lemon/issue-379-fig']).branch).toBe('lemon/issue-379-fig');
+  });
 });
 
 // Guard 1 (#310): a full `git show HEAD -- docs/puzzle-velocity.csv` diff. The CSV

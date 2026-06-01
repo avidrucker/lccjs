@@ -22,8 +22,9 @@
  * takes over after, owning only the racy push + the gated teardown. Keeping the
  * commit out of the tool keeps it from ever fabricating a close.
  *
- * Usage (run from inside the puzzle's worktree, after committing `Closes #N`):
- *   node scripts/close.js <issue>
+ * Usage (after committing `Closes #N`):
+ *   node scripts/close.js <issue>                    # from inside the worktree
+ *   node scripts/close.js <issue> --branch <name>    # from main root; branch auto-detected by close.sh
  *   node scripts/close.js <issue> --max 8        # more push-race retries (default 5)
  *   node scripts/close.js <issue> --dry-run      # show the plan, change nothing
  *   node scripts/close.js <issue> --keep         # land the commit but DON'T tear down
@@ -112,7 +113,7 @@ function parseArgs(argv) {
   const opts = {
     issue: null, max: DEFAULT_MAX_RETRIES, dryRun: false,
     keep: false, verifyIssue: true, skipTicketMatch: false, skipKeywordCheck: false,
-    skipVelocityCheck: false, skipMarkerCheck: false,
+    skipVelocityCheck: false, skipMarkerCheck: false, branch: null,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -125,6 +126,7 @@ function parseArgs(argv) {
     else if (a === '--skip-keyword-check') opts.skipKeywordCheck = true;
     else if (a === '--skip-velocity-check') opts.skipVelocityCheck = true;
     else if (a === '--skip-marker-check') opts.skipMarkerCheck = true;
+    else if (a === '--branch') opts.branch = argv[++i];
     else if (a.startsWith('--')) die(`unknown flag: ${a}`);
     else positionals.push(a);
   }
@@ -537,12 +539,14 @@ function report({ issue, branch, wtPath, sha, kept, dry }) {
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
-    die('usage: node scripts/close.js <issue-number> [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match] [--skip-keyword-check] [--skip-velocity-check] [--skip-marker-check]');
+    die('usage: node scripts/close.js <issue-number> [--branch <name>] [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match] [--skip-keyword-check] [--skip-velocity-check] [--skip-marker-check]');
   }
   const issue = opts.issue;
 
   // --- pre-flight: refuse to start unless the close is real and the tree sane.
-  const branch = currentBranch();
+  // --branch lets close.sh pass the branch name after cd-ing to main root, so
+  // close.js need not be launched from the worktree CWD. (#379)
+  const branch = opts.branch || currentBranch();
   if (!branch || !/\/issue-\d+/.test(branch)) {
     die(`current branch "${branch || '?'}" is not a <fruit>/issue-<N> worktree branch. ` +
         'Run this from inside the puzzle\'s worktree, not the main checkout.');
@@ -550,6 +554,20 @@ function main() {
   if (!new RegExp(`/issue-${issue}\\b`).test(branch)) {
     die(`branch "${branch}" does not match issue #${issue}. Wrong worktree?`);
   }
+
+  // When --branch is supplied, close.sh has already cd'd to main root so npm's
+  // process CWD survives teardown. Chdir into the worktree here so all
+  // subsequent git operations run in the right context. (#379)
+  const root = mainRoot();
+  const wtPath = path.join(root, '.claude', 'worktrees', branch.split('/')[0] + '-issue-' + issue);
+  if (opts.branch) {
+    try {
+      process.chdir(wtPath);
+    } catch (_) {
+      die(`--branch supplied but worktree not found at ${wtPath}. Is it still present?`);
+    }
+  }
+
   if (!headClosesIssue(issue)) {
     die(`HEAD commit does not reference "Closes #${issue}". Commit the close ` +
         '(marker deletion + CSV row + `Closes #N`) FIRST, then run close. ' +
@@ -572,8 +590,6 @@ function main() {
   }
 
   const sha = headSha();
-  const root = mainRoot();
-  const wtPath = path.join(root, '.claude', 'worktrees', branch.split('/')[0] + '-issue-' + issue);
 
   if (opts.dryRun) {
     log(`would loop fetch/rebase/push (max ${opts.max}), verify ${sha && sha.slice(0, 12)} on origin/main, then ${opts.keep ? 'KEEP' : 'remove'} the worktree.`);
@@ -657,12 +673,6 @@ function main() {
 
   report({ issue, branch, wtPath, sha: landedSha, kept: false, dry: false });
   log(`Shell re-root: cd "${root}"`);
-  // npm's own process retains the shell's original CWD (the now-deleted
-  // worktree). After Node exits, npm's internal cleanup calls getcwd() and
-  // fails, printing "pwd: error retrieving current directory: getcwd: cannot
-  // access parent directories" and exiting 1. This is cosmetic — close.js
-  // already exited 0. Verify success via "CLOSE OK" in stdout above. (#360)
-  log('Note: if npm exits 1 with a getcwd error after this line, that is cosmetic — verify success via "CLOSE OK" above.');
 }
 
 if (require.main === module) main();
