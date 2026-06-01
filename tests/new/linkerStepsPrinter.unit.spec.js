@@ -27,10 +27,11 @@ describe('linkerStepsPrinter — first coverage (#200)', () => {
     const m2 = path.join(dir, 'm2.a');
     fs.copyFileSync(path.join(REPO, 'demos', 'm1.a'), m1);
     fs.copyFileSync(path.join(REPO, 'demos', 'm2.a'), m2);
-    // Writing a .o prompts for an author name on stdin — feed one so the
-    // assembler exits cleanly in this non-interactive context.
-    execFileSync('node', [ASM, m1], { input: 'Tester, Auto\n' });
-    execFileSync('node', [ASM, m2], { input: 'Tester, Auto\n' });
+    // Pre-create name.nnn in dir so the assembler does not block on stdin
+    // in this non-interactive context.
+    fs.writeFileSync(path.join(dir, 'name.nnn'), 'Tester, Auto\n');
+    execFileSync('node', [ASM, m1], { cwd: dir });
+    execFileSync('node', [ASM, m2], { cwd: dir });
     m1o = path.join(dir, 'm1.o');
     m2o = path.join(dir, 'm2.o');
     outE = path.join(dir, 'link.e');

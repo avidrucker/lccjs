@@ -73,6 +73,15 @@ function createNameFile(inputPath) {
     return fs.readFileSync(nameFile, 'utf8').trim();
   }
 
+  // name.nnn absent and stdin is not a terminal — fail fast instead of hanging
+  if (!process.stdin.isTTY) {
+    process.stderr.write(
+      'Fatal: name.nnn not found and stdin is not a terminal.\n' +
+      'Create a name.nnn file in the working directory to run non-interactively.\n'
+    );
+    process.exit(1);
+  }
+
   // If not, prompt for name
   process.stdout.write(prompt);
   const name = readLineFromStdin();

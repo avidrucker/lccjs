@@ -449,6 +449,43 @@ args[0] is assembled; remaining .a args are silently ignored"). Full decision re
 
 ---
 
+### 18. Non-interactive stdin with absent `name.nnn`: LCC.js fails fast; OG LCC hangs (#375)
+
+When `name.nnn` is not present in the working directory and stdin is not a terminal
+(e.g. a pipe, a closed fd, or an agent shell), the OG LCC binary blocks indefinitely
+waiting for interactive input — consuming ~100% CPU with no diagnostic output.
+
+LCC.js now detects this condition early in `createNameFile()` and exits non-zero
+with a clear fatal message:
+
+```
+Fatal: name.nnn not found and stdin is not a terminal.
+Create a name.nnn file in the working directory to run non-interactively.
+```
+
+| Condition | OG LCC (cuh63 6.3) | LCC.js (pre-#375) | LCC.js (post-#375) |
+|---|---|---|---|
+| `name.nnn` absent, stdin = TTY | prompt + reads name | prompt + reads name | prompt + reads name |
+| `name.nnn` absent, stdin = non-TTY pipe | **hangs indefinitely** | **hangs indefinitely** | fatal error, exit 1 |
+| `name.nnn` present | reads from file | reads from file | reads from file |
+
+**Why BY DESIGN:** hanging silently with 99.9% CPU is the worst possible failure
+mode for automated callers. The correct non-interactive usage is to pre-create
+`name.nnn` in the working directory — the fatal error message tells callers exactly
+what to do. The TTY interactive path is unchanged.
+
+**Source:** `src/utils/name.js` — `createNameFile()`: TTY check before
+`readLineFromStdin()`.
+
+**Tests:** `tests/new/name.integration.spec.js` (new test: "createNameFile exits
+non-zero with a diagnostic when name.nnn is absent and stdin is not a TTY");
+`tests/new/interpreter.e2e.spec.js` and `tests/new/linkerStepsPrinter.unit.spec.js`
+updated to pre-create `name.nnn` instead of piping it via stdin.
+
+**GitHub issue:** [#375](https://github.com/avidrucker/lccjs/issues/375)
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -471,3 +508,4 @@ _None pending._
 | 2026-06-01 | §4 OB-001 removed (#31 closed) | `mov` immediate range-checking is fixed: `assembleMOV` now calls `evaluateImmediate(-256, 255, "mov immediate value")` — out-of-range imm9 errors rather than wrapping. Removed from "LCC.js BUG" section. §2 (OB-008) LCC.js behavior description and source line (`:1880` → `:1915`) updated to match. |
 | 2026-06-01 | §5 OB-002 removed (#32 closed) | Disassembler `mvi` imm9 mask corrected: `disassembleMVI` now uses `word & 0x1FF` (9-bit, correct). Removed from "LCC.js BUG" section. |
 | 2026-06-01 | §6 OB-026 → BY DESIGN §17 (#59 closed) | Multi-file `.a` input: decided — only `args[0]` is assembled, extras silently ignored. Moved from "LCC.js BUG (fix pending)" to BY DESIGN §17; full decision record in `docs/core-behavior-matrix.md`. |
+| 2026-06-01 | Deviation 18 added (#375) | Non-interactive stdin + absent `name.nnn`: LCC.js now exits immediately with a fatal diagnostic instead of hanging at ~100% CPU. OG LCC blocks indefinitely. Classified BY DESIGN (fail-fast is safer). |

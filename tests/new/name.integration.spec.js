@@ -91,15 +91,45 @@ describe('Name Wrapper Integration Tests', () => {
       return 1;
     });
 
+    // Simulate a TTY so the name-prompt path is reached
+    const origIsTTY = process.stdin.isTTY;
+    process.stdin.isTTY = true;
+
     interpreter.generateStats = true;
 
-    expect(() => {
-      interpreter.main([eFilePath]);
-    }).not.toThrow();
+    try {
+      expect(() => {
+        interpreter.main([eFilePath]);
+      }).not.toThrow();
 
-    expect(virtualFs['name.nnn']).toBe('MilkyWay\n');
-    expect(virtualFs['promptForName.lst']).toBeDefined();
-    expect(virtualFs['promptForName.bst']).toBeDefined();
+      expect(virtualFs['name.nnn']).toBe('MilkyWay\n');
+      expect(virtualFs['promptForName.lst']).toBeDefined();
+      expect(virtualFs['promptForName.bst']).toBeDefined();
+    } finally {
+      process.stdin.isTTY = origIsTTY;
+    }
+  });
+
+  test('createNameFile exits non-zero with a diagnostic when name.nnn is absent and stdin is not a TTY', () => {
+    delete virtualFs['name.nnn'];
+    const origIsTTY = process.stdin.isTTY;
+    process.stdin.isTTY = false;
+
+    const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit called');
+    });
+    const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => {});
+
+    try {
+      const { createNameFile } = require('../../src/utils/name.js');
+      expect(() => createNameFile('any.e')).toThrow('process.exit called');
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('name.nnn not found'));
+      expect(mockExit).toHaveBeenCalledWith(1);
+    } finally {
+      process.stdin.isTTY = origIsTTY;
+      mockExit.mockRestore();
+      stderrSpy.mockRestore();
+    }
   });
 
   test('interpreter wrapper should not require or create name.nnn when -nostats is used', () => {

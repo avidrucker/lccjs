@@ -13,10 +13,13 @@ describe('Interpreter CLI E2E', () => {
 
       fs.writeFileSync(eFilePath, Buffer.from([0x6F, 0x43, 0x00, 0xF0]));
 
+      // Pre-create name.nnn so the interpreter does not hang waiting for
+      // interactive input in this non-TTY context.
+      fs.writeFileSync(path.join(tmpDir, 'name.nnn'), 'MilkyWay\n');
+
       const result = spawnSync(process.execPath, [interpreterPath, 'promptForName.e'], {
         cwd: tmpDir,
         encoding: 'utf8',
-        input: 'MilkyWay\n',
         timeout: 5000,
       });
 
