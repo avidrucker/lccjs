@@ -3,8 +3,9 @@
 const {
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
   isVelocityCsvOnlyConflict,
-  DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV,
+  DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET,
   extractTicketFromCsvDiff, velocityTicketMismatch,
+  extractKeywords, keywordsOverlap,
 } = require('../../scripts/close');
 
 describe('close.js classifyPushError()', () => {
@@ -170,6 +171,11 @@ describe('close.js parseArgs()', () => {
     expect(parseArgs(['310']).skipTicketMatch).toBe(false);
     expect(parseArgs(['310', '--skip-ticket-match']).skipTicketMatch).toBe(true);
   });
+
+  test('--skip-keyword-check sets skipKeywordCheck (default false, #311)', () => {
+    expect(parseArgs(['311']).skipKeywordCheck).toBe(false);
+    expect(parseArgs(['311', '--skip-keyword-check']).skipKeywordCheck).toBe(true);
+  });
 });
 
 // Guard 1 (#310): a full `git show HEAD -- docs/puzzle-velocity.csv` diff. The CSV
@@ -321,5 +327,109 @@ describe('close.js isVelocityCsvOnlyConflict()', () => {
 
   test('VELOCITY_CSV constant matches the actual export path', () => {
     expect(VELOCITY_CSV).toBe('docs/puzzle-velocity.csv');
+  });
+});
+
+describe('close.js extractKeywords() — Guard 2 tokenizer', () => {
+  test('returns lowercase words of length ≥4', () => {
+    expect(extractKeywords('Guard close check')).toEqual(['guard', 'close', 'check']);
+  });
+
+  test('strips punctuation and symbols — hyphen, dot, slash', () => {
+    expect(extractKeywords('puzzle-velocity.csv migration')).toEqual(['puzzle', 'velocity', 'migration']);
+  });
+
+  test('filters words shorter than 4 chars', () => {
+    expect(extractKeywords('add the fix')).toEqual([]);
+  });
+
+  test('filters stop-set words (research, data, writer, spike, architect)', () => {
+    expect(extractKeywords('research into data migration')).toEqual(['migration']);
+    expect(extractKeywords('writer spike architect')).toEqual([]);
+  });
+
+  test('filters pure numbers (year, issue IDs)', () => {
+    expect(extractKeywords('TIL 2026 session 311 notes')).toEqual(['session', 'notes']);
+  });
+
+  test('empty string returns empty array', () => {
+    expect(extractKeywords('')).toEqual([]);
+  });
+
+  test('null/undefined coerced safely', () => {
+    expect(extractKeywords(null)).toEqual([]);
+    expect(extractKeywords(undefined)).toEqual([]);
+  });
+
+  test('custom stopSet overrides the default', () => {
+    expect(extractKeywords('close migration', new Set(['migration']))).toEqual(['close']);
+  });
+
+  test('KEYWORD_STOP_SET is exported and is a Set', () => {
+    expect(KEYWORD_STOP_SET).toBeInstanceOf(Set);
+    expect(KEYWORD_STOP_SET.has('research')).toBe(true);
+    expect(KEYWORD_STOP_SET.has('data')).toBe(true);
+  });
+});
+
+describe('close.js keywordsOverlap() — Guard 2 decision', () => {
+  test('returns true when ≥1 word in common', () => {
+    expect(keywordsOverlap(['migration', 'model'], ['velocity', 'migration'])).toBe(true);
+  });
+
+  test('returns false when no words in common', () => {
+    expect(keywordsOverlap(['migration', 'model'], ['cherry', 'hardening'])).toBe(false);
+  });
+
+  test('returns false for empty title words', () => {
+    expect(keywordsOverlap([], ['migration'])).toBe(false);
+  });
+
+  test('returns false for empty subject words', () => {
+    expect(keywordsOverlap(['migration'], [])).toBe(false);
+  });
+
+  test('returns false when both empty', () => {
+    expect(keywordsOverlap([], [])).toBe(false);
+  });
+
+  test('null arrays handled safely', () => {
+    expect(keywordsOverlap(null, null)).toBe(false);
+    expect(keywordsOverlap(null, ['migration'])).toBe(false);
+    expect(keywordsOverlap(['migration'], null)).toBe(false);
+  });
+
+  // The #278 failure case: TIL commit accidentally closing a data-migration ticket.
+  // This is the canonical motivating example from the closed-issue audit (#294).
+  test('#278 failure: TIL-CHERRY subject vs model-column-migration title → no overlap', () => {
+    const titleWords = extractKeywords(
+      'Data: complete + document the model column migration in puzzle-velocity.csv'
+    );
+    const subjectWords = extractKeywords(
+      'TIL 2026-05-30 CHERRY s3 — close-sequence hardening'
+    );
+    expect(keywordsOverlap(titleWords, subjectWords)).toBe(false);
+  });
+
+  // Guard 2 true positive: a genuine close with shared keywords passes naturally.
+  test('genuine close: Guard 2 commit vs Guard 2 issue title → overlap', () => {
+    const titleWords = extractKeywords(
+      'DEV: Guard 2 — issue-title keyword spot-check in close.js'
+    );
+    const subjectWords = extractKeywords(
+      'feat(close): Guard 2 — issue-title keyword spot-check'
+    );
+    expect(keywordsOverlap(titleWords, subjectWords)).toBe(true);
+  });
+
+  // False-positive cases from Finding 4 of audit #294. These require
+  // --skip-keyword-check; confirmed here that they produce no overlap so the flag
+  // is necessary for each, rather than relying on a coincidental keyword match.
+  test('#215 false-positive: retroactive tracker close has no natural overlap', () => {
+    // issue title: "velocity log no-ticket gap"; commit: "cross-link cluster ..."
+    // Both share no ≥4-char non-stop-set word → guard fires → needs --skip
+    const titleWords = extractKeywords('velocity logging for issueless PM rows');
+    const subjectWords = extractKeywords('cross-link cluster identity issues');
+    expect(keywordsOverlap(titleWords, subjectWords)).toBe(false);
   });
 });

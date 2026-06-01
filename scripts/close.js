@@ -28,7 +28,8 @@
  *   node scripts/close.js <issue> --dry-run      # show the plan, change nothing
  *   node scripts/close.js <issue> --keep         # land the commit but DON'T tear down
  *   node scripts/close.js <issue> --no-verify-issue  # skip the gh post-close check
- *   node scripts/close.js <issue> --skip-ticket-match # bypass the Guard 1 velocity-row ticket check (#310)
+ *   node scripts/close.js <issue> --skip-ticket-match  # bypass Guard 1 velocity-row ticket check (#310)
+ *   node scripts/close.js <issue> --skip-keyword-check # bypass Guard 2 issue-title keyword check (#311)
  *
  * See docs/research/close-sequence-hardening.md for the full design.
  */
@@ -109,7 +110,7 @@ function mainRoot() {
 function parseArgs(argv) {
   const opts = {
     issue: null, max: DEFAULT_MAX_RETRIES, dryRun: false,
-    keep: false, verifyIssue: true, skipTicketMatch: false,
+    keep: false, verifyIssue: true, skipTicketMatch: false, skipKeywordCheck: false,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -119,6 +120,7 @@ function parseArgs(argv) {
     else if (a === '--keep') opts.keep = true;
     else if (a === '--no-verify-issue') opts.verifyIssue = false;
     else if (a === '--skip-ticket-match') opts.skipTicketMatch = true;
+    else if (a === '--skip-keyword-check') opts.skipKeywordCheck = true;
     else if (a.startsWith('--')) die(`unknown flag: ${a}`);
     else positionals.push(a);
   }
@@ -216,6 +218,33 @@ function velocityTicketMismatch(tickets, issue) {
   return (tickets || []).filter((t) => t !== n);
 }
 
+// Guard 2 (#311/#301): stop-set for keyword extraction — role prefixes and filler
+// words that appear in titles/subjects but carry no discriminating signal.
+const KEYWORD_STOP_SET = new Set([
+  'this', 'that', 'with', 'from', 'have', 'been', 'will', 'into', 'onto',
+  'also', 'when', 'then', 'than', 'what', 'where', 'which',
+  'writer', 'research', 'architect', 'spike', 'data',
+]);
+
+// Guard 2 (#311): tokenize text into discriminating keywords for overlap checks.
+// Splits on non-word chars, lowercases, keeps words ≥4 chars that are neither
+// pure numbers nor in the stop-set. Pure: takes a string + optional stop-set
+// (defaults to KEYWORD_STOP_SET), returns a string array.
+function extractKeywords(text, stopSet = KEYWORD_STOP_SET) {
+  return String(text || '')
+    .toLowerCase()
+    .split(/\W+/)
+    .filter((w) => w.length >= 4 && !/^\d+$/.test(w) && !stopSet.has(w));
+}
+
+// Guard 2 (#311): returns true if ≥1 word from titleWords appears in subjectWords.
+// Pure: takes two string arrays, returns a boolean. An empty array on either side
+// is treated as "no signal" and returns false (don't block on untokenizable input).
+function keywordsOverlap(titleWords, subjectWords) {
+  const s = new Set(subjectWords || []);
+  return (titleWords || []).some((w) => s.has(w));
+}
+
 // Classify a rebase's conflicted paths against the union-file set.
 //   'none'       — no conflicts.
 //   'union-only' — every conflicted path is a merge=union file. This should be
@@ -269,6 +298,26 @@ function checkVelocityTicketMatch(issue) {
         `ticket #${mismatched.join(', #')}, but you are closing issue #${issue}. ` +
         'Amend the commit (or the velocity row) to align them first. ' +
         'Pass --skip-ticket-match if intentional.');
+  }
+}
+
+// Guard 2 I/O wrapper (#311): fetch the issue title via gh and verify that the
+// commit subject shares ≥1 keyword with it. Catches gross mismatches (a TIL
+// commit accidentally closing a data-migration ticket). Degrades gracefully when
+// gh is unavailable — prints a warning and skips rather than blocking the close.
+function checkKeywordMatch(issue) {
+  const title = sh(`gh issue view ${issue} --json title -q .title`, true);
+  if (!title || !title.trim()) {
+    log('warn: could not fetch issue title (gh unavailable?) — skipping keyword check.');
+    return;
+  }
+  const subject = sh('git log -1 --format=%s', true) || '';
+  if (!keywordsOverlap(extractKeywords(title.trim()), extractKeywords(subject.trim()))) {
+    die(`keyword check: no word from issue #${issue} title\n` +
+        `         ("${title.trim()}")\n` +
+        `         appears in commit subject\n` +
+        `         ("${subject.trim()}").\n` +
+        `         Is this the right issue? Pass --skip-keyword-check to override.`);
   }
 }
 
@@ -357,7 +406,7 @@ function report({ issue, branch, wtPath, sha, kept, dry }) {
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
-    die('usage: node scripts/close.js <issue-number> [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match]');
+    die('usage: node scripts/close.js <issue-number> [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match] [--skip-keyword-check]');
   }
   const issue = opts.issue;
 
@@ -377,6 +426,8 @@ function main() {
   }
   // Guard 1 (#310): the velocity row in HEAD must record the issue being closed.
   if (!opts.skipTicketMatch) checkVelocityTicketMatch(issue);
+  // Guard 2 (#311): commit subject must share ≥1 keyword with the issue title.
+  if (!opts.skipKeywordCheck) checkKeywordMatch(issue);
   if (rebaseOrMergeInProgress()) {
     die('a rebase/merge is already in progress here — finish or abort it first.');
   }
@@ -457,8 +508,9 @@ function main() {
 if (require.main === module) main();
 
 module.exports = {
-  DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV,
+  DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET,
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
   isVelocityCsvOnlyConflict,
   extractTicketFromCsvDiff, velocityTicketMismatch,
+  extractKeywords, keywordsOverlap,
 };
