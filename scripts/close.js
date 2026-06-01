@@ -657,6 +657,12 @@ function main() {
 
   report({ issue, branch, wtPath, sha: landedSha, kept: false, dry: false });
   log(`Shell re-root: cd "${root}"`);
+  // npm's own process retains the shell's original CWD (the now-deleted
+  // worktree). After Node exits, npm's internal cleanup calls getcwd() and
+  // fails, printing "pwd: error retrieving current directory: getcwd: cannot
+  // access parent directories" and exiting 1. This is cosmetic — close.js
+  // already exited 0. Verify success via "CLOSE OK" in stdout above. (#360)
+  log('Note: if npm exits 1 with a getcwd error after this line, that is cosmetic — verify success via "CLOSE OK" above.');
 }
 
 if (require.main === module) main();
