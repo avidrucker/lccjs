@@ -69,6 +69,9 @@ function findMarkers() {
     const m = line.match(/^([^:]+):(\d+):(.*)$/);
     if (!m) continue;
     const [, file, lineno, content] = m;
+    // Skip files that .pddignore excludes from the pdd gem scan — spec files can
+    // contain fixture strings that look like markers but are not real puzzles (#370).
+    if (file.startsWith('tests/') && file.endsWith('.spec.js')) continue;
     const km = content.match(re);
     if (!km) continue;
     markers.push({
