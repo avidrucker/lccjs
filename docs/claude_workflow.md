@@ -87,6 +87,12 @@ next," start here.
 - **Surface findings as I notice them.** Open questions, unexpected behaviour, brittle code — these become candidate follow-up puzzles. I usually mention them at close so the user decides whether to file new tickets.
 - **Correcting a sibling issue's description.** If I find a factual error in *another* issue's description (wrong cross-ref, stale dependency, outdated premise), I do **not** silently rewrite the body. I redline it: `~~strikethrough~~` the wrong text in place, add a `> ⚠️ **SEE COMMENTS FOR CORRECTIONS**` banner at the top, and post the correction as a comment — so the original stays visible and the fix is additive. The `yegor-tickets` skill owns this convention (#300).
 - **Verify as I go.** For code changes: assemble, run tests, exercise the change. For doc changes: re-read for accuracy and link sanity. For research: cite source line numbers so the reasoning is checkable.
+- **Wrap tool invocations with `lccrun.sh`.** Any shell call to `lcc.js`, `interpreter.js`, `linker.js`, or the oracle binary (`$LCC_ORACLE`) that could read from stdin **must** go through `scripts/lccrun.sh`:
+  ```bash
+  scripts/lccrun.sh [<secs>] node src/core/lcc.js <file>.a      # default 30 s
+  scripts/lccrun.sh [<secs>] "$LCC_ORACLE" probe.a
+  ```
+  Bare invocations block indefinitely when `name.nnn` is absent and stdin is not a TTY (agent FIG, 2026-06-01: 28 min at 99.9% CPU). The runner kills the full process group on timeout and exits 124. Only skip the runner for `assembler.js` or `linker.js` invocations that provably never reach the interpreter (i.e., `--assemble-only` / `-o` output and no `-i` flag).
 - **Use TaskUpdate** to mark sub-steps complete if I created tasks. Cleaning up the task list is part of the work.
 - **Brief, accurate status updates** — one sentence at key moments, not a running monologue.
 - **Tool-failure discipline.** Any `tool_use_error` from Edit/Write/Bash means the operation **did not happen** — treat it as a hard block, not advice. Two real failure modes have shipped broken state in this project:
