@@ -36,7 +36,7 @@ Produced by the LCC+ pipeline (`src/plus/`). **Local-only** (gitignored).
 | Artifact | Path | Produced by | Committed? | Value | Staleness |
 |----------|------|-------------|------------|-------|-----------|
 | Puzzle XML | `puzzles.xml` | `pdd` Ruby gem via `npm run puzzles` | No — gitignored | Machine-readable list of all `@todo` puzzle markers in tracked files; feeds the pre-push scan | Regenerated on each `npm run puzzles` run; stale the moment a marker is added/removed |
-| Cluster manifest | `docs/puzzle-clusters.csv` | Hand-authored | Yes | Maps cluster names → issue numbers + `blocked_by` deps; `puzzle:status` uses it to derive soft-locks (LOCKED state) | Updated manually when clusters are defined or resolved |
+| Cluster manifest | `docs/puzzle-clusters.csv` | Hand-authored | Yes | Maps cluster names → issue numbers, plus optional `blocked_by` deps (`cluster,issue,blocked_by`). `puzzle:status` reads it to derive two *live* states (nothing is stored, so both self-clear): **LOCKED** 🔒 — a *different* member of the same cluster currently holds a live worktree, so the shared code-area is hands-off (a soft-lock: grabbable in principle, #222); and **BLOCKED** ⚪ — the row's `blocked_by` issue is still open (#358). LOCKED is rarely seen in output: it needs a clustermate in-progress at the moment you scan. | Updated manually when clusters are defined or resolved |
 
 ---
 
