@@ -27,7 +27,7 @@ const DB_PATH  = path.join(os.homedir(), '.lccjs', 'velocity.db');
 const REQUIRED = ['role', 'agent'];
 
 const VALID_ROLES = new Set([
-  'DEV', 'TEST', 'WRITER', 'RESEARCH', 'SPIKE', 'ARC', 'PM', 'COMBO',
+  'DEV', 'TEST', 'WRITER', 'RESEARCH', 'SPIKE', 'ARC', 'PM', 'COMBO', 'DATA',
 ]);
 
 function die(msg) {
