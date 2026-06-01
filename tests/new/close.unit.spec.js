@@ -613,7 +613,7 @@ describe('close.js markerStillPresent() — Check B (#359)', () => {
   });
 
   test('finds an @inprogress marker', () => {
-    const out = 'scripts/claim.js:10:  // @inprogress #359:30/DEV fixing';
+    const out = 'scripts/claim.js:10:  // ' + '@' + 'inprogress #359:30/DEV fixing';
     const { found, lines } = markerStillPresent('359', out);
     expect(found).toBe(true);
     expect(lines[0]).toMatch(/@inprogress/);
@@ -647,7 +647,7 @@ describe('close.js markerStillPresent() — Check B (#359)', () => {
   test('returns all matched lines when multiple markers present', () => {
     const out = [
       'src/a.js:1: // ' + '@' + 'todo #359:10/DEV',
-      'src/b.js:2: // @inprogress #359:20/DEV',
+      'src/b.js:2: // ' + '@' + 'inprogress #359:20/DEV',
     ].join('\n');
     const { found, lines } = markerStillPresent('359', out);
     expect(found).toBe(true);
