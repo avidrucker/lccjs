@@ -1,13 +1,3 @@
-<!-- @todo #207:45m/RESEARCH Mine every TIL below into actionable codebase + process
-     improvements: de-dupe lessons that recur across agents/sessions (recurrence =
-     a process defect, not a one-off), classify into codebase vs work-process buckets,
-     cross-check against open issues so we corroborate rather than re-file, ship a
-     synthesis doc (docs/learnings/til-synthesis-<date>.md), and decompose the
-     genuinely-new actionable items into ≤60m grabbable follow-up puzzles. Recommend
-     whether this harvest should become periodic. Read-only spike — no source changes
-     in #207 itself. Marker is documentary: docs/** is .pddignored so the pdd scan
-     skips it, but `npm run puzzle:status` (git grep) reconciles it against the issue.
-     See #207. -->
 
 # Learnings — `docs/learnings/`
 
@@ -72,6 +62,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-05-31 DRAGONFRUIT s3](./today-i-learned-2026-05-31-dragonfruit-3.md) | 2026-05-31 | DRAGONFRUIT | OG LCC blank-.e is universal across all error types (not just undefined labels) — two sizes by pass phase; oracle requires cwd+basename invocation (absolute paths give "Bad command line switch" exit 2); velocity commit must reference `Closes #N` or close.js blocks on HEAD check; regex-from-end extracts simple trailing CSV fields without a full parser; SHA-rewrite issue consistently orphans worktree — cleanup does NOT happen automatically, manual teardown always needed (#350). |
 | [TIL 2026-05-31 CHERRY s3](./today-i-learned-2026-05-31-cherry-3.md) | 2026-05-31 | CHERRY | Hit the batching footgun *while building its guard* — plan-mode one-call-per-step discipline held where the memory rule didn't (primary evidence for #316); my own Guard 1 (#310) blocked my own closes twice, correctly — sync+re-export, never `--skip`; adversarially verify a load-bearing research claim against the *primary* source (distrusted 2 sub-agents on `PostToolBatch`, WebFetched the docs — half-wrong: skepticism right, claim true); the success route is the dangerous one — `close.js` kills its own cwd (close must be the lone last call) and gates on a SHA its own rebase rewrites (#350, reproduced). |
 | [TIL 2026-05-31 ELDERBERRY](./today-i-learned-2026-05-31-elderberry.md) | 2026-05-31 | ELDERBERRY | Parallel `gh issue create` jobs assign numbers by arrival not submission — @todo markers get wrong issue numbers; notebook-editing script writes before asserting — re-running inserts duplicates; full marker audit prevents shipping pointers to closed issues; "not significant" ≠ "uninformative" (n=4 Spearman has ~5% power); SHA-rewrite after close is a known #350 failure mode, not a real close failure. |
+| [TIL synthesis 2026-06-01](./til-synthesis-2026-06-01.md) | 2026-06-01 | ELDERBERRY | #207 harvest: 4 tier-1 process defects (batching confabulation, at_todo trap, guards-vs-prose meta, SHA-rewrite); 6 proposed follow-on puzzles P-1..P-6; periodicity recommendation (every ≥10 new TILs). |
 
 ## Recurring threads (informal — #207 will formalize)
 
