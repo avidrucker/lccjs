@@ -186,3 +186,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 193,351,TIL 2026-05-31 CHERRY s3,WRITER,20,12,10,10,2,2026-05-31T16:33:00-1000,2026-05-31T16:42:59-1000,,"session-3 TIL: batching footgun while building its guard (plan-mode discipline held), Guard 1 caught own closes x2, adversarial research verification vs primary source, success-route hazards (#350 repro).",CHERRY,claude-opus-4-8
 194,333,Fix: §3 KW excludes ELDERBERRY singleton (n=1),DATA,20,8,3,-17,-5,2026-05-31T16:41:49-1000,2026-05-31T16:44:25-1000,,,ELDERBERRY,sonnet-4.6
 195,335,Fix: add c_ratio definition markdown cell,WRITER,20,5,1,-19,-4,2026-05-31T16:46:29-1000,2026-05-31T16:47:42-1000,,,ELDERBERRY,sonnet-4.6
+196,336,Fix: strengthen Spearman n=4 underpowered caveat,WRITER,20,8,2,-18,-6,2026-05-31T16:49:13-1000,2026-05-31T16:51:21-1000,,,ELDERBERRY,sonnet-4.6
