@@ -23,12 +23,14 @@
  * namespace is the single source of truth; no registry file.
  *
  * Usage:
- *   node scripts/claim.js <issue> [slug]                   # auto-pick a fresh fruit
  *   node scripts/claim.js <issue> [slug] --as apple        # reuse a known identity
  *   node scripts/claim.js <issue> --as dragonfruit --custom # non-list name, explicit opt-in
  *   CLAUDE_AGENT_NAME=apple node scripts/claim.js <issue>  # human-directed default
  *   node scripts/claim.js <issue> --base origin/main
  *   node scripts/claim.js <issue> --dry-run                # show the plan, stake nothing
+ *
+ * Agent identity is REQUIRED. Omitting both --as and CLAUDE_AGENT_NAME causes an
+ * immediate exit-nonzero — auto-naming is disabled (#386).
  *
  * If no slug is given, claim.js tries to derive one from the issue title via gh
  * (best-effort; falls back to no slug if gh is unavailable).
@@ -280,6 +282,20 @@ function main() {
   const issue = opts.issue;
 
   const identity = resolveIdentity(opts, process.env, currentBranch());
+
+  // Auto-naming is disabled (#386): agents must be explicitly named by the human
+  // orchestrator. A bare `npm run claim <N>` with no --as and no CLAUDE_AGENT_NAME
+  // used to silently pick a random fruit — that produced lemon/honeydew/grape
+  // branches that confused worktree attribution. Fail loud instead.
+  if (identity.source === 'auto') {
+    die(
+      'no agent identity set.\n' +
+      '  Pass --as <fruit>  (e.g. --as apple)\n' +
+      '  or export CLAUDE_AGENT_NAME=apple before running.\n' +
+      '  Auto-naming is disabled — agent names must be assigned by the human orchestrator (#386).'
+    );
+  }
+
   const nameCheck = checkIdentityName(identity, opts);
   if (nameCheck) {
     if (nameCheck.error) die(nameCheck.error);
