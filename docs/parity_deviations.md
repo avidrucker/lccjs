@@ -63,12 +63,13 @@ covers −256..+255. OG LCC 6.3 rejects all negative `mov` immediates while
 accepting the same values via `mvi` — an apparent regression in the `mov`
 validation path.
 
-**LCC.js behavior:** `assembleMOV` uses `evaluateImmediateNaive` (no range
-check, relies on the 9-bit signed encoding). All values in the −256..+255
-window assemble correctly. Values outside that window silently wrap — see
-OB-001 below.
+**LCC.js behavior:** `assembleMOV` calls `evaluateImmediate(-256, 255,
+"mov immediate value")` — the same range-checked validator `mvi` uses. All
+values in the −256..+255 window assemble correctly; values outside that window
+produce a `mov immediate value out of range` error (the OB-001 silent-wrap bug
+was fixed in #31, closed).
 
-**Source:** `src/core/assembler.js:1880` (`assembleMOV`, `mov` → `mvi` path)
+**Source:** `src/core/assembler.js:1915` (`assembleMOV`, `mov` → `mvi` path)
 
 **GitHub issue:** [#40 OB-008](https://github.com/avidrucker/lccjs/issues/40)
 
@@ -195,50 +196,8 @@ report as the "fails-loud" half of the same parser defect. Summarized in
 
 ## LCC.js BUG — LCC.js deviates from OG LCC (fix pending)
 
-### 4. `mov` out-of-spec immediates silently wrap (OB-001)
-
-| | cuh63 6.3 | LCC.js |
-|---|---|---|
-| `mov r0, 256` | REJECT | silently wraps to 0 |
-| `mov r0, -257` | REJECT | silently wraps |
-
-**Cause:** `assembleMOV` calls `evaluateImmediateNaive` instead of
-`evaluateImmediate(-256, 255, …)`. Values outside the 9-bit signed range are
-accepted and silently wrapped by the 9-bit mask (`& 0x1FF`).
-
-**Fix:** Route the `mov` → `mvi` path through `evaluateImmediate(-256, 255,
-"mvi immediate")`, the same validator `mvi` already uses.
-
-**Source:** `src/core/assembler.js:1860–1886` (`assembleMOV`, OB-001 `@todo`)
-
-**GitHub issue:** [#31 OB-001](https://github.com/avidrucker/lccjs/issues/31)
-
----
-
-### 5. Disassembler decodes `mvi` imm9 with 8-bit mask (OB-002)
-
-| | Expected | LCC.js |
-|---|---|---|
-| `mvi r0, 0x1FF` | imm9 = -1 (signed 9-bit) | imm9 = 0xFF (8-bit mask applied) |
-
-**Cause:** The disassembler applies `0xFF` where it should apply `0x1FF` to
-extract the 9-bit immediate from the `mvi` encoding.
-
-**Source:** `src/extra/disassembler.js:425` (OB-002 `@todo`)
-
-**GitHub issue:** [#32 OB-002](https://github.com/avidrucker/lccjs/issues/32)
-
----
-
-### 6. Multi-file `.a` input not implemented (OB-026)
-
-OG LCC accepts multiple `.a` source files on the command line and assembles
-them together. LCC.js only handles multiple `.o` files (linking path). If
-multiple `.a` files are given, only the first is assembled.
-
-**Source:** `src/core/lcc.js:85–99` (`main`, OB-026 `@todo`)
-
-**GitHub issue:** [#59 OB-026](https://github.com/avidrucker/lccjs/issues/59)
+_None currently — see Changelog for OB-001 (#31 closed), OB-002 (#32 closed),
+and OB-026 (#59 decided → BY DESIGN §17)._
 
 ---
 
@@ -471,6 +430,25 @@ sibling of #241.
 
 ---
 
+### 17. Multi-file `.a` input: only the first file is assembled; extras silently ignored (OB-026)
+
+OG LCC accepts multiple `.a` source files on the command line and assembles them
+together. LCC.js assembles only `args[0]`; any additional `.a` arguments are
+silently ignored.
+
+**Why BY DESIGN:** decided in #59 (closed) — implement the single-file path cleanly
+and document the divergence rather than replicating OG LCC's multi-file assembly.
+The single-source-file case covers all lccjs use cases; multi-file `.a` is a rare
+OG LCC feature.
+
+**Source:** `src/core/lcc.js` (`main()` dispatch comment: "Multiple .a files: only
+args[0] is assembled; remaining .a args are silently ignored"). Full decision record:
+`docs/core-behavior-matrix.md` → "Multi-file .a input".
+
+**GitHub issue:** [#59 OB-026](https://github.com/avidrucker/lccjs/issues/59)
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -490,3 +468,6 @@ _None pending._
 | 2026-05-30 | OG BUG #1 broadened; #14 added (#257) | No-comma negative-offset silent-drop confirmed to span the whole `baser,offset6` family (`jmp`/`blr`/`jsrr`, not just `ldr`/`str`); new OG BUG #14 records the `imm5`/`imm9` fails-loud half of the same no-comma parser defect. Both summarized in `reports_summary.md`; evidence in `public_experiments/nocomma_negative_immediate_family/` |
 | 2026-05-30 | Deviation 15 added (#157) | `.string` escape set is identical to the oracle (`\n \t \r \\ \"`); they diverge only on UNKNOWN escapes — LCC.js rejects with `Unknown escape sequence` while OG silently drops the backslash. Classified BY DESIGN (lccjs stricter-is-safer). The #157 headline (`\n` rejected) is non-reproducible. Evidence: `docs/research/string-escape-parity.md` |
 | 2026-05-31 | Deviation 16 added (#269) | Object-module output atomicity: assembler now resolves the author name BEFORE `writeOutputFile()`, so a name-only failure aborts before the `.o` is written (matches oracle all-or-nothing); pre-fix LCC.js left an orphan `.o`. Classified BY DESIGN / parity-correct (preserve-on-change). Decision is provisional pending owner ratification — tracked in #298 |
+| 2026-06-01 | §4 OB-001 removed (#31 closed) | `mov` immediate range-checking is fixed: `assembleMOV` now calls `evaluateImmediate(-256, 255, "mov immediate value")` — out-of-range imm9 errors rather than wrapping. Removed from "LCC.js BUG" section. §2 (OB-008) LCC.js behavior description and source line (`:1880` → `:1915`) updated to match. |
+| 2026-06-01 | §5 OB-002 removed (#32 closed) | Disassembler `mvi` imm9 mask corrected: `disassembleMVI` now uses `word & 0x1FF` (9-bit, correct). Removed from "LCC.js BUG" section. |
+| 2026-06-01 | §6 OB-026 → BY DESIGN §17 (#59 closed) | Multi-file `.a` input: decided — only `args[0]` is assembled, extras silently ignored. Moved from "LCC.js BUG (fix pending)" to BY DESIGN §17; full decision record in `docs/core-behavior-matrix.md`. |
