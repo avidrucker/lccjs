@@ -41,10 +41,12 @@ Produced by the LCC+ pipeline (`src/plus/`). **Local-only** (gitignored).
 
 ## 4. Velocity & analytics artifacts
 
+Since the SQLite migration (#289/#290), the write path is **`npm run velocity:log` → `~/.lccjs/velocity.db` (SQLite, source of truth) → `npm run velocity:export` → `docs/puzzle-velocity.csv`**. The CSV is a derived, read-only export — never hand-edit it.
+
 | Artifact | Path | Produced by | Committed? | Value | Staleness |
 |----------|------|-------------|------------|-------|-----------|
-| Velocity log | `docs/puzzle-velocity.csv` | Hand-appended (one row per closed puzzle) | Yes — read-only export; `~/.lccjs/velocity.db` is the source of truth | Per-ticket H/C estimates vs actuals | Never "stale" — append-only export |
-| Enriched velocity | `stats/puzzle-velocity-enriched.csv` | `stats/enrich.py` | No — gitignored | Adds git-churn columns, GH issue timestamps, and derived flags/ratios for notebook analysis | Goes stale whenever new rows land in `~/.lccjs/velocity.db`; re-run `enrich.py` before analysis. `enrich.py` reads from the SQLite DB to produce this file. |
+| Velocity log | `docs/puzzle-velocity.csv` | `scripts/velocity-export.js` (full-file export from `~/.lccjs/velocity.db`; auto-runs after every `velocity:log` INSERT, also via `npm run velocity:export`) | Yes — read-only export; **never hand-edit**. `~/.lccjs/velocity.db` (SQLite) is the source of truth | Per-ticket H/C estimates vs actuals; a flat, diff-friendly view of the DB | Regenerated on every `velocity:log` (or `velocity:export`); drifts from the DB only if an export is skipped |
+| Enriched velocity | `stats/puzzle-velocity-enriched.csv` | `stats/enrich.py` (reads all rows from `~/.lccjs/velocity.db`) | No — gitignored | Adds git-churn columns, GH issue timestamps, and derived flags/ratios for notebook analysis | Goes stale whenever new rows land in `~/.lccjs/velocity.db`; re-run `enrich.py` before analysis |
 | Analysis notebooks | `stats/*.ipynb` | Jupyter (human-run) | Yes — with embedded outputs | Exploratory velocity analysis to surface calibration insights and improve estimate accuracy over time | Outputs are frozen at last run; re-execute (`jupyter nbconvert --execute --inplace`) after a fresh `enrich.py` run |
 
 ---
