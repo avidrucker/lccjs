@@ -85,16 +85,34 @@ Key points:
 
 Resolving a puzzle is a deletion, not a status change. In order:
 
-1. **Do the work** (write the code/doc, make tests pass).
-2. **Delete the marker** from the source — the `@todo` or `@inprogress` line.
-   This is the step people forget; a leftover marker goes STALE.
-3. **Commit with `Closes #N`** in the message. On push to `main`, GitHub
-   auto-closes issue `#N`. (You can also `gh issue close N --comment "…"` by hand;
-   the pdd-adoption notes call this "0pdd manually.")
-4. **Log a velocity row** in `docs/puzzle-velocity.csv` in the same commit (see
+1. **Do the work** (write the code/doc, make tests pass) and capture the finish
+   timestamp (`date '+%Y-%m-%dT%H:%M:%S%z'`).
+2. **Log the velocity row** with `npm run velocity:log -- '{"ticket":N,…}'`. This
+   validates and inserts the row into the SQLite store (`~/.lccjs/velocity.db`, the
+   source of truth) and **auto-exports** `docs/puzzle-velocity.csv`. Never hand-edit
+   the CSV — it is a generated, read-only view (see
    [`puzzle-velocity.md`](./puzzle-velocity.md)).
-5. **Push** trunk-based: `git pull --rebase` then `git push origin HEAD:main`.
-6. **Remove your worktree** once the commit is on `origin/main`.
+3. **Delete the marker** from the source — the `@todo` or `@inprogress` line. This
+   is the step people forget; a leftover marker goes STALE.
+4. **Make one commit** carrying everything — the marker deletion *and* the exported
+   CSV — with `Closes #N` in the message.
+5. **Land and tear down with `npm run close N`.** It loops fetch/rebase/push until
+   the commit is on `origin/main`, and **only then** removes the worktree + branch
+   (the gate that makes "clean up after a failed push" impossible). It also
+   fast-forward-pulls the main checkout and prints `Shell re-root: cd <path>` — don't
+   run `git pull` yourself after close, the shell's CWD is the now-deleted worktree.
+   GitHub auto-closes `#N` from the `Closes #N` keyword once the commit lands;
+   close.js verifies this and closes it explicitly if the keyword lagged.
+6. **Post a closing comment on the issue** summarising what changed (an append-only
+   comment, not a body edit — body edits race with parallel agents).
+
+> **Don't hand-push at close.** `git pull --rebase && git push origin HEAD:main`
+> followed by a manual `git worktree remove` is the *unhardened* sequence that
+> destroyed work in the #200/#242 incidents — cleanup ran even when the push lost a
+> parallel-agent race, leaving the close commit only local while the worktree was
+> already gone. `npm run close` exists to remove that footgun structurally; the
+> `&&`-gated fallback in [`claude_workflow.md`](./claude_workflow.md) is only for
+> when `close` is unavailable.
 
 After this: the marker is gone, the next `pdd` scan and `puzzle:status` no longer
 show the puzzle, and the GitHub issue is Closed. Those three facts together are
@@ -120,9 +138,11 @@ gh issue create --label severity:low --label documentation   # 1. make the issue
 npm run claim -- N            # claim a worktree; then flip @todo #N -> @inprogress #N
 npm run puzzle:status         # what's AVAILABLE / CLAIMED / IN-PROGRESS / STALE
 npm run puzzles               # pdd scan (pre-push hook runs this too)
-# ... do the work, delete the marker ...
-git commit -m "... Closes #N" # resolve: marker gone + velocity row
-git pull --rebase && git push origin HEAD:main
+# ... do the work, then close: ...
+npm run velocity:log -- '{"ticket":N,"role":"ROLE","agent":"NAME"}'  # row -> SQLite, auto-exports the CSV
+# ... delete the @todo / @inprogress marker ...
+git add -A && git commit -m "... Closes #N"   # one commit: marker deletion + exported CSV
+npm run close N               # loops rebase/push until on origin/main, then tears down the worktree
 ```
 
 ## See also
