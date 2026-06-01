@@ -68,8 +68,7 @@ class LCC {
     this.inputFileName = this.args[0];
 
     // -i flag: delegate entirely to the interactive debugger (ILCC).
-    // Supported: .a (assemble then debug) and .e (debug directly).
-    // .bin/.hex deferred to proposals #99/#100.
+    // Supported: .a, .bin, .hex (assembled first) and .e (loaded directly). (#395)
     if (this.options.interactive) {
       this.runInteractiveMode();
       return;

@@ -76,6 +76,32 @@ describe('ILCC Unit Tests', () => {
       expect(mockRun).toHaveBeenCalledTimes(1);
       expect(ilcc.outputFileName).toBe('demo.e');
     });
+
+    test('.bin input: assembleFile() then runInteractiveFile() called', () => {
+      const ilcc = new ILCC();
+      const mockAssemble = jest.spyOn(ilcc, 'assembleFile').mockImplementation(() => {
+        ilcc.outputFileName = 'demo.e';
+      });
+      const mockRun = jest.spyOn(ilcc, 'runInteractiveFile').mockImplementation(() => {});
+
+      ilcc.main(['demo.bin']);
+
+      expect(mockAssemble).toHaveBeenCalledTimes(1);
+      expect(mockRun).toHaveBeenCalledTimes(1);
+    });
+
+    test('.hex input: assembleFile() then runInteractiveFile() called', () => {
+      const ilcc = new ILCC();
+      const mockAssemble = jest.spyOn(ilcc, 'assembleFile').mockImplementation(() => {
+        ilcc.outputFileName = 'demo.e';
+      });
+      const mockRun = jest.spyOn(ilcc, 'runInteractiveFile').mockImplementation(() => {});
+
+      ilcc.main(['demo.hex']);
+
+      expect(mockAssemble).toHaveBeenCalledTimes(1);
+      expect(mockRun).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('runInteractiveFile()', () => {

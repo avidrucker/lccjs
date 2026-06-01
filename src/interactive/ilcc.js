@@ -9,7 +9,7 @@
 //   -e   efficient mode — disables snapshot log (forward-only, lower memory)
 //   -c   colorblind mode — alternate ANSI color palette
 //
-// Only .a and .e files are supported (no .o linking, no .bin/.hex).
+// Supported: .a, .bin, .hex (assembled first), .e (loaded directly). No .o linking.
 // See also: src/interactive/iinterpreter.js
 
 'use strict';
@@ -49,12 +49,18 @@ class ILCC {
     this.inputFileName = this.args[0];
     const ext = path.extname(this.inputFileName).toLowerCase();
 
-    if (ext === '.e') {
-      // Direct execution of a pre-assembled executable
-      this.outputFileName = this.inputFileName;
-    } else {
-      // Assemble .a (or any other source extension) first
-      this.assembleFile();
+    switch (ext) {
+      case '.bin':
+      case '.hex':
+        this.assembleFile();
+        break;
+      case '.e':
+        this.outputFileName = this.inputFileName;
+        break;
+      default:
+        // .a or any other source extension
+        this.assembleFile();
+        break;
     }
 
     this.runInteractiveFile();
@@ -148,7 +154,7 @@ class ILCC {
     console.log('   -h   show this help');
     console.log('   -l<hex>  load point (hex address, e.g. -l0010)');
     console.log('   -o <file>  output executable name');
-    console.log('Supported input extensions: .a (assembled first), .e (direct)');
+    console.log('Supported input extensions: .a, .bin, .hex (assembled first), .e (direct)');
   }
 }
 

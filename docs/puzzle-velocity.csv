@@ -275,3 +275,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 282,401,day-five notebook quality pass,DATA,45,30,7,38,23,2026-06-01T13:15:37-10:00,2026-06-01T13:22:32-10:00,,"bootstrap_ci helper, heading hierarchy, stale §5 table, FIG n=4→n=3",FIG,sonnet-4.6
 283,384,Research: disassembler .o-input handling,RESEARCH,45,35,,,,2026-06-01T13:30:03-1000,,,,CHERRY,sonnet-4.6
 284,298,WRITER: report + owner ratification of #269 parity-policy decision (assembler name-failure atomicity),WRITER,30,12,1,29,11,2026-06-01T13:29:49-1000,2026-06-01T13:30:40-1000,,report posted as GH comment on #298; no code change; worktree claimed only for close sequence,DRAGONFRUIT,sonnet-4.6
+285,395,ilcc .bin/.hex file input support,DEV,30,10,3,27,7,2026-06-01T13:30:11-1000,2026-06-01T13:33:32-1000,,,BANANA,sonnet-4.6
