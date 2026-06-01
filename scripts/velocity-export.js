@@ -41,8 +41,25 @@ function encodeRow(obj) {
   return COLS.map(c => encodeField(obj[c])).join(',');
 }
 
-// @todo #320:30m/DEV skip export when running from main checkout (not a worktree) — guard goes here in exportCSV(); detect via fs.statSync(path.join(__dirname,'..', '.git')).isDirectory(); see docs/research/csv-from-main-footgun.md
-function exportCSV() {
+// Implemented #320: guard added in exportCSV() — see isMainCheckout() above.
+
+// Returns true when the script is running from the main checkout (not a worktree).
+// In a worktree, .git is a file containing "gitdir: ..."; in the main checkout it is a directory.
+function isMainCheckout() {
+  const dotGit = path.join(__dirname, '..', '.git');
+  try {
+    return fs.statSync(dotGit).isDirectory();
+  } catch (_) {
+    return false; // no .git at all — exotic env, allow export
+  }
+}
+
+function exportCSV({ force = false } = {}) {
+  if (!force && isMainCheckout()) {
+    console.log('Skipping CSV export — running from main checkout; the row is in the DB and will be included at the next worktree-close export. Pass --force to override.');
+    return;
+  }
+
   if (!fs.existsSync(DB_PATH)) {
     console.error(`DB not found at ${DB_PATH} — run npm run velocity:seed first`);
     process.exit(1);
@@ -63,8 +80,8 @@ function exportCSV() {
   console.log(`Exported ${rows.length} rows → ${CSV}`);
 }
 
-module.exports = { exportCSV };
+module.exports = { exportCSV, isMainCheckout };
 
 if (require.main === module) {
-  exportCSV();
+  exportCSV({ force: process.argv.includes('--force') });
 }
