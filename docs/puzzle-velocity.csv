@@ -192,3 +192,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 199,341,Fix: move inter-turn gap caveat to after §2 chart,WRITER,10,5,2,-8,-3,2026-05-31T17:09:02-1000,2026-05-31T17:11:07-1000,,,ELDERBERRY,sonnet-4.6
 200,342,Fix: add newcomer orientation to notebook title cell,WRITER,30,8,3,-27,-5,2026-05-31T17:11:51-1000,2026-05-31T17:14:02-1000,,,ELDERBERRY,sonnet-4.6
 201,344,Fix: discuss anomalously wide 05-29 CI in §2,WRITER,15,5,1,-14,-4,2026-05-31T17:14:46-1000,2026-05-31T17:15:23-1000,,,ELDERBERRY,sonnet-4.6
+202,345,Fix: explain PM n=13 vs §0 PM=26 discrepancy,WRITER,10,5,1,-9,-4,2026-05-31T17:16:02-1000,2026-05-31T17:16:36-1000,,,ELDERBERRY,sonnet-4.6
