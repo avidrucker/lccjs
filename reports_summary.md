@@ -22,7 +22,7 @@ Last updated: 2026-05-30 (probe #257).
 | 2 | `mov` immediate range (OB-008) | `mov` rejects negatives its own `mvi` accepts | Medium | Report **drafted**, not sent · gate now clear **→ Charlie** |
 | 3 | `jmp` with missing register | **segfaults** (vs a clean error) | Low* | No report (preserved deviation) |
 | 4 | undefined-label `br` | leaves a runnable **blank `.e`** for a *failed* assemble | Low* | No report (footgun, premise-corrected) |
-| 5 | long source line | no length check; line **silently split** into bogus source | Medium | **Not drafted** — conditional (#244) |
+| 5 | long source line | no length check; line **silently split** into bogus source | Medium | Report **drafted**, not sent (#260) |
 | 6 | `sext` non-`2^k−1` selector | returns silent garbage; contract unspecified | Low–Med | **SENT** — awaiting reply (#159) |
 | 7 | no-comma neg `offset6` on `jmp`/`blr`/`jsrr` | same silent-→0 as #1, on more instructions | **High** | **NEW (probe #257)** — undocumented |
 | 8 | no-comma neg `imm5`/`imm9` | `add`/`sub`/`and`/`cmp`/`mvi` **reject** a negative that the comma form accepts | Medium | **NEW (probe #257)** — undocumented |
@@ -81,10 +81,6 @@ written yet. **NEW**: surfaced by this pass, not yet in any ledger.
   the bug). That's exactly the branch in which #40 says to **send** the report, so
   OB-008 appears unblocked. Needs Charlie's go-ahead to send.
 
----
-
-## Confirmed, not yet drafted into a report
-
 ### 5. No source-line length limit — long lines silently split into bogus source
 - **Symptom:** OG LCC has no line-length check; it reads each line into a fixed
   **298-char** buffer and silently **splits** longer lines, feeding the overflow
@@ -95,9 +91,13 @@ written yet. **NEW**: surfaced by this pass, not yet in any ledger.
 - **Evidence:** [`docs/research/line-length-limit.md`](./docs/research/line-length-limit.md)
   (full probe from #244). LCC.js is intentionally stricter: a clear "line exceeds
   300 chars" diagnostic (`docs/parity_deviations.md` BY DESIGN #7).
-- **Status:** confirmed OG bug (`docs/parity_deviations.md` OG BUG #13), **report
-  not yet drafted** — filing was left conditional on the #244 decision. Ready to
-  write up if you want it sent.
+- **Report:** [`docs/cuh63-line-length-silent-split-bug-report.md`](./docs/cuh63-line-length-silent-split-bug-report.md)
+- **Status:** confirmed OG bug (`docs/parity_deviations.md` OG BUG #13); report
+  **drafted, not sent** (#260). Sending is the human's call.
+
+---
+
+## Confirmed, not yet drafted into a report
 
 ### 7. No-comma negative `offset6` silent-drop on `jmp` / `blr` / `jsrr` — **NEW**
 - **Symptom:** the #1 defect is **not** limited to `ldr`/`str`. Every
