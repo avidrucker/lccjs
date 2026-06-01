@@ -506,7 +506,6 @@ class IInterpreter extends Interpreter {
   }
 
   // runInteractive(sourceMap) — main interactive prompt loop.
-  // @inprogress #394:H90m/DEV ilcc multi-column pane layout (l command + output pane)
   //
   // Commands (entered at "Input: " prompt):
   //   {N}         step forward N instructions
