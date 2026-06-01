@@ -195,3 +195,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 202,345,Fix: explain PM n=13 vs §0 PM=26 discrepancy,WRITER,10,5,1,-9,-4,2026-05-31T17:16:02-1000,2026-05-31T17:16:36-1000,,,ELDERBERRY,sonnet-4.6
 203,337,Fix: add Read interpretation cells after §1–§5,WRITER,30,15,3,-27,-12,2026-05-31T17:17:14-1000,2026-05-31T17:19:55-1000,,,ELDERBERRY,sonnet-4.6
 204,343,Fix: replace §0 print() with styled DataFrames,WRITER,20,8,1,-19,-7,2026-05-31T17:20:43-1000,2026-05-31T17:21:29-1000,,,ELDERBERRY,sonnet-4.6
+205,334,Fix: add role-by-day distribution table to §2,DATA,30,10,1,-29,-9,2026-05-31T17:22:00-1000,2026-05-31T17:22:40-1000,,,ELDERBERRY,sonnet-4.6
