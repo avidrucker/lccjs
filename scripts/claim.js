@@ -161,7 +161,7 @@ function currentBranch() {
 // identity (single candidate, never silently swapped).
 function resolveIdentity(opts, env, branch = null) {
   if (opts.as) {
-    return { name: opts.as, source: 'as', modeLabel: 'reuse (--as)' };
+    return { name: normalizeIdentity(opts.as), source: 'as', modeLabel: 'reuse (--as)' };
   }
   const envName = normalizeIdentity(env.CLAUDE_AGENT_NAME || '');
   if (envName) {
