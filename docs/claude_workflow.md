@@ -54,6 +54,26 @@ next," start here.
 
 ---
 
+## Session orientation (responding to a readiness greeting)
+
+When a session opens with an agent-readiness greeting — _"you are agent BANANA. are
+you ready to work?"_ or any variant — the correct response is:
+
+1. **Reply with a short confirmation** ("Ready." or similar, one line).
+2. **Stop.** Wait for the first explicit task assignment.
+
+**Do not** invoke puzzle-triage, fruit-agent-orchestrate, or any other skill
+speculatively. A greeting is not an implicit request to triage the backlog, list
+available issues, or orchestrate work. Skills fire only on explicit user requests:
+a specific trigger phrase, a `/skill-name` invocation, or an unambiguous directive
+("what should I work on?", "/fruit-agent-orchestrate").
+
+This rule applies even if the agent would "naturally" want to orient itself by
+checking the backlog. Orientation is the user's job to trigger — the agent's job
+is to be ready when asked (#377).
+
+---
+
 ## At start (picking up a puzzle)
 
 **Before reading the issue:**
