@@ -175,7 +175,7 @@ Do **not** `git commit --amend` to backfill the SHA — amend orphans the origin
 
 **After the push:**
 
-3. Update tracker checkbox **via an issue comment**, not a body edit. (Body edits race with parallel agents; comments are append-only.) If there's no tracker, this step is skipped.
+3. **Post a closing comment on the issue** — always, regardless of whether there is a tracker. For research tickets: 1–3 sentences summarising the finding and the DEV child (if filed). For DEV tickets: one line noting what changed and the commit SHA. Use an issue comment, not a body edit (comments are append-only; body edits race with parallel agents). If there is a tracker checkbox, update it in the same comment.
 4. Mark any related TaskCreate tasks as complete via TaskUpdate.
 5. **Worktree teardown + main sync** — handled automatically by `npm run close` (confirms commit on `origin/main`, removes worktree + branch, then fast-forward-pulls the main checkout). Do **not** run `git pull` after close — the shell CWD is the now-deleted worktree and the command will fail. close.js prints `Shell re-root: cd <path>` at the end; use that if you need to issue further commands from main. (#352) If using the fallback path, confirm first (`git branch -r --contains HEAD` → `origin/main`), then run the `&&`-gated chain above. This is **mandatory**: a worktree left after close looks like a live claim to every other agent and to `puzzle:status`.
 6. Report what changed in 1-2 sentences. Include the velocity Δ if it's interesting.
