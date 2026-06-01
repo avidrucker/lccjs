@@ -204,3 +204,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 211,350,close.js stale pre-rebase SHA teardown gate,RESEARCH,,,,,,,,,"inter-turn gap; findings: stale SHA confirmed causes left-behind worktree, not silent-teardown; DEV child #354 filed; fix site is re-read landedSha after landed===true in main()",BANANA,
 212,320,DEV: guard against committing puzzle-velocity.csv from the main checkout,DEV,30,20,,,,,,,,DRAGONFRUIT,sonnet-4.6
 213,356,CHORE: remove gratuitous tracking comment left in velocity-export.js at #320 close,CHORE,5,5,,,,,,,,DRAGONFRUIT,sonnet-4.6
+214,354,close.js re-read HEAD after tryLand — stale-SHA gate fix,DEV,20,15,2,18,13,2026-06-01T06:08:54-1000,2026-06-01T06:10:42-1000,,3-line fix + e2e regression; hit this bug live on #352 close so no ramp-up,APPLE,claude-sonnet-4-6

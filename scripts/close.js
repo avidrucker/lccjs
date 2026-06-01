@@ -498,28 +498,34 @@ function main() {
         '`npm run close` (or raise --max). Worktree left intact, NOT removed.');
   }
 
+  // Re-read HEAD after the push loop: tryLand() may have rebased (e.g. the
+  // velocity CSV auto-resolve path calls `git rebase --continue`), rewriting
+  // the SHA captured above. The gate must check the SHA that actually landed
+  // on origin/main, not the pre-rebase value. (#354)
+  const landedSha = headSha();
+
   // --- the gate: verify on origin/main before ANY teardown.
   sh('git fetch origin main', true);
-  if (!shouldCleanup({ onOriginMain: onOriginMain(sha) })) {
-    die(`push reported success but ${sha && sha.slice(0, 12)} is NOT on ` +
+  if (!shouldCleanup({ onOriginMain: onOriginMain(landedSha) })) {
+    die(`push reported success but ${landedSha && landedSha.slice(0, 12)} is NOT on ` +
         'origin/main — refusing to remove the worktree. Investigate before ' +
         'cleaning up; your work is intact.');
   }
-  log(`commit ${sha.slice(0, 12)} confirmed on origin/main.`);
+  log(`commit ${landedSha.slice(0, 12)} confirmed on origin/main.`);
 
   // --- best-effort: confirm the issue actually closed (the keyword can lag).
   if (opts.verifyIssue) {
     const st = sh(`gh issue view ${issue} --json state -q .state`, true);
     if (st && st.trim().toUpperCase() === 'OPEN') {
       log(`#${issue} still shows OPEN — closing it explicitly.`);
-      sh(`gh issue close ${issue} -c "Closed via npm run close (commit ${sha.slice(0, 12)} on main)."`, true);
+      sh(`gh issue close ${issue} -c "Closed via npm run close (commit ${landedSha.slice(0, 12)} on main)."`, true);
     } else if (st) {
       log(`#${issue} is ${st.trim()}.`);
     }
   }
 
   if (opts.keep) {
-    report({ issue, branch, wtPath, sha, kept: true, dry: false });
+    report({ issue, branch, wtPath, sha: landedSha, kept: true, dry: false });
     return;
   }
 
@@ -548,7 +554,7 @@ function main() {
         `Sync manually: git -C "${root}" pull --ff-only origin main`);
   }
 
-  report({ issue, branch, wtPath, sha, kept: false, dry: false });
+  report({ issue, branch, wtPath, sha: landedSha, kept: false, dry: false });
   log(`Shell re-root: cd "${root}"`);
 }
 

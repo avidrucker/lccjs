@@ -160,6 +160,48 @@ describe('close.js e2e — lost-race retry', () => {
   }, 30_000);
 });
 
+// ─── Stale-SHA gate fix (#354) ───────────────────────────────────────────────
+//
+// Regression: tryLand() may rebase, rewriting the SHA captured before the loop.
+// The gate must check the post-rebase HEAD, not the stale pre-loop value.
+// Repro: push a concurrent commit to the remote BEFORE close.js runs, so
+// tryLand()'s first rebase rewrites this agent's commit SHA.
+
+describe('close.js e2e — stale-SHA gate fix (#354)', () => {
+  test('closes cleanly when a concurrent push forces a rebase that rewrites the SHA', () => {
+    const { tmpDir, mainPath, wtPath } = makeRepo('9010');
+    try {
+      // Simulate a concurrent agent: push an extra commit directly to the remote
+      // so tryLand()'s rebase rebases this agent's commit onto it, rewriting the SHA.
+      fs.writeFileSync(path.join(mainPath, 'concurrent.txt'), 'concurrent agent work\n');
+      sh(mainPath, 'git add concurrent.txt');
+      sh(mainPath, 'git commit -m "feat: concurrent agent commit"');
+      sh(mainPath, 'git push origin main');
+      // Reset main checkout so it doesn't interfere with close.js's internal pull
+      sh(mainPath, 'git reset --hard origin/main');
+
+      const preLandSha = sh(wtPath, 'git rev-parse HEAD').trim();
+      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9010 --no-verify-issue`);
+      expect(ok).toBe(true);
+      expect(out).toMatch(/CLOSED/);
+
+      // The landed SHA on origin/main must be the post-rebase one (different from pre-loop SHA)
+      sh(mainPath, 'git fetch origin main');
+      const landedSha = sh(mainPath, 'git rev-parse origin/main').trim();
+      expect(landedSha).not.toBe(preLandSha);
+
+      // The close content is on origin/main
+      const log = sh(mainPath, 'git log origin/main --format=%B');
+      expect(log).toMatch(/Closes #9010/);
+
+      // Worktree was removed (gate passed with the post-rebase SHA)
+      expect(fs.existsSync(wtPath)).toBe(false);
+    } finally {
+      rmrf(tmpDir);
+    }
+  }, 30_000);
+});
+
 // ─── headClosesIssue via absolute path (dogfooding finding — #267 comment) ───
 
 describe('close.js e2e — pre-flight accepts valid Closes #N via abs-path invocation', () => {
