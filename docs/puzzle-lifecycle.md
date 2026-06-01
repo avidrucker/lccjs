@@ -78,8 +78,9 @@ Key points:
 - **`@inprogress` → deleted:** when the work is done, you remove the marker
   entirely (see Part 3). There is no `@done`.
 - `npm run puzzle:status` reconciles every marker against live worktrees and the
-  GitHub issue state, reporting each as AVAILABLE / CLAIMED / IN-PROGRESS / STALE.
-  A **STALE** row means a marker outlived its closed issue — delete it.
+  GitHub issue state, reporting each as AVAILABLE / CLAIMED / IN-PROGRESS / LOCKED
+  (a clustermate is in progress) / BLOCKED (a `blocked` label or an open `blocked_by`
+  dep) / STALE. A **STALE** row means a marker outlived its closed issue — delete it.
 
 ## Part 3 — How and when "done" is signalled
 
@@ -136,7 +137,7 @@ before the marker rather than after.
 gh issue create --label severity:low --label documentation   # 1. make the issue (#N)
 # ... write the @todo #N marker at the code site ...
 npm run claim -- N            # claim a worktree; then flip @todo #N -> @inprogress #N
-npm run puzzle:status         # what's AVAILABLE / CLAIMED / IN-PROGRESS / STALE
+npm run puzzle:status         # AVAILABLE / CLAIMED / IN-PROGRESS / LOCKED / BLOCKED / STALE
 npm run puzzles               # pdd scan (pre-push hook runs this too)
 # ... do the work, then close: ...
 npm run velocity:log -- '{"ticket":N,"role":"ROLE","agent":"NAME"}'  # row -> SQLite, auto-exports the CSV
