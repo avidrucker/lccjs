@@ -197,3 +197,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 204,343,Fix: replace §0 print() with styled DataFrames,WRITER,20,8,1,-19,-7,2026-05-31T17:20:43-1000,2026-05-31T17:21:29-1000,,,ELDERBERRY,sonnet-4.6
 205,334,Fix: add role-by-day distribution table to §2,DATA,30,10,1,-29,-9,2026-05-31T17:22:00-1000,2026-05-31T17:22:40-1000,,,ELDERBERRY,sonnet-4.6
 206,348,Bug: close guard CSV-bleed — already fixed by #346,RESEARCH,20,5,1,-19,-4,2026-05-31T17:23:17-1000,2026-05-31T17:24:05-1000,,No code change needed — #346 already landed extractRowsFromCsvDiff + closingAgent filter in close.js. Closed with comment.,ELDERBERRY,sonnet-4.6
+207,353,TIL 2026-05-31 ELDERBERRY,WRITER,20,10,1,-19,-9,2026-05-31T17:41:25-1000,2026-05-31T17:42:29-1000,,,ELDERBERRY,sonnet-4.6
