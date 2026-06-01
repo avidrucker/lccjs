@@ -5,71 +5,69 @@
 
 const fs = require('fs');
 
-// Check command-line arguments
-if (process.argv.length !== 3) {
-    console.error('Usage: node hexDisplay.js <filename>');
-    process.exit(1);
-}
-
-const fileName = process.argv[2];
-
-// Read the file into a buffer
-let buffer;
-try {
-    buffer = fs.readFileSync(fileName);
-} catch (err) {
-    console.error(`Cannot open file ${fileName}`);
-    process.exit(1);
-}
-
-let offset = 0;
-const fileSize = buffer.length;
-
-// Function to determine if a byte is a printable ASCII character
+// True for bytes that render as themselves in the ASCII gutter (space..~).
+// Pure — no I/O.
 function isPrintableASCII(byte) {
     return byte >= 32 && byte <= 126;
 }
 
-// We'll process the buffer, starting from the current offset
-// Process 16 bytes per line
-const bytesPerLine = 16;
+// Pure render of up to 16 bytes into one display line: space-separated
+// big-endian hex pairs (a lone trailing byte stays a single pair), padded to a
+// fixed width, then four spaces and the ASCII gutter (non-printables shown as
+// '.'). Accepts an array or a Buffer slice. Returns a string — the CLI prints it.
+function formatHexLine(bytes) {
+    const arr = Array.from(bytes);
 
-while (offset < fileSize) {
-    const lineBytes = [];
-    const asciiChars = [];
-
-    // Read up to bytesPerLine bytes
-    for (let i = 0; i < bytesPerLine && offset < fileSize; i++, offset++) {
-        const byte = buffer[offset];
-        lineBytes.push(byte);
-        asciiChars.push(isPrintableASCII(byte) ? String.fromCharCode(byte) : '.');
-    }
-
-    // Format hex output without swapping bytes
     const hexParts = [];
-    for (let i = 0; i < lineBytes.length; i += 2) {
-        if (i + 1 < lineBytes.length) {
-            const byte1 = lineBytes[i];
-            const byte2 = lineBytes[i + 1];
-            // Combine bytes as they appear in the file (big-endian)
-            hexParts.push(byte1.toString(16).padStart(2, '0').toUpperCase() + byte2.toString(16).padStart(2, '0').toUpperCase());
+    for (let i = 0; i < arr.length; i += 2) {
+        if (i + 1 < arr.length) {
+            // Combine the two bytes as they appear in the file (big-endian).
+            hexParts.push(
+                arr[i].toString(16).padStart(2, '0').toUpperCase() +
+                arr[i + 1].toString(16).padStart(2, '0').toUpperCase()
+            );
         } else {
-            // If we have an odd number of bytes, output the last byte
-            const byte = lineBytes[i];
-            hexParts.push(byte.toString(16).padStart(2, '0').toUpperCase());
+            // Odd trailing byte: emit it on its own.
+            hexParts.push(arr[i].toString(16).padStart(2, '0').toUpperCase());
         }
     }
 
-    // Join hex parts with spaces
     const hexString = hexParts.join(' ');
+    const asciiString = arr
+        .map((byte) => (isPrintableASCII(byte) ? String.fromCharCode(byte) : '.'))
+        .join('');
 
-    // Join ASCII characters
-    const asciiString = asciiChars.join('');
+    // Pad the hex column to its maximum width (8 pairs * 4 chars + 7 spaces = 39)
+    // so the ASCII gutter aligns across full and short lines.
+    const totalHexWidth = 39;
+    const padding = ' '.repeat(Math.max(0, totalHexWidth - hexString.length));
 
-    // Calculate padding to align ASCII output
-    const totalHexWidth = 39; // Maximum width of hex string (for 16 bytes)
-    const padding = ' '.repeat(totalHexWidth - hexString.length);
-
-    // Output the line
-    console.log(`${hexString}${padding}    ${asciiString}`);
+    return `${hexString}${padding}    ${asciiString}`;
 }
+
+// CLI wrapper: owns argv parsing, file I/O, console output, and exit codes.
+if (require.main === module) {
+    if (process.argv.length !== 3) {
+        console.error('Usage: node hexDisplay.js <filename>');
+        process.exit(1);
+    }
+
+    const fileName = process.argv[2];
+    let buffer;
+    try {
+        buffer = fs.readFileSync(fileName);
+    } catch (err) {
+        console.error(`Cannot open file ${fileName}`);
+        process.exit(1);
+    }
+
+    const bytesPerLine = 16;
+    for (let offset = 0; offset < buffer.length; offset += bytesPerLine) {
+        const lineBytes = Array.from(buffer.subarray(offset, offset + bytesPerLine));
+        console.log(formatHexLine(lineBytes));
+    }
+}
+
+// Export seam (#172): isPrintableASCII + formatHexLine were previously buried in
+// the CLI loop at module level (0% coverage). See tests/new/hexDisplay.unit.spec.js.
+module.exports = { isPrintableASCII, formatHexLine };

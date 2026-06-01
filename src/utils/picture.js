@@ -4,31 +4,11 @@
 // Reads a .o or .e file and outputs a "picture" of the file
 
 const fs = require('fs');
-const path = require('path');
+const { InvalidExecutableFormatError } = require('./errors');
 
-// @inprogress #172:30m/DEV decomplect/testability: split a pure formatPicture() -> string from the console output sink so the picture builder is unit-testable -- this is the refactor the 0% coverage in #172 is gated on. See #246 H6 + docs/research/codebase-quality-hotspots.md
-
-// Check command-line arguments
-if (process.argv.length !== 3) {
-    console.error('Usage: node picture.js <filename>');
-    process.exit(1);
-}
-
-const fileName = process.argv[2];
-
-// Read the file into a buffer
-let buffer;
-try {
-    buffer = fs.readFileSync(fileName);
-} catch (err) {
-    console.error(`Cannot open file ${fileName}`);
-    process.exit(1);
-}
-
-let offset = 0;
-const fileSize = buffer.length;
-
-// Function to read null-terminated string
+// Reads a null-terminated string starting at `offset`. Returns { str, offset }
+// where the returned offset points just past the terminating NUL (or past the
+// end of the buffer if no NUL was found). Pure — no I/O.
 function readNullTerminatedString(buffer, offset) {
     let str = '';
     while (offset < buffer.length) {
@@ -39,90 +19,132 @@ function readNullTerminatedString(buffer, offset) {
     return { str, offset };
 }
 
-// Output header
-console.log('Header:');
-if (offset >= fileSize) {
-    console.error('Unexpected end of file');
-    process.exit(1);
-}
+// Pure parse of an LCC object/executable buffer into a structured "picture":
+//   { header: [...entries], codeWords: [...numbers] }
+// Each header entry carries a `type` char. Address-bearing entries (S/A) add a
+// numeric `address`; label-bearing entries (G/E/e/V) add `address` plus a string
+// `label`. The leading 'o' magic and the terminating 'C' are included as bare
+// entries. Throws InvalidExecutableFormatError on malformed input — no
+// console output, no process.exit, no file I/O (the CLI wrapper owns those).
+function parseObjectPicture(buffer) {
+    let offset = 0;
+    const fileSize = buffer.length;
+    const header = [];
 
-// Read and print the initial 'o'
-const initialChar = String.fromCharCode(buffer[offset++]);
-if (initialChar !== 'o') {
-    console.error('File does not start with \'o\'');
-    process.exit(1);
-}
-console.log(`   ${initialChar}`);
-
-// Read header entries until 'C'
-while (offset < fileSize) {
-    const entryType = String.fromCharCode(buffer[offset++]);
-    if (entryType === 'C') {
-        console.log(`   ${entryType}`);
-        break;
+    if (offset >= fileSize) {
+        throw new InvalidExecutableFormatError('Unexpected end of file');
     }
-    switch (entryType) {
-        case 'S': {
-            if (offset + 1 >= fileSize) {
-                console.error('Unexpected end of file while reading S entry');
-                process.exit(1);
-            }
-            const address = buffer.readUInt16LE(offset);
-            offset += 2;
-            console.log(`   ${entryType} ${address.toString(16).padStart(4, '0')}`);
+
+    const initialChar = String.fromCharCode(buffer[offset++]);
+    if (initialChar !== 'o') {
+        throw new InvalidExecutableFormatError("File does not start with 'o'");
+    }
+    header.push({ type: 'o' });
+
+    // Read header entries until the 'C' terminator (or end of buffer).
+    while (offset < fileSize) {
+        const entryType = String.fromCharCode(buffer[offset++]);
+        if (entryType === 'C') {
+            header.push({ type: 'C' });
             break;
         }
-        case 'G':
-        case 'E':
-        case 'e':
-        case 'V': {
-            if (offset + 1 >= fileSize) {
-                console.error(`Unexpected end of file while reading ${entryType} entry`);
-                process.exit(1);
+        switch (entryType) {
+            case 'S':
+            case 'A': {
+                if (offset + 1 >= fileSize) {
+                    throw new InvalidExecutableFormatError(`Unexpected end of file while reading ${entryType} entry`);
+                }
+                const address = buffer.readUInt16LE(offset);
+                offset += 2;
+                header.push({ type: entryType, address });
+                break;
             }
-            const address = buffer.readUInt16LE(offset);
-            offset += 2;
-            const { str: label, offset: newOffset } = readNullTerminatedString(buffer, offset);
-            offset = newOffset;
-            console.log(`   ${entryType} ${address.toString(16).padStart(4, '0')} ${label}`);
-            break;
-        }
-        case 'A': {
-            if (offset + 1 >= fileSize) {
-                console.error('Unexpected end of file while reading A entry');
-                process.exit(1);
+            case 'G':
+            case 'E':
+            case 'e':
+            case 'V': {
+                if (offset + 1 >= fileSize) {
+                    throw new InvalidExecutableFormatError(`Unexpected end of file while reading ${entryType} entry`);
+                }
+                const address = buffer.readUInt16LE(offset);
+                offset += 2;
+                const { str: label, offset: newOffset } = readNullTerminatedString(buffer, offset);
+                offset = newOffset;
+                header.push({ type: entryType, address, label });
+                break;
             }
-            const address = buffer.readUInt16LE(offset);
-            offset += 2;
-            console.log(`   ${entryType} ${address.toString(16).padStart(4, '0')}`);
-            break;
+            default:
+                throw new InvalidExecutableFormatError(`Unknown header entry type: ${entryType}`);
         }
-        default:
-            console.error(`Unknown header entry type: ${entryType}`);
-            process.exit(1);
+    }
+
+    // Remaining whole 16-bit words form the code section.
+    const codeWords = [];
+    while (offset + 1 < fileSize) {
+        const word = buffer.readUInt16LE(offset);
+        offset += 2;
+        codeWords.push(word);
+    }
+
+    return { header, codeWords };
+}
+
+// Pure render of a parsed picture (the inverse sink of parseObjectPicture) into
+// the multi-line display string. Code words wrap 8 per line. Returns a string;
+// the CLI is the only thing that prints it.
+function formatPicture({ header, codeWords }) {
+    const lines = ['Header:'];
+    for (const entry of header) {
+        if (entry.type === 'o' || entry.type === 'C') {
+            lines.push(`   ${entry.type}`);
+        } else if (entry.label !== undefined) {
+            lines.push(`   ${entry.type} ${entry.address.toString(16).padStart(4, '0')} ${entry.label}`);
+        } else {
+            lines.push(`   ${entry.type} ${entry.address.toString(16).padStart(4, '0')}`);
+        }
+    }
+
+    lines.push('Code:');
+    let codeLine = '   ';
+    for (let i = 0; i < codeWords.length; i++) {
+        codeLine += codeWords[i].toString(16).padStart(4, '0');
+        if ((i + 1) % 8 === 0) {
+            lines.push(codeLine);
+            codeLine = '   ';
+        } else {
+            codeLine += ' ';
+        }
+    }
+    if (codeLine.trim() !== '') {
+        lines.push(codeLine);
+    }
+    return lines.join('\n');
+}
+
+// CLI wrapper: owns argv parsing, file I/O, console output, and exit codes.
+if (require.main === module) {
+    if (process.argv.length !== 3) {
+        console.error('Usage: node picture.js <filename>');
+        process.exit(1);
+    }
+
+    const fileName = process.argv[2];
+    let buffer;
+    try {
+        buffer = fs.readFileSync(fileName);
+    } catch (err) {
+        console.error(`Cannot open file ${fileName}`);
+        process.exit(1);
+    }
+
+    try {
+        console.log(formatPicture(parseObjectPicture(buffer)));
+    } catch (err) {
+        console.error(err.message);
+        process.exit(1);
     }
 }
 
-// Now read code section
-console.log('Code:');
-const codeWords = [];
-while (offset + 1 < fileSize) {
-    const word = buffer.readUInt16LE(offset);
-    offset += 2;
-    codeWords.push(word.toString(16).padStart(4, '0'));
-}
-
-// Output code words
-let codeLine = '   ';
-for (let i = 0; i < codeWords.length; i++) {
-    codeLine += codeWords[i];
-    if ((i + 1) % 8 === 0) {
-        console.log(codeLine);
-        codeLine = '   ';
-    } else {
-        codeLine += ' ';
-    }
-}
-if (codeLine.trim() !== '') {
-    console.log(codeLine);
-}
+// Export seam (#172): the pure parse/format helpers were previously buried in
+// the CLI driver at module level (0% coverage). See tests/new/picture.unit.spec.js.
+module.exports = { readNullTerminatedString, parseObjectPicture, formatPicture };
