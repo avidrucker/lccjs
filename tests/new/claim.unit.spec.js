@@ -5,6 +5,8 @@ const {
   resolveIdentity,
   checkIdentityName,
   assessBaseStaleness,
+  sentinelBranch,
+  isSentinelStaleByAge,
 } = require('../../scripts/claim');
 
 // Pure identity-resolution seam from scripts/claim.js. These tests exercise the
@@ -199,6 +201,46 @@ describe('claim.js identity resolution', () => {
 
     test('an un-knowable (non-numeric) behind count is treated as 0 → proceed', () => {
       expect(assessBaseStaleness('main', NaN).stale).toBe(false);
+    });
+  });
+
+  // #194: session-sentinel helpers — pure seams only (git I/O paths not tested here)
+  describe('sentinelBranch()', () => {
+    test('returns <fruit>/session', () => {
+      expect(sentinelBranch('apple')).toBe('apple/session');
+      expect(sentinelBranch('dragonfruit')).toBe('dragonfruit/session');
+    });
+  });
+
+  describe('isSentinelStaleByAge()', () => {
+    const WEEK_S = 7 * 24 * 60 * 60;
+    const now = 1_700_000_000;
+
+    test('fresh sentinel (1 hour old) → not stale', () => {
+      expect(isSentinelStaleByAge(now - 3_600, now, WEEK_S)).toBe(false);
+    });
+
+    test('stale sentinel (one second past max age) → stale', () => {
+      expect(isSentinelStaleByAge(now - WEEK_S - 1, now, WEEK_S)).toBe(true);
+    });
+
+    test('sentinel exactly at max age → not stale', () => {
+      expect(isSentinelStaleByAge(now - WEEK_S, now, WEEK_S)).toBe(false);
+    });
+
+    test('NaN timestamp → stale (non-finite = unreadable, free the fruit)', () => {
+      expect(isSentinelStaleByAge(NaN, now, WEEK_S)).toBe(true);
+    });
+
+    test('Infinity timestamp → stale (non-finite = unreadable, free the fruit)', () => {
+      expect(isSentinelStaleByAge(Infinity, now, WEEK_S)).toBe(true);
+    });
+
+    test('uses SESSION_SENTINEL_MAX_AGE_S as default when maxAgeS omitted', () => {
+      // 6 days old → not stale under the 7-day default
+      expect(isSentinelStaleByAge(now - 6 * 24 * 3600, now)).toBe(false);
+      // 8 days old → stale under the 7-day default
+      expect(isSentinelStaleByAge(now - 8 * 24 * 3600, now)).toBe(true);
     });
   });
 });

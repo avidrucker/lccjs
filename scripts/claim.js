@@ -100,14 +100,59 @@ function listWorktreeBranches() {
   return branches;
 }
 
-// @todo #194:45m/DEV takenFruits() is worktree-scoped: a fruit frees the instant
-//  its last worktree is removed, even while that agent's session is still alive (the
-//  #193 collision — apple reassigned mid-session). Make identity session-scoped via a
-//  persistent <fruit>/session sentinel branch + scan all <fruit>/* branches + a
-//  reflog-age staleness sweep. Scanning all branches alone is NOT enough (close
-//  deletes the branch too). See #194 and docs/research/claim-fruit-session-scope.md.
+// Session sentinel: a <fruit>/session branch (no worktree) that keeps a fruit
+// marked "taken" across individual worktree teardowns — closing a puzzle removes
+// both the worktree and the issue branch, but the sentinel survives until the
+// session ends or the stale-sweep reclaims it (#194).
+const SESSION_SENTINEL_MAX_AGE_S = 7 * 24 * 60 * 60; // 7 days
+
+function sentinelBranch(fruit) {
+  return `${fruit}/session`;
+}
+
+// Pure: given a commit timestamp and current time (both unix seconds), is the
+// sentinel stale? Exported for unit testing without git I/O.
+function isSentinelStaleByAge(commitTs, nowS, maxAgeS = SESSION_SENTINEL_MAX_AGE_S) {
+  if (!Number.isFinite(commitTs)) return true;
+  return (nowS - commitTs) > maxAgeS;
+}
+
+// Returns true when the <fruit>/session branch's tip commit is older than
+// SESSION_SENTINEL_MAX_AGE_S, indicating the session that created it has died.
+// Returns false when fresh or when the age cannot be read (conservative: keep taken).
+function isSentinelStale(fruit) {
+  const raw = sh(`git log -1 --format="%ct" refs/heads/${sentinelBranch(fruit)}`, true);
+  if (!raw || !raw.trim()) return false;
+  const ts = parseInt(raw.trim(), 10);
+  return isSentinelStaleByAge(ts, Math.floor(Date.now() / 1000));
+}
+
+// Creates the <fruit>/session sentinel if it doesn't exist yet. Idempotent —
+// safe to call on every auto-claim; re-claims within the same session are no-ops.
+function createSessionSentinel(fruit) {
+  const b = sentinelBranch(fruit);
+  if (branchExists(b)) return;
+  sh(`git branch "${b}" HEAD`, true);
+}
+
 function takenFruits() {
-  return new Set(listWorktreeBranches().map((b) => b.fruit).filter(Boolean));
+  // Start from live worktrees (the fast path, also the former sole source).
+  const taken = new Set(listWorktreeBranches().map((b) => b.fruit).filter(Boolean));
+  // Also scan all local <fruit>/* branches to catch session sentinels.
+  // A sentinel keeps a fruit taken across the gap between an agent's worktrees.
+  const allBranches = sh('git branch --list', true) || '';
+  for (const line of allBranches.split('\n')) {
+    const branch = line.trim().replace(/^\*\s+/, '');
+    if (!branch) continue;
+    const slash = branch.indexOf('/');
+    if (slash < 0) continue;
+    const fruit = branch.slice(0, slash);
+    const rest = branch.slice(slash + 1);
+    // Skip stale sentinels so crashed/ended sessions eventually free their fruit.
+    if (rest === 'session' && isSentinelStale(fruit)) continue;
+    if (fruit) taken.add(fruit);
+  }
+  return taken;
 }
 
 function branchExists(branch) {
@@ -332,6 +377,10 @@ function main() {
       }
     }
 
+    // In auto mode, stake a session-sentinel branch so this fruit stays taken
+    // across the gap between this worktree's teardown and the next auto-claim (#194).
+    if (!identity.name) createSessionSentinel(fruit);
+
     report(fruit, branch, wtPath, base, identity.modeLabel, false);
     return;
   }
@@ -366,4 +415,5 @@ module.exports = {
   FRUITS, slugify, listWorktreeBranches, takenFruits,
   parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
   checkIdentityName, readIssue, shouldBlockClaim,
+  sentinelBranch, isSentinelStaleByAge,
 };

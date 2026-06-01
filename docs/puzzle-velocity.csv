@@ -232,3 +232,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 239,249,decide .gitignore vs .pddignore coverage policy + report pdd defects upstream,RESEARCH,,,,,,,,,"inter-turn gap; decision: Option A (keep .gitignore folded in via --skip-gitignore, load-bearing, documented in run-pdd.sh); upstream: filed cqfn/pdd#247 for defects 1+2; commented on existing cqfn/pdd#221 for defect 3",BANANA,
 240,170,,WRITER,60,25,,,,,,,,FIG,
 241,367,.pddignore tests spec.js + revert split-concat workarounds,DEV,15,8,3,12,5,2026-06-01T08:40:58-1000,2026-06-01T08:44:20-1000,,1 .pddignore line; 8 reverts in close.unit.spec.js; 2 in close.e2e.spec.js; pitfalls.md note,APPLE,claude-sonnet-4-6
+242,194,Fix: claim auto-fruit is worktree-scoped — add session-sentinel branch,DEV,45,35,,,,,,,,DRAGONFRUIT,sonnet-4.6
