@@ -5,6 +5,7 @@ const {
   isVelocityCsvOnlyConflict,
   DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET,
   extractTicketFromCsvDiff, extractRowsFromCsvDiff, velocityTicketMismatch,
+  computeVelocityMismatch,
   extractKeywords, keywordsOverlap,
 } = require('../../scripts/close');
 
@@ -498,5 +499,66 @@ describe('close.js extractRowsFromCsvDiff() — Guard 1 fix (#346)', () => {
   test('+++ header line is ignored', () => {
     const diff = '+++ b/docs/puzzle-velocity.csv\n' + row(311, 'DRAGONFRUIT');
     expect(extractRowsFromCsvDiff(diff)).toEqual([{ ticket: 311, agent: 'DRAGONFRUIT' }]);
+  });
+});
+
+// Guard 1 (#361 fix): computeVelocityMismatch — ticket-first attribution.
+// The #346 agent-filter assumed velocity row agent == branch-prefix fruit.
+// When terminal-name convention diverges from that (e.g. row says "CHERRY",
+// branch says "banana"), the filter picks up a concurrent BANANA row for a
+// different ticket and ignores the correct CHERRY row → false-positive mismatch.
+// Fix: any added row for the correct ticket passes immediately; the agent-filter
+// fallback only runs when no correct-ticket row is present (catches #278 transposition).
+describe('close.js computeVelocityMismatch() — Guard 1 #361 fix', () => {
+  const mkRow = (ticket, agent) => ({ ticket, agent });
+
+  test('#361 repro: concurrent BANANA/#357 + closer CHERRY/#317 → pass (branch=banana)', () => {
+    // Exact scenario from the #317 close that triggered the bug.
+    const rows = [mkRow(357, 'BANANA'), mkRow(317, 'CHERRY')];
+    expect(computeVelocityMismatch(rows, '317', 'banana')).toEqual([]);
+  });
+
+  test('#278 transposition still fires: closer logged wrong ticket, no correct-ticket row', () => {
+    // DRAGONFRUIT logged #279 but is closing #278 — Guard 1 must still catch this.
+    const rows = [mkRow(279, 'DRAGONFRUIT')];
+    expect(computeVelocityMismatch(rows, '278', 'dragonfruit')).toEqual([279]);
+  });
+
+  test('correct-ticket row from any agent passes — agent identity does not matter', () => {
+    // Even if closingAgent is something else entirely, a row for the right ticket passes.
+    const rows = [mkRow(317, 'CHERRY')];
+    expect(computeVelocityMismatch(rows, '317', 'dragonfruit')).toEqual([]);
+  });
+
+  test('no rows at all → pass (nothing to check; row-presence is a separate guard)', () => {
+    expect(computeVelocityMismatch([], '317', 'banana')).toEqual([]);
+    expect(computeVelocityMismatch(null, '317', 'banana')).toEqual([]);
+  });
+
+  test('only concurrent rows for a different ticket, closer has no rows → pass silently', () => {
+    // Concurrent BANANA logged #357; closer CHERRY logged nothing.
+    // closingAgent is 'cherry' — no rows match → myRows = [] → no mismatch.
+    const rows = [mkRow(357, 'BANANA')];
+    expect(computeVelocityMismatch(rows, '317', 'cherry')).toEqual([]);
+  });
+
+  test('CLAUDE_AGENT_NAME path: closingAgent=CHERRY filters correctly when env agent matches row', () => {
+    // When CLAUDE_AGENT_NAME=CHERRY is passed as closingAgent, the correct row
+    // is found both via the ticket-first shortcut AND via agent filtering.
+    const rows = [mkRow(357, 'BANANA'), mkRow(317, 'CHERRY')];
+    expect(computeVelocityMismatch(rows, '317', 'CHERRY')).toEqual([]);
+  });
+
+  test('no closingAgent (null) → all rows checked; fires on any mismatch', () => {
+    // Pre-#346 fallback: no agent identity → check all rows.
+    const rows = [mkRow(279, 'DRAGONFRUIT')];
+    expect(computeVelocityMismatch(rows, '278', null)).toEqual([279]);
+  });
+
+  test('multiple rows: correct-ticket row among mismatches → pass (correct row present)', () => {
+    // Closer has correct row (#317); also has a spurious row for #318 (unusual).
+    // The correct row's presence is sufficient to pass.
+    const rows = [mkRow(317, 'CHERRY'), mkRow(318, 'CHERRY')];
+    expect(computeVelocityMismatch(rows, '317', 'cherry')).toEqual([]);
   });
 });

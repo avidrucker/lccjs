@@ -242,6 +242,32 @@ function velocityTicketMismatch(tickets, issue) {
   return (tickets || []).filter((t) => t !== n);
 }
 
+// Guard 1 (#361 fix): decide whether the added rows indicate a mismatch, given
+// the full row list, the issue being closed, and the closing agent identity.
+//
+// The #346 fix filtered by branch-prefix agent to exclude concurrent rows. That
+// assumption breaks when the velocity row's `agent` field (terminal name) differs
+// from the branch-prefix fruit — e.g. row says "CHERRY", branch says "banana".
+// Filtering by "banana" then picks up a concurrent BANANA row for a different
+// ticket and ignores CHERRY's correct row → false-positive mismatch (#361).
+//
+// Fix: if any added row records the correct ticket, the closer has a valid row —
+// pass immediately, regardless of agent name. Only when no correct-ticket row
+// exists do we fall back to agent-name filtering to catch the original #278
+// digit-transposition case (closer logged a row but with the wrong ticket number).
+//
+// Pure: takes {ticket, agent}[], issue string|number, closingAgent string|null.
+// Returns mismatch ticket numbers (empty array = pass).
+function computeVelocityMismatch(allRows, issue, closingAgent) {
+  const n = Number(issue);
+  const rows = allRows || [];
+  if (rows.some((r) => r.ticket === n)) return [];
+  const myRows = closingAgent
+    ? rows.filter((r) => r.agent.toLowerCase() === String(closingAgent).toLowerCase())
+    : rows;
+  return velocityTicketMismatch(myRows.map((r) => r.ticket), issue);
+}
+
 // Guard 2 (#311/#301): stop-set for keyword extraction — role prefixes and filler
 // words that appear in titles/subjects but carry no discriminating signal.
 const KEYWORD_STOP_SET = new Set([
@@ -309,24 +335,23 @@ function treeIsClean() {
   return s !== null && s.trim() === '';
 }
 
-// Guard 1 I/O wrapper (#310, fixed in #346): read the velocity CSV rows added in
-// HEAD and verify that this agent's rows record the issue being closed. Skips
-// silently when no row was added (not every close has a velocity row). Rows
+// Guard 1 I/O wrapper (#310, fixed in #346, #361): read the velocity CSV rows
+// added in HEAD and verify that this agent's rows record the issue being closed.
+// Skips silently when no row was added (not every close has a velocity row). Rows
 // belonging to concurrent agents are ignored — a full-file CSV re-export
 // legitimately includes rows from other agents active in the same window (#346).
 // die()s on mismatch; the commit is still local and can be amended.
 function checkVelocityTicketMatch(issue) {
   const diff = sh('git show HEAD -- docs/puzzle-velocity.csv', true) || '';
-  // Derive the closing agent from the branch prefix (e.g. "dragonfruit" from
-  // "dragonfruit/issue-346-..."). Falls back to null, which disables filtering
-  // and checks all rows (same as pre-#346 behaviour — safe but noisier).
+  // Prefer CLAUDE_AGENT_NAME (the terminal's declared identity, matching the
+  // velocity row's `agent` field) over branch prefix (can diverge when the
+  // claim fruit ≠ the terminal name — #361 false-positive root cause).
+  const envAgent = process.env.CLAUDE_AGENT_NAME || null;
   const branch = currentBranch() || '';
-  const closingAgent = branch.split('/')[0] || null;
+  const branchAgent = branch.split('/')[0] || null;
+  const closingAgent = envAgent || branchAgent;
   const allRows = extractRowsFromCsvDiff(diff);
-  const myRows = closingAgent
-    ? allRows.filter((r) => r.agent.toLowerCase() === closingAgent.toLowerCase())
-    : allRows;
-  const mismatched = velocityTicketMismatch(myRows.map((r) => r.ticket), issue);
+  const mismatched = computeVelocityMismatch(allRows, issue, closingAgent);
   if (mismatched.length) {
     die(`velocity row ticket mismatch: the CSV row(s) added in HEAD record ` +
         `ticket #${mismatched.join(', #')}, but you are closing issue #${issue}. ` +
@@ -565,5 +590,6 @@ module.exports = {
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
   isVelocityCsvOnlyConflict,
   extractTicketFromCsvDiff, extractRowsFromCsvDiff, velocityTicketMismatch,
+  computeVelocityMismatch,
   extractKeywords, keywordsOverlap,
 };
