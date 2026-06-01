@@ -41,8 +41,6 @@ function encodeRow(obj) {
   return COLS.map(c => encodeField(obj[c])).join(',');
 }
 
-// Implemented #320: guard added in exportCSV() — see isMainCheckout() above.
-
 // Returns true when the script is running from the main checkout (not a worktree).
 // In a worktree, .git is a file containing "gitdir: ..."; in the main checkout it is a directory.
 function isMainCheckout() {
