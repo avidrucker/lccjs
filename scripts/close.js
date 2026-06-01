@@ -28,6 +28,7 @@
  *   node scripts/close.js <issue> --dry-run      # show the plan, change nothing
  *   node scripts/close.js <issue> --keep         # land the commit but DON'T tear down
  *   node scripts/close.js <issue> --no-verify-issue  # skip the gh post-close check
+ *   node scripts/close.js <issue> --skip-ticket-match # bypass the Guard 1 velocity-row ticket check (#310)
  *
  * See docs/research/close-sequence-hardening.md for the full design.
  */
@@ -108,7 +109,7 @@ function mainRoot() {
 function parseArgs(argv) {
   const opts = {
     issue: null, max: DEFAULT_MAX_RETRIES, dryRun: false,
-    keep: false, verifyIssue: true,
+    keep: false, verifyIssue: true, skipTicketMatch: false,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -117,6 +118,7 @@ function parseArgs(argv) {
     else if (a === '--dry-run') opts.dryRun = true;
     else if (a === '--keep') opts.keep = true;
     else if (a === '--no-verify-issue') opts.verifyIssue = false;
+    else if (a === '--skip-ticket-match') opts.skipTicketMatch = true;
     else if (a.startsWith('--')) die(`unknown flag: ${a}`);
     else positionals.push(a);
   }
@@ -178,6 +180,42 @@ function shouldCleanup({ onOriginMain }) {
   return onOriginMain === true;
 }
 
+// Guard 1 (#310/#301): extract the ticket number(s) from the velocity rows ADDED
+// in a commit, by parsing the unified diff of `git show HEAD -- <csv>`. Catches
+// the #278 failure mode — a digit transposition where `Closes #N` and the
+// velocity row's `ticket` column disagree, silently misattributing the work.
+//
+// The CSV schema (see scripts/velocity-export.js) is `id,ticket,title,...`, so
+// `ticket` is column index 1 — always BEFORE the free-text title/notes columns,
+// so a plain comma-split is safe regardless of commas inside those later fields
+// (the machine-generated `id` in column 0 never contains a comma).
+//
+// Only added data rows count: lines starting with a single `+` (not the `+++`
+// file header). The two non-data `+`-lines that can appear — the `# AUTO-
+// GENERATED` comment and the `id,ticket,...` header on a fresh file — both yield
+// a non-numeric column 1, so filtering to integer tickets drops them for free.
+// Pure: takes the diff string, returns an array of integer ticket numbers.
+function extractTicketFromCsvDiff(diff) {
+  const tickets = [];
+  for (const line of String(diff || '').split('\n')) {
+    if (!line.startsWith('+') || line.startsWith('+++')) continue;
+    const fields = line.slice(1).split(',');
+    const raw = (fields[1] || '').trim();
+    if (/^\d+$/.test(raw)) tickets.push(Number(raw));
+  }
+  return tickets;
+}
+
+// The Guard 1 decision (#310): which of the added rows' tickets disagree with the
+// issue being closed. Empty result == the close is consistent (including the
+// no-row-added case, where `tickets` is []). Pure: array + issue → array of the
+// offending ticket numbers. Kept separate from the diff parsing so both halves of
+// the guard are unit-testable without git I/O.
+function velocityTicketMismatch(tickets, issue) {
+  const n = Number(issue);
+  return (tickets || []).filter((t) => t !== n);
+}
+
 // Classify a rebase's conflicted paths against the union-file set.
 //   'none'       — no conflicts.
 //   'union-only' — every conflicted path is a merge=union file. This should be
@@ -216,6 +254,22 @@ function headClosesIssue(issue) {
 function treeIsClean() {
   const s = sh('git status --porcelain', true);
   return s !== null && s.trim() === '';
+}
+
+// Guard 1 I/O wrapper (#310): read the velocity CSV rows added in HEAD and verify
+// they record the issue being closed. Skips silently when no row was added (not
+// every close has a velocity row — fast turns, retroactive tracker tickets). Any
+// added row whose ticket ≠ issue is a hard stop (the #278 misattribution). die()s
+// on mismatch; the commit is still local and can be amended without consequence.
+function checkVelocityTicketMatch(issue) {
+  const diff = sh('git show HEAD -- docs/puzzle-velocity.csv', true) || '';
+  const mismatched = velocityTicketMismatch(extractTicketFromCsvDiff(diff), issue);
+  if (mismatched.length) {
+    die(`velocity row ticket mismatch: the CSV row(s) added in HEAD record ` +
+        `ticket #${mismatched.join(', #')}, but you are closing issue #${issue}. ` +
+        'Amend the commit (or the velocity row) to align them first. ' +
+        'Pass --skip-ticket-match if intentional.');
+  }
 }
 
 function rebaseOrMergeInProgress() {
@@ -303,7 +357,7 @@ function report({ issue, branch, wtPath, sha, kept, dry }) {
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
-    die('usage: node scripts/close.js <issue-number> [--max N] [--dry-run] [--keep] [--no-verify-issue]');
+    die('usage: node scripts/close.js <issue-number> [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match]');
   }
   const issue = opts.issue;
 
@@ -321,6 +375,8 @@ function main() {
         '(marker deletion + CSV row + `Closes #N`) FIRST, then run close. ' +
         'This tool lands an existing close commit; it does not author one.');
   }
+  // Guard 1 (#310): the velocity row in HEAD must record the issue being closed.
+  if (!opts.skipTicketMatch) checkVelocityTicketMatch(issue);
   if (rebaseOrMergeInProgress()) {
     die('a rebase/merge is already in progress here — finish or abort it first.');
   }
@@ -404,4 +460,5 @@ module.exports = {
   DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV,
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
   isVelocityCsvOnlyConflict,
+  extractTicketFromCsvDiff, velocityTicketMismatch,
 };
