@@ -2,7 +2,8 @@
 
 const {
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
-  DEFAULT_MAX_RETRIES, UNION_FILES,
+  isVelocityCsvOnlyConflict,
+  DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV,
 } = require('../../scripts/close');
 
 describe('close.js classifyPushError()', () => {
@@ -102,7 +103,7 @@ describe('close.js classifyRebaseConflict()', () => {
     expect(classifyRebaseConflict(['docs/puzzle-clusters.csv'])).toBe('union-only');
   });
 
-  test('velocity CSV is no longer a union file (#290 removed merge=union) → blocking', () => {
+  test('velocity CSV is not a union file (#290 removed merge=union) → blocking from classifyRebaseConflict; tryLand() catches it earlier via isVelocityCsvOnlyConflict (#313)', () => {
     expect(classifyRebaseConflict(['docs/puzzle-velocity.csv'])).toBe('blocking');
   });
 
@@ -162,5 +163,43 @@ describe('close.js parseArgs()', () => {
   test('--no-verify-issue sets verifyIssue false (default true)', () => {
     expect(parseArgs(['267']).verifyIssue).toBe(true);
     expect(parseArgs(['267', '--no-verify-issue']).verifyIssue).toBe(false);
+  });
+});
+
+describe('close.js isVelocityCsvOnlyConflict()', () => {
+  test('velocity CSV alone → true (auto-resolvable by re-export)', () => {
+    expect(isVelocityCsvOnlyConflict([VELOCITY_CSV])).toBe(true);
+  });
+
+  test('velocity CSV + another file → false (human-resolvable conflict)', () => {
+    expect(isVelocityCsvOnlyConflict([VELOCITY_CSV, 'README.md'])).toBe(false);
+  });
+
+  test('a source file alone → false', () => {
+    expect(isVelocityCsvOnlyConflict(['src/core/assembler.js'])).toBe(false);
+  });
+
+  test('cluster CSV (union file) alone → false (not the velocity CSV)', () => {
+    expect(isVelocityCsvOnlyConflict(['docs/puzzle-clusters.csv'])).toBe(false);
+  });
+
+  test('empty array → false (no conflict at all)', () => {
+    expect(isVelocityCsvOnlyConflict([])).toBe(false);
+  });
+
+  test('null → false', () => {
+    expect(isVelocityCsvOnlyConflict(null)).toBe(false);
+  });
+
+  test('undefined → false', () => {
+    expect(isVelocityCsvOnlyConflict(undefined)).toBe(false);
+  });
+
+  test('path strings are trimmed before comparison', () => {
+    expect(isVelocityCsvOnlyConflict([`  ${VELOCITY_CSV}  `])).toBe(true);
+  });
+
+  test('VELOCITY_CSV constant matches the actual export path', () => {
+    expect(VELOCITY_CSV).toBe('docs/puzzle-velocity.csv');
   });
 });

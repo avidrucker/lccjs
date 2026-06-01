@@ -45,7 +45,22 @@ const DEFAULT_MAX_RETRIES = 5;
 // is a real, human-resolvable conflict. Keep in sync with .gitattributes.
 // Note: docs/puzzle-velocity.csv was removed from this list in #290 — the CSV
 // is now a full-file auto-export from SQLite; conflicts resolve via re-export.
+// tryLand() handles velocity CSV conflicts automatically (see isVelocityCsvOnlyConflict).
 const UNION_FILES = ['docs/puzzle-clusters.csv'];
+
+// The velocity CSV path — a full-file SQLite export. When two agents both log a
+// row and commit before either pushes, their CSV snapshots diverge and git
+// cannot auto-merge the full-file rewrites. tryLand() detects this case and
+// re-exports from SQLite (the source of truth) instead of aborting. (#313)
+const VELOCITY_CSV = 'docs/puzzle-velocity.csv';
+
+// Returns true when the only conflicted path is the velocity CSV, meaning
+// tryLand() can auto-resolve by re-exporting from SQLite rather than aborting.
+// Pure: takes an array of path strings, returns a boolean.
+function isVelocityCsvOnlyConflict(paths) {
+  const list = (paths || []).map((p) => String(p).trim()).filter(Boolean);
+  return list.length > 0 && list.every((p) => p === VELOCITY_CSV);
+}
 
 function sh(cmd, allowFail = false) {
   try {
@@ -227,17 +242,42 @@ function tryLand() {
   sh('git fetch origin main', true);
   const rebase = shCapture('git rebase origin/main');
   if (!rebase.ok) {
-    const kind = classifyRebaseConflict(conflictedPaths());
-    sh('git rebase --abort', true);
-    if (kind === 'union-only') {
-      die('rebase conflicted ONLY on merge=union file(s) — that should be ' +
-          'impossible (union auto-resolves). Check .gitattributes is in effect. ' +
-          'Aborted the rebase; your commit is safe and local.');
+    const conflicted = conflictedPaths();
+    if (isVelocityCsvOnlyConflict(conflicted)) {
+      // Auto-resolve: two agents committed divergent CSV snapshots. Re-export
+      // from SQLite (the source of truth, already has both rows) then continue.
+      const exportScript = path.join(__dirname, 'velocity-export.js');
+      const exported = shCapture(`node "${exportScript}"`);
+      if (!exported.ok) {
+        sh('git rebase --abort', true);
+        die('velocity CSV conflict: auto-resolve via velocity-export.js failed. ' +
+            'Aborted the rebase; your commit is safe and local.');
+      }
+      const staged = shCapture(`git add "${VELOCITY_CSV}"`);
+      if (!staged.ok) {
+        sh('git rebase --abort', true);
+        die('velocity CSV conflict: re-export succeeded but git add failed. Aborted.');
+      }
+      const cont = shCapture('GIT_EDITOR=true git rebase --continue');
+      if (!cont.ok) {
+        sh('git rebase --abort', true);
+        die('velocity CSV conflict: re-export + stage succeeded but rebase ' +
+            `--continue failed: ${cont.out.trim()}. Your commit is safe and local.`);
+      }
+      log('velocity CSV conflict auto-resolved (re-exported from SQLite).');
+    } else {
+      const kind = classifyRebaseConflict(conflicted);
+      sh('git rebase --abort', true);
+      if (kind === 'union-only') {
+        die('rebase conflicted ONLY on merge=union file(s) — that should be ' +
+            'impossible (union auto-resolves). Check .gitattributes is in effect. ' +
+            'Aborted the rebase; your commit is safe and local.');
+      }
+      die('rebase hit a real conflict in non-union file(s): ' +
+          `${conflicted.join(', ') || rebase.out.trim()}. ` +
+          'Aborted the rebase. Resolve manually, then re-run `npm run close`. ' +
+          'Your commit is safe and local.');
     }
-    die('rebase hit a real conflict in non-union file(s): ' +
-        `${conflictedPaths().join(', ') || rebase.out.trim()}. ` +
-        'Aborted the rebase. Resolve manually, then re-run `npm run close`. ' +
-        'Your commit is safe and local.');
   }
   const push = shCapture('git push origin HEAD:main');
   // Exit code is the source of truth for success: a failing pre-push hook makes
@@ -361,6 +401,7 @@ function main() {
 if (require.main === module) main();
 
 module.exports = {
-  DEFAULT_MAX_RETRIES, UNION_FILES,
+  DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV,
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
+  isVelocityCsvOnlyConflict,
 };
