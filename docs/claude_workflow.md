@@ -80,7 +80,7 @@ is to be ready when asked (#377).
 
 1. Capture the start timestamp:
    ```bash
-   date '+%Y-%m-%dT%H:%M:%S%z'
+   date '+%Y-%m-%dT%H:%M:%S%:z'
    ```
    Time starts the moment context-gathering begins, *not* the moment work begins. Reading the issue counts as start.
 
@@ -159,7 +159,7 @@ A pause happens in two shapes:
 
 1. Capture the finish timestamp:
    ```bash
-   date '+%Y-%m-%dT%H:%M:%S%z'
+   date '+%Y-%m-%dT%H:%M:%S%:z'
    ```
 2. Final verification — does the change actually do what it should?
 

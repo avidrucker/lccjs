@@ -97,7 +97,7 @@ I pick up the ticket as my prediction *before* doing the work.
 
 When I pick up a ticket:
 
-1. **Start** — capture `date '+%Y-%m-%dT%H:%M:%S%z'` *before* reading the issue.
+1. **Start** — capture `date '+%Y-%m-%dT%H:%M:%S%:z'` *before* reading the issue.
 2. **Predict** — if the ticket has no C estimate yet, set one now.
 3. **Work** — do the puzzle.
 4. **Finish** — capture finish timestamp before the closing commit.
