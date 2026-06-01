@@ -102,12 +102,21 @@ All cases: exit=1 on both sides.
 | `jsrr` bare | `Bad register` | pass 1 and 2 | `.e(2B)` `.lst` `.bst` | `Missing operand` | none ✓ |
 | `jsr` bare | `Missing operand` | pass 1 only | `.e(1B)` `.lst` `.bst` | `Bad label` | none ✓ |
 | `bl` bare | `Missing operand` | pass 1 only | `.e(1B)` `.lst` `.bst` | `Bad label` | none ✓ |
-| `ret` bare | — (assembled OK; hung at runtime) | both | `.e(4B)` `.lst(0B)` `.bst(0B)` | `Missing operand` | none ✓ |
+| `ret` bare | `Possible infinite loop` + debug-dump flood (killed by timeout) | both | `.e(4B)` `.lst(0B)` `.bst(0B)` | `Possible infinite loop` | `.e(4B)` ✗ |
+| `jmp r0`   | `Possible infinite loop` + debug-dump flood (killed by timeout) | both | `.e(4B)` `.lst(0B)` `.bst(0B)` | `Possible infinite loop` | `.e(4B)` ✗ |
 
-`ret` and `jmp r0` assemble successfully (both are valid instructions) and then
-execute infinite loops — those are runtime behaviors, not assembler errors. Only
-LCC.js rejects `ret` bare as an assembler error; that divergence is separate from
-the missing-operand pattern.
+`ret` (= `jmp r7`; r7 initialises to 0 → jumps to address 0) and `jmp r0` (r0=0 at
+startup → same) are valid instructions that produce infinite loops at runtime. Both
+tools assemble them successfully. At runtime, the oracle prints `Possible infinite
+loop` and enters a stepping debug mode: in a non-TTY context it reads EOF at each
+`ret>>>`/`jmp>>>` prompt and floods stdout indefinitely (322–459 MB in 5 s; killed by
+timeout); in a TTY it waits for user input and appears to hang. LCC.js detects the
+same loop and exits 1 immediately with a single-line message. See deviation §19.
+
+The `.e(4B)` column for LCC.js (marked ✗) is a **runtime-error artifact** — the
+assembler wrote the `.e` before execution began (assembly was correct), but
+the interpreter did not write `.lst`/`.bst` because it exited early. This differs
+from the assembly-error artifact pattern in §3's primary deviation.
 
 #### Deviations
 
@@ -530,6 +539,54 @@ updated to pre-create `name.nnn` instead of piping it via stdin.
 
 ---
 
+### 19. `ret` bare / `jmp r0`: oracle enters debug-dump loop; LCC.js exits immediately (#385)
+
+`ret` assembles to `jmp r7`; r7 initialises to 0, so execution immediately jumps to
+address 0 and loops. `jmp r0` has the same effect (r0=0 at startup). Both are valid
+instructions — assembly succeeds on both runtimes.
+
+| | Oracle (cuh63 6.3) | LCC.js |
+|---|---|---|
+| Assembly | Succeeds (both passes) | Succeeds (both passes) |
+| Runtime message | `Possible infinite loop` + stepping debug dump | `Possible infinite loop` |
+| Runtime exit | Never exits; killed at timeout (exit=124) | Exits immediately (exit=1) |
+| TTY context | Pauses at `ret>>>`/`jmp>>>` prompt; waits for user input | Same immediate exit |
+| Non-TTY context | Reads EOF at prompt; floods stdout (~90 MB/s) until killed | Same immediate exit |
+| Artifacts | `.e(4B)` `.lst(0B)` `.bst(0B)` | `.e(4B)` only (no `.lst`/`.bst`) |
+
+**Oracle detail:** the oracle detects the loop and prints `Possible infinite loop`,
+then enters a stepping debugger mode — each iteration prints one trace line and emits
+a `ret>>>` (or `jmp>>>`) prompt. In a TTY this waits for user input (appears to hang).
+In a non-interactive context it reads EOF immediately and floods stdout at ~90 MB/s
+until killed (322–459 MB in 5 s at timeout). The oracle never exits on its own.
+
+**LCC.js behavior:** the interpreter's cycle-limit heuristic fires, prints a single
+`Error running <file>: Possible infinite loop`, and exits 1. The `.e` file remains
+(assembly was correct); no `.lst`/`.bst` because stats are written after execution
+completes, which never happens.
+
+**Why BY DESIGN (beneficial deviation):**
+
+- LCC.js's fail-fast behavior is strictly better for automated callers (CI, agents,
+  scripts) — it produces a clear error message and a clean exit code.
+- The oracle's debug-dump mode is arguably useful in TTY contexts (stepping through
+  the loop) but catastrophically bad in automated ones.
+- No change to LCC.js is needed; the behavior is already correct.
+
+**Report-worthy?** Provisionally yes — the oracle's stdout flood in non-TTY contexts
+is a robustness defect, not educational behavior. A minimal report to Prof. Dos Reis
+noting that `ret`/`jmp r0` cause unlimited stdout in non-interactive use would be
+appropriate. Tracked in **#385** pending owner ratification.
+
+**Source:** `src/core/interpreter.js` — cycle-limit / loop-detection logic.
+
+**Evidence:** `public_experiments/` (probe described in #385); §3 blast-radius table
+corrected in same commit.
+
+**GitHub issue:** [#385](https://github.com/avidrucker/lccjs/issues/385)
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -554,3 +611,4 @@ _None pending._
 | 2026-06-01 | §6 OB-026 → BY DESIGN §17 (#59 closed) | Multi-file `.a` input: decided — only `args[0]` is assembled, extras silently ignored. Moved from "LCC.js BUG (fix pending)" to BY DESIGN §17; full decision record in `docs/core-behavior-matrix.md`. |
 | 2026-06-01 | Deviation 18 added (#375) | Non-interactive stdin + absent `name.nnn`: LCC.js now exits immediately with a fatal diagnostic instead of hanging at ~100% CPU. OG LCC blocks indefinitely. Classified BY DESIGN (fail-fast is safer). |
 | 2026-06-01 | §3 OG BUG #3 corrigendum (#261) | Segfault claim not reproducible in cuh63 6.3. Oracle exits 1 with "Missing operand" and leaves `.e`/`.lst`/`.bst` artifact files (same pattern as OG BUG #10). Entry rewritten: BY DESIGN (no-artifact behavior beneficial). Full probe: `docs/research/jmp-missing-operand-segfault.md`. |
+| 2026-06-01 | §3 blast-radius table corrected + Deviation 19 added (#385) | `ret` bare / `jmp r0` row: LCC.js column was `Missing operand` / `none ✓` — both wrong. Actual: LCC.js says `Possible infinite loop` (runtime, exit=1) and leaves `.e(4B)`. Oracle says `Possible infinite loop` then floods stdout in a debug-dump loop (never exits; killed at timeout). `jmp r0` row added. Footnote corrected. New deviation §19 documents the runtime divergence; classified BY DESIGN (beneficial). |
