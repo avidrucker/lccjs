@@ -536,7 +536,20 @@ function main() {
   sh(`git branch -D ${branch}`, true);
   sh('git worktree prune', true);
 
+  // Pull main while chdir'd at root — agents often run `git pull` right after
+  // close, but by then the shell CWD is the now-deleted worktree, causing
+  // "CWD deleted; recovered to /home" failures. Doing it here eliminates
+  // that footgun. (#352)
+  const pullResult = shCapture('git pull --ff-only origin main');
+  if (pullResult.ok) {
+    log('main checkout synced.');
+  } else {
+    log(`warn: ff pull of main skipped (${pullResult.out.trim().split('\n')[0].slice(0, 80)}). ` +
+        `Sync manually: git -C "${root}" pull --ff-only origin main`);
+  }
+
   report({ issue, branch, wtPath, sha, kept: false, dry: false });
+  log(`Shell re-root: cd "${root}"`);
 }
 
 if (require.main === module) main();

@@ -148,7 +148,10 @@ git add -A
 git commit -m "... Closes #N"
 
 # 3. Land + clean up (loops fetch/rebase/push until it lands on origin/main,
-#    then removes the worktree + branch — ONLY if the push succeeded)
+#    then removes the worktree + branch — ONLY if the push succeeded).
+#    close.js also fast-forward-pulls the main checkout and prints a
+#    "Shell re-root: cd <path>" line — do NOT run `git pull` manually after
+#    close; the shell CWD is the now-deleted worktree and the command will fail.
 npm run close N
 ```
 
@@ -174,7 +177,7 @@ Do **not** `git commit --amend` to backfill the SHA — amend orphans the origin
 
 3. Update tracker checkbox **via an issue comment**, not a body edit. (Body edits race with parallel agents; comments are append-only.) If there's no tracker, this step is skipped.
 4. Mark any related TaskCreate tasks as complete via TaskUpdate.
-5. **Worktree teardown** — handled automatically by `npm run close` (it confirms the commit is on `origin/main` before removing). If using the fallback path, confirm first (`git branch -r --contains HEAD` → `origin/main`), then run the `&&`-gated chain above. This is **mandatory**: a worktree left after close looks like a live claim to every other agent and to `puzzle:status`.
+5. **Worktree teardown + main sync** — handled automatically by `npm run close` (confirms commit on `origin/main`, removes worktree + branch, then fast-forward-pulls the main checkout). Do **not** run `git pull` after close — the shell CWD is the now-deleted worktree and the command will fail. close.js prints `Shell re-root: cd <path>` at the end; use that if you need to issue further commands from main. (#352) If using the fallback path, confirm first (`git branch -r --contains HEAD` → `origin/main`), then run the `&&`-gated chain above. This is **mandatory**: a worktree left after close looks like a live claim to every other agent and to `puzzle:status`.
 6. Report what changed in 1-2 sentences. Include the velocity Δ if it's interesting.
 
 **What I do *not* do at close:**
