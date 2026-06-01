@@ -12,12 +12,16 @@
  *   node scripts/velocity-log.js '{"ticket":276,"role":"DEV","agent":"BANANA","h_min":20,...}'
  *   npm run velocity:log -- '{"ticket":276,...}'
  *
+ *   --from-main   bypass the CWD guard when logging from the main checkout is
+ *                 intentional (e.g. a PM row while another agent holds a worktree)
+ *
  * Exit codes:
  *   0  success (prints inserted row id)
- *   1  missing arg / invalid JSON / validation failure / DB error
+ *   1  missing arg / invalid JSON / validation failure / DB error / CWD guard
  */
 'use strict';
 
+const { execSync } = require('child_process');
 const os   = require('os');
 const path = require('path');
 const Database = require('better-sqlite3');
@@ -58,6 +62,33 @@ if (input.ticket != null && (typeof input.ticket !== 'number' || !Number.isInteg
 if (VALID_ROLES.size > 0 && !VALID_ROLES.has(input.role)) {
   // Warn but don't block — role taxonomy may expand (#284 Q3)
   console.warn(`velocity-log: unknown role "${input.role}" (valid: ${[...VALID_ROLES].join(', ')})`);
+}
+
+// --- CWD guard (#312) ---
+// Exporting from the main checkout while a worktree is active writes the CSV
+// to the wrong docs/ and causes a rebase conflict on the next concurrent push.
+// Die loudly BEFORE any DB insert so no partial state is left behind.
+// --from-main escapes the guard for legitimate cases: a PM/RESEARCH row when
+// the task has no worktree of its own but another agent's worktree is active.
+// @todo #319:30m/RESEARCH evaluate guard approach — #312 implemented option (a)
+//   (die before insert + --from-main escape hatch); research whether option (b)
+//   (auto-route export to worktree) or a pre-commit hook is a better long-term fit
+const fromMain = process.argv.includes('--from-main');
+if (!fromMain && !process.cwd().includes('.claude/worktrees')) {
+  let activeWorktrees = [];
+  try {
+    const wtOut = execSync('git worktree list', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    // First line is always the main checkout — drop it; rest are active worktrees.
+    activeWorktrees = wtOut.trim().split('\n').slice(1).filter(l => l.trim().length > 0);
+  } catch (_) { /* git unavailable or not in a repo — skip the guard */ }
+  if (activeWorktrees.length > 0) {
+    const csvPath = path.join(__dirname, '..', 'docs', 'puzzle-velocity.csv');
+    console.error('velocity-log: ✗ logging from main checkout while active worktrees exist.');
+    console.error(`  CSV would export to: ${csvPath}`);
+    console.error('  Run this from inside the worktree instead.');
+    console.error('  Pass --from-main to override (e.g. a PM row with no worktree of your own).');
+    process.exit(1);
+  }
 }
 
 // --- Insert ---
