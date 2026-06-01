@@ -135,3 +135,99 @@ H2 is unconfirmed but not eliminated. A targeted audit — where in the context 
 | TBD | RESEARCH: context-budget audit — measure position of violated rules in context at violation time | RESEARCH | 45m |
 
 The first three convert the three highest-signal prose rules to guards. The fourth is existing debt. The fifth is the remaining unconfirmed hypothesis.
+
+---
+
+# Serial-tool-use enforcement — the spike (#316)
+
+**Agent:** CHERRY · **Ticket:** #316 (child of #309 footguns 1+2) · **Date:** 2026-05-31
+
+The "serial-tool-use lint" row in the follow-up table above was filed as #316 with one open
+question: **is there ANY mechanical enforcement point for "don't co-issue a producer and its
+consumer in one parallel tool block", or is it purely process?** A #309-era code scan found no
+in-repo git-boundary hook for it. This spike answers the question against the *harness*, not the
+repo.
+
+## The failure, restated precisely
+
+The model emits N tool calls in ONE assistant turn (a parallel block). A *producer* (a Bash that
+writes a log / mutates state) and its *consumer* (a Read of that log, or a comment drafted from a
+query's expected output) ride in the same block. The consumer runs before the producer's result
+is observable, so the model acts on stale/empty/expected — not actual — output.
+
+This recurred **live, repeatedly, during the #309/#310 work that filed and built these tickets** —
+the strongest possible evidence base:
+- #307: a log-writing Bash + the Read of that log, batched → acted on empty output → wrong-identity worktree.
+- #304: sqlite queries + a comment drafted from their *expected* numbers, batched → a comment full of fabricated rows; stopped only by an unrelated exception aborting the batch (luck).
+- #310 close-out: an 11-call batch with a **fabricated SHA**, and a separate batch whose `git reset --hard` **destroyed an uncommitted implementation** (rebuilt from scratch). The user intervened twice.
+
+In every case `deliberate-tool-pacing` was in memory and did not fire — re-confirming the §"enforcement asymmetry" finding: prose/memory rules don't hold under self-direction.
+
+## Findings — verified against the official Claude Code hooks docs
+
+Source: <https://code.claude.com/docs/en/hooks>, read directly via WebFetch (NOT trusted from a
+sub-agent — see the verification note below). Two hook events are relevant:
+
+**`PreToolUse` — fires per individual tool, CANNOT prevent the batch.** Its stdin payload is
+`session_id, transcript_path, cwd, permission_mode, hook_event_name, tool_name, tool_input` — and
+critically **no field listing or counting sibling tool calls in the same turn.** It can block its
+*own* call (`hookSpecificOutput.permissionDecision: "deny"`), but it has zero visibility into the
+other calls in the block. So **prevention of a producer+consumer batch is architecturally
+impossible at PreToolUse** — by the time the consumer's PreToolUse fires, the hook cannot know a
+sibling producer exists.
+
+**`PostToolBatch` — fires once per batch, CAN detect-and-react (the enforcement point).** Documented
+verbatim: *"After a full batch of parallel tool calls resolves, before the next model call."* It is a
+top-level-`decision` event, so it supports `decision: "block"` + `reason`, `continue: false`, and
+`hookSpecificOutput.additionalContext`. Because it fires **after** execution but **before the next
+model turn**, it cannot *prevent* the stale read, but it CAN:
+- inspect every tool call in the resolved batch,
+- detect a producer→consumer pair (e.g. a `Bash` writing path P + a `Read`/`Bash` consuming P in the same batch), and
+- **block the next model turn** with a `reason` that tells the model "you batched a write and a read of <P>; re-issue them serially and trust the real output" — turning a silent confabulation into a loud, self-correcting interrupt.
+
+This is exactly the guard-not-prose mechanism the §"enforcement asymmetry" predicted would hold.
+
+## Verdict
+
+**Partially enforceable — and the enforcement point is real, but it is detect-and-interrupt
+(PostToolBatch), not prevent (PreToolUse).** The #309 "no in-repo enforcement point" conclusion was
+right about *git boundaries* and about PreToolUse, but missed `PostToolBatch`, which is the
+harness-level event the spike was looking for. So the answer to the ticket's three-way question is
+option **(1)+(2)**: a `settings.json` PostToolBatch hook, not a git hook and not purely process.
+
+### Verification note (meta, and on-point for this ticket)
+
+Two sub-agents researched this; one returned a plausible answer that *included* `PostToolBatch`,
+the other "confirmed" it but also emitted a ~30-item hook list that I initially judged
+hallucinated and flagged a prompt-injection in its own search results. **I did not trust either
+agent on the load-bearing fact** — I WebFetched the official doc myself, which confirmed both the
+full (genuinely large) hook list AND `PostToolBatch`. The lesson is the ticket's own thesis applied
+to research: adversarially verify the load-bearing claim against the primary source; a confident
+secondary source that confabulates 20 neighbouring facts cannot be trusted on the 21st.
+
+**Not fully verified (docs truncated at the PostToolBatch section):** the exact `tool_calls[]`
+input schema — specifically whether each entry carries `tool_response` and the precise field names.
+The DEV puzzle below must confirm this against a live payload before relying on it.
+
+## Recommended decomposition — ONE grounded DEV puzzle (≤60m)
+
+> **DEV: PostToolBatch serial-tool-use guard — detect producer+consumer in one batch, block the
+> next turn (≤60m).** A `settings.json` `PostToolBatch` hook (`scripts/git-hooks/` sibling, or a new
+> `scripts/hooks/serial-tool-guard.js`) that: (a) reads the batch payload on stdin; (b) FIRST
+> confirms the real `tool_calls[]` schema against a logged live payload (the one truncation gap
+> above); (c) flags a batch where a `Bash`/`Write`/`Edit` writes a path that a `Read` or another
+> `Bash` in the same batch consumes, OR more cheaply, any batch containing ≥2 state-changing Bash
+> calls (`git`/`gh`/`npm run claim|close`); (d) emits `{"decision":"block","reason":"<which two
+> calls collided + re-issue serially>"}`. Ship behind a documented opt-in in `settings.json` so it
+> can be trialled (label `experiment`) before becoming default. Acceptance: a deliberately-batched
+> write+read turn is blocked with a clear reason; a single-tool or read-only batch passes
+> untouched.
+
+Scope guard: keep detection conservative to start (the ≥2-state-changing-Bash heuristic is cheap and
+catches every #307/#304/#310 instance) and tune toward path-level producer/consumer matching only if
+false-positives bite. A blocked turn costs one re-issue; a missed confabulation costs an hour, as
+this ticket's own evidence shows.
+
+| # | Title | Role | Est |
+|---|---|---|---|
+| TBD | DEV: PostToolBatch serial-tool-use guard — detect batched producer+consumer, block next turn | DEV | 60m |
