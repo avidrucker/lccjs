@@ -67,11 +67,22 @@ Because the close path is `git push origin HEAD:main`, the fruit branch name
 never lands on `main` — it is purely local coordination scaffolding, deleted with
 the worktree at close.
 
-### A fruit is "taken" iff a `<fruit>/*` branch exists
+### A fruit is "taken" iff any `<fruit>/*` local branch exists
 
 This keeps git as the single source of truth — no registry file to fall out of
-sync. `claim.js` reads `git worktree list --porcelain`, takes each branch's
-prefix before the first `/`, and that set is the taken-fruit set.
+sync. `takenFruits()` builds the taken set from two sources (#194):
+
+1. **Live worktrees** — `git worktree list --porcelain`, taking each checked-out
+   branch's prefix before the first `/`.
+2. **All local branches** — `git branch --list`, scanning for any `<fruit>/*`
+   branch. This captures the **session-sentinel** branch (`<fruit>/session`) that
+   `claim.js` creates on the first auto-claim of a session. The sentinel keeps
+   the fruit marked taken even when the agent holds no live worktree — closing
+   one puzzle and immediately claiming the next no longer creates a gap where
+   another session can steal the same fruit.
+
+Stale sentinels (tip commit older than 7 days) are skipped so crashed sessions
+eventually free their fruit. See `docs/research/claim-fruit-session-scope.md`.
 
 ### Selection contract: `auto` vs `--as`
 

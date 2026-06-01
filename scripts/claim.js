@@ -18,8 +18,9 @@
  * Identity precedence (highest first): --as <fruit> > CLAUDE_AGENT_NAME > branch-inferred > auto.
  * Full contract and race-safety model: docs/design-agent-worktree-identity.md
  *
- * A fruit is "taken" iff a `<fruit>/*` branch exists — git's branch namespace is
- * the single source of truth, no registry file.
+ * A fruit is "taken" iff any `<fruit>/*` local branch exists — either a live
+ * worktree branch or the `<fruit>/session` session-sentinel (#194). Git's branch
+ * namespace is the single source of truth; no registry file.
  *
  * Usage:
  *   node scripts/claim.js <issue> [slug]                   # auto-pick a fresh fruit

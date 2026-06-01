@@ -97,7 +97,8 @@ next," start here.
 **If I'm working in a `git worktree`** (because of parallel-agent activity):
 
 - **I claim under a self-assigned agent identity** — sync `main` first (`git pull --ff-only origin main`), then `npm run claim -- <issue>`. Identity precedence: `--as <fruit>` > `CLAUDE_AGENT_NAME` (export at launch) > `auto` (first-claim of a session, race-safe). Full contract: `docs/design-agent-worktree-identity.md`.
-- The worktree lives at `.claude/worktrees/<fruit>-issue-<N>/` on branch `<fruit>/issue-<N>-<slug>`. (Legacy worktrees used `worktree-issue-<N>`; both still carry `issue-<N>`, so `puzzle:status` recognises either — it just can't attribute the legacy ones to an agent.)
+  - **`auto` is only safe for the first claim of a solo session.** When the human launches ≥2 agents in parallel (fan-out), identities must be pre-assigned before any agent claims: `npm run claim -- <N> --as apple` (or set `CLAUDE_AGENT_NAME=apple` at session launch). Bare `auto` in a multi-agent context risks handing the same fruit to two different sessions (#193).
+- The worktree lives at `.claude/worktrees/<fruit>-issue-<N>/` on branch `<fruit>/issue-<N>-<slug>`. **Worktree and claim names must use only `[A-Za-z0-9._-]`** — a `/` in the name becomes `+` on disk and can interfere with other tooling (see `docs/design-agent-worktree-identity.md` for the naming contract). (Legacy worktrees used `worktree-issue-<N>`; both still carry `issue-<N>`, so `puzzle:status` recognises either — it just can't attribute the legacy ones to an agent.)
 - I work in the worktree, not in the main checkout.
 - All file edits and commits happen in the worktree.
 - I push using the trunk-based pattern: `git push origin HEAD:main` (after rebase).
@@ -223,8 +224,7 @@ through a special-char-free symlink instead, so the gate is correct from any
 worktree (it prints a one-line `[run-pdd] note:` when it does). If it can't build
 a safe path (e.g. a hostile `TMPDIR`) it fails loudly rather than mis-scan in
 silence. So `+` in a worktree name no longer defeats this gate — though keeping
-worktree/claim names to `[A-Za-z0-9._-]` is still good hygiene for other tooling
-(see #195).
+worktree/claim names to `[A-Za-z0-9._-]` is still good hygiene for other tooling.
 
 **The substring trap.** `pdd` is a dumb, case-sensitive *substring* matcher. It
 flags the bare uppercase keyword (`@todo`'s uppercase form, or `TODO` / `TODO:`)
