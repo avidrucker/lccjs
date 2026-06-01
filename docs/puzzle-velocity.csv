@@ -182,3 +182,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 189,,TIL 2026-05-31 BANANA s3,PM,10,8,,,,,,,"7 learnings: guard-before-mutation, hard-fail+escape-hatch, Guard1 full-file contract, stale SHA (#350), SQLite vs export path, --as fruit, skill stubs",BANANA,claude-sonnet-4-6
 190,,TIL 2026-05-31 DRAGONFRUIT s3,WRITER,20,10,,,,,,,"5 learnings: blank-.e universal, oracle cwd convention, velocity commit ordering, regex-from-end CSV parsing, SHA-rewrite orphans worktree consistently",DRAGONFRUIT,claude-sonnet-4-6
 191,,TIL 2026-05-31 DRAGONFRUIT s3,WRITER,20,10,,,,,,,"5 learnings: blank-.e universal, oracle cwd convention, velocity commit ordering, regex-from-end CSV parsing, SHA-rewrite orphans worktree consistently",DRAGONFRUIT,claude-sonnet-4-6
+192,331,Fix: §1 heading — re-run on calibration-usable rows,WRITER,10,5,1,-9,-4,2026-05-31T16:39:35-1000,2026-05-31T16:40:36-1000,,,ELDERBERRY,sonnet-4.6
