@@ -583,7 +583,7 @@ class Interpreter {
     }
   }
 
-  // @todo #251:45m/DEV decomplect: extract a pure decode(ir) -> {opcode,dr,sr1,imm5,...} that returns a value and writes nothing to this, so decode is unit-testable without running a full step(). See #246 H1a + docs/research/codebase-quality-hotspots.md
+  // @inprogress #251:45m/DEV decomplect: extract a pure decode(ir) -> {opcode,dr,sr1,imm5,...} that returns a value and writes nothing to this, so decode is unit-testable without running a full step(). See #246 H1a + docs/research/codebase-quality-hotspots.md
   // @todo #252:45m/DEV decomplect: lift traceMode source-emit + the post-execute register/flag diff printer (diffRegisters) out of this execution core into an observer that step() calls (step returns a delta). Blocked by #251. See #246 H1b
   step() {
     // Fetch instruction
