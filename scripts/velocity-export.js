@@ -41,6 +41,7 @@ function encodeRow(obj) {
   return COLS.map(c => encodeField(obj[c])).join(',');
 }
 
+// @todo #320:30m/DEV skip export when running from main checkout (not a worktree) — guard goes here in exportCSV(); detect via fs.statSync(path.join(__dirname,'..', '.git')).isDirectory(); see docs/research/csv-from-main-footgun.md
 function exportCSV() {
   if (!fs.existsSync(DB_PATH)) {
     console.error(`DB not found at ${DB_PATH} — run npm run velocity:seed first`);
