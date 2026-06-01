@@ -149,6 +149,21 @@ worktree+branch and retries with the next fruit. This is sound precisely because
 `auto` promises a *fresh* fruit (so >1 same-fruit branch ⇒ collision), whereas
 `--as` expects to share and skips the check.
 
+### Precondition: sync `main` before claiming
+
+Always run `git pull --ff-only origin main` before `npm run claim`. The stale-main
+guard in `claim.js` enforces this — it checks whether local `main` is behind
+`origin/main` and aborts with a pull hint if so (override with `--allow-stale-main`).
+Two reasons it matters:
+
+1. A stale local `main` means `takenFruits()` reads an incomplete branch namespace
+   and may hand out a name that is already in use on the remote.
+2. `CLAUDE_AGENT_NAME` support landed in #212. A pre-#212 checkout silently ignores
+   the env var and auto-picks a different fruit (reproduced in #223: `cherry` was
+   set, `apple` was returned). Always pull to guarantee you have the current script.
+
+See also #228 (stale-main guard implementation).
+
 ### Algorithm (claim.js)
 
 ```

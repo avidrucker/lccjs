@@ -36,7 +36,7 @@ puzzle, plus a comment header line. Empty fields mean "not tracked".
 | `finished_iso` | ISO 8601 | timestamp of the commit that closed the ticket |
 | `closed_commit` | git short SHA / empty | short SHA of the closing commit. Left **empty** at close time since the rebase rewrites it (#186); derive on demand: `git log --grep "Closes #N" -1 --format=%h`. **Cross-repo:** when a puzzle ships in a paired repo (e.g. [`claude-config`](https://github.com/avidrucker/claude-config) skill work), the closing commit lives *there*, so that `git log` run in lccjs finds nothing — the SHA belongs to the sibling repo and the `notes` column names which one. |
 | `notes` | string | free-text notes (anomalies, context, what was hard/easy) |
-| `agent` | string / empty | which agent did the work — the worktree fruit identity, uppercased (e.g. `APPLE`); see [`design-agent-worktree-identity.md`](./design-agent-worktree-identity.md). Empty for rows logged before #180 / for work whose agent is unknown. Trailing column so the positional `awk` examples below keep their `$1..$12`. |
+| `agent` | string / empty | the human/terminal name the agent ran under (e.g. `APPLE`). Once `CLAUDE_AGENT_NAME`/`--as` is set, this equals the worktree fruit — divergence only arises under bare `auto`. See [`design-agent-worktree-identity.md`](./design-agent-worktree-identity.md). Empty for rows logged before #180 / for work whose agent is unknown. Trailing column so the positional `awk` examples below keep their `$1..$12`. |
 
 ## Role codes
 

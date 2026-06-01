@@ -96,8 +96,7 @@ next," start here.
 
 **If I'm working in a `git worktree`** (because of parallel-agent activity):
 
-- **I claim under a self-assigned agent identity** so `git worktree list` shows *who* is working *what*. I run `npm run claim -- <issue>` instead of bare `git worktree add`; it picks the lowest free **fruit** name (apple, banana, …), stakes the worktree at `.claude/worktrees/<fruit>-issue-<N>/` on branch `<fruit>/issue-<N>-<slug>`, and prints the name. **My fruit is stable for the whole session** — for any *further* worktree I open I pass `--as <fruit>` to reuse it (`auto` is for the first claim only; it returns a brand-new fruit and is race-safe via detect-and-rollback). See `docs/design-agent-worktree-identity.md`.
-  - **If the human named me at launch** (e.g. "you are DRAGONFRUIT"), that name is authoritative. The human exports `CLAUDE_AGENT_NAME=dragonfruit` in my shell, and a bare `npm run claim -- <issue>` then stakes under it — no `--as` needed, and the script never silently auto-picks a different fruit (#212). Precedence is `--as` > `CLAUDE_AGENT_NAME` > `auto`. Until the human sets it, I keep passing `--as <name>` myself so I never mis-identify under an auto fruit.
+- **I claim under a self-assigned agent identity** — sync `main` first (`git pull --ff-only origin main`), then `npm run claim -- <issue>`. Identity precedence: `--as <fruit>` > `CLAUDE_AGENT_NAME` (export at launch) > `auto` (first-claim of a session, race-safe). Full contract: `docs/design-agent-worktree-identity.md`.
 - The worktree lives at `.claude/worktrees/<fruit>-issue-<N>/` on branch `<fruit>/issue-<N>-<slug>`. (Legacy worktrees used `worktree-issue-<N>`; both still carry `issue-<N>`, so `puzzle:status` recognises either — it just can't attribute the legacy ones to an agent.)
 - I work in the worktree, not in the main checkout.
 - All file edits and commits happen in the worktree.

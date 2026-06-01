@@ -15,25 +15,8 @@
  * Both still contain `issue-<N>`, so the issue join in puzzle-status.js keeps
  * working; the fruit prefix is additive.
  *
- * Identity, in precedence order (highest first):
- *   --as <fruit>             — "reuse this identity." Explicit per-call override.
- *                              Use for every subsequent worktree in the same
- *                              session, passing the fruit you were given (or one a
- *                              human assigned). Same-fruit/different-issue is fine.
- *   CLAUDE_AGENT_NAME=<name>  — human-directed default. When the human launches an
- *                              agent under a chosen name (e.g. DRAGONFRUIT), they
- *                              export this so a bare `npm run claim -- <N>` stakes
- *                              under that name — no `--as` needed, and the script
- *                              never silently auto-picks a different fruit (#212).
- *                              Normalized to lowercase for the branch/path.
- *   auto (no --as, no env)   — "give me a brand-new fruit nobody is using." Picks
- *                              the lowest-indexed free fruit. Use ONCE, on the
- *                              first claim of a session. Race-safe via
- *                              detect-and-rollback.
- *
- * A "forced" identity (either --as or CLAUDE_AGENT_NAME) is a single candidate:
- * it is never swapped for a different fruit, and a branch-exists collision is a
- * hard error rather than a silent retry. Only auto walks the free-fruit list.
+ * Identity precedence (highest first): --as <fruit> > CLAUDE_AGENT_NAME > auto.
+ * Full contract and race-safety model: docs/design-agent-worktree-identity.md
  *
  * A fruit is "taken" iff a `<fruit>/*` branch exists — git's branch namespace is
  * the single source of truth, no registry file.
