@@ -39,6 +39,8 @@ Exported read-only copy: **`docs/puzzle-velocity.csv`** — committed to git, au
 | `ARC` | Architecture decision |
 | `PM` | Project management (filing issues, triage, planning) |
 | `COMBO` | Multi-role work in a single session |
+| `DATA` | Data analysis, CSV enrichment, notebook re-runs |
+| `CHORE` | Housekeeping with no feature/fix value (removing dead code, cleanup) |
 
 ## Adding new columns
 
