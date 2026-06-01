@@ -162,3 +162,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 163,268,switch close sequence to npm run close,WRITER,15,10,,,,,2026-05-31T14:00:50-1000,,"docs-only: claude_workflow.md + puzzle-velocity.md; npm run close canonical, &&-gated chain as fallback",BANANA,claude-sonnet-4-6
 164,230,consolidate agent-identity precedence to one canonical source,WRITER,45,25,,,,,,,,APPLE,
 165,229,fix puzzle-velocity.md agent-column description,WRITER,15,5,,,,,,,,APPLE,
+166,301,Architect: design close-time guard implementation,ARCHITECT,30,25,,,,2026-05-31T14:23:03-1000,2026-05-31T14:25:55-1000,,"accepted both guards; design doc at docs/research/close-time-guard-design.md; filed #310 (Guard 1, 30m DEV) + #311 (Guard 2, 45m DEV)",BANANA,claude-sonnet-4-6
