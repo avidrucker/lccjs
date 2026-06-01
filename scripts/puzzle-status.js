@@ -131,19 +131,21 @@ function findIssueStates() {
 function loadClusters(file) {
   const f = file || path.join(__dirname, '..', 'docs', 'puzzle-clusters.csv');
   let txt;
-  try { txt = fs.readFileSync(f, 'utf8'); } catch { return { clusterOf: new Map(), members: new Map() }; }
+  try { txt = fs.readFileSync(f, 'utf8'); } catch { return { clusterOf: new Map(), members: new Map(), blockedBy: new Map() }; }
   const clusterOf = new Map(); // issue -> cluster name
   const members = new Map();   // cluster name -> Set(issue)
+  const blockedBy = new Map(); // issue -> blocking issue number (#358)
   for (const line of txt.trim().split('\n').slice(1)) { // slice(1) drops the header
     if (!line.trim()) continue;
-    const [cluster, issue] = line.split(',').map((s) => (s || '').trim());
+    const [cluster, issue, blocked] = line.split(',').map((s) => (s || '').trim());
     if (!cluster || !/^\d+$/.test(issue)) continue;
     const n = Number(issue);
     clusterOf.set(n, cluster);
     if (!members.has(cluster)) members.set(cluster, new Set());
     members.get(cluster).add(n);
+    if (blocked && /^\d+$/.test(blocked)) blockedBy.set(n, Number(blocked));
   }
-  return { clusterOf, members };
+  return { clusterOf, members, blockedBy };
 }
 
 // Derived soft-lock: a marker's issue is "locked" iff a *different* member of its
@@ -182,11 +184,24 @@ function classify(marker, byIssue, issues, clusters, inProgress) {
   if (issue && issue.blocked) {
     return { status: 'BLOCKED', stale: false, detail: 'open but labeled `blocked` — not grabbable yet' };
   }
+  // CSV blocked_by edge (#358): hard dependency on another issue.
+  // Open blocker → BLOCKED (can't start). Closed blocker → informational note appended
+  // to the LOCKED detail if a clustermate is also in progress (the #222 mockup case).
+  let blockedByNote = '';
+  const blocker = clusters && clusters.blockedBy && clusters.blockedBy.get(marker.issue);
+  if (blocker) {
+    const blockerIssue = issues ? issues.get(blocker) : undefined;
+    const blockerOpen = !blockerIssue || blockerIssue.state !== 'CLOSED';
+    if (blockerOpen) {
+      return { status: 'BLOCKED', stale: false, detail: `blocked-by #${blocker} (CSV edge)` };
+    }
+    blockedByNote = ` · blocked-by #${blocker} (closed ✓)`;
+  }
   // Derived-cluster soft-lock (#222): grabbable on its own, but a clustermate is being
   // worked right now, so its code-area is hands-off. Distinct from BLOCKED (a label).
   const lock = clusters && inProgress && clusterLockers(marker.issue, clusters, inProgress);
   if (lock) {
-    return { status: 'LOCKED', stale: false, detail: `cluster \`${lock.cluster}\` — clustermate ${lock.mates.map((i) => '#' + i).join(' ')} in progress` };
+    return { status: 'LOCKED', stale: false, detail: `cluster \`${lock.cluster}\` — clustermate ${lock.mates.map((i) => '#' + i).join(' ')} in progress${blockedByNote}` };
   }
   return { status: 'AVAILABLE', stale: false, detail: state === 'UNKNOWN' ? 'open (issue state unknown)' : 'open, unclaimed' };
 }

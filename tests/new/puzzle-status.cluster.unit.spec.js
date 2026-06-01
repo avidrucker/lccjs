@@ -72,3 +72,75 @@ describe('puzzle-status derived-cluster soft-lock (#237)', () => {
     expect(classify(marker, new Map(), issues).status).toBe('AVAILABLE');
   });
 });
+
+describe('puzzle-status blocked_by CSV edges (#358)', () => {
+  test('loadClusters parses blocked_by column into blockedBy map', () => {
+    const c = manifest('identity,194,223\nidentity,227,\ntooling,238,237\n');
+    expect(c.blockedBy.get(194)).toBe(223);
+    expect(c.blockedBy.get(238)).toBe(237);
+    expect(c.blockedBy.has(227)).toBe(false); // empty third column → no entry
+  });
+
+  test('loadClusters fallback includes blockedBy map when file is absent', () => {
+    const c = loadClusters(path.join(os.tmpdir(), 'no-such-manifest.csv'));
+    expect(c.blockedBy).toBeDefined();
+    expect(c.blockedBy.size).toBe(0);
+  });
+
+  test('classify returns BLOCKED from CSV edge when blocker is open', () => {
+    const c = manifest('identity,194,223\nidentity,223,\n');
+    // 223 is open — 194 is blocked-by it
+    const issues = new Map([
+      [194, { state: 'OPEN', blocked: false }],
+      [223, { state: 'OPEN', blocked: false }],
+    ]);
+    const result = classify({ issue: 194, keyword: 'todo' }, new Map(), issues, c, new Set());
+    expect(result.status).toBe('BLOCKED');
+    expect(result.detail).toMatch(/#223/);
+    expect(result.detail).toMatch(/CSV edge/);
+  });
+
+  test('classify returns BLOCKED from CSV edge even when a clustermate is also in progress', () => {
+    const c = manifest('identity,194,223\nidentity,227,\n');
+    const issues = new Map([
+      [194, { state: 'OPEN', blocked: false }],
+      [223, { state: 'OPEN', blocked: false }],
+      [227, { state: 'OPEN', blocked: false }],
+    ]);
+    // 227 in progress would normally give LOCKED, but open CSV blocker takes priority
+    const result = classify({ issue: 194, keyword: 'todo' }, new Map(), issues, c, new Set([227]));
+    expect(result.status).toBe('BLOCKED');
+  });
+
+  test('classify annotates LOCKED detail when blocker is closed', () => {
+    const c = manifest('identity,194,223\nidentity,227,\n');
+    const issues = new Map([
+      [194, { state: 'OPEN', blocked: false }],
+      [223, { state: 'CLOSED', blocked: false }], // blocker closed — annotation only
+      [227, { state: 'OPEN', blocked: false }],
+    ]);
+    const result = classify({ issue: 194, keyword: 'todo' }, new Map(), issues, c, new Set([227]));
+    expect(result.status).toBe('LOCKED');
+    expect(result.detail).toMatch(/clustermate #227/);
+    expect(result.detail).toMatch(/blocked-by #223 \(closed ✓\)/);
+  });
+
+  test('classify stays AVAILABLE when blocker is closed and no clustermate in progress', () => {
+    const c = manifest('identity,194,223\nidentity,227,\n');
+    const issues = new Map([
+      [194, { state: 'OPEN', blocked: false }],
+      [223, { state: 'CLOSED', blocked: false }],
+    ]);
+    const result = classify({ issue: 194, keyword: 'todo' }, new Map(), issues, c, new Set());
+    expect(result.status).toBe('AVAILABLE');
+  });
+
+  test('classify returns BLOCKED from CSV when gh is unavailable (issue state unknown)', () => {
+    const c = manifest('identity,194,223\n');
+    // issues === null simulates gh unavailable
+    const result = classify({ issue: 194, keyword: 'todo' }, new Map(), null, c, new Set());
+    // blocker state unknown → conservative: treat as open → BLOCKED
+    expect(result.status).toBe('BLOCKED');
+    expect(result.detail).toMatch(/#223/);
+  });
+});
