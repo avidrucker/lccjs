@@ -104,7 +104,11 @@ When I pick up a ticket:
    (validates, INSERTs into `~/.lccjs/velocity.db`, auto-exports `docs/puzzle-velocity.csv`).
 6. **Close in ONE commit** — delete the puzzle's source marker and commit:
    `git commit -m "… Closes #N"`. The exported CSV rides along automatically.
-7. **Sync + push** — `git pull --rebase`, then `git push`.
+7. **Land + clean up** — `npm run close N` (from inside the worktree). Loops
+   fetch/rebase/push until the commit lands on `origin/main`, then tears down
+   the worktree and branch — gated on push success so cleanup can never race
+   ahead of a failed push. Fallback when the tool is unavailable:
+   `git pull --rebase && git push && git worktree remove .claude/worktrees/<fruit>-issue-N && git worktree prune && git branch -D <fruit>/issue-N-<slug>`.
 
 ### What gets logged (and what's skipped)
 

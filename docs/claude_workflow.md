@@ -147,8 +147,19 @@ npm run velocity:log -- '{"ticket":N,"role":"DEV","agent":"BANANA",...}'
 # 2. One commit carries everything: delete the source marker + the exported CSV
 git add -A
 git commit -m "... Closes #N"
-git pull --rebase                  # parallel agents may have pushed
-git push
+
+# 3. Land + clean up (loops fetch/rebase/push until it lands on origin/main,
+#    then removes the worktree + branch — ONLY if the push succeeded)
+npm run close N
+```
+
+**Fallback** (when `npm run close` is unavailable — `&&`-gate is mandatory so cleanup can't race ahead of a failed push):
+
+```bash
+git pull --rebase && git push && \
+  git worktree remove .claude/worktrees/<fruit>-issue-N && \
+  git worktree prune && \
+  git branch -D <fruit>/issue-N-<slug>
 ```
 
 **Leave `closed_commit` empty** in the velocity row — the `git pull --rebase` rewrites
@@ -164,7 +175,7 @@ Do **not** `git commit --amend` to backfill the SHA — amend orphans the origin
 
 3. Update tracker checkbox **via an issue comment**, not a body edit. (Body edits race with parallel agents; comments are append-only.) If there's no tracker, this step is skipped.
 4. Mark any related TaskCreate tasks as complete via TaskUpdate.
-5. **Remove my worktree** — `ExitWorktree --remove` (for one created via `EnterWorktree`) or `git worktree remove .claude/worktrees/<fruit>-issue-<N>` + `git worktree prune`. This is **mandatory**: confirm the commits are on `origin/main` first (`git branch -r --contains HEAD` → `origin/main`), then remove. Leaving a worktree behind after close is the #1 source of "is someone working on this?" confusion — it reads as a live claim when no agent is in it. Delete the throwaway `<fruit>/issue-<N>-<slug>` branch too (it's merged and has no remote).
+5. **Worktree teardown** — handled automatically by `npm run close` (it confirms the commit is on `origin/main` before removing). If using the fallback path, confirm first (`git branch -r --contains HEAD` → `origin/main`), then run the `&&`-gated chain above. This is **mandatory**: a worktree left after close looks like a live claim to every other agent and to `puzzle:status`.
 6. Report what changed in 1-2 sentences. Include the velocity Δ if it's interesting.
 
 **What I do *not* do at close:**
