@@ -144,7 +144,7 @@ The #206 re-run (74-row CSV) confirmed the ~3× over-pad bias but surfaced two c
 in the over-time signal — see the open follow-up below.
 
 - [ ] de-confound the velocity over-time drift signal — switch §1 day-bucketing UTC→HST and decide whether TEST needs its own correction constant (for a human; surfaced by the #206 re-run)
-  <!-- @todo #208:45m/RESEARCH de-confound velocity over-time drift — the day-02 notebook's rising per-day ratio (2.42→3.33→5.00x, raw rho=+0.299) is confounded by (a) role mix (within-WRITER rho=+0.076 n.s.; TEST 7.5x is a structural outlier vs DEV/WRITER ~2.5x) and (b) UTC day-bucketing that manufactures a spurious 3rd day (UTC-05-30 n=11 is really the 05-29 HST evening session — only 2 HST working days). Re-bucket by HST + re-test; decide per-role correction constants vs one global 0.33x. Evidence in #206 close + stats/day-two-analysis.ipynb. See #208 -->
+  <!-- @inprogress #208:45m/RESEARCH de-confound velocity over-time drift — the day-02 notebook's rising per-day ratio (2.42→3.33→5.00x, raw rho=+0.299) is confounded by (a) role mix (within-WRITER rho=+0.076 n.s.; TEST 7.5x is a structural outlier vs DEV/WRITER ~2.5x) and (b) UTC day-bucketing that manufactures a spurious 3rd day (UTC-05-30 n=11 is really the 05-29 HST evening session — only 2 HST working days). Re-bucket by HST + re-test; decide per-role correction constants vs one global 0.33x. Evidence in #206 close + stats/day-two-analysis.ipynb. See #208 -->
 
 ## Nice-to-Have Cleanup
 
