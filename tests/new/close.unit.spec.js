@@ -4,7 +4,7 @@ const {
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
   isVelocityCsvOnlyConflict,
   DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET,
-  extractTicketFromCsvDiff, velocityTicketMismatch,
+  extractTicketFromCsvDiff, extractRowsFromCsvDiff, velocityTicketMismatch,
   extractKeywords, keywordsOverlap,
 } = require('../../scripts/close');
 
@@ -431,5 +431,72 @@ describe('close.js keywordsOverlap() — Guard 2 decision', () => {
     const titleWords = extractKeywords('velocity logging for issueless PM rows');
     const subjectWords = extractKeywords('cross-link cluster identity issues');
     expect(keywordsOverlap(titleWords, subjectWords)).toBe(false);
+  });
+});
+
+// Guard 1 fix (#346): extractRowsFromCsvDiff returns {ticket, agent}[] so
+// checkVelocityTicketMatch can ignore concurrent agents' rows.
+describe('close.js extractRowsFromCsvDiff() — Guard 1 fix (#346)', () => {
+  const row = (ticket, agent, model = '') =>
+    `+1,${ticket},title,DEV,30,,,,,,,,,notes,${agent},${model}`;
+
+  test('single row → [{ticket, agent}]', () => {
+    expect(extractRowsFromCsvDiff(row(311, 'DRAGONFRUIT', 'claude-sonnet-4-6')))
+      .toEqual([{ ticket: 311, agent: 'DRAGONFRUIT' }]);
+  });
+
+  test('two rows from different agents → both returned', () => {
+    const diff = [row(330, 'ELDERBERRY', 'sonnet-4.6'), row(311, 'DRAGONFRUIT', 'claude-sonnet-4-6')].join('\n');
+    expect(extractRowsFromCsvDiff(diff)).toEqual([
+      { ticket: 330, agent: 'ELDERBERRY' },
+      { ticket: 311, agent: 'DRAGONFRUIT' },
+    ]);
+  });
+
+  test('the #346 repro: concurrent row is present but filtered by caller', () => {
+    // Closing agent is DRAGONFRUIT (#311); ELDERBERRY (#330) is concurrent.
+    const diff = [row(330, 'ELDERBERRY'), row(311, 'DRAGONFRUIT')].join('\n');
+    const rows = extractRowsFromCsvDiff(diff);
+    const myRows = rows.filter((r) => r.agent.toLowerCase() === 'dragonfruit');
+    expect(velocityTicketMismatch(myRows.map((r) => r.ticket), '311')).toEqual([]);
+  });
+
+  test('own-agent mismatch still fires after filtering', () => {
+    // DRAGONFRUIT logged ticket 279 but is closing 278 — Guard 1 must still fire.
+    const diff = [row(330, 'ELDERBERRY'), row(279, 'DRAGONFRUIT')].join('\n');
+    const rows = extractRowsFromCsvDiff(diff);
+    const myRows = rows.filter((r) => r.agent.toLowerCase() === 'dragonfruit');
+    expect(velocityTicketMismatch(myRows.map((r) => r.ticket), '278')).toEqual([279]);
+  });
+
+  test('agent with empty model (trailing comma) is extracted correctly', () => {
+    expect(extractRowsFromCsvDiff('+1,311,title,DEV,,,,,,,,,,,BANANA,'))
+      .toEqual([{ ticket: 311, agent: 'BANANA' }]);
+  });
+
+  test('commas inside notes do not corrupt agent extraction', () => {
+    expect(extractRowsFromCsvDiff('+1,311,title,DEV,,,,,,,,,,"a, b, c",CHERRY,'))
+      .toEqual([{ ticket: 311, agent: 'CHERRY' }]);
+  });
+
+  test('no agent/model columns → agent is some non-empty string that will not match a real branch agent', () => {
+    // Old rows missing agent/model: the regex finds whatever word-pair is at the
+    // end. The result won't match any real branch agent name, so such rows are
+    // filtered out by checkVelocityTicketMatch — correct degraded behaviour.
+    const rows = extractRowsFromCsvDiff('+1,304,title,DEV');
+    // The row IS parsed (ticket extracted), just agent is unreliable for old rows.
+    expect(rows).toHaveLength(1);
+    expect(rows[0].ticket).toBe(304);
+  });
+
+  test('empty/null/undefined diff → []', () => {
+    expect(extractRowsFromCsvDiff('')).toEqual([]);
+    expect(extractRowsFromCsvDiff(null)).toEqual([]);
+    expect(extractRowsFromCsvDiff(undefined)).toEqual([]);
+  });
+
+  test('+++ header line is ignored', () => {
+    const diff = '+++ b/docs/puzzle-velocity.csv\n' + row(311, 'DRAGONFRUIT');
+    expect(extractRowsFromCsvDiff(diff)).toEqual([{ ticket: 311, agent: 'DRAGONFRUIT' }]);
   });
 });

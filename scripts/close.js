@@ -208,6 +208,30 @@ function extractTicketFromCsvDiff(diff) {
   return tickets;
 }
 
+// Guard 1 (#346 fix): extract ticket + agent from every added velocity row in a
+// diff. Returns {ticket, agent}[] so checkVelocityTicketMatch can filter to only
+// the closing agent's rows and ignore concurrent agents' rows.
+//
+// Agent is the second-to-last column; model is last. Both are simple identifiers
+// (no commas, no quotes). notes (col 12) may contain commas and be quoted, so we
+// cannot use a plain split to reach col 13. Instead we extract agent+model from
+// the end of the row via regex — safe because neither field ever contains a comma.
+// Pure: takes the diff string, returns {ticket: number, agent: string}[].
+function extractRowsFromCsvDiff(diff) {
+  const rows = [];
+  for (const line of String(diff || '').split('\n')) {
+    if (!line.startsWith('+') || line.startsWith('+++')) continue;
+    const row = line.slice(1);
+    // ticket is column 1 — always before free-text fields, safe with naive split.
+    const ticketRaw = (row.split(',')[1] || '').trim();
+    if (!/^\d+$/.test(ticketRaw)) continue;
+    // agent is second-to-last; model (possibly empty) is last. Both are word-chars.
+    const m = row.match(/,([A-Za-z][A-Za-z0-9]*),([A-Za-z0-9.-]*)$/);
+    rows.push({ ticket: Number(ticketRaw), agent: m ? m[1] : '' });
+  }
+  return rows;
+}
+
 // The Guard 1 decision (#310): which of the added rows' tickets disagree with the
 // issue being closed. Empty result == the close is consistent (including the
 // no-row-added case, where `tickets` is []). Pure: array + issue → array of the
@@ -285,14 +309,24 @@ function treeIsClean() {
   return s !== null && s.trim() === '';
 }
 
-// Guard 1 I/O wrapper (#310): read the velocity CSV rows added in HEAD and verify
-// they record the issue being closed. Skips silently when no row was added (not
-// every close has a velocity row — fast turns, retroactive tracker tickets). Any
-// added row whose ticket ≠ issue is a hard stop (the #278 misattribution). die()s
-// on mismatch; the commit is still local and can be amended without consequence.
+// Guard 1 I/O wrapper (#310, fixed in #346): read the velocity CSV rows added in
+// HEAD and verify that this agent's rows record the issue being closed. Skips
+// silently when no row was added (not every close has a velocity row). Rows
+// belonging to concurrent agents are ignored — a full-file CSV re-export
+// legitimately includes rows from other agents active in the same window (#346).
+// die()s on mismatch; the commit is still local and can be amended.
 function checkVelocityTicketMatch(issue) {
   const diff = sh('git show HEAD -- docs/puzzle-velocity.csv', true) || '';
-  const mismatched = velocityTicketMismatch(extractTicketFromCsvDiff(diff), issue);
+  // Derive the closing agent from the branch prefix (e.g. "dragonfruit" from
+  // "dragonfruit/issue-346-..."). Falls back to null, which disables filtering
+  // and checks all rows (same as pre-#346 behaviour — safe but noisier).
+  const branch = currentBranch() || '';
+  const closingAgent = branch.split('/')[0] || null;
+  const allRows = extractRowsFromCsvDiff(diff);
+  const myRows = closingAgent
+    ? allRows.filter((r) => r.agent.toLowerCase() === closingAgent.toLowerCase())
+    : allRows;
+  const mismatched = velocityTicketMismatch(myRows.map((r) => r.ticket), issue);
   if (mismatched.length) {
     die(`velocity row ticket mismatch: the CSV row(s) added in HEAD record ` +
         `ticket #${mismatched.join(', #')}, but you are closing issue #${issue}. ` +
@@ -511,6 +545,6 @@ module.exports = {
   DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET,
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
   isVelocityCsvOnlyConflict,
-  extractTicketFromCsvDiff, velocityTicketMismatch,
+  extractTicketFromCsvDiff, extractRowsFromCsvDiff, velocityTicketMismatch,
   extractKeywords, keywordsOverlap,
 };
