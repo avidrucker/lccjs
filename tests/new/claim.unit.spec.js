@@ -3,6 +3,7 @@ const {
   normalizeIdentity,
   inferFruitFromBranch,
   resolveIdentity,
+  checkIdentityName,
   assessBaseStaleness,
 } = require('../../scripts/claim');
 
@@ -122,6 +123,58 @@ describe('claim.js identity resolution', () => {
     test('existing auto test still passes with explicit null branch arg', () => {
       const id = resolveIdentity({ as: null }, {});
       expect(id).toMatchObject({ name: null, source: 'auto' });
+    });
+  });
+
+  // #366: Option C — checkIdentityName() and parseArgs --custom
+  describe('parseArgs() --custom flag', () => {
+    test('defaults to false when --custom is absent', () => {
+      expect(parseArgs(['212']).custom).toBe(false);
+    });
+
+    test('sets custom=true when --custom is present', () => {
+      expect(parseArgs(['212', '--as', 'dragonfruit', '--custom']).custom).toBe(true);
+    });
+  });
+
+  describe('checkIdentityName() — Option C validation (#366)', () => {
+    test('known fruit via --as → null (no action)', () => {
+      expect(checkIdentityName({ name: 'apple', source: 'as' }, { custom: false })).toBeNull();
+    });
+
+    test('unknown name via --as without --custom → error with valid-names list', () => {
+      const result = checkIdentityName({ name: 'durian', source: 'as' }, { custom: false });
+      expect(result).toHaveProperty('error');
+      expect(result.error).toMatch(/not a recognised agent name/);
+      expect(result.error).toMatch(/apple.*banana.*cherry/);
+      expect(result.error).toMatch(/--custom/);
+      expect(result.error).not.toHaveProperty('warn');
+    });
+
+    test('unknown name via --as with --custom → warn (proceed)', () => {
+      const result = checkIdentityName({ name: 'dragonfruit', source: 'as' }, { custom: true });
+      expect(result).toHaveProperty('warn');
+      expect(result.error).toBeUndefined();
+    });
+
+    test('unknown name via env → warn regardless of --custom (env is not --as)', () => {
+      const result = checkIdentityName({ name: 'dragonfruit', source: 'env' }, { custom: false });
+      expect(result).toHaveProperty('warn');
+      expect(result.error).toBeUndefined();
+    });
+
+    test('unknown name via branch-inference → warn (already existed from prior claim)', () => {
+      const result = checkIdentityName({ name: 'dragonfruit', source: 'branch' }, { custom: false });
+      expect(result).toHaveProperty('warn');
+      expect(result.error).toBeUndefined();
+    });
+
+    test('auto source (name null) → null', () => {
+      expect(checkIdentityName({ name: null, source: 'auto' }, { custom: false })).toBeNull();
+    });
+
+    test('known fruit via env → null', () => {
+      expect(checkIdentityName({ name: 'cherry', source: 'env' }, { custom: false })).toBeNull();
     });
   });
 

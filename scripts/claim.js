@@ -22,11 +22,12 @@
  * the single source of truth, no registry file.
  *
  * Usage:
- *   node scripts/claim.js <issue> [slug]            # auto-pick a fresh fruit
- *   node scripts/claim.js <issue> [slug] --as apple # reuse a known identity
- *   CLAUDE_AGENT_NAME=apple node scripts/claim.js <issue>   # human-directed default
+ *   node scripts/claim.js <issue> [slug]                   # auto-pick a fresh fruit
+ *   node scripts/claim.js <issue> [slug] --as apple        # reuse a known identity
+ *   node scripts/claim.js <issue> --as dragonfruit --custom # non-list name, explicit opt-in
+ *   CLAUDE_AGENT_NAME=apple node scripts/claim.js <issue>  # human-directed default
  *   node scripts/claim.js <issue> --base origin/main
- *   node scripts/claim.js <issue> --dry-run         # show the plan, stake nothing
+ *   node scripts/claim.js <issue> --dry-run                # show the plan, stake nothing
  *
  * If no slug is given, claim.js tries to derive one from the issue title via gh
  * (best-effort; falls back to no slug if gh is unavailable).
@@ -114,7 +115,7 @@ function branchExists(branch) {
 }
 
 function parseArgs(argv) {
-  const opts = { issue: null, slug: null, as: null, base: 'main', dryRun: false, allowStaleMain: false, force: false };
+  const opts = { issue: null, slug: null, as: null, base: 'main', dryRun: false, allowStaleMain: false, force: false, custom: false };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -123,6 +124,7 @@ function parseArgs(argv) {
     else if (a === '--dry-run') opts.dryRun = true;
     else if (a === '--force') opts.force = true;
     else if (a === '--allow-stale-main') opts.allowStaleMain = true;
+    else if (a === '--custom') opts.custom = true;
     else if (a.startsWith('--')) die(`unknown flag: ${a}`);
     else positionals.push(a);
   }
@@ -208,16 +210,34 @@ function shouldBlockClaim(info, force) {
   return !!(info && info.state === 'CLOSED');
 }
 
+// Validate the resolved identity name against the known fruit list (#366 Option C).
+// Returns null if the name is valid or absent.
+// Returns { error } when --as supplied an unknown name without --custom (die path).
+// Returns { warn } when an unknown name is tolerated (env/branch source, or --custom).
+function checkIdentityName(identity, opts) {
+  if (!identity.name || FRUITS.includes(identity.name)) return null;
+  if (identity.source === 'as' && !opts.custom) {
+    return {
+      error: `"${identity.name}" is not a recognised agent name.\n` +
+             `  Valid names: ${FRUITS.join(', ')}\n` +
+             `  Re-run with --as <valid-name>, or pass --custom to use this name anyway.`,
+    };
+  }
+  return { warn: `"${identity.name}" is not in the known fruit list — using it anyway.` };
+}
+
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
-    die('usage: node scripts/claim.js <issue-number> [slug] [--as <fruit>] [--base <ref>] [--dry-run] [--force]');
+    die('usage: node scripts/claim.js <issue-number> [slug] [--as <fruit>] [--base <ref>] [--dry-run] [--force] [--custom]');
   }
   const issue = opts.issue;
 
   const identity = resolveIdentity(opts, process.env, currentBranch());
-  if (identity.name && !FRUITS.includes(identity.name)) {
-    console.error(`[claim] note: "${identity.name}" is not in the known fruit list — using it anyway.`);
+  const nameCheck = checkIdentityName(identity, opts);
+  if (nameCheck) {
+    if (nameCheck.error) die(nameCheck.error);
+    else console.error(`[claim] note: ${nameCheck.warn}`);
   }
 
   // One gh round-trip serves both the slug and the open/closed guard (#227).
@@ -345,5 +365,5 @@ if (require.main === module) main();
 module.exports = {
   FRUITS, slugify, listWorktreeBranches, takenFruits,
   parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
-  readIssue, shouldBlockClaim,
+  checkIdentityName, readIssue, shouldBlockClaim,
 };

@@ -225,3 +225,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 232,324,RESEARCH: get accurate Produced by description for puzzle-velocity.csv,RESEARCH,10,5,1,9,4,2026-06-01T08:16:30-1000,2026-06-01T08:17:44-1000,,Row already corrected by 43f80d0 (closed #321) ~6h before this ticket was read. Research confirmed current description is accurate; closed as already done.,ELDERBERRY,claude-sonnet-4-6
 233,322,,RESEARCH,15,10,,,,,,,,FIG,
 234,248,run-pdd.sh --skip-gitignore guard + SSOT doc fix,DEV,25,10,2,23,8,2026-06-01T08:17:03-1000,2026-06-01T08:19:39-1000,,guard drops flag when .gitignore absent; corrected both SSOT claims in workflow.md; new e2e test,APPLE,claude-sonnet-4-6
+235,366,"DEV: implement Option C in claim.js — reject unknown --as names, add --custom escape",DEV,30,20,,,,,,,,DRAGONFRUIT,sonnet-4.6
