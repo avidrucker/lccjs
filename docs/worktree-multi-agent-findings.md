@@ -3,8 +3,6 @@
 Status: **findings / retro.** The fix is an open puzzle — see
 [#188](https://github.com/avidrucker/lccjs/issues/188).
 
-<!-- @todo #188:60m/ARC spike: evaluate concurrency-safe work-logging + push-gating options (SQLite [CHERRY researching], one-file-per-row, write-lock, post-push SHA stamping, pre-push marker guard) and recommend a process; see docs/worktree-multi-agent-findings.md -->
-
 ## Context
 
 lccjs is worked by **several Claude agents in parallel**, each in its own git
@@ -85,26 +83,63 @@ symptom above traces back to this.
 
 ## Shipped since this retro
 
-- **Gate push on a clean rebase — DONE (#205, `df6c1c2`).** `scripts/git-hooks/pre-push`
-  now blocks the push if a rebase/merge is in progress (`rebase-merge`/`rebase-apply`
-  dirs or `MERGE_HEAD`) or any tracked file carries a column-0 conflict marker; never
-  chain `rebase && push`. This closes failure mode #2.
+All six concrete, agent-actionable mitigations from the original spike are now closed:
 
-## Candidate mitigations (to evaluate under #188)
+| Mode | Fix | Ticket |
+|------|-----|--------|
+| #1 — CSV append conflict | `merge=union` on `docs/puzzle-velocity.csv` + SQLite canonical store | #186, #290 |
+| #2 — partial-state push | `scripts/git-hooks/pre-push` gates on conflict markers + in-progress rebase; `npm run close` retry-loops fetch→rebase→push and gates cleanup | #205, #242 |
+| #3 — `closed_commit` orphaned | Protocol: always log `closed_commit` empty; derive with `git log --grep "Closes #N" -1 --format=%h` | #186 |
+| #4 — branch-protection enforcement | User-owned decision — see below | — |
+| #5 — classifier outage stalls close | Infra, not ours; SOP: read-only-verify-then-retry | — |
+| #6 — claim/marker state half-visible | `npm run puzzle:status` shows AVAILABLE/CLAIMED/IN-PROGRESS/STALE without per-worktree greps; identity half addressed via fruit system | #179, #212 |
+| #7 — transient churn looks like lost work | Discipline: check `git worktree list` + `puzzle:status` before alarming | — |
 
-- **Replace the append-only CSV** with a concurrency-safer store:
-  - **SQLite** for work/time logging (CHERRY is researching) — serialized
-    writes, no text-merge conflicts.
-  - **One-file-per-row** — a directory of tiny per-ticket files (e.g.
-    `velocity/<ticket>.json`); independent paths never conflict; reduce to a CSV
-    on demand.
-  - Append-only log reconciled periodically rather than committed per close.
-- **Stamp `closed_commit` after the final push** (or reference the GH close
-  event instead of a SHA) so concurrent rebases can't orphan it.
-- **PR / merge-queue** instead of trunk-based `HEAD:main` if branch protection
-  is enforced.
-- **Surface claim+marker state cross-agent** without needing per-worktree greps
-  (e.g. the same store that replaces the CSV could hold live claims).
+Additional hardening:
+- **PDD gate `+` in worktree names** (#224): `scripts/run-pdd.sh` routes through a symlink when the worktree path contains regex-special chars, so the pre-push pdd scan is correct from every worktree.
+- **Atomic close tool** (#242): `npm run close N` wraps the retry loop + gated cleanup in a single command; `git worktree remove` runs only after verifying HEAD is on `origin/main`.
+
+## Recommended durable process (ARC synthesis — #188)
+
+This section is the deliverable of the spike: a layered, concurrency-safe protocol for multi-agent worktree work that replaces the ad-hoc per-agent discipline that produced the failure modes above.
+
+### Layer 1 — Velocity store (eliminating the CSV write race)
+
+- **Canonical write store:** `~/.lccjs/velocity.db` — SQLite, local-only, never committed, accessible from every worktree via absolute path. Serialized by SQLite's own locking; no merge conflict possible.
+- **Read-only git artifact:** `docs/puzzle-velocity.csv` — auto-exported by `npm run velocity:export` after each `npm run velocity:log` write. `merge=union` in `.gitattributes` as a safety net for any concurrent CSV reads.
+- **`closed_commit`:** always logged as empty; recover on demand via `git log --grep "Closes #N" -1 --format=%h`. Never attempt to stamp it before the rebase + push have settled.
+
+### Layer 2 — Push safety (eliminating partial-state and racy cleanup)
+
+- **Pre-push hook** (`scripts/git-hooks/pre-push`, #205): runs before every `git push`; exits 1 if a rebase/merge is in progress or any tracked file has a column-0 conflict marker.
+- **`npm run close N`** (#242): the standard close path — takes the issue number, loops fetch→rebase→push until the commit lands on `origin/main`, then and only then removes the worktree and branch. Aborts loudly at any step rather than cleaning up on a failed push. Use the `&&`-gated manual chain only as a documented fallback when the tool is unavailable.
+
+### Layer 3 — Claim identity and marker visibility
+
+- **Claim:** `npm run claim -- <issue> --as <fruit>` stakes a worktree on branch `<fruit>/issue-<N>-<slug>`. Identity persists via the `--as` flag; use the same fruit for the session's full claim→close lifecycle.
+- **Marker protocol:** flip `@todo #N:…` → `@inprogress #N:…` the moment the worktree is checked out; delete the marker in the closing commit.
+- **Cross-agent visibility:** `npm run puzzle:status` reads `git worktree list` + `git log` + live GitHub state to surface AVAILABLE / CLAIMED / IN-PROGRESS / STALE per puzzle without needing per-worktree greps. The `@inprogress` marker state visible to `puzzle:status` on `main` lags until the first push from the worktree (known limitation; accepted at current agent scale).
+- **Cleanup:** `npm run close N` removes the worktree and branch. Leaving a worktree after close is a hard protocol violation — it looks like a live claim to every other agent.
+
+### Layer 4 — PDD gate robustness
+
+- `scripts/run-pdd.sh` detects regex-special characters in the worktree path (e.g. `+` from `EnterWorktree`) and scans through a symlink, so the pre-push pdd gate is correct from every worktree.
+- Worktree/branch names should use only `[A-Za-z0-9._-]` (the `+` issue is handled, but clean names reduce friction in other tooling).
+- `commit-msg` hook enforces Conventional Commit format; reject if `--no-verify` is needed, investigate the hook failure instead.
+
+### Layer 5 — Branch-protection decision (user-owned, still open)
+
+The remote currently emits a non-blocking "Changes must be made through a pull request" warning on every `git push origin HEAD:main`. If GitHub enforcement is ever turned on, the trunk-based flow breaks for **all agents simultaneously**.
+
+**Decision needed from `@avidrucker`:** choose one before protection is enforced:
+
+| Option | Mechanics | Trade-offs |
+|--------|-----------|------------|
+| **A — Stay trunk-based** | Keep `push origin HEAD:main`; ensure branch protection stays non-enforced (or add a ruleset bypass for the repo owner). | Simplest. Agents use the same protocol forever. Requires actively not enabling protection. |
+| **B — PR per close** | Each agent pushes to its fruit branch and opens a PR; `npm run close` would drive `gh pr merge --squash`. | Protection-proof; adds 1 GH API call per close; squash changes commit graph (rebase SHAs change again). |
+| **C — Merge queue** | PRs enter a queue; queue serializes rebases + merges. | Cleanest long-term; requires GitHub merge-queue setup; highest complexity change. |
+
+**Recommendation:** Option A for now — the current enforcement notice is non-blocking, and switching to PRs would require changes to the close tool and the workflow. File a separate ticket if protection enforcement becomes a real constraint.
 
 ## Related
 
