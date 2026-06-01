@@ -158,7 +158,5 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 157,303,"TIL 2026-05-31 BANANA s2 — worktree cleanup, closed-issue audit, ARCHITECT follow-up",WRITER,20,10,34,-14,-24,2026-05-31T10:25:49-1000,2026-05-31T11:00:07-1000,,"No TIL issue pre-filed; using ad-hoc row per convention. Concise 4-section doc: package-lock force-remove, audit-before-map ordering, keyword heuristic false-positive rate, file ARCHITECT ticket immediately.",BANANA,claude-sonnet-4-6
 158,302,TIL 2026-05-31 APPLE-2,WRITER,20,8,3,17,5,2026-05-31T10:59:13-1000,2026-05-31T11:02:16-1000,,"4 learnings: CSV read-only rule, null-ticket gap, merge=union rebase gap, #281 enforcement-asymmetry finding",APPLE,claude-sonnet-4-6
 159,306,,WRITER,,,,,,,,,wrote docs/agent-priorities/BANANA.md from TIL history,BANANA,
-160,,puzzle triage,PM,,,,,,,,,,APPLE,
-161,299,fix nullable ticket,DEV,,,,,,,,,,APPLE,
 162,299,fix nullable ticket in velocity-log.js,DEV,15,10,,,,,,,,APPLE,
 163,268,switch close sequence to npm run close,WRITER,15,10,,,,,2026-05-31T14:00:50-1000,,"docs-only: claude_workflow.md + puzzle-velocity.md; npm run close canonical, &&-gated chain as fallback",BANANA,claude-sonnet-4-6

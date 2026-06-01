@@ -14,9 +14,9 @@ When `git pull --rebase` conflicted on `docs/puzzle-velocity.csv`, I reflexively
 
 Root cause: I committed the CSV from the main checkout after a direct `sqlite3` insert (needed because `velocity-log.js` rejects null tickets). That out-of-band commit created exactly the split-checkout conflict it was trying to avoid. The right path was always: DB rows live in `~/.lccjs/velocity.db`; let the closing worktree's export pick them up at commit time.
 
-## 2. velocity-log.js has a null-ticket gap worth fixing (#299)
+## 2. velocity-log.js had a null-ticket gap — now fixed (#299)
 
-`velocity-log.js` lists `ticket` as a required positive integer, but `docs/velocity-schema.md` marks it nullable. Issueless PM/triage rows need `ticket = NULL`. Workaround: `sqlite3` direct insert. Filed #299 (`@todo #299:15m/DEV`) at the validation site. Fix: remove `ticket` from `REQUIRED`, guard the type-check only when the field is provided.
+`velocity-log.js` listed `ticket` as a required positive integer, but `docs/velocity-schema.md` marks it nullable. Issueless PM/triage rows need `ticket = NULL`. Workaround had been `sqlite3` direct insert. Fixed in the same session: removed `ticket` from `REQUIRED`, guard the type-check only when the field is provided. Closes #299.
 
 ## 3. merge=union doesn't fire on rebase — it only fires on merge
 
