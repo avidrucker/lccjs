@@ -21,7 +21,17 @@ cd "$(dirname "$0")/.."   # repo root (this script lives in scripts/)
 repo_abs="$PWD"
 
 # Build the --exclude args from .pddignore (gitignore-style; '#' comments skipped).
-args=(--file puzzles.xml --skip-gitignore)
+# --skip-gitignore in pdd-0.24.2 has BACKWARDS semantics: when present AND a
+# .gitignore exists, pdd reads it and folds its excludes into the scan set
+# (bin/pdd:71-76). When .gitignore is absent the flag stays boolean true and
+# `[] + true` crashes with an opaque TypeError stacktrace (#248). Guard: only
+# pass the flag when .gitignore exists. NOTE: .gitignore IS load-bearing here —
+# it excludes build artifacts (*.e, *.o, *.bst, *.hex, puzzles.xml, etc.) that
+# .pddignore does not cover, so do NOT simply remove this flag.
+args=(--file puzzles.xml)
+if [[ -f .gitignore ]]; then
+  args+=(--skip-gitignore)
+fi
 if [[ -f .pddignore ]]; then
   while IFS= read -r line || [[ -n "$line" ]]; do
     line="${line%%#*}"                                   # drop trailing/whole-line comments

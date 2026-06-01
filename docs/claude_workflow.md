@@ -199,11 +199,14 @@ One row per closed puzzle, written via `npm run velocity:log`. Full column refer
 ## PDD scan coverage & the `at_todo` placeholder
 
 `npm run puzzles` runs the `pdd` gem over the repo to enforce that every real
-puzzle marker is backed by a GitHub issue. **What it scans is controlled by
-[`.pddignore`](../.pddignore)** (root) — a gitignore-style file, one exclude glob
-per line, read by `scripts/run-pdd.sh` and translated into `pdd --exclude`
-arguments. To change what's scanned, edit `.pddignore`; nothing is hardcoded in
-`package.json` anymore.
+puzzle marker is backed by a GitHub issue. **Scan coverage is `.pddignore` plus
+`.gitignore`**: `scripts/run-pdd.sh` translates `.pddignore` lines into `pdd
+--exclude` arguments and passes `--skip-gitignore` which, counter-intuitively,
+*folds* `.gitignore` excludes in rather than skipping them. Both files are
+load-bearing — `.pddignore` excludes docs and fixtures; `.gitignore` excludes
+build artifacts (`*.e`, `*.o`, `*.hex`, `puzzles.xml`, etc.) that `.pddignore`
+does not cover. Edit `.pddignore` for puzzle-scan policy; be aware that changes
+to `.gitignore` also silently shift what the scanner sees. (#248)
 
 The default policy is **scan all source, blacklist the rest**: code under `src/**`
 and friends is scanned; `docs/**`, all `*.md`, fixtures, generated trees,
@@ -251,7 +254,7 @@ inside a token like `AT_TODO`). Rules:
 - **Puzzle** — one such `@todo` + ticket pair. Cap is 60m human time.
 - **`@inprogress`** — a `@todo` that's been checked out into a worktree. Same shape (`@inprogress #N:Est/ROLE`), but signals "claimed, don't grab." Invisible to the `pdd` gem; surfaced by `npm run puzzle:status`. Flip back to `@todo` if abandoned, delete on close.
 - **`puzzle:status`** — `scripts/puzzle-status.js`, run via `npm run puzzle:status`. Joins markers × worktrees × issue state into AVAILABLE / CLAIMED / IN-PROGRESS / STALE. The authority on "what's safe to grab" and "what marker is orphaned."
-- **`.pddignore`** — root file (gitignore-style) listing the globs the puzzle scanner skips. Read by `scripts/run-pdd.sh`; the single source of truth for scan coverage.
+- **`.pddignore`** — root file (gitignore-style) listing the globs the puzzle scanner skips. Read by `scripts/run-pdd.sh` alongside the repo `.gitignore` to form total scan coverage — both files are load-bearing (#248).
 - **`at_todo`** — lowercase placeholder for *discussing* the marker concept inside a scanned code file without tripping the case-sensitive `pdd` substring matcher. Never an actual obligation; see "PDD scan coverage" above.
 - **Spike** — a bounded research puzzle that produces findings, not code. Labeled `research` (not `pdd-tracked`).
 - **Tracker** — a GitHub issue that doesn't represent a single work unit but tracks N child puzzles. Example: #108 tracked the 5 assembler.js spikes.

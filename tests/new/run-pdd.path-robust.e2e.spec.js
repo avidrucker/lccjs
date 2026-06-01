@@ -99,3 +99,26 @@ describeMaybe('run-pdd.sh path-robustness (#224)', () => {
     expect(r.stderr).not.toMatch(/scanning via/);
   });
 });
+
+describeMaybe('run-pdd.sh --skip-gitignore guard (#248)', () => {
+  let parent;
+  beforeEach(() => {
+    parent = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-pdd248-'));
+  });
+  afterEach(() => {
+    fs.rmSync(parent, { recursive: true, force: true });
+  });
+
+  // Pre-fix: pdd-0.24.2 crashes with "TypeError: no implicit conversion of true
+  // into Array" when --skip-gitignore is passed but no .gitignore exists.
+  // Post-fix: the guard in run-pdd.sh drops the flag, so the scan succeeds.
+  test('no .gitignore present: scan succeeds rather than crashing with TypeError', () => {
+    const root = path.join(parent, 'no-gitignore');
+    scaffold(root, { pddignore: '*.md\n', files: { 'src/clean.js': '// nothing\n' } });
+    fs.unlinkSync(path.join(root, '.gitignore'));
+
+    const r = runScan(root);
+    expect(r.status).toBe(0);
+    expect(r.stderr).not.toMatch(/TypeError/);
+  });
+});
