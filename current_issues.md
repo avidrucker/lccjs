@@ -25,11 +25,11 @@ Status line in `open_bugs.md` for the resolving commit. The
 disassembler bug's *module* still has 0% test coverage (separate
 gap, tracked in #166).
 
-The remaining `open_bugs.md` entries (OB-009..OB-026) also have
-resolution commits and are being reconciled in **#170**; until that
-lands, trust each entry's Status line over the count. One upstream bug
-report (**OB-008**, cuh63 6.3's `mov`/`mvi` discrepancy) is drafted
-in `docs/cuh63-mov-immediate-bug-report.md` and ready to send to
+**Reconciled 2026-06-01 (#170):** OB-009..OB-026 all verified against
+their resolution commits — 15 FIXED, 2 DOCUMENTED (wontfix-by-design:
+OB-019, OB-026). The only remaining open entry is **OB-008** (upstream
+cuh63 6.3 `mov`/`mvi` discrepancy), drafted in
+`docs/cuh63-mov-immediate-bug-report.md` and ready to send to
 Prof. Dos Reis.
 
 ## Missing features and asymmetries

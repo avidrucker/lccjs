@@ -14,10 +14,10 @@ docs), **severity**, **status**, **where**, a short description, and
 suggested fix. Citations are `main`-relative; line numbers drift as
 the code evolves, so verify file:line before fixing.
 
-Last updated: 2026-05-28 — reconciled the eight verified core entries
-(OB-001..OB-007 + OB-012) against their resolution commits; all are
-fixed on `main`. Issue #165. The remaining entries (OB-009..OB-026)
-also have resolution commits and are reconciled separately — see #170.
+Last updated: 2026-06-01 — reconciled all entries OB-001..OB-026 against
+their resolution commits. OB-001..OB-007 + OB-012 verified in #165;
+OB-009..OB-026 verified in #170. Only OB-008 (upstream cuh63 bug) remains
+open. All others are FIXED or DOCUMENTED on `main`.
 
 ---
 
@@ -168,7 +168,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-009 — `assemblerplus.js:158` double-exits on error
 - **GH:** [#41](https://github.com/avidrucker/lccjs/issues/41)
 - **Severity:** medium (loses multi-error reporting)
-- **Status:** open
+- **Status:** FIXED in `4fba6ee` (verified 2026-06-01) — redundant `fatalExit()` after `error()` removed from `assembleRAND` in `assemblerplus.js`.
 - **Where:** `src/plus/assemblerplus.js:158`
 - **Description:** After calling `this.error()` (which sets
   `errorFlag` per the parent's pattern), the code immediately calls
@@ -182,7 +182,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-010 — `assemblerplus.js:184` requires undocumented `.lccplus` directive
 - **GH:** [#42](https://github.com/avidrucker/lccjs/issues/42)
 - **Severity:** low (UX issue)
-- **Status:** open
+- **Status:** FIXED in `05ee186` (verified 2026-06-01) — error message improved to tell users what directive to add; usage skeleton added to `assemblerplus.md`.
 - **Where:** `src/plus/assemblerplus.js:184`
 - **Description:** Requires the source to begin with a `.lccplus`
   directive or exits with error. Not documented in `plus.md` or
@@ -194,7 +194,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-011 — `interpreterplus.js:36` dead `instructionsCap`
 - **GH:** [#43](https://github.com/avidrucker/lccjs/issues/43)
 - **Severity:** low (dead code)
-- **Status:** open
+- **Status:** FIXED in `c163d11` (verified 2026-06-01) — dead `instructionsCap` field removed from `InterpreterPlus`.
 - **Where:** `src/plus/interpreterplus.js:36`
 - **Description:** `this.instructionsCap = Infinity;` set in
   constructor; never read anywhere in the class. Either a leftover
@@ -218,7 +218,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-013 — `lccplus.js:40-42` argument-shadowing on constructor + main()
 - **GH:** [#45](https://github.com/avidrucker/lccjs/issues/45)
 - **Severity:** low (fragile coupling)
-- **Status:** open
+- **Status:** FIXED in `fe71af7` (verified 2026-06-01) — redundant `inputFileName` pre-set removed from `LCCPlus` constructor; single source of truth via `main()` argument.
 - **Where:** `src/plus/lccplus.js:40-42`
 - **Description:** Passes `this.inputFileName` both to the
   assembler constructor and to its `main([this.inputFileName])`.
@@ -229,7 +229,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-014 — `disassembler.js:84-87` silently skips G/E/V header entries
 - **GH:** [#46](https://github.com/avidrucker/lccjs/issues/46)
 - **Severity:** medium (latent; module has 0% coverage)
-- **Status:** open
+- **Status:** FIXED in `67e551d` (verified 2026-06-01) — null-terminator absence in G/E/V header entries now detected; typed error raised on malformed input.
 - **Where:** `src/extra/disassembler.js:84-87`
 - **Description:** Skips header G/E/V entries assuming they end at
   a null terminator. No check that the null terminator exists;
@@ -240,7 +240,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-015 — `disassembler.js:189-210` `.zero` adjustment may truncate
 - **GH:** [#47](https://github.com/avidrucker/lccjs/issues/47)
 - **Severity:** medium (latent)
-- **Status:** open
+- **Status:** FIXED in `2b9e136` (verified 2026-06-01) — `adjustZeroDirectives` now iterates all labels in a zero block; adjusted count validated positive.
 - **Where:** `src/extra/disassembler.js:189-210`
 - **Description:** `adjustZeroDirectives` breaks on the first
   label found inside a `.zero` range; doesn't handle multiple
@@ -253,7 +253,7 @@ also have resolution commits and are reconciled separately — see #170.
 - **GH:** [#48](https://github.com/avidrucker/lccjs/issues/48)
 - **Severity:** medium (memory-DoS surface if disassembler is
   ever exposed to untrusted input)
-- **Status:** open
+- **Status:** FIXED in `94e98fb` (verified 2026-06-01) — `processData()` string accumulation capped; typed error on overflow.
 - **Where:** `src/extra/disassembler.js:731-805`
 - **Description:** `processData()` accumulates string bytes
   until a null terminator. A blob with many printable ASCII bytes
@@ -265,7 +265,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-017 — `linkerStepsPrinter.js:501` V-table adjustment silently wraps
 - **GH:** [#49](https://github.com/avidrucker/lccjs/issues/49)
 - **Severity:** medium (latent; tool has 0% coverage)
-- **Status:** open
+- **Status:** FIXED in `345a2f9` (verified 2026-06-01) — overflow detected before `Uint16Array` store; typed error raised.
 - **Where:** `src/extra/linkerStepsPrinter.js:501`
 - **Description:** `preAdjustmentWord + globalAddr` is stored into
   a `Uint16Array` slot. If the sum exceeds 0xFFFF it wraps
@@ -276,7 +276,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-018 — `linkerStepsPrinter.js` `writeExecutable` lacks try/finally
 - **GH:** [#50](https://github.com/avidrucker/lccjs/issues/50)
 - **Severity:** low (partial-write leaves fd open + corrupt file)
-- **Status:** open
+- **Status:** FIXED in `12ab410` (verified 2026-06-01) — `writeExecutable` wrapped in try/catch/finally; fd closed and partial file unlinked on failure.
 - **Where:** `src/extra/linkerStepsPrinter.js` (`writeExecutable`)
 - **Description:** Uses `openSync`/`writeSync` without try/finally.
   On a mid-stream write failure the fd is leaked and the file is
@@ -287,7 +287,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-019 — `Interpreter.executeSRL/SRA/ROL/ROR` corner at `ct = 0`
 - **GH:** [#51](https://github.com/avidrucker/lccjs/issues/51)
 - **Severity:** low (unreachable today)
-- **Status:** open
+- **Status:** DOCUMENTED in `b5c718a` (verified 2026-06-01) — corner unreachable today (assembler defaults `ct` to 1); documented in-code with rationale; no guard added (wontfix-by-design).
 - **Where:** `src/core/interpreter.js:920-944`
 - **Description:** Uses `ct - 1` to extract the "last bit shifted
   out." For `ct = 0`, the expression becomes `>> -1`, which JS
@@ -304,7 +304,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-020 — `loadPoint = 0` hardcoded in 5 spots; `-l<hex loadpt>` flag incomplete
 - **GH:** [#52](https://github.com/avidrucker/lccjs/issues/52), [#53](https://github.com/avidrucker/lccjs/issues/53) (decomposed)
 - **Severity:** medium (documented feature does not work)
-- **Status:** open
+- **Status:** FIXED in `6cb6cce` (OB-020a) + `37781e6` (OB-020b) (verified 2026-06-01) — five `loadPoint = 0` sites consolidated to `defaultLoadPoint`; `-l<hex>` flag wired to listing display.
 - **Where:** `src/core/assembler.js:119, 192, 581, 715, 787`
 - **Description:** All five sites set `loadPoint = 0` with the
   identical TODO comment "flags may dictate where in memory the
@@ -318,7 +318,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-021 — `evaluateImmediate` bounds untested across 6+ instructions
 - **GH:** [#54](https://github.com/avidrucker/lccjs/issues/54)
 - **Severity:** medium (validators may not actually validate)
-- **Status:** open
+- **Status:** FIXED in `6bfee1b` (verified 2026-06-01) — 20 boundary tests added covering all 7 `evaluateImmediate` call sites.
 - **Where:** `src/core/assembler.js:1361, 1592, 1622, 1796, 1808, 1820, 1837`
 - **Description:** Each site carries `//// TODO: test bounds, see
   if input is naive or not`. Bounds are passed in (e.g. −16..15
@@ -332,7 +332,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-022 — `assembler.js:1781` `pcoffset11 out of range` path untested
 - **GH:** [#55](https://github.com/avidrucker/lccjs/issues/55)
 - **Severity:** low (validator likely correct but unverified)
-- **Status:** open
+- **Status:** FIXED in `586feef` (verified 2026-06-01) — `pcoffset11` out-of-range error path covered by integration test with a too-far branch target.
 - **Where:** `src/core/assembler.js:1781`
 - **Description:** Explicit `// TODO: test this in integration
   tests` next to the error path. The check exists; no test
@@ -343,7 +343,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-023 — Dead `.word` validation block with five outstanding TODOs
 - **GH:** [#56](https://github.com/avidrucker/lccjs/issues/56)
 - **Severity:** low (dead code + accumulated questions)
-- **Status:** open
+- **Status:** FIXED in `aa2dc48` (verified 2026-06-01) — dead validation block removed; accepted `.word` operand spacing forms documented in a reference table.
 - **Where:** `src/core/assembler.js:1077-1084`
 - **Description:** 8 lines of commented-out `this.error` / `return`
   with five "inspect to make sure" TODOs covering `.word` operand
@@ -356,7 +356,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-024 — Operand-spacing TODOs for `ret+3` / `ret +3` / `ret+ 3` / `ret + 3`
 - **GH:** [#57](https://github.com/avidrucker/lccjs/issues/57)
 - **Severity:** low (open parity question)
-- **Status:** open
+- **Status:** FIXED in `8ccc7df` (verified 2026-06-01) — four `ret`-spacing TODOs collapsed into one decision; accepted forms documented + 5 spacing-variant tests added.
 - **Where:** `src/core/assembler.js:1844-1847`
 - **Description:** Four near-identical TODOs about whether `ret`
   with various whitespace patterns is valid. The four variants
@@ -368,7 +368,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-025 — `interpreter.js:1101` line-ending portability untested
 - **GH:** [#58](https://github.com/avidrucker/lccjs/issues/58)
 - **Severity:** low (cross-platform risk)
-- **Status:** open
+- **Status:** FIXED in `ba05124` (verified 2026-06-01) — 3 CRLF portability tests added; input-buffer path verified for both `\r\n` and `\n`.
 - **Where:** `src/core/interpreter.js:1101`
 - **Description:** `// TODO: check to make sure this behaves as
   expected on both Linux and Windows`. Input-handling code path,
@@ -379,7 +379,7 @@ also have resolution commits and are reconciled separately — see #170.
 ### OB-026 — `lcc.js:85` multi-file input not implemented
 - **GH:** [#59](https://github.com/avidrucker/lccjs/issues/59)
 - **Severity:** low (missing feature, not active bug)
-- **Status:** open
+- **Status:** DOCUMENTED in `0391071` (verified 2026-06-01) — multi-file `.a` input documented as a known research divergence in `parity_deviations.md`; no implementation planned (wontfix-by-design).
 - **Where:** `src/core/lcc.js:85`
 - **Description:** `// TODO: (extra feature) check similarly to
   see if multiple .a files were ...`. Multi-input handling is a
