@@ -43,9 +43,9 @@ Produced by the LCC+ pipeline (`src/plus/`). **Local-only** (gitignored).
 
 | Artifact | Path | Produced by | Committed? | Value | Staleness |
 |----------|------|-------------|------------|-------|-----------|
-| Velocity log | `docs/puzzle-velocity.csv` | Hand-appended (one row per closed puzzle) | Yes — source of truth | Per-ticket H/C estimates vs actuals; feeds calibration analysis and the SQLite migration (#284) | Never "stale" — append-only log; the `merge=union` gitattribute handles parallel-agent appends |
-| Enriched velocity | `stats/puzzle-velocity-enriched.csv` | `stats/enrich.py` | No — gitignored (#286) | Adds git-churn columns, GH issue timestamps, and derived flags/ratios for notebook analysis | Goes stale whenever new rows land in `puzzle-velocity.csv`; re-run `enrich.py` before analysis. Will be obsolete once `enrich.py` writes to SQLite directly (#284) |
-| Analysis notebooks | `stats/*.ipynb` | Jupyter (human-run) | Yes — with embedded outputs | Velocity calibration findings; surfaced the systematic 2–3x over-padding pattern and per-agent/per-role breakdowns | Outputs are frozen at last run; re-execute (`jupyter nbconvert --execute --inplace`) after a fresh `enrich.py` run |
+| Velocity log | `docs/puzzle-velocity.csv` | Hand-appended (one row per closed puzzle) | Yes — read-only export; `~/.lccjs/velocity.db` is the source of truth | Per-ticket H/C estimates vs actuals | Never "stale" — append-only export |
+| Enriched velocity | `stats/puzzle-velocity-enriched.csv` | `stats/enrich.py` | No — gitignored | Adds git-churn columns, GH issue timestamps, and derived flags/ratios for notebook analysis | Goes stale whenever new rows land in `~/.lccjs/velocity.db`; re-run `enrich.py` before analysis. `enrich.py` reads from the SQLite DB to produce this file. |
+| Analysis notebooks | `stats/*.ipynb` | Jupyter (human-run) | Yes — with embedded outputs | Exploratory velocity analysis to surface calibration insights and improve estimate accuracy over time | Outputs are frozen at last run; re-execute (`jupyter nbconvert --execute --inplace`) after a fresh `enrich.py` run |
 
 ---
 
