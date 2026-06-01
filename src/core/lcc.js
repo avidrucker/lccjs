@@ -26,6 +26,7 @@ class LCC {
     this.interpreter = null;
     this.inputBuffer = '';
     this.generateStats = true;
+    this.userName = null;
   }
 
   resolveUserName(inputFileName = this.inputFileName) {
@@ -37,7 +38,7 @@ class LCC {
   }
 
   buildReportArtifacts(includeSourceCode, includeComments, now) {
-    const userName = this.resolveUserName();
+    const userName = this.userName ?? this.resolveUserName();
 
     return buildReportArtifacts({
       interpreter: this.interpreter,
@@ -80,6 +81,16 @@ class LCC {
     // This matches the most-common OG LCC usage (single source file → single .e).
     // See core-behavior-matrix.md → "Multi-file .a input" for documented divergence.
     const firstArgIsObjectFile = path.extname(this.args[0]).toLowerCase() === '.o';
+
+    // Resolve the author name before any assembly or execution — matches oracle
+    // behavior (oracle always prompts for name first). Writes name.nnn if absent;
+    // subsequent calls in assembler/interpreter just read from the file. (#398)
+    // Guards:
+    //   - linking (.o → .e): linker writes no report artifacts, name not needed.
+    //   - generateStats=false: no .lst/.bst will be written, name not needed.
+    if (!firstArgIsObjectFile && this.generateStats) {
+      this.userName = this.resolveUserName();
+    }
 
     if (firstArgIsObjectFile) {
       // We have a linking scenario: one or more files (assumed to be .o files)

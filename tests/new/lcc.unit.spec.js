@@ -80,6 +80,7 @@ describe('LCC Unit Tests', () => {
     jest.spyOn(lcc, 'parseArguments').mockImplementation((args) => {
       lcc.args = [...args];
     });
+    jest.spyOn(lcc, 'resolveUserName').mockReturnValue('TestUser A');
     jest.spyOn(lcc, 'linkObjectFiles').mockImplementation(() => {});
     jest.spyOn(lcc, 'handleSingleFile').mockImplementation(() => {});
 
@@ -233,6 +234,7 @@ describe('LCC Unit Tests', () => {
       const lcc = new LCC();
       const interactiveSpy = jest.spyOn(lcc, 'runInteractiveMode').mockImplementation(() => {});
       const handleSpy = jest.spyOn(lcc, 'handleSingleFile').mockImplementation(() => {});
+      jest.spyOn(lcc, 'resolveUserName').mockReturnValue('TestUser A');
       lcc.main(['demo.a']);
       expect(interactiveSpy).not.toHaveBeenCalled();
       expect(handleSpy).toHaveBeenCalledTimes(1);
