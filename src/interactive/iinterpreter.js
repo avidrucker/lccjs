@@ -38,6 +38,22 @@ class IInterpreter extends Interpreter {
     this.memDisplayBase = 0;      // a{hex}: base address for the memory pane
     this.memDisplayRows = 2;      // m{int}: number of rows (8 words each) in the memory pane
     this.stackAnchor = 'sp';      // s{hex|register}: anchor for the stack pane
+
+    // Pane layout — l{layout} command; up to 3 columns separated by /
+    // Pane chars: r=registers, c=code snippet, m=memory, o=output
+    this.paneLayout = { column0: 'ro', column1: 'mc', column2: '' };
+
+    // Program output buffer — captures aout/dout/sout etc. for the 'o' pane
+    // Populated via writeOutput() override; does NOT go to stdout during interactive mode
+    this.programOutput = '';
+  }
+
+  // writeOutput(message) — override Interpreter's stdout+buffer write.
+  // In interactive mode all program I/O goes here instead of stdout so it
+  // appears in the Output pane on the next render rather than polluting the UI.
+  writeOutput(message) {
+    this.programOutput += message;
+    this.output += message;
   }
 
   // initSnapshot() — capture the pre-execution initial machine state as snapshot[0].
@@ -344,19 +360,165 @@ class IInterpreter extends Interpreter {
     return output;
   }
 
+  // ─── Box rendering helpers ────────────────────────────────────────────────
+  // All pane lines are exactly 48 visible characters wide so columns can be
+  // placed side-by-side without misalignment.
+
+  // _boxTop(title) — 48-char box-drawing top border with centred title.
+  _boxTop(title) {
+    const label = `┤ ${title} ├`;
+    const inner = 46; // chars between ┌ and ┐
+    const dashes = inner - label.length;
+    const left = Math.floor(dashes / 2);
+    const right = dashes - left;
+    return `┌${'─'.repeat(left)}${label}${'─'.repeat(right)}┐`;
+  }
+
+  // _boxBottom() — 48-char box-drawing bottom border.
+  _boxBottom() {
+    return `└${'─'.repeat(46)}┘`;
+  }
+
+  // _visibleLen(str) — string length ignoring ANSI escape sequences.
+  _visibleLen(str) {
+    return str.replace(/\x1b\[[0-9;]*m/g, '').length;
+  }
+
+  // _boxLine(content) — wrap content in a 48-char │ ... │ box line.
+  // Pads based on visible length so ANSI-colored content aligns correctly.
+  _boxLine(content) {
+    const vis = this._visibleLen(content);
+    const pad = Math.max(0, 44 - vis);
+    return `│ ${content}${' '.repeat(pad)} │`;
+  }
+
+  // ─── Pane rendering methods (each returns string[]) ───────────────────────
+
+  // registerPane — registers + stack in a 48-char box.
+  registerPane(prevSnap, currSnap) {
+    const text = this.displayRegisters(prevSnap, currSnap) + '\n' +
+                 this.displayStack(this.stackAnchor);
+    const lines = text.split('\n').filter((l) => l !== '');
+    return [this._boxTop('Registers'), ...lines.map((l) => this._boxLine(l)), this._boxBottom()];
+  }
+
+  // codePane — source snippet in a 48-char box.
+  // Returns [] when sourceMap is null (no source available), matching the original
+  // behaviour of runInteractive which skipped the code snippet in that case.
+  codePane(sourceMap) {
+    if (!sourceMap) return [];
+    const text = this.displayCodeSnippet(sourceMap);
+    const lines = text.split('\n').filter((l) => l !== '');
+    return [this._boxTop('Code Snippet'), ...lines.map((l) => this._boxLine(l)), this._boxBottom()];
+  }
+
+  // memoryPane — memory display in a 48-char box.
+  memoryPane() {
+    const text = this.displayMemory(this.memDisplayBase, this.memDisplayRows);
+    const lines = text.split('\n').filter((l) => l !== '');
+    return [this._boxTop('Memory'), ...lines.map((l) => this._boxLine(l)), this._boxBottom()];
+  }
+
+  // outputPane — program I/O buffer in a 48-char box.
+  outputPane() {
+    const raw = this.programOutput || '';
+    const lines = raw.split('\n');
+    // Drop a trailing empty string from split so we don't show a blank final row
+    if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+    return [
+      this._boxTop('Output'),
+      ...lines.map((l) => this._boxLine(l.replace(/\r/g, ''))),
+      this._boxBottom(),
+    ];
+  }
+
+  // paneLines(paneId, prevSnap, currSnap, sourceMap) — dispatch to the right pane method.
+  paneLines(paneId, prevSnap, currSnap, sourceMap) {
+    switch (paneId) {
+      case 'r': return this.registerPane(prevSnap, currSnap);
+      case 'c': return this.codePane(sourceMap);
+      case 'm': return this.memoryPane();
+      case 'o': return this.outputPane();
+      default:  return [];
+    }
+  }
+
+  // ─── Multi-column display ─────────────────────────────────────────────────
+
+  // displayInteractiveMode — assemble pane columns from this.paneLayout and
+  // write them to stdout side-by-side (48 chars per column).
+  // Returns the number of lines written (for clearLines before the next render).
+  displayInteractiveMode(prevSnap, currSnap, sourceMap) {
+    const BLANK = ' '.repeat(48);
+    const columns = [[], [], []];
+
+    for (let i = 0; i < 3; i++) {
+      const tokens = this.paneLayout[`column${i}`] || '';
+      for (const ch of tokens) {
+        columns[i].push(...this.paneLines(ch, prevSnap, currSnap, sourceMap));
+      }
+    }
+
+    const height = Math.max(columns[0].length, columns[1].length, columns[2].length);
+    let out = '\n';
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < 3; col++) {
+        if (columns[col][row] !== undefined) {
+          out += columns[col][row];
+        } else if (columns[col].length > 0) {
+          out += BLANK;
+        }
+      }
+      out += '\n';
+    }
+
+    process.stdout.write(out);
+    return (out.match(/\n/g) || []).length + 1; // +1 for console.log trailing newline
+  }
+
+  // handlePaneLayout(inputLine) — parse an l-command argument like "ro/mc" or "r/c/mo".
+  // Returns { error: string, paneLayout: { column0, column1, column2 } }.
+  handlePaneLayout(inputLine) {
+    const result = { error: '', paneLayout: { column0: '', column1: '', column2: '' } };
+    const parts = inputLine.split('/');
+    if (parts.length > 3) {
+      result.error = 'Layout supports at most 3 columns (separated by /).';
+      return result;
+    }
+    for (let i = 0; i < parts.length; i++) {
+      for (const ch of parts[i]) {
+        if (!'rcmo'.includes(ch)) {
+          result.error = `'${ch}' is not a valid pane identifier. Use r, c, m, or o.`;
+          return result;
+        }
+        result.paneLayout[`column${i}`] += ch;
+      }
+    }
+    return result;
+  }
+
+  // clearLines(n) — move cursor up n lines then clear to end of screen.
+  clearLines(n) {
+    if (n > 0) {
+      process.stdout.write(`\x1b[${n}A`);
+      process.stdout.write('\x1b[0J');
+    }
+  }
+
   // runInteractive(sourceMap) — main interactive prompt loop.
-  // Called after the executable is loaded (loadExecutableBuffer) and
-  // this.initialMem is set. Renders state after each command.
+  // @inprogress #394:H90m/DEV ilcc multi-column pane layout (l command + output pane)
   //
   // Commands (entered at "Input: " prompt):
-  //   {N}       step forward N instructions
-  //   {-N}      step backward N instructions (time-travel)
-  //   0         re-display current state without stepping
-  //   a{hex}    set memory display base address (e.g. a0010)
-  //   m{N}      set memory display row count (e.g. m4)
-  //   s{anchor} set stack anchor: register name or hex addr (e.g. ssp, s0ff0)
-  //   h         show this help
-  //   q         quit
+  //   {N}         step forward N instructions
+  //   {-N}        step backward N instructions (time-travel)
+  //   0           re-display current state without stepping
+  //   <enter>     repeat last step count
+  //   a{hex}      set memory display base address (e.g. a0010)
+  //   m{N}        set memory display row count    (e.g. m4)
+  //   s{anchor}   set stack anchor: register name or hex addr (e.g. ssp, s0ff0)
+  //   l{layout}   set pane layout (e.g. lro/mc, lr/c/mo)
+  //   h           show help
+  //   q           quit
   //
   // sourceMap (optional) — { addressToLine: Map<pc, {lineNumber, sourceLine}>, allLines: string[] }
   // Passed to displayCodeSnippet(), which shows source context around the current PC.
@@ -365,25 +527,25 @@ class IInterpreter extends Interpreter {
     this.initSnapshot();
     this.spInitial = this.r[6];
 
-    const renderDisplay = () => {
+    let newlineCount = 0;
+
+    const render = () => {
       const prevIdx = Math.max(0, this.currentIteration - 1);
       const prev = this.snapshot[prevIdx];
       const curr = this.snapshot[this.currentIteration];
-      process.stdout.write(this.displayRegisters(prev, curr) + '\n');
-      process.stdout.write(this.displayMemory(this.memDisplayBase, this.memDisplayRows) + '\n');
-      process.stdout.write(this.displayStack(this.stackAnchor) + '\n');
-      if (sourceMap) {
-        process.stdout.write(this.displayCodeSnippet(sourceMap) + '\n');
-      }
+      this.clearLines(newlineCount);
+      newlineCount = this.displayInteractiveMode(prev, curr, sourceMap);
       if (!this.running) {
         process.stdout.write('--- Program halted. Step back with -N, or quit with q. ---\n');
+        newlineCount++;
       }
     };
 
-    renderDisplay();
+    render();
     process.stdout.write("Enter 'h' for help.\n");
+    newlineCount++;
 
-    let lastStep = 1; // remembered across prompts
+    let lastStep = 1;
 
     while (true) {
       process.stdout.write('Input: ');
@@ -394,31 +556,44 @@ class IInterpreter extends Interpreter {
 
       if (cmd === 'h') {
         process.stdout.write(this.displayHelp());
+        newlineCount = 0; // help text scrolled; don't try to clear it on the next render
         continue;
       }
 
       if (cmd === '0') {
-        renderDisplay();
+        render();
         continue;
       }
 
       if (cmd.startsWith('a')) {
         const addr = parseInt(cmd.slice(1), 16);
         if (!isNaN(addr)) this.memDisplayBase = addr & 0xFFFF;
-        renderDisplay();
+        render();
         continue;
       }
 
       if (cmd.startsWith('m')) {
         const n = parseInt(cmd.slice(1));
         if (!isNaN(n) && n >= 0) this.memDisplayRows = n;
-        renderDisplay();
+        render();
         continue;
       }
 
       if (cmd.startsWith('s') && cmd.length > 1) {
         this.stackAnchor = cmd.slice(1);
-        renderDisplay();
+        render();
+        continue;
+      }
+
+      if (cmd.startsWith('l')) {
+        const result = this.handlePaneLayout(cmd.slice(1));
+        if (result.error) {
+          process.stdout.write(`Error: ${result.error}\n`);
+          newlineCount++;
+        } else {
+          this.paneLayout = result.paneLayout;
+          render();
+        }
         continue;
       }
 
@@ -426,13 +601,13 @@ class IInterpreter extends Interpreter {
       const n = parseInt(cmd, 10);
       if (!isNaN(n)) {
         if (n !== 0) lastStep = n;
-        const steps = n;
-        if (steps > 0 && !this.running) {
+        if (n > 0 && !this.running) {
           process.stdout.write('Program has halted. Step back with -N first.\n');
+          newlineCount++;
           continue;
         }
-        this.handleSteps(steps);
-        renderDisplay();
+        this.handleSteps(n);
+        render();
         continue;
       }
 
@@ -440,14 +615,16 @@ class IInterpreter extends Interpreter {
       if (cmd === '') {
         if (lastStep > 0 && !this.running) {
           process.stdout.write('Program has halted. Step back with -N first.\n');
+          newlineCount++;
           continue;
         }
         this.handleSteps(lastStep);
-        renderDisplay();
+        render();
         continue;
       }
 
       process.stdout.write(`Unknown command: ${cmd}. Enter 'h' for help.\n`);
+      newlineCount++;
     }
   }
 
@@ -455,15 +632,18 @@ class IInterpreter extends Interpreter {
   displayHelp() {
     return [
       'ilcc interactive commands:',
-      '  {N}       step forward N instructions',
-      '  {-N}      step backward N instructions',
-      '  0         re-display without stepping',
-      '  <enter>   repeat last step count',
-      '  a{hex}    set memory base address (e.g. a0010)',
-      '  m{N}      set memory row count    (e.g. m4)',
-      '  s{anchor} set stack anchor        (e.g. ssp, sfff2)',
-      '  h         show this help',
-      '  q         quit',
+      '  {N}         step forward N instructions',
+      '  {-N}        step backward N instructions',
+      '  0           re-display without stepping',
+      '  <enter>     repeat last step count',
+      '  a{hex}      set memory base address  (e.g. a0010)',
+      '  m{N}        set memory row count     (e.g. m4)',
+      '  s{anchor}   set stack anchor         (e.g. ssp, sfff2)',
+      '  l{layout}   set pane layout          (e.g. lro/mc, lr/c/mo)',
+      '              panes: r=registers  c=code  m=memory  o=output',
+      '              use / to separate columns  (up to 3)',
+      '  h           show this help',
+      '  q           quit',
     ].join('\n') + '\n';
   }
 }
