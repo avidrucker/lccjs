@@ -190,3 +190,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 197,338,Fix: define calibration-usable in prose,WRITER,15,5,1,-14,-4,2026-05-31T17:04:20-1000,2026-05-31T17:05:10-1000,,,ELDERBERRY,sonnet-4.6
 198,339,"Fix: soften narrows substantially — visual only, no numbers",WRITER,15,5,1,-14,-4,2026-05-31T17:06:21-1000,2026-05-31T17:07:19-1000,,,ELDERBERRY,sonnet-4.6
 199,341,Fix: move inter-turn gap caveat to after §2 chart,WRITER,10,5,2,-8,-3,2026-05-31T17:09:02-1000,2026-05-31T17:11:07-1000,,,ELDERBERRY,sonnet-4.6
+200,342,Fix: add newcomer orientation to notebook title cell,WRITER,30,8,3,-27,-5,2026-05-31T17:11:51-1000,2026-05-31T17:14:02-1000,,,ELDERBERRY,sonnet-4.6
