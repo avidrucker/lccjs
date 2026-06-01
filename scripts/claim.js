@@ -15,7 +15,7 @@
  * Both still contain `issue-<N>`, so the issue join in puzzle-status.js keeps
  * working; the fruit prefix is additive.
  *
- * Identity precedence (highest first): --as <fruit> > CLAUDE_AGENT_NAME > auto.
+ * Identity precedence (highest first): --as <fruit> > CLAUDE_AGENT_NAME > branch-inferred > auto.
  * Full contract and race-safety model: docs/design-agent-worktree-identity.md
  *
  * A fruit is "taken" iff a `<fruit>/*` branch exists — git's branch namespace is
@@ -139,12 +139,27 @@ function normalizeIdentity(s) {
   return String(s).trim().toLowerCase();
 }
 
+// Extract a fruit identity from a branch name of the form <fruit>/issue-N[...].
+// Returns the lowercased fruit string, or null if the branch doesn't match.
+// Kept pure (no git I/O) so it's directly unit-testable.
+function inferFruitFromBranch(branch) {
+  if (!branch) return null;
+  const m = branch.match(/^([a-z]+)\/issue-\d+/);
+  return m ? m[1] : null;
+}
+
+function currentBranch() {
+  const b = sh('git rev-parse --abbrev-ref HEAD', true);
+  return b ? b.trim() : null;
+}
+
 // Resolve the agent identity from flags + environment, in precedence order:
-//   --as <fruit>  >  CLAUDE_AGENT_NAME  >  auto (no forced identity).
-// Returns { name, source, modeLabel }. name === null means "auto-pick a fresh
-// fruit"; a non-null name is a *forced* identity (single candidate, never
-// silently swapped). `source`/`modeLabel` only drive the human-readable report.
-function resolveIdentity(opts, env) {
+//   --as <fruit>  >  CLAUDE_AGENT_NAME  >  branch-inferred  >  auto (no forced identity).
+// `branch` is the caller's current HEAD branch name (passed in from main() so this
+// function stays pure — no git I/O here). Returns { name, source, modeLabel }.
+// name === null means "auto-pick a fresh fruit"; a non-null name is a *forced*
+// identity (single candidate, never silently swapped).
+function resolveIdentity(opts, env, branch = null) {
   if (opts.as) {
     return { name: opts.as, source: 'as', modeLabel: 'reuse (--as)' };
   }
@@ -152,12 +167,10 @@ function resolveIdentity(opts, env) {
   if (envName) {
     return { name: envName, source: 'env', modeLabel: 'human-directed (env)' };
   }
-  // @todo #315:50m/DEV add a branch-inference tier HERE (below env, above auto):
-  //  when no --as and no env, read the caller's current worktree branch
-  //  (currentBranch() = `git rev-parse --abbrev-ref HEAD`, copy from close.js) and,
-  //  if it matches <fruit>/issue-N, infer the fruit via branch.split('/')[0] so a
-  //  2nd+ claim reuses identity automatically. Pair with a scripts/claim.sh shim
-  //  so npm can't swallow --as. Add resolveIdentity precedence tests. See #315/#309.
+  const inferredFruit = inferFruitFromBranch(branch);
+  if (inferredFruit) {
+    return { name: inferredFruit, source: 'branch', modeLabel: 'branch-inferred' };
+  }
   return { name: null, source: 'auto', modeLabel: 'auto' };
 }
 
@@ -202,7 +215,7 @@ function main() {
   }
   const issue = opts.issue;
 
-  const identity = resolveIdentity(opts, process.env);
+  const identity = resolveIdentity(opts, process.env, currentBranch());
   if (identity.name && !FRUITS.includes(identity.name)) {
     console.error(`[claim] note: "${identity.name}" is not in the known fruit list — using it anyway.`);
   }
@@ -331,6 +344,6 @@ if (require.main === module) main();
 
 module.exports = {
   FRUITS, slugify, listWorktreeBranches, takenFruits,
-  parseArgs, normalizeIdentity, resolveIdentity, assessBaseStaleness,
+  parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
   readIssue, shouldBlockClaim,
 };

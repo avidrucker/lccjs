@@ -1,6 +1,7 @@
 const {
   parseArgs,
   normalizeIdentity,
+  inferFruitFromBranch,
   resolveIdentity,
   assessBaseStaleness,
 } = require('../../scripts/claim');
@@ -64,6 +65,63 @@ describe('claim.js identity resolution', () => {
     test('--allow-stale-main sets the bypass flag (default false)', () => {
       expect(parseArgs(['228']).allowStaleMain).toBe(false);
       expect(parseArgs(['228', '--allow-stale-main']).allowStaleMain).toBe(true);
+    });
+  });
+
+  // #315: branch-inference tier — pure helper + resolveIdentity precedence
+  describe('inferFruitFromBranch()', () => {
+    test('extracts fruit from a canonical worktree branch', () => {
+      expect(inferFruitFromBranch('cherry/issue-180-some-slug')).toBe('cherry');
+    });
+
+    test('extracts fruit when branch has no slug tail', () => {
+      expect(inferFruitFromBranch('apple/issue-99')).toBe('apple');
+    });
+
+    test('returns null for main', () => {
+      expect(inferFruitFromBranch('main')).toBeNull();
+    });
+
+    test('returns null for a feature branch without issue-N', () => {
+      expect(inferFruitFromBranch('feature/some-thing')).toBeNull();
+    });
+
+    test('returns null for null / undefined', () => {
+      expect(inferFruitFromBranch(null)).toBeNull();
+      expect(inferFruitFromBranch(undefined)).toBeNull();
+    });
+  });
+
+  describe('resolveIdentity() branch-inference precedence (#315)', () => {
+    test('branch-inferred fires when --as and env are both absent', () => {
+      const id = resolveIdentity({ as: null }, {}, 'cherry/issue-180-slug');
+      expect(id).toMatchObject({ name: 'cherry', source: 'branch' });
+      expect(id.modeLabel).toMatch(/branch/);
+    });
+
+    test('--as wins over branch-inferred', () => {
+      const id = resolveIdentity({ as: 'apple' }, {}, 'cherry/issue-180-slug');
+      expect(id).toMatchObject({ name: 'apple', source: 'as' });
+    });
+
+    test('CLAUDE_AGENT_NAME wins over branch-inferred', () => {
+      const id = resolveIdentity({ as: null }, { CLAUDE_AGENT_NAME: 'dragonfruit' }, 'cherry/issue-180-slug');
+      expect(id).toMatchObject({ name: 'dragonfruit', source: 'env' });
+    });
+
+    test('non-fruit-issue branch falls through to auto', () => {
+      const id = resolveIdentity({ as: null }, {}, 'main');
+      expect(id).toMatchObject({ name: null, source: 'auto' });
+    });
+
+    test('null branch falls through to auto', () => {
+      const id = resolveIdentity({ as: null }, {}, null);
+      expect(id).toMatchObject({ name: null, source: 'auto' });
+    });
+
+    test('existing auto test still passes with explicit null branch arg', () => {
+      const id = resolveIdentity({ as: null }, {});
+      expect(id).toMatchObject({ name: null, source: 'auto' });
     });
   });
 
