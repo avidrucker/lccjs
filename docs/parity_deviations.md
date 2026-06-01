@@ -83,23 +83,58 @@ was fixed in #31, closed).
 > Not reproducible in cuh63 6.3. See `docs/research/jmp-missing-operand-segfault.md`.
 > The entry below reflects the verified behavior.
 
-| | cuh63 6.3 | LCC.js |
-|---|---|---|
-| `jmp` bare | exit=1 `Missing operand` (pass 1 only); leaves `.e(1B)` `.lst` `.bst` | exit=1 `Missing operand` (pass 2); **no artifacts** ✓ |
-| `jmp ,` | exit=1 `Missing register` | exit=1 `Missing operand` |
-| `jmp notaregister` | exit=1 `Bad register` | exit=1 `Bad register` |
+#### `jmp` variants
 
-**Primary deviation:** Oracle leaves artifact files (`.e`, `.lst`, `.bst`) even
-when assembly fails — same "fail-with-artifacts" pattern as OG BUG #10. LCC.js
-leaves nothing on error (beneficial).
+| Input | cuh63 6.3 message | cuh63 6.3 pass | cuh63 6.3 artifacts | LCC.js message | LCC.js artifacts |
+|-------|-------------------|----------------|---------------------|----------------|-----------------|
+| `jmp` bare | `Missing operand` | pass 1 only | `.e(1B)` `.lst` `.bst` | `Missing operand` | none ✓ |
+| `jmp ,` | `Missing register` | pass 2 | `.e(2B)` `.lst` `.bst` | `Missing operand` | none ✓ |
+| `jmp notaregister` | `Bad register` | pass 2 | `.e(2B)` `.lst` `.bst` | `Bad register` | none ✓ |
+| `jmp r99` | `Bad register` | pass 2 | `.e(2B)` `.lst` `.bst` | `Bad register` | none ✓ |
 
-**Secondary deviation:** Oracle detects the bare-operand error in pass 1 only;
-LCC.js runs both passes before erroring.
+All cases: exit=1 on both sides.
 
-**Source:** `src/core/assembler.js` (`assembleJMP`)
+#### Blast radius — other single-register-operand instructions
+
+| Instruction | Oracle message | Oracle pass | Oracle artifacts | LCC.js message | LCC.js artifacts |
+|-------------|----------------|-------------|-----------------|----------------|-----------------|
+| `blr` bare | `Missing operand` | pass 1 only | `.e(1B)` `.lst` `.bst` | `Missing operand` | none ✓ |
+| `jsrr` bare | `Bad register` | pass 1 and 2 | `.e(2B)` `.lst` `.bst` | `Missing operand` | none ✓ |
+| `jsr` bare | `Missing operand` | pass 1 only | `.e(1B)` `.lst` `.bst` | `Bad label` | none ✓ |
+| `bl` bare | `Missing operand` | pass 1 only | `.e(1B)` `.lst` `.bst` | `Bad label` | none ✓ |
+| `ret` bare | — (assembled OK; hung at runtime) | both | `.e(4B)` `.lst(0B)` `.bst(0B)` | `Missing operand` | none ✓ |
+
+`ret` and `jmp r0` assemble successfully (both are valid instructions) and then
+execute infinite loops — those are runtime behaviors, not assembler errors. Only
+LCC.js rejects `ret` bare as an assembler error; that divergence is separate from
+the missing-operand pattern.
+
+#### Deviations
+
+**Primary — artifact-on-error:** Oracle leaves `.e`, `.lst`, `.bst` on disk even
+when assembly fails. LCC.js leaves nothing. This is the same "fail-with-artifacts"
+pattern as OG BUG #10 — the bare-operand cases are additional instances of it.
+
+**Secondary — pass count:** Oracle catches `jmp`, `blr`, `jsr`, `bl` bare in pass
+1 only. LCC.js always runs both passes before erroring. Observable: oracle prints
+"Starting assembly pass 1" only; LCC.js prints both.
+
+**Tertiary — message wording (exit=1 on both sides; wording only):**
+
+| Input | Oracle | LCC.js |
+|-------|--------|--------|
+| `jmp ,` | `Missing register` | `Missing operand` |
+| `jsrr` bare | `Bad register` | `Missing operand` |
+| `jsr` bare | `Missing operand` | `Bad label` |
+| `bl` bare | `Missing operand` | `Bad label` |
+
+**Source:** `src/core/assembler.js` (`assembleJMP`, `assembleJSR`, `assembleBL`)
 
 **Classification:** BY DESIGN — LCC.js's no-artifact behavior is safer. No parity
 fix needed.
+
+**Evidence:** `public_experiments/jmp_missing_operand_segfault/`,
+`docs/research/jmp-missing-operand-segfault.md`
 
 ---
 
