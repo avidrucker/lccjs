@@ -20,6 +20,10 @@ scratch/**
 experiments/**
 public_experiments/**
 
+# --- test spec files: they exercise/discuss the marker concept but don't own
+#     real puzzles; fixture strings legitimately contain marker-like content ---
+tests/**/*.spec.js
+
 # --- the scanner itself: its source must contain the literal marker to work ---
 scripts/puzzle-status.js
 

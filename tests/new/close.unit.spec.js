@@ -605,15 +605,15 @@ describe('close.js velocityRowExists() — Check A (#359)', () => {
 // ─── Check B: markerStillPresent() (#359) ────────────────────────────────────
 
 describe('close.js markerStillPresent() — Check B (#359)', () => {
-  test('finds a puzzle marker (todo)', () => {
-    const out = 'scripts/close.js:42:  // ' + '@' + 'todo #359:30/DEV fix the thing';
+  test('finds a @todo marker', () => {
+    const out = 'scripts/close.js:42:  // @todo #359:30/DEV fix the thing';
     const { found, lines } = markerStillPresent('359', out);
     expect(found).toBe(true);
     expect(lines).toHaveLength(1);
   });
 
   test('finds an @inprogress marker', () => {
-    const out = 'scripts/claim.js:10:  // ' + '@' + 'inprogress #359:30/DEV fixing';
+    const out = 'scripts/claim.js:10:  // @inprogress #359:30/DEV fixing';
     const { found, lines } = markerStillPresent('359', out);
     expect(found).toBe(true);
     expect(lines[0]).toMatch(/@inprogress/);
@@ -626,28 +626,25 @@ describe('close.js markerStillPresent() — Check B (#359)', () => {
   });
 
   test('does not match a different issue number', () => {
-    const out = 'src/foo.js:5: // ' + '@' + 'todo #100:20/DEV something else';
+    const out = 'src/foo.js:5: // @todo #100:20/DEV something else';
     expect(markerStillPresent('359', out).found).toBe(false);
   });
 
   test('case-insensitive on todo/inprogress keyword', () => {
-    // Use uppercase variants to exercise the case-insensitive flag in the regex.
-    // Split so PDD does not treat these as real puzzle markers.
-    const at = '@';
-    expect(markerStillPresent('359', `src/x.js:1: ${at}ToDo #359:10/DEV`).found).toBe(true);
-    expect(markerStillPresent('359', `src/x.js:1: ${at}InProgress #359:10/DEV`).found).toBe(true);
+    expect(markerStillPresent('359', 'src/x.js:1: @TODO #359:10/DEV').found).toBe(true);
+    expect(markerStillPresent('359', 'src/x.js:1: @InProgress #359:10/DEV').found).toBe(true);
   });
 
   test('does not match issue number appearing mid-word (word boundary)', () => {
     // #3590 should not match #359
-    const out = 'src/x.js:1: // ' + '@' + 'todo #3590:10/DEV other issue';
+    const out = 'src/x.js:1: // @todo #3590:10/DEV other issue';
     expect(markerStillPresent('359', out).found).toBe(false);
   });
 
   test('returns all matched lines when multiple markers present', () => {
     const out = [
-      'src/a.js:1: // ' + '@' + 'todo #359:10/DEV',
-      'src/b.js:2: // ' + '@' + 'inprogress #359:20/DEV',
+      'src/a.js:1: // @todo #359:10/DEV',
+      'src/b.js:2: // @inprogress #359:20/DEV',
     ].join('\n');
     const { found, lines } = markerStillPresent('359', out);
     expect(found).toBe(true);

@@ -242,6 +242,10 @@ the two you're most likely to hit:
 
 ---
 
+## 6. Toolchain / workflow pitfalls
+
+**`*.spec.js` files are outside PDD scan coverage.** `tests/**/*.spec.js` is excluded from `.pddignore` (#367), so a `@todo` marker placed inside a spec file will not appear in `npm run puzzles` output and will not be enforced against a GitHub issue. Real puzzle markers belong in source files under `src/`.
+
 ## See also
 
 - [docs/lcc-isa.md](./lcc-isa.md) — instruction set, field widths, branch codes.

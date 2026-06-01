@@ -314,14 +314,13 @@ describe('close.js e2e — Check A: velocity row required (#359)', () => {
 // ─── Check B: marker must be deleted (#359) ──────────────────────────────────
 
 describe('close.js e2e — Check B: marker must be deleted (#359)', () => {
-  test('dies pre-flight when a puzzle marker for the ticket still exists in a JS file', () => {
+  test('dies pre-flight when a @todo marker for the ticket still exists in a JS file', () => {
     const { tmpDir, wtPath } = makeRepo('99993');
     try {
-      // Plant a puzzle marker in a tracked JS file inside the temp worktree.
-      // (Use string concat so the PDD scanner doesn't treat this line as a real marker.)
+      // Plant a @todo marker in a tracked JS file inside the temp worktree.
       fs.writeFileSync(
         path.join(wtPath, 'marker.js'),
-        '// ' + '@' + 'todo #99993:10/DEV fix this\n'
+        '// @todo #99993:10/DEV fix this\n'
       );
       sh(wtPath, 'git add marker.js');
       sh(wtPath, 'git commit --amend --no-edit');
@@ -341,8 +340,8 @@ describe('close.js e2e — Check B: marker must be deleted (#359)', () => {
   test('--skip-marker-check bypasses the check and allows the close to proceed', () => {
     const { tmpDir, wtPath } = makeRepo('99994');
     try {
-      // Plant a marker that would normally block the close.
-      fs.writeFileSync(path.join(wtPath, 'marker.js'), '// ' + '@' + 'todo #99994:10/DEV\n');
+      // Plant a @todo marker that would normally block the close.
+      fs.writeFileSync(path.join(wtPath, 'marker.js'), '// @todo #99994:10/DEV\n');
       sh(wtPath, 'git add marker.js');
       sh(wtPath, 'git commit --amend --no-edit');
 
