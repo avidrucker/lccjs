@@ -583,25 +583,41 @@ class Interpreter {
     }
   }
 
-  // @inprogress #251:45m/DEV decomplect: extract a pure decode(ir) -> {opcode,dr,sr1,imm5,...} that returns a value and writes nothing to this, so decode is unit-testable without running a full step(). See #246 H1a + docs/research/codebase-quality-hotspots.md
+  /**
+   * Pure instruction decode: maps a 16-bit instruction word to its field
+   * breakdown. Reads only `ir` (and the pure `signExtend` helper) and writes
+   * nothing to `this`, so it is deterministic and unit-testable in isolation
+   * (e.g. `decode(0x1283)` yields the field set for `add r1, r2, r3`). step()
+   * publishes the result onto the instance the execute* handlers read from.
+   */
+  decode(ir) {
+    const reg9 = (ir >> 9) & 0x7;  // dr / sr / code (bits 11-9)
+    const reg6 = (ir >> 6) & 0x7;  // sr1 / baser (bits 8-6)
+    const pcoffset9 = this.signExtend(ir & 0x1FF, 9); // bits 8-0
+    return {
+      opcode: (ir >> 12) & 0xF,        // bits 15-12
+      code: reg9, dr: reg9, sr: reg9,  // bits 11-9 (three aliases)
+      sr1: reg6, baser: reg6,          // bits 8-6 (two aliases)
+      sr2: ir & 0x7,                   // bits 2-0
+      bit5: (ir >> 5) & 0x1,
+      bit11: (ir >> 11) & 0x1,
+      imm5: this.signExtend(ir & 0x1F, 5),   // bits 4-0, sign-extended
+      pcoffset9,
+      imm9: pcoffset9,                 // alias of pcoffset9
+      pcoffset11: this.signExtend(ir & 0x7FF, 11), // bits 10-0, sign-extended
+      offset6: this.signExtend(ir & 0x3F, 6),      // bits 5-0, sign-extended
+      eopcode: ir & 0x1F,              // bits 4-0
+      trapvec: ir & 0xFF,              // bits 7-0
+    };
+  }
+
   // @todo #252:45m/DEV decomplect: lift traceMode source-emit + the post-execute register/flag diff printer (diffRegisters) out of this execution core into an observer that step() calls (step returns a delta). Blocked by #251. See #246 H1b
   step() {
     // Fetch instruction
     this.ir = this.mem[this.pc++];
-    // Decode instruction
-    this.opcode = (this.ir >> 12) & 0xF; // Opcode (bits 15-12)
-    this.code = this.dr = this.sr = (this.ir >> 9) & 0x7; // dr/sr (bits 11-9)
-    this.sr1 = this.baser = (this.ir >> 6) & 0x7; // sr1/baser (bits 8-6)
-    this.sr2 = this.ir & 0x7; // sr2 (bits 2-0)
-    this.bit5 = (this.ir >> 5) & 0x1; // bit 5
-    this.bit11 = (this.ir >> 11) & 0x1; // bit 11
-    this.imm5 = this.signExtend(this.ir & 0x1F, 5); // imm5 (bits 4-0)
-    this.pcoffset9 = this.signExtend(this.ir & 0x1FF, 9); // pcoffset9 (bits 8-0)
-    this.imm9 = this.pcoffset9;
-    this.pcoffset11 = this.signExtend(this.ir & 0x7FF, 11); // pcoffset11 (bits 10-0)
-    this.offset6 = this.signExtend(this.ir & 0x3F, 6); // offset6 (bits 5-0)
-    this.eopcode = this.ir & 0x1F; // eopcode (bits 4-0)
-    this.trapvec = this.ir & 0xFF; // trap vector (bits 7-0)
+    // Decode the instruction word into a plain value (pure — writes nothing to
+    // `this`), then publish those fields onto the instance the handlers read.
+    Object.assign(this, this.decode(this.ir));
 
     if (this.traceMode) {
       // Emit "  addr:   source text" before executing the instruction.
