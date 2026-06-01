@@ -97,15 +97,19 @@ before anything else.
   tokenizer splits `arr` and `+3`, and the offset token is silently ignored.
 - **Fix:** Write `arr+3` with **no whitespace** around the `+`.
 
-### 2.3 The string-escape set is small
+### 2.3 Unknown string escapes are a hard error (only five are valid)
 
-- **Symptom:** `"col\0sep"` assembles with an "Unknown escape sequence" warning
-  and leaves a literal `\` + `0` in the string — a program expecting a NUL
-  terminator there reads garbage.
-- **Why:** Only five escapes are recognized: `\n`, `\t`, `\\`, `\"`, `\r`.
-  Anything else keeps the backslash (non-fatal).
-- **Fix:** For a NUL or other special byte mid-string, emit it with `.word`
-  entries instead of an escape, or split the string.
+- **Symptom:** `.string "col\0sep"` (or any `\X` outside the supported set) **fails
+  assembly** with `Unknown escape sequence: \0` and exit 1 — the file does not
+  assemble at all.
+- **Why:** Only five escapes are recognized: `\n`, `\t`, `\\`, `\"`, `\r`. Anything
+  else (`\0`, `\a`, `\b`, `\f`, `\v`, `\'`, the C numeric escapes `\xNN`/`\NNN`, …)
+  is **rejected outright** — LCC.js fails loud rather than silently dropping the
+  backslash the way OG LCC does (a deliberate divergence; see
+  [parity deviation #15](./parity_deviations.md)).
+- **Fix:** For a NUL or other byte with no escape, emit it with `.word` entries
+  instead, or split the string. Don't reach for C-style numeric escapes — they
+  aren't supported.
 
 ### 2.4 Labels must start with `[A-Za-z_$@]`
 
@@ -148,6 +152,19 @@ before anything else.
 - **Why:** The address space is 16-bit word-addressable (`MAX_MEMORY = 65536`).
 - **Fix:** Split into modules. (Multi-module `.ap` linking via the planned
   `linkerplus.js` is not yet available — see pitfall 4.1.)
+
+### 2.9 Source lines are capped at 300 characters
+
+- **Symptom:** A long machine-generated line — or even a short instruction with a
+  very long trailing comment — aborts with `Line exceeds maximum length of 300
+  characters`.
+- **Why:** LCC.js rejects any source line longer than 300 **raw** characters (code +
+  whitespace + comment, counted before stripping). This is a deliberate fail-fast
+  replacement for OG LCC, which silently splits lines past its ~298-char buffer and
+  parses the overflow tail as bogus following source (see
+  [parity deviation #7](./parity_deviations.md)).
+- **Fix:** Keep lines under 300 chars — move long comments onto their own line and
+  split generated data across multiple `.word` lines.
 
 ---
 
@@ -209,8 +226,12 @@ the two you're most likely to hit:
 
 - **OG LCC:** `ldr r1 fp -1` (no commas) silently encodes `offset6 = 0`.
 - **LCC.js:** correctly encodes `offset6 = -1`.
-- **Fix:** Use commas (`ldr r1, fp, -1`) for cross-tool portability; without them,
-  OG LCC is wrong and LCC.js matches the spec.
+- **Also the immediate family (`add`/`sub`/`and`/`cmp`/`mvi`):** OG LCC *rejects* a
+  no-comma negative immediate (`add r0 r0 -1`) with a generic error (and leaves a
+  blank `.e` behind); LCC.js encodes it correctly. Same root cause — OG LCC's
+  no-comma parser can't read a negative integer (#257).
+- **Fix:** Use commas (`ldr r1, fp, -1`, `add r0, r0, -1`) for cross-tool
+  portability; without them, OG LCC is wrong and LCC.js matches the spec.
 
 ### 5.2 `mov dr, -1` — accepted by LCC.js, rejected by OG LCC (OB-008)
 
