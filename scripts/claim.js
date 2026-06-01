@@ -152,6 +152,12 @@ function resolveIdentity(opts, env) {
   if (envName) {
     return { name: envName, source: 'env', modeLabel: 'human-directed (env)' };
   }
+  // @todo #315:50m/DEV add a branch-inference tier HERE (below env, above auto):
+  //  when no --as and no env, read the caller's current worktree branch
+  //  (currentBranch() = `git rev-parse --abbrev-ref HEAD`, copy from close.js) and,
+  //  if it matches <fruit>/issue-N, infer the fruit via branch.split('/')[0] so a
+  //  2nd+ claim reuses identity automatically. Pair with a scripts/claim.sh shim
+  //  so npm can't swallow --as. Add resolveIdentity precedence tests. See #315/#309.
   return { name: null, source: 'auto', modeLabel: 'auto' };
 }
 
