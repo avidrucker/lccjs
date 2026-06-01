@@ -7,6 +7,7 @@ const {
   extractTicketFromCsvDiff, extractRowsFromCsvDiff, velocityTicketMismatch,
   computeVelocityMismatch,
   extractKeywords, keywordsOverlap,
+  velocityRowExists, markerStillPresent,
 } = require('../../scripts/close');
 
 describe('close.js classifyPushError()', () => {
@@ -560,5 +561,96 @@ describe('close.js computeVelocityMismatch() — Guard 1 #361 fix', () => {
     // The correct row's presence is sufficient to pass.
     const rows = [mkRow(317, 'CHERRY'), mkRow(318, 'CHERRY')];
     expect(computeVelocityMismatch(rows, '317', 'cherry')).toEqual([]);
+  });
+});
+
+// ─── Check A: velocityRowExists() (#359) ─────────────────────────────────────
+
+describe('close.js velocityRowExists() — Check A (#359)', () => {
+  let db;
+  beforeEach(() => {
+    // In-memory DB with the minimal velocity schema needed for the check.
+    const Database = require('better-sqlite3');
+    db = new Database(':memory:');
+    db.exec('CREATE TABLE velocity (id INTEGER PRIMARY KEY, ticket INTEGER)');
+  });
+  afterEach(() => db.close());
+
+  test('returns true when a row for the ticket exists', () => {
+    db.prepare('INSERT INTO velocity (ticket) VALUES (?)').run(359);
+    expect(velocityRowExists(db, 359)).toBe(true);
+  });
+
+  test('returns false when no row for the ticket exists', () => {
+    db.prepare('INSERT INTO velocity (ticket) VALUES (?)').run(100);
+    expect(velocityRowExists(db, 359)).toBe(false);
+  });
+
+  test('returns false on an empty table', () => {
+    expect(velocityRowExists(db, 1)).toBe(false);
+  });
+
+  test('matches by integer value — string ticket coerced correctly', () => {
+    db.prepare('INSERT INTO velocity (ticket) VALUES (?)').run(42);
+    expect(velocityRowExists(db, Number('42'))).toBe(true);
+  });
+
+  test('does not match a different ticket', () => {
+    db.prepare('INSERT INTO velocity (ticket) VALUES (?)').run(100);
+    db.prepare('INSERT INTO velocity (ticket) VALUES (?)').run(200);
+    expect(velocityRowExists(db, 300)).toBe(false);
+  });
+});
+
+// ─── Check B: markerStillPresent() (#359) ────────────────────────────────────
+
+describe('close.js markerStillPresent() — Check B (#359)', () => {
+  test('finds a puzzle marker (todo)', () => {
+    const out = 'scripts/close.js:42:  // ' + '@' + 'todo #359:30/DEV fix the thing';
+    const { found, lines } = markerStillPresent('359', out);
+    expect(found).toBe(true);
+    expect(lines).toHaveLength(1);
+  });
+
+  test('finds an @inprogress marker', () => {
+    const out = 'scripts/claim.js:10:  // @inprogress #359:30/DEV fixing';
+    const { found, lines } = markerStillPresent('359', out);
+    expect(found).toBe(true);
+    expect(lines[0]).toMatch(/@inprogress/);
+  });
+
+  test('returns found=false when grep output is empty (no matches)', () => {
+    expect(markerStillPresent('359', '').found).toBe(false);
+    expect(markerStillPresent('359', null).found).toBe(false);
+    expect(markerStillPresent('359', undefined).found).toBe(false);
+  });
+
+  test('does not match a different issue number', () => {
+    const out = 'src/foo.js:5: // ' + '@' + 'todo #100:20/DEV something else';
+    expect(markerStillPresent('359', out).found).toBe(false);
+  });
+
+  test('case-insensitive on todo/inprogress keyword', () => {
+    // Use uppercase variants to exercise the case-insensitive flag in the regex.
+    // Split so PDD does not treat these as real puzzle markers.
+    const at = '@';
+    expect(markerStillPresent('359', `src/x.js:1: ${at}ToDo #359:10/DEV`).found).toBe(true);
+    expect(markerStillPresent('359', `src/x.js:1: ${at}InProgress #359:10/DEV`).found).toBe(true);
+  });
+
+  test('does not match issue number appearing mid-word (word boundary)', () => {
+    // #3590 should not match #359
+    const out = 'src/x.js:1: // ' + '@' + 'todo #3590:10/DEV other issue';
+    expect(markerStillPresent('359', out).found).toBe(false);
+  });
+
+  test('returns all matched lines when multiple markers present', () => {
+    const out = [
+      'src/a.js:1: // ' + '@' + 'todo #359:10/DEV',
+      'src/b.js:2: // @inprogress #359:20/DEV',
+    ].join('\n');
+    const { found, lines } = markerStillPresent('359', out);
+    expect(found).toBe(true);
+    expect(lines).toHaveLength(2);
   });
 });

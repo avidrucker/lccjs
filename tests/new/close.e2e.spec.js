@@ -82,7 +82,7 @@ describe('close.js e2e — happy path', () => {
   test('clean close: commit lands on origin/main and worktree + branch are removed', () => {
     const { tmpDir, mainPath, wtPath, wtBranch } = makeRepo('9001');
     try {
-      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9001 --no-verify-issue`);
+      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9001 --no-verify-issue --skip-velocity-check --skip-marker-check`);
       expect(ok).toBe(true);
       expect(out).toMatch(/CLOSED/);
 
@@ -105,7 +105,7 @@ describe('close.js e2e — happy path', () => {
   test('--keep: commit lands on origin/main, worktree survives', () => {
     const { tmpDir, mainPath, wtPath } = makeRepo('9002');
     try {
-      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9002 --keep --no-verify-issue`);
+      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9002 --keep --no-verify-issue --skip-velocity-check --skip-marker-check`);
       expect(ok).toBe(true);
       expect(out).toMatch(/LANDED \(kept worktree\)/);
       expect(fs.existsSync(wtPath)).toBe(true);
@@ -143,7 +143,7 @@ describe('close.js e2e — lost-race retry', () => {
       );
       fs.chmodSync(hookPath, 0o755);
 
-      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9003 --no-verify-issue`);
+      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9003 --no-verify-issue --skip-velocity-check --skip-marker-check`);
       expect(ok).toBe(true);
       expect(out).toMatch(/CLOSED/);
 
@@ -181,7 +181,7 @@ describe('close.js e2e — stale-SHA gate fix (#354)', () => {
       sh(mainPath, 'git reset --hard origin/main');
 
       const preLandSha = sh(wtPath, 'git rev-parse HEAD').trim();
-      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9010 --no-verify-issue`);
+      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9010 --no-verify-issue --skip-velocity-check --skip-marker-check`);
       expect(ok).toBe(true);
       expect(out).toMatch(/CLOSED/);
 
@@ -212,7 +212,7 @@ describe('close.js e2e — pre-flight accepts valid Closes #N via abs-path invoc
   test('--dry-run succeeds (pre-flight passes) when cwd is the worktree', () => {
     const { tmpDir, wtPath } = makeRepo('9004');
     try {
-      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9004 --dry-run`);
+      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9004 --dry-run --skip-velocity-check --skip-marker-check`);
       expect(ok).toBe(true);
       expect(out).toMatch(/DRYRUN/);
     } finally {
@@ -265,7 +265,7 @@ describe('close.js e2e — pre-flight rejections', () => {
     const { tmpDir, mainPath, wtPath } = makeRepo('9008');
     try {
       const headBefore = sh(wtPath, 'git rev-parse HEAD').trim();
-      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9008 --dry-run`);
+      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9008 --dry-run --skip-velocity-check --skip-marker-check`);
       expect(ok).toBe(true);
       expect(out).toMatch(/WOULD CLOSE/);
       expect(out).toMatch(/DRYRUN/);
@@ -279,4 +279,96 @@ describe('close.js e2e — pre-flight rejections', () => {
       rmrf(tmpDir);
     }
   }, 15_000);
+});
+
+// ─── Check A: velocity row required (#359) ───────────────────────────────────
+
+describe('close.js e2e — Check A: velocity row required (#359)', () => {
+  test('dies pre-flight when velocity DB has no row for the ticket', () => {
+    // Use a high fake issue number that will never be in the real DB.
+    const { tmpDir, wtPath } = makeRepo('99991');
+    try {
+      const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 99991 --no-verify-issue --skip-marker-check`);
+      expect(ok).toBe(false);
+      expect(out).toMatch(/no velocity row found/i);
+    } finally {
+      rmrf(tmpDir);
+    }
+  }, 15_000);
+
+  test('--skip-velocity-check bypasses the check and allows the close to proceed', () => {
+    const { tmpDir, wtPath } = makeRepo('99992');
+    try {
+      const { ok, out } = shCapture(
+        wtPath,
+        `node "${CLOSE_JS}" 99992 --no-verify-issue --skip-velocity-check --skip-marker-check`
+      );
+      expect(ok).toBe(true);
+      expect(out).toMatch(/CLOSED/);
+    } finally {
+      rmrf(tmpDir);
+    }
+  }, 30_000);
+});
+
+// ─── Check B: marker must be deleted (#359) ──────────────────────────────────
+
+describe('close.js e2e — Check B: marker must be deleted (#359)', () => {
+  test('dies pre-flight when a puzzle marker for the ticket still exists in a JS file', () => {
+    const { tmpDir, wtPath } = makeRepo('99993');
+    try {
+      // Plant a puzzle marker in a tracked JS file inside the temp worktree.
+      // (Use string concat so the PDD scanner doesn't treat this line as a real marker.)
+      fs.writeFileSync(
+        path.join(wtPath, 'marker.js'),
+        '// ' + '@' + 'todo #99993:10/DEV fix this\n'
+      );
+      sh(wtPath, 'git add marker.js');
+      sh(wtPath, 'git commit --amend --no-edit');
+
+      const { ok, out } = shCapture(
+        wtPath,
+        `node "${CLOSE_JS}" 99993 --no-verify-issue --skip-velocity-check`
+      );
+      expect(ok).toBe(false);
+      expect(out).toMatch(/puzzle marker.*still present/i);
+      expect(out).toMatch(/marker\.js/);
+    } finally {
+      rmrf(tmpDir);
+    }
+  }, 15_000);
+
+  test('--skip-marker-check bypasses the check and allows the close to proceed', () => {
+    const { tmpDir, wtPath } = makeRepo('99994');
+    try {
+      // Plant a marker that would normally block the close.
+      fs.writeFileSync(path.join(wtPath, 'marker.js'), '// ' + '@' + 'todo #99994:10/DEV\n');
+      sh(wtPath, 'git add marker.js');
+      sh(wtPath, 'git commit --amend --no-edit');
+
+      const { ok, out } = shCapture(
+        wtPath,
+        `node "${CLOSE_JS}" 99994 --no-verify-issue --skip-velocity-check --skip-marker-check`
+      );
+      expect(ok).toBe(true);
+      expect(out).toMatch(/CLOSED/);
+    } finally {
+      rmrf(tmpDir);
+    }
+  }, 30_000);
+
+  test('passes when no marker file exists (docs-only close has no marker)', () => {
+    const { tmpDir, wtPath } = makeRepo('99995');
+    try {
+      // The default makeRepo has no JS marker file — grep returns no matches.
+      const { ok, out } = shCapture(
+        wtPath,
+        `node "${CLOSE_JS}" 99995 --no-verify-issue --skip-velocity-check`
+      );
+      expect(ok).toBe(true);
+      expect(out).toMatch(/CLOSED/);
+    } finally {
+      rmrf(tmpDir);
+    }
+  }, 30_000);
 });

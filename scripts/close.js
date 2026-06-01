@@ -37,6 +37,7 @@
 'use strict';
 
 const { execSync } = require('child_process');
+const os   = require('os');
 const path = require('path');
 
 const DEFAULT_MAX_RETRIES = 5;
@@ -111,6 +112,7 @@ function parseArgs(argv) {
   const opts = {
     issue: null, max: DEFAULT_MAX_RETRIES, dryRun: false,
     keep: false, verifyIssue: true, skipTicketMatch: false, skipKeywordCheck: false,
+    skipVelocityCheck: false, skipMarkerCheck: false,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -121,6 +123,8 @@ function parseArgs(argv) {
     else if (a === '--no-verify-issue') opts.verifyIssue = false;
     else if (a === '--skip-ticket-match') opts.skipTicketMatch = true;
     else if (a === '--skip-keyword-check') opts.skipKeywordCheck = true;
+    else if (a === '--skip-velocity-check') opts.skipVelocityCheck = true;
+    else if (a === '--skip-marker-check') opts.skipMarkerCheck = true;
     else if (a.startsWith('--')) die(`unknown flag: ${a}`);
     else positionals.push(a);
   }
@@ -295,6 +299,22 @@ function keywordsOverlap(titleWords, subjectWords) {
   return (titleWords || []).some((w) => s.has(w));
 }
 
+// Check A (#359): does a velocity row for this ticket exist in the DB?
+// Pure: takes a better-sqlite3 Database instance + integer ticket, returns boolean.
+function velocityRowExists(db, ticket) {
+  return db.prepare('SELECT 1 FROM velocity WHERE ticket = ? LIMIT 1').get(ticket) !== undefined;
+}
+
+// Check B (#359): does a puzzle marker (todo/inprogress) for this issue still
+// appear in the grep output? Pure: takes the issue number and raw git-grep stdout,
+// returns { found: bool, lines: string[] }.
+function markerStillPresent(issue, grepOutput) {
+  const re = new RegExp(`@(?:todo|inprogress)\\s+#${issue}\\b`, 'i');
+  const lines = String(grepOutput || '').split('\n').map((l) => l.trim()).filter(Boolean);
+  const matched = lines.filter((l) => re.test(l));
+  return { found: matched.length > 0, lines: matched };
+}
+
 // Classify a rebase's conflicted paths against the union-file set.
 //   'none'       — no conflicts.
 //   'union-only' — every conflicted path is a merge=union file. This should be
@@ -377,6 +397,58 @@ function checkKeywordMatch(issue) {
         `         appears in commit subject\n` +
         `         ("${subject.trim()}").\n` +
         `         Is this the right issue? Pass --skip-keyword-check to override.`);
+  }
+}
+
+// Check A I/O wrapper (#359): verify a velocity row for ticket N exists in the
+// SQLite DB. Lazy-requires better-sqlite3 (real startup cost; skip when
+// --skip-velocity-check is passed). Degrades gracefully when the DB is absent
+// (first-time setup, CI) — logs a warning instead of blocking. die()s only when
+// the DB is readable but contains no row for this ticket.
+function checkVelocityRowExists(issue) {
+  const dbPath = path.join(os.homedir(), '.lccjs', 'velocity.db');
+  let Database;
+  try {
+    Database = require('better-sqlite3'); // eslint-disable-line global-require
+  } catch (_) {
+    log('warn: better-sqlite3 unavailable — skipping velocity-row check.');
+    return;
+  }
+  let db;
+  try {
+    db = new Database(dbPath, { readonly: true });
+  } catch (_) {
+    log(`warn: could not open velocity DB at ${dbPath} — skipping velocity-row check.`);
+    return;
+  }
+  try {
+    if (!velocityRowExists(db, Number(issue))) {
+      die(`no velocity row found for ticket #${issue} in ${dbPath}.\n` +
+          '  Log it via `npm run velocity:log` and amend the commit, then re-run.\n' +
+          '  Pass --skip-velocity-check to bypass (PM/triage closes without a log).');
+    }
+  } finally {
+    db.close();
+  }
+}
+
+// Check B I/O wrapper (#359): verify no puzzle marker (todo/inprogress) for
+// ticket N remains in tracked JS/TS files. die()s if any found; skip with
+// --skip-marker-check for tickets that never had a source marker.
+function checkMarkerDeleted(issue) {
+  // Split marker keywords so the PDD scanner doesn't treat these grep patterns
+  // as puzzle markers in the source. Two -e args → OR search.
+  const tPat = '@' + `todo #${issue}`;
+  const iPat = '@' + `inprogress #${issue}`;
+  const result = shCapture(
+    `git grep -rn -e "${tPat}" -e "${iPat}" -- "*.js" "*.ts" "*.mjs"`
+  );
+  // git grep exits 0 (ok=true) when matches found, 1 (ok=false) when none.
+  const { found, lines } = markerStillPresent(issue, result.out);
+  if (found) {
+    die(`puzzle marker for #${issue} still present — delete it in the closing commit first.\n` +
+        lines.map((l) => `  Found: ${l}`).join('\n') + '\n' +
+        '  Pass --skip-marker-check to bypass (no source marker ever existed).');
   }
 }
 
@@ -465,7 +537,7 @@ function report({ issue, branch, wtPath, sha, kept, dry }) {
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
-    die('usage: node scripts/close.js <issue-number> [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match] [--skip-keyword-check]');
+    die('usage: node scripts/close.js <issue-number> [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match] [--skip-keyword-check] [--skip-velocity-check] [--skip-marker-check]');
   }
   const issue = opts.issue;
 
@@ -487,6 +559,10 @@ function main() {
   if (!opts.skipTicketMatch) checkVelocityTicketMatch(issue);
   // Guard 2 (#311): commit subject must share ≥1 keyword with the issue title.
   if (!opts.skipKeywordCheck) checkKeywordMatch(issue);
+  // Check A (#359): a velocity row for this ticket must exist in the DB.
+  if (!opts.skipVelocityCheck) checkVelocityRowExists(issue);
+  // Check B (#359): the puzzle marker must have been deleted before closing.
+  if (!opts.skipMarkerCheck) checkMarkerDeleted(issue);
   if (rebaseOrMergeInProgress()) {
     die('a rebase/merge is already in progress here — finish or abort it first.');
   }
@@ -592,4 +668,5 @@ module.exports = {
   extractTicketFromCsvDiff, extractRowsFromCsvDiff, velocityTicketMismatch,
   computeVelocityMismatch,
   extractKeywords, keywordsOverlap,
+  velocityRowExists, markerStillPresent,
 };
