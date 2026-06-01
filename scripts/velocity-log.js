@@ -70,9 +70,7 @@ if (VALID_ROLES.size > 0 && !VALID_ROLES.has(input.role)) {
 // Die loudly BEFORE any DB insert so no partial state is left behind.
 // --from-main escapes the guard for legitimate cases: a PM/RESEARCH row when
 // the task has no worktree of its own but another agent's worktree is active.
-// @todo #319:30m/RESEARCH evaluate guard approach — #312 implemented option (a)
-//   (die before insert + --from-main escape hatch); research whether option (b)
-//   (auto-route export to worktree) or a pre-commit hook is a better long-term fit
+// #319 (research) closed: option (a) — die before insert + --from-main escape — is the chosen approach.
 const fromMain = process.argv.includes('--from-main');
 if (!fromMain && !process.cwd().includes('.claude/worktrees')) {
   let activeWorktrees = [];
