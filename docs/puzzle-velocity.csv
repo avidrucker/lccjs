@@ -235,3 +235,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 242,194,Fix: claim auto-fruit is worktree-scoped — add session-sentinel branch,DEV,45,35,,,,,,,,DRAGONFRUIT,sonnet-4.6
 243,370,puzzle-status.js skip spec files,DEV,15,5,3,12,2,2026-06-01T09:23:00-1000,2026-06-01T09:26:51-1000,,one-line path guard in findMarkers; filed ticket same turn,APPLE,claude-sonnet-4-6
 244,195,Docs: worktree/claim naming + --as fan-out guidance (folds #232),WRITER,30,25,,,,,,,,DRAGONFRUIT,sonnet-4.6
+245,173,README: document alias.sh shell-alias installer,WRITER,20,10,1,19,9,2026-06-01T09:28:45-1000,2026-06-01T09:29:47-1000,,alias table + run instructions + idempotency + Windows caveat + reload note,APPLE,claude-sonnet-4-6

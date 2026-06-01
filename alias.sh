@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# @todo #173:20m/WRITER document this installer in README.md — what it does, the
+# @inprogress #173:20m/WRITER document this installer in README.md — what it does, the
 #  four aliases it creates (lccjs/lccplusjs/hex/picture -> their src targets), how
 #  to run it (bash alias.sh), the consent prompt + idempotency, and the
 #  Windows-shell caveat with a manual fallback. README currently has zero mention

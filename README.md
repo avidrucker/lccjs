@@ -46,6 +46,25 @@ LCC.js has **no runtime dependencies** — Node.js is all you need to run the CL
 npm install
 ```
 
+## Shell aliases (`alias.sh`)
+
+`alias.sh` is an optional convenience installer. Running it once appends four short aliases to your `~/.bashrc` or `~/.zshrc` so you don't need to type `node ./src/...` every time:
+
+| Alias | Expands to |
+|-------|-----------|
+| `lccjs` | `node <repo>/src/core/lcc.js` |
+| `lccplusjs` | `node <repo>/src/plus/lccplus.js` |
+| `hex` | `node <repo>/src/utils/hexDisplay.js` |
+| `picture` | `node <repo>/src/utils/picture.js` |
+
+```bash
+bash alias.sh
+```
+
+The script asks for consent before modifying your shell config, and is idempotent — if all four aliases already exist it exits without changes. Windows shells (cmd, PowerShell) are not yet supported; add the aliases manually or use the full `node` paths from the table above.
+
+After running, reload your shell (`source ~/.bashrc` or open a new terminal) to activate the aliases.
+
 ## CLI Usage
 
 ### `lcc.js`
