@@ -104,5 +104,4 @@ const ticketLabel = input.ticket != null ? `ticket #${input.ticket}` : 'no ticke
 console.log(`Inserted row id=${result.lastInsertRowid} (${ticketLabel})`);
 
 // --- Auto-export CSV ---
-// @inprogress #319:30m/RESEARCH guard this export — unconditional export from main checkout causes rebase conflicts; see also #320 (DEV fix) and #312/#313
 exportCSV();
