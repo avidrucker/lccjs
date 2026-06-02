@@ -49,6 +49,48 @@ describe('ILCC Unit Tests', () => {
       ilcc.parseArguments(['demo.a']);
       expect(ilcc.args).toEqual(['demo.a']);
     });
+
+    test('-n sets noInteractive option', () => {
+      const ilcc = new ILCC();
+      ilcc.parseArguments(['-n', 'demo.a']);
+      expect(ilcc.options.noInteractive).toBe(true);
+    });
+
+    test('-m sets memDisplay option', () => {
+      const ilcc = new ILCC();
+      ilcc.parseArguments(['-m', 'demo.a']);
+      expect(ilcc.options.memDisplay).toBe(true);
+    });
+
+    test('-r sets regDisplay option', () => {
+      const ilcc = new ILCC();
+      ilcc.parseArguments(['-r', 'demo.a']);
+      expect(ilcc.options.regDisplay).toBe(true);
+    });
+
+    test('-f sets fullLineDisplay option', () => {
+      const ilcc = new ILCC();
+      ilcc.parseArguments(['-f', 'demo.a']);
+      expect(ilcc.options.fullLineDisplay).toBe(true);
+    });
+
+    test('-x sets hexOutput option', () => {
+      const ilcc = new ILCC();
+      ilcc.parseArguments(['-x', 'demo.a']);
+      expect(ilcc.options.hexOutput).toBe(true);
+    });
+
+    test('-t sets trace option', () => {
+      const ilcc = new ILCC();
+      ilcc.parseArguments(['-t', 'demo.a']);
+      expect(ilcc.options.trace).toBe(true);
+    });
+
+    test('-i<N> sets instructionCap option', () => {
+      const ilcc = new ILCC();
+      ilcc.parseArguments(['-i100', 'demo.a']);
+      expect(ilcc.options.instructionCap).toBe(100);
+    });
   });
 
   describe('main() routing', () => {
@@ -137,6 +179,55 @@ describe('ILCC Unit Tests', () => {
       expect(ilcc.interpreter.colorblindMode).toBe(true);
 
       IInterpreter.prototype.loadExecutableFile.mockRestore();
+      IInterpreter.prototype.runInteractive.mockRestore();
+    });
+
+    test('-t flag: sets traceMode on interpreter', () => {
+      const ilcc = new ILCC();
+      ilcc.options.trace = true;
+      ilcc.outputFileName = 'demo.e';
+
+      jest.spyOn(IInterpreter.prototype, 'loadExecutableFile').mockImplementation(() => {});
+      jest.spyOn(IInterpreter.prototype, 'runInteractive').mockImplementation(() => {});
+
+      ilcc.runInteractiveFile();
+      expect(ilcc.interpreter.traceMode).toBe(true);
+
+      IInterpreter.prototype.loadExecutableFile.mockRestore();
+      IInterpreter.prototype.runInteractive.mockRestore();
+    });
+
+    test('-i<N> flag: sets instructionsCap on interpreter', () => {
+      const ilcc = new ILCC();
+      ilcc.options.instructionCap = 1000;
+      ilcc.outputFileName = 'demo.e';
+
+      jest.spyOn(IInterpreter.prototype, 'loadExecutableFile').mockImplementation(() => {});
+      jest.spyOn(IInterpreter.prototype, 'runInteractive').mockImplementation(() => {});
+
+      ilcc.runInteractiveFile();
+      expect(ilcc.interpreter.instructionsCap).toBe(1000);
+
+      IInterpreter.prototype.loadExecutableFile.mockRestore();
+      IInterpreter.prototype.runInteractive.mockRestore();
+    });
+
+    test('-n flag: calls run() instead of runInteractive()', () => {
+      const ilcc = new ILCC();
+      ilcc.options.noInteractive = true;
+      ilcc.outputFileName = 'demo.e';
+
+      jest.spyOn(IInterpreter.prototype, 'loadExecutableFile').mockImplementation(() => {});
+      const mockRun = jest.spyOn(IInterpreter.prototype, 'run').mockImplementation(() => {});
+      const mockRunInteractive = jest.spyOn(IInterpreter.prototype, 'runInteractive').mockImplementation(() => {});
+
+      ilcc.runInteractiveFile();
+
+      expect(mockRun).toHaveBeenCalledTimes(1);
+      expect(mockRunInteractive).not.toHaveBeenCalled();
+
+      IInterpreter.prototype.loadExecutableFile.mockRestore();
+      IInterpreter.prototype.run.mockRestore();
       IInterpreter.prototype.runInteractive.mockRestore();
     });
   });

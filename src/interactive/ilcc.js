@@ -86,6 +86,11 @@ class ILCC {
     interpreter.options = this.options;
     interpreter.efficientMode  = !!this.options.efficientMode;
     interpreter.colorblindMode = !!this.options.colorblindMode;
+    interpreter.debugMode      = !!this.options.debug;
+    interpreter.traceMode      = !!this.options.trace;
+    if (this.options.instructionCap !== undefined) {
+      interpreter.instructionsCap = this.options.instructionCap;
+    }
 
     if (this.inputBuffer) {
       interpreter.inputBuffer = this.inputBuffer;
@@ -100,8 +105,15 @@ class ILCC {
     // null when the .e was loaded directly (no assembler ran in this session).
     const sourceMap = (this.assembler && this.assembler.sourceMap) ? this.assembler.sourceMap : null;
 
-    // Enter the interactive prompt loop
-    interpreter.runInteractive(sourceMap);
+    if (this.options.noInteractive) {
+      // Batch mode (-n): run without the interactive prompt, then flush captured output
+      interpreter.run();
+      if (interpreter.programOutput) {
+        process.stdout.write(interpreter.programOutput);
+      }
+    } else {
+      interpreter.runInteractive(sourceMap);
+    }
   }
 
   parseArguments(args) {
@@ -110,6 +122,24 @@ class ILCC {
       const arg = args[i];
       if (arg.startsWith('-')) {
         switch (arg) {
+          case '-n':
+            this.options.noInteractive = true;
+            break;
+          case '-m':
+            this.options.memDisplay = true;
+            break;
+          case '-r':
+            this.options.regDisplay = true;
+            break;
+          case '-f':
+            this.options.fullLineDisplay = true;
+            break;
+          case '-x':
+            this.options.hexOutput = true;
+            break;
+          case '-t':
+            this.options.trace = true;
+            break;
           case '-e':
             this.options.efficientMode = true;
             break;
@@ -124,7 +154,9 @@ class ILCC {
             fatalExit('Printing help message after -h flag used.', 0);
             break;
           default:
-            if (arg.startsWith('-l')) {
+            if (arg.startsWith('-i')) {
+              this.options.instructionCap = parseInt(arg.substr(2), 10);
+            } else if (arg.startsWith('-l')) {
               this.options.loadPoint = parseInt(arg.substr(2), 16);
             } else if (arg === '-o') {
               i++;
@@ -148,10 +180,17 @@ class ILCC {
   printHelp() {
     console.log('Usage: ilcc.js <input.a | input.e>  [flags]');
     console.log('Flags:');
+    console.log('   -n   batch mode (non-interactive; skip prompt, run to completion)');
+    console.log('   -m   print memory display after run');
+    console.log('   -r   print register display after run');
+    console.log('   -f   full line display');
+    console.log('   -x   4-digit hex output');
+    console.log('   -t   trace mode (print each instruction before execution)');
     console.log('   -e   efficient mode (forward-only stepping, lower memory)');
     console.log('   -c   colorblind mode (alternate ANSI palette)');
     console.log('   -d   debug mode');
     console.log('   -h   show this help');
+    console.log('   -i<N>  instruction cap before automatic halt (default 500000)');
     console.log('   -l<hex>  load point (hex address, e.g. -l0010)');
     console.log('   -o <file>  output executable name');
     console.log('Supported input extensions: .a, .bin, .hex (assembled first), .e (direct)');
