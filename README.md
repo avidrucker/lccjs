@@ -17,6 +17,7 @@ LCC.js is a JavaScript implementation of the LCC toolchain — the assembler, li
 
 ```bash
 npm install                            # dev/test deps only; no runtime deps
+npm run setup                          # install git hooks (run once after cloning)
 node ./src/cli/lcc.js demos/demoA.a  # assemble + run
 node ./src/cli/lcc.js demos/demoA.e  # run executable directly
 ```
@@ -40,11 +41,14 @@ node ./src/cli/lcc.js demos/demoA.e  # run executable directly
 
 LCC.js has **no runtime dependencies** — Node.js is all you need to run the CLI tools.
 
-`npm install` installs dev/test dependencies only (`jest`, `dotenv`):
+Install dev/test dependencies, then set up the git hooks (run once after cloning):
 
 ```bash
-npm install
+npm install     # dev/test deps only (jest, dotenv); no runtime deps
+npm run setup   # installs git hooks (commit-msg enforces commit format; pre-push runs PDD scan)
 ```
+
+First-time contributors who skip `npm run setup` won't hit the hooks until a commit is rejected or a bad push slips through.
 
 ## Shell aliases (`alias.sh`)
 
