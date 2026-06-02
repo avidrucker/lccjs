@@ -29,11 +29,11 @@ The architecture story is told consistently across `README.md`, `ROADMAP.md`, `T
 
 **Concrete documentation problems:**
 
-- **Every cross-reference in the docs is a broken absolute path.** All `docs/*.md`, `src/core/core.md`, `src/utils/utils.md`, and `README.md:281-290` link to `/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/...` which doesn't exist on this machine (the repo lives under `~/Documents/Study/JavaScript/lccjs`). These look like a `sed` replacement that was never run after a workspace move. Use repo-relative paths.
+- **~~Every cross-reference in the docs is a broken absolute path.~~** ~~All `docs/*.md`, `src/core/core.md`, `src/utils/utils.md`, and `README.md:281-290` link to `/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/...` which doesn't exist on this machine (the repo lives under `~/Documents/Study/JavaScript/lccjs`). These look like a `sed` replacement that was never run after a workspace move. Use repo-relative paths.~~ — *Resolved: stale absolute paths removed from `README.md` and `src/`; remaining `docs/*.md` references cleaned up.*
 - **`docs/assembler.md:139` lists `.orig` as a research question**, but the code at `src/core/assembler.js:974` already implements `.orig` as an alias for `.org`. Drift.
-- **`package.json` test scripts point to nonexistent paths.** `test:legacy` runs `jest test/` (there's no `test/`), and `test:oracle` runs `tests/new/integration.oracle.spec.js` (the file doesn't exist; the oracle suites are `assembler.oracle.e2e.spec.js`, `interpreter.oracle.e2e.spec.js`, `lcc.oracle.e2e.spec.js`, `linker.oracle.e2e.spec.js`). Anyone copy-pasting from the README's `npm run test:oracle` block will hit "no tests found."
+- **~~`package.json` test scripts point to nonexistent paths.~~** ~~`test:legacy` runs `jest test/` (there's no `test/`), and `test:oracle` runs `tests/new/integration.oracle.spec.js` (the file doesn't exist; the oracle suites are `assembler.oracle.e2e.spec.js`, `interpreter.oracle.e2e.spec.js`, `lcc.oracle.e2e.spec.js`, `linker.oracle.e2e.spec.js`). Anyone copy-pasting from the README's `npm run test:oracle` block will hit "no tests found."~~ — *Resolved: `test:legacy` removed; `test:oracle` fixed to `jest --runInBand --testPathPattern oracle.e2e`.*
 - **`onboarding.md` is dated.** Says `linker.js` has no tests ("Linker Test Suite Not Implemented"), dated 11/21/2024, while `tests/new/linker.unit.spec.js` and `tests/new/linker.oracle.e2e.spec.js` exist. README's `## Current Status` more accurately reflects today.
-- **`ROADMAP.md` "Remove Docker Dependency" is stale.** No Docker anywhere in the tree (`grep -i docker` returns nothing). That bullet should be marked done or removed.
+- **~~`ROADMAP.md` "Remove Docker Dependency" is stale.~~** ~~No Docker anywhere in the tree (`grep -i docker` returns nothing). That bullet should be marked done or removed.~~ — *Resolved: Docker bullet removed from `ROADMAP.md`.*
 - **`docs/onboarding_strategy.md` is a seven-line skeleton** that adds nothing on top of `onboarding.md`. Either expand or delete. — *Resolved 2026-05-30 (#211): deleted; `onboarding.md` is the realized guide.*
 - **Per-module docs are consistent with code** for the most part (the assembler doc's `.orig` drift above is the main exception). The `core-behavior-matrix.md` Research markers correctly map to the still-open work in `TODOS.md`.
 
@@ -76,19 +76,19 @@ Findings, with file:line citations:
 4. **`src/core/assembler.js:706-708`**: `performPass()` pops the last listing entry if it's empty — comment says "possible bug/strange lcc behavior." Either confirm against oracle and update the comment, or guard with a feature flag.
 5. **`src/core/assembler.js:1077-1084`**: 8 lines of dead `// this.error` / `// return` code with five "inspect to make sure" TODOs. Either implement validation or remove the dead block.
 6. **`src/core/assembler.js:1844-1847`**: four near-identical TODO comments about `ret+3`, `ret +3`, `ret+ 3`, `ret + 3`. These are operand-spacing concerns; collapse into one.
-7. **`package.json:5-6`**: `test:legacy` runs `jest test/` (no such directory); `test:oracle` runs `tests/new/integration.oracle.spec.js` (no such file).
+7. ~~**`package.json:5-6`**: `test:legacy` runs `jest test/` (no such directory); `test:oracle` runs `tests/new/integration.oracle.spec.js` (no such file).~~ — *Resolved: `test:legacy` removed; `test:oracle` fixed.*
 8. **`src/utils/name.js:13`**: "asks t he user" — typo.
 9. **`src/core/interpreter.js:570`**: `this.code = this.dr = this.sr = (this.ir >> 9) & 0x7` — triple assignment to express three names for the same bits. Works, but the comment `dr/sr` is misleading (it's also `code` for BR). A line of clarifying comment would help.
 10. **`src/core/interpreter.js:651-688`**: post-step debug formatting reads `prevPC` but the code uses `this.pc.toString(16)` without `padStart` — formatting inconsistent with other places (e.g. line 660 uses `padStart(1, '0')` which is a no-op).
 11. **`src/core/lcc.js:15`** and many others: `const isTestMode = (typeof global.it === 'function')` is duplicated verbatim across `assembler.js:23`, `interpreter.js:42`, `linker.js:8`, `lcc.js:15`, `assemblerplus.js:7`, `interpreterplus.js:10`, `lccplus.js:11`. Same with `cliErrorExit` / `fatalExit` / `cliWrappedErrorExit` in `assembler.js`, `interpreter.js`, and `lcc.js`. Move to a shared `cliErrors.js` in `src/utils/`.
 12. **`tests/helpers/assemblerIntegrationHarness.js:67-78`**: binary-to-string concat corrupts assembled output buffers when stored in the virtual FS. Not currently causing test failures because nothing reads the bytes back from the virtual FS through this harness.
 13. **`onboarding.md`**: stale linker-tests claim (from 11/21/2024); says debugger is "not yet implemented" while `interpreter.js:807` has a `debug()` method.
-14. **`ROADMAP.md`**: Docker removal is listed as a priority; there's no Docker in the project. Stale.
+14. ~~**`ROADMAP.md`**: Docker removal is listed as a priority; there's no Docker in the project. Stale.~~ — *Resolved: Docker bullet removed from `ROADMAP.md`.*
 
 ## 6. Top recommendations (prioritized)
 
-1. **Fix the broken doc cross-references.** Run a search-and-replace replacing `/home/avi/Documents/SchoolLocalOnly/AssemblyLocalOnly/lccjs/` with relative paths (e.g. `./` or `../`) across `README.md`, `docs/*.md`, `src/core/core.md`, `src/utils/utils.md`. Low effort, high credibility.
-2. **Fix `package.json` test scripts.** `test:legacy` and `test:oracle` reference paths that don't exist. Either point them at real targets (e.g. `test:oracle` → a `--testPathPattern oracle.e2e` invocation) or delete them.
+1. ~~**Fix the broken doc cross-references.**~~ *Done: stale `SchoolLocalOnly/AssemblyLocalOnly` paths removed from `README.md` and `src/`.*
+2. ~~**Fix `package.json` test scripts.**~~ *Done: `test:legacy` removed; `test:oracle` fixed to `--testPathPattern oracle.e2e`.*
 3. **Fix the linker error propagation bug.** In `src/core/linker.js:195-205`, after `adjustExternalReferences` or `adjustLocalReferences` errors, `link()` still calls `createExecutable()`. Either have `error()` throw a `LinkerError` (matching the doc's claimed boundary) or check `errorFlag` and bail before `createExecutable`. Add a unit test.
 4. **Remove dead `throwOnRuntimeError` flag (or honor it).** `src/core/interpreter.js:271` sets it but `raiseRuntimeError` at line 1542 ignores it. Either delete the flag, or branch on it like `Assembler.abortAssembly` does.
 5. **Fix the dec/hex inconsistency in genStats.** `src/utils/genStats.js:125` should use `interpreter.memMax - interpreter.loadPoint + 1` for both forms. Add a unit test with non-zero `loadPoint`.
@@ -96,7 +96,7 @@ Findings, with file:line citations:
 7. **Refactor the operand-parsing copy-paste.** Extract the `if (!isNumLiteral(operands[N]) && operands[N+1] && operands[N+2])` glue-operands pattern into a helper; reuse from `assembleLD`, `assembleST`, `assembleLea`, `assembleBR`, and `.word` handler in `src/core/assembler.js`. Eliminates ~60 lines and is a precondition for the TODOS.md decomposition work.
 8. **Fix the test harness's binary buffer handling.** `tests/helpers/assemblerIntegrationHarness.js:67-78` should use `Buffer.concat` like `tests/new/lcc.integration.spec.js:67-73` already does. Then add an integration test that verifies the bytes written to the virtual FS match `assembler.toOutputBuffer()`.
 9. **Replace the SEXT lookup table with the derived transform.** `TODOS.md` flags this; doing it would shrink `interpreter.js:23-40` from ~17 lines of opaque hex to a few lines of documented logic, and would make the "Research" item in `core-behavior-matrix.md` movable to "Preserve."
-10. **Update `onboarding.md` and `ROADMAP.md` for current reality.** Mark Docker work done/dropped; correct the linker-test claim; ~~either expand or delete `docs/onboarding_strategy.md`~~ *(done 2026-05-30, #211: deleted)*. A short pass would remove the project's clearest stale-doc smells.
+10. **Update `onboarding.md` and `ROADMAP.md` for current reality.** ~~Mark Docker work done/dropped;~~ *(done: Docker bullet removed from `ROADMAP.md`)* correct the linker-test claim; ~~either expand or delete `docs/onboarding_strategy.md`~~ *(done 2026-05-30, #211: deleted)*. A short pass would remove the project's clearest stale-doc smells.
 
 ---
 

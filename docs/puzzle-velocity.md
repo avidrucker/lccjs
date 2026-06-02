@@ -127,10 +127,13 @@ writes to SQLite and auto-exports the full CSV after every INSERT. Format detail
 (LF endings, quote-doubling) are handled by the export script; manual editing is
 not needed and not safe.
 
-If a *non-union* file conflicts during the rebase (e.g. two agents edited the
-same region of `TODOS.md`), resolve it manually and still run the guard before
-`git add`: `grep -c '^<<<<<<<\|^=======\|^>>>>>>>' <file>` must print `0` (a
-botched resolution once shipped raw markers — #139, fixed by `a19d115`).
+If a file conflicts during the rebase (e.g. two agents edited the same region
+of `TODOS.md`), resolve it manually and still run the guard before `git add`:
+`grep -c '^<<<<<<<\|^=======\|^>>>>>>>' <file>` must print `0` (a botched
+resolution once shipped raw markers — #139, fixed by `a19d115`).
+`docs/puzzle-velocity.csv` conflicts are auto-resolved by `npm run close`
+(re-exports from SQLite); `docs/puzzle-clusters.csv` auto-resolves via
+`merge=union`. Manual resolution is only needed for everything else.
 
 ### `closed_commit`: derive, don't capture
 
