@@ -19,13 +19,13 @@ class Linker {
   // multiple link() calls without state leaking from one run into the next.
   // This is the single definition of the per-link field set (see #254 / #246 H3).
   resetState() {
-    this.mca = [];               // Machine Code Array
+    this.machineCode = [];
     this.mcaIndex = 0;
-    this.GTable = {};            // Global symbols: label -> address
-    this.ETable = [];            // External references with 11-bit addresses
-    this.eTable = [];            // External references with 9-bit addresses
-    this.VTable = [];            // External references with full addresses
-    this.ATable = [];            // Local references
+    this.globalSymbols = {};
+    this.externalRefs11 = [];
+    this.externalRefs9 = [];
+    this.virtualAddressRefs = [];
+    this.localRefs = [];
     this.start = null;
     this.gotStart = false;
     this.objectModules = [];     // List of object modules to process
@@ -196,31 +196,31 @@ class Linker {
           this.gotStart = true;
           break;
         case 'G':
-          if (this.GTable.hasOwnProperty(header.label)) {
+          if (this.globalSymbols.hasOwnProperty(header.label)) {
             this.error(`More than one global declaration for ${header.label}`);
           }
-          this.GTable[header.label] = header.address + this.mcaIndex;
+          this.globalSymbols[header.label] = header.address + this.mcaIndex;
           break;
         case 'E':
-          this.ETable.push({
+          this.externalRefs11.push({
             address: header.address + this.mcaIndex,
             label: header.label,
           });
           break;
         case 'e':
-          this.eTable.push({
+          this.externalRefs9.push({
             address: header.address + this.mcaIndex,
             label: header.label,
           });
           break;
         case 'V':
-          this.VTable.push({
+          this.virtualAddressRefs.push({
             address: header.address + this.mcaIndex,
             label: header.label,
           });
           break;
         case 'A':
-          this.ATable.push({
+          this.localRefs.push({
             address: header.address + this.mcaIndex,
             moduleStart: this.mcaIndex,
           });
@@ -230,46 +230,46 @@ class Linker {
       }
     }
 
-    // Append code to mca
+    // Append code to machineCode
     for (let word of code) {
-      this.mca[this.mcaIndex++] = word;
+      this.machineCode[this.mcaIndex++] = word;
     }
   }
 
   adjustExternalReferences() {
-    // Adjust ETable (11-bit addresses)
-    for (let ref of this.ETable) {
-      if (!this.GTable.hasOwnProperty(ref.label)) {
+    // Adjust externalRefs11 (11-bit addresses)
+    for (let ref of this.externalRefs11) {
+      if (!this.globalSymbols.hasOwnProperty(ref.label)) {
         this.error(`${ref.label} is an undefined external reference`);
       }
-      let Gaddr = this.GTable[ref.label];
-      let offset = ((this.mca[ref.address] + Gaddr - ref.address - 1) & 0x7ff);
-      this.mca[ref.address] = (this.mca[ref.address] & 0xf800) | offset;
+      let Gaddr = this.globalSymbols[ref.label];
+      let offset = ((this.machineCode[ref.address] + Gaddr - ref.address - 1) & 0x7ff);
+      this.machineCode[ref.address] = (this.machineCode[ref.address] & 0xf800) | offset;
     }
 
-    // Adjust eTable (9-bit addresses)
-    for (let ref of this.eTable) {
-      if (!this.GTable.hasOwnProperty(ref.label)) {
+    // Adjust externalRefs9 (9-bit addresses)
+    for (let ref of this.externalRefs9) {
+      if (!this.globalSymbols.hasOwnProperty(ref.label)) {
         this.error(`${ref.label} is an undefined external reference`);
       }
-      let Gaddr = this.GTable[ref.label];
-      let offset = ((this.mca[ref.address] + Gaddr - ref.address - 1) & 0x1ff);
-      this.mca[ref.address] = (this.mca[ref.address] & 0xfe00) | offset;
+      let Gaddr = this.globalSymbols[ref.label];
+      let offset = ((this.machineCode[ref.address] + Gaddr - ref.address - 1) & 0x1ff);
+      this.machineCode[ref.address] = (this.machineCode[ref.address] & 0xfe00) | offset;
     }
 
-    // Adjust VTable (full addresses)
-    for (let ref of this.VTable) {
-      if (!this.GTable.hasOwnProperty(ref.label)) {
+    // Adjust virtualAddressRefs (full addresses)
+    for (let ref of this.virtualAddressRefs) {
+      if (!this.globalSymbols.hasOwnProperty(ref.label)) {
         this.error(`${ref.label} is an undefined external reference`);
       }
-      let Gaddr = this.GTable[ref.label];
-      this.mca[ref.address] += Gaddr;
+      let Gaddr = this.globalSymbols[ref.label];
+      this.machineCode[ref.address] += Gaddr;
     }
   }
 
   adjustLocalReferences() {
-    for (let ref of this.ATable) {
-      this.mca[ref.address] += ref.moduleStart;
+    for (let ref of this.localRefs) {
+      this.machineCode[ref.address] += ref.moduleStart;
     }
   }
 
@@ -292,8 +292,8 @@ class Linker {
     }
 
     // Write 'G' entries
-    for (let label in this.GTable) {
-      const address = this.GTable[label];
+    for (let label in this.globalSymbols) {
+      const address = this.globalSymbols[label];
       const buffer = Buffer.alloc(3 + label.length + 1);
       buffer.write('G', 0, 'ascii');
       buffer.writeUInt16LE(address, 1);
@@ -303,7 +303,7 @@ class Linker {
     }
 
     // Write 'A' entries for VTable entries
-    for (let ref of this.VTable) {
+    for (let ref of this.virtualAddressRefs) {
       const buffer = Buffer.alloc(3);
       buffer.write('A', 0, 'ascii');
       buffer.writeUInt16LE(ref.address, 1);
@@ -311,7 +311,7 @@ class Linker {
     }
 
     // Write 'A' entries
-    for (let ref of this.ATable) {
+    for (let ref of this.localRefs) {
       const buffer = Buffer.alloc(3);
       buffer.write('A', 0, 'ascii');
       buffer.writeUInt16LE(ref.address, 1);
@@ -322,9 +322,9 @@ class Linker {
     fs.writeSync(outFile, 'C');
 
     // Write machine code
-    const codeBuffer = Buffer.alloc(this.mca.length * 2);
-    for (let i = 0; i < this.mca.length; i++) {
-      codeBuffer.writeUInt16LE(this.mca[i], i * 2);
+    const codeBuffer = Buffer.alloc(this.machineCode.length * 2);
+    for (let i = 0; i < this.machineCode.length; i++) {
+      codeBuffer.writeUInt16LE(this.machineCode[i], i * 2);
     }
     fs.writeSync(outFile, codeBuffer);
 

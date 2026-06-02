@@ -33,13 +33,13 @@ describe('Linker Unit Tests', () => {
   // reused link() runs) is caught.
   describe('per-link state is single-sourced in resetState() (#254)', () => {
     const FRESH = {
-      mca: [], mcaIndex: 0, GTable: {}, ETable: [], eTable: [], VTable: [],
-      ATable: [], start: null, gotStart: false, objectModules: [],
+      machineCode: [], mcaIndex: 0, globalSymbols: {}, externalRefs11: [], externalRefs9: [], virtualAddressRefs: [],
+      localRefs: [], start: null, gotStart: false, objectModules: [],
       inputFiles: [], outputFileName: null,
     };
     const snapshot = (l) => ({
-      mca: l.mca, mcaIndex: l.mcaIndex, GTable: l.GTable, ETable: l.ETable,
-      eTable: l.eTable, VTable: l.VTable, ATable: l.ATable, start: l.start,
+      machineCode: l.machineCode, mcaIndex: l.mcaIndex, globalSymbols: l.globalSymbols, externalRefs11: l.externalRefs11,
+      externalRefs9: l.externalRefs9, virtualAddressRefs: l.virtualAddressRefs, localRefs: l.localRefs, start: l.start,
       gotStart: l.gotStart, objectModules: l.objectModules,
       inputFiles: l.inputFiles, outputFileName: l.outputFileName,
     });
@@ -51,9 +51,9 @@ describe('Linker Unit Tests', () => {
     test('resetState() clears accumulated state back to the fresh field set (no leak)', () => {
       const linker = new Linker();
       // dirty every field as a prior link() run would
-      linker.mca = [1, 2, 3]; linker.mcaIndex = 3; linker.GTable = { main: 7 };
-      linker.ETable.push({}); linker.eTable.push({}); linker.VTable.push({});
-      linker.ATable.push({}); linker.start = 99; linker.gotStart = true;
+      linker.machineCode = [1, 2, 3]; linker.mcaIndex = 3; linker.globalSymbols = { main: 7 };
+      linker.externalRefs11.push({}); linker.externalRefs9.push({}); linker.virtualAddressRefs.push({});
+      linker.localRefs.push({}); linker.start = 99; linker.gotStart = true;
       linker.objectModules.push({}); linker.inputFiles.push('m.o');
       linker.outputFileName = 'out.e';
 
@@ -99,7 +99,7 @@ describe('Linker Unit Tests', () => {
 
   test('processModule() should throw LinkerError on duplicate global symbols', () => {
     const linker = new Linker();
-    linker.GTable.main = 3;
+    linker.globalSymbols.main = 3;
 
     expect(() => {
       linker.processModule({
@@ -109,7 +109,7 @@ describe('Linker Unit Tests', () => {
     }).toThrow(LinkerError);
 
     expect(() => {
-      linker.GTable.main = 3;
+      linker.globalSymbols.main = 3;
       linker.processModule({
         headers: [{ type: 'G', address: 0, label: 'main' }],
         code: [],
@@ -121,16 +121,16 @@ describe('Linker Unit Tests', () => {
 
   test('adjustExternalReferences() should throw LinkerError on undefined external symbols', () => {
     const linker = new Linker();
-    linker.mca = [0];
-    linker.ETable = [{ address: 0, label: 'missing' }];
+    linker.machineCode = [0];
+    linker.externalRefs11 = [{ address: 0, label: 'missing' }];
 
     expect(() => {
       linker.adjustExternalReferences();
     }).toThrow(LinkerError);
 
     expect(() => {
-      linker.mca = [0];
-      linker.ETable = [{ address: 0, label: 'missing' }];
+      linker.machineCode = [0];
+      linker.externalRefs11 = [{ address: 0, label: 'missing' }];
       linker.adjustExternalReferences();
     }).toThrow('missing is an undefined external reference');
 
@@ -138,122 +138,122 @@ describe('Linker Unit Tests', () => {
   });
 
   // #171 spike: the relocation MATH (not just the undefined-symbol throw) was
-  // entirely unasserted. These hand-build GTable/ETable/eTable/VTable + mca so
+  // entirely unasserted. These hand-build globalSymbols/externalRefs11/externalRefs9/virtualAddressRefs + machineCode so
   // each calculation is verified in isolation, including the easily-missed fact
   // that the formula folds the pre-existing operand word into the offset.
   describe('adjustExternalReferences() relocation math (#181)', () => {
     test('ETable 11-bit: encodes (Gaddr - addr - 1) into low 11 bits, preserving the opcode bits', () => {
       const linker = new Linker();
-      linker.mca = [];
-      linker.mca[100] = 0xe000; // opcode bits set, pcoffset11 field = 0
-      linker.GTable = { foo: 200 };
-      linker.ETable = [{ address: 100, label: 'foo' }];
+      linker.machineCode = [];
+      linker.machineCode[100] = 0xe000; // opcode bits set, pcoffset11 field = 0
+      linker.globalSymbols = { foo: 200 };
+      linker.externalRefs11 = [{ address: 100, label: 'foo' }];
 
       linker.adjustExternalReferences();
 
       // offset = (200 - 100 - 1) & 0x7ff = 99; high 5 bits (0xe000) untouched
-      expect(linker.mca[100]).toBe(0xe063);
-      expect(linker.mca[100] & 0xf800).toBe(0xe000);
+      expect(linker.machineCode[100]).toBe(0xe063);
+      expect(linker.machineCode[100] & 0xf800).toBe(0xe000);
     });
 
     test('ETable 11-bit: the pre-existing operand word is ADDED into the offset', () => {
       const linker = new Linker();
-      linker.mca = [];
-      linker.mca[100] = 0xe005; // low field already holds 5
-      linker.GTable = { foo: 200 };
-      linker.ETable = [{ address: 100, label: 'foo' }];
+      linker.machineCode = [];
+      linker.machineCode[100] = 0xe005; // low field already holds 5
+      linker.globalSymbols = { foo: 200 };
+      linker.externalRefs11 = [{ address: 100, label: 'foo' }];
 
       linker.adjustExternalReferences();
 
       // offset = (5 + 200 - 100 - 1) & 0x7ff = 104  (= 99 + the pre-existing 5)
-      expect(linker.mca[100]).toBe(0xe068);
+      expect(linker.machineCode[100]).toBe(0xe068);
     });
 
     test('ETable 11-bit: result masks to 11 bits (wraparound)', () => {
       const linker = new Linker();
-      linker.mca = [0];
-      linker.GTable = { far: 5000 };
-      linker.ETable = [{ address: 0, label: 'far' }];
+      linker.machineCode = [0];
+      linker.globalSymbols = { far: 5000 };
+      linker.externalRefs11 = [{ address: 0, label: 'far' }];
 
       linker.adjustExternalReferences();
 
       // (5000 - 0 - 1) & 0x7ff = 4999 & 2047 = 903
-      expect(linker.mca[0]).toBe(903);
+      expect(linker.machineCode[0]).toBe(903);
     });
 
     test('eTable 9-bit: encodes into low 9 bits, preserving the high 7 bits', () => {
       const linker = new Linker();
-      linker.mca = [];
-      linker.mca[20] = 0x0e00; // high 7 bits set, pcoffset9 field = 0
-      linker.GTable = { bar: 50 };
-      linker.eTable = [{ address: 20, label: 'bar' }];
+      linker.machineCode = [];
+      linker.machineCode[20] = 0x0e00; // high 7 bits set, pcoffset9 field = 0
+      linker.globalSymbols = { bar: 50 };
+      linker.externalRefs9 = [{ address: 20, label: 'bar' }];
 
       linker.adjustExternalReferences();
 
       // offset = (50 - 20 - 1) & 0x1ff = 29; high bits (0x0e00) preserved
-      expect(linker.mca[20]).toBe(0x0e1d);
-      expect(linker.mca[20] & 0xfe00).toBe(0x0e00);
+      expect(linker.machineCode[20]).toBe(0x0e1d);
+      expect(linker.machineCode[20] & 0xfe00).toBe(0x0e00);
     });
 
     test('eTable 9-bit: result masks to 9 bits (wraparound)', () => {
       const linker = new Linker();
-      linker.mca = [0];
-      linker.GTable = { baz: 600 };
-      linker.eTable = [{ address: 0, label: 'baz' }];
+      linker.machineCode = [0];
+      linker.globalSymbols = { baz: 600 };
+      linker.externalRefs9 = [{ address: 0, label: 'baz' }];
 
       linker.adjustExternalReferences();
 
       // (600 - 0 - 1) & 0x1ff = 599 & 511 = 87
-      expect(linker.mca[0]).toBe(87);
+      expect(linker.machineCode[0]).toBe(87);
     });
 
     test('VTable full-address: adds Gaddr to the whole word (no mask)', () => {
       const linker = new Linker();
-      linker.mca = [];
-      linker.mca[5] = 16;
-      linker.GTable = { qux: 1234 };
-      linker.VTable = [{ address: 5, label: 'qux' }];
+      linker.machineCode = [];
+      linker.machineCode[5] = 16;
+      linker.globalSymbols = { qux: 1234 };
+      linker.virtualAddressRefs = [{ address: 5, label: 'qux' }];
 
       linker.adjustExternalReferences();
 
-      expect(linker.mca[5]).toBe(1250); // 16 + 1234, full 16-bit add
+      expect(linker.machineCode[5]).toBe(1250); // 16 + 1234, full 16-bit add
     });
 
     test('all three tables in one pass update independently without interference', () => {
       const linker = new Linker();
-      linker.mca = [0x0000, 0x0000, 0x0005];
-      linker.GTable = { a: 300, b: 60, c: 1000 };
-      linker.ETable = [{ address: 0, label: 'a' }];
-      linker.eTable = [{ address: 1, label: 'b' }];
-      linker.VTable = [{ address: 2, label: 'c' }];
+      linker.machineCode = [0x0000, 0x0000, 0x0005];
+      linker.globalSymbols = { a: 300, b: 60, c: 1000 };
+      linker.externalRefs11 = [{ address: 0, label: 'a' }];
+      linker.externalRefs9 = [{ address: 1, label: 'b' }];
+      linker.virtualAddressRefs = [{ address: 2, label: 'c' }];
 
       linker.adjustExternalReferences();
 
       // E: (300-0-1)&0x7ff=299 | e: (60-1-1)&0x1ff=58 | V: 5+1000=1005
-      expect(linker.mca).toEqual([299, 58, 1005]);
+      expect(linker.machineCode).toEqual([299, 58, 1005]);
     });
   });
 
   // #171 spike: adjustLocalReferences() (A-table relocation) was never called by
   // a unit test. It relocates a module-local reference to its global position by
-  // adding the module's start offset: mca[addr] += moduleStart.
+  // adding the module's start offset: machineCode[addr] += moduleStart.
   describe('adjustLocalReferences() ATable relocation (#182)', () => {
     test('adds moduleStart to the referenced word in place', () => {
       const linker = new Linker();
-      linker.mca = [];
-      linker.mca[10] = 5; // module-local address 5
-      linker.ATable = [{ address: 10, moduleStart: 100 }];
+      linker.machineCode = [];
+      linker.machineCode[10] = 5; // module-local address 5
+      linker.localRefs = [{ address: 10, moduleStart: 100 }];
 
       linker.adjustLocalReferences();
 
-      expect(linker.mca[10]).toBe(105); // 5 + moduleStart(100)
+      expect(linker.machineCode[10]).toBe(105); // 5 + moduleStart(100)
     });
 
     test('relocates multiple entries by their own moduleStart in one pass', () => {
       // Three modules concatenated at offsets 0 / 10 / 30.
       const linker = new Linker();
-      linker.mca = [2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 1];
-      linker.ATable = [
+      linker.machineCode = [2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 1];
+      linker.localRefs = [
         { address: 0, moduleStart: 0 },
         { address: 5, moduleStart: 10 },
         { address: 12, moduleStart: 30 },
@@ -261,35 +261,35 @@ describe('Linker Unit Tests', () => {
 
       linker.adjustLocalReferences();
 
-      expect(linker.mca[0]).toBe(2);   // 2 + 0
-      expect(linker.mca[5]).toBe(13);  // 3 + 10
-      expect(linker.mca[12]).toBe(31); // 1 + 30
-      expect(linker.mca[3]).toBe(0);   // untouched index unchanged
+      expect(linker.machineCode[0]).toBe(2);   // 2 + 0
+      expect(linker.machineCode[5]).toBe(13);  // 3 + 10
+      expect(linker.machineCode[12]).toBe(31); // 1 + 30
+      expect(linker.machineCode[3]).toBe(0);   // untouched index unchanged
     });
 
     test('moduleStart of 0 (first module) leaves the word unchanged', () => {
       const linker = new Linker();
-      linker.mca = [];
-      linker.mca[3] = 7;
-      linker.ATable = [{ address: 3, moduleStart: 0 }];
+      linker.machineCode = [];
+      linker.machineCode[3] = 7;
+      linker.localRefs = [{ address: 3, moduleStart: 0 }];
 
       linker.adjustLocalReferences();
 
-      expect(linker.mca[3]).toBe(7);
+      expect(linker.machineCode[3]).toBe(7);
     });
 
     test('empty ATable is a no-op', () => {
       const linker = new Linker();
-      linker.mca = [11, 22, 33];
-      linker.ATable = [];
+      linker.machineCode = [11, 22, 33];
+      linker.localRefs = [];
 
       linker.adjustLocalReferences();
 
-      expect(linker.mca).toEqual([11, 22, 33]);
+      expect(linker.machineCode).toEqual([11, 22, 33]);
     });
   });
 
-  // #171 spike: multi-module mcaIndex/GTable threading was only checked
+  // #171 spike: multi-module mcaIndex/globalSymbols threading was only checked
   // indirectly via the 3-demo oracle e2e (which detects but can't localize a
   // wrong relocation). processModule() appends each module's code at the running
   // mcaIndex and records every symbol/reference at (local address + mcaIndex),
@@ -308,9 +308,9 @@ describe('Linker Unit Tests', () => {
       linker.processModule(mod([{ type: 'G', address: 3, label: 'baz' }], 15));
 
       // foo: 0+0 | bar: 5+10 | baz: 3+(10+20)
-      expect(linker.GTable).toEqual({ foo: 0, bar: 15, baz: 33 });
+      expect(linker.globalSymbols).toEqual({ foo: 0, bar: 15, baz: 33 });
       expect(linker.mcaIndex).toBe(45);
-      expect(linker.mca).toHaveLength(45);
+      expect(linker.machineCode).toHaveLength(45);
     });
 
     test('each module code lands at its concatenated offset', () => {
@@ -319,9 +319,9 @@ describe('Linker Unit Tests', () => {
       linker.processModule(mod([], 20, 0x2222));
       linker.processModule(mod([], 15, 0x3333));
 
-      expect(linker.mca[0]).toBe(0x1111);  // module A @ 0
-      expect(linker.mca[10]).toBe(0x2222); // module B @ 10
-      expect(linker.mca[30]).toBe(0x3333); // module C @ 30
+      expect(linker.machineCode[0]).toBe(0x1111);  // module A @ 0
+      expect(linker.machineCode[10]).toBe(0x2222); // module B @ 10
+      expect(linker.machineCode[30]).toBe(0x3333); // module C @ 30
     });
 
     test('S start address is threaded by the owning module offset', () => {
@@ -340,9 +340,9 @@ describe('Linker Unit Tests', () => {
         mod([{ type: 'E', address: 3, label: 'x' }, { type: 'A', address: 7 }], 5),
       );
 
-      expect(linker.ETable).toEqual([{ address: 13, label: 'x' }]); // 3 + 10
+      expect(linker.externalRefs11).toEqual([{ address: 13, label: 'x' }]); // 3 + 10
       // A entries also record the module start for the later local relocation
-      expect(linker.ATable).toEqual([{ address: 17, moduleStart: 10 }]); // 7 + 10
+      expect(linker.localRefs).toEqual([{ address: 17, moduleStart: 10 }]); // 7 + 10
     });
   });
 
@@ -405,10 +405,10 @@ describe('Linker Unit Tests', () => {
       linker.outputFileName = 'out.e';
       linker.gotStart = true;
       linker.start = 2;
-      linker.GTable = { main: 0 };           // 'main' = 6d 61 69 6e
-      linker.VTable = [{ address: 7, label: 'v' }]; // written as an 'A' entry (address only)
-      linker.ATable = [{ address: 9, moduleStart: 0 }];
-      linker.mca = [0x1234, 0x5678];
+      linker.globalSymbols = { main: 0 };           // 'main' = 6d 61 69 6e
+      linker.virtualAddressRefs = [{ address: 7, label: 'v' }]; // written as an 'A' entry (address only)
+      linker.localRefs = [{ address: 9, moduleStart: 0 }];
+      linker.machineCode = [0x1234, 0x5678];
 
       linker.createExecutable();
 
@@ -428,10 +428,10 @@ describe('Linker Unit Tests', () => {
       const linker = new Linker();
       linker.outputFileName = 'out.e';
       linker.gotStart = false;              // no start → no 'S' entry
-      linker.GTable = {};
-      linker.VTable = [{ address: 0x11, label: 'v' }];
-      linker.ATable = [{ address: 0x22, moduleStart: 0 }];
-      linker.mca = [];
+      linker.globalSymbols = {};
+      linker.virtualAddressRefs = [{ address: 0x11, label: 'v' }];
+      linker.localRefs = [{ address: 0x22, moduleStart: 0 }];
+      linker.machineCode = [];
 
       linker.createExecutable();
 
