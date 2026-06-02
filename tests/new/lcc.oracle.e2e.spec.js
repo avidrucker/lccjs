@@ -66,7 +66,7 @@ const xstCompareOptions = {
 };
 
 function runJSLCC(aFile, userInputs) {
-  const LCC = require('../../src/core/lcc');
+  const LCC = require('../../src/cli/lcc');
   const base = path.basename(aFile, '.a');
   const tmp = createTempWorkspace('lccjs-js-lcc-');
   const tmpAFile = stageFileInWorkspace(aFile, tmp, `${base}.a`);

@@ -3,9 +3,9 @@
 // lcc.js
 
 const path = require('path');
-const Assembler = require('./assembler');
-const Interpreter = require('./interpreter');
-const Linker = require('./linker');
+const Assembler = require('../core/assembler');
+const Interpreter = require('../core/interpreter');
+const Linker = require('../core/linker');
 const ILCC = require('../interactive/ilcc');
 const { LinkerError } = require('../utils/errors');
 const nameHandler = require('../utils/name.js');

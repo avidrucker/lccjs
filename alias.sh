@@ -6,7 +6,7 @@ LCC_PLUS_JS="lccplusjs"
 HEX_DISPLAY="hex"
 PICTURE="picture"
 
-LCC_JS_PATH="node $(pwd)/src/core/lcc.js"
+LCC_JS_PATH="node $(pwd)/src/cli/lcc.js"
 LCC_PLUS_JS_PATH="node $(pwd)/src/plus/lccplus.js"
 HEX_DISPLAY_PATH="node $(pwd)/src/utils/hexDisplay.js"
 PICTURE_PATH="node $(pwd)/src/utils/picture.js"

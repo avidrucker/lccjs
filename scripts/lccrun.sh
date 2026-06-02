@@ -14,8 +14,8 @@
 # spawned by the node process are also reaped.
 #
 # Example:
-#   scripts/lccrun.sh 10 node src/core/lcc.js myprogram.a
-#   scripts/lccrun.sh node src/core/lcc.js myprogram.a   # uses 30s default
+#   scripts/lccrun.sh 10 node src/cli/lcc.js myprogram.a
+#   scripts/lccrun.sh node src/cli/lcc.js myprogram.a   # uses 30s default
 
 set -uo pipefail
 

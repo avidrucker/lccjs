@@ -1,6 +1,6 @@
 const fs = require('fs');
 const Linker = require('../../src/core/linker');
-const LCC = require('../../src/core/lcc');
+const LCC = require('../../src/cli/lcc');
 
 jest.mock('fs');
 jest.mock('../../src/core/linker', () => {

@@ -14,7 +14,7 @@
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO_ROOT=$(cd "$HERE/../.." && pwd)
-LCC_JS="$REPO_ROOT/src/core/lcc.js"
+LCC_JS="$REPO_ROOT/src/cli/lcc.js"
 
 if [ -z "${LCC_ORACLE:-}" ] && [ -f "$REPO_ROOT/.env" ]; then
   set -a; . "$REPO_ROOT/.env"; set +a

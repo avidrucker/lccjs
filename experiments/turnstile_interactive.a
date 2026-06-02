@@ -20,7 +20,7 @@
 ; the newline left in the input buffer after you press Enter, so you may see the
 ; state line reprinted once between events.
 ;
-; Run:  node src/core/lcc.js experiments/turnstile_interactive.a
+; Run:  node src/cli/lcc.js experiments/turnstile_interactive.a
 ; (then type c / p / q and press Enter)
 ; ---------------------------------------------------------------------------
 

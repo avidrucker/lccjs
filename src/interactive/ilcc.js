@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // ilcc.js — Interactive LCC CLI driver
-// Mirrors src/core/lcc.js but uses IInterpreter instead of Interpreter.
+// Mirrors src/cli/lcc.js but uses IInterpreter instead of Interpreter.
 // Calls interpreter.runInteractive(sourceMap) instead of interpreter.run().
 //
 // Usage:  node ilcc.js <input.a>  [flags]

@@ -41,7 +41,7 @@ snap lst oe; snap bst oe
 echo "── lccjs on .a (lcc.js) ──"
 rm -f "$T"/d.e "$T"/d.lst "$T"/d.bst
 cp "$DEMO" "$T/d.a"
-run lccjs_a "$T" -- node "$REPO/src/core/lcc.js" d.a
+run lccjs_a "$T" -- node "$REPO/src/cli/lcc.js" d.a
 snap e la; snap lst la; snap bst la
 
 echo "── lccjs on .e (interpreter.js) ──"

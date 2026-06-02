@@ -1,7 +1,7 @@
 const Assembler = require('../../src/core/assembler');
 const Interpreter = require('../../src/core/interpreter');
 const ILCC = require('../../src/interactive/ilcc');
-const LCC = require('../../src/core/lcc');
+const LCC = require('../../src/cli/lcc');
 
 describe('LCC Unit Tests', () => {
   beforeAll(() => {

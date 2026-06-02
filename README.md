@@ -17,8 +17,8 @@ LCC.js is a JavaScript implementation of the LCC toolchain — the assembler, li
 
 ```bash
 npm install                            # dev/test deps only; no runtime deps
-node ./src/core/lcc.js demos/demoA.a  # assemble + run
-node ./src/core/lcc.js demos/demoA.e  # run executable directly
+node ./src/cli/lcc.js demos/demoA.a  # assemble + run
+node ./src/cli/lcc.js demos/demoA.e  # run executable directly
 ```
 
 ## What's In This Repo
@@ -28,7 +28,7 @@ node ./src/core/lcc.js demos/demoA.e  # run executable directly
 | `src/core/assembler.js` | Assembles `.a`, `.bin`, `.hex` → `.e` or `.o` |
 | `src/core/interpreter.js` | Executes `.e` files |
 | `src/core/linker.js` | Links `.o` files → `.e` |
-| `src/core/lcc.js` | Top-level CLI orchestrator |
+| `src/cli/lcc.js` | Top-level CLI orchestrator |
 | `src/interactive/ilcc.js` | Interactive stepping debugger (`-i` mode) |
 | `src/utils/` | Report generation, file helpers, typed errors, name handling |
 | `src/plus/` | LCC+ variants for the extended `.ap`/`.ep` toolchain |
@@ -52,7 +52,7 @@ npm install
 
 | Alias | Expands to |
 |-------|-----------|
-| `lccjs` | `node <repo>/src/core/lcc.js` |
+| `lccjs` | `node <repo>/src/cli/lcc.js` |
 | `lccplusjs` | `node <repo>/src/plus/lccplus.js` |
 | `hex` | `node <repo>/src/utils/hexDisplay.js` |
 | `picture` | `node <repo>/src/utils/picture.js` |
@@ -70,7 +70,7 @@ After running, reload your shell (`source ~/.bashrc` or open a new terminal) to 
 ### `lcc.js`
 
 ```bash
-node ./src/core/lcc.js <infile> [options]
+node ./src/cli/lcc.js <infile> [options]
 ```
 
 | Option | Description |
@@ -92,12 +92,12 @@ node ./src/core/lcc.js <infile> [options]
 **Examples:**
 
 ```bash
-node ./src/core/lcc.js demos/demoA.a          # assemble + run
-node ./src/core/lcc.js demos/demoA.e          # run .e directly
-node ./src/core/lcc.js -t demos/demoA.a       # assemble + run with per-step trace
-node ./src/core/lcc.js -i demos/demoA.a       # assemble + interactive debugger
-node ./src/core/lcc.js module1.o module2.o    # link .o files → link.e
-node ./src/core/lcc.js -o prog.e m1.o m2.o   # link with custom output name
+node ./src/cli/lcc.js demos/demoA.a          # assemble + run
+node ./src/cli/lcc.js demos/demoA.e          # run .e directly
+node ./src/cli/lcc.js -t demos/demoA.a       # assemble + run with per-step trace
+node ./src/cli/lcc.js -i demos/demoA.a       # assemble + interactive debugger
+node ./src/cli/lcc.js module1.o module2.o    # link .o files → link.e
+node ./src/cli/lcc.js -o prog.e m1.o m2.o   # link with custom output name
 ```
 
 ### Other entrypoints

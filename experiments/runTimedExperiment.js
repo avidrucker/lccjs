@@ -119,7 +119,7 @@ function buildCommand(target, resolvedProgram, tmpDir) {
 
     return {
       command: process.execPath,
-      args: [path.join(repoRoot, 'src/core/lcc.js'), resolvedProgram],
+      args: [path.join(repoRoot, 'src/cli/lcc.js'), resolvedProgram],
       cwd: repoRoot,
       managedPaths: [],
     };

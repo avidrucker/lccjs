@@ -21,7 +21,7 @@ if [ -z "${LCC_ORACLE:-}" ]; then
   exit 1
 fi
 
-LCCJS="node $REPO_ROOT/src/core/lcc.js"
+LCCJS="node $REPO_ROOT/src/cli/lcc.js"
 
 VALUES=(-257 -256 -255 -128 -16 -15 -1 0 1 15 16 127 128 255 256 257 511 512)
 

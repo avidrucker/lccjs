@@ -143,6 +143,6 @@ These are illustrative programs, run directly with LCC.js — not oracle parity 
   interactive debugger itself — `../docs/research/xstate-iinterpreter.md`.
 
   ```bash
-  node src/core/lcc.js experiments/turnstile_interactive.a
+  node src/cli/lcc.js experiments/turnstile_interactive.a
   # then type c (coin), p (push), q (quit) and press Enter
   ```
