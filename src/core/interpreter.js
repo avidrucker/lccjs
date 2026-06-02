@@ -1311,8 +1311,7 @@ class Interpreter {
         try {
           let bytesRead = fs.readSync(fd, buffer, 0, 1, null);
           if (bytesRead === 0) {
-            // EOF
-            break;
+            return { inputLine: '', isSimulated: false, isEOF: true };
           }
           let char = buffer.toString('utf8');
           
@@ -1367,6 +1366,9 @@ class Interpreter {
       while (ainBytesRead === 0) {
         try {
           ainBytesRead = fs.readSync(fd, ainBuffer, 0, 1, null);
+          if (ainBytesRead === 0) {
+            return { char: '', isSimulated: false, isEOF: true };
+          }
         } catch (err) {
           if (err.code === 'EAGAIN') {
             continue;
@@ -1545,8 +1547,11 @@ class Interpreter {
         break;
       case 7: // DIN
         while (true) {
-          let { inputLine: dinInput, isSimulated } = this.readLineFromStdin();
+          let { inputLine: dinInput, isSimulated, isEOF } = this.readLineFromStdin();
 
+          if (isEOF) {
+            this.raiseRuntimeError(new InterpreterRuntimeError('din: unexpected EOF on stdin'));
+          }
           if (dinInput.trim() === '') {
             continue;
           }
@@ -1572,8 +1577,11 @@ class Interpreter {
         break;
       case 8: // HIN
         while (true) {
-          let { inputLine: hinInput, isSimulated } = this.readLineFromStdin();
+          let { inputLine: hinInput, isSimulated, isEOF: hinEOF } = this.readLineFromStdin();
 
+          if (hinEOF) {
+            this.raiseRuntimeError(new InterpreterRuntimeError('hin: unexpected EOF on stdin'));
+          }
           if (hinInput.trim() === '') {
             continue;
           }
@@ -1597,7 +1605,10 @@ class Interpreter {
         }
         break;
       case 9: // AIN
-        let { char: ainChar, isSimulated } = this.readCharFromStdin();
+        let { char: ainChar, isSimulated, isEOF: ainEOF } = this.readCharFromStdin();
+        if (ainEOF) {
+          this.raiseRuntimeError(new InterpreterRuntimeError('ain: unexpected EOF on stdin'));
+        }
         this.r[this.dr] = ainChar.charCodeAt(0);
         // No need to echo input here; already handled in readCharFromStdin()
         break;

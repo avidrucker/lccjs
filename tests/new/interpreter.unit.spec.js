@@ -188,6 +188,60 @@ describe('Interpreter Unit Tests', () => {
     expect(result.output).toContain('hi');
   });
 
+  test('executeBuffer() din throws InterpreterRuntimeError on EOF instead of spinning', () => {
+    const source = `
+      din r0
+      halt
+    `;
+    const assembler = new Assembler();
+    const assembly = assembler.assembleSource(source, { inputFileName: 'dinEof.a' });
+    const interpreter = new Interpreter();
+
+    jest.spyOn(interpreter, 'readLineFromStdin').mockReturnValue(
+      { inputLine: '', isSimulated: false, isEOF: true }
+    );
+
+    expect(() => {
+      interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'dinEof.e' });
+    }).toThrow(InterpreterRuntimeError);
+  });
+
+  test('executeBuffer() hin throws InterpreterRuntimeError on EOF instead of spinning', () => {
+    const source = `
+      hin r0
+      halt
+    `;
+    const assembler = new Assembler();
+    const assembly = assembler.assembleSource(source, { inputFileName: 'hinEof.a' });
+    const interpreter = new Interpreter();
+
+    jest.spyOn(interpreter, 'readLineFromStdin').mockReturnValue(
+      { inputLine: '', isSimulated: false, isEOF: true }
+    );
+
+    expect(() => {
+      interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'hinEof.e' });
+    }).toThrow(InterpreterRuntimeError);
+  });
+
+  test('executeBuffer() ain throws InterpreterRuntimeError on EOF instead of spinning', () => {
+    const source = `
+      ain r0
+      halt
+    `;
+    const assembler = new Assembler();
+    const assembly = assembler.assembleSource(source, { inputFileName: 'ainEof.a' });
+    const interpreter = new Interpreter();
+
+    jest.spyOn(interpreter, 'readCharFromStdin').mockReturnValue(
+      { char: '', isSimulated: false, isEOF: true }
+    );
+
+    expect(() => {
+      interpreter.executeBuffer(assembly.outputBytes, { inputFileName: 'ainEof.e' });
+    }).toThrow(InterpreterRuntimeError);
+  });
+
   test('executeBuffer() should reject incomplete S header entries', () => {
     const executable = Buffer.from([0x6f, 0x53, 0x00]);
     const interpreter = new Interpreter();
