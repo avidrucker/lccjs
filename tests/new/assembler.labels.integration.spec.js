@@ -332,6 +332,21 @@ data2: .word 10
     }).toThrow('Undefined label');
   });
 
+  // #510 — OG BUG §24: oracle accepts numeric tokens as syntactically valid label names
+  // and rejects them at lookup time ("Undefined label"). LCC.js rejects upfront ("Bad label").
+  test('510. bl with numeric token emits Bad label, not Undefined label', () => {
+    const aFilePath = 'blNumericLabel.a';
+    const source = `
+      bl 5
+      halt
+    `;
+    virtualFs[aFilePath] = source;
+
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).toThrow('Bad label');
+  });
+
   test('181. should throw error for br instruction with undefined label', () => {
     const aFilePath = 'brUndefinedLabel.a';
     const source = `

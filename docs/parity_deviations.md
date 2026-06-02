@@ -292,6 +292,49 @@ report as the "fails-loud" half of the same parser defect. Summarized in
 
 ---
 
+### 24. `bl` / `call` / `jsr` with numeric token: oracle says `Undefined label`; LCC.js says `Bad label` (#510)
+
+When a numeric literal is used as the branch target of `bl` (and its aliases `call`, `jsr`),
+both assemblers reject the input with exit 1, but the error diagnostic differs.
+
+| | Oracle (cuh63 6.3) | LCC.js |
+|---|---|---|
+| Input | `bl 5` | `bl 5` |
+| Error text | `Undefined label` | `Bad label` |
+| Exit code | 1 | 1 |
+| Artifacts | 1-byte blank `.e` (OG BUG §10) | none |
+
+**Cause (oracle):** the oracle's parser treats `5` as a **syntactically valid label
+name** — it passes the token through to symbol-table lookup and only then rejects it
+as undefined. The oracle's label validation is purely existence-based, not
+syntactic: any token that is not a directive, mnemonic, or register is tentatively
+treated as a label reference.
+
+**LCC.js behavior:** `assembleBL` calls `isValidLabel(label)` before anything else.
+`isValidLabel` requires the token to match `/^[A-Za-z_$@][A-Za-z0-9_$@]*$/` — a
+token starting with a digit fails immediately with `Bad label`
+(`src/core/assembler.js:1735–1736`). The error fires in Pass 1, before any
+symbol-table lookup.
+
+**Why OG BUG:** accepting a numeric token as a syntactically valid label name is
+incorrect. A digit-led token can never legally be a label; deferring the rejection
+to lookup time is a parser weakness, not a feature. LCC.js's upfront syntactic
+check is the correct and more informative behavior — `Bad label` is a more precise
+diagnosis than `Undefined label` for this case.
+
+**Scope:** `bl 5` / `call 5` / `jsr 5` only. Whether the oracle similarly accepts
+other syntactically invalid tokens (e.g. `bl 0x10`, `bl -1`) is not investigated
+here.
+
+**Source:** `src/core/assembler.js:1732` (`assembleBL`) — `isValidLabel` gate at
+line 1735.
+
+**Evidence:** `docs/research/adversarial_hypotheses.md` H-016; probe run #502.
+
+**GitHub issue:** [#510](https://github.com/avidrucker/lccjs/issues/510)
+
+---
+
 ## LCC.js BUG — LCC.js deviates from OG LCC (fix pending)
 
 _None currently — see Changelog for OB-001 (#31 closed), OB-002 (#32 closed),
@@ -756,4 +799,5 @@ _None pending._
 | 2026-06-01 | Deviation 20 added (#371, #441) | `.bin`/`.hex` loading message: LCC.js prints `Loading <file> (no assembly pass) — N word(s)`; oracle is silent. Message predated #371 (was `Assembling …`); #371 improved wording. Classified BY DESIGN. |
 | 2026-06-01 | OG BUG #21 added (#270) | Successful `.o` assemble: oracle exits 1 ("needs linking"), LCC.js exits 0. Oracle's exit 1 is specific to the `.o` path — both exit 0 on `.e` assemble+run. Classified OG BUG: exit 1 conflates "no runnable output" with "error"; LCC.js exit 0 is semantically correct. |
 | 2026-06-02 | Deviation 22 added (#501) | `bp` in non-interactive context: both runtimes auto-continue past `bp` (oracle does NOT flood stdout). Oracle enters step-trace mode, printing `<mnemonic>>>  <pc>:   <instruction>` before each instruction after the breakpoint; LCC.js continues cleanly with no traces. Classified BY DESIGN (clean output better for automated callers). Same root cause as §19 (oracle debug-dump mode) but bounded because the program terminates normally. |
+| 2026-06-02 | OG BUG §24 added (#510) | `bl` / `call` / `jsr` with numeric token: oracle `Undefined label` vs LCC.js `Bad label`. Oracle accepts digit-led tokens as syntactically valid label names (defers rejection to lookup); LCC.js rejects upfront via `isValidLabel`. Classified OG BUG — upfront syntactic validation is correct. |
 | 2026-06-02 | BY DESIGN §23 added (#500) | `.org` invalid operand: oracle emits `Bad number`; LCC.js emits `Invalid number for .org directive`. Classified BY DESIGN (more informative). Forward-gap padding confirmed byte-identical (parity achieved); `.orig` synonym confirmed parity-complete. Parity test added: `tests/new/assembler.org.oracle.e2e.spec.js`. |
