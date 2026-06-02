@@ -24,6 +24,7 @@
 //
 
 const fs = require('fs');
+const { cliErrorExit } = require('../utils/cliExit');
 
 // Utilities for printing visual separators
 function printSpacerLine() {
@@ -676,8 +677,7 @@ class LinkerStepsPrinter {
 if (require.main === module) {
   const args = process.argv.slice(2);
   if (args.length < 1) {
-    console.error('Usage: node linkerStepsPrinter.js [-o outputfile.e] <object module 1> <object module 2> ...');
-    process.exit(1);
+    cliErrorExit('Usage: node linkerStepsPrinter.js [-o outputfile.e] <object module 1> <object module 2> ...', 1);
   }
 
   let outputFileName = null;
@@ -686,8 +686,7 @@ if (require.main === module) {
   while (i < args.length) {
     if (args[i] === '-o') {
       if (i + 1 >= args.length) {
-        console.error('Missing output file name after -o');
-        process.exit(1);
+        cliErrorExit('Missing output file name after -o', 1);
       }
       outputFileName = args[i + 1];
       i += 2;
@@ -698,8 +697,7 @@ if (require.main === module) {
   }
 
   if (inputFiles.length === 0) {
-    console.error('Error: No input object modules specified');
-    process.exit(1);
+    cliErrorExit('Error: No input object modules specified', 1);
   }
 
   const linker = new LinkerStepsPrinter();
