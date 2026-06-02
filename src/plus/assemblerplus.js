@@ -6,6 +6,15 @@ const Assembler = require('../core/assembler.js');
 
 const { fatalExit } = require('../utils/cliExit');
 
+// LCC+ extension trap vector addresses
+const TRAP_CLEAR  = 0x000F;
+const TRAP_SLEEP  = 0x0010;
+const TRAP_NBAIN  = 0x0011;
+const TRAP_CURSOR = 0x0012;
+const TRAP_SRAND  = 0x0013;
+const TRAP_MILLIS = 0x0014;
+const TRAP_RESETC = 0x0015;
+
 class AssemblerPlus extends Assembler {
   constructor() {
     super();
@@ -99,24 +108,24 @@ class AssemblerPlus extends Assembler {
   
     switch (mnemonic) {
       case 'clear':
-        machineWord = this.assembleTrap(operands, 0x000F);
+        machineWord = this.assembleTrap(operands, TRAP_CLEAR);
         // Here, WE do the writing/incrementing for "clear"
         this.writeAndInc(machineWord);
         break;
       case 'sleep':
-        machineWord = this.assembleTrap(operands, 0x0010);
+        machineWord = this.assembleTrap(operands, TRAP_SLEEP);
         this.writeAndInc(machineWord);
         break;
       case 'nbain':
-        machineWord = this.assembleTrap(operands, 0x0011);
+        machineWord = this.assembleTrap(operands, TRAP_NBAIN);
         this.writeAndInc(machineWord);
         break;
       case 'cursor':
-        machineWord = this.assembleTrap(operands, 0x0012);
+        machineWord = this.assembleTrap(operands, TRAP_CURSOR);
         this.writeAndInc(machineWord);
         break;
       case 'srand':
-        machineWord = this.assembleTrap(operands, 0x0013);
+        machineWord = this.assembleTrap(operands, TRAP_SRAND);
         this.writeAndInc(machineWord);
         break;
       case 'rand':
@@ -124,11 +133,11 @@ class AssemblerPlus extends Assembler {
         this.writeAndInc(machineWord);
         break;
       case 'millis':
-        machineWord = this.assembleTrap(operands, 0x0014);
+        machineWord = this.assembleTrap(operands, TRAP_MILLIS);
         this.writeAndInc(machineWord);
         break;
       case 'resetc':
-        machineWord = this.assembleTrap(operands, 0x0015);
+        machineWord = this.assembleTrap(operands, TRAP_RESETC);
         this.writeAndInc(machineWord);
         break;
       default:
