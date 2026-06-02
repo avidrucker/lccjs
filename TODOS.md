@@ -53,9 +53,9 @@ This file is the current actionable backlog. Completed historical refactor steps
 - [ ] continue `bp` / debugger parity research
   - [ ] determine whether non-interactive oracle runs always auto-continue after `bp`
   - [ ] decide how closely LCC.js should match oracle breakpoint stdout before full debugger parity work
-- [ ] research the original 300-character line-length rule more precisely
-  - [ ] whether comments count
-  - [ ] whether there is a separate true label-length limit
+- [x] research the original 300-character line-length rule more precisely
+  - [x] whether comments count (#244 closed — confirmed: raw line including comments counts)
+  - [x] whether there is a separate true label-length limit (#245 closed — confirmed: none)
 
 ## Core Behavior and Features
 
@@ -65,11 +65,11 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] custom `-o` output
 - [ ] complete LCC / interpreter flag behavior cleanup and documentation
   - [ ] verify `-d`
-  - [ ] verify `-m`
-  - [ ] verify `-r`
+  - [x] verify `-m` (flag wired — #74 closed)
+  - [x] verify `-r` (flag wired — #75 closed)
   - [x] verify `-t` (implemented and tested)
   - [ ] verify `-f`
-  - [ ] verify `-x`
+  - [x] verify `-x` (flag wired — #76 closed)
   - [ ] verify `-l<loadpt>`
 - [ ] continue symbolic debugger work
   - [x] implement more debugger commands (Phase 1+2 complete: g/q/r/m/b/i/h/s)
@@ -135,7 +135,7 @@ committing. Full context in `docs/research/xstate-iinterpreter.md`.
 
 - [ ] research a statechart for `iinterpreter.js` modes/UI; decide adopt-XState vs hand-roll vs keep-flags, then decompose into build puzzles
   <!-- @todo #134:60m/ARC research an XState (or hand-rolled) statechart for the interactive debugger's modes/UI in src/interactive/iinterpreter.js — exec region + orthogonal display region; assess dependency cost and snapshot/time-travel coupling; keep the per-opcode step() switch out of scope. Design in docs/research/xstate-iinterpreter.md; see #134 -->
-- [x] DRY the core symbolic debugger vs the `ilcc`/`iinterpreter` extension — ROI map in `docs/research/debugger-ilcc-dry.md` (#146 closed). Build puzzles: format.js #163 (done), stateDelta.js #164. Do #164 before #134.
+- [x] DRY the core symbolic debugger vs the `ilcc`/`iinterpreter` extension — ROI map in `docs/research/debugger-ilcc-dry.md` (#146 closed). Build puzzles: format.js #163 (done), stateDelta.js #164 (done).
 
 ## Velocity / Calibration Analytics
 
