@@ -703,6 +703,31 @@ terminates normally so the step dump is bounded.
 
 ---
 
+### 23. `.org` invalid operand: oracle prints `Bad number`; LCC.js prints `Invalid number for .org directive` (#500)
+
+When the operand of a `.org` directive cannot be parsed as a number (e.g. `.org banana`),
+the two assemblers emit the same exit code and error shape but different diagnostic text.
+
+| | Oracle (cuh63 6.3) | LCC.js |
+|---|---|---|
+| error text | `Bad number` | `Invalid number for .org directive` |
+| error channel | stdout | stderr |
+| exit code | `1` | `1` |
+| artifacts emitted | 1-byte blank `.e` (see OG BUG §10) | none |
+
+The error-channel and blank-artifact differences are covered by existing deviations
+(§10 / §11 / §12); this entry records only the message-text divergence.
+
+**Why BY DESIGN:** `Bad number` is the oracle's generic parse-failure message reused across
+multiple directive contexts. `Invalid number for .org directive` is more informative: it
+identifies the affected directive, reducing user confusion. LCC.js-stricter-is-safer applies.
+
+**Source:** `src/core/assembler.js:1109` (`failAssembly('Invalid number for .org directive', 1)`).
+
+**GitHub issue:** [#500](https://github.com/avidrucker/lccjs/issues/500) (probe evidence)
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -731,3 +756,4 @@ _None pending._
 | 2026-06-01 | Deviation 20 added (#371, #441) | `.bin`/`.hex` loading message: LCC.js prints `Loading <file> (no assembly pass) — N word(s)`; oracle is silent. Message predated #371 (was `Assembling …`); #371 improved wording. Classified BY DESIGN. |
 | 2026-06-01 | OG BUG #21 added (#270) | Successful `.o` assemble: oracle exits 1 ("needs linking"), LCC.js exits 0. Oracle's exit 1 is specific to the `.o` path — both exit 0 on `.e` assemble+run. Classified OG BUG: exit 1 conflates "no runnable output" with "error"; LCC.js exit 0 is semantically correct. |
 | 2026-06-02 | Deviation 22 added (#501) | `bp` in non-interactive context: both runtimes auto-continue past `bp` (oracle does NOT flood stdout). Oracle enters step-trace mode, printing `<mnemonic>>>  <pc>:   <instruction>` before each instruction after the breakpoint; LCC.js continues cleanly with no traces. Classified BY DESIGN (clean output better for automated callers). Same root cause as §19 (oracle debug-dump mode) but bounded because the program terminates normally. |
+| 2026-06-02 | BY DESIGN §23 added (#500) | `.org` invalid operand: oracle emits `Bad number`; LCC.js emits `Invalid number for .org directive`. Classified BY DESIGN (more informative). Forward-gap padding confirmed byte-identical (parity achieved); `.orig` synonym confirmed parity-complete. Parity test added: `tests/new/assembler.org.oracle.e2e.spec.js`. |
