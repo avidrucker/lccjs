@@ -4,6 +4,11 @@ Generated 2026-05-31 from deep read of `src/core/assembler.js`,
 `src/core/interpreter.js`, `src/core/linker.js`, `open_bugs.md`,
 `docs/parity_deviations.md`, and existing test suites.
 
+> **Architect triage (2026-06-01, #404):** Priority order, batching plan, oracle-routing
+> decisions, and critiques of the priority list below all live in
+> `docs/research/adversarial-hypothesis-triage.md`. Read that first before picking up
+> any hypothesis as a ticket — several items are re-ranked, batched, or routed to #218.
+
 Each hypothesis is a **specific failure mode** that the current code
 may or may not handle correctly. The TDD workflow is:
 
@@ -183,6 +188,11 @@ of raising "Bad number".
 
 **Test idea:** `add r0, r1` (no immediate, no third operand) — does the
 assembler detect the missing operand, or does it encode `add r0, r1, 0`?
+
+> **Architect caution (#404):** `assembleADD` likely has an upstream operand-count
+> check that fires before `evaluateImmediate` is called with `undefined`. Verify
+> whether that guard exists first — if it does, this hypothesis confirms correct
+> behavior rather than exposing a bug. Ranked 6th (not 1st) in the triage doc.
 
 ---
 
