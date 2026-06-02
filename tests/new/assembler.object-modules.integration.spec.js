@@ -225,17 +225,11 @@ foo:  .word 456
     virtualFs[aFilePath] = source;
     // No name.nnn present → createNameFile prompts and reads stdin.
 
-    // Simulate EOF on a non-TTY (e.g. `< /dev/null`): readSync returns 0, so the
-    // resolved name is empty and name.js calls process.exit(1).
-    const readSyncSpy = jest.spyOn(fs, 'readSync').mockReturnValue(0);
-    const exitSpy = jest.spyOn(process, 'exit').mockImplementation((code) => {
-      throw new Error(`process.exit(${code})`);
-    });
-
+    // No name.nnn + non-TTY stdin (Jest default) → fatalExit throws before any output is written.
     try {
       expect(() => {
         assembler.main([aFilePath]);
-      }).toThrow('process.exit(1)');
+      }).toThrow('name.nnn not found');
 
       expect(assembler.isObjectModule).toBe(true);
       // The crux: the .o (and its reports) must never have been opened/written.
@@ -243,8 +237,7 @@ foo:  .word 456
       expect(virtualFs['atomicNameFail.lst']).toBeUndefined();
       expect(virtualFs['atomicNameFail.bst']).toBeUndefined();
     } finally {
-      readSyncSpy.mockRestore();
-      exitSpy.mockRestore();
+      // nothing to restore
     }
   });
 });

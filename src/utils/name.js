@@ -14,6 +14,7 @@
 // format "LastName, FirstName MiddleInitial"
 
 const fs = require('fs');
+const { fatalExit } = require('./cliExit');
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 const prompt = `Enter familyname, firstname middleinitial (if any)${newline}`;
 
@@ -79,7 +80,7 @@ function createNameFile(inputPath) {
       'Fatal: name.nnn not found and stdin is not a terminal.\n' +
       'Create a name.nnn file in the working directory to run non-interactively.\n'
     );
-    process.exit(1);
+    fatalExit('Fatal: name.nnn not found and stdin is not a terminal.', 1);
   }
 
   // If not, prompt for name
@@ -90,7 +91,7 @@ function createNameFile(inputPath) {
   // but it should make sure that the name is not empty.
   if(name.trim() === '') {
     console.error('Name cannot be empty');
-    process.exit(1);
+    fatalExit('Name cannot be empty', 1);
   }
 
   // Write to name.nnn file with \n if on linux/mac or \r\n if on windows

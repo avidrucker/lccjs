@@ -115,19 +115,14 @@ describe('Name Wrapper Integration Tests', () => {
     const origIsTTY = process.stdin.isTTY;
     process.stdin.isTTY = false;
 
-    const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-      throw new Error('process.exit called');
-    });
     const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => {});
 
     try {
       const { createNameFile } = require('../../src/utils/name.js');
-      expect(() => createNameFile('any.e')).toThrow('process.exit called');
+      expect(() => createNameFile('any.e')).toThrow('name.nnn not found');
       expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('name.nnn not found'));
-      expect(mockExit).toHaveBeenCalledWith(1);
     } finally {
       process.stdin.isTTY = origIsTTY;
-      mockExit.mockRestore();
       stderrSpy.mockRestore();
     }
   });
