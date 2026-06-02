@@ -10,6 +10,7 @@ on:
       - 'docs/research/**'
       - 'docs/learnings/**'
       - 'docs/glossary/**'
+      - 'docs/themes/**'
       - 'scripts/build-site.js'
   workflow_dispatch:
 

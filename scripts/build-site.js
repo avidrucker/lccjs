@@ -31,6 +31,10 @@ const retroLightTheme = {
   ],
 };
 
+const zenburnTheme = JSON.parse(
+  fs.readFileSync(path.join(ROOT, 'docs', 'themes', 'zenburn.json'), 'utf8')
+);
+
 const THEMES = [
   { id: 'github-dark',          label: 'GitHub Dark',          dark: true  },
   { id: 'github-light',         label: 'GitHub Light',         dark: false },
@@ -40,6 +44,7 @@ const THEMES = [
   { id: 'nord',                 label: 'Nord',                 dark: true  },
   { id: 'tokyo-night',          label: 'Tokyo Night',          dark: true  },
   { id: 'solarized-light',      label: 'Solarized Light',      dark: false },
+  { id: 'zenburn',              label: 'Zenburn',              dark: true  },
   { id: 'retro-console-dark',   label: 'Retro Console Dark',   dark: true  },
   { id: 'retro-console-light',  label: 'Retro Console Light',  dark: false },
 ];
@@ -202,8 +207,8 @@ ${footer}${script ? `\n  <script>${script}</script>` : ''}
   const { marked }            = await import('marked');
 
   const grammar  = JSON.parse(fs.readFileSync(GRAMMAR_PATH, 'utf8'));
-  const themeIds = THEMES.filter(t => !t.id.startsWith('retro-console')).map(t => t.id);
-  const hl = await createHighlighter({ themes: [retroDarkTheme, retroLightTheme, ...themeIds], langs: [grammar] });
+  const themeIds = THEMES.filter(t => !t.id.startsWith('retro-console') && t.id !== 'zenburn').map(t => t.id);
+  const hl = await createHighlighter({ themes: [retroDarkTheme, retroLightTheme, zenburnTheme, ...themeIds], langs: [grammar] });
 
   // ── Landing page ─────────────────────────────────────────────────────────────
 
