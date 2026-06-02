@@ -239,6 +239,8 @@ words.
 
 **Probe result (#502):** `sra r0` → `0xa023`; `sra r0, 0` → `0xa003`; `sra r0, 1` → `0xa023`. Oracle and lccjs produce identical encodings for all three forms. `sra r0, 0` is a valid distinct encoding (count=0 field), not an error. No deviation.
 
+**Decision (#513):** ct=0 is **valid and distinct** — a no-op (identity) operation. Confirmed by runtime: `sra r0, 0` on +5 → 5, on -4 → -4 (value unchanged). The ISA doc already states the valid range as 0–15. Interpreter ct=0 safety was confirmed by #51. No code change needed; lower bound of `evaluateImmediate(0, 15)` in `assembleSRA` is correct. Siblings (SRL/SLL/ROL/ROR) should also accept ct=0 when range checks are added per #512.
+
 ---
 
 ### H-014 🟡 `assembleRET offset6` — offset6 is not range-checked
