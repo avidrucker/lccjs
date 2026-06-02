@@ -580,7 +580,7 @@ describe('IInterpreter.displayCodeSnippet() — source pane (OB-043/#95)', () =>
 
     interp.runInteractive(sm);
 
-    expect(spy).toHaveBeenCalledWith(sm);
+    expect(spy).toHaveBeenCalledWith(sm, interp.codeContextRows);
     spy.mockRestore();
     stdoutMock.mockRestore();
     logMock.mockRestore();

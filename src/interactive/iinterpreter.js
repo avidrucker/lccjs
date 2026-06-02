@@ -43,6 +43,10 @@ class IInterpreter extends Interpreter {
     // Pane chars: r=registers, c=code snippet, m=memory, o=output
     this.paneLayout = { column0: 'ro', column1: 'mc', column2: '' };
 
+    // Number of context rows (above + below current PC) shown in the code pane.
+    // c{N} sets this at runtime; c0 hides the pane (matches Charlie's convention).
+    this.codeContextRows = 5;
+
     // Program output buffer — captures aout/dout/sout etc. for the 'o' pane
     // Populated via writeOutput() override; does NOT go to stdout during interactive mode
     this.programOutput = '';
@@ -403,11 +407,10 @@ class IInterpreter extends Interpreter {
   }
 
   // codePane — source snippet in a 48-char box.
-  // Returns [] when sourceMap is null (no source available), matching the original
-  // behaviour of runInteractive which skipped the code snippet in that case.
+  // Returns [] when sourceMap is null or codeContextRows is 0 (pane hidden).
   codePane(sourceMap) {
-    if (!sourceMap) return [];
-    const text = this.displayCodeSnippet(sourceMap);
+    if (!sourceMap || this.codeContextRows === 0) return [];
+    const text = this.displayCodeSnippet(sourceMap, this.codeContextRows);
     const lines = text.split('\n').filter((l) => l !== '');
     return [this._boxTop('Code Snippet'), ...lines.map((l) => this._boxLine(l)), this._boxBottom()];
   }
@@ -512,8 +515,9 @@ class IInterpreter extends Interpreter {
   //   {-N}        step backward N instructions (time-travel)
   //   0           re-display current state without stepping
   //   <enter>     repeat last step count
-  //   a{hex}      set memory display base address (e.g. a0010)
-  //   m{N}        set memory display row count    (e.g. m4)
+  //   a{hex}      set memory display base address  (e.g. a0010)
+  //   m{N}        set memory display row count     (e.g. m4)
+  //   c{N}        set code snippet context rows    (e.g. c5; c0 hides pane)
   //   s{anchor}   set stack anchor: register name or hex addr (e.g. ssp, s0ff0)
   //   l{layout}   set pane layout (e.g. lro/mc, lr/c/mo)
   //   h           show help
@@ -584,6 +588,24 @@ class IInterpreter extends Interpreter {
         continue;
       }
 
+      if (cmd.startsWith('c')) {
+        const arg = cmd.slice(1);
+        if (arg === '') {
+          this.codeContextRows = 0;
+        } else {
+          const n = parseInt(arg, 10);
+          if (!isNaN(n) && n >= 0) {
+            this.codeContextRows = n;
+          } else {
+            process.stdout.write('Error: c{N} expects a non-negative integer (e.g. c5, c0).\n');
+            newlineCount++;
+            continue;
+          }
+        }
+        render();
+        continue;
+      }
+
       if (cmd.startsWith('l')) {
         const result = this.handlePaneLayout(cmd.slice(1));
         if (result.error) {
@@ -637,6 +659,7 @@ class IInterpreter extends Interpreter {
       '  <enter>     repeat last step count',
       '  a{hex}      set memory base address  (e.g. a0010)',
       '  m{N}        set memory row count     (e.g. m4)',
+      '  c{N}        set code context rows    (e.g. c5, c0=hide)',
       '  s{anchor}   set stack anchor         (e.g. ssp, sfff2)',
       '  l{layout}   set pane layout          (e.g. lro/mc, lr/c/mo)',
       '              panes: r=registers  c=code  m=memory  o=output',
