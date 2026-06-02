@@ -191,6 +191,8 @@ git commit -m "... Closes #N"
 npm run close N
 ```
 
+**Build-artifact tickets:** If the closing commit must include a generated file (e.g. from `npm run build:site`), run the build *before* step 1 (`velocity:log`) — so the artifact, the exported CSV, and the `Closes #N` marker all land in the same commit. If the artifact is rebuilt by CI on every push, prefer gitignoring it so no local artifact commit is needed at all. (`docs/site/` falls in this category: `pages.yml` already rebuilds it from source on every push to `main`, so it can safely be gitignored.) (#492)
+
 **Fallback** (when `npm run close` is unavailable — `&&`-gate is mandatory so cleanup can't race ahead of a failed push):
 
 ```bash
