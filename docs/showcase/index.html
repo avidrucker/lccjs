@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LCC Assembly — Syntax Highlight Showcase</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --border:    #30363d;
+      --text:      #c9d1d9;
+      --muted:     #8b949e;
+      --accent:    #58a6ff;
+      --tag-bg:    #1f2d3d;
+      --tag-core:  #79c0ff;
+      --tag-plus:  #3fb950;
+      --tag-plus-bg: #1f3024;
+      --error:     #f85149;
+      --radius:    8px;
+      --font-code: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+      --font-ui:   -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    html { background: var(--bg); color: var(--text); font-family: var(--font-ui); }
+    body { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    header { padding-bottom: 2rem; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+    header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.4rem; }
+    header p  { color: var(--muted); font-size: 0.95rem; line-height: 1.6; }
+    header a, footer a { color: var(--accent); text-decoration: none; }
+    header a:hover, footer a:hover { text-decoration: underline; }
+
+    /* ── Badges ─────────────────────────────────────────────── */
+    .tag {
+      display: inline-block;
+      padding: 0.15em 0.55em;
+      border-radius: 2em;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: var(--font-code);
+      background: var(--tag-bg);
+      color: var(--tag-core);
+      letter-spacing: 0.02em;
+    }
+    .tag.plus { background: var(--tag-plus-bg); color: var(--tag-plus); }
+
+    /* ── Sections ────────────────────────────────────────────── */
+    section + section { margin-top: 2.5rem; }
+    section h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    section .desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Code block ──────────────────────────────────────────── */
+    .code-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      background: var(--surface);
+    }
+    /* Shiki outputs a <pre>; normalise its padding and override its inline background */
+    .code-wrap pre {
+      margin: 0 !important;
+      padding: 1.25rem 1.5rem !important;
+      overflow-x: auto;
+      background: var(--surface) !important;
+      font-family: var(--font-code) !important;
+    }
+    .code-wrap code { font-family: var(--font-code); }
+
+    /* Plain pre used while Shiki is loading */
+    .code-wrap pre.plain {
+      color: var(--muted);
+      white-space: pre;
+    }
+
+    .status {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+      min-height: 1.2em;
+    }
+    .status.err { color: var(--error); }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 1rem 1rem 3rem; }
+      header h1 { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>LCC Assembly — Syntax Highlight Showcase</h1>
+  <p>
+    Rendered with <a href="https://shiki.style" target="_blank" rel="noopener">Shiki</a>
+    and a custom <a href="https://macromates.com/manual/en/language_grammars"
+      target="_blank" rel="noopener">TextMate grammar</a>
+    (<code>docs/lcc.tmLanguage.json</code>) for the LCC 16-bit educational ISA.
+    Source: <a href="https://github.com/avidrucker/lccjs" target="_blank" rel="noopener">avidrucker/lccjs</a>.
+  </p>
+</header>
+
+<main>
+
+  <section>
+    <h2>demoO.a <span class="tag">.a</span></h2>
+    <p class="desc">Name-prompt program: I/O traps (<code>sout</code>, <code>sin</code>, <code>nl</code>), string directives, label definitions and references.</p>
+    <div class="code-wrap" id="wrap-o"><pre class="plain"></pre></div>
+    <div class="status" id="status-o">Initialising Shiki…</div>
+  </section>
+
+  <section>
+    <h2>demoF.a <span class="tag">.a</span></h2>
+    <p class="desc">Numeric and character literals: decimal, signed, hex (<code>0xff</code>), char (<code>'B'</code>); arithmetic; memory load from a <code>.word</code> label.</p>
+    <div class="code-wrap" id="wrap-f"><pre class="plain"></pre></div>
+    <div class="status" id="status-f"></div>
+  </section>
+
+  <section>
+    <h2>rock-paper-scissors.ap <span class="tag plus">.ap · LCC+</span></h2>
+    <p class="desc">LCC+ extension instructions: <code>.lccplus</code> directive, <code>clear</code>, <code>millis</code>, <code>srand</code>, <code>rand</code>, <code>nbain</code>, <code>@</code>-prefixed labels.</p>
+    <div class="code-wrap" id="wrap-rps"><pre class="plain"></pre></div>
+    <div class="status" id="status-rps"></div>
+  </section>
+
+</main>
+
+<footer>
+  Grammar: <code>docs/lcc.tmLanguage.json</code> ·
+  Theme: <a href="https://github.com/shikijs/shiki" target="_blank" rel="noopener">github-dark</a> ·
+  Powered by <a href="https://shiki.style" target="_blank" rel="noopener">Shiki v1</a> · No build step.
+</footer>
+
+<script type="module">
+
+// ── Sample source programs ──────────────────────────────────────────────────
+
+const SAMPLES = [
+  {
+    wrapId:   'wrap-o',
+    statusId: 'status-o',
+    code: `\
+; demoO.a: I/O, strings, and label showcase
+            lea r0, prompt
+            sout r0
+            lea r0, buffer
+            sin r0
+            lea r1, hi
+            sout r1
+            sout r0
+            nl
+            halt
+prompt:     .string "Name: "
+hi:         .string "Hi "
+buffer:     .zero 10`,
+  },
+  {
+    wrapId:   'wrap-f',
+    statusId: 'status-f',
+    code: `\
+; demoF.a: numeric and character literals, arithmetic, hex output
+    mov r0, 'B'
+    aout r0
+    nl
+    mov r0, 65
+    dout r0
+    nl
+    mov r0, 0xff
+    hout r0
+    nl
+    mov r0, -15
+    udout r0
+    nl
+    ld r0, x
+    dout r0
+    nl
+    add r0, r0, 1
+    dout r0
+    nl
+    halt
+
+x:  .word 0xffff`,
+  },
+  {
+    wrapId:   'wrap-rps',
+    statusId: 'status-rps',
+    code: `\
+; rock-paper-scissors.ap — LCC+ extension showcase
+; Showcases: .lccplus, clear, millis, srand, rand, nbain, @-prefixed labels.
+;
+; Register convention:
+;   r0-r4 scratch / return.   r5/r6/r7 = fp/sp/lr — never reused.
+
+          .lccplus
+          .start startup
+
+;----------------------------------------------------------------
+; startup: clear screen, seed RNG, run main, halt
+;----------------------------------------------------------------
+startup:  clear
+          millis r0
+          srand  r0
+          bl     main
+          halt
+
+@M_rock:     .string "Rock"
+@M_paper:    .string "Paper"
+@M_scissors: .string "Scissors"`,
+  },
+];
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function setPlain(wrapId, code) {
+  const pre = document.querySelector(`#${wrapId} pre.plain`);
+  if (pre) pre.textContent = code;
+}
+
+function setHighlighted(wrapId, html) {
+  document.getElementById(wrapId).innerHTML = html;
+}
+
+function setStatus(id, msg, isErr = false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'status' + (isErr ? ' err' : '');
+}
+
+// ── Grammar loading ──────────────────────────────────────────────────────────
+//
+// Primary path: docs/lcc.tmLanguage.json (stable — requires #448 / CHERRY to land).
+// Fallback:     docs/research/127-lcc-textmate-grammar.json (interim, pre-#448).
+//
+// @todo #448: remove the fallback entry once CHERRY lands docs/lcc.tmLanguage.json
+
+const GRAMMAR_URLS = [
+  '../lcc.tmLanguage.json',
+  '../research/127-lcc-textmate-grammar.json',
+];
+
+async function loadGrammar() {
+  const errors = [];
+  for (const url of GRAMMAR_URLS) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return await res.json();
+      errors.push(`${url}: HTTP ${res.status}`);
+    } catch (err) {
+      errors.push(`${url}: ${err.message}`);
+    }
+  }
+  throw new Error(
+    'Grammar not found. Ensure docs/lcc.tmLanguage.json exists (see #448).\n' +
+    errors.join('\n')
+  );
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────────
+
+async function main() {
+  // Render plain code immediately — page is useful before Shiki loads.
+  for (const { wrapId, code } of SAMPLES) setPlain(wrapId, code);
+
+  // Load Shiki + grammar in parallel.
+  let createHighlighter, grammar;
+  try {
+    [{ createHighlighter }, grammar] = await Promise.all([
+      import('https://esm.sh/shiki@1'),
+      loadGrammar(),
+    ]);
+  } catch (err) {
+    setStatus('status-o', `Highlighting unavailable: ${err.message}`, true);
+    setStatus('status-f',   '');
+    setStatus('status-rps', '');
+    return;
+  }
+
+  let hl;
+  try {
+    hl = await createHighlighter({ langs: [grammar], themes: ['github-dark'] });
+  } catch (err) {
+    setStatus('status-o', `Shiki init failed: ${err.message}`, true);
+    return;
+  }
+
+  // Replace plain placeholders with highlighted HTML.
+  for (const { wrapId, statusId, code } of SAMPLES) {
+    try {
+      const html = hl.codeToHtml(code, { lang: 'source.lcc', theme: 'github-dark' });
+      setHighlighted(wrapId, html);
+      setStatus(statusId, '');
+    } catch (err) {
+      setStatus(statusId, `Highlight error: ${err.message}`, true);
+    }
+  }
+}
+
+main();
+</script>
+
+</body>
+</html>
