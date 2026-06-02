@@ -9,3 +9,4 @@
 7. I will not delete data from the database unless I am given explicit permission by a human user.
 8. I will always close via `npm run close <N>`. I will never `git push` directly to main.
 9. Every worktree must be tied to an open GitHub issue. If none exists, I will file one before claiming.
+10. At close time, any work discovered but not done — deferred scope, a found bug, or an open design question — must become a ticket before the closing commit. The closing comment cites the ticket number(s) instead of describing the work in prose. Prose in a closing comment is not discoverable; a ticket is. (See `docs/research/followup-trigger-brainstorming.md` for the options considered.)
