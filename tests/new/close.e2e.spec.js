@@ -26,6 +26,48 @@ function shCapture(cwd, cmd) {
   }
 }
 
+// Like makeRepo but includes a committed package.json with a "close" script so
+// `npm run close` can be invoked from the worktree (used by the #434 regression).
+function makeRepoWithPkg(issue = '9999') {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-close-e2e-'));
+  const remotePath = path.join(tmpDir, 'remote.git');
+  const mainPath = path.join(tmpDir, 'main');
+
+  fs.mkdirSync(remotePath);
+  sh(tmpDir, `git init --bare "${remotePath}"`);
+  sh(remotePath, 'git symbolic-ref HEAD refs/heads/main');
+  fs.mkdirSync(mainPath);
+  sh(tmpDir, `git clone "${remotePath}" main`);
+  sh(mainPath, 'git config user.email "test@example.com"');
+  sh(mainPath, 'git config user.name "Test"');
+  sh(mainPath, 'git config commit.gpgsign false');
+
+  // Initial commit: include a package.json so `npm run close` works in the worktree.
+  // The script must point to CLOSE_JS (absolute) so npm can find it without node_modules.
+  const pkg = JSON.stringify({ name: 'test', version: '1.0.0', scripts: { close: `node "${CLOSE_JS}"` } });
+  fs.writeFileSync(path.join(mainPath, 'README.md'), 'init\n');
+  fs.writeFileSync(path.join(mainPath, 'package.json'), pkg);
+  sh(mainPath, 'git add README.md package.json');
+  sh(mainPath, 'git commit -m "init"');
+  const br = sh(mainPath, 'git rev-parse --abbrev-ref HEAD').trim();
+  if (br !== 'main') sh(mainPath, 'git checkout -b main');
+  sh(mainPath, 'git push -u origin main');
+
+  const wtPath = path.join(mainPath, '.claude', 'worktrees', `dragonfruit-issue-${issue}`);
+  const wtBranch = `dragonfruit/issue-${issue}-test`;
+  fs.mkdirSync(path.dirname(wtPath), { recursive: true });
+  sh(mainPath, `git worktree add "${wtPath}" -b "${wtBranch}"`);
+  sh(wtPath, 'git config user.email "test@example.com"');
+  sh(wtPath, 'git config user.name "Test"');
+  sh(wtPath, 'git config commit.gpgsign false');
+
+  fs.writeFileSync(path.join(wtPath, 'work.txt'), `puzzle ${issue}\n`);
+  sh(wtPath, 'git add work.txt');
+  sh(wtPath, `git commit -m "fix: thing\n\nCloses #${issue}"`);
+
+  return { tmpDir, remotePath, mainPath, wtPath, wtBranch };
+}
+
 // Build a temp bare remote + working checkout + a puzzle worktree whose HEAD is
 // a valid "Closes #<issue>" commit. Returns paths for assertions and cleanup.
 function makeRepo(issue = '9999') {
@@ -366,6 +408,32 @@ describe('close.js e2e — Check B: marker must be deleted (#359)', () => {
       );
       expect(ok).toBe(true);
       expect(out).toMatch(/CLOSED/);
+    } finally {
+      rmrf(tmpDir);
+    }
+  }, 30_000);
+});
+
+// ─── npm run close exit-code regression (#434) ───────────────────────────────
+
+describe('close.js e2e — npm wrapper exit code (#434)', () => {
+  test('npm run close exits 0 after successful close (worktree CWD deleted)', () => {
+    // Regression: before #434, `npm run close N` exited 1 even when CLOSE OK
+    // was printed, because npm's process had CWD = worktree and called getcwd()
+    // after the worktree was deleted. Fix: package.json "close" entry now invokes
+    // `node scripts/close.js` directly, so no bash/sh intermediate layer holds
+    // a stale CWD reference.
+    // makeRepoWithPkg includes a committed package.json in the initial commit so the
+    // working tree is clean and `npm run close` works inside the worktree.
+    const { tmpDir, wtPath } = makeRepoWithPkg('9012');
+    try {
+      const { ok, out } = shCapture(
+        wtPath,
+        'npm run close -- 9012 --no-verify-issue --skip-velocity-check --skip-marker-check'
+      );
+      expect(ok).toBe(true);
+      expect(out).toMatch(/CLOSE OK/);
+      expect(fs.existsSync(wtPath)).toBe(false);
     } finally {
       rmrf(tmpDir);
     }

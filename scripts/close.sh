@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
-# close.sh — shim so npm's process CWD stays valid after worktree teardown (#379).
+# close.sh — manual-invocation wrapper for close.js when calling from the main
+# checkout (not a worktree). Passes --branch so close.js knows which worktree
+# to operate on without needing to be launched from inside it.
 #
-# Root cause: `npm run close N` launches bash with CWD = the worktree (where
-# package.json lives). After close.js removes the worktree, bash's CWD is a
-# deleted directory. On exit, bash calls getcwd(), fails, and prints:
-#   pwd: error retrieving current directory: getcwd: cannot access parent directories
-# causing npm to exit 1 — even though the close itself succeeded.
-#
-# Fix: capture the branch name now (while still in the worktree CWD), then cd
-# to main root BEFORE invoking node. Bash's CWD is main root for the entire
-# duration of the node run and at exit — getcwd() never sees the deleted path.
-# close.js receives --branch so it can chdir back into the worktree for its git
-# operations without needing to be launched from there. (#379)
+# NOTE: `npm run close` no longer goes through this shim (#434). The package.json
+# "close" entry now invokes `node scripts/close.js` directly, which avoids the
+# npm-process getcwd failure that occurred when npm's CWD (the worktree) was
+# deleted after teardown. The bash getcwd fix (#379) is preserved here for
+# manual use but is no longer on the npm hot path.
 #
 # NOTE: do NOT use `exec node ...` here — exec replaces this process and closes
 # the bash context that holds the post-teardown chdir; a regular fork+wait is
