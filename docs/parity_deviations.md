@@ -222,6 +222,51 @@ in #244 (this is the candidate OG bug from that probe).
 
 ---
 
+### 21. Successful `.o` assemble: LCC.js exits 0; oracle exits 1 (#270)
+
+On a successful object-module assemble (`.a` with `.extern`/`.global` → `.o` that
+needs linking), both tools produce identical artifacts (`.o`, `.lst`, `.bst`) and
+print the same output, but the oracle exits **1** while LCC.js exits **0**.
+
+| Path | LCC.js | Oracle (cuh63 6.3) |
+|---|---|---|
+| `.e` assemble+run (standalone `.a`) | 0 | 0 |
+| `.o` assemble (`.a` with `.extern`, needs linking) | **0** | **1** |
+
+The oracle's exit 1 is **specific to the `.o`/"needs linking" path** — both tools
+exit 0 on a successful `.e` assemble+run. The `.o`, `.lst`, and `.bst` artifacts
+produced by both tools are correct and identical.
+
+**Cause (oracle):** `lcc` is primarily a "compile and run" tool. When it produces a
+`.o` that cannot be executed directly it prints `Output file needs linking` and exits
+1 — treating "no runnable output" as non-success even when the object module itself
+is correctly formed.
+
+**LCC.js behavior:** exits 0. A successful assemble that correctly writes a `.o` is
+a success. Matching the oracle's exit 1 would break CI/scripts that check exit codes
+after assembling object modules, and would contradict LCC.js's exit-code posture
+elsewhere (see deviations #8, #9).
+
+**Why OG BUG:** the oracle conflates "I produced no runnable executable" with
+"assembly failed." These are distinct outcomes. Exit 1 conventionally signals error;
+a correctly-produced `.o` with all artifacts written is not an error. LCC.js exit 0
+is the semantically correct behavior.
+
+**Source:** `src/core/assembler.js` — object-module branch returns without error;
+`src/cli/lcc.js` exits 0 after a clean assemble.
+
+**Repro:**
+```bash
+# With name.nnn in cwd:
+node src/core/assembler.js demos/m1.a; echo $?   # → 0
+$LCC_ORACLE m1.a; echo $?                         # → 1
+```
+
+**Reference:** `docs/research/og-lcc-author-name-noninteractive.md` (delta B);
+decision recorded in #270.
+
+---
+
 ### 14. no-comma syntax: negative `imm5`/`imm9` is rejected, not encoded (#257)
 
 | | cuh63 6.3 | LCC.js |
@@ -636,3 +681,4 @@ _None pending._
 | 2026-06-01 | §3 OG BUG #3 corrigendum (#261) | Segfault claim not reproducible in cuh63 6.3. Oracle exits 1 with "Missing operand" and leaves `.e`/`.lst`/`.bst` artifact files (same pattern as OG BUG #10). Entry rewritten: BY DESIGN (no-artifact behavior beneficial). Full probe: `docs/research/jmp-missing-operand-segfault.md`. |
 | 2026-06-01 | §3 blast-radius table corrected + Deviation 19 added (#385) | `ret` bare / `jmp r0` row: LCC.js column was `Missing operand` / `none ✓` — both wrong. Actual: LCC.js says `Possible infinite loop` (runtime, exit=1) and leaves `.e(4B)`. Oracle says `Possible infinite loop` then floods stdout in a debug-dump loop (never exits; killed at timeout). `jmp r0` row added. Footnote corrected. New deviation §19 documents the runtime divergence; classified BY DESIGN (beneficial). |
 | 2026-06-01 | Deviation 20 added (#371, #441) | `.bin`/`.hex` loading message: LCC.js prints `Loading <file> (no assembly pass) — N word(s)`; oracle is silent. Message predated #371 (was `Assembling …`); #371 improved wording. Classified BY DESIGN. |
+| 2026-06-01 | OG BUG #21 added (#270) | Successful `.o` assemble: oracle exits 1 ("needs linking"), LCC.js exits 0. Oracle's exit 1 is specific to the `.o` path — both exit 0 on `.e` assemble+run. Classified OG BUG: exit 1 conflates "no runnable output" with "error"; LCC.js exit 0 is semantically correct. |
