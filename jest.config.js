@@ -1,5 +1,10 @@
 module.exports = {
   maxWorkers: 1,
+  // Force jest to call process.exit() after all tests complete, regardless of
+  // open handles. Prevents a deadlock when an external process (e.g. babashka)
+  // spawns `npm test` with an open stdin pipe — jest finishes but never exits
+  // because the event loop never drains while the pipe is held open. (#435)
+  forceExit: true,
   // Only ever run/resolve tests from the checkout Jest is invoked from. Sibling
   // git worktrees live under <repo>/.claude/worktrees/<agent>-issue-N/ and carry
   // their own copy of tests/; without this, `jest tests/new` from main would
