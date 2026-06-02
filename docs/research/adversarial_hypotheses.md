@@ -176,6 +176,8 @@ exactly at the limit. Verify both boundary values assemble and that
 **Test idea:** Craft a program where a branch lands exactly 256
 instructions behind and 255 ahead. Assemble and verify encoded bits.
 
+**Probe result (#502):** Oracle and lccjs agree exactly. +255 assembles as `0x00ff`; -256 assembles as `0x0100`. Both reject +256 and -257 with identical "pcoffset9 out of range" errors. No deviation.
+
 ---
 
 ### H-010 🔴 `evaluateImmediate` accepts `NaN` string — `parseNumber(undefined)` returns `null`
@@ -235,6 +237,8 @@ assembles a 0-count which may behave differently from the oracle. Verify
 **Test idea:** `sra r0` vs `sra r0, 0` vs `sra r0, 1` — compare machine
 words.
 
+**Probe result (#502):** `sra r0` → `0xa023`; `sra r0, 0` → `0xa003`; `sra r0, 1` → `0xa023`. Oracle and lccjs produce identical encodings for all three forms. `sra r0, 0` is a valid distinct encoding (count=0 field), not an error. No deviation.
+
 ---
 
 ### H-014 🟡 `assembleRET offset6` — offset6 is not range-checked
@@ -270,6 +274,8 @@ Oracle behavior: does `bl 5` error on the oracle? If oracle accepts it,
 lccjs has a deviation.
 
 **Test idea:** `bl 5` — does it assemble? Does the oracle?
+
+**Probe result (#502):** Both reject `bl 5`. Oracle: "Undefined label" (treats `5` as a syntactically valid but undefined label). lccjs: "Bad label" (rejects `5` as an invalid label name). No behavioral deviation; error message wording differs. lccjs's stricter upfront validation is acceptable.
 
 ---
 
@@ -312,6 +318,8 @@ wrong values for `.word 0777` style literals.
 
 **Test idea:** `.word 0777` — what value does lccjs assemble? What does
 the oracle produce?
+
+**Probe result (#502):** Oracle assembled `.word 0777` as `0x0309` (777 decimal) and printed "777" at runtime. lccjs also assembles as `0x0309`. Both treat `0`-prefixed integers as decimal. No deviation — hypothesis disproved.
 
 ---
 
