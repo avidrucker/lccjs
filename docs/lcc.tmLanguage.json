@@ -18,6 +18,7 @@
     { "include": "#mnemonic_plus" },
     { "include": "#mnemonic_debug" },
     { "include": "#number" },
+    { "include": "#pc_ref" },
     { "include": "#label_ref" }
   ],
   "repository": {
@@ -63,7 +64,7 @@
       "match": "\\b(?:br|bral|brz|brnz|bre|brne|brn|brp|brlt|brgt|brc|brb|jmp|jsr|jsrr|bl|blr|call|ret)\\b"
     },
     "mnemonic_core": {
-      "comment": "Arithmetic, logic, data movement, debug",
+      "comment": "Arithmetic, logic, data movement",
       "name": "keyword.mnemonic.lcc",
       "match": "\\b(?:add|sub|mul|div|rem|and|or|xor|not|sll|srl|sra|rol|ror|mov|mvi|mvr|ld|ldr|st|str|lea|cea|cmp|sext|push|pop|halt)\\b"
     },
@@ -88,6 +89,10 @@
       "comment": "Single-letter debug traps — anchored to avoid over-matching label refs",
       "name": "keyword.mnemonic.debug.lcc",
       "match": "^\\s+(?:m|r|s|bp)(?=\\s*(;|$))"
+    },
+    "pc_ref": {
+      "name": "variable.language.pc.lcc",
+      "match": "\\*"
     },
     "label_ref": {
       "name": "entity.name.label.lcc",
