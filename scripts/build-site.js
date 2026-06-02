@@ -57,11 +57,23 @@ const CURATED_SAMPLES = [
   { file: 'plusdemos/charTypewriter.ap', label: 'plusdemos/charTypewriter.ap', title: 'LCC+ — clear, sleep, aout loop' },
 ];
 
-// Docs subfolders to expose as subpages.
+// Docs sections to expose as subpages.
+// Use srcDir for folder-based sections; use files[] for explicit per-file lists.
 const DOCS_SECTIONS = [
-  { id: 'research', label: 'Research',  srcDir: path.join(ROOT, 'docs', 'research')  },
+  { id: 'research',  label: 'Research',  srcDir: path.join(ROOT, 'docs', 'research')  },
   { id: 'learnings', label: 'Learnings', srcDir: path.join(ROOT, 'docs', 'learnings') },
-  { id: 'glossary', label: 'Glossary',  srcDir: path.join(ROOT, 'docs', 'glossary')  },
+  { id: 'glossary',  label: 'Glossary',  srcDir: path.join(ROOT, 'docs', 'glossary')  },
+  { id: 'parity',    label: 'Parity',    files: [
+    path.join(ROOT, 'docs', 'parity_deviations.md'),
+    path.join(ROOT, 'docs', 'cuh63-mov-immediate-bug-report.md'),
+    path.join(ROOT, 'docs', 'cuh63-ldr-str-silent-miscompile-bug-report.md'),
+    path.join(ROOT, 'docs', 'cuh63-line-length-silent-split-bug-report.md'),
+    path.join(ROOT, 'docs', 'cuh63-o-assemble-exit-code-bug-report.md'),
+  ]},
+  { id: 'workflow',  label: 'Workflow',  files: [
+    path.join(ROOT, 'docs', 'claude_workflow.md'),
+    path.join(ROOT, 'RULES.md'),
+  ]},
 ];
 
 const DARK_IDS = THEMES.filter(t => t.dark).map(t => t.id);
@@ -277,14 +289,15 @@ ${alphabetSections}
     const sectionOut = path.join(OUT_DIR, 'docs', section.id);
     fs.mkdirSync(sectionOut, { recursive: true });
 
-    const mdFiles = fs.readdirSync(section.srcDir)
-      .filter(f => f.endsWith('.md'))
-      .sort();
+    const mdEntries = section.files
+      ? section.files.map(fp => ({ fullPath: fp, mdFile: path.basename(fp) }))
+      : fs.readdirSync(section.srcDir).filter(f => f.endsWith('.md')).sort()
+          .map(f => ({ fullPath: path.join(section.srcDir, f), mdFile: f }));
 
     // Render each .md file to its own .html.
     const fileLinks = [];
-    for (const mdFile of mdFiles) {
-      const mdContent  = fs.readFileSync(path.join(section.srcDir, mdFile), 'utf8');
+    for (const { fullPath, mdFile } of mdEntries) {
+      const mdContent  = fs.readFileSync(fullPath, 'utf8');
       const htmlBody   = marked.parse(mdContent);
       const slug       = mdFile.replace(/\.md$/, '');
       const outFile    = path.join(sectionOut, `${slug}.html`);
@@ -310,7 +323,7 @@ ${alphabetSections}
 
     const indexContent = `
   <h1>${section.label}</h1>
-  <p class="subtitle">${mdFiles.length} document${mdFiles.length !== 1 ? 's' : ''} from <code>docs/${section.id}/</code></p>
+  <p class="subtitle">${mdEntries.length} document${mdEntries.length !== 1 ? 's' : ''}${section.srcDir ? ` from <code>docs/${section.id}/</code>` : ''}</p>
   <ul class="file-list">
 ${listItems}
   </ul>`;
@@ -326,7 +339,7 @@ ${listItems}
     });
     const indexFile = path.join(sectionOut, 'index.html');
     fs.writeFileSync(indexFile, indexHtml);
-    console.log(`build:site — ${section.id}: ${path.relative(ROOT, indexFile)} + ${mdFiles.length} pages`);
+    console.log(`build:site — ${section.id}: ${path.relative(ROOT, indexFile)} + ${mdEntries.length} pages`);
   }
 
   console.log('build:site — done.');

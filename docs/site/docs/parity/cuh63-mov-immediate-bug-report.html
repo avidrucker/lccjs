@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>cuh63-mov-immediate-bug-report — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/" class="active">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+</nav>
+  <div class="back-link"><a href="./">← Parity index</a></div>
+  <div class="prose">
+<h1>Possible regression in cuh63 6.3: <code>mov</code> accepts a narrower immediate range than <code>mvi</code></h1>
+<p><strong>Author:</strong> Avi Drucker (<a href="mailto:avi.drucker@dataico.com">avi.drucker@dataico.com</a>)
+<strong>Date filed:</strong> 2026-05-25
+<strong>Distribution under inspection:</strong> <code>cuh63.zip</code> (file mtimes 2025-01-09)
+<strong>Reported binary:</strong> <code>lcc</code> (Linux build from <code>lnx/</code> subfolder of the cuh package)
+<strong>Reported version string:</strong> <code>LCC Assemble/Link/Interpret/Debug Ver 6.3</code> (as printed in <code>.lst</code> headers)</p>
+<p>This report describes what appears to be a regression in the way the
+<code>lcc</code> program included with cuh63 validates the immediate operand of the
+<code>mov</code> pseudo-instruction. It diverges from the behavior documented in
+<code>LCCInstructionSetSummary.pdf</code> (shipped in the same package) and from
+the behavior of <code>mvi</code>, the underlying real instruction that <code>mov</code> is
+supposed to translate to. The report is offered respectfully and may
+well be a deliberate change rather than a regression — if so, a one-line
+note in <code>lcc.txt</code> clarifying the intent would be enough to close the
+loop on the educational use case.</p>
+<hr>
+<h2>Summary</h2>
+<p><code>LCCInstructionSetSummary.pdf</code> defines:</p>
+<blockquote>
+<p><code>mov dr, imm9</code> is a pseudo-instruction translated to the machine
+instruction corresponding to <code>mvi dr, imm9</code>.</p>
+</blockquote>
+<p>It also notes, in the footnotes of the same page:</p>
+<blockquote>
+<p><code>pcoffset9, pcoffset11, imm5, imm9, offset6</code> are signed number fields
+of the indicated length.</p>
+</blockquote>
+<p>A 9-bit signed field represents the range <strong>−256..+255</strong>, and <code>mov</code>
+should therefore accept that range, identically to <code>mvi</code>.</p>
+<p>The cuh63 6.3 <code>lcc</code> binary disagrees with this on the negative side of
+the range: <strong>it rejects every negative <code>mov</code> immediate</strong>, including
+spec-valid values such as <code>mov r0, −1</code>, <code>mov r0, −15</code>, <code>mov r0, −256</code>.</p>
+<p>The same binary&#39;s <code>mvi</code> accepts those same values. Both <code>mov</code> and <code>mvi</code>
+correctly reject values outside the 9-bit signed range (≤ −257 or ≥
++256); the disagreement is only on the negative half of the in-range
+window.</p>
+<p>Side-by-side acceptance table (cuh63 6.3, same <code>lcc</code> binary, same run):</p>
+<table>
+<thead>
+<tr>
+<th align="right">Value</th>
+<th align="center"><code>mov r0, ⟨val⟩</code></th>
+<th align="center"><code>mvi r0, ⟨val⟩</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">−257</td>
+<td align="center">REJECT</td>
+<td align="center">REJECT</td>
+</tr>
+<tr>
+<td align="right">−256</td>
+<td align="center"><strong>REJECT</strong></td>
+<td align="center">ACCEPT</td>
+</tr>
+<tr>
+<td align="right">−255</td>
+<td align="center"><strong>REJECT</strong></td>
+<td align="center">ACCEPT</td>
+</tr>
+<tr>
+<td align="right">−1</td>
+<td align="center"><strong>REJECT</strong></td>
+<td align="center">ACCEPT</td>
+</tr>
+<tr>
+<td align="right">0</td>
+<td align="center">ACCEPT</td>
+<td align="center">ACCEPT</td>
+</tr>
+<tr>
+<td align="right">1</td>
+<td align="center">ACCEPT</td>
+<td align="center">ACCEPT</td>
+</tr>
+<tr>
+<td align="right">255</td>
+<td align="center">ACCEPT</td>
+<td align="center">ACCEPT</td>
+</tr>
+<tr>
+<td align="right">256</td>
+<td align="center">REJECT</td>
+<td align="center">REJECT</td>
+</tr>
+<tr>
+<td align="right">257</td>
+<td align="center">REJECT</td>
+<td align="center">REJECT</td>
+</tr>
+</tbody></table>
+<p>So <code>mov</code> and <code>mvi</code> should be synonyms per the spec, but in cuh63 6.3
+they have different acceptance ranges on the negative half. The bolded
+rows show inputs that the spec allows and <code>mvi</code> accepts but <code>mov</code>
+rejects.</p>
+<p>The error message produced by <code>lcc</code> for the rejected cases is:</p>
+<pre><code>Error on line N of file.a:
+    mov rD, &lt;value&gt;
+mov immediate value out of range
+</code></pre>
+<p>Exit status is non-zero; assembly aborts.</p>
+<h2>Environment / version</h2>
+<ul>
+<li>OS: Linux 6.17.0-29-generic (Ubuntu/Mint family), x86-64.</li>
+<li>Binary: <code>lnx/lcc</code> from <code>cuh63.zip</code> (overlaid onto the main folder per
+the package&#39;s <code>0READFIRST.txt</code> instructions).</li>
+<li><code>file lcc</code>:
+<code>ELF 64-bit LSB pie executable, x86-64 ... dynamically linked, ...  for GNU/Linux 3.2.0, not stripped</code></li>
+<li>Version banner (from any <code>.lst</code> it produces):
+<code>LCC Assemble/Link/Interpret/Debug Ver 6.3  &lt;timestamp&gt;</code></li>
+</ul>
+<h2>Minimal reproduction</h2>
+<p>Files: a single one-line assembly program. No <code>name.nnn</code> required for
+this reproduction since the failure is at assembly time, before the
+prompt would appear, but supply one if <code>lcc</code> warns about its absence:</p>
+<pre><code>; mov_neg.a
+    mov r0, -15
+    halt
+</code></pre>
+<p>Invoke:</p>
+<pre><code class="language-bash">$ lcc mov_neg.a
+Starting assembly pass 1
+Starting assembly pass 2
+Error on line 2 of mov_neg.a:
+    mov r0, -15
+mov immediate value out of range
+$ echo $?
+1
+</code></pre>
+<p>Substitute the <code>mov</code> for <code>mvi</code> and the same binary accepts it:</p>
+<pre><code>; mvi_neg.a
+    mvi r0, -15
+    halt
+</code></pre>
+<pre><code class="language-bash">$ lcc mvi_neg.a
+Starting assembly pass 1
+Starting assembly pass 2
+Starting interpretation of mvi_neg.e
+[...]
+$ echo $?
+0
+</code></pre>
+<p>The two source files differ in a single mnemonic. Per the documented
+pseudo-instruction definition, they should produce the same machine
+code and the same acceptance/rejection outcome.</p>
+<h2>Expected behavior</h2>
+<p>Either of the following would be self-consistent:</p>
+<ol>
+<li><p><strong>Treat <code>mov</code> exactly as <code>mvi</code></strong> (the documented behavior): accept
+the full 9-bit signed range −256..+255 for both. This is also what
+the older cuh-6.x build that produced the educational example
+listings did — listings in the wild contain encodings such as
+<code>d1f1 = mov r0, -15</code>, which is the spec-correct 9-bit-signed
+encoding.</p>
+</li>
+<li><p><strong>Restrict both <code>mov</code> and <code>mvi</code> to 0..255</strong> and update
+<code>LCCInstructionSetSummary.pdf</code> to redefine <code>imm9</code> for <code>mvi</code> as
+unsigned, and to redefine <code>mov</code>&#39;s range accordingly. If this is the
+intent, the documentation footnote stating that <code>imm9</code> is &quot;signed&quot;
+would need to be corrected, since it currently reads as a global
+property of the <code>imm9</code> field across all instructions that use it.</p>
+</li>
+</ol>
+<p>The mismatch as it stands today — where <code>mov</code> and <code>mvi</code> disagree on
+which inputs are legal, despite the spec saying they are equivalent —
+is the part that looks most like an unintended regression.</p>
+<h2>Why this matters (educational impact)</h2>
+<ol>
+<li><p><strong>Pre-existing course materials use the rejected forms.</strong> Several
+demos that ship in cuh63 (or were widely used in earlier editions)
+include lines like <code>mov r0, -15</code>, <code>mov r1, -5</code>, <code>mov r0, -1</code>. They
+were written and tested against an earlier cuh-6.x build that
+accepted these. Students or instructors upgrading to cuh63 6.3 will
+see those programs suddenly fail to assemble, with an error that
+reads as if the student wrote something illegal — when in fact the
+program is spec-correct.</p>
+</li>
+<li><p><strong>The <code>mov</code> ↔ <code>mvi</code> discrepancy is confusing pedagogically.</strong> The
+pseudo-instruction definition in the LCC ISA summary is, in a small
+way, a teaching opportunity about source-vs-machine-code distinction.
+A student who reads the spec and tries <code>mov r0, -15</code> and <code>mvi r0, -15</code>
+will see the latter work and the former fail, contradicting the
+stated equivalence. That undermines the pedagogical point.</p>
+</li>
+<li><p><strong>Cross-implementation parity becomes hard to verify.</strong> Other LCC
+implementations (in JavaScript, in C++, in pedagogical compilers
+built by students as course projects) that follow the documented
+spec will diverge from cuh63 6.3 on these inputs, and it&#39;s not
+obvious from <code>lcc.txt</code> or the ISA summary which side has the
+correct behavior.</p>
+</li>
+</ol>
+<h2>Considerations / possible underlying causes</h2>
+<p>These are speculative, intended only to give a starting point for
+investigation:</p>
+<ul>
+<li>A range-check that was added to the <code>mov</code> parsing path (perhaps to
+guard against typos like writing a 16-bit literal where a 9-bit one
+was intended) and was unintentionally tightened to 0..255 instead of
+−256..+255.</li>
+<li>A reuse of the 8-bit byte-literal validation from <code>.string</code> /
+byte-mode handling that leaked into the <code>mov</code> parser by accident.</li>
+<li>A deliberate design change with the intent of forcing students to
+use <code>mvi</code> for negative immediates (in which case the documentation
+needs an update, since the current wording explicitly equates the
+two).</li>
+</ul>
+<h2>Suggested fix (if treated as a bug)</h2>
+<p>Route <code>mov</code>&#39;s immediate-range check through the same validator that
+<code>mvi</code> already uses. If they share validation, the two acceptance sets
+become identical by construction and the spec is preserved.</p>
+<h2>Scope verification</h2>
+<p>Before sending this report, I ran a broader audit of cuh63 6.3 to confirm
+the <code>mov</code> regression is isolated, not part of a wider parser change.
+The audit script and its summary live in
+<a href="../public_experiments/cuh63_audit/"><code>public_experiments/cuh63_audit/</code></a>
+in the LCC.js parity-testing repository.</p>
+<p>The audit verified that the following all behave per spec in cuh63 6.3
+and are unaffected by the issue described above:</p>
+<ul>
+<li><code>mvi dr, imm9</code> (the underlying instruction) — accepts the full
+−256..+255 range.</li>
+<li>Other pseudo-instructions: <code>cea dr, imm5</code> (pseudo for
+<code>add dr, fp, imm5</code>) and <code>mov dr, sr</code> (pseudo for <code>mvr dr, sr</code>).</li>
+<li><code>imm5</code> immediates on <code>add</code>, <code>sub</code>, <code>and</code>: −16..+15 accepted, ±16+
+correctly rejected.</li>
+<li>Numeric literal forms: decimal, hex, binary, <code>char</code>, unary <code>+</code>/<code>−</code>,
+negative zero.</li>
+<li>Directive synonyms: <code>.string</code>/<code>.stringz</code>/<code>.asciz</code>,
+<code>.word</code>/<code>.fill</code>, <code>.zero</code>/<code>.space</code>/<code>.blkw</code>, <code>.global</code>/<code>.globl</code>.</li>
+<li>Label arithmetic (<code>br main+1</code>) and the <code>*</code> current-address notation.</li>
+</ul>
+<p>Concentrating the suggested fix on the <code>mov</code> pseudo&#39;s validator (and
+not the wider parser) is therefore safe and well-scoped.</p>
+<h2>Other observations made during the audit (not separate bug reports)</h2>
+<p>Two minor behaviors surfaced during the audit that may also be worth
+a quick look. They are not in the same category as the <code>mov</code>
+regression, but flagging them here in case they are unintentional.</p>
+<ol>
+<li><p><strong><code>.orig</code> is silently accepted as a synonym for <code>.org</code>.</strong> The ISA
+summary&#39;s &quot;Assembler Directives&quot; section lists <code>.org</code> but not
+<code>.orig</code>. <code>cuh63 6.3</code> accepts <code>.orig 5</code> and produces a listing
+byte-identical to <code>.org 5</code> — same zero-padding, same encoded
+output. Either the doc could mention <code>.orig</code> as an accepted alias,
+or the assembler could reject the undocumented form. (LCC.js
+matches this in the permissive direction.)</p>
+</li>
+<li><p><strong>Duplicate <code>.start</code> directives are silently accepted (last-one
+wins).</strong> A program with two <code>.start</code> directives produces a <code>.e</code>
+header containing the address of the latter target, with no
+warning. This may be intentional, but the documentation does not
+specify. (LCC.js currently does the same; either way, parity work
+should align on a documented behavior.)</p>
+</li>
+</ol>
+<h2>Acknowledgements</h2>
+<p>This was found while building a JavaScript reimplementation of LCC for
+educational use, while running parity tests against cuh63 6.3 as the
+reference oracle. The reimplementation matches the documented spec for
+<code>mov</code>/<code>mvi</code> (signed <code>imm9</code>, −256..+255), which is what surfaced the
+discrepancy. The cuh package&#39;s careful packaging — per-platform
+binaries, <code>0READFIRST.txt</code>, the ISA summary PDFs — made it
+straightforward to set up the test environment and locate the spec
+text supporting each claim above.</p>
+<p>Thank you for the educational tool; it is a pleasure to work with.</p>
+<h2>Probe scripts used (for full reproducibility)</h2>
+<p>These are checked into the LCC.js parity-testing repository under
+<a href="../public_experiments/mov_mvi_parity/"><code>public_experiments/mov_mvi_parity/</code></a>
+and are intended to be runnable as-is on any machine where the cuh63
+<code>lcc</code> binary is reachable via the <code>LCC_ORACLE</code> environment variable
+(the same variable the LCC.js test suite uses):</p>
+<ul>
+<li><code>mov_neg.a</code> — the minimal one-line reproduction.</li>
+<li><code>probe.sh</code> — sweeps <code>mov r0, &lt;val&gt;</code> for
+<code>val ∈ {−257,−256,−255,−128,−16,−15,−1,0,1,15,16,127,128,255,256,257,511,512}</code>
+and reports accept/reject for OG <code>lcc</code> and the LCC.js
+reimplementation, plus the encoding bytes LCC.js produces.</li>
+<li><code>probe_mvi.sh</code> — same sweep, comparing <code>mov</code> against <code>mvi</code> side by
+side on the same OG binary. The output is reproduced in the
+acceptance table above; <code>public_experiments/mov_mvi_parity/README.md</code>
+walks through how to interpret it.</li>
+</ul>
+<p>I&#39;m happy to share full session logs or extend the probes if useful.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

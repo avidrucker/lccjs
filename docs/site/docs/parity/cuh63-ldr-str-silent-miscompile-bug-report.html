@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>cuh63-ldr-str-silent-miscompile-bug-report — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/" class="active">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+</nav>
+  <div class="back-link"><a href="./">← Parity index</a></div>
+  <div class="prose">
+<h1>Silent miscompile in cuh63 6.3: <code>ldr</code>/<code>str</code> with space-separated operands drops negative <code>offset6</code></h1>
+<p><strong>Author:</strong> Avi Drucker (<a href="mailto:avidrucker@gmail.com">avidrucker@gmail.com</a>)
+<strong>Date filed:</strong> 2026-05-26
+<strong>Distribution under inspection:</strong> <code>cuh63.zip</code> (file mtimes 2025-01-09)
+<strong>Reported binary:</strong> <code>lcc</code> (Linux build from <code>lnx/</code> subfolder of the cuh package)
+<strong>Reported version string:</strong> <code>LCC Assemble/Link/Interpret/Debug Ver 6.3</code> (as printed in <code>.lst</code> headers)</p>
+<p>This report describes a silent miscompile in the cuh63 6.3 <code>lcc</code> binary
+affecting the <code>ldr</code> and <code>str</code> instructions when written with space-separated
+(no-comma) operands and a negative <code>offset6</code>. The assembler accepts the
+source, produces an executable, and prints no error — but silently encodes
+<code>offset6</code> as 0 instead of the requested negative value. The program then
+executes with the wrong memory address.</p>
+<p>The report is offered respectfully; a description of this magnitude (no
+diagnostic, wrong output) would be worth flagging even if it turns out to be
+a deliberate change.</p>
+<hr>
+<h2>Summary</h2>
+<p>The LCC ISA defines <code>ldr</code> as:</p>
+<blockquote>
+<p><code>ldr dr, sr, offset6</code> — loads the word at <code>mem[sr + offset6]</code> into <code>dr</code>.</p>
+</blockquote>
+<p>The cuh63 6.3 assembler accepts both a comma-separated form
+(<code>ldr r1, fp, -1</code>) and a space-separated form (<code>ldr r1 fp -1</code>). For
+comma-separated operands the negative offset is encoded correctly. For
+space-separated operands <strong>every negative offset is silently encoded as 0</strong>,
+regardless of the actual value. No error or warning is emitted.</p>
+<p>Side-by-side encoding table (cuh63 6.3 only; <code>ldr r1, fp/r5, &lt;offset6&gt;</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Source line</th>
+<th>Encoding</th>
+<th>offset6 bits</th>
+<th>Correct?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ldr r1, fp, 0</code></td>
+<td><code>6340</code></td>
+<td><code>000000</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>ldr r1, fp, 1</code></td>
+<td><code>6341</code></td>
+<td><code>000001</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>ldr r1, fp, -1</code></td>
+<td><code>637f</code></td>
+<td><code>111111</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>ldr r1, fp, -32</code></td>
+<td><code>6360</code></td>
+<td><code>100000</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>ldr r1 fp 0</code></td>
+<td><code>6340</code></td>
+<td><code>000000</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>ldr r1 fp 1</code></td>
+<td><code>6341</code></td>
+<td><code>000001</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><strong><code>ldr r1 fp -1</code></strong></td>
+<td><strong><code>6340</code></strong></td>
+<td><strong><code>000000</code></strong></td>
+<td><strong>✗ (should be <code>637f</code>)</strong></td>
+</tr>
+<tr>
+<td><strong><code>ldr r1 fp -2</code></strong></td>
+<td><strong><code>6340</code></strong></td>
+<td><strong><code>000000</code></strong></td>
+<td><strong>✗ (should be <code>637e</code>)</strong></td>
+</tr>
+<tr>
+<td><strong><code>ldr r1 fp -32</code></strong></td>
+<td><strong><code>6340</code></strong></td>
+<td><strong><code>000000</code></strong></td>
+<td><strong>✗ (should be <code>6360</code>)</strong></td>
+</tr>
+</tbody></table>
+<p><code>str</code> has the same behavior: <code>str r1, fp, -1</code> encodes correctly as <code>737f</code>;
+<code>str r1 fp -1</code> silently encodes as <code>7340</code> (offset=0).</p>
+<p>The expected encoding for <code>ldr r1, fp/r5, -1</code> is computed from the
+instruction format <code>[15:12]=0110 | [11:9]=DR | [8:6]=BaseR | [5:0]=offset6</code>:</p>
+<ul>
+<li>DR = r1 = <code>001</code>, BaseR = fp = r5 = <code>101</code>, offset6 = −1 = <code>111111</code></li>
+<li>→ <code>0110 001 101 111111</code> = <code>0x637f</code></li>
+</ul>
+<p>The cuh63 6.3 binary produces <code>6340</code> = <code>0110 001 101 000000</code>, i.e.,
+offset=0, whenever the space-separated path encounters a negative value.</p>
+<hr>
+<h2>Environment / version</h2>
+<ul>
+<li>OS: Linux 6.17.0-29-generic (Ubuntu/Mint family), x86-64.</li>
+<li>Binary: <code>lnx/lcc</code> from <code>cuh63.zip</code> (overlaid onto the main folder per
+the package&#39;s <code>0READFIRST.txt</code> instructions).</li>
+<li><code>file lcc</code>:
+<code>ELF 64-bit LSB pie executable, x86-64 ... dynamically linked, ...  for GNU/Linux 3.2.0, not stripped</code></li>
+<li>Version banner (from any <code>.lst</code> it produces):
+<code>LCC Assemble/Link/Interpret/Debug Ver 6.3  &lt;timestamp&gt;</code></li>
+</ul>
+<hr>
+<h2>Minimal reproduction</h2>
+<p>A single two-line assembly file. <code>name.nnn</code> is required because the LCC
+runtime will attempt to prompt for it:</p>
+<pre><code>; ldr_neg.a
+    ldr r1, fp, -1
+    halt
+</code></pre>
+<pre><code class="language-bash">$ echo &quot;TestUser&quot; &gt; name.nnn
+$ lcc ldr_neg.a
+Starting assembly pass 1
+Starting assembly pass 2
+Starting interpretation of ldr_neg.e
+[...]
+$ grep &quot;ldr&quot; ldr_neg.lst
+0000  637f     ldr r1, fp, -1       ← correct (637f)
+</code></pre>
+<p>Now the same program, space-separated:</p>
+<pre><code>; ldr_neg_noc.a
+    ldr r1 fp -1
+    halt
+</code></pre>
+<pre><code class="language-bash">$ lcc ldr_neg_noc.a
+Starting assembly pass 1
+Starting assembly pass 2
+Starting interpretation of ldr_neg_noc.e
+[...]
+$ grep &quot;ldr&quot; ldr_neg_noc.lst
+0000  6340     ldr r1 fp -1         ← WRONG (6340 = offset 0, not -1)
+</code></pre>
+<p>The assembler completes successfully (exit 0) in both cases. The difference
+is that the second produces the wrong machine word <code>6340</code> instead of <code>637f</code>,
+and the program silently loads from <code>mem[fp + 0]</code> rather than <code>mem[fp - 1]</code>.</p>
+<hr>
+<h2>Expected behavior</h2>
+<p>Either form should produce the same encoding when the operands are
+semantically identical:</p>
+<ul>
+<li><code>ldr r1, fp, -1</code> and <code>ldr r1 fp -1</code> are the same instruction written with
+and without commas.</li>
+<li>The ISA says <code>offset6</code> is a signed 6-bit field (range −32..+31). The
+comma-separated path correctly handles the full signed range; the
+space-separated path should too.</li>
+</ul>
+<p>The self-consistent fix is for both syntax forms to produce identical output
+for identical operands. Specifically, <code>ldr r1 fp -1</code> should encode as
+<code>637f</code>, not <code>6340</code>.</p>
+<hr>
+<h2>Why this matters</h2>
+<ol>
+<li><p><strong>Silent wrong behavior is harder to diagnose than a rejected assembly.</strong>
+The other cuh63 6.3 regression on record (<code>mov</code> rejects negative
+immediates — see separate report) at least halts assembly with an error
+message. This bug lets a miscompiled program run, producing incorrect
+results that may appear in an interpreter&#39;s memory output or a debug
+listing without an obvious indicator of what went wrong.</p>
+</li>
+<li><p><strong>Stack-frame accesses are the primary use case for negative <code>offset6</code>.</strong>
+The idiomatic LCC pattern for a local variable at <code>fp-1</code> is
+<code>ldr r0, fp, -1</code> or <code>ldr r0 fp -1</code>. Both forms appear in instructional
+materials and student code. Programs that use the no-comma style for
+stack reads or writes will silently access the wrong memory location.</p>
+</li>
+<li><p><strong>The space-separated form is documented and accepted.</strong> Because the
+assembler doesn&#39;t reject <code>ldr r1 fp -1</code>, a user has no way to know
+from the binary&#39;s output alone that the encoding is wrong. They would
+have to read the <code>.lst</code> file and manually decode the machine word to
+catch the discrepancy.</p>
+</li>
+<li><p><strong>Cross-implementation parity is broken in a subtle direction.</strong>
+The LCC.js reimplementation handles both syntax forms correctly (it
+produces <code>637f</code> for <code>ldr r1 fp -1</code>). This means programs that assemble
+correctly on LCC.js may miscompile on cuh63 6.3, with no error from
+either tool to point to the difference.</p>
+</li>
+</ol>
+<hr>
+<h2>Considerations / possible underlying causes</h2>
+<p>These are speculative, intended only to give a starting point for
+investigation:</p>
+<ul>
+<li><p>The no-comma tokenizer may split on whitespace naively, yielding tokens
+<code>ldr</code>, <code>r1</code>, <code>fp</code>, <code>-</code>, <code>1</code>. If the operand parser then reads only the
+first non-whitespace token after <code>fp</code> and encounters <code>-</code> as a
+non-numeric character, it may treat the offset as absent or zero and
+silently accept the line without consuming the <code>1</code>.</p>
+</li>
+<li><p>Alternatively, the signed-integer validator used for the comma path may
+not be shared with the no-comma path. The comma path handles the full
+signed range; the no-comma path may use an unsigned or non-negative
+parser that converts <code>-1</code> to 0 (clamp) or ignores the minus sign.</p>
+</li>
+<li><p>The fact that positive no-comma offsets (<code>ldr r1 fp 31</code>) encode
+correctly suggests the tokenizer does produce a numeric token in the
+positive case; the failure is specific to the leading <code>-</code> in negative
+literals.</p>
+</li>
+</ul>
+<hr>
+<h2>Suggested fix</h2>
+<p>Route the no-comma <code>offset6</code> parser through the same signed-integer
+validator that the comma-separated path already uses. The two parser
+branches should share a common helper for reading and range-checking the
+<code>offset6</code> field, so identical operand values produce identical encodings
+regardless of syntax form. If commas are optional syntactic sugar, the
+numeric-literal handling should not differ between the two paths.</p>
+<hr>
+<h2>Scope verification</h2>
+<p>Before sending this report, a broader probe was run to confirm the bug is
+isolated to the <code>ldr</code>/<code>str</code> offset6 parser path and does not affect
+adjacent instructions. The probe script and its summary live in
+<a href="../public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/"><code>public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/</code></a>
+in the LCC.js parity-testing repository.</p>
+<p>The probe verified that the following are unaffected:</p>
+<ul>
+<li><strong>Comma-separated <code>ldr</code>/<code>str</code></strong> — the full offset6 signed range
+(−32..+31) assembles correctly with commas. The bug is entirely in the
+no-comma code path.</li>
+<li><strong><code>ld</code>/<code>st</code>/<code>lea</code> (pcoffset9 path)</strong> — <code>ld r0 x</code> and <code>ld r0, x</code>
+produce identical encodings; no-comma syntax works correctly for
+these instructions.</li>
+<li><strong>Label arithmetic</strong> (<code>ld r0, x+1</code>, <code>ld r0, x-1</code>) — both assemble
+correctly in cuh63 6.3. This is a distinct feature (address arithmetic
+in the operand expression) unrelated to the <code>offset6</code> tokenizer.</li>
+</ul>
+<p>Concentrating the suggested fix on the <code>ldr</code>/<code>str</code> no-comma offset6
+parser path is therefore safe and well-scoped.</p>
+<hr>
+<h2>Comparison with the <code>mov</code> regression</h2>
+<p>A separate report covers another cuh63 6.3 regression: <code>mov dr, imm9</code>
+rejects all negative immediates (while the underlying <code>mvi dr, imm9</code>
+accepts them correctly). That bug at least makes itself visible — assembly
+fails with an error on line N.</p>
+<p>The <code>ldr</code>/<code>str</code> no-comma bug documented here is in a higher severity class
+because it <strong>produces wrong output silently</strong>. The two bugs are
+mechanically distinct but may share a common root: the no-comma parser
+path for <code>ldr</code>/<code>str</code> may use the same non-negative or unsigned literal
+parser that was inadvertently applied to <code>mov</code>.</p>
+<hr>
+<h2>Probe scripts used (for full reproducibility)</h2>
+<p>These are checked into the LCC.js parity-testing repository under
+<a href="../public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/"><code>public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/</code></a>
+and are runnable on any machine where the cuh63 <code>lcc</code> binary is reachable
+via the <code>LCC_ORACLE</code> environment variable:</p>
+<ul>
+<li><code>probe.sh</code> — side-by-side sweep of cuh63 6.3 and LCC.js across
+comma/no-comma, positive/negative, boundary values, and sibling
+instructions (<code>ld</code>/<code>st</code>/<code>lea</code>, label arithmetic).</li>
+</ul>
+<p>I&#39;m happy to share full session logs or extend the probes if useful.</p>
+<p>Thank you for the educational tool; it is a pleasure to work with.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>
