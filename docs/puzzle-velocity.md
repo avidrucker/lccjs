@@ -69,29 +69,7 @@ I pick up the ticket as my prediction *before* doing the work.
 
 ## Concept reference (LCCjs-specific or PDD jargon)
 
-- **PDD (Puzzle-Driven Development)** — Yegor Bugayenko's discipline where
-  unfinished work lives as a `@todo` comment ("puzzle") in code, tied to a
-  GitHub issue. Each puzzle is ≤60m and has format
-  `@todo #N:Est/ROLE description`.
-- **Yegor discipline** — broader conventions around PDD: ≤60m cap, research
-  tickets labeled `research` (not `pdd-tracked`), parent/child trackers,
-  decompose only what's about to be implemented.
-- **Spike** — a bounded ≤60m **research** session that produces findings
-  (term inventory, scope notes) rather than working code. Labeled `research`
-  on the GH issue, *not* `pdd-tracked`.
-- **Tracker** — a GH issue that doesn't represent a single piece of work but
-  tracks N child puzzles. Example: #108 tracked the 5 assembler.js inventory
-  spikes #119–#123. Closing a tracker means all children closed.
-- **Term inventory** — first phase of glossary writing: list term names only,
-  no definitions. Definitions land in a separate, later ticket (typically
-  blocked by all the inventory spikes).
-- **Section (a)-(e)** — the assembler.js glossary was decomposed into 5
-  sections by file structure: (a) lifecycle, (b) pass model, (c) tokenization,
-  (d) per-instruction encoders, (e) operand helpers. The interpreter and
-  linker glossaries may use similar but not identical letterings.
-- **Oracle / cuh63** — the reference LCC implementation
-  (`~/Documents/Study/Assembly/cuh63/lcc`) used to verify LCC.js parity. See
-  the `lcc_oracle_install` memory.
+See the canonical glossary in [`claude_workflow.md` § "Concept glossary (one-liners)"](./claude_workflow.md#concept-glossary-one-liners) — PDD, Puzzle, Spike, Tracker, Worktree, fruit identity, velocity row, and more are defined there.
 
 ## Protocol
 
