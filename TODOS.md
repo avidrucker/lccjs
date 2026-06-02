@@ -118,8 +118,7 @@ custom-grammar hook. Spike whether to surface the real `lcc-tools` TextMate
 grammar via Shiki, on a public GitHub Pages site and/or a Tampermonkey
 userscript.
 
-- [ ] spike Shiki + custom-grammar approaches for LCC highlighting (Pages site and/or Tampermonkey userscript)
-  <!-- @todo #127:60m/DEV spike beautiful LCC highlighting via Shiki + lcc-tools .tmLanguage — evaluate GitHub Pages docs site vs Tampermonkey userscript (or both), then decompose the chosen path into build puzzles. See #127 -->
+- [x] spike Shiki + custom-grammar approaches for LCC highlighting (Pages site and/or Tampermonkey userscript)
 
 ## Interactive Debugger Architecture
 

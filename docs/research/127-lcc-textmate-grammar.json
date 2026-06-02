@@ -1,0 +1,89 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "LCC Assembly",
+  "scopeName": "source.lcc",
+  "fileTypes": ["a", "ap"],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#directive" },
+    { "include": "#label_def" },
+    { "include": "#string" },
+    { "include": "#char" },
+    { "include": "#register" },
+    { "include": "#mnemonic_io" },
+    { "include": "#mnemonic_branch" },
+    { "include": "#mnemonic_core" },
+    { "include": "#mnemonic_plus" },
+    { "include": "#number" },
+    { "include": "#label_ref" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.line.semicolon.lcc",
+      "match": ";.*$"
+    },
+    "directive": {
+      "name": "keyword.other.directive.lcc",
+      "match": "\\.(?:start|org|word|fill|stringz|string|asciz|zero|space|blkw|lccplus|extern|global)\\b"
+    },
+    "label_def": {
+      "name": "entity.name.label.lcc",
+      "match": "^\\s*(?:[@A-Za-z_][A-Za-z0-9_@]*):"
+    },
+    "string": {
+      "name": "string.quoted.double.lcc",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.lcc",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "char": {
+      "name": "string.quoted.single.lcc",
+      "match": "'(?:[^'\\\\]|\\\\.)*'"
+    },
+    "register": {
+      "name": "variable.language.register.lcc",
+      "match": "\\b(?:r[0-7]|fp|sp|lr)\\b"
+    },
+    "mnemonic_io": {
+      "comment": "I/O traps — visually distinct from control flow",
+      "name": "support.function.io.lcc",
+      "match": "\\b(?:dout|udout|hout|aout|sout|nl|din|hin|ain|sin)\\b"
+    },
+    "mnemonic_branch": {
+      "comment": "Branches and jumps",
+      "name": "keyword.control.branch.lcc",
+      "match": "\\b(?:br|bral|brz|brnz|bre|brne|brn|brp|brlt|brgt|brc|brb|jmp|jsr|jsrr|bl|blr|call|ret)\\b"
+    },
+    "mnemonic_core": {
+      "comment": "Arithmetic, logic, data movement, debug",
+      "name": "keyword.mnemonic.lcc",
+      "match": "\\b(?:add|sub|mul|div|rem|and|or|xor|not|sll|srl|sra|rol|ror|mov|mvi|mvr|ld|ldr|st|str|lea|cea|cmp|push|pop|halt|bp)\\b"
+    },
+    "mnemonic_plus": {
+      "comment": "LCC+ extension pseudo-instructions (.lccplus required)",
+      "name": "keyword.mnemonic.extension.lcc",
+      "match": "\\b(?:clear|sleep|nbain|rand|srand|millis|resetc|cursor)\\b"
+    },
+    "number": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.lcc",
+          "match": "\\b0x[0-9A-Fa-f]+\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.lcc",
+          "match": "-?\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "label_ref": {
+      "name": "variable.other.label.lcc",
+      "match": "\\b[@A-Za-z_][A-Za-z0-9_@]*(?:[+-][0-9]+)?\\b"
+    }
+  }
+}
