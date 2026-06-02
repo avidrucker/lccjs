@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS velocity (
   closed_commit TEXT,
   notes         TEXT,
   agent         TEXT,
-  model         TEXT
+  model         TEXT,
+  repo          TEXT DEFAULT 'lccjs'
 );
 `.trim();
 
@@ -131,34 +132,35 @@ async function main() {
 
   console.log(`Parsed ${rows.length} data rows from CSV (${headerCols.length} columns)`);
 
-  // CSV columns (0-indexed): ticket,title,role,h_min,c_min,actual_min,
-  //   delta_h_min,delta_c_min,started_iso,finished_iso,closed_commit,notes,agent,model
+  // CSV columns (0-indexed): id,ticket,title,role,h_min,c_min,actual_min,
+  //   delta_h_min,delta_c_min,started_iso,finished_iso,closed_commit,notes,agent,model,repo
   const insert = db.prepare(`
     INSERT INTO velocity
       (ticket, title, role, h_min, c_min, actual_min, delta_h_min, delta_c_min,
-       started_iso, finished_iso, closed_commit, notes, agent, model)
+       started_iso, finished_iso, closed_commit, notes, agent, model, repo)
     VALUES
       (@ticket, @title, @role, @h_min, @c_min, @actual_min, @delta_h_min, @delta_c_min,
-       @started_iso, @finished_iso, @closed_commit, @notes, @agent, @model)
+       @started_iso, @finished_iso, @closed_commit, @notes, @agent, @model, @repo)
   `);
 
   const insertMany = db.transaction((rows) => {
     for (const r of rows) {
       insert.run({
-        ticket:       toNum(r[0]),
-        title:        toStr(r[1]),
-        role:         toStr(r[2]),
-        h_min:        toNum(r[3]),
-        c_min:        toNum(r[4]),
-        actual_min:   toNum(r[5]),
-        delta_h_min:  toNum(r[6]),
-        delta_c_min:  toNum(r[7]),
-        started_iso:  toStr(r[8]),
-        finished_iso: toStr(r[9]),
-        closed_commit:toStr(r[10]),
-        notes:        toStr(r[11]),
-        agent:        toStr(r[12]),
-        model:        toStr(r[13] ?? ''),
+        ticket:       toNum(r[1]),
+        title:        toStr(r[2]),
+        role:         toStr(r[3]),
+        h_min:        toNum(r[4]),
+        c_min:        toNum(r[5]),
+        actual_min:   toNum(r[6]),
+        delta_h_min:  toNum(r[7]),
+        delta_c_min:  toNum(r[8]),
+        started_iso:  toStr(r[9]),
+        finished_iso: toStr(r[10]),
+        closed_commit:toStr(r[11]),
+        notes:        toStr(r[12]),
+        agent:        toStr(r[13]),
+        model:        toStr(r[14] ?? ''),
+        repo:         toStr(r[15] ?? '') || 'lccjs',
       });
     }
   });

@@ -26,6 +26,7 @@ Exported read-only copy: **`docs/puzzle-velocity.csv`** — committed to git, au
 | `notes` | TEXT | YES | Free-form. Avoid literal `@todo #N:Est/ROLE` strings (triggers `puzzle:status` scanner). |
 | `agent` | TEXT | YES | Terminal/worktree name under which the work ran (e.g. `BANANA`). NULL for pre-#180 historical rows. |
 | `model` | TEXT | YES | Claude model ID used (e.g. `claude-sonnet-4-6`). NULL for rows predating the column (#275). |
+| `repo` | TEXT | YES | Repository the `closed_commit` SHA belongs to. Default `lccjs`; set to `claude-config` for cross-repo closes. NULL for rows predating the column (#438). |
 
 ## Valid `role` values
 
@@ -82,7 +83,7 @@ the `notes` field. Keep `h_min` and `c_min` (estimates are still valid).
 ## Related files
 
 - `scripts/velocity-seed.js` — seed the DB from `docs/puzzle-velocity.csv`
-- `scripts/velocity-log.js` — insert a new row (validates, inserts, auto-exports CSV) — *coming in #290*
-- `scripts/velocity-export.js` — export all rows to `docs/puzzle-velocity.csv` — *coming in #290*
+- `scripts/velocity-log.js` — insert a new row (validates, inserts, auto-exports CSV)
+- `scripts/velocity-export.js` — export all rows to `docs/puzzle-velocity.csv`
 - `docs/puzzle-velocity.md` — protocol and close-sequence instructions
 - `docs/research/sqlite-schema-questions.md` — deferred schema design questions (#284)

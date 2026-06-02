@@ -102,10 +102,10 @@ db.pragma('journal_mode = WAL');
 const insert = db.prepare(`
   INSERT INTO velocity
     (ticket, title, role, h_min, c_min, actual_min, delta_h_min, delta_c_min,
-     started_iso, finished_iso, closed_commit, notes, agent, model)
+     started_iso, finished_iso, closed_commit, notes, agent, model, repo)
   VALUES
     (@ticket, @title, @role, @h_min, @c_min, @actual_min, @delta_h_min, @delta_c_min,
-     @started_iso, @finished_iso, @closed_commit, @notes, @agent, @model)
+     @started_iso, @finished_iso, @closed_commit, @notes, @agent, @model, @repo)
 `);
 
 const toNum = v => (v == null || v === '') ? null : Number(v);
@@ -128,6 +128,7 @@ try {
     notes:         toStr(input.notes),
     agent:         input.agent,
     model:         toStr(input.model),
+    repo:          toStr(input.repo) ?? 'lccjs',
   });
 } catch (e) {
   die(`DB insert failed: ${e.message}`);

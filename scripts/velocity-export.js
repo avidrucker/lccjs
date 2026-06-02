@@ -25,7 +25,7 @@ const COLS = [
   'id', 'ticket', 'title', 'role',
   'h_min', 'c_min', 'actual_min', 'delta_h_min', 'delta_c_min',
   'started_iso', 'finished_iso', 'closed_commit',
-  'notes', 'agent', 'model',
+  'notes', 'agent', 'model', 'repo',
 ];
 
 function encodeField(val) {
