@@ -12,13 +12,23 @@ const GRAMMAR_PATH = path.join(ROOT, 'docs', 'lcc.tmLanguage.json');
 const OUT_DIR = path.join(ROOT, 'docs', 'highlight');
 const OUT_FILE = path.join(OUT_DIR, 'index.html');
 
-const retroTheme = {
-  name: 'retro-console',
+const retroDarkTheme = {
+  name: 'retro-console-dark',
   settings: [
     { settings: { background: '#233501', foreground: '#d0cf9d' } },
     { scope: ['comment'],                                          settings: { foreground: '#446710' } },
     { scope: ['keyword', 'keyword.other', 'keyword.control'],     settings: { foreground: '#8d9a4a' } },
     { scope: ['entity.name.label', 'string', 'constant.numeric'], settings: { foreground: '#d0cf9d' } },
+  ],
+};
+
+const retroLightTheme = {
+  name: 'retro-console-light',
+  settings: [
+    { settings: { background: '#d0cf9d', foreground: '#233501' } },
+    { scope: ['comment'],                                          settings: { foreground: '#8d9a4a' } },
+    { scope: ['keyword', 'keyword.other', 'keyword.control'],     settings: { foreground: '#446710' } },
+    { scope: ['entity.name.label', 'string', 'constant.numeric'], settings: { foreground: '#233501' } },
   ],
 };
 
@@ -31,7 +41,8 @@ const THEMES = [
   { id: 'nord',            label: 'Nord',            dark: true  },
   { id: 'tokyo-night',     label: 'Tokyo Night',     dark: true  },
   { id: 'solarized-light', label: 'Solarized Light', dark: false },
-  { id: 'retro-console',   label: 'Retro Console',   dark: true  },
+  { id: 'retro-console-dark',  label: 'Retro Console Dark',  dark: true  },
+  { id: 'retro-console-light', label: 'Retro Console Light', dark: false },
 ];
 const DEFAULT_THEME = 'github-dark';
 
@@ -91,7 +102,7 @@ const JS = `
     document.querySelectorAll('.theme-panel').forEach(function (p) {
       p.hidden = p.dataset.theme !== t;
     });
-    document.body.className = (DARK.has(t) ? 'dark' : 'light') + (t === 'retro-console' ? ' retro' : '');
+    document.body.className = (DARK.has(t) ? 'dark' : 'light') + (t.indexOf('retro-console') === 0 ? ' retro' : '');
   }
   sel.addEventListener('change', function () { apply(sel.value); });
   apply(sel.value);
@@ -106,8 +117,8 @@ const themeOptions = THEMES.map(({ id, label }) =>
   const { createHighlighter } = await import('shiki');
 
   const grammar = JSON.parse(fs.readFileSync(GRAMMAR_PATH, 'utf8'));
-  const themeIds = THEMES.filter(t => t.id !== 'retro-console').map(t => t.id);
-  const hl = await createHighlighter({ themes: [retroTheme, ...themeIds], langs: [grammar] });
+  const themeIds = THEMES.filter(t => !t.id.startsWith('retro-console')).map(t => t.id);
+  const hl = await createHighlighter({ themes: [retroDarkTheme, retroLightTheme, ...themeIds], langs: [grammar] });
 
   const sections = SAMPLES.map(({ file, label, title }) => {
     const code = fs.readFileSync(path.join(ROOT, file), 'utf8').trimEnd();
