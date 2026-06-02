@@ -655,6 +655,54 @@ would regress user feedback without any oracle-parity benefit.
 
 ---
 
+### 22. `bp` in non-interactive context: oracle enters step-trace mode; LCC.js continues cleanly (#501)
+
+`bp` is the software breakpoint instruction. In a TTY session it pauses execution and
+enters the interactive debugger. In a non-interactive (non-TTY) context both runtimes
+auto-continue past the breakpoint — but they diverge in what they print.
+
+| | Oracle (cuh63 6.3) | LCC.js |
+|---|---|---|
+| Assembly | Succeeds (both passes) | Succeeds (both passes) |
+| `bp` message | `software breakpoint` | `software breakpoint` |
+| Post-`bp` execution | Continues with per-instruction step traces | Continues cleanly, no traces |
+| Step trace example | `dout>>>  2:         dout r0` | *(none)* |
+| Program output (`dout r0` = 7) | Present, interleaved with traces | Present, no interleaving |
+| Runtime exit | Exits normally after `halt` | Exits normally after `halt` |
+
+**Oracle detail:** after hitting `bp` in a non-TTY context, the oracle enters the same
+stepping debug mode as in §19 — but unlike `ret`/`jmp r0`, which loop infinitely and
+flood stdout, a well-formed program runs to `halt` and terminates normally. The oracle
+prints one trace line per instruction (`<mnemonic>>>  <pc>:         <instruction>`) before
+executing each instruction following the breakpoint; program output is interleaved with
+the trace lines.
+
+**LCC.js behavior:** `bp` in non-interactive context prints `software breakpoint` and
+continues execution without step traces. Program output appears cleanly with no
+interleaving.
+
+**Why BY DESIGN (beneficial deviation):**
+
+- LCC.js's clean output is strictly better for automated callers (CI, agents, test
+  suites) — step traces interleaved with program output corrupt any downstream parsing.
+- The oracle's step-trace behavior is a side effect of the interactive debugger being
+  activated in a non-TTY session. Useful in a TTY context (actual single-step
+  debugging); misleading in automated ones.
+- No change to LCC.js is needed; the behavior is already correct.
+
+**Note on §19 relationship:** §19 (`ret`/`jmp r0` debug-dump flood) and this deviation
+share the same root cause — the oracle enters step mode after any breakpoint-triggering
+event. §19's program loops infinitely so the step dump is catastrophic; here the program
+terminates normally so the step dump is bounded.
+
+**Source:** `src/core/interpreter.js` — `bp` trap handler.
+
+**Evidence:** `experiments/bp_basic.a` probe — run #501.
+
+**GitHub issue:** [#501](https://github.com/avidrucker/lccjs/issues/501)
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -682,3 +730,4 @@ _None pending._
 | 2026-06-01 | §3 blast-radius table corrected + Deviation 19 added (#385) | `ret` bare / `jmp r0` row: LCC.js column was `Missing operand` / `none ✓` — both wrong. Actual: LCC.js says `Possible infinite loop` (runtime, exit=1) and leaves `.e(4B)`. Oracle says `Possible infinite loop` then floods stdout in a debug-dump loop (never exits; killed at timeout). `jmp r0` row added. Footnote corrected. New deviation §19 documents the runtime divergence; classified BY DESIGN (beneficial). |
 | 2026-06-01 | Deviation 20 added (#371, #441) | `.bin`/`.hex` loading message: LCC.js prints `Loading <file> (no assembly pass) — N word(s)`; oracle is silent. Message predated #371 (was `Assembling …`); #371 improved wording. Classified BY DESIGN. |
 | 2026-06-01 | OG BUG #21 added (#270) | Successful `.o` assemble: oracle exits 1 ("needs linking"), LCC.js exits 0. Oracle's exit 1 is specific to the `.o` path — both exit 0 on `.e` assemble+run. Classified OG BUG: exit 1 conflates "no runnable output" with "error"; LCC.js exit 0 is semantically correct. |
+| 2026-06-02 | Deviation 22 added (#501) | `bp` in non-interactive context: both runtimes auto-continue past `bp` (oracle does NOT flood stdout). Oracle enters step-trace mode, printing `<mnemonic>>>  <pc>:   <instruction>` before each instruction after the breakpoint; LCC.js continues cleanly with no traces. Classified BY DESIGN (clean output better for automated callers). Same root cause as §19 (oracle debug-dump mode) but bounded because the program terminates normally. |

@@ -50,9 +50,9 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [ ] decide whether to support `.orig` as a synonym
   - [ ] decide whether to match oracle’s 1-byte `o` artifact on `.org` assembly failure
   - [ ] add / finalize parity tests for forward-gap, backward-address, and invalid-operand `.org`
-- [ ] continue `bp` / debugger parity research
-  - [ ] determine whether non-interactive oracle runs always auto-continue after `bp`
-  - [ ] decide how closely LCC.js should match oracle breakpoint stdout before full debugger parity work
+- [x] continue `bp` / debugger parity research
+  - [x] determine whether non-interactive oracle runs always auto-continue after `bp`
+  - [x] decide how closely LCC.js should match oracle breakpoint stdout before full debugger parity work
 - [x] research the original 300-character line-length rule more precisely
   - [x] whether comments count (#244 closed — confirmed: raw line including comments counts)
   - [x] whether there is a separate true label-length limit (#245 closed — confirmed: none)
