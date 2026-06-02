@@ -384,10 +384,9 @@ class Assembler {
       // If the file ends in ".bin", parse it as raw binary instead of doing normal assembly.
       // This keeps the core parsing path reusable while preserving the existing CLI behavior.
       if (extension === '.bin') {
-        // Note: The original LCC does not print any message for assembling a .bin file as
-        // of 12/2024. We keep the current LCC.js user feedback here.
-        console.log(`Assembling ${this.inputFileName}`);
         this.parseBinFile();
+        // Note: The original LCC does not print any message for .bin files (as of 12/2024).
+        console.log(`Loading ${this.inputFileName} (no assembly pass) — ${this.outputBuffer.length} word(s)`);
         // Construct output filename with .e extension.
         this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
         return;
@@ -395,11 +394,9 @@ class Assembler {
 
       // If the file ends in ".hex", parse it as raw hexadecimal instead of doing normal assembly.
       if (extension === '.hex') {
-        // Note: I believe that the original LCC does not print any
-        // message for assembling a .hex file as of 12/2024.
-        // so this is custom lcc.js behavior
-        console.log(`Assembling ${this.inputFileName}`);
         this.parseHexFile();
+        // Note: The original LCC does not print any message for .hex files (as of 12/2024).
+        console.log(`Loading ${this.inputFileName} (no assembly pass) — ${this.outputBuffer.length} word(s)`);
         this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
         return;
       }
