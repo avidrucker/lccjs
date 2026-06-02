@@ -12,6 +12,16 @@ const GRAMMAR_PATH = path.join(ROOT, 'docs', 'lcc.tmLanguage.json');
 const OUT_DIR = path.join(ROOT, 'docs', 'highlight');
 const OUT_FILE = path.join(OUT_DIR, 'index.html');
 
+const retroTheme = {
+  name: 'retro-console',
+  settings: [
+    { settings: { background: '#233501', foreground: '#d0cf9d' } },
+    { scope: ['comment'],                                          settings: { foreground: '#446710' } },
+    { scope: ['keyword', 'keyword.other', 'keyword.control'],     settings: { foreground: '#8d9a4a' } },
+    { scope: ['entity.name.label', 'string', 'constant.numeric'], settings: { foreground: '#d0cf9d' } },
+  ],
+};
+
 const THEMES = [
   { id: 'github-dark',     label: 'GitHub Dark',     dark: true  },
   { id: 'github-light',    label: 'GitHub Light',    dark: false },
@@ -21,6 +31,7 @@ const THEMES = [
   { id: 'nord',            label: 'Nord',            dark: true  },
   { id: 'tokyo-night',     label: 'Tokyo Night',     dark: true  },
   { id: 'solarized-light', label: 'Solarized Light', dark: false },
+  { id: 'retro-console',   label: 'Retro Console',   dark: true  },
 ];
 const DEFAULT_THEME = 'github-dark';
 
@@ -34,8 +45,13 @@ const SAMPLES = [
 const DARK_IDS = THEMES.filter(t => t.dark).map(t => t.id);
 
 const CSS = `
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
 body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
 body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.retro pre.shiki { font-family:"UnifontMedium",monospace; }
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 body {
   background:var(--bg); color:var(--fg);
@@ -73,7 +89,7 @@ const JS = `
     document.querySelectorAll('.theme-panel').forEach(function (p) {
       p.hidden = p.dataset.theme !== t;
     });
-    document.body.className = DARK.has(t) ? 'dark' : 'light';
+    document.body.className = (DARK.has(t) ? 'dark' : 'light') + (t === 'retro-console' ? ' retro' : '');
   }
   sel.addEventListener('change', function () { apply(sel.value); });
   apply(sel.value);
@@ -88,8 +104,8 @@ const themeOptions = THEMES.map(({ id, label }) =>
   const { createHighlighter } = await import('shiki');
 
   const grammar = JSON.parse(fs.readFileSync(GRAMMAR_PATH, 'utf8'));
-  const themeIds = THEMES.map(t => t.id);
-  const hl = await createHighlighter({ themes: themeIds, langs: [grammar] });
+  const themeIds = THEMES.filter(t => t.id !== 'retro-console').map(t => t.id);
+  const hl = await createHighlighter({ themes: [retroTheme, ...themeIds], langs: [grammar] });
 
   const sections = SAMPLES.map(({ file, label, title }) => {
     const code = fs.readFileSync(path.join(ROOT, file), 'utf8').trimEnd();

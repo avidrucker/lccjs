@@ -5,8 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>LCC Assembly — Syntax Highlighting</title>
   <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
 body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
 body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.retro pre.shiki { font-family:"UnifontMedium",monospace; }
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 body {
   background:var(--bg); color:var(--fg);
@@ -55,6 +60,7 @@ code { font-family:monospace; }
     <option value="nord">Nord</option>
     <option value="tokyo-night">Tokyo Night</option>
     <option value="solarized-light">Solarized Light</option>
+    <option value="retro-console">Retro Console</option>
     </select>
   </div>
 
@@ -118,6 +124,13 @@ code { font-family:monospace; }
 <span class="line"><span style="color:#859900">    dout</span><span style="color:#268BD2"> r0</span></span>
 <span class="line"><span style="color:#859900">    nl</span></span>
 <span class="line"><span style="color:#859900">    halt</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="retro-console" hidden>
+      <pre class="shiki retro-console" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoA.a: simple program assembly/execution and test input/output caching</span></span>
+<span class="line"><span style="color:#8D9A4A">    mov</span><span style="color:#D0CF9D"> r0, 5</span></span>
+<span class="line"><span style="color:#8D9A4A">    dout</span><span style="color:#D0CF9D"> r0</span></span>
+<span class="line"><span style="color:#8D9A4A">    nl</span></span>
+<span class="line"><span style="color:#8D9A4A">    halt</span></span></code></pre>
     </div>
   </section>
 
@@ -254,6 +267,22 @@ code { font-family:monospace; }
 <span class="line"><span style="color:#657B83">hi:         </span><span style="color:#859900">.string</span><span style="color:#2AA198"> "Hi "</span></span>
 <span class="line"><span style="color:#657B83">buffer:     </span><span style="color:#859900">.zero</span><span style="color:#D33682"> 10</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="retro-console" hidden>
+      <pre class="shiki retro-console" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoO.a: program that tests IO and LST generation thoroughly</span></span>
+<span class="line"><span style="color:#8D9A4A">            lea</span><span style="color:#D0CF9D"> r0, prompt</span></span>
+<span class="line"><span style="color:#8D9A4A">            sout</span><span style="color:#D0CF9D"> r0</span></span>
+<span class="line"><span style="color:#8D9A4A">            lea</span><span style="color:#D0CF9D"> r0, buffer</span></span>
+<span class="line"><span style="color:#8D9A4A">            sin</span><span style="color:#D0CF9D"> r0</span></span>
+<span class="line"><span style="color:#8D9A4A">            lea</span><span style="color:#D0CF9D"> r1, hi</span></span>
+<span class="line"><span style="color:#8D9A4A">            sout</span><span style="color:#D0CF9D"> r1</span></span>
+<span class="line"><span style="color:#8D9A4A">            sout</span><span style="color:#D0CF9D"> r0</span></span>
+<span class="line"><span style="color:#8D9A4A">            nl</span></span>
+<span class="line"><span style="color:#8D9A4A">            m</span></span>
+<span class="line"><span style="color:#8D9A4A">            halt</span></span>
+<span class="line"><span style="color:#D0CF9D">prompt:     </span><span style="color:#8D9A4A">.string</span><span style="color:#D0CF9D"> "Name: "</span></span>
+<span class="line"><span style="color:#D0CF9D">hi:         </span><span style="color:#8D9A4A">.string</span><span style="color:#D0CF9D"> "Hi "</span></span>
+<span class="line"><span style="color:#D0CF9D">buffer:     </span><span style="color:#8D9A4A">.zero</span><span style="color:#D0CF9D"> 10</span></span></code></pre>
+    </div>
   </section>
 
   <section>
@@ -332,6 +361,15 @@ code { font-family:monospace; }
 <span class="line"><span style="color:#859900">    dout</span><span style="color:#268BD2"> r0</span></span>
 <span class="line"><span style="color:#859900">    nl</span></span>
 <span class="line"><span style="color:#859900">    halt</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="retro-console" hidden>
+      <pre class="shiki retro-console" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demo program that tests the detection of division by zero</span></span>
+<span class="line"><span style="color:#8D9A4A">    mov</span><span style="color:#D0CF9D"> r0, 3</span></span>
+<span class="line"><span style="color:#8D9A4A">    mov</span><span style="color:#D0CF9D"> r1, 0</span></span>
+<span class="line"><span style="color:#8D9A4A">    div</span><span style="color:#D0CF9D"> r0, r1</span></span>
+<span class="line"><span style="color:#8D9A4A">    dout</span><span style="color:#D0CF9D"> r0</span></span>
+<span class="line"><span style="color:#8D9A4A">    nl</span></span>
+<span class="line"><span style="color:#8D9A4A">    halt</span></span></code></pre>
     </div>
   </section>
 
@@ -500,6 +538,26 @@ code { font-family:monospace; }
 <span class="line"></span>
 <span class="line"><span style="color:#657B83">onesecond: </span><span style="color:#859900">.word</span><span style="color:#D33682"> 1000</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="retro-console" hidden>
+      <pre class="shiki retro-console" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; plusB.ap: clear and sleep</span></span>
+<span class="line"><span style="color:#446710">; This program prints out the letters 'a' through 'f'</span></span>
+<span class="line"><span style="color:#446710">; in the terminal 'typewriter' style</span></span>
+<span class="line"><span style="color:#8D9A4A">     .lccplus</span></span>
+<span class="line"><span style="color:#8D9A4A">      clear</span><span style="color:#446710"> ; clears the screen of anything else that was in the terminal</span></span>
+<span class="line"><span style="color:#8D9A4A">      ld</span><span style="color:#D0CF9D"> r1, onesecond </span><span style="color:#446710">; load 1000 into r1 to represent milliseconds</span></span>
+<span class="line"><span style="color:#8D9A4A">      mov</span><span style="color:#D0CF9D"> r0, </span><span style="color:#D0CF9D">'a'</span><span style="color:#446710"> ; our initialized 'current char' to print goes into r0</span></span>
+<span class="line"><span style="color:#8D9A4A">      mov</span><span style="color:#D0CF9D"> r2, </span><span style="color:#D0CF9D">'f'</span><span style="color:#446710"> ; this is our 'terminal char'</span></span>
+<span class="line"><span style="color:#D0CF9D">loop: </span><span style="color:#8D9A4A">cmp</span><span style="color:#D0CF9D"> r0, r2 </span><span style="color:#446710">; check to see how the current compares with the terminal</span></span>
+<span class="line"><span style="color:#8D9A4A">      brgt</span><span style="color:#D0CF9D"> done </span><span style="color:#446710">; if the current is greater than the terminal, branch to done label</span></span>
+<span class="line"><span style="color:#8D9A4A">      aout</span><span style="color:#D0CF9D"> r0 </span><span style="color:#446710">; print the current char</span></span>
+<span class="line"><span style="color:#8D9A4A">      sleep</span><span style="color:#D0CF9D"> r1 </span><span style="color:#446710">; pause for 1 second</span></span>
+<span class="line"><span style="color:#8D9A4A">      add</span><span style="color:#D0CF9D"> r0, r0, 1 </span><span style="color:#446710">; increment the char</span></span>
+<span class="line"><span style="color:#8D9A4A">      br</span><span style="color:#D0CF9D"> loop </span><span style="color:#446710">; go back to the loop label</span></span>
+<span class="line"><span style="color:#D0CF9D">done: </span><span style="color:#8D9A4A">nl</span></span>
+<span class="line"><span style="color:#8D9A4A">      halt</span><span style="color:#446710"> ; end the program</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D0CF9D">onesecond: </span><span style="color:#8D9A4A">.word</span><span style="color:#D0CF9D"> 1000</span></span></code></pre>
+    </div>
   </section>
   <footer>
     Built by <code>npm run build:highlight</code> &mdash;
@@ -507,13 +565,13 @@ code { font-family:monospace; }
   </footer>
   <script>
 (function () {
-  var DARK = new Set(["github-dark","monokai","one-dark-pro","dracula","nord","tokyo-night"]);
+  var DARK = new Set(["github-dark","monokai","one-dark-pro","dracula","nord","tokyo-night","retro-console"]);
   var sel = document.getElementById('theme-select');
   function apply(t) {
     document.querySelectorAll('.theme-panel').forEach(function (p) {
       p.hidden = p.dataset.theme !== t;
     });
-    document.body.className = DARK.has(t) ? 'dark' : 'light';
+    document.body.className = (DARK.has(t) ? 'dark' : 'light') + (t === 'retro-console' ? ' retro' : '');
   }
   sel.addEventListener('change', function () { apply(sel.value); });
   apply(sel.value);
