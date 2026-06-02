@@ -8,8 +8,8 @@
 
 The `lcc-tools` VS Code extension grammar referenced in the issue/TODOS does **not yet
 exist as a committed file** in this repo — `.gitattributes` and TODOS.md both reference
-it aspirationally. The grammar I drafted for this spike (`127-lcc-textmate-grammar.json`
-in this directory) is therefore the first concrete artifact.
+it aspirationally. The grammar I drafted for this spike (`docs/lcc.tmLanguage.json`)
+is therefore the first concrete artifact.
 
 The grammar covers the full token set found by surveying ~60 `.a` and ~17 `.ap` files:
 
