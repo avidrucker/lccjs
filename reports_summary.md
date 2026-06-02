@@ -12,7 +12,7 @@ series). Each oracle finding's verdict is one of: a confirmed original-LCC bug, 
 intentional/acceptable deviation we simply document, or inconclusive — 100% parity
 is **not** a goal.
 
-Last updated: 2026-06-02 (#258 — full no-comma negative-operand family report drafted).
+Last updated: 2026-06-02 (#508 — OG BUG #21 added to summary; report send-ready).
 
 ## Status at a glance
 
@@ -26,6 +26,7 @@ Last updated: 2026-06-02 (#258 — full no-comma negative-operand family report 
 | 6 | `sext` non-`2^k−1` selector | returns silent garbage; contract unspecified | Low–Med | **SENT** — awaiting reply (#159) |
 | 7 | no-comma neg `offset6` on `jmp`/`blr`/`jsrr` | same silent-→0 as #1, on more instructions | **High** | **Send-ready** — covered in family report · pending human email (#506) |
 | 8 | no-comma neg `imm5`/`imm9` | `add`/`sub`/`and`/`cmp`/`mvi` **reject** a negative that the comma form accepts | Medium | **Send-ready** — covered in family report · pending human email (#506) |
+| 21 | `.o` assemble exit code | `lcc` exits **1** on successful `.o` assemble ("needs linking") | Medium | Report **send-ready** · pending human email (#508) |
 
 \* "Low" severity but a genuine defect; classified low because the trigger is a
 malformed/edge-case program rather than valid everyday source.
@@ -82,6 +83,18 @@ written yet. **NEW**: surfaced by this pass, not yet in any ledger.
   the bug). That's exactly the branch in which #40 says to **send** the report, so
   OB-008 appears unblocked. Needs Charlie's go-ahead to send.
 
+### 21. Successful `.o` assemble exits 1 ("needs linking")
+- **Symptom:** when assembly produces an object module — triggered by `.extern` or
+  `.global` directives — `lcc` exits **1** even though all artifacts (`.o`, `.lst`,
+  `.bst`) are correctly written and no errors are reported. The standalone `.e`
+  assemble+run path exits 0. The non-zero exit misrepresents a successful operation
+  as a failure; any build script or CI harness that checks `$?` after a `.o`
+  assemble will abort falsely with no way to distinguish a genuine assembly error
+  from a successful "needs linking" assemble.
+- **Report:** [`docs/cuh63-o-assemble-exit-code-bug-report.md`](./docs/cuh63-o-assemble-exit-code-bug-report.md)
+- **Evidence:** `docs/parity_deviations.md` §21; parity decision #270 (closed — LCC.js exits 0, correct behavior).
+- **Status: send-ready, pending human email** — report is complete (#508). Once sent, flip this row to **SENT** and file a follow-up issue to act on any reply.
+
 ### 5. No source-line length limit — long lines silently split into bogus source
 - **Symptom:** OG LCC has no line-length check; it reads each line into a fixed
   **298-char** buffer and silently **splits** longer lines, feeding the overflow
@@ -131,7 +144,7 @@ for a report — listed here so the decision is explicit, not an omission.
 Probed and characterized: the no-comma operand parser across all immediate/offset
 instructions (#1/#7/#8), `mov`/`mvi` immediate ranges (#2), source-line length
 (#5/#244), label length (#244-sibling #245 → parity, no bug), `sext` (#6),
-`jmp`/undefined-label edge cases (#3/#4).
+`jmp`/undefined-label edge cases (#3/#4), `.o`-assemble exit code (#21/#270).
 
 **Not yet swept** (candidate future probes — no claim is made about these):
 - `.word` / `.fill` / `.zero` with out-of-range or negative arguments.
