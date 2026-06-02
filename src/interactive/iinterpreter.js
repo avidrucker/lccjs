@@ -26,11 +26,6 @@ class IInterpreter extends Interpreter {
     this.memoryChange = null;     // Most-recent memory delta; set by initSnapshot() and step()
 
     // Mode flags (set from CLI options in runInteractive)
-    // @inprogress #134:60m/ARC these mode/display fields + the prompt-command dispatch are an
-    //  ad-hoc state machine; research modeling them as a statechart (XState or hand-rolled):
-    //  an exec region (running/paused/stepping/awaiting-input/halted) with an orthogonal
-    //  display region (stack/mem panes). Keep the per-opcode step() switch out of scope.
-    //  Design + plan: docs/research/xstate-iinterpreter.md ; see #134
     this.efficientMode = false;   // -e: disable snapshot logging (forward-only, lower memory)
     this.colorblindMode = false;  // -c: alternate ANSI color palette
 

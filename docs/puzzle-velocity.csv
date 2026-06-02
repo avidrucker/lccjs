@@ -318,3 +318,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 326,444,lccrun.sh drops piped stdin — fix with TTY detection,COMBO,30,20,6,24,14,2026-06-01T17:00:34-1000,2026-06-01T17:06:49-1000,,RESEARCH confirmed root cause + tested 3-line TTY-detection fix; all 3 smoke tests pass,APPLE,sonnet-4.6
 327,434,npm run close exits 1 after CLOSE OK (getcwd fix),DEV,30,30,16,14,14,2026-06-01T16:57:31-1000,2026-06-01T17:13:24-1000,,package.json close entry changed to node scripts/close.js; bash/sh intermediary removed; regression test via npm wrapper added,CHERRY,sonnet-4.6
 328,446,,WRITER,,,,,,,,,,APPLE,
+329,134,Research: statechart for interactive debugger modes/UI (iinterpreter.js),RESEARCH,60,20,4,56,16,2026-06-01T18:16:50-1000,2026-06-01T18:20:28-1000,,mapped iinterpreter.js flags to 3-state exec machine + orthogonal display context; posted statechart sketch + hand-roll recommendation as comment on #134,DRAGONFRUIT,sonnet-4.6

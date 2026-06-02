@@ -133,8 +133,7 @@ illegal mode combinations become unrepresentable and the debugger becomes unit-t
 by replaying events. Scope the idea (adopt XState vs. hand-roll vs. keep flags) before
 committing. Full context in `docs/research/xstate-iinterpreter.md`.
 
-- [ ] research a statechart for `iinterpreter.js` modes/UI; decide adopt-XState vs hand-roll vs keep-flags, then decompose into build puzzles
-  <!-- @inprogress #134:60m/ARC research an XState (or hand-rolled) statechart for the interactive debugger's modes/UI in src/interactive/iinterpreter.js — exec region + orthogonal display region; assess dependency cost and snapshot/time-travel coupling; keep the per-opcode step() switch out of scope. Design in docs/research/xstate-iinterpreter.md; see #134 -->
+- [x] research a statechart for `iinterpreter.js` modes/UI; decide adopt-XState vs hand-roll vs keep-flags, then decompose into build puzzles (#134 closed)
 - [x] DRY the core symbolic debugger vs the `ilcc`/`iinterpreter` extension — ROI map in `docs/research/debugger-ilcc-dry.md` (#146 closed). Build puzzles: format.js #163 (done), stateDelta.js #164 (done).
 
 ## Velocity / Calibration Analytics
