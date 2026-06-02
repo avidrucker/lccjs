@@ -247,6 +247,7 @@ git commit -m &quot;... Closes #N&quot;
 #    Do NOT run `git pull` after close — close handles the main checkout sync.
 npm run close N
 </code></pre>
+<p><strong>Build-artifact tickets:</strong> If the closing commit must include a generated file (e.g. from <code>npm run build:site</code>), run the build <em>before</em> step 1 (<code>velocity:log</code>) — so the artifact, the exported CSV, and the <code>Closes #N</code> marker all land in the same commit. If the artifact is rebuilt by CI on every push, prefer gitignoring it so no local artifact commit is needed at all. (<code>docs/site/</code> falls in this category: <code>pages.yml</code> already rebuilds it from source on every push to <code>main</code>, so it can safely be gitignored.) (#492)</p>
 <p><strong>Fallback</strong> (when <code>npm run close</code> is unavailable — <code>&amp;&amp;</code>-gate is mandatory so cleanup can&#39;t race ahead of a failed push):</p>
 <pre><code class="language-bash">git pull --rebase &amp;&amp; git push &amp;&amp; \
   git worktree remove .claude/worktrees/&lt;fruit&gt;-issue-N &amp;&amp; \

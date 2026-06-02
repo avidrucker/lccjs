@@ -200,13 +200,23 @@ numeric-literal handling should not differ between the two paths.
 
 ## Scope verification
 
-Before sending this report, a broader probe was run to confirm the bug is
-isolated to the `ldr`/`str` offset6 parser path and does not affect
-adjacent instructions. The probe script and its summary live in
+> **UPDATE (probe #257, 2026-06-02):** A wider probe showed the defect is
+> **not** limited to `ldr`/`str`. The full `baser, offset6` family — `ldr`,
+> `str`, **`jmp`**, **`blr`/`jsrr`** — is affected by the same silent-drop.
+> Additionally, the `imm5`/`imm9` instructions (`add`, `sub`, `and`, `cmp`,
+> `mvi`) exhibit a related hard-reject failure for no-comma negative
+> immediates. A companion report covers the full family:
+> [`docs/cuh63-nocomma-negative-operand-family-bug-report.md`](./cuh63-nocomma-negative-operand-family-bug-report.md).
+> The scope conclusion in this section (below) reflects the **original**,
+> narrower probe and is superseded by the companion report.
+
+Before sending this report, a broader probe was run to confirm the bug
+affects the `ldr`/`str` offset6 parser path. The probe script and its
+summary live in
 [`public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/`](../public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/)
 in the LCC.js parity-testing repository.
 
-The probe verified that the following are unaffected:
+The original probe verified that the following are unaffected:
 
 - **Comma-separated `ldr`/`str`** — the full offset6 signed range
   (−32..+31) assembles correctly with commas. The bug is entirely in the
@@ -218,8 +228,9 @@ The probe verified that the following are unaffected:
   correctly in cuh63 6.3. This is a distinct feature (address arithmetic
   in the operand expression) unrelated to the `offset6` tokenizer.
 
-Concentrating the suggested fix on the `ldr`/`str` no-comma offset6
-parser path is therefore safe and well-scoped.
+The wider probe (#257) confirms `ld`/`st`/`lea` and label arithmetic
+remain unaffected. The fix scope is the no-comma negative-integer parser,
+shared across the `baser, offset6` and `imm5`/`imm9` instruction families.
 
 ---
 

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>cuh63-nocomma-negative-operand-family-bug-report — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/" class="active">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+</nav>
+  <div class="back-link"><a href="./">← Parity index</a></div>
+  <div class="prose">
+<h1>No-comma negative-operand family in cuh63 6.3: silent miscompile on <code>baser,offset6</code> instructions + hard reject on <code>imm5</code>/<code>imm9</code> instructions</h1>
+<p><strong>Author:</strong> Avi Drucker (<a href="mailto:avidrucker@gmail.com">avidrucker@gmail.com</a>)
+<strong>Date filed:</strong> 2026-06-02
+<strong>Distribution under inspection:</strong> <code>cuh63.zip</code> (file mtimes 2025-01-09)
+<strong>Reported binary:</strong> <code>lcc</code> (Linux build from <code>lnx/</code> subfolder of the cuh package)
+<strong>Reported version string:</strong> <code>LCC Assemble/Link/Interpret/Debug Ver 6.3</code> (as printed in <code>.lst</code> headers)</p>
+<p>This report extends an earlier finding
+(<a href="./cuh63-ldr-str-silent-miscompile-bug-report.md"><code>docs/cuh63-ldr-str-silent-miscompile-bug-report.md</code></a>)
+from two instructions (<code>ldr</code>/<code>str</code>) to the full set of instructions whose operands
+include a signed integer in the <strong>no-comma (space-separated) syntax</strong>. A wider probe
+(<code>public_experiments/nocomma_negative_immediate_family/</code>) shows the root cause —
+the no-comma operand parser cannot read a <strong>negative</strong> integer — affects seven
+instructions across two distinct failure modes.</p>
+<hr>
+<h2>Summary</h2>
+<p>When cuh63 6.3 assembles an instruction with space-separated operands that include
+a <strong>negative</strong> signed integer, the behavior differs from the comma-separated form
+in two ways depending on where in the instruction that integer appears:</p>
+<ol>
+<li><p><strong>Silent miscompile (trailing <code>offset6</code> position):</strong> <code>ldr</code>, <code>str</code>, <code>jmp</code>,
+<code>blr</code>/<code>jsrr</code> — the negative offset is silently encoded as <strong>0</strong>. Assembly
+succeeds, a <code>.e</code> file is written, no error or warning is emitted. The program
+then executes with the wrong memory address or branch target.</p>
+</li>
+<li><p><strong>Hard reject (<code>imm5</code>/<code>imm9</code> position):</strong> <code>add</code>, <code>sub</code>, <code>and</code>, <code>cmp</code>, <code>mvi</code> —
+the negative immediate causes <code>Error on line 1</code> and leaves a blank <code>.e</code> file on
+disk. The comma form and no-comma <strong>positive</strong> immediates for these same
+instructions assemble without error.</p>
+</li>
+</ol>
+<p>Both modes have the same root cause. Comma-separated syntax handles the full signed
+range for all these instructions; the divergence is entirely in the no-comma path.
+LCC.js handles both syntax forms correctly for all affected instructions.</p>
+<hr>
+<h2>Part A — Silent miscompile: <code>baser, offset6</code> instructions</h2>
+<h3>Affected instructions</h3>
+<p><code>ldr</code>, <code>str</code>, <code>jmp</code>, <code>blr</code> (alias <code>jsrr</code>).</p>
+<p>All four use the <code>baser, offset6</code> operand pair. The <code>offset6</code> field is a signed
+6-bit value (range −32..+31) in the LSB of the instruction word. Single-operand
+<code>ret</code> (which encodes a fixed <code>offset6</code>) is <strong>not</strong> affected; the parser failure
+requires a user-supplied <code>offset6</code> token.</p>
+<h3>Encoding table — <code>jmp</code> (new; the <code>ldr</code>/<code>str</code> table is in the companion report)</h3>
+<table>
+<thead>
+<tr>
+<th>Source line</th>
+<th>Oracle encoding</th>
+<th>offset6 bits</th>
+<th>Correct?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>jmp r1, -1</code> (comma)</td>
+<td><code>c07f</code></td>
+<td><code>111111</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>jmp r1, 0</code>  (comma)</td>
+<td><code>c040</code></td>
+<td><code>000000</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>jmp r1, 1</code>  (comma)</td>
+<td><code>c041</code></td>
+<td><code>000001</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><strong><code>jmp r1 -1</code></strong> (no-comma, neg)</td>
+<td><strong><code>c040</code></strong></td>
+<td><strong><code>000000</code></strong></td>
+<td><strong>✗ (should be <code>c07f</code>)</strong></td>
+</tr>
+<tr>
+<td><code>jmp r1 0</code>   (no-comma, pos)</td>
+<td><code>c040</code></td>
+<td><code>000000</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>jmp r1 1</code>   (no-comma, pos)</td>
+<td><code>c041</code></td>
+<td><code>000001</code></td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p>The no-comma negative case encodes the same word as <code>jmp r1 0</code> — the offset is
+silently dropped to 0 rather than encoding the intended −1.</p>
+<h3>Encoding table — <code>blr</code> / <code>jsrr</code></h3>
+<table>
+<thead>
+<tr>
+<th>Source line</th>
+<th>Oracle encoding</th>
+<th>offset6 bits</th>
+<th>Correct?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>blr r1, -1</code> (comma)</td>
+<td><code>407f</code></td>
+<td><code>111111</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><strong><code>blr r1 -1</code></strong> (no-comma, neg)</td>
+<td><strong><code>4040</code></strong></td>
+<td><strong><code>000000</code></strong></td>
+<td><strong>✗ (should be <code>407f</code>)</strong></td>
+</tr>
+<tr>
+<td><code>jsrr r1, -1</code> (comma)</td>
+<td><code>407f</code></td>
+<td><code>111111</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td><strong><code>jsrr r1 -1</code></strong> (no-comma, neg)</td>
+<td><strong><code>4040</code></strong></td>
+<td><strong><code>000000</code></strong></td>
+<td><strong>✗ (should be <code>407f</code>)</strong></td>
+</tr>
+</tbody></table>
+<h3>Why this matters</h3>
+<p><code>jmp</code>, <code>blr</code>, and <code>jsrr</code> with a no-comma negative <code>offset6</code> produce a silently
+wrong branch target. A call or indirect jump to <code>BaseR − 1</code> is assembled as a
+call to <code>BaseR + 0</code> — not a rejected instruction, not a run-time error, just
+the wrong target. This failure mode is identical in character to the previously
+reported <code>ldr</code>/<code>str</code> bug: the assembler exits 0, writes a <code>.e</code>, and the program
+executes incorrectly with no diagnostic from either the assembler or interpreter.</p>
+<hr>
+<h2>Part B — Hard reject: <code>imm5</code>/<code>imm9</code> instructions</h2>
+<h3>Affected instructions</h3>
+<p><code>add</code>, <code>sub</code>, <code>and</code>, <code>cmp</code> (5-bit signed immediate field, <code>imm5</code>); <code>mvi</code> (9-bit
+signed immediate field, <code>imm9</code>).</p>
+<h3>Behavior table</h3>
+<table>
+<thead>
+<tr>
+<th>Source line</th>
+<th>Oracle result</th>
+<th>LCC.js result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>add r0, r0, -1</code> (comma, neg)</td>
+<td><code>103f</code> ✓</td>
+<td><code>103f</code> ✓</td>
+</tr>
+<tr>
+<td><code>add r0 r0 1</code>    (no-comma, pos)</td>
+<td><code>1021</code> ✓</td>
+<td><code>1021</code> ✓</td>
+</tr>
+<tr>
+<td><strong><code>add r0 r0 -1</code></strong> (no-comma, neg)</td>
+<td><strong><code>Error on line 1</code> + blank <code>.e</code></strong> ✗</td>
+<td><code>103f</code> ✓</td>
+</tr>
+<tr>
+<td><code>sub r0, r0, -1</code> (comma)</td>
+<td>correct ✓</td>
+<td>correct ✓</td>
+</tr>
+<tr>
+<td><strong><code>sub r0 r0 -1</code></strong> (no-comma, neg)</td>
+<td><strong><code>Error on line 1</code> + blank <code>.e</code></strong> ✗</td>
+<td>correct ✓</td>
+</tr>
+<tr>
+<td><code>and r0, r0, -1</code> (comma)</td>
+<td>correct ✓</td>
+<td>correct ✓</td>
+</tr>
+<tr>
+<td><strong><code>and r0 r0 -1</code></strong> (no-comma, neg)</td>
+<td><strong><code>Error on line 1</code> + blank <code>.e</code></strong> ✗</td>
+<td>correct ✓</td>
+</tr>
+<tr>
+<td><code>cmp r0, -1</code> (comma)</td>
+<td>correct ✓</td>
+<td>correct ✓</td>
+</tr>
+<tr>
+<td><strong><code>cmp r0 -1</code></strong> (no-comma, neg)</td>
+<td><strong><code>Error on line 1</code> + blank <code>.e</code></strong> ✗</td>
+<td>correct ✓</td>
+</tr>
+<tr>
+<td><code>mvi r0, -1</code> (comma)</td>
+<td>correct ✓</td>
+<td>correct ✓</td>
+</tr>
+<tr>
+<td><strong><code>mvi r0 -1</code></strong> (no-comma, neg)</td>
+<td><strong><code>Error on line 1</code> + blank <code>.e</code></strong> ✗</td>
+<td>correct ✓</td>
+</tr>
+</tbody></table>
+<p>The pattern is consistent: comma form assembles correctly for any signed value in
+range; no-comma form with a <strong>positive</strong> immediate assembles correctly; no-comma
+form with a <strong>negative</strong> immediate is rejected with a generic <code>Error on line 1</code>.</p>
+<h3>Secondary concern — blank <code>.e</code> artifact</h3>
+<p>When cuh63 6.3 rejects an assembly with <code>Error on line 1</code>, it leaves a 2-byte
+(header-only) <code>.e</code> file on disk. Running that file in the interpreter causes an
+infinite-loop-style hang (<code>jmp r0</code> from address 0 → <code>jmp r0</code> again). This
+secondary behavior means that a user who misses the error message can silently
+end up executing a stale or stub <code>.e</code> from a prior run — the file name signals
+success but the content is the failure artifact. This is a known cuh63 6.3
+characteristic; it is not new to this report.</p>
+<hr>
+<h2>Common root cause</h2>
+<p>Both failure modes appear to share a single underlying cause: the <strong>no-comma
+operand tokenizer</strong> splits the source line on whitespace and then passes each
+token to a numeric parser that does not handle a <strong>leading minus sign</strong>. In the
+<code>baser, offset6</code> case the result is that the <code>−N</code> token is read as 0 (sign
+dropped, base interpreted as absent or zero). In the <code>imm5</code>/<code>imm9</code> case the
+parser either rejects the token as invalid or produces a value that fails a
+downstream range check, triggering a generic <code>Error on line 1</code>.</p>
+<p>The comma-separated parser uses a distinct code path that correctly reads the
+full signed range; the inconsistency is entirely between the two paths.</p>
+<p>Speculative implementation detail: splitting on whitespace may yield tokens <code>…</code>,
+<code>-</code>, <code>1</code> rather than <code>…</code>, <code>-1</code> — or the token parser may read only unsigned
+digits after skipping whitespace. Either would explain why positive no-comma
+immediates work (no minus sign to trip over) and why the comma path is unaffected
+(the comma parser likely reads a complete operand expression including the sign).</p>
+<hr>
+<h2>Environment / version</h2>
+<ul>
+<li>OS: Linux 6.17.0-29-generic (Ubuntu/Mint family), x86-64.</li>
+<li>Binary: <code>lnx/lcc</code> from <code>cuh63.zip</code> (overlaid onto the main folder per
+<code>0READFIRST.txt</code>).</li>
+<li><code>file lcc</code>: <code>ELF 64-bit LSB pie executable, x86-64 … dynamically linked, for GNU/Linux 3.2.0, not stripped</code></li>
+<li>Version banner (from any <code>.lst</code>): <code>LCC Assemble/Link/Interpret/Debug Ver 6.3  &lt;timestamp&gt;</code></li>
+</ul>
+<hr>
+<h2>Minimal reproduction — Part A (silent miscompile)</h2>
+<pre><code>; jmp_neg_noc.a
+    jmp r1, -1
+    halt
+</code></pre>
+<p>Comma form (correct):</p>
+<pre><code class="language-bash">$ echo &quot;TestUser&quot; &gt; name.nnn
+$ lcc jmp_neg_noc.a
+$ grep &quot;jmp&quot; jmp_neg_noc.lst
+0000  c07f    jmp r1, -1        ← correct (c07f = offset −1)
+</code></pre>
+<p>Now no-comma form (silent miscompile):</p>
+<pre><code>; jmp_neg_noc2.a
+    jmp r1 -1
+    halt
+</code></pre>
+<pre><code class="language-bash">$ lcc jmp_neg_noc2.a
+Starting assembly pass 1
+Starting assembly pass 2
+Starting interpretation of jmp_neg_noc2.e
+[...]
+$ grep &quot;jmp&quot; jmp_neg_noc2.lst
+0000  c040    jmp r1 -1         ← WRONG (c040 = offset 0, not −1)
+</code></pre>
+<p>The assembler exits 0 and writes a <code>.e</code> in both cases; only the machine word
+differs, and only a manual decode of the <code>.lst</code> reveals the discrepancy.</p>
+<hr>
+<h2>Minimal reproduction — Part B (hard reject)</h2>
+<pre><code>; add_neg_noc.a
+    add r0 r0 -1
+    halt
+</code></pre>
+<pre><code class="language-bash">$ lcc add_neg_noc.a
+Starting assembly pass 1
+Error on line 1
+$ ls -la add_neg_noc.e   # 2-byte header-only stub left on disk
+-rw-rw-r-- 1 … 2 … add_neg_noc.e
+</code></pre>
+<p>The comma form assembles correctly:</p>
+<pre><code>; add_neg_comma.a
+    add r0, r0, -1
+    halt
+</code></pre>
+<pre><code class="language-bash">$ lcc add_neg_comma.a
+Starting assembly pass 1
+Starting assembly pass 2
+Starting interpretation of add_neg_comma.e
+[...]
+$ grep &quot;add&quot; add_neg_comma.lst
+0000  103f    add r0, r0, -1    ← correct (103f = imm5 = −1)
+</code></pre>
+<hr>
+<h2>Expected behavior</h2>
+<p>For all affected instructions, comma-separated and space-separated syntax are
+described in the LCC documentation as interchangeable. A negative integer is a
+valid value in the signed immediate/offset fields of <code>ldr</code>, <code>str</code>, <code>jmp</code>,
+<code>blr</code>/<code>jsrr</code>, <code>add</code>, <code>sub</code>, <code>and</code>, <code>cmp</code>, and <code>mvi</code>. Both syntax forms should
+produce identical output for identical operand values.</p>
+<p>Specifically:</p>
+<ul>
+<li><code>jmp r1 -1</code> should encode as <code>c07f</code> (same as <code>jmp r1, -1</code>).</li>
+<li><code>blr r1 -1</code> / <code>jsrr r1 -1</code> should encode as <code>407f</code>.</li>
+<li><code>add r0 r0 -1</code>, <code>sub r0 r0 -1</code>, <code>and r0 r0 -1</code>, <code>cmp r0 -1</code>, <code>mvi r0 -1</code>
+should all assemble without error (same as their comma counterparts).</li>
+</ul>
+<hr>
+<h2>Suggested fix</h2>
+<p>Route all numeric-literal parsing in the no-comma path through the same
+signed-integer validator used by the comma-separated path. A single shared
+helper for reading and range-checking a signed integer would eliminate the
+divergence; both paths would produce identical encodings for identical values,
+and the no-comma path would accept the full signed range the ISA defines.</p>
+<hr>
+<h2>Relationship to prior reports</h2>
+<p><strong>Companion to the <code>ldr</code>/<code>str</code> report:</strong> this is an extension of the
+silent-miscompile finding in
+<a href="./cuh63-ldr-str-silent-miscompile-bug-report.md"><code>docs/cuh63-ldr-str-silent-miscompile-bug-report.md</code></a>.
+That report&#39;s &quot;Scope verification&quot; section concluded the bug was isolated to
+<code>ldr</code>/<code>str</code>, based on a narrower probe that did not test <code>jmp</code>, <code>blr</code>, or
+<code>jsrr</code>. The wider probe (<code>public_experiments/nocomma_negative_immediate_family/</code>)
+corrects that conclusion: the defect covers the entire <code>baser, offset6</code> instruction
+family. The two reports are intended to be sent together as a single upstream
+notification.</p>
+<p><strong>Distinct from the <code>mov</code> report (OB-008):</strong> a separate report covers cuh63 6.3&#39;s
+rejection of <code>mov dr, imm9</code> with a negative immediate —
+<a href="./cuh63-mov-immediate-bug-report.md"><code>docs/cuh63-mov-immediate-bug-report.md</code></a>.
+That issue is specifically the <code>mov</code> pseudo-instruction&#39;s validation logic
+(it rejects values the underlying <code>mvi</code> would accept); it is not a
+comma-vs-no-comma syntax issue and the <code>mvi</code> instruction is itself unaffected.
+The <code>mov</code> report was drafted independently and may be sent separately or
+bundled with this one at the sender&#39;s discretion.</p>
+<hr>
+<h2>Probe scripts (for full reproducibility)</h2>
+<p>The differential probe that produced the tables above is checked into the
+LCC.js parity-testing repository:</p>
+<ul>
+<li><a href="../public_experiments/nocomma_negative_immediate_family/"><code>public_experiments/nocomma_negative_immediate_family/</code></a>
+— <code>probe.js</code> assembles a one-instruction program for each case (comma and
+no-comma, positive and negative) under both cuh63 6.3 and LCC.js and diffs
+the emitted <code>.e</code> hex. Runnable with <code>LCC_ORACLE=/path/to/cuh63/lcc node probe.js</code>.</li>
+</ul>
+<p>I am happy to share full session logs or run extended probes if useful.</p>
+<p>Thank you for the educational tool.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

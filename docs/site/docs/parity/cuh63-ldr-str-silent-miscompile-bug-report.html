@@ -300,12 +300,23 @@ regardless of syntax form. If commas are optional syntactic sugar, the
 numeric-literal handling should not differ between the two paths.</p>
 <hr>
 <h2>Scope verification</h2>
-<p>Before sending this report, a broader probe was run to confirm the bug is
-isolated to the <code>ldr</code>/<code>str</code> offset6 parser path and does not affect
-adjacent instructions. The probe script and its summary live in
+<blockquote>
+<p><strong>UPDATE (probe #257, 2026-06-02):</strong> A wider probe showed the defect is
+<strong>not</strong> limited to <code>ldr</code>/<code>str</code>. The full <code>baser, offset6</code> family — <code>ldr</code>,
+<code>str</code>, <strong><code>jmp</code></strong>, <strong><code>blr</code>/<code>jsrr</code></strong> — is affected by the same silent-drop.
+Additionally, the <code>imm5</code>/<code>imm9</code> instructions (<code>add</code>, <code>sub</code>, <code>and</code>, <code>cmp</code>,
+<code>mvi</code>) exhibit a related hard-reject failure for no-comma negative
+immediates. A companion report covers the full family:
+<a href="./cuh63-nocomma-negative-operand-family-bug-report.md"><code>docs/cuh63-nocomma-negative-operand-family-bug-report.md</code></a>.
+The scope conclusion in this section (below) reflects the <strong>original</strong>,
+narrower probe and is superseded by the companion report.</p>
+</blockquote>
+<p>Before sending this report, a broader probe was run to confirm the bug
+affects the <code>ldr</code>/<code>str</code> offset6 parser path. The probe script and its
+summary live in
 <a href="../public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/"><code>public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/</code></a>
 in the LCC.js parity-testing repository.</p>
-<p>The probe verified that the following are unaffected:</p>
+<p>The original probe verified that the following are unaffected:</p>
 <ul>
 <li><strong>Comma-separated <code>ldr</code>/<code>str</code></strong> — the full offset6 signed range
 (−32..+31) assembles correctly with commas. The bug is entirely in the
@@ -317,8 +328,9 @@ these instructions.</li>
 correctly in cuh63 6.3. This is a distinct feature (address arithmetic
 in the operand expression) unrelated to the <code>offset6</code> tokenizer.</li>
 </ul>
-<p>Concentrating the suggested fix on the <code>ldr</code>/<code>str</code> no-comma offset6
-parser path is therefore safe and well-scoped.</p>
+<p>The wider probe (#257) confirms <code>ld</code>/<code>st</code>/<code>lea</code> and label arithmetic
+remain unaffected. The fix scope is the no-comma negative-integer parser,
+shared across the <code>baser, offset6</code> and <code>imm5</code>/<code>imm9</code> instruction families.</p>
 <hr>
 <h2>Comparison with the <code>mov</code> regression</h2>
 <p>A separate report covers another cuh63 6.3 regression: <code>mov dr, imm9</code>

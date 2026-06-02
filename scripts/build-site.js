@@ -65,8 +65,9 @@ const DOCS_SECTIONS = [
   { id: 'glossary',  label: 'Glossary',  srcDir: path.join(ROOT, 'docs', 'glossary')  },
   { id: 'parity',    label: 'Parity',    files: [
     path.join(ROOT, 'docs', 'parity_deviations.md'),
-    path.join(ROOT, 'docs', 'cuh63-mov-immediate-bug-report.md'),
+    path.join(ROOT, 'docs', 'cuh63-nocomma-negative-operand-family-bug-report.md'),
     path.join(ROOT, 'docs', 'cuh63-ldr-str-silent-miscompile-bug-report.md'),
+    path.join(ROOT, 'docs', 'cuh63-mov-immediate-bug-report.md'),
     path.join(ROOT, 'docs', 'cuh63-line-length-silent-split-bug-report.md'),
     path.join(ROOT, 'docs', 'cuh63-o-assemble-exit-code-bug-report.md'),
   ]},

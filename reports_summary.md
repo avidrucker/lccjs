@@ -12,20 +12,20 @@ series). Each oracle finding's verdict is one of: a confirmed original-LCC bug, 
 intentional/acceptable deviation we simply document, or inconclusive — 100% parity
 is **not** a goal.
 
-Last updated: 2026-05-30 (probe #257).
+Last updated: 2026-06-02 (#258 — full no-comma negative-operand family report drafted).
 
 ## Status at a glance
 
 | # | Area | Symptom (one line) | Severity | Report status |
 |---|------|--------------------|----------|---------------|
-| 1 | `ldr`/`str` no-comma neg `offset6` | negative offset silently encodes as **0** (silent miscompile) | **High** | Report **drafted**, not sent · **now broadened** (see #7) |
+| 1 | `ldr`/`str` no-comma neg `offset6` | negative offset silently encodes as **0** (silent miscompile) | **High** | Report **drafted**, not sent · superseded by family report (see #7/#8) |
 | 2 | `mov` immediate range (OB-008) | `mov` rejects negatives its own `mvi` accepts | Medium | Report **drafted**, not sent · gate now clear **→ Charlie** |
 | 3 | `jmp` with missing register | **segfaults** (vs a clean error) | Low* | No report (preserved deviation) |
 | 4 | undefined-label `br` | leaves a runnable **blank `.e`** for a *failed* assemble | Low* | No report (footgun, premise-corrected) |
 | 5 | long source line | no length check; line **silently split** into bogus source | Medium | Report **drafted**, not sent (#260) |
 | 6 | `sext` non-`2^k−1` selector | returns silent garbage; contract unspecified | Low–Med | **SENT** — awaiting reply (#159) |
-| 7 | no-comma neg `offset6` on `jmp`/`blr`/`jsrr` | same silent-→0 as #1, on more instructions | **High** | **NEW (probe #257)** — undocumented |
-| 8 | no-comma neg `imm5`/`imm9` | `add`/`sub`/`and`/`cmp`/`mvi` **reject** a negative that the comma form accepts | Medium | **NEW (probe #257)** — undocumented |
+| 7 | no-comma neg `offset6` on `jmp`/`blr`/`jsrr` | same silent-→0 as #1, on more instructions | **High** | **Drafted** — covered in family report `cuh63-nocomma-negative-operand-family-bug-report.md` |
+| 8 | no-comma neg `imm5`/`imm9` | `add`/`sub`/`and`/`cmp`/`mvi` **reject** a negative that the comma form accepts | Medium | **Drafted** — covered in family report `cuh63-nocomma-negative-operand-family-bug-report.md` |
 
 \* "Low" severity but a genuine defect; classified low because the trigger is a
 malformed/edge-case program rather than valid everyday source.
@@ -53,18 +53,19 @@ written yet. **NEW**: surfaced by this pass, not yet in any ledger.
 
 ## Drafted and ready — awaiting send
 
-### 1. `ldr`/`str` no-comma negative `offset6` → silent `0` (silent miscompile)
-- **Symptom:** `ldr r1 fp -1` (space-separated operands) assembles with **no
-  error**, writes a `.e`, but encodes `offset6 = 0` instead of `-1` (`6340` vs the
-  correct `637f`). The program then reads/writes the wrong address. The comma form
-  `ldr r1, fp, -1` is correct. **Silent miscompile — the most dangerous class here.**
-- **Report:** [`docs/cuh63-ldr-str-silent-miscompile-bug-report.md`](./docs/cuh63-ldr-str-silent-miscompile-bug-report.md)
-- **Evidence:** [`public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/`](./public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/)
-- **Status:** drafted, not sent; no upstream-ledger entry yet (unlike OB-008).
-- **Update (probe #257):** the same defect affects **`jmp`, `blr`, `jsrr`** too —
-  see #7. Recommend sending #1 and #7 as **one** report covering the whole
-  no-comma-negative family. `docs/parity_deviations.md` OG BUG #1 has been
-  broadened accordingly.
+### 1 / 7 / 8. No-comma negative-operand full family (silent miscompile + hard reject)
+- **Symptom:** the no-comma operand parser cannot read a negative integer, causing
+  two distinct failures depending on operand position:
+  - **Silent miscompile** — `ldr`, `str`, `jmp`, `blr`/`jsrr`: negative no-comma
+    `offset6` silently encodes as 0. `ldr r1 fp -1` → `6340` (wrong) vs comma
+    `ldr r1, fp, -1` → `637f` (correct). `jmp r1 -1` → `c040`; `blr r1 -1` → `4040`.
+  - **Hard reject** — `add`, `sub`, `and`, `cmp`, `mvi`: no-comma negative
+    `imm5`/`imm9` triggers `Error on line 1` + blank `.e`, while the comma form
+    and no-comma **positive** immediates assemble fine.
+- **Family report (primary):** [`docs/cuh63-nocomma-negative-operand-family-bug-report.md`](./docs/cuh63-nocomma-negative-operand-family-bug-report.md) — covers all seven instructions; ready to send.
+- **Original `ldr`/`str` report:** [`docs/cuh63-ldr-str-silent-miscompile-bug-report.md`](./docs/cuh63-ldr-str-silent-miscompile-bug-report.md) — superseded by the family report; retained as a historical record with an update notice.
+- **Evidence:** [`public_experiments/nocomma_negative_immediate_family/`](./public_experiments/nocomma_negative_immediate_family/), [`public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/`](./public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/)
+- **Status: drafted, not sent** — family report is complete (#258). Sending is the human's call; recommend bundling with the `mov` report (#2/OB-008) at sender's discretion.
 
 ### 2. `mov` rejects negative immediates that `mvi` accepts (OB-008)
 - **Symptom:** the shipped ISA summary defines `mov dr, imm9` as a pseudo-instruction
@@ -99,27 +100,8 @@ written yet. **NEW**: surfaced by this pass, not yet in any ledger.
 
 ## Confirmed, not yet drafted into a report
 
-### 7. No-comma negative `offset6` silent-drop on `jmp` / `blr` / `jsrr` — **NEW**
-- **Symptom:** the #1 defect is **not** limited to `ldr`/`str`. Every
-  `baser, offset6` instruction silently drops a negative no-comma offset to 0:
-  `jmp r1 -1` → `c040` (offset 0) vs comma `jmp r1, -1` → `c07f`; `blr`/`jsrr` →
-  `4040` vs `407f`. Verified for offsets −1 and −32; assembly succeeds with no
-  diagnostic. Single-operand `ret -1` is **not** affected.
-- **Evidence:** [`public_experiments/nocomma_negative_immediate_family/`](./public_experiments/nocomma_negative_immediate_family/)
-- **Status:** confirmed; folds into report #1 (send as one). Now noted in
-  `docs/parity_deviations.md` OG BUG #1. Tracked by **#258**.
-
-### 8. No-comma negative `imm5`/`imm9` rejected (not miscompiled) — **NEW**
-- **Symptom:** same root cause (no-comma parser can't read a negative integer) but,
-  for immediate-field instructions, it manifests as a **hard error** instead of a
-  silent drop. `add r0 r0 -1`, `sub`, `and`, `cmp`, `mvi r0 -1` all fail with
-  `Error on line 1` and leave a blank `.e` (see #4), while the comma form **and**
-  no-comma **positive** immediates (`add r0 r0 1` → `1021`) assemble fine. LCC.js
-  accepts all forms and encodes correctly.
-- **Evidence:** [`public_experiments/nocomma_negative_immediate_family/`](./public_experiments/nocomma_negative_immediate_family/)
-- **Status:** confirmed; less dangerous than #1/#7 (fails loud, modulo the #4
-  blank-`.e` footgun) but a real inconsistency. New entry (OG BUG #14) in
-  `docs/parity_deviations.md`. Tracked by **#258**.
+_(No items currently in this category — #7 and #8 are now covered by the family
+report under §1/7/8 above.)_
 
 ---
 
