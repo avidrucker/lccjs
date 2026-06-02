@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>sext-semantics-report — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1><code>sext</code> semantics in LCC — research &amp; bug report</h1>
+<p><strong>For:</strong> Prof. Anthony Dos Reis (LCC author)
+<strong>From:</strong> the LCC.js project (a JavaScript reimplementation of the LCC toolchain, validated for output parity against the <code>cuh63</code> 6.3 <code>lcc</code> binary)
+<strong>Re:</strong> GitHub issue #150 · base-ISA <code>sext</code> instruction
+<strong>Date:</strong> 2026-05-28</p>
+<hr>
+<h2>TL;DR</h2>
+<p>The <code>sext</code> (sign-extend) instruction takes a second operand that the ISA table
+describes only as <em>&quot;sr specifies field to extend.&quot;</em> Empirically, that operand is
+treated as a <strong>bitmask</strong> read from the runtime register value. <code>sext</code> produces a
+<strong>coherent</strong> sign-extension <strong>only when that mask is a contiguous low-order run
+of 1-bits</strong> (i.e. <code>sr ∈ {1, 3, 7, 15, 31, …} = 2^k−1</code>). For <strong>every other</strong>
+selector value (e.g. <code>2, 4, 5, 6, 8, …</code>) the result corresponds to <strong>no
+sign-extension of any field of the input</strong> — the output is non-monotonic and, as
+far as we can tell, an artifact of the implementation rather than a defined
+behavior.</p>
+<p>We believe this is <strong>(a) under-documented</strong> and quite possibly <strong>(b) a latent
+bug</strong> for non-contiguous selectors. This report shows the evidence and asks for
+the intended contract.</p>
+<hr>
+<h2>1. What the documentation says</h2>
+<p>From the LCC ISA (as transcribed in <code>docs/lcc-isa.md</code>), the <code>sext</code> row is:</p>
+<pre><code>| sext | 1010  dr   sr 0 01101 | nz | dr sign extended (sr specifies field to extend) |
+</code></pre>
+<p>So <code>sext</code> is opcode <code>1010</code> (the extended-group opcode 10), eb-field <code>01101</code>, with
+two 3-bit register operands <code>dr</code> and <code>sr</code>. The semantics are given as five words:
+<strong>&quot;dr sign extended (sr specifies field to extend).&quot;</strong></p>
+<p>Three readings of <em>&quot;sr specifies field to extend&quot;</em> are all plausible from the
+text alone:</p>
+<ol>
+<li><strong>Bit width N</strong> — <code>sr</code> holds a count; sign-extend the low <code>N</code> bits of <code>dr</code>.</li>
+<li><strong>Bit index i</strong> — <code>sr</code> holds a position; treat bit <code>i</code> of <code>dr</code> as the sign bit.</li>
+<li><strong>Bitmask</strong> — <code>sr</code> holds a mask; the set bits define the field.</li>
+</ol>
+<p>The documentation does not say which, nor does it state any constraint on the
+range or shape of <code>sr</code>. (Note also that <code>sr</code> is read at <strong>run time</strong> — it is the
+<em>value currently in the register</em>, not an immediate field — so the selector is
+generally data-dependent and not visible at assembly time.)</p>
+<h2>2. Method</h2>
+<p>A probe program holds a fixed input and sweeps the selector
+<code>r1 = 0 … 15</code>, printing <code>sext r0, r1</code> each time:</p>
+<pre><code class="language-asm">        mov r0, 10        ; input = 0x000A = 0b01010
+        mov r1, &lt;k&gt;       ; field selector
+        sext r0, r1
+        hout r0           ; print result
+</code></pre>
+<p>(Full source: <a href="../../experiments/sext_field_probe.a"><code>experiments/sext_field_probe.a</code></a>.)</p>
+<p>Run against the oracle <code>lcc</code> (cuh63 6.3):</p>
+<pre><code>cp sext_field_probe.a probe1.a &amp;&amp; printf &#39;TestUser\n&#39; &gt; name.nnn
+lcc probe1.a
+</code></pre>
+<h2>3. Results — input <code>0x000A</code> (<code>0b01010</code>), oracle <code>lcc</code></h2>
+<table>
+<thead>
+<tr>
+<th align="right">selector <code>r1</code></th>
+<th align="left">binary</th>
+<th align="left">oracle output</th>
+<th align="left">coherent sign-extend?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">0</td>
+<td align="left"><code>0000</code></td>
+<td align="left"><code>0x0000</code></td>
+<td align="left">— (empty mask → 0)</td>
+</tr>
+<tr>
+<td align="right"><strong>1</strong></td>
+<td align="left"><code>0001</code></td>
+<td align="left"><code>0x0000</code></td>
+<td align="left">✅ low <strong>1</strong> bit of <code>0b…0</code> = 0 → 0</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td align="left"><code>0010</code></td>
+<td align="left"><code>0x0002</code></td>
+<td align="left">✗ no field of <code>0b01010</code> sign-extends to <code>+2</code> here</td>
+</tr>
+<tr>
+<td align="right"><strong>3</strong></td>
+<td align="left"><code>0011</code></td>
+<td align="left"><code>0xFFFE</code></td>
+<td align="left">✅ low <strong>2</strong> bits = <code>0b10</code>, sign set → −2</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td align="left"><code>0100</code></td>
+<td align="left"><code>0xFFFB</code></td>
+<td align="left">✗ = −5; not any field of the input</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td align="left"><code>0101</code></td>
+<td align="left"><code>0xFFFA</code></td>
+<td align="left">✗ = −6</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td align="left"><code>0110</code></td>
+<td align="left"><code>0xFFFB</code></td>
+<td align="left">✗ = −5</td>
+</tr>
+<tr>
+<td align="right"><strong>7</strong></td>
+<td align="left"><code>0111</code></td>
+<td align="left"><code>0x0002</code></td>
+<td align="left">✅ low <strong>3</strong> bits = <code>0b010</code>, sign clear → +2</td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td align="left"><code>1000</code></td>
+<td align="left"><code>0x0008</code></td>
+<td align="left">✗ = +8</td>
+</tr>
+<tr>
+<td align="right">9</td>
+<td align="left"><code>1001</code></td>
+<td align="left"><code>0x0008</code></td>
+<td align="left">✗</td>
+</tr>
+<tr>
+<td align="right">10</td>
+<td align="left"><code>1010</code></td>
+<td align="left"><code>0x000A</code></td>
+<td align="left">✗ = +10</td>
+</tr>
+<tr>
+<td align="right">11</td>
+<td align="left"><code>1011</code></td>
+<td align="left"><code>0xFFFE</code></td>
+<td align="left">✗</td>
+</tr>
+<tr>
+<td align="right">12</td>
+<td align="left"><code>1100</code></td>
+<td align="left"><code>0xFFFB</code></td>
+<td align="left">✗</td>
+</tr>
+<tr>
+<td align="right">13</td>
+<td align="left"><code>1101</code></td>
+<td align="left"><code>0xFFFA</code></td>
+<td align="left">✗</td>
+</tr>
+<tr>
+<td align="right">14</td>
+<td align="left"><code>1110</code></td>
+<td align="left"><code>0xFFFB</code></td>
+<td align="left">✗</td>
+</tr>
+<tr>
+<td align="right"><strong>15</strong></td>
+<td align="left"><code>1111</code></td>
+<td align="left"><code>0xFFFA</code></td>
+<td align="left">✅ low <strong>4</strong> bits = <code>0b1010</code>, sign set → −6</td>
+</tr>
+</tbody></table>
+<p>The <strong>only</strong> selectors that produce a defensible sign-extension are
+<code>r1 ∈ {1, 3, 7, 15}</code> — exactly the values <code>2^k − 1</code>. For those, <code>sext</code> sign-extends
+the low-<code>k</code>-bit field of the input, which is the natural and useful behavior. The
+remaining twelve selectors return values that do not correspond to sign-extending
+<em>any</em> contiguous field of <code>0x000A</code>.</p>
+<h3>Corroborating data set (<code>experiments/sext_boundaries.a</code>)</h3>
+<table>
+<thead>
+<tr>
+<th align="left">input</th>
+<th align="right"><code>r1</code></th>
+<th align="left">binary mask</th>
+<th align="left">oracle</th>
+<th align="left">reading</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>0x00FF</code></td>
+<td align="right">3</td>
+<td align="left"><code>0b11</code> (2^2−1)</td>
+<td align="left"><code>0xFFFF</code></td>
+<td align="left">✅ low 2 bits <code>0b11</code>, sign set → −1</td>
+</tr>
+<tr>
+<td align="left"><code>0x0011</code></td>
+<td align="right">5</td>
+<td align="left"><code>0b101</code> (not 2^k−1)</td>
+<td align="left"><code>0xFFFB</code> (−5)</td>
+<td align="left">✗ incoherent</td>
+</tr>
+<tr>
+<td align="left"><code>0x00F0</code></td>
+<td align="right">7</td>
+<td align="left"><code>0b111</code> (2^3−1)</td>
+<td align="left"><code>0x0000</code></td>
+<td align="left">✅ low 3 bits <code>0b000</code> → 0</td>
+</tr>
+<tr>
+<td align="left"><code>0x0070</code></td>
+<td align="right">7</td>
+<td align="left"><code>0b111</code> (2^3−1)</td>
+<td align="left"><code>0x0000</code></td>
+<td align="left">✅ low 3 bits <code>0b000</code> → 0</td>
+</tr>
+</tbody></table>
+<p>Same conclusion: contiguous masks behave; the non-contiguous one (<code>r1=5</code>) does not.</p>
+<h2>4. Analysis</h2>
+<p>The evidence is consistent with <code>sext</code> treating <code>sr</code> as a <strong>bitmask whose
+contiguous low-order width defines the field to sign-extend</strong>:</p>
+<blockquote>
+<p><code>sext dr, sr</code> with <code>sr = 2^k − 1</code> ⟹ sign-extend the low <code>k</code> bits of <code>dr</code>.</p>
+</blockquote>
+<p>Under that contract, selectors that are <em>not</em> of the form <code>2^k − 1</code> are
+<strong>out-of-contract</strong>, and the values returned for them appear to be incidental
+output of the internal bit manipulation rather than a defined result. They are
+non-monotonic in both the selector and the input, so we could not fit them to any
+simple alternative rule (bit-index, popcount, highest-set-bit — none match).</p>
+<h2>5. The problem</h2>
+<ol>
+<li><strong>Ambiguous specification.</strong> &quot;sr specifies field to extend&quot; does not tell a
+programmer that <code>sr</code> is a <em>mask</em>, nor that it must be <code>2^k − 1</code>, nor what
+happens otherwise. A reasonable reader guesses &quot;bit width&quot; or &quot;bit index&quot; —
+both wrong.</li>
+<li><strong>Silent garbage for out-of-contract selectors.</strong> Because <code>sr</code> is a runtime
+value, a program that computes a selector and happens to land on a
+non-contiguous value (very easy — 12 of the low 16 values are non-contiguous)
+gets a silently wrong result with no diagnostic.</li>
+</ol>
+<h2>6. Questions / recommendations for the author</h2>
+<ol>
+<li><strong>What is the intended contract for <code>sr</code>?</strong> Is it a mask (<code>2^k − 1</code>), a width,
+or something else? Confirming this lets us document it precisely and decide
+whether the out-of-contract outputs are &quot;don&#39;t care&quot; or a bug.</li>
+<li><strong>If <code>sr</code> is meant to be a <code>2^k − 1</code> mask:</strong> could the ISA documentation say so
+explicitly (e.g. <em>&quot;sr is a mask of the form 2^k−1 selecting the low k bits;
+other values are undefined&quot;</em>), and could the toolchain optionally diagnose
+non-<code>2^k−1</code> selectors rather than returning silent garbage?</li>
+<li><strong>Is there a canonical idiom</strong> for <code>sext</code> in LCC course material we should
+mirror in our teaching demos? (Our demo that motivated this, <code>happy-path.a</code>,
+had <code>sext</code> stubbed precisely because its usage was unclear.)</li>
+</ol>
+<h2>7. Reproduction</h2>
+<pre><code class="language-bash"># Oracle (cuh63 6.3):
+cd $(mktemp -d) &amp;&amp; cp &lt;repo&gt;/experiments/sext_field_probe.a probe1.a
+printf &#39;TestUser\n&#39; &gt; name.nnn
+lcc probe1.a            # observe the r1=0..15 sweep
+
+# LCC.js (identical output — see §8):
+node src/core/lcc.js experiments/sext_field_probe.a
+</code></pre>
+<h2>8. LCC.js parity note (not a divergence)</h2>
+<p>LCC.js reproduces the oracle&#39;s <code>sext</code> output <strong>exactly</strong> for every case above —
+verified by <code>diff</code> of the full <code>r1 = 0…15</code> sweep. To achieve this, LCC.js could
+not implement <code>sext</code> as a formula; it ships a literal <strong>16 × 32 lookup table</strong>
+(<code>SEXT_PARITY_TABLE</code> in <code>src/core/interpreter.js</code>) capturing the oracle&#39;s output
+for selectors <code>0…15</code> over the low-5-bit input space, falling back to a raw-mask
+sign-extend for selectors <code>≥ 0x10</code>. The fact that matching the reference required
+hardcoding a table — rather than a one-line sign-extend — is itself evidence that
+the behavior for non-contiguous selectors is not specified by any simple rule.</p>
+<p>This report does not propose changing LCC.js (its job is to match the oracle). It
+asks the author to clarify or correct the reference semantics, after which both
+the documentation and LCC.js&#39;s table can be revisited.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

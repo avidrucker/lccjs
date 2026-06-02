@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>debugger-oracle-parity — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Report-artifact parity: lccjs vs oracle LCC (<code>.lst</code> / <code>.bst</code>, <code>.a</code> vs <code>.e</code>)</h1>
+<p>Findings for <strong>#145</strong> (spike under #13). Reproducible via
+<a href="../../experiments/debugger-report-parity-probe.sh"><code>experiments/debugger-report-parity-probe.sh</code></a>,
+which runs the 2×2 matrix — <code>{oracle, lccjs} × {run on .a, run on .e}</code> — snapshots all
+eight artifacts, and diffs the oracle-vs-lccjs pairs. Oracle = cuh63 <code>lcc</code> Ver 6.3
+(via <code>LCC_ORACLE</code>). Sample demo: <code>textbook_demos/ch03…/demo-009-static-linked-list.a</code>.</p>
+<h2>TL;DR</h2>
+<ul>
+<li><strong>No missing artifact.</strong> All four cases (<code>.lst</code>+<code>.bst</code> on <code>.a</code>, <code>.lst</code>+<code>.bst</code> on <code>.e</code>)
+are produced by <strong>both</strong> tools, with identical addresses / machine code / statistic
+<em>values</em>. The remembered &quot;missing <code>.bst</code> or <code>.lst</code>&quot; does <strong>not</strong> reproduce on a normal
+run <strong>nor</strong> under <code>-d</code> (both tools still write both files in debug mode).</li>
+<li>The real divergences are <strong>report <em>formatting</em></strong>, not content or presence. Six of them,
+catalogued below. One (<code>.a</code> source-line truncation) changes rendered content; the rest
+are whitespace/column geometry.</li>
+<li><code>#13</code>&#39;s premise should be re-framed: the gap is <strong>report-format parity</strong>, not a missing
+file. The one place that <em>does</em> deliberately differ (debug-trace output isn&#39;t folded into
+the listing) is by design and matches between tools at the file level.</li>
+</ul>
+<h2>The matrix (demo-009, bytes)</h2>
+<table>
+<thead>
+<tr>
+<th>artifact</th>
+<th>oracle</th>
+<th>lccjs</th>
+<th>present both?</th>
+<th>values match?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.lst</code> on <code>.a</code></td>
+<td>3141</td>
+<td>4020</td>
+<td>yes</td>
+<td>yes (see diff E)</td>
+</tr>
+<tr>
+<td><code>.bst</code> on <code>.a</code></td>
+<td>3885</td>
+<td>4353</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>.lst</code> on <code>.e</code></td>
+<td>935</td>
+<td>925</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>.bst</code> on <code>.e</code></td>
+<td>1534</td>
+<td>1480</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+</tbody></table>
+<p>Both also write <code>.lst</code>+<code>.bst</code> under <code>-d</code> (debug) on <code>.e</code>.</p>
+<h2>Observable differences (oracle ⇒ lccjs)</h2>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>where</th>
+<th>oracle</th>
+<th>lccjs</th>
+<th>kind</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>A</strong></td>
+<td>banner (line 1)</td>
+<td><code>LCC … Ver 6.3  Thu May 28 19:38:16 2026</code> (ctime-style date)</td>
+<td><code>LCC.js … Ver 0.1  Thu, May 28, 2026, 19:38:16</code></td>
+<td>product + <strong>date format</strong></td>
+</tr>
+<tr>
+<td><strong>B</strong></td>
+<td>Header <code>A</code>/<code>S</code> lines</td>
+<td><code>A     0000</code> (addr right-aligned in 5-wide field)</td>
+<td><code>A 0000</code> (single space)</td>
+<td>whitespace</td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td>Program-statistics block</td>
+<td>label padded to ~22, value right-aligned (<code>Input file name       =      d.e</code>)</td>
+<td>label padded wider, value left-set (<code>Input file name          =   d.e</code>)</td>
+<td>column widths</td>
+</tr>
+<tr>
+<td><strong>D</strong></td>
+<td>Source/Code column geometry</td>
+<td>LST source gutter starts ~col 11; BST header <code>Loc          Code</code></td>
+<td>gutter ~col 20; <code>Loc   Code</code></td>
+<td>column widths</td>
+</tr>
+<tr>
+<td><strong>E</strong></td>
+<td><code>.a</code> Source-Code column</td>
+<td><strong>truncates</strong> each source line to the listing width (~67 cols; comments cut mid-word)</td>
+<td>prints the <strong>full</strong> source line (≤109 cols)</td>
+<td><strong>rendered content</strong></td>
+</tr>
+<tr>
+<td><strong>F</strong></td>
+<td>BST data rows</td>
+<td>trailing space after the binary word</td>
+<td>trimmed</td>
+<td>trailing whitespace</td>
+</tr>
+</tbody></table>
+<p>A is expected (different product) except the gratuitous date-format difference. B–D + F are
+pure formatting. <strong>E is the only content-affecting one</strong> and is the most interesting: lccjs&#39;s
+untruncated output is arguably <em>better</em> for humans, so &quot;match the oracle exactly&quot; is a
+<strong>decision</strong>, not an obvious fix — flagged for the owner.</p>
+<h2>Hypotheses ruled out</h2>
+<ul>
+<li><em>&quot;Debug mode suppresses <code>.lst</code>/<code>.bst</code>.&quot;</em> — No. <code>-d</code> still writes both, on both tools.
+(<code>interpreter.js:364</code> <code>generateStats=false</code> is under <code>-nostats</code>, a separate branch from
+<code>-d</code> at <code>:366</code>; the default <code>generateStats=false</code> at <code>:157</code> is overridden to <code>true</code> by the
+CLI main at <code>:1749</code>, and <code>lcc.js:46</code> sets it <code>true</code>.)</li>
+<li><em>&quot;The <code>.e</code> path drops an artifact.&quot;</em> — No. <code>.e</code> runs produce both files on both tools.</li>
+</ul>
+<h2>Still open (cheap follow-ups, if the missing-artifact memory matters)</h2>
+<p>The missing-artifact symptom wasn&#39;t reproduced in CLI <code>.a</code>/<code>.e</code>/<code>-d</code> runs. If it was real it
+likely lives in a path this probe didn&#39;t drive:</p>
+<ul>
+<li>the <strong>interactive <code>ilcc</code>/<code>iinterpreter</code></strong> stepping session (not the <code>-d</code> core path);</li>
+<li>the <strong>500k-instruction auto-activation</strong> of the debugger (the probe demos are tiny);</li>
+<li>a now-fixed earlier state (the memory may predate a fix).</li>
+</ul>
+<p>Driving those is a small extension of the probe — folded into the #13 decomposition below.</p>
+<h2>Decomposition → build puzzles on #13</h2>
+<p>Report-format parity, smallest-first (each ≤60m; <strong>all gated by re-running the probe</strong>):</p>
+<ol>
+<li><strong>B</strong> — Header <code>A</code>/<code>S</code> address-line padding parity. (~20m)</li>
+<li><strong>F</strong> — match the oracle&#39;s trailing space on BST data rows (or normalize it in goldens). (~15m)</li>
+<li><strong>D</strong> — Source/Code column geometry (gutter + <code>Loc/Code</code> header width). (~30m)</li>
+<li><strong>C</strong> — Program-statistics block label/value alignment parity. (~30m)</li>
+<li><strong>A</strong> — banner date-format parity (keep <code>LCC.js</code>/version; match the date shape). (~20m)</li>
+<li><strong>E</strong> — <em>decision</em> + impl: match the oracle&#39;s source-line truncation, or keep
+lccjs&#39;s full lines and normalize goldens instead. Owner call first. (~30m once decided)</li>
+<li><strong>probe extension</strong> — drive the interactive <code>ilcc</code> + 500k auto-debug paths to rule the
+missing-artifact symptom fully in or out. (~30m) — overlaps the DRY spike #146.</li>
+</ol>
+<p>Add a <code>.e</code>-path oracle-parity test (the suite&#39;s <code>runOracle.js</code> only ever runs the oracle on
+<code>.a</code>; nothing exercises oracle-on-<code>.e</code> report parity today).</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

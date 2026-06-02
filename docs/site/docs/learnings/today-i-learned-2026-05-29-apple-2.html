@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-29-apple-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-29 (APPLE, session 2)</h1>
+<p>Date: 2026-05-29
+Agent: APPLE
+Context: A shorter second session, triage-driven. Closed <strong>#168</strong> (debug/format
+unit tests), <strong>#167</strong> (extracted the duplicated CLI exit scaffolding into
+<code>src/utils/cliExit.js</code>, −67 lines across 8 entry points), ran a spike on the
+claim auto-fruit collision (<strong>#193</strong>) and graduated it into <strong>#194/#195</strong>, then —
+at the user&#39;s request — ran a <strong>self-audit of my own PDD/Yegor process adherence</strong>
+(<strong>#203</strong>). The audit is the spine of this session&#39;s lessons: it caught
+discipline gaps I&#39;d have sworn I was following.</p>
+<hr>
+<h2>1. &quot;I followed the protocol&quot; is a hypothesis — test it against artifacts, not memory</h2>
+<p>Asked to self-assess, my first instinct was to recall what I did. That would have
+graded me generously. The honest signal came from <strong>cross-checking against git</strong>:
+commit timestamps proved my <code>actual_min</code> logging was honest (good), but they also
+proved <strong>no commit ever flipped a marker to <code>@inprogress</code></strong> — the &quot;claimed&quot; signal
+never reached <code>main</code> on any task, something I&#39;d have <em>claimed</em> I did. Memory
+self-confirms; artifacts don&#39;t.</p>
+<p><strong>The rule:</strong> audit process adherence against the durable record (git log, the
+CSV, the diff), never against self-report. Treat &quot;I did X&quot; as a claim to verify,
+especially when X is a step that leaves a trace.</p>
+<h2>2. Parallelizing calls can silently violate an <em>ordering</em> constraint</h2>
+<p>I batched <code>date</code> and <code>gh issue view &lt;N&gt;</code> in one parallel tool block every time —
+efficient, and wrong. The protocol wants the <strong>C estimate set <em>before</em> reading the
+issue</strong> (a blind forward prediction). Collapsing the two steps for throughput leaked
+the spec before the prediction, quietly destroying the calibration signal on three
+straight tasks.</p>
+<p><strong>The rule:</strong> parallelism is for <em>independent</em> work. When a protocol imposes an
+order — predict, <em>then</em> read — keep the steps separate even when the tool calls
+<em>could</em> run together. Speed that breaks a sequencing invariant isn&#39;t speed.</p>
+<h2>3. A step the <em>whole fleet</em> skips is doc-drift, not a discipline failure</h2>
+<p>The <code>@todo</code>→<code>@inprogress</code>-on-<code>main</code> flip: I skipped it — but so did banana (she
+got the same <code>&quot;consider flipping&quot;</code> nudge on #152). When <em>every</em> agent misses the
+same step, the cheap explanation (&quot;agents are sloppy&quot;) is probably wrong. The real
+cause: <code>puzzle:status</code> now reads the <em>worktree</em> as the claim signal, so the
+on-<code>main</code> flip became redundant ceremony. That reclassifies the finding from
+&quot;discipline&quot; to &quot;stale doc,&quot; with a different fix (reconcile the doc, → #201).</p>
+<p><strong>The rule:</strong> cross-agent consistency in a &quot;violation&quot; is evidence about the
+<em>rule</em>, not the agents. A step nobody performs is a candidate for deletion, not
+enforcement.</p>
+<h2>4. Fixing <em>when</em> you predict doesn&#39;t fix <em>what you predict from</em></h2>
+<p>The audit task itself (#203) was the experiment: I set its C estimate <strong>before</strong>
+doing any analysis (the corrected ordering from lesson 2) — and it was <em>still</em> <strong>9×
+high</strong> (35m predicted, 4m actual). So the read-ordering bug (F1) and the
+over-padding bias (F5) are <strong>independent</strong>. The padding comes from anchoring on the
+marker&#39;s <em>human</em> cap (30/60m) instead of my own recent actuals (TEST≈2m, DEV≈5m,
+SPIKE≈4m).</p>
+<p><strong>The rule:</strong> when two defects look like one, isolate them with a controlled case.
+Here, correcting the timing while holding everything else fixed proved the anchor
+was the real culprit — and that fixing F1 alone would have left a 9× error standing.</p>
+<h2>5. A spike&#39;s best output is often the non-obvious <em>negative</em> result</h2>
+<p>For #193 the cheap finding (&quot;identity is worktree-scoped&quot;) was already in banana&#39;s
+report. The finding that earns the spike its 45 minutes was the <strong>negative</strong> one:
+reconciling the code to its own header comment (scan <em>all</em> <code>&lt;fruit&gt;/*</code> branches)
+<strong>would not fix it</strong>, because the close protocol deletes the branch too — so only a
+session-lifetime artifact closes the gap. That&#39;s the result that stops the
+implementer from shipping a plausible non-fix.</p>
+<p><strong>The rule:</strong> in a spike, actively hunt for why the <em>tempting</em> fix fails. Ruling out
+the obvious-but-wrong path is usually worth more than restating the problem.</p>
+<h2>6. Match the container to the finding — not every finding is a ticket</h2>
+<p>The #193 spike and the #203 audit each produced a <em>mix</em> of outputs, and routing
+them by type mattered: code fix → ticket (<strong>#194</strong>), doc fix → ticket (<strong>#195</strong>),
+<strong>behavior</strong> fixes → a <strong>feedback memory</strong> (pre-flight checklist, no ticket),
+doc-<em>drift</em> → fold into the <strong>existing</strong> #201 rather than file a near-duplicate.
+Filing everything as tickets would have buried the behavior fixes where they&#39;d
+never fire, and duplicated #201.</p>
+<p><strong>The rule:</strong> sort findings by their nature before filing. Tickets are for
+code/doc <em>work</em>; persisted memory is for <em>behavior</em> changes; an existing ticket is
+the home for same-class drift. The container determines whether the fix actually
+gets applied.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/168">#168</a></td>
+<td><strong>Closed</strong> — <code>tests/new/debug.format.unit.spec.js</code>, 12 characterization cases for <code>h4</code>/<code>REG_NAMES</code>/<code>REG_ALIASES</code>.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/167">#167</a></td>
+<td><strong>Closed</strong> — extracted the duplicated <code>isTestMode</code> + exit helpers into <code>src/utils/cliExit.js</code>; 8 entry points import it; −67 lines; <code>interpreterplus</code> keeps its <code>resetProcessStdin</code> wrapper. Full suite green.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/193">#193</a></td>
+<td><strong>Closed</strong> (spike) — <code>docs/research/claim-fruit-session-scope.md</code>; identity is worktree- not session-scoped; recommended mandatory <code>--as</code> now + a session-sentinel branch if it recurs.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/194">#194</a> / <a href="https://github.com/avidrucker/lccjs/issues/195">#195</a></td>
+<td><strong>Filed + graduated</strong> — DEV session-sentinel fix (marker in <code>claim.js</code>) and WRITER docs fix (marker in <code>TODOS.md</code>).</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/203">#203</a></td>
+<td><strong>Closed</strong> (research) — <code>docs/research/process-adherence-self-audit-2026-05-29.md</code>; 6 adherence findings; behavior fixes persisted to the <code>process-adherence-fixes</code> agent memory.</td>
+</tr>
+</tbody></table>
+<h2>Open threads for tomorrow</h2>
+<ul>
+<li><strong>#188 keeps accreting concrete children</strong> (#193, #194, #195, #201 are all
+instances of the multi-agent-coordination gap). It now has enough real cases that
+<strong>re-scoping #188 as a spike</strong> is high-leverage — the next-best move in this area.</li>
+<li><strong>F2 doc-drift</strong> (the vestigial <code>@inprogress</code> flip) is proposed to <strong>fold into
+#201</strong>, not be filed separately — awaiting a go-ahead.</li>
+<li><strong>Tooling gap surfaced by this very doc:</strong> <code>npm run claim</code> is issue-centric, so
+there&#39;s no clean worktree path for <em>non-issue</em> closeout edits (TIL, velocity,
+triage cleanup). Today I treated those as a main-branch carve-out limited to
+<em>zero-contention, uniquely-named</em> files (this TIL) — explicitly <strong>not</strong> the hot
+<code>TODOS.md</code>, which is what made my session&#39;s F3 edits a real violation. That
+distinction (safe-unique-file vs hot-shared-file) is worth writing into the
+worktree convention.</li>
+</ul>
+<h2>Related artifacts</h2>
+<ul>
+<li><code>docs/research/process-adherence-self-audit-2026-05-29.md</code> — the #203 audit this
+TIL distills.</li>
+<li><code>docs/research/claim-fruit-session-scope.md</code> — the #193 spike (lesson 5&#39;s negative
+result).</li>
+<li><a href="./today-i-learned-2026-05-29-apple.md">TIL 2026-05-29 (apple)</a> — session 1; its
+lesson 2 (&quot;escalate the pattern, don&#39;t polish the workaround&quot;) is the same reflex
+that drove this session&#39;s self-audit.</li>
+<li>Agent memory <code>process-adherence-fixes</code> — the behavior-change checklist (lessons
+1–4, 6) in applied form.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

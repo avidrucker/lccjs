@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>string-escape-parity — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Research: <code>.string</code> escape-sequence parity — LCC.js vs OG LCC (#157)</h1>
+<p><strong>Agent:</strong> APPLE · <strong>Date:</strong> 2026-05-30 · <strong>Oracle:</strong> cuh63 6.3 <code>lcc</code></p>
+<p>Investigates #157: &quot;lccjs <code>.string</code> rejects <code>\n</code> escape that the oracle accepts
+(<code>Missing terminating quote</code>)&quot;, split from the #150 sext probe. Resolves the
+deferred research questions on which escape-handling path fails, why there are two
+handlers, and the oracle&#39;s full supported escape set.</p>
+<h2>TL;DR</h2>
+<ul>
+<li><strong>The headline bug does NOT reproduce.</strong> lccjs <code>.string &quot;hi\n&quot;</code> assembles and
+runs correctly (<code>\n</code> → newline). The exact repro from the issue produces no
+<code>Missing terminating quote</code>; it outputs <code>hi\n</code>. Shipped demos already depend on
+this (<code>demos/demoP.a</code> <code>&quot;Hi\n&quot;</code>, <code>demos/happy-path.a</code> <code>&quot;A\nmulti-line\nstring&quot;</code>),
+and a pre-existing test (#209 in <code>assembler.directives.integration.spec.js</code>)
+already pins escaped-newline assembly. <strong>#157&#39;s premise was a misdiagnosis</strong> —
+the side-observation, carried over from the #150 sext probe, that a <code>.string</code>
+banner&#39;s <code>\n</code> &quot;had to be removed to assemble&quot; simply does not reproduce. (#150
+itself is a separate, valid ticket about <code>sext</code> sign-extend semantics — <em>not</em>
+about string escapes.)</li>
+<li>The escape-handling code has been correct since commit <code>8639411</code> (<strong>2024-12-30</strong>),
+~17 months <em>before</em> #157 was filed (2026-05-29) — so this was never a regression
+that got fixed; the premise was wrong at filing time.</li>
+<li><strong>lccjs&#39;s supported escape set is identical to the oracle&#39;s special set:</strong>
+<code>\n \t \r \\ \&quot;</code> — byte-for-byte agreement (verified by <code>.e</code> diff).</li>
+<li><strong>The genuine — and opposite — divergence:</strong> for any escape <em>outside</em> that set,
+<strong>lccjs rejects</strong> with a clear <code>Unknown escape sequence: \X</code> error, while the
+<strong>oracle silently drops the backslash</strong> and emits the following character
+literally (<code>\0</code>→<code>0</code>, <code>\a</code>→<code>a</code>, <code>\q</code>→<code>q</code>, <code>\x41</code>→<code>x41</code>, <code>\101</code>→<code>101</code>). The oracle
+supports <strong>no</strong> C numeric/control escapes (<code>\0 \a \b \f \v</code>, hex, octal) — it just
+passes the char through.</li>
+<li><strong>Verdict: BY DESIGN — no lccjs code change.</strong> lccjs being <em>stricter</em> than the
+oracle is safer: a typo like <code>\m</code> becomes a loud error instead of silently
+swallowing the backslash. The deviation is documented (parity_deviations.md +
+core-behavior-matrix.md) rather than &quot;fixed&quot;.</li>
+</ul>
+<h2>Parity table</h2>
+<p><code>.string &quot;A&lt;seq&gt;B&quot;</code>, assembled by both tools; behavior of <code>&lt;seq&gt;</code>:</p>
+<table>
+<thead>
+<tr>
+<th>escape</th>
+<th>lccjs</th>
+<th>oracle</th>
+<th>parity</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>\n</code></td>
+<td><code>0x0a</code> newline</td>
+<td><code>0x0a</code> newline</td>
+<td>✓ identical</td>
+</tr>
+<tr>
+<td><code>\t</code></td>
+<td><code>0x09</code> tab</td>
+<td><code>0x09</code> tab</td>
+<td>✓ identical</td>
+</tr>
+<tr>
+<td><code>\r</code></td>
+<td><code>0x0d</code> CR</td>
+<td><code>0x0d</code> CR</td>
+<td>✓ identical</td>
+</tr>
+<tr>
+<td><code>\\</code></td>
+<td><code>0x5c</code> backslash</td>
+<td><code>0x5c</code> backslash</td>
+<td>✓ identical</td>
+</tr>
+<tr>
+<td><code>\&quot;</code></td>
+<td><code>0x22</code> quote</td>
+<td><code>0x22</code> quote</td>
+<td>✓ identical</td>
+</tr>
+<tr>
+<td><code>\0</code></td>
+<td><strong>error</strong> <code>Unknown escape sequence: \0</code></td>
+<td><code>&#39;0&#39;</code> (0x30) — backslash dropped</td>
+<td>✗ lccjs stricter</td>
+</tr>
+<tr>
+<td><code>\a</code> <code>\b</code> <code>\f</code> <code>\v</code></td>
+<td><strong>error</strong></td>
+<td><code>&#39;a&#39; &#39;b&#39; &#39;f&#39; &#39;v&#39;</code> — backslash dropped</td>
+<td>✗ lccjs stricter</td>
+</tr>
+<tr>
+<td><code>\&#39;</code></td>
+<td><strong>error</strong></td>
+<td><code>&#39;\&#39;&#39;</code> (0x27) — backslash dropped</td>
+<td>✗ lccjs stricter</td>
+</tr>
+<tr>
+<td><code>\x41</code> (hex)</td>
+<td><strong>error</strong></td>
+<td><code>x41</code> literal — NOT &#39;A&#39;</td>
+<td>✗ neither does C-hex</td>
+</tr>
+<tr>
+<td><code>\101</code> (octal)</td>
+<td><strong>error</strong></td>
+<td><code>101</code> literal — NOT &#39;A&#39;</td>
+<td>✗ neither does C-octal</td>
+</tr>
+<tr>
+<td><code>\q</code> (bogus)</td>
+<td><strong>error</strong></td>
+<td><code>&#39;q&#39;</code> — backslash dropped</td>
+<td>✗ lccjs stricter</td>
+</tr>
+</tbody></table>
+<p>Confirmed by byte-level <code>sout</code> hexdump: oracle <code>&quot;[\0]&quot;</code> → <code>5b 30 5d</code> (<code>[0]</code>),
+<code>&quot;[\a]&quot;</code> → <code>5b 61 5d</code> (<code>[a]</code>), <code>&quot;[\b]&quot;</code> → <code>5b 62 5d</code> (<code>[b]</code>) — i.e. the literal
+character, never the C control code. Probe:
+<code>public_experiments/string_escape_parity/</code>.</p>
+<h2>Answers to the issue&#39;s follow-up questions</h2>
+<ol>
+<li><strong>Which path fails — tokenizer (L902) or <code>parseString</code> (L967)?</strong> Neither, for
+the supported set. The tokenizer&#39;s <code>escape</code> flag (assembler.js:938–943) correctly
+prevents an escaped <code>\&quot;</code> from ending the string, so the closing quote is never
+lost — <em>that</em> is the mechanism the issue suspected was broken, but it works. For
+an <em>unsupported</em> escape, <code>parseString</code>&#39;s <code>default</code> branch (assembler.js:992–994)
+is what raises <code>Unknown escape sequence</code> — never <code>Missing terminating quote</code>.</li>
+<li><strong>Why two handlers?</strong> They do different jobs and both are needed: the tokenizer
+<code>escape</code> flag is a <strong>lexer</strong> concern (don&#39;t split a token on an escaped
+delimiter); <code>parseString</code> is the <strong>decoder</strong> (escape → byte). They are not
+redundant. Minor cleanup opportunity: the tokenizer only needs to recognise <code>\</code>
+as &quot;next char is literal for splitting purposes&quot; — it does not need to know the
+escape <em>set</em>, and currently doesn&#39;t. No unification warranted.</li>
+<li><strong>Oracle&#39;s full escape set:</strong> special-cased = <code>\n \t \r \\ \&quot;</code> only; everything
+else = drop-backslash passthrough. No octal/hex/<code>\0</code>/<code>\a</code> support.</li>
+<li><strong>Position dependence?</strong> None. <code>\n</code> works mid-string and immediately before the
+closing quote (the case the issue guessed &quot;breaks&quot;). Verified both.</li>
+<li><strong>Do shipped demos rely on it?</strong> Yes — <code>demos/demoP.a</code> and <code>demos/happy-path.a</code>
+use <code>\n</code> in <code>.string</code> and assemble/run fine, which alone disproves the headline.</li>
+</ol>
+<h2>Outcome</h2>
+<ul>
+<li><strong>No lccjs code change.</strong> Headline non-reproducible; the real divergence
+(strict-reject vs silent-passthrough on unknown escapes) is classified BY DESIGN.</li>
+<li>Regression tests added to <code>tests/new/assembler.directives.integration.spec.js</code>
+(describe &quot;Assembler .string escape sequences (#157)&quot;): pin the supported set&#39;s
+bytes and the clear <code>Unknown escape sequence</code> error.</li>
+<li><code>docs/core-behavior-matrix.md</code>: new <code>.string</code> escape row.</li>
+<li><code>docs/parity_deviations.md</code>: new BY DESIGN entry (lccjs stricter on unknown
+escapes).</li>
+<li>This is a lccjs↔oracle <em>leniency</em> difference, not an oracle bug — <strong>no report to
+Prof. Dos Reis</strong> (silent backslash-drop is sloppy but not a miscompile).</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

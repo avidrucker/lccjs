@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-31-apple-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-31 (APPLE, session 2)</h1>
+<p>Afternoon session: #295 (stale-artifact cleanup post-SQLite migration), #281 (agent instruction non-compliance root-cause research), #299 (velocity-log null-ticket gap), and a PM sprint — puzzle triage, 4-agent work assignment, bug-label audit, severity labeling.</p>
+<hr>
+<h2>1. The CSV is read-only — don&#39;t hand-edit it to resolve a rebase conflict</h2>
+<p>When <code>git pull --rebase</code> conflicted on <code>docs/puzzle-velocity.csv</code>, I reflexively opened the Edit tool to resolve the conflict markers by hand. The user stopped me. <strong>The CSV is a generated export from <code>~/.lccjs/velocity.db</code> — it must never be hand-edited.</strong> The correct resolution is:</p>
+<ol>
+<li>Abort the rebase (<code>git rebase --abort</code>).</li>
+<li>Drop the offending commit (<code>git reset --hard origin/main</code>).</li>
+<li>Re-export from the DB at close time (<code>npm run velocity:export</code> inside the closing worktree) — the DB already has the rows, so the export produces the correct file without any manual touching.</li>
+</ol>
+<p>Root cause: I committed the CSV from the main checkout after a direct <code>sqlite3</code> insert (needed because <code>velocity-log.js</code> rejects null tickets). That out-of-band commit created exactly the split-checkout conflict it was trying to avoid. The right path was always: DB rows live in <code>~/.lccjs/velocity.db</code>; let the closing worktree&#39;s export pick them up at commit time.</p>
+<h2>2. velocity-log.js had a null-ticket gap — now fixed (#299)</h2>
+<p><code>velocity-log.js</code> listed <code>ticket</code> as a required positive integer, but <code>docs/velocity-schema.md</code> marks it nullable. Issueless PM/triage rows need <code>ticket = NULL</code>. Workaround had been <code>sqlite3</code> direct insert. Fixed in the same session: removed <code>ticket</code> from <code>REQUIRED</code>, guard the type-check only when the field is provided. Closes #299.</p>
+<h2>3. merge=union doesn&#39;t fire on rebase — it only fires on merge</h2>
+<p>Encountered this twice in one session. <code>docs/puzzle-velocity.csv</code> carries <code>merge=union</code> in <code>.gitattributes</code>, but that driver fires for <code>git merge</code>, not <code>git rebase</code>. Under rebase, standard three-way merge applies and parallel CSV appends conflict. The mitigation is what the worktree workflow already prescribes: export only from the closing worktree, one writer at a time. Don&#39;t export ad-hoc from the main checkout.</p>
+<h2>4. Guards held; prose didn&#39;t — the #281 research finding in one sentence</h2>
+<p>Root-cause analysis across 8 violation instances from the 2026-05-29–31 period confirmed: every executable guard (claim refusing a closed issue, claim refusing a stale main, close.js verify-then-cleanup gate) caught its violation with zero misses. Every rule that lived only in prose or memory (<code>deliberate-tool-pacing</code>, &quot;tool failure means stop&quot;) was violated. The mitigation is converting load-bearing prose rules to guards, not rewriting the prose. Five follow-up puzzles filed in <code>docs/research/agent-instruction-compliance.md</code>.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

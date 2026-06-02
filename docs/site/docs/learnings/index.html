@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Learnings — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+
+  <h1>Learnings</h1>
+  <p class="subtitle">63 documents from <code>docs/learnings/</code></p>
+  <ul class="file-list">
+    <li><a href="./2026-05-25-lcc-oracle-e2e-bst-redundancy.html">2026-05-25-lcc-oracle-e2e-bst-redundancy.md</a></li>
+    <li><a href="./2026-05-26-pdd-adoption.html">2026-05-26-pdd-adoption.md</a></li>
+    <li><a href="./README.html">README.md</a></li>
+    <li><a href="./til-synthesis-2026-06-01.html">til-synthesis-2026-06-01.md</a></li>
+    <li><a href="./today-i-learned-2026-05-28-001.html">today-i-learned-2026-05-28-001.md</a></li>
+    <li><a href="./today-i-learned-2026-05-28-002.html">today-i-learned-2026-05-28-002.md</a></li>
+    <li><a href="./today-i-learned-2026-05-28-003.html">today-i-learned-2026-05-28-003.md</a></li>
+    <li><a href="./today-i-learned-2026-05-28-004.html">today-i-learned-2026-05-28-004.md</a></li>
+    <li><a href="./today-i-learned-2026-05-29-apple-2.html">today-i-learned-2026-05-29-apple-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-29-apple.html">today-i-learned-2026-05-29-apple.md</a></li>
+    <li><a href="./today-i-learned-2026-05-29-banana-2.html">today-i-learned-2026-05-29-banana-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-29-banana.html">today-i-learned-2026-05-29-banana.md</a></li>
+    <li><a href="./today-i-learned-2026-05-29-cherry-2.html">today-i-learned-2026-05-29-cherry-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-29-cherry.html">today-i-learned-2026-05-29-cherry.md</a></li>
+    <li><a href="./today-i-learned-2026-05-29-dragonfruit.html">today-i-learned-2026-05-29-dragonfruit.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-apple-2.html">today-i-learned-2026-05-30-apple-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-apple-3.html">today-i-learned-2026-05-30-apple-3.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-apple.html">today-i-learned-2026-05-30-apple.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-banana-2.html">today-i-learned-2026-05-30-banana-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-banana-3.html">today-i-learned-2026-05-30-banana-3.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-banana.html">today-i-learned-2026-05-30-banana.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-cherry-2.html">today-i-learned-2026-05-30-cherry-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-cherry-3.html">today-i-learned-2026-05-30-cherry-3.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-cherry.html">today-i-learned-2026-05-30-cherry.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-dragonfruit-2.html">today-i-learned-2026-05-30-dragonfruit-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-30-dragonfruit.html">today-i-learned-2026-05-30-dragonfruit.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-apple-2.html">today-i-learned-2026-05-31-apple-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-apple-3.html">today-i-learned-2026-05-31-apple-3.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-apple.html">today-i-learned-2026-05-31-apple.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-banana-2.html">today-i-learned-2026-05-31-banana-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-banana-3.html">today-i-learned-2026-05-31-banana-3.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-banana.html">today-i-learned-2026-05-31-banana.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-cherry-2.html">today-i-learned-2026-05-31-cherry-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-cherry-3.html">today-i-learned-2026-05-31-cherry-3.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-cherry.html">today-i-learned-2026-05-31-cherry.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-dragonfruit-2.html">today-i-learned-2026-05-31-dragonfruit-2.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-dragonfruit-3.html">today-i-learned-2026-05-31-dragonfruit-3.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-dragonfruit.html">today-i-learned-2026-05-31-dragonfruit.md</a></li>
+    <li><a href="./today-i-learned-2026-05-31-elderberry.html">today-i-learned-2026-05-31-elderberry.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-apple-2.html">today-i-learned-2026-06-01-apple-2.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-apple-3.html">today-i-learned-2026-06-01-apple-3.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-apple.html">today-i-learned-2026-06-01-apple.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-banana-2.html">today-i-learned-2026-06-01-banana-2.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-banana.html">today-i-learned-2026-06-01-banana.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-cherry-2.html">today-i-learned-2026-06-01-cherry-2.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-cherry-3.html">today-i-learned-2026-06-01-cherry-3.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-cherry-4.html">today-i-learned-2026-06-01-cherry-4.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-cherry-5.html">today-i-learned-2026-06-01-cherry-5.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-cherry-6.html">today-i-learned-2026-06-01-cherry-6.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-cherry.html">today-i-learned-2026-06-01-cherry.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-dragonfruit-2.html">today-i-learned-2026-06-01-dragonfruit-2.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-dragonfruit-3.html">today-i-learned-2026-06-01-dragonfruit-3.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-dragonfruit-4.html">today-i-learned-2026-06-01-dragonfruit-4.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-dragonfruit-5.html">today-i-learned-2026-06-01-dragonfruit-5.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-dragonfruit.html">today-i-learned-2026-06-01-dragonfruit.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-elderberry-2.html">today-i-learned-2026-06-01-elderberry-2.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-elderberry-3.html">today-i-learned-2026-06-01-elderberry-3.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-elderberry.html">today-i-learned-2026-06-01-elderberry.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-fig-2.html">today-i-learned-2026-06-01-fig-2.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-fig-3.html">today-i-learned-2026-06-01-fig-3.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-fig-4.html">today-i-learned-2026-06-01-fig-4.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-fig-5.html">today-i-learned-2026-06-01-fig-5.md</a></li>
+    <li><a href="./today-i-learned-2026-06-01-fig.html">today-i-learned-2026-06-01-fig.md</a></li>
+  </ul>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

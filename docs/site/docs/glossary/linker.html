@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>linker — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/" class="active">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Glossary index</a></div>
+  <div class="prose">
+<h1>Linker Glossary</h1>
+<p>LCC-specific vocabulary used in <code>src/core/linker.js</code> — how multiple <code>.o</code>
+object modules are concatenated into one <code>.e</code> executable: the per-link
+state tables, the link pipeline, external- and local-reference fix-up math,
+and output serialization. See <a href="./README.md">README</a> for entry conventions
+and the other module glossaries.</p>
+<hr>
+<h2>Definitions</h2>
+<h3>Machine Code Array (<code>mca</code>)</h3>
+<p>The linker&#39;s growing buffer of machine words concatenated from every linked object module. When <code>mca</code> is finally serialized in <code>[createExecutable]</code>, it becomes the code section after the <code>&#39;C&#39;</code> marker of the output <code>.e</code> file. Distinct from the assembler&#39;s <code>outputBuffer</code>: <code>mca</code> aggregates words across multiple input modules; <code>outputBuffer</code> is single-module-scoped.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:25, 42, 254-256</code>
+<strong>See also:</strong> [mcaIndex], [createExecutable]</p>
+<h3><code>mcaIndex</code></h3>
+<p>The next-write position in <code>[Machine Code Array (mca)]</code>. It does double duty: when a new object module is being registered, <code>mcaIndex</code> is <em>also</em> the &quot;module-start base&quot; added to every header entry&#39;s <code>address</code> (since the module&#39;s local addresses now sit at <code>mcaIndex .. mcaIndex + module.code.length</code>). For <code>&#39;A&#39;</code> entries it is captured separately as [<code>moduleStart</code>] so the fix-up phase can apply the same shift after other modules have been appended.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:26, 215, 222, 226, 232, 238, 245, 255</code>
+<strong>See also:</strong> [Machine Code Array (mca)], [processModule], [moduleStart]</p>
+<h3><code>GTable</code></h3>
+<p>Global symbol table for the <em>whole link</em>, mapping a label string to its final <code>[Machine Code Array (mca)]</code> address. Populated as each module&#39;s <code>&#39;G&#39;</code> entries are registered by <code>[processModule]</code>; consulted by every external-reference fix-up to resolve a placeholder offset/value into a concrete address. Duplicate labels across modules → <code>[Multiple-globals error]</code>.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:27, 218-223, 262, 272, 282</code>
+<strong>See also:</strong> [processModule], [adjustExternalReferences]</p>
+<h3><code>ETable</code> / <code>eTable</code> / <code>VTable</code></h3>
+<p>The three external-reference tables — one per fix-up encoding. Each entry is <code>{address, label}</code> where <code>address</code> is the (already-relocated) word position in <code>[Machine Code Array (mca)]</code> containing a placeholder, and <code>label</code> is the symbol to resolve via <code>[GTable]</code>. The capitalisation tracks the header-entry type byte the assembler emitted:</p>
+<ul>
+<li><code>ETable</code> (uppercase <code>E</code>) — 11-bit pc-offset placeholder for <code>bl</code> (range ±1024)</li>
+<li><code>eTable</code> (lowercase <code>e</code>) — 9-bit pc-offset placeholder for <code>ld</code> / <code>st</code> / <code>lea</code> / <code>br</code> (range ±256)</li>
+<li><code>VTable</code> (uppercase <code>V</code>) — full 16-bit value placeholder for <code>.word label</code></li>
+</ul>
+<p>The naming mirrors the on-disk header marker bytes — see <a href="assembler.md#e--o-file-format">.e / .o file format</a> for the byte-layout the assembler produces.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:28-30, 224-241, 259-287</code>
+<strong>See also:</strong> [GTable], [adjustExternalReferences]</p>
+<h3><code>ATable</code></h3>
+<p>Adjustment / local-reference entries. Each entry is <code>{address, moduleStart}</code> where <code>address</code> is the relocated word position holding a value to shift, and [<code>moduleStart</code>] is the offset the value&#39;s source module landed at when it was appended to <code>[Machine Code Array (mca)]</code>. Unlike the three external tables, <code>ATable</code> performs no symbol lookup — <code>[adjustLocalReferences]</code> just adds <code>moduleStart</code> to <code>mca[address]</code>.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:31, 242-246, 290-293</code>
+<strong>See also:</strong> [processModule], [adjustLocalReferences], [moduleStart]</p>
+<h3><code>moduleStart</code></h3>
+<p>A per-<code>&#39;A&#39;</code>-entry copy of <code>[mcaIndex]</code> taken at the moment the entry&#39;s module was being registered. Carried alongside the entry&#39;s address so <code>[adjustLocalReferences]</code> can apply the right offset once the link is complete — even though the live <code>mcaIndex</code> has moved on as later modules are concatenated.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:245-246, 291-293</code>
+<strong>See also:</strong> [ATable], [adjustLocalReferences]</p>
+<h3><code>start</code> / <code>gotStart</code></h3>
+<p><code>start</code> holds the entry-point address — the final <code>[Machine Code Array (mca)]</code> location the runtime should set PC to. <code>gotStart</code> is a one-shot latch: false until the first <code>&#39;S&#39;</code> header entry is seen; thereafter true, so any <em>second</em> <code>&#39;S&#39;</code> raises <code>[Multiple-entry-points error]</code>. The pair guarantees an LCC link has at most one entry point even when multiple modules each contribute their own <code>.start</code> directive.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:32-33, 211-216</code>
+<strong>See also:</strong> [processModule]</p>
+<h3><code>objectModules</code></h3>
+<p>The list of parsed modules accumulated by <code>[readObjectModule]</code>. Each entry has the shape <code>{headers, code}</code> returned by <code>[parseObjectModuleBuffer]</code>. The list is consumed in input order by <code>[link]</code>, which feeds each one to <code>[processModule]</code> — so module concatenation order matches the CLI argument order exactly.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:34, 160, 189</code>
+<strong>See also:</strong> [readObjectModule], [link]</p>
+<h3><code>parseObjectModuleBuffer</code></h3>
+<p>Pure-seam parser for an <code>.o</code> file. Input: a <code>Buffer</code> of bytes; output: <code>{headers: [{type, address, [label]}], code: [&lt;UInt16LE&gt;...]}</code>. Validates the <code>&#39;o&#39;</code> intro byte, reads header entries until <code>&#39;C&#39;</code>, then reads the rest as little-endian 16-bit words. Any parse failure throws <code>[LinkerError]</code>, so the same buffer-driven parser is reusable by tests and in-process wrappers without going through <code>[readObjectModule]</code>&#39;s filesystem path.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:84-153</code>
+<strong>See also:</strong> [readObjectModule], [LinkerError], <a href="assembler.md#e--o-file-format">.e / .o file format</a></p>
+<h3><code>readObjectModule</code></h3>
+<p>Filesystem wrapper around <code>[parseObjectModuleBuffer]</code>. Reads the named file with <code>fs.readFileSync</code>, hands the buffer to the pure seam, and pushes the resulting parsed module into <code>[objectModules]</code>. If a <code>[LinkerError]</code> escapes the parser, it is logged to stderr via <code>[error]</code> and re-thrown — test-mode callers see a typed exception without losing the stderr trail.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:156-167</code>
+<strong>See also:</strong> [parseObjectModuleBuffer], [objectModules], [error]</p>
+<h3><code>link</code></h3>
+<p>The top-level link pipeline: <code>resetState</code> → for each filename <code>[readObjectModule]</code> (with status print <code>&quot;Linking &lt;f&gt;&quot;</code>) → for each parsed module <code>[processModule]</code> → <code>[adjustExternalReferences]</code> → <code>[adjustLocalReferences]</code> → <code>[createExecutable]</code>. The order is significant: every <code>[GTable]</code> entry must be populated by <code>processModule</code> before external fix-ups look them up, and all <code>[Machine Code Array (mca)]</code> content must be in place before the executable is serialized.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:169-202</code>
+<strong>See also:</strong> [processModule], [adjustExternalReferences], [adjustLocalReferences], [createExecutable]</p>
+<h3><code>processModule</code></h3>
+<p>Registers one parsed module&#39;s headers into the appropriate per-link table, then appends its <code>code</code> words to <code>[Machine Code Array (mca)]</code>. Every header entry&#39;s <code>address</code> is rewritten to <code>header.address + mcaIndex</code> <em>before</em> it is stored, so all subsequent fix-up logic sees absolute <code>mca</code> positions rather than module-local offsets. For <code>&#39;A&#39;</code> entries, <code>[mcaIndex]</code> is <em>also</em> captured separately as <code>[moduleStart]</code> for the fix-up phase. Code words are written at <code>mca[mcaIndex++]</code> in order — module concatenation happens here.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:204-257</code>
+<strong>See also:</strong> [mca][Machine Code Array (mca)], [mcaIndex], [GTable], [ETable / eTable / VTable], [ATable]</p>
+<h3><code>adjustExternalReferences</code></h3>
+<p>Resolves every <code>[ETable / eTable / VTable]</code> entry against <code>[GTable]</code>. For each ref, computes the final value the placeholder word should hold:</p>
+<ul>
+<li><code>ETable</code> — rewrites the low 11 bits with the resolved pc-offset (preserves the top 5 bits — opcode + <code>b11</code> — via <code>&amp; 0xf800</code>).</li>
+<li><code>eTable</code> — rewrites the low 9 bits (preserves the top 7 via <code>&amp; 0xfe00</code>).</li>
+<li><code>VTable</code> — adds the resolved global address directly to the word (no masking; the assembler emitted <code>0</code> as the placeholder).</li>
+</ul>
+<p>A missing global at this point is fatal: <code>[Undefined-external-reference error]</code>. The same pc-offset formula <code>(current + Gaddr - ref.address - 1)</code> is used for both <code>ETable</code> and <code>eTable</code> — only the mask width differs.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:259-288</code>
+<strong>See also:</strong> [ETable / eTable / VTable], [GTable]</p>
+<h3><code>adjustLocalReferences</code></h3>
+<p>The last fix-up phase: walks <code>[ATable]</code> and adds each entry&#39;s <code>[moduleStart]</code> to <code>mca[ref.address]</code>. This corrects label-arithmetic words (<code>.word label+N</code>-style values emitted by the assembler relative to the module&#39;s own load base) — after module concatenation those base addresses have shifted, so the stored value needs the same shift applied.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:290-294</code>
+<strong>See also:</strong> [ATable], [moduleStart]</p>
+<h3><code>createExecutable</code></h3>
+<p>Serializes the final linked state to disk as a standard <code>.e</code> file: <code>&#39;o&#39;</code> signature → <code>&#39;S&#39;</code> entry (if <code>[gotStart]</code>) → all <code>[GTable]</code> entries → <code>&#39;A&#39;</code> entries derived from <code>[VTable]</code> (so the runtime sees a fix-up site for each full-value reference) → original <code>[ATable]</code> entries → <code>&#39;C&#39;</code> code marker → <code>[Machine Code Array (mca)]</code> as little-endian 16-bit words. The output of this method has the <em>same byte layout</em> as a fresh assembler-produced <code>.e</code> — there is nothing linker-specific about the file format itself.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:296-352</code>
+<strong>See also:</strong> <a href="assembler.md#e--o-file-format">.e / .o file format</a></p>
+<h3>Default output name (<code>linktest.e</code> vs <code>link.e</code>)</h3>
+<p>When <code>linker.js</code> is invoked standalone with no <code>-o</code> flag, the output defaults to <code>linktest.e</code> in the current working directory — matching the oracle&#39;s standalone <code>linker</code> binary. The oracle&#39;s <code>lcc</code> binary defaults to <code>link.e</code> instead; <code>lcc.js</code> always passes an explicit <code>outputFileName</code> so this fallback only ever applies to direct <code>linker.js</code> invocations. Both oracle tools use the CWD rather than the directory of the first input <code>.o</code>; using the latter was considered but rejected to preserve oracle parity.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:172-180</code>
+<strong>See also:</strong> <code>core-behavior-matrix.md</code> § &quot;Linker output location and default name&quot;</p>
+<h3><code>LinkerError</code></h3>
+<p>The typed error class for every linker parse / link failure. Wrapping link failures in a dedicated type lets test callers <code>catch</code> linker failures specifically without conflating them with arbitrary <code>Error</code>s, and lets future in-process wrappers route linker failures through their own handling without bouncing through <code>process.exit</code>.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:6</code> (import); <code>src/utils/errors.js</code> (definition)
+<strong>See also:</strong> [error]</p>
+<h3><code>error</code> (linker)</h3>
+<p>Internal helper: prints <code>message</code> to stderr, then throws a fresh <code>[LinkerError]</code> with the same message. The double behaviour (log + throw) means a single <code>error(&#39;…&#39;)</code> call satisfies both the operator-feedback path (stderr) and the typed-exception path (catchable in tests / <code>[link]</code> callers) without the caller having to duplicate either.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:354-357</code>
+<strong>See also:</strong> [LinkerError]</p>
+<h3>Multiple-entry-points error</h3>
+<p><code>&quot;Multiple entry points&quot;</code> — raised when a second <code>&#39;S&#39;</code> (start address) header entry is encountered across all linked modules. Implies the user is linking together two modules that both contain a <code>.start</code> directive; only one entry point is valid per <code>.e</code>.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:212-213</code>
+<strong>See also:</strong> [start / gotStart], [processModule]</p>
+<h3>Multiple-globals error</h3>
+<p><code>&quot;More than one global declaration for &lt;label&gt;&quot;</code> — raised when a label appears in a <code>&#39;G&#39;</code> header entry across more than one linked module. The link tools require exactly one <code>.global</code> declaration per label for the whole link.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:219-220</code>
+<strong>See also:</strong> [GTable], [processModule]</p>
+<h3>Undefined-external-reference error</h3>
+<p><code>&quot;&lt;label&gt; is an undefined external reference&quot;</code> — raised when a label declared as <code>.extern</code> in one module is not declared as <code>.global</code> in any other linked module. Caught at fix-up time, not parse time — the linker can&#39;t tell which <code>.extern</code>s are bogus until it knows the full set of globals.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:262-263, 272-273, 282-283</code>
+<strong>See also:</strong> [adjustExternalReferences], [GTable]</p>
+<h3>Parse-format errors</h3>
+<p>A small family of typed-error wordings from <code>[parseObjectModuleBuffer]</code> and <code>[readObjectModule]</code>:</p>
+<ul>
+<li><code>&quot;&lt;file&gt; not a linkable file&quot;</code> — missing <code>&#39;o&#39;</code> intro byte</li>
+<li><code>&quot;Invalid &lt;T&gt; entry&quot;</code> — truncated header entry of type <code>T</code></li>
+<li><code>&quot;Unknown header entry &lt;T&gt; in file &lt;f&gt;&quot;</code> — type byte not in the known set</li>
+<li><code>&quot;Invalid header entry: &lt;T&gt;&quot;</code> — same problem caught later in <code>[processModule]</code></li>
+</ul>
+<p>All are thrown as <code>[LinkerError]</code>s so callers can branch on parse-vs-link failure cleanly.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:88, 107, 119, 134, 142, 249</code>
+<strong>See also:</strong> [parseObjectModuleBuffer], [LinkerError]</p>
+<h3>CLI errors</h3>
+<p>A small family of <code>cliErrorExit</code>-routed messages for direct <code>linker.js</code> invocations:</p>
+<ul>
+<li><code>&quot;Usage: node linker.js [-o outputfile.e] &lt;object module 1&gt; &lt;object module 2&gt; ...&quot;</code> — no args</li>
+<li><code>&quot;Missing output file name after -o&quot;</code> — <code>-o</code> with no following value</li>
+<li><code>&quot;Error: No input object modules specified&quot;</code> — only <code>-o</code> flags, no <code>.o</code> files</li>
+</ul>
+<p>Unlike <code>[LinkerError]</code>, these go straight to <code>process.exit(1)</code> (or <code>throw</code> in test mode) — they reflect operator misuse rather than link-time failures.</p>
+<p><strong>Source:</strong> <code>src/core/linker.js:56-82</code>
+<strong>See also:</strong> [link]</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

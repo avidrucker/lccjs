@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>agent-identity-guidance-reconciliation — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Research — reconciling <code>--as</code> vs <code>CLAUDE_AGENT_NAME</code>, and making the docs/memory guide agents to the right identity practice</h1>
+<p><strong>Issue:</strong> <a href="https://github.com/avidrucker/lccjs/issues/223">#223</a> · <strong>Role:</strong> RESEARCH · <strong>Agent:</strong> CHERRY · <strong>Date:</strong> 2026-05-30 (HST)</p>
+<h2>Question</h2>
+<p>After #212 (<code>d1a4e28</code>) shipped <code>CLAUDE_AGENT_NAME</code>, there are two ways to pin a
+session&#39;s agent identity: the older per-call <code>--as &lt;name&gt;</code> and the new
+human-directed env var. How should the project&#39;s <strong>memory / skills / docs</strong> be
+reconciled so current and future agents reliably &quot;do the right thing&quot; — set the
+right identity, log velocity under it, and never silently mis-identify?</p>
+<h2>TL;DR — the reconciled practice</h2>
+<p>There is <strong>one</strong> correct story; the three mechanisms are a precedence ladder, not
+alternatives to choose between:</p>
+<table>
+<thead>
+<tr>
+<th>When</th>
+<th>Do</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Human named the agent at launch</td>
+<td>Human <code>export CLAUDE_AGENT_NAME=&lt;name&gt;</code>; agent runs a <strong>bare</strong> <code>npm run claim -- &lt;N&gt;</code></td>
+<td>#212 default; identity flows into branch, <code>git worktree list</code>, and the velocity <code>agent</code> column with nothing to remember</td>
+</tr>
+<tr>
+<td>Env var not set (or override one call)</td>
+<td>Agent passes <code>--as &lt;name&gt;</code> every claim</td>
+<td>per-call forced identity; the pre-#212 workaround, still the fallback</td>
+</tr>
+<tr>
+<td>Genuine first claim, solo session, no human name</td>
+<td>bare claim → <code>auto</code></td>
+<td>picks a fresh fruit; race-safe via detect-and-rollback</td>
+</tr>
+</tbody></table>
+<p>Precedence (in <code>claim.js</code> <code>resolveIdentity()</code>): <strong><code>--as</code> &gt; <code>CLAUDE_AGENT_NAME</code> &gt; <code>auto</code></strong>.</p>
+<p><strong>But all three are inert unless the agent is running the #212 <code>claim.js</code> from an
+up-to-date <code>main</code> — which is the gap no current doc covers (see Finding 1).</strong></p>
+<hr>
+<h2>Finding 1 (NEW, highest value) — <code>CLAUDE_AGENT_NAME</code> is silently inert on a stale local <code>main</code></h2>
+<p><code>scripts/claim.js</code> lives on <code>main</code> and is run from the local checkout. An agent
+whose local <code>main</code> has <strong>not</strong> been fast-forwarded to include #212 runs the <em>old</em>
+auto-only script, which never reads the env var — so the #212 fix is silently
+re-disabled by version skew, reproducing the exact bug it closed.</p>
+<p><strong>Reproduced live this session (#223 pickup):</strong></p>
+<pre><code>$ CLAUDE_AGENT_NAME=cherry npm run claim -- 223
+  CLAIMED  ·  agent: apple  (auto)        # env var ignored → auto-picked &#39;apple&#39;
+</code></pre>
+<p>Local <code>main</code> was at <code>d2ff450</code> (pre-#212); <code>grep -c CLAUDE_AGENT_NAME scripts/claim.js</code>
+returned <strong>0</strong> locally but <strong>7</strong> on <code>origin/main</code> (<code>5b9c447</code>). After
+<code>git pull --ff-only origin main</code>, the identical command returned <code>agent: cherry</code>.</p>
+<p>Two compounding harms, not one:</p>
+<ol>
+<li><strong>Mis-identification</strong> — the agent is labelled <code>apple</code>, not its real name, in
+the branch, <code>git worktree list</code>, and the velocity CSV.</li>
+<li><strong>Active collision risk</strong> — <code>auto</code> can hand out a fruit belonging to a <em>live</em>
+agent (the open #194 gap), so stale-main doesn&#39;t merely mislabel, it can clobber
+another agent&#39;s identity.</li>
+<li><strong>Stale base tree</strong> — <code>claim.js</code> stakes from the local <code>main</code> ref, so the
+worktree is also built on an out-of-date tree (missing other agents&#39; merged work),
+beyond just the identity issue.</li>
+</ol>
+<p><strong>This is the crux of the research question:</strong> the <em>tooling</em> fix (#212) is
+necessary but not sufficient; the <em>process</em> must guarantee agents sync <code>main</code>
+before claiming and know the env var exists. Neither is currently written down.</p>
+<hr>
+<h2>Finding 2 — Identity guidance is restated in 6 places; #212 updated only 3</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Location</th>
+<th>Mentions <code>CLAUDE_AGENT_NAME</code>?</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>docs/design-agent-worktree-identity.md</code> (§&quot;Human-directed identity&quot;, precedence table)</td>
+<td>✅ yes</td>
+<td><strong>current</strong> — the natural canonical source</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>scripts/claim.js</code> header (l.18–44)</td>
+<td>✅ yes</td>
+<td><strong>current</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>docs/claude_workflow.md</code> (l.98–99)</td>
+<td>✅ yes</td>
+<td><strong>current</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>memory <code>terminal-agent-name-vs-fruit</code></td>
+<td>✅ yes (updated 2026-05-30)</td>
+<td><strong>current</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td>memory <code>parallel-worktree-workflow</code> (step 2)</td>
+<td>❌ <strong>no</strong> — only <code>auto</code>/<code>--as</code></td>
+<td><strong>STALE</strong> (predates #212)</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>puzzle-velocity</code> skill — <code>agent</code> column rule</td>
+<td>❌ says &quot;the worktree <strong>fruit</strong> name&quot;</td>
+<td><strong>misaligned</strong> wording</td>
+</tr>
+</tbody></table>
+<p>Guidance restated in N places drifts: #212 had to touch 3+ of these and <em>still</em>
+missed #5 and #6. The durable fix is <strong>one canonical source + cross-references</strong>,
+not N hand-maintained copies (see Recommendation R5).</p>
+<hr>
+<h2>Finding 3 — The &quot;branch namespace is the source of truth&quot; claim is still wrong in 2 places</h2>
+<p>Both <code>claim.js</code> header (l.38–39) and <code>design-agent-worktree-identity.md</code> (l.36,
+l.70–74) assert <em>&quot;a fruit is taken iff a <code>&lt;fruit&gt;/*</code> branch exists — git&#39;s branch
+namespace is the single source of truth.&quot;</em> But <code>takenFruits()</code> (claim.js l.125–127)
+scans only <code>git worktree list</code> — <strong>worktree-attached</strong> branches, not the full
+namespace. This is the open #195/#194 inaccuracy (the <code>@todo #194</code> marker at
+claim.js:119 documents the same gap). It matters because it&#39;s the mental model that
+makes the #193 reuse-after-teardown collision <em>surprising</em> — the doc tells agents
+the namespace is authoritative when behaviour is worktree-scoped.</p>
+<hr>
+<h2>Recommendations (actionable, per-location, prioritized)</h2>
+<p><strong>R1 — Add &quot;sync <code>main</code> before claiming&quot; to the claim step.</strong> <em>(highest value; fixes Finding 1)</em></p>
+<ul>
+<li><code>docs/claude_workflow.md</code> claim step (l.98) and memory <code>parallel-worktree-workflow</code>
+step 2: prepend <em>&quot;Run <code>git pull --ff-only origin main</code> first — <code>claim.js</code> and its
+<code>CLAUDE_AGENT_NAME</code> support live on <code>main</code>; a stale local <code>main</code> silently runs the
+old auto-only script and can mis-identify or collide (evidence: #223).&quot;</em></li>
+<li>Tie it to the <code>puzzle-velocity</code> pickup protocol (the &quot;capture start&quot; step is the
+natural place to also &quot;sync main&quot;).</li>
+<li><strong>Follow-up DEV puzzle (recommended):</strong> make <code>claim.js</code> self-defending — <code>git fetch</code>
+and <strong>warn/abort if local <code>main</code> is behind <code>origin/main</code></strong>, or default <code>--base origin/main</code>. A guard in the tool is more reliable than a doc note. File against the
+identity tracker (#179) or as a child of #188.</li>
+</ul>
+<p><strong>R2 — De-stale memory <code>parallel-worktree-workflow</code> step 2.</strong> Add <code>CLAUDE_AGENT_NAME</code>
+as the primary identity mechanism (env var &gt; <code>--as</code> &gt; <code>auto</code>), plus the R1 sync-main
+note, and cross-link <code>[[terminal-agent-name-vs-fruit]]</code> + the design doc. <em>(Finding 2, row 5)</em></p>
+<p><strong>R3 — Correct the &quot;source of truth&quot; overstatement.</strong> In <code>claim.js</code> header (l.38–39)
+and <code>design-agent-worktree-identity.md</code> (l.36, l.70–74): say identity is
+<strong>worktree-scoped</strong> (<code>takenFruits()</code> reads <code>git worktree list</code>), not &quot;the branch
+namespace is the source of truth.&quot; Fold into the <strong>#195</strong> close (its scope already
+names these exact lines). <em>(Finding 3)</em></p>
+<p><strong>R4 — Align the <code>puzzle-velocity</code> skill <code>agent</code>-column wording.</strong> Change &quot;the
+worktree fruit name, uppercased&quot; to &quot;the human/terminal name the agent runs under —
+which, once <code>CLAUDE_AGENT_NAME</code>/<code>--as</code> is set, <strong>equals</strong> the worktree fruit; the
+old fruit-vs-terminal divergence only arises under bare <code>auto</code>.&quot; Cross-link
+<code>terminal-agent-name-vs-fruit</code>. <em>(Finding 2, row 6)</em></p>
+<p><strong>R5 — Designate ONE canonical identity source; make the rest pointers.</strong>
+<code>design-agent-worktree-identity.md</code> is the home (it has the precedence table + race
+model). <code>claude_workflow.md</code>, both memories, and the <code>claim.js</code> header should carry a
+<strong>one-line summary + link</strong>, not a restated copy of the precedence ladder. Then the
+next identity change (e.g. #194&#39;s session-sentinel) updates one place. <em>(Finding 2)</em></p>
+<p><strong>R6 — Add &quot;pull <code>main</code> before claim&quot; to the pre-flight checklist.</strong> Extend memory
+<code>process-adherence-fixes</code> (or a small new identity feedback memory) so the sync-main
+step is part of the standing pickup discipline, not just buried in one doc. <em>(Finding 1)</em></p>
+<h2>What is already good (do not regress)</h2>
+<ul>
+<li>The <strong>precedence model</strong> (<code>--as</code> &gt; <code>CLAUDE_AGENT_NAME</code> &gt; <code>auto</code>) is sound and well
+explained in the design doc and <code>claim.js</code> header.</li>
+<li><code>docs/claude_workflow.md</code> l.98–99 and memory <code>terminal-agent-name-vs-fruit</code> are
+current and correct post-#212.</li>
+<li>The dogfood loop works: once on current <code>main</code>, <code>CLAUDE_AGENT_NAME=cherry</code> produced
+the correct <code>cherry</code> identity — the mechanism itself is fine.</li>
+</ul>
+<h2>Suggested follow-up tickets</h2>
+<ul>
+<li><strong>DOCS</strong> (R2+R3+R5): reconcile identity guidance to one canonical source + de-stale
+the memory + fix the source-of-truth lines. R3 can ride #195; R2/R5 are new.</li>
+<li><strong>DEV</strong> (R1 tool guard): <code>claim.js</code> warns/aborts on stale local <code>main</code>.</li>
+<li><strong>SKILL</strong> (R4): one-line wording fix to the <code>puzzle-velocity</code> <code>agent</code>-column rule.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

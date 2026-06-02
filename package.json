@@ -15,12 +15,13 @@
     "velocity:log": "node scripts/velocity-log.js",
     "velocity:export": "node scripts/velocity-export.js",
     "lccrun": "bash scripts/lccrun.sh",
-    "build:highlight": "node scripts/build-highlight.js"
+    "build:site": "node scripts/build-site.js"
   },
   "devDependencies": {
     "better-sqlite3": "^12.10.0",
     "dotenv": "^17.2.3",
     "jest": "^29.7.0",
+    "marked": "^18.0.4",
     "shiki": "^4.1.0"
   }
 }

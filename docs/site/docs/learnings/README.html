@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>README — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Learnings — <code>docs/learnings/</code></h1>
+<p>Per-session <strong>&quot;Today I Learned&quot;</strong> (TIL) write-ups: the non-obvious, hard-won
+lessons from working this repo — process friction, tooling gotchas, ISA/parity
+surprises, and the conventions that emerged to fix them. Each agent writes one
+at the end of a working session.</p>
+<p>These are <strong>narrative retrospectives</strong>, not authority docs. When a lesson
+hardens into a rule it migrates into the relevant authority doc
+(<a href="../claude_workflow.md"><code>claude_workflow.md</code></a>, <a href="../puzzle-velocity.md"><code>puzzle-velocity.md</code></a>,
+the skills) — the TIL is where it&#39;s first noticed, not where it&#39;s enforced.</p>
+<blockquote>
+<p><strong>Standing follow-up:</strong> the lessons here are only mined into tracked work
+ad-hoc. <strong><a href="https://github.com/avidrucker/lccjs/issues/207">#207</a></strong> (marker at
+the top of this file) is the spike that systematically harvests them into
+codebase + process improvements. A lesson learned once by one agent shouldn&#39;t
+silently recur for the next.</p>
+</blockquote>
+<h2>Naming</h2>
+<ul>
+<li><code>today-i-learned-YYYY-MM-DD-&lt;agent&gt;[-&lt;session&gt;].md</code> — the per-session format
+(agent = the worktree fruit identity: APPLE, BANANA, CHERRY, …).</li>
+<li><code>YYYY-MM-DD-&lt;topic&gt;.md</code> — older topic-scoped retrospectives.</li>
+</ul>
+<h2>Writing guidelines</h2>
+<blockquote>
+<p><strong>Jargon rule:</strong> When using a project-specific term (workflow jargon, tool names, role codes), define it on first use in the doc or link to the <a href="../claude_workflow.md#concept-glossary-one-liners"><code>claude_workflow.md</code> Concept glossary</a>. If the term isn&#39;t in the glossary yet, add it there first (see <a href="https://github.com/avidrucker/lccjs/issues/479">#479</a>).</p>
+</blockquote>
+<h2>Index</h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Date</th>
+<th>Agent</th>
+<th>Themes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="./2026-05-25-lcc-oracle-e2e-bst-redundancy.md">oracle-e2e <code>.bst</code> redundancy</a></td>
+<td>2026-05-25</td>
+<td>—</td>
+<td>A redundant <code>.bst</code> golden in the <code>lcc.oracle.e2e</code> suite: the bug, the fix, and general golden-hygiene lessons.</td>
+</tr>
+<tr>
+<td><a href="./2026-05-26-pdd-adoption.md">adopting PDD on lccjs</a></td>
+<td>2026-05-26</td>
+<td>—</td>
+<td>Why/how PDD was adopted: the layering architecture, decomposition in practice, resolution lifecycle, and where it deviates from canonical Yegor.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-28-001.md">TIL 2026-05-28-001</a></td>
+<td>2026-05-28</td>
+<td>—</td>
+<td>Worktree isolation isn&#39;t a judgment call; one-shot spike scaffolding; de-noising docs; verify counts vs headings; asserting edit scripts; murky multi-pass velocity.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-28-002.md">TIL 2026-05-28-002</a></td>
+<td>2026-05-28</td>
+<td>—</td>
+<td>pdd&#39;s substring scan trips on uppercase <code>TODO</code>; close vs blocked-follow-up; share substrate not presentation; stale-marker debt; retract confident-wrong claims; blocked vs icebox.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-28-003.md">TIL 2026-05-28-003</a></td>
+<td>2026-05-28</td>
+<td>—</td>
+<td>&quot;File as puzzles&quot; = GH ticket not <code>@todo</code> (yet); read the tracker before filing; highest-value test = risk × testability; severity follows failure-visibility.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-28-004.md">TIL 2026-05-28-004</a></td>
+<td>2026-05-28</td>
+<td>—</td>
+<td><code>Closes #N</code> decouples GitHub from hand-maintained snapshots; quality pass = verification not discovery; sample the whole set before scoping; never hard-code issue numbers under concurrency; fixed-budget = ticket honesty.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-29-apple.md">TIL 2026-05-29 APPLE</a></td>
+<td>2026-05-29</td>
+<td>APPLE</td>
+<td>Never chain <code>rebase &amp;&amp; push</code>; a repeated manual workaround is a system bug; recover from outages read-only; prove what your commands touch; dogfood coordination conventions; shortest-estimate is a tiebreak.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-29-apple-2.md">TIL 2026-05-29 APPLE s2</a></td>
+<td>2026-05-29</td>
+<td>APPLE</td>
+<td>&quot;I followed the protocol&quot; is a hypothesis to test vs artifacts; parallelizing can violate ordering; fleet-wide skips are doc-drift; fix what you predict <em>from</em>; a spike&#39;s best output is a negative result; match container to finding.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-29-banana.md">TIL 2026-05-29 BANANA</a></td>
+<td>2026-05-29</td>
+<td>BANANA</td>
+<td>Oracle runs what it assembles (parity programs must terminate); audit the whole class on one glitch; re-assess &quot;epics&quot; vs current code; delete markers wherever they live; public docs mustn&#39;t link private repos; <code>npm run</code> eats flags without <code>--</code>.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-29-banana-2.md">TIL 2026-05-29 BANANA s2</a></td>
+<td>2026-05-29</td>
+<td>BANANA</td>
+<td>Auto-claim handed a live agent&#39;s identity (#193–#195); close-protocol doc drift (#201); <code>cea</code> is fp-relative <code>lea</code> (#152); <code>Read</code> false-positives <code>.a</code>/<code>.ap</code> as binary; push-gating hook bash/grep gotchas (#205/#188).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-29-cherry.md">TIL 2026-05-29 CHERRY</a></td>
+<td>2026-05-29</td>
+<td>CHERRY</td>
+<td><code>merge=union</code> fires under rebase too; derive rebased values, don&#39;t store them; prefer the project&#39;s claim tooling; trust VERSION/CHANGELOG over loaded frontmatter; close a process-changing ticket <em>using</em> the new process.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-29-cherry-2.md">TIL 2026-05-29 CHERRY s2</a></td>
+<td>2026-05-29</td>
+<td>CHERRY</td>
+<td>Live data is the tiebreaker when docs disagree (and the disagreement is a bug); a scope ticket is done when it spawns grabbable children; a guardrail stop means confirm not circumvent; verify outward effects landed; log live repros of documented bugs.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-29-dragonfruit.md">TIL 2026-05-29 DRAGONFRUIT</a></td>
+<td>2026-05-29</td>
+<td>DRAGONFRUIT</td>
+<td>Triage ranks importance, not what&#39;s already taken; precedent ≠ authorization for an external write; closing a ticket has a footprint beyond the tracker; a velocity row belongs to its own unit&#39;s ticket; <code>wontfix</code> with a forward path.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-cherry.md">TIL 2026-05-30 CHERRY</a></td>
+<td>2026-05-30</td>
+<td>CHERRY</td>
+<td>A tool living on <code>main</code> is silently stale on an un-synced checkout (the #212 fix ran inert → #228 guard); &quot;no files changed&quot; ≠ &quot;no logging&quot;; sharpen an existing complaint, don&#39;t duplicate it; a guard needs both its decision <em>and</em> its trigger proven; logging is data, commentary is noise.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-apple.md">TIL 2026-05-30 APPLE</a></td>
+<td>2026-05-30</td>
+<td>APPLE</td>
+<td>A gate that false-fails on the common path trains everyone to bypass it (#224); trace to the mechanism, fix the layer that closes every entry point; capture t0 live (reconstructed start = honesty tax); dogfood the fix on your next action; consolidate onto the <em>existing</em> convergence point, don&#39;t spawn a competitor; the worktree default prevents stale-base clobbers.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-cherry-2.md">TIL 2026-05-30 CHERRY s2</a></td>
+<td>2026-05-30</td>
+<td>CHERRY</td>
+<td>Root-caused upstream ≠ fix upstream — fix the layer that closes every entry point (#224 run-pdd symlink); a source scanner scans the code that <em>talks about</em> it (the keyword bit my own fix twice — comment + <code>UC_TODO</code> substring); a green regression test proves nothing until it&#39;s failed on the unfixed code; don&#39;t shell to <code>grep</code> for a metachar check (system <code>grep</code> may be <code>ugrep</code>) — use quoted <code>case</code>; the crash was shallow, the wrong doc model (<code>.pddignore</code> ∪ <code>.gitignore</code>, not SSOT) was the real find (#248/#249); reconstructed t₀ is an honesty tax.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-dragonfruit.md">TIL 2026-05-30 DRAGONFRUIT</a></td>
+<td>2026-05-30</td>
+<td>DRAGONFRUIT</td>
+<td>Don&#39;t store availability—derive it (a lock from a live worktree can&#39;t orphan, #222); batch label/state reads are cheap, native relationships expensive—never the source of truth; verify a ticket is OPEN before claiming (raced #223→filed #227); the <code>at_todo</code> trap bites CSV <em>data</em> too; cross-repo deliverable / single-repo log; <code>npm run</code> drops flags without <code>--</code> and a leftover branch blocks a forced re-claim; decide-then-execute via documented architect calls; estimates are data, not commentary.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-banana.md">TIL 2026-05-30 BANANA</a></td>
+<td>2026-05-30</td>
+<td>BANANA</td>
+<td>A coverage ticket that cites a bug usually wants a regression <em>pin</em>, not a repro (the #166 OB sites were all fixed); &quot;hard to test&quot; is itself a finding (#240/#241 off-TTY + stdin-prompt CLI bugs); when the named path is blocked, drop to the pure seam underneath; cleanup must be gated on a <em>confirmed</em> push — a newline is not an <code>&amp;&amp;</code> (#242 near-miss); <code>puzzle:status</code> only sees marker-backed work, read <code>git worktree list</code> for the real board.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-banana-2.md">TIL 2026-05-30 BANANA s2</a></td>
+<td>2026-05-30</td>
+<td>BANANA</td>
+<td>Batching tool calls makes me confabulate results — one command → read the real block → proceed (#227); don&#39;t invent an external cause (output &quot;corruption&quot;) for a self-inflicted discipline failure; a classifier denial is a feature catching a scope escalation; I re-committed the very lesson I was fixing (claimed a CLOSED issue without checking, #239).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-banana-3.md">TIL 2026-05-30 BANANA s3</a></td>
+<td>2026-05-30</td>
+<td>BANANA</td>
+<td>Fix the chokepoint, not the line in the stack trace (#259 <code>resetProcessStdin</code> hit via 4 paths); check whether the contract already exists before designing one (<code>nbain</code>→0 was the off-TTY answer); split the crisp fix from the fuzzy decision — ship one (#259), file the other (#272); a test forces adjacent correctness you&#39;d wave off as &quot;optional&quot; (cursor-escape leak); Edit/Write mangle literal control bytes — anchor on ASCII, assert via <code>String.fromCharCode(27)</code>; don&#39;t clobber another agent&#39;s uncommitted work to satisfy a guard (<code>--allow-stale-main</code>); &quot;available&quot; ≠ &quot;ready&quot; — the gate can live in the body, not a label (#268 dep on #266).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-apple-2.md">TIL 2026-05-30 APPLE s2</a></td>
+<td>2026-05-30</td>
+<td>APPLE</td>
+<td>&quot;Match the oracle&quot; is wrong when the oracle silently corrupts — a louder/earlier failure is BY DESIGN, not a parity bug (#244 no line-length limit, 298-char buffer splits silently); before adding an exclude over a path the tool can run <em>from</em>, check the symmetric self-exclude case — anchor with <code>&lt;rootDir&gt;</code>, prove it with <code>--listTests</code> (#247 jest worktree leak); convert a permanently-skipped test into an active assertion or a deleted placeholder pointing at a findings doc.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-apple-3.md">TIL 2026-05-30 APPLE s3</a></td>
+<td>2026-05-30</td>
+<td>APPLE</td>
+<td>A bug ticket&#39;s premise is a claim — reproduce on current <code>main</code> first (#157 <code>\n</code> worked for ~17mo, demos depend on it); when the headline doesn&#39;t reproduce, the <em>adjacent</em> truth is the finding (oracle silently drops unknown-escape backslashes, lccjs errors — BY DESIGN); &quot;split from #X&quot; makes #X the parent, not the claim (mislabeled #150 the misdiagnosis — human caught it); &quot;depends on #N&quot; can be a typo — ground-truth a block by whether the artifact exists + <code>git worktree list</code> (#267 → really #266); a report&#39;s &quot;shared root cause&quot; is a probe spec, sweep the family (#257 no-comma spans <code>jmp</code>/<code>blr</code>/<code>jsrr</code> + <code>imm5</code>/<code>imm9</code>); highest-severity ≠ best-next (owner-gated/epic rank high but aren&#39;t grabbable); the shared <code>main</code> checkout can hold another agent&#39;s uncommitted WIP — worktree on clean <code>origin/main</code>.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-dragonfruit-2.md">TIL 2026-05-30 DRAGONFRUIT s2</a></td>
+<td>2026-05-30</td>
+<td>DRAGONFRUIT</td>
+<td>I confabulated #241 as a fictional &quot;30-byte cap&quot; and wrote a whole doc before reading the issue — the batch-calls-assume-success trap on the <em>write</em> side; a clean-room repro must neutralize the cwd <code>name.nnn</code> cache or it lies; &quot;it already works&quot; (OG has no author flag, only <code>name.nnn</code>, already mirrored) is a valid research answer; surface out-of-scope deltas as tickets (#269/#270) not as a while-I&#39;m-here fix; a label is only useful with a self-explaining <code>--description</code>; <code>gh issue create</code> isn&#39;t idempotent — a queued retry double-filed (#273/#274); the stale-main claim guard is right, base the worktree on <code>origin/main</code>.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-30-cherry-3.md">TIL 2026-05-30 CHERRY s3</a></td>
+<td>2026-05-30</td>
+<td>CHERRY</td>
+<td>Dogfooding <code>close.js</code> (#266) found two bugs the smoke tests missed — the <code>pre-push</code> banner prints on every push so success can&#39;t be string-matched (exit code is the authority), and &quot;failed to push some refs&quot; is git&#39;s generic any-failure summary, not a race; the <code>at_todo</code> trap bit a <code>TODOS.md</code> mention in a code comment; committing from a worktree path a <em>failed</em> claim never created landed tracked junk under <code>.claude/</code> on main (now gitignored) — a claim failure means there&#39;s no worktree, stop; batched calls → confabulated state (the root of every error this session, re-affirmed <code>deliberate-tool-pacing</code>); a guard that makes the unsafe path <em>impossible</em> (#227/#228/#266 gate) holds even when the layer above it is buggy.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-banana.md">TIL 2026-05-31 BANANA</a></td>
+<td>2026-05-31</td>
+<td>BANANA</td>
+<td>No validated write path = recurring CSV corruption; SQLite eliminates the format-error class that CSV tooling cannot; auto-export on write keeps the generated file always current; DB location outside the repo solves cross-worktree access; run velocity-log from the committing worktree, not main; atomic writes (tmp + rename) are non-negotiable for generated files; walk architectural decisions phase-by-phase with the user, not as one front-loaded approval.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-apple.md">TIL 2026-05-31 APPLE</a></td>
+<td>2026-05-31</td>
+<td>APPLE</td>
+<td><code>at_todo</code> trap bites shell script echo strings (third surface: code comments, CSV data, now string literals); parallel issue filing breaks cross-links — file siblings sequentially; git worktree <code>.git</code> is a file, use <code>--git-common-dir</code> in hook installers; committed derived artifacts create silent staleness + crash risk; two-tier approach prevents artifact catalogs from becoming file-tree dumps; document <em>why</em> a workaround exists so its retirement condition is clear (<code>merge=union</code> → SQLite).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-cherry.md">TIL 2026-05-31 CHERRY</a></td>
+<td>2026-05-31</td>
+<td>CHERRY</td>
+<td>Exit code is the authority, don&#39;t parse git prose to decide success; dogfood a tool against its own close before trusting it; a tool failure means the precondition didn&#39;t happen — stop; every error traced to batching tool calls (enforcement-asymmetry lesson: guards held, prose didn&#39;t — that&#39;s the fix); re-verify the board before reporting it, stale worktrees lie.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-dragonfruit.md">TIL 2026-05-31 DRAGONFRUIT</a></td>
+<td>2026-05-31</td>
+<td>DRAGONFRUIT</td>
+<td>Pre-flight start timestamp is not optional — proved by skipping it (empty <code>started_iso</code>); the <code>at_todo</code> trap is meta-recursive in velocity notes (a row describing having dropped a marker contained the live form); two omissions, not one — the velocity row and the worktree for the row are independent obligations; <code>puzzle:status</code> + <code>git worktree list</code> are complements not alternatives; stale worktrees outlive closed issues.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-banana-2.md">TIL 2026-05-31 BANANA s2</a></td>
+<td>2026-05-31</td>
+<td>BANANA</td>
+<td>A dirty <code>package-lock.json</code> alone is safe to force-remove; do the data-integrity audit before the process-mapping research (concrete evidence first); keyword-overlap mismatch heuristic finds gross transpositions but has a high false-positive rate (7/9); only 1 unrecovered mis-close in 233 issues — the system is more robust than feared; file the ARCHITECT follow-up immediately, don&#39;t leave guard recs as stranded prose.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-apple-2.md">TIL 2026-05-31 APPLE s2</a></td>
+<td>2026-05-31</td>
+<td>APPLE</td>
+<td>CSV is read-only generated (never hand-edit conflict markers in it); null-ticket gap fixed (#299); <code>merge=union</code> only fires on merge, not rebase; guards held 8/8, prose rules violated 8/8 — the fix is converting prose to guards.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-apple-3.md">TIL 2026-05-31 APPLE s3</a></td>
+<td>2026-05-31</td>
+<td>APPLE</td>
+<td>Prose violations happen even mid-documentation — guards are structural, not discipline; <code>.git</code> file vs directory is the clean worktree detector; research deliverables should name the exact implementation site; smoke-test inserts pollute the global DB; N-location prose drifts, N=1+links doesn&#39;t.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-banana-3.md">TIL 2026-05-31 BANANA s3</a></td>
+<td>2026-05-31</td>
+<td>BANANA</td>
+<td>Guard before mutation not after (partial state is cleanup debt); hard failure + named escape hatch beats a warning; Guard 1 &quot;all rows match&quot; too strict for full-file exports — need &quot;match present&quot;, not &quot;no mismatch&quot; (#346); CSV auto-resolve rewrites the SHA close.js uses for teardown gating (#350); SQLite made the DB write safe but not the export path; always <code>--as &lt;fruit&gt;</code> on claim; stubs make a skill shippable — document gaps, don&#39;t paper over them.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-dragonfruit-3.md">TIL 2026-05-31 DRAGONFRUIT s3</a></td>
+<td>2026-05-31</td>
+<td>DRAGONFRUIT</td>
+<td>OG LCC blank-.e is universal across all error types (not just undefined labels) — two sizes by pass phase; oracle requires cwd+basename invocation (absolute paths give &quot;Bad command line switch&quot; exit 2); velocity commit must reference <code>Closes #N</code> or close.js blocks on HEAD check; regex-from-end extracts simple trailing CSV fields without a full parser; SHA-rewrite issue consistently orphans worktree — cleanup does NOT happen automatically, manual teardown always needed (#350).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-cherry-3.md">TIL 2026-05-31 CHERRY s3</a></td>
+<td>2026-05-31</td>
+<td>CHERRY</td>
+<td>Hit the batching footgun <em>while building its guard</em> — plan-mode one-call-per-step discipline held where the memory rule didn&#39;t (primary evidence for #316); my own Guard 1 (#310) blocked my own closes twice, correctly — sync+re-export, never <code>--skip</code>; adversarially verify a load-bearing research claim against the <em>primary</em> source (distrusted 2 sub-agents on <code>PostToolBatch</code>, WebFetched the docs — half-wrong: skepticism right, claim true); the success route is the dangerous one — <code>close.js</code> kills its own cwd (close must be the lone last call) and gates on a SHA its own rebase rewrites (#350, reproduced).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-05-31-elderberry.md">TIL 2026-05-31 ELDERBERRY</a></td>
+<td>2026-05-31</td>
+<td>ELDERBERRY</td>
+<td>Parallel <code>gh issue create</code> jobs assign numbers by arrival not submission — @todo markers get wrong issue numbers; notebook-editing script writes before asserting — re-running inserts duplicates; full marker audit prevents shipping pointers to closed issues; &quot;not significant&quot; ≠ &quot;uninformative&quot; (n=4 Spearman has ~5% power); SHA-rewrite after close is a known #350 failure mode, not a real close failure.</td>
+</tr>
+<tr>
+<td><a href="./til-synthesis-2026-06-01.md">TIL synthesis 2026-06-01</a></td>
+<td>2026-06-01</td>
+<td>ELDERBERRY</td>
+<td>#207 harvest: 4 tier-1 process defects (batching confabulation, at_todo trap, guards-vs-prose meta, SHA-rewrite); 6 proposed follow-on puzzles P-1..P-6; periodicity recommendation (every ≥10 new TILs).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-01-fig.md">TIL 2026-06-01 FIG</a></td>
+<td>2026-06-01</td>
+<td>FIG</td>
+<td>Case-sensitive <code>--as</code> warning was the bug; GitHub API vs push warning text; <code>assembleFile()</code> early-return for <code>.hex</code> bypasses two-pass assembly; surfacing already-computed data; FIXED vs DOCUMENTED resolution kinds.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-01-elderberry.md">TIL 2026-06-01 ELDERBERRY</a></td>
+<td>2026-06-01</td>
+<td>ELDERBERRY</td>
+<td>ARC follow-on + comment is part of the deliverable (caught on #188); sanity-check neighboring entries (all 3 parity §4–6 were stale); &quot;already fixed&quot; is a valid research outcome (#324); SHA-rewrite cosmetic recovery; recurrence is the signal the synthesis reveals.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-01-cherry.md">TIL 2026-06-01 CHERRY</a></td>
+<td>2026-06-01</td>
+<td>CHERRY</td>
+<td>Doc-audit session: verify load-bearing claims against the <em>source</em>, not secondary docs (caught two accurate-docs-about-to-be-broken: OB-001 <code>mov</code> already fixed, <code>LOCKED</code> state real); close.js Guard 1 collides when velocity agent ≠ branch prefix — set <code>CLAUDE_AGENT_NAME</code> to avoid (#361); findings become their own BDD tickets not comments (#361/#364/#369); cwd resets after worktree teardown — <code>cd</code> explicitly in post-close commands.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-01-cherry-2.md">TIL 2026-06-01 CHERRY s2</a></td>
+<td>2026-06-01</td>
+<td>CHERRY</td>
+<td>The &quot;~45m/DEV decomplect&quot; estimate is a guess not a contract — grep the consumers first (#255 was ~450 refs + a public-API decision → architect #388; #251 was internal-only → a real 45m extraction); &quot;no behavior change&quot; earns a <em>mechanical</em> proof (84-file corpus diff #256, exhaustive 65536-word <code>decode</code> equivalence #251); a refactor&#39;s verify-diff is a bug detector — file what it finds, don&#39;t fix inline (pre-existing <code>.o</code> crash → #384); learn to see the embedded architectural decision and hand it off (#384/#388); velocity-logger sharp edges (fixed role set, canonical <code>opus-4.8</code> not <code>claude-opus-4-8</code>, <code>--from-main</code> <em>after</em> the JSON); use the assigned name, not the claim tool&#39;s auto fruit (#386).</td>
+</tr>
+</tbody></table>
+<h2>Recurring threads (informal — #207 will formalize)</h2>
+<p>A few lessons already recur across multiple agents/sessions — exactly the signal
+#207 is meant to catch:</p>
+<ul>
+<li><strong>Marker hygiene</strong> — closing a ticket isn&#39;t done until its <code>@todo</code> is deleted
+<em>wherever it lives</em> (28-002 #4, 29-banana #4, 29-dragonfruit #3).</li>
+<li><strong>Close-protocol doc drift</strong> — <code>claude_workflow.md</code> vs <code>puzzle-velocity.md</code>
+disagree on the close sequence (29-banana-2 #2, 29-cherry-2 #1; tracked as #201).</li>
+<li><strong>Outward actions need explicit authorization</strong> — precedent isn&#39;t a green light
+for writes to shared/external systems (29-cherry-2 #3, 29-dragonfruit #2).</li>
+<li><strong>Test against artifacts, not memory</strong> — &quot;I followed the protocol&quot; / counts /
+predicted issue numbers must be verified against ground truth (28-001 #4,
+28-004 #4, 29-apple-2 #1).</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

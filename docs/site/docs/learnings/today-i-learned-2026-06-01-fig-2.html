@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-01-fig-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-01 — FIG (session 2)</h1>
+<p><strong>Research:</strong> #208 — De-confound velocity over-time drift (HST day-bucketing + per-role correction constants)<br><strong>Data basis:</strong> 4 notebook runs across 63, 71, 71 (HST-fixed), and 136 calibration rows; 4 HST working days.</p>
+<hr>
+<h2>1. A tz fix can sharpen the signal it was supposed to remove</h2>
+<p>The working hypothesis for #208 was: UTC day-bucketing manufactured a spurious third day
+(UTC 05-30 was really the 05-29 HST evening), and merging it back into day-2 would weaken
+or kill the apparent over-time trend.</p>
+<p>The fix (done in #210) did the opposite. Day-level comparison <em>sharpened</em>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>UTC (before)</th>
+<th>HST (after)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>days clearing n≥5</td>
+<td>3</td>
+<td>2</td>
+</tr>
+<tr>
+<td>per-day median ratio</td>
+<td>2.42→3.33→5.00×</td>
+<td>2.41→5.00×</td>
+</tr>
+<tr>
+<td>day-1-vs-rest CI</td>
+<td>[−0.08, +0.70] → no clear change</td>
+<td>[+0.23, +1.15] → &quot;worsening&quot;</td>
+</tr>
+</tbody></table>
+<p>Why: the continuous Spearman test ranks <strong>absolute timestamps</strong>, not calendar buckets — it
+is bucketing-invariant. HST day-2 happens to absorb the most-over-padded cluster (TEST/SPIKE
+rows from the evening session), so the two-day gap looks wider in HST than the three-day
+spread in UTC.</p>
+<p><strong>Lesson:</strong> when a confound and a signal share the same axis (time), correcting the confound
+can <em>increase</em> measured effect size rather than decrease it, because both sides shift.
+The direction of the correction tells you nothing about whether the signal is real — you
+need a different axis (within-role) to actually de-confound it.</p>
+<hr>
+<h2>2. The decisive de-confound was within-role, not the timezone fix</h2>
+<p>The within-WRITER check across all data cuts:</p>
+<table>
+<thead>
+<tr>
+<th>Cut (cal rows)</th>
+<th>Within-WRITER ρ</th>
+<th>p</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>63 (UTC, pre-fix)</td>
+<td>+0.076</td>
+<td>0.743</td>
+</tr>
+<tr>
+<td>71 (HST-fixed)</td>
+<td>+0.076</td>
+<td>0.743</td>
+</tr>
+<tr>
+<td>136 (day-4 run)</td>
+<td>+0.198</td>
+<td>0.364</td>
+</tr>
+</tbody></table>
+<p>Flat every time. Day-2 (HST) is the TEST/SPIKE/RESEARCH-heavy bucket. Load those roles into
+day-2 and the day-level medians diverge; look <em>within</em> WRITER and you see nothing.</p>
+<p>Meanwhile, the headline continuous trend weakened monotonically as data grew:</p>
+<table>
+<thead>
+<tr>
+<th>Cut</th>
+<th>Spearman ρ</th>
+<th>p</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>63-cal</td>
+<td>+0.299</td>
+<td>0.017 (significant)</td>
+</tr>
+<tr>
+<td>71-cal</td>
+<td>+0.215</td>
+<td>0.072 (marginal)</td>
+</tr>
+<tr>
+<td>136-cal</td>
+<td>−0.40</td>
+<td>0.60 (non-monotone, n.s.)</td>
+</tr>
+</tbody></table>
+<p>By day-4 the signal reversed sign and lost significance entirely. <strong>Conclusion: the apparent
+&quot;drift&quot; is role-mix composition, not a learning curve or skill change.</strong></p>
+<p><strong>Lesson:</strong> for a confounded metric, correct first with a covariate (role), not a binning
+fix (tz). If the effect disappears within any stratum, the aggregate trend is composition.</p>
+<hr>
+<h2>3. Per-role correction constants are statistically supported</h2>
+<p>Three roles reached n≥5 and can now be distinguished (Mann-Whitney):</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>n</th>
+<th>Median C-ratio</th>
+<th>vs TEST</th>
+<th>vs WRITER</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TEST</td>
+<td>10</td>
+<td>~7.5×</td>
+<td>—</td>
+<td>p=0.004</td>
+</tr>
+<tr>
+<td>WRITER</td>
+<td>23</td>
+<td>~3.00×</td>
+<td>p=0.004</td>
+<td>—</td>
+</tr>
+<tr>
+<td>DEV</td>
+<td>21</td>
+<td>~2.76×</td>
+<td>p=0.001–0.002</td>
+<td>p=0.549</td>
+</tr>
+</tbody></table>
+<p>DEV and WRITER are indistinguishable (p=0.549); TEST is a distinct population.</p>
+<p>Actionable: <strong>two correction constants</strong>, not one. Rough priors:</p>
+<ul>
+<li>TEST: divide C by ~7–8 when calibrating estimates</li>
+<li>DEV + WRITER: divide C by ~2.5–3</li>
+</ul>
+<p>The previous single global 0.33× factor (÷3) was a role-mix average that systematically
+over-corrects for WRITER/DEV and under-corrects for TEST.</p>
+<hr>
+<h2>4. Within-role drift remains underpowered — and that&#39;s fine</h2>
+<p>To test drift <em>within</em> a role, you need ≥2 genuine working days with ≥8 rows each, within
+that role. At day-4:</p>
+<ul>
+<li>WRITER: spans all 4 HST days but n=1 on day-4 — underpowered at the tail</li>
+<li>DEV: only 2 days clearly populated</li>
+<li>TEST: concentrated in a single day</li>
+</ul>
+<p>A within-WRITER drift test needs ≥1 more genuine working day before it has power. Given
+that the headline trend reversed sign (and the within-WRITER check never moved), the most
+defensible call at current n is:</p>
+<blockquote>
+<p><strong>No learning curve detected. Apparent drift is composition. Revisit at n≥200 or when
+per-turn gap-tagging lands.</strong></p>
+</blockquote>
+<p>The inter-turn gap confound (#284) is uncontrolled: <code>actual_min</code> includes human-idle time
+between turns. True agent wall-clock is lower than measured, and idle-gap magnitude varies
+by day. This further muddies any per-day comparison until rows are tagged.</p>
+<hr>
+<h2>What went well</h2>
+<ul>
+<li><strong>Prior analysis was complete.</strong> Four ELDERBERRY/BANANA comments on #208 had done the
+heavy lifting; synthesis required reading, not re-running. This is the right division of
+labour: DATA agents re-run cells, RESEARCH agents synthesize.</li>
+<li><strong>The within-role check was the right axis.</strong> Identifying it early (in the #210 comment)
+meant every subsequent cut answered the same test, making the trend across cuts legible.</li>
+</ul>
+<h2>What didn&#39;t go well</h2>
+<ul>
+<li>The issue&#39;s &quot;Should have&quot; section predicted the tz fix would <em>weaken</em> the signal —
+it didn&#39;t. A cleaner hypothesis would have noted the bucketing-invariance of continuous
+Spearman and predicted <em>only</em> that the day-level median table would change, not the
+headline trend. The surprise was predictable from first principles.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

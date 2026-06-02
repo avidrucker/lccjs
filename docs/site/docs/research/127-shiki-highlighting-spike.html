@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>127-shiki-highlighting-spike — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Spike: LCC syntax highlighting via Shiki (#127)</h1>
+<p><strong>Authored:</strong> 2026-06-01 · agent ELDERBERRY · ≤60m</p>
+<hr>
+<h2>Grammar assessment</h2>
+<p>The <code>lcc-tools</code> VS Code extension grammar referenced in the issue/TODOS does <strong>not yet
+exist as a committed file</strong> in this repo — <code>.gitattributes</code> and TODOS.md both reference
+it aspirationally. The grammar I drafted for this spike (<code>docs/lcc.tmLanguage.json</code>)
+is therefore the first concrete artifact.</p>
+<p>The grammar covers the full token set found by surveying ~60 <code>.a</code> and ~17 <code>.ap</code> files:</p>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>What it matches</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>comment.line.semicolon.lcc</code></td>
+<td><code>;</code> to end of line</td>
+</tr>
+<tr>
+<td><code>entity.name.label.lcc</code></td>
+<td><code>label:</code> definitions (including <code>@</code>-prefixed labels)</td>
+</tr>
+<tr>
+<td><code>keyword.other.directive.lcc</code></td>
+<td><code>.start</code> <code>.org</code> <code>.word</code> <code>.fill</code> <code>.string[z]</code> <code>.asciz</code> <code>.zero</code> <code>.space</code> <code>.blkw</code> <code>.lccplus</code> <code>.extern</code> <code>.global</code></td>
+</tr>
+<tr>
+<td><code>keyword.control.branch.lcc</code></td>
+<td><code>br</code> <code>bral</code> <code>brz</code> <code>brnz</code> <code>bre</code> <code>brne</code> <code>brn</code> <code>brp</code> <code>brlt</code> <code>brgt</code> <code>brc</code> <code>brb</code> <code>jmp</code> <code>jsr</code> <code>jsrr</code> <code>bl</code> <code>blr</code> <code>call</code> <code>ret</code></td>
+</tr>
+<tr>
+<td><code>keyword.mnemonic.lcc</code></td>
+<td>arithmetic/logic/shift/move/load/store/stack/debug (<code>add</code> <code>sub</code> … <code>halt</code> <code>bp</code>)</td>
+</tr>
+<tr>
+<td><code>support.function.io.lcc</code></td>
+<td>I/O traps: <code>dout</code> <code>udout</code> <code>hout</code> <code>aout</code> <code>sout</code> <code>nl</code> <code>din</code> <code>hin</code> <code>ain</code> <code>sin</code></td>
+</tr>
+<tr>
+<td><code>keyword.mnemonic.extension.lcc</code></td>
+<td>LCC+ pseudo-instructions: <code>clear</code> <code>sleep</code> <code>nbain</code> <code>rand</code> <code>srand</code> <code>millis</code> <code>resetc</code> <code>cursor</code></td>
+</tr>
+<tr>
+<td><code>variable.language.register.lcc</code></td>
+<td><code>r0</code>–<code>r7</code> · <code>fp</code> · <code>sp</code> · <code>lr</code></td>
+</tr>
+<tr>
+<td><code>string.quoted.double.lcc</code></td>
+<td><code>&quot;…&quot;</code> with escape support (<code>\n</code>, <code>\&quot;</code>, etc.)</td>
+</tr>
+<tr>
+<td><code>string.quoted.single.lcc</code></td>
+<td><code>&#39;x&#39;</code> character literals</td>
+</tr>
+<tr>
+<td><code>constant.numeric.hex.lcc</code></td>
+<td><code>0x…</code></td>
+</tr>
+<tr>
+<td><code>constant.numeric.decimal.lcc</code></td>
+<td>signed/unsigned integers</td>
+</tr>
+<tr>
+<td><code>variable.other.label.lcc</code></td>
+<td>identifier references (catch-all, includes <code>label+offset</code> like <code>x+1</code>)</td>
+</tr>
+</tbody></table>
+<p><strong>Shiki compatibility:</strong> Shiki accepts a TextMate grammar JSON directly (no build step).
+The drafted grammar is drop-in ready for <code>createHighlighter({ langs: [lccGrammar] })</code>.</p>
+<p><strong>Known limitation:</strong> The single-letter mnemonics <code>m</code> (dump memory) <code>r</code> (dump registers)
+<code>s</code> (dump stack) were omitted in the original spike draft — see <code>docs/lcc.tmLanguage.json</code>
+for the corrected grammar that adds them (fixed in #458). They are anchored with a
+start-of-field pattern to avoid over-matching label references.</p>
+<hr>
+<h2>Approach A: GitHub Pages docs site + Shiki</h2>
+<p><strong>Effort:</strong> ~4–6h to bootstrap. Needs: a static site generator (Astro/Vite or bare HTML),
+a <code>highlight.js</code>-style wrapper around <code>shiki@^1</code>, and a curated set of <code>.a</code>/<code>.ap</code> code
+examples to showcase.</p>
+<p><strong>Maintenance:</strong> Low after initial setup. Grammar updates ripple automatically if the
+grammar JSON is kept in the repo and the build imports it. Hosting on GitHub Pages is
+free and CI-driven (push → Pages rebuild).</p>
+<p><strong>Who benefits:</strong> Everyone — public visitors, students, anyone who clicks a GitHub Pages
+link. No install required.</p>
+<p><strong>Hosting/build implications:</strong> Adds a <code>docs/</code> build step or a separate <code>pages</code> branch.
+If Astro: ~5 MB node_modules in Pages workflow, trivial. If bare HTML + ESM Shiki: even
+simpler, no bundler.</p>
+<p><strong>Recommendation: pursue this.</strong> One-time build, permanent public win.</p>
+<hr>
+<h2>Approach B: Tampermonkey userscript</h2>
+<p><strong>Effort:</strong> ~1–2h. Inject Shiki via CDN, detect <code>github.com/*/lccjs/*.a</code> URLs, replace
+GitHub&#39;s <code>&lt;code&gt;</code> block with a Shiki-rendered <code>&lt;div&gt;</code>.</p>
+<p><strong>Maintenance:</strong> Fragile — GitHub can change DOM layout. Shiki CDN version must be pinned
+or updates can silently break the script.</p>
+<p><strong>Who benefits:</strong> Only the person who installs the userscript. Public visitors see the
+stock <code>asm</code> grammar.</p>
+<p><strong>Recommendation: skip for now.</strong> The effort is similar to approach A&#39;s first milestone
+(get Shiki rendering LCC), but the payoff is private and brittle. Could be offered later
+as a developer convenience, but not the primary deliverable.</p>
+<hr>
+<h2>Recommendation</h2>
+<p><strong>Do approach A (GitHub Pages + Shiki).</strong> The grammar drafted here is the foundation.
+The recommended decomposition:</p>
+<ol>
+<li><strong>Commit the grammar</strong> to a stable path (e.g. <code>docs/lcc.tmLanguage.json</code>) and update
+<code>TODOS.md</code> — this closes #127 (the spike) and de-risks A.</li>
+<li><strong>Build puzzle:</strong> set up a minimal Astro (or plain Vite) GitHub Pages site that imports
+the grammar and renders 3–5 curated <code>.a</code>/<code>.ap</code> snippets. ~3–4h / SPIKE → DEV.</li>
+<li><strong>Stretch puzzle:</strong> add the Tampermonkey script as an optional install once the grammar
+is proven in Pages.</li>
+</ol>
+<p>Neither Linguist submission nor Tampermonkey are blocking — approach A lands public
+highlighting with zero user-install friction.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

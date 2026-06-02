@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>adversarial_hypotheses — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>lccjs — Adversarial Test Hypotheses</h1>
+<p>Generated 2026-05-31 from deep read of <code>src/core/assembler.js</code>,
+<code>src/core/interpreter.js</code>, <code>src/core/linker.js</code>, <code>open_bugs.md</code>,
+<code>docs/parity_deviations.md</code>, and existing test suites.</p>
+<blockquote>
+<p><strong>Architect triage (2026-06-01, #404):</strong> Priority order, batching plan, oracle-routing
+decisions, and critiques of the priority list below all live in
+<code>docs/research/adversarial-hypothesis-triage.md</code>. Read that first before picking up
+any hypothesis as a ticket — several items are re-ranked, batched, or routed to #218.</p>
+</blockquote>
+<p>Each hypothesis is a <strong>specific failure mode</strong> that the current code
+may or may not handle correctly. The TDD workflow is:</p>
+<ol>
+<li>Write a test that encodes the hypothesis (red).</li>
+<li>Confirm whether the code already passes it (green) or exposes a bug.</li>
+<li>Fix if broken; document if intentional deviation.</li>
+</ol>
+<p>Severity legend: 🔴 High (silent miscompile / crash / corrupt output)
+                  🟡 Medium (wrong output, loud error)
+                  🟢 Low (cosmetic / edge aesthetic)</p>
+<hr>
+<h2>ASSEMBLER — Tokenizer &amp; Parser</h2>
+<h3>H-001 🔴 Unterminated string literal silently truncates</h3>
+<p><strong>Hypothesis:</strong> <code>.stringz &quot;hello</code> (no closing quote) causes
+<code>isStringLiteral</code> to return false and <code>failAssembly(&quot;Missing terminating quote&quot;)</code> to fire. BUT — the tokenizer&#39;s <code>inString</code> flag keeps reading
+until EOF and pushes the entire rest of the line as one token. If a
+later line happens to contain a <code>&quot;</code>, the tokenizer exits <code>inString</code> mid-
+line and passes the merged blob to <code>handleDirective</code>. Net result may be a
+misleading &quot;invalid operation&quot; error pointing at the <em>wrong</em> line, not
+the unterminated literal.</p>
+<p><strong>Test idea:</strong></p>
+<pre><code class="language-asm">.stringz &quot;hello
+add r0, r1, r2
+</code></pre>
+<p>Assert: error is reported on line 1, not line 2.</p>
+<hr>
+<h3>H-002 🟡 Label-colon detection is fooled by colon inside a string</h3>
+<p><strong>Hypothesis:</strong> <code>tokenizeLine</code> watches for <code>:</code> in the outer (non-string)
+branch, but a line like:</p>
+<pre><code class="language-asm">  .stringz &quot;a:b&quot;
+</code></pre>
+<p>should NOT produce a label token <code>a</code>. The colon handling strips the colon
+and pushes a token whenever <code>currentToken</code> is non-empty — but this code
+path only runs when <code>!inString</code>. If the string starts <em>after</em> the colon
+character position, a bare colon appearing before the quote could be mis-
+tokenized. Edge: a label definition line like <code>foo: .stringz &quot;x:y&quot;</code>.</p>
+<p><strong>Test idea:</strong> Assemble <code>foo: .stringz &quot;x:y&quot;</code> and verify symbol table has
+exactly one entry (<code>foo</code>) and the string data is <code>x:y\0</code> (4 words).</p>
+<hr>
+<h3>H-003 🔴 <code>*+N</code> / <code>*-N</code> with hex offset is not supported</h3>
+<p><strong>Hypothesis:</strong> <code>evaluateOperand</code> handles <code>*+N</code> / <code>*-N</code> by calling
+<code>parseNumber(operand.slice(1))</code> on the <code>+N</code> or <code>-N</code> suffix. <code>parseNumber</code>
+handles decimal and <code>0x</code> hex. But <code>*+0x10</code> would slice to <code>+0x10</code>, and
+<code>parseInt(&quot;+0x10&quot;, 10)</code> returns <code>NaN</code> while <code>parseInt(&quot;+0x10&quot;, 16)</code>
+returns <code>NaN</code> too (leading <code>+</code> breaks hex parse). This means a hex PC-
+relative offset silently triggers <code>Bad number</code> or <code>Unspecified label error</code> at runtime instead of assembling correctly.</p>
+<p><strong>Test idea:</strong> <code>.word *+0x2</code> — should assemble as <code>locCtr + 2</code>.</p>
+<hr>
+<h3>H-004 🟡 <code>.org</code> backward-overlap check uses <code>locCtr</code>, not <code>outputBuffer</code> fill level</h3>
+<p><strong>Hypothesis:</strong> After a <code>.org 5</code> the locCtr is 5. If code or data later
+advances locCtr to 10, and then <code>.org 7</code> is encountered, the check
+<code>orgAddress &lt; this.locCtr</code> fires with <code>7 &lt; 10</code> → &quot;Backward address on
+.org&quot;. That is intentional. But in Pass 1 the check also fires even
+though no actual words have been written yet — the semantics are purely
+locCtr-based. Hypothesis: a forward <code>.org</code> that skips to an address
+exactly equal to <code>locCtr</code> (<code>.org locCtr</code>) emits no gap words and does not
+error, but nothing prevents locCtr from equaling the orgAddress after a
+previous <code>.org</code> left a gap that was then filled. Verify the exact boundary:
+<code>.org N</code> where N == current locCtr should be a no-op, not an error.</p>
+<p><strong>Test idea:</strong> Assemble:</p>
+<pre><code class="language-asm">  .org 5
+  .org 5   ; same address again — should this error or be a no-op?
+</code></pre>
+<hr>
+<h3>H-005 🔴 <code>.blkw</code> / <code>.space</code> upper bound allows exact 65536-word program</h3>
+<p><strong>Hypothesis:</strong> The upper bound check is <code>num &gt; (65536 - this.locCtr)</code>.
+If <code>locCtr == 0</code> and <code>num == 65536</code>, the check is <code>65536 &gt; 65536</code> which
+is false, so it passes. Writing 65536 words with locCtr starting at 0
+fills the <em>entire</em> 16-bit address space including address 0xFFFF. But
+the interpreter&#39;s memory is <code>new Uint16Array(65536)</code> (indices 0..65535),
+so index 65535 is valid. The <code>locCtr &gt; 65536</code> overflow guard in
+<code>performPass</code> fires when locCtr <em>exceeds</em> 65536, not when it <em>reaches</em> it.
+Net result: a <code>.blkw 65536</code> at address 0 should assemble without error
+but produces a 131072-byte output file. Verify this is intentional or an
+off-by-one.</p>
+<p><strong>Test idea:</strong> <code>.blkw 65536</code> at locCtr==0 — does it assemble? Does the
+interpreter load it without overflow?</p>
+<hr>
+<h3>H-006 🟡 Duplicate label detected only in Pass 1; Pass 2 silently uses first value</h3>
+<p><strong>Hypothesis:</strong> <code>this.labels</code> (a Set) tracks duplicates in Pass 1 and
+raises an error. But <code>REPORT_MULTI_ERRORS = false</code> means the <em>first</em>
+duplicate error exits immediately, so the second label definition is never
+reached in Pass 1. If for some reason <code>REPORT_MULTI_ERRORS</code> were true,
+Pass 2 would silently overwrite the symbol table with the second
+occurrence. Verify the error fires on the <em>second</em> definition line, not
+the first.</p>
+<p><strong>Test idea:</strong></p>
+<pre><code class="language-asm">foo:  add r0, r1, 1
+foo:  add r0, r1, 2
+</code></pre>
+<p>Assert: error mentions line 2 (the duplicate), not line 1.</p>
+<hr>
+<h3>H-007 🟡 <code>.word label + N</code> with three tokens — only evaluated in Pass 2</h3>
+<p><strong>Hypothesis:</strong> The three-operand label+offset path for <code>.word</code> checks
+<code>operands[1] &amp;&amp; operands[2]</code> in Pass 2 to merge <code>label + N</code>. In Pass 1,
+<code>locCtr += 1</code> unconditionally (correct). But in Pass 2, if exactly
+<code>operands[1]</code> is present but <code>operands[2]</code> is absent (two tokens: label
+operator), the code hits:</p>
+<pre><code class="language-js">if((operands[1] &amp;&amp; this.isOperator(operands[1])) &amp;&amp;
+   (operands[2] === null || operands[2] === undefined)) {
+  this.failAssembly(&#39;Missing number&#39;, 1);
+}
+</code></pre>
+<p>But this check comes <em>after</em> the three-token merge block. If <code>operands[1]</code>
+is a non-operator (e.g. a second label), it falls through to
+<code>evaluateOperand(operands[0], &#39;V&#39;)</code>, ignoring <code>operands[1]</code> silently.</p>
+<p><strong>Test idea:</strong> <code>.word foo bar</code> (two label tokens, no operator) — does it
+silently use only <code>foo</code>, or error?</p>
+<hr>
+<h3>H-008 🔴 <code>tokenizeLine</code> collapses adjacent commas to nothing</h3>
+<p><strong>Hypothesis:</strong> The tokenizer strips commas as delimiters but does not
+detect <em>missing</em> operands between commas. <code>add r0,,r1</code> would tokenize as
+<code>[&#39;add&#39;, &#39;r0&#39;, &#39;r1&#39;]</code>, which looks like <code>add r0, r1</code> (missing third
+operand). The <code>assembleADD</code> call then sees <code>operands[2] === undefined</code> and
+calls <code>failAssembly(&#39;Missing operand&#39;)</code> — the <em>right</em> error, but the
+wrong message (<code>Missing operand</code> vs something like <code>Bad syntax</code>). More
+importantly, <code>add r0, r1,</code> (trailing comma) silently drops the comma and
+tries to assemble with only two operands, possibly giving a misleading
+error.</p>
+<p><strong>Test idea:</strong> <code>add r0,,r1</code> and <code>add r0, r1,</code> — confirm both error with
+a clear message, not a confusing one.</p>
+<hr>
+<h3>H-009 🟡 Branch pcoffset9 boundary: exactly -256 and +255 should assemble</h3>
+<p><strong>Hypothesis:</strong> <code>assembleBR</code> computes <code>pcoffset9 = address - locCtr - 1</code>
+and checks <code>-256 &lt;= pcoffset9 &lt;= 255</code>. A branch to <code>locCtr - 256</code>
+(maximum backward reach) should produce pcoffset9 == -256 which is
+exactly at the limit. Verify both boundary values assemble and that
+<code>-257</code> / <code>+256</code> produce the &quot;pcoffset9 out of range&quot; error. Same for
+<code>assembleLD</code>/<code>assembleST</code>/<code>assembleLea</code>.</p>
+<p><strong>Test idea:</strong> Craft a program where a branch lands exactly 256
+instructions behind and 255 ahead. Assemble and verify encoded bits.</p>
+<hr>
+<h3>H-010 🔴 <code>evaluateImmediate</code> accepts <code>NaN</code> string — <code>parseNumber(undefined)</code> returns <code>null</code></h3>
+<p><strong>Hypothesis:</strong> <code>evaluateImmediate(valueStr, min, max)</code> calls
+<code>parseNumber(valueStr)</code>. <code>parseNumber</code> returns <code>null</code> when <code>valueStr</code> is
+<code>null</code> or <code>undefined</code>. Then <code>isNaN(null)</code> is <code>false</code> in JS (because
+<code>Number(null) === 0</code>), so <code>null</code> passes the NaN check and is treated as
+the number <code>0</code>. A missing immediate would silently encode as <code>0</code> instead
+of raising &quot;Bad number&quot;.</p>
+<p><strong>Test idea:</strong> <code>add r0, r1</code> (no immediate, no third operand) — does the
+assembler detect the missing operand, or does it encode <code>add r0, r1, 0</code>?</p>
+<blockquote>
+<p><strong>Architect caution (#404):</strong> <code>assembleADD</code> likely has an upstream operand-count
+check that fires before <code>evaluateImmediate</code> is called with <code>undefined</code>. Verify
+whether that guard exists first — if it does, this hypothesis confirms correct
+behavior rather than exposing a bug. Ranked 6th (not 1st) in the triage doc.</p>
+</blockquote>
+<hr>
+<h3>H-011 🟡 <code>.start</code> with an undefined label errors after Pass 2, not during it</h3>
+<p><strong>Hypothesis:</strong> <code>.start</code> stores <code>this.startLabel</code> but resolves it <em>after</em>
+Pass 2 via <code>this.symbolTable[this.startLabel]</code>. If the label is undefined,
+<code>failAssembly(&#39;Undefined label&#39;)</code> fires. But by this point the output
+buffer has been populated and <code>writeOutputFile()</code> has not yet been called,
+so no corrupt file is written. Verify the error message correctly names
+the undefined label, not a generic message.</p>
+<p><strong>Test idea:</strong> <code>.start nonexistent</code> — assert the error message includes
+the label name.</p>
+<hr>
+<h2>ASSEMBLER — Instruction Encoding</h2>
+<h3>H-012 🔴 <code>assembleSRL/SLL/ROL/ROR</code> shift count is not range-checked</h3>
+<p><strong>Hypothesis:</strong> <code>assembleSRL</code> / <code>assembleSLL</code> / <code>assembleROL</code> /
+<code>assembleROR</code> accept the count via <code>evaluateImmediateNaive</code>, which caps at
+16 bits but does <strong>no range check</strong>. A shift count of 0 (no-op) or 16+
+(wraps the field) is silently encoded. The count field is 4 bits in the
+machine word (<code>ct &lt;&lt; 5</code> with bits 5..8). A count of 16 (<code>0x10</code>) would
+overflow into bit 9 and corrupt the opcode encoding.</p>
+<p><strong>Test idea:</strong> <code>srl r0, 16</code> — what machine word is produced? Does it
+accidentally encode a valid but wrong instruction?</p>
+<hr>
+<h3>H-013 🔴 <code>assembleSRA</code> uses <code>evaluateImmediate(0, 15)</code> — shift 0 is allowed but shift 16 is rejected</h3>
+<p><strong>Hypothesis:</strong> Unlike its siblings, <code>assembleSRA</code> calls <code>evaluateImmediate</code>
+with range [0, 15]. This is the only shift instruction that enforces a
+range. If a count of 0 was intended to mean &quot;shift by 1&quot; (matching the
+<code>ct === null → ct = 1</code> fallback on the others), then <code>sra r0, 0</code>
+assembles a 0-count which may behave differently from the oracle. Verify
+<code>sra r0</code> (no count) vs <code>sra r0, 0</code> produce the same or different encoding.</p>
+<p><strong>Test idea:</strong> <code>sra r0</code> vs <code>sra r0, 0</code> vs <code>sra r0, 1</code> — compare machine
+words.</p>
+<hr>
+<h3>H-014 🟡 <code>assembleRET offset6</code> — offset6 is not range-checked</h3>
+<p><strong>Hypothesis:</strong> <code>assembleRET</code> calls <code>evaluateImmediate(operands[0], -32, 31)</code> which IS range-checked. But <code>assembleJMP</code> offset6 path also uses
+<code>evaluateImmediate(-32, 31)</code>. The hypothesis is about <code>ret 32</code> and
+<code>ret -33</code> — verify they both raise &quot;offset6 out of range&quot; and not
+&quot;Bad number&quot;.</p>
+<p><strong>Test idea:</strong> <code>ret 32</code> — confirm error text.</p>
+<hr>
+<h3>H-015 🔴 <code>assembleTrap</code> with an unknown register string hits <code>getRegister</code>&#39;s <code>failAssembly</code></h3>
+<p><strong>Hypothesis:</strong> <code>assembleTrap</code> calls <code>getRegister(operands[0])</code> only when
+<code>operands[0]</code> is truthy. If an invalid non-register token is passed (e.g.
+<code>dout foo</code>), <code>getRegister</code> calls <code>failAssembly(&#39;Bad register&#39;)</code>. But
+<code>assembleTrap</code> was designed for traps like <code>dout r0</code> where the register
+selects the source. If someone writes <code>dout 5</code> (a numeric literal), it
+goes to <code>getRegister(&quot;5&quot;)</code>, which fails <code>isRegister</code> and fires &quot;Bad
+register&quot;. The correct error might be more specific. Verify.</p>
+<p><strong>Test idea:</strong> <code>dout 5</code> — does it error? What message?</p>
+<hr>
+<h3>H-016 🟡 <code>assembleBL</code> rejects numeric literals as the label operand</h3>
+<p><strong>Hypothesis:</strong> <code>assembleBL</code> calls <code>isValidLabel(label)</code> before anything
+else and fires <code>failAssembly(&#39;Bad label&#39;)</code> if it fails. A numeric
+literal like <code>bl 0x10</code> would fail <code>isValidLabel</code> (starts with <code>0</code>) and
+error immediately, but the intent might be to jump to an absolute address.
+Oracle behavior: does <code>bl 5</code> error on the oracle? If oracle accepts it,
+lccjs has a deviation.</p>
+<p><strong>Test idea:</strong> <code>bl 5</code> — does it assemble? Does the oracle?</p>
+<hr>
+<h2>ASSEMBLER — Edge Cases / State</h2>
+<h3>H-017 🔴 <code>assembleSource</code> called twice on the same instance without explicit reset</h3>
+<p><strong>Hypothesis:</strong> <code>assembleSource</code> calls <code>resetAssemblyState()</code> at the top,
+so reuse should be safe. But <code>inputFileName</code> and <code>outputFileName</code> are NOT
+reset by <code>resetAssemblyState()</code> — they&#39;re set via the options parameter.
+If a caller invokes <code>assembleSource(src, {})</code> (no filenames) on a
+previously-used instance, the stale filenames from the prior run are
+inherited. Listing entries will reference the old filename in error
+messages.</p>
+<p><strong>Test idea:</strong> Assemble file A, then call <code>assembleSource</code> with a
+different source but no filename override. Check <code>inputFileName</code> in the
+result.</p>
+<hr>
+<h3>H-018 🟡 <code>performPass</code> removes the last line if it&#39;s blank — but only at end of Pass 2</h3>
+<p><strong>Hypothesis:</strong> The tail-blank-line strip at the end of Pass 2 calls
+<code>this.listing.pop()</code> unconditionally when <code>sourceLine.trim() === &#39;&#39;</code>. If
+the source file has <em>multiple</em> trailing blank lines, only the last one is
+removed. Verify: a file with three trailing blank lines produces a listing
+with two trailing blank-line entries — not zero.</p>
+<p><strong>Test idea:</strong> Source ending in <code>\n\n\n</code> — how many listing entries are
+there for the trailing blanks?</p>
+<hr>
+<h3>H-019 🔴 <code>parseNumber</code> does not handle octal — <code>08</code> and <code>09</code> silently parse as 8 and 9</h3>
+<p><strong>Hypothesis:</strong> <code>parseInt(&quot;08&quot;, 10)</code> returns 8 in modern JS. But
+historically <code>parseInt(&quot;08&quot;)</code> (no radix) returned 0 in older engines.
+lccjs always passes radix 10 for decimal and 16 for hex, so this is safe.
+However, <code>&quot;0777&quot;</code> is parsed as decimal 777, not octal 511. If the oracle
+LCC treats <code>0</code>-prefixed integers as octal, lccjs would silently produce
+wrong values for <code>.word 0777</code> style literals.</p>
+<p><strong>Test idea:</strong> <code>.word 0777</code> — what value does lccjs assemble? What does
+the oracle produce?</p>
+<hr>
+<h2>INTERPRETER</h2>
+<h3>H-020 🔴 Division by zero — <code>div</code> trap behavior</h3>
+<p><strong>Hypothesis:</strong> <code>assembleDIV</code> encodes the instruction, but the interpreter
+must handle the case where the divisor register is 0 at runtime. If there
+is no explicit divide-by-zero check, the JS <code>%</code> or <code>/</code> operator will
+return <code>Infinity</code> or <code>NaN</code>, which when coerced to <code>Uint16Array</code> becomes
+<code>0</code>. The program continues with a silently wrong result rather than a
+runtime error. Same applies to <code>rem</code>.</p>
+<p><strong>Test idea:</strong> At runtime: <code>mov r1, 0; mov r0, 10; div r0, r1</code> — does the
+interpreter halt with an error, or silently produce a wrong value?</p>
+<hr>
+<h3>H-021 🔴 <code>instructionsCap</code> triggers on programs with legitimate long loops</h3>
+<p><strong>Hypothesis:</strong> The 500,000-instruction cap fires <code>Possible infinite loop</code>
+for any program that genuinely runs longer. A program computing a large
+Fibonacci value or doing heavy string processing could hit this. The cap
+is also applied <em>even when <code>allowRuntimeDebugging = false</code></em>, so users
+can&#39;t easily override it from the API. Verify that <code>disableInfiniteLoopDetection = true</code>
+fully suppresses the cap without side effects.</p>
+<p><strong>Test idea:</strong> Write a program with a deliberate 600,000-iteration loop.
+Run with <code>disableInfiniteLoopDetection = true</code> — should complete.
+Run without it — should error at 500,000.</p>
+<hr>
+<h3>H-022 🟡 Stack-pointer tracking: <code>spInitial</code> set at load time; what if SP is modified before first push?</h3>
+<p><strong>Hypothesis:</strong> <code>maxStackSize</code> is tracked as <code>spInitial - this.r[6]</code> (or
+similar). If the program initializes SP to a custom value <em>after</em> load
+(e.g. <code>mvi sp, 0x1000</code>), <code>spInitial</code> from load time is wrong and
+<code>maxStackSize</code> will be meaningless or negative. Verify the interpreter
+handles this gracefully (no negative maxStackSize reported in stats).</p>
+<p><strong>Test idea:</strong> Program that sets <code>sp</code> to an explicit address before
+pushing anything. Check the <code>.bst</code> stats output.</p>
+<hr>
+<h3>H-023 🔴 Reading memory above the loaded program region returns 0 (Uint16Array default)</h3>
+<p><strong>Hypothesis:</strong> <code>ldr r0, r1, 0</code> where r1 points past the program&#39;s loaded
+region reads from initialized-to-zero memory. This is correct and
+expected. The adversarial case: a buggy program that computes a pointer
+to address 0xFFFF and then does <code>ldr</code>/<code>str</code> there. Storing to 0xFFFF
+should work (it&#39;s valid memory). Verify no off-by-one in the memory
+bounds check.</p>
+<p><strong>Test idea:</strong> <code>mvi r0, 0; str r1, r0, -1</code> — r0=0, offset=-1 → effective
+address = 0xFFFF (wraps). Does it store to 0xFFFF without error?</p>
+<hr>
+<h3>H-024 🟡 <code>SEXT_PARITY_TABLE</code> — selector values &gt; 15 fall through to raw-mask path</h3>
+<p><strong>Hypothesis:</strong> The comment says &quot;Selectors larger than 0x0f still behave
+like raw masks.&quot; Verify that <code>sext r0, r1</code> where the selector field in the
+instruction word is 16..31 actually hits the raw-mask path and produces
+correct sign-extension results, vs. a possible index-out-of-bounds on the
+table (which is 16 rows × 32 cols — so row index 16 would be undefined).</p>
+<p><strong>Test idea:</strong> Encode a <code>sext</code> instruction with selector nibble = 0x10
+(16). Does the interpreter correctly sign-extend or throw an error?</p>
+<hr>
+<h2>LINKER</h2>
+<h3>H-025 🔴 Two object modules both declaring <code>.globl</code> for the same label — which wins?</h3>
+<p><strong>Hypothesis:</strong> The linker builds <code>GTable</code> (global symbol → address). If
+two <code>.o</code> files both export the same label name, <code>GTable[label]</code> is
+overwritten silently by the second module&#39;s value. The final linked
+<code>.e</code> may call the wrong function. Verify the linker either errors on
+duplicate globals or documents which one wins.</p>
+<p><strong>Test idea:</strong> Link two <code>.o</code> files each exporting <code>foo</code>. Verify either an
+error or predictable (first-wins / last-wins) behavior.</p>
+<hr>
+<h3>H-026 🔴 Linker <code>parseObjectModuleBuffer</code> — truncated buffer after &#39;C&#39; marker</h3>
+<p><strong>Hypothesis:</strong> After the <code>&#39;C&#39;</code> marker, the remaining buffer bytes are
+read as machine code words in pairs. If the buffer length after <code>&#39;C&#39;</code> is
+odd (an extra byte), <code>buffer.readUInt16LE(offset)</code> at the last byte would
+read one byte past the end. Node.js <code>Buffer.readUInt16LE</code> throws
+<code>ERR_OUT_OF_RANGE</code> in this case. An adversarially crafted <code>.o</code> file with
+an odd code-section length would crash the linker instead of producing a
+clean error.</p>
+<p><strong>Test idea:</strong> Craft a <code>Buffer</code> with a valid header and one trailing code
+byte (odd length). Call <code>parseObjectModuleBuffer</code> — expect a <code>LinkerError</code>,
+not an uncaught Node exception.</p>
+<hr>
+<h3>H-027 🟡 Linker with zero input files after <code>-o</code> flag parsing</h3>
+<p><strong>Hypothesis:</strong> The CLI parser in <code>linker.main()</code> stops when <code>args[i] === &#39;-o&#39;</code> and consumes the next arg as the output file. If someone passes
+<code>node linker.js -o out.e</code> with no <code>.o</code> files, <code>inputFiles</code> stays empty and
+the &quot;No input object modules specified&quot; error fires. But if they pass
+<code>node linker.js -o</code> with no output filename AND no input files, the check
+<code>i + 1 &gt;= args.length</code> fires &quot;Missing output file name after -o&quot;, which
+is correct. Verify both cases produce clean, non-crashing errors.</p>
+<p><strong>Test idea:</strong> Run <code>linker.main([&#39;-o&#39;])</code> and <code>linker.main([&#39;-o&#39;, &#39;x.e&#39;])</code>
+— confirm correct error messages.</p>
+<hr>
+<h2>DISASSEMBLER (0% coverage)</h2>
+<h3>H-028 🔴 Round-trip fidelity: assemble → disassemble → re-assemble must be stable</h3>
+<p><strong>Hypothesis:</strong> Any <code>.a</code> program assembled to <code>.e</code>, disassembled back to
+<code>.a</code>, and re-assembled should produce byte-identical output. The OB-002
+fix addressed <code>mvi</code> mask, but no round-trip test exists. Silent deviations
+in any other instruction&#39;s disassembly will go unnoticed.</p>
+<p><strong>Test idea:</strong> For each instruction type, run the round-trip and diff the
+<code>.e</code> files.</p>
+<hr>
+<h3>H-029 🟡 Disassembler for <code>mvr</code> / <code>sext</code> / extended group opcode disambiguation</h3>
+<p><strong>Hypothesis:</strong> The extended group (<code>OP_EXT = 0xA000</code>) covers PUSH, POP,
+SRL, SRA, SLL, ROL, ROR, MUL, DIV, REM, OR, XOR, MVR, SEXT. These are
+distinguished by bits in the low byte. The disassembler must inspect the
+full 16-bit word carefully. A word like <code>0xA00D</code> is <code>sext r0, r0</code>; <code>0xA00C</code>
+is <code>mvr r0, r0</code>. Verify the disassembler produces the correct mnemonic for
+each sub-opcode across all 8 register pairs.</p>
+<p><strong>Test idea:</strong> Encode <code>0xA00C</code> manually in a <code>.hex</code> file, run through
+disassembler, confirm output is <code>mvr r0, r0</code>.</p>
+<hr>
+<h2>PLUS MODE (0% test coverage)</h2>
+<h3>H-030 🔴 <code>assemblerplus.js</code> inherits <code>assembleSource</code> — does <code>resetAssemblyState</code> also reset plus-specific state?</h3>
+<p><strong>Hypothesis:</strong> <code>AssemblerPlus</code> extends <code>Assembler</code>. If it adds new
+instance variables (e.g. for extended mnemonics or directives) that are
+not included in <code>resetAssemblyState()</code>, reusing an <code>AssemblerPlus</code>
+instance across two <code>assembleSource</code> calls would leak plus-specific state
+from the first run into the second.</p>
+<p><strong>Test idea:</strong> Assemble a <code>.ap</code> program that uses a plus-only feature.
+Re-assemble a minimal <code>.ap</code> program on the same instance. Verify the
+second result is clean.</p>
+<hr>
+<h2>META-HYPOTHESIS</h2>
+<h3>H-031 🟡 <code>REPORT_MULTI_ERRORS = false</code> is a global constant — no per-instance override</h3>
+<p><strong>Hypothesis:</strong> The constant at the top of <code>assembler.js</code> is
+<code>const REPORT_MULTI_ERRORS = false</code>. There is no way for callers to
+enable multi-error mode without modifying source. An API caller (e.g. an
+IDE plugin) that wants to collect all errors in one pass cannot do so.
+This is a design constraint, not a bug, but adversarially: passing
+<code>throwOnAssemblyError = true</code> in options does NOT enable multi-error
+mode — it just makes the first error throw instead of calling
+<code>process.exit</code>. Verify this is documented and test that <em>exactly one</em>
+error is reported even when two errors exist on separate lines.</p>
+<p><strong>Test idea:</strong></p>
+<pre><code class="language-asm">bad_instr_1
+bad_instr_2
+</code></pre>
+<p>Assert: only one error in the <code>errors</code> array, not two.</p>
+<hr>
+<p><em>Total: 31 hypotheses across assembler, interpreter, linker,
+disassembler, and plus-mode. Priority order for TDD:</em></p>
+<p><strong>Start here (highest risk, least coverage):</strong>
+H-010, H-003, H-012, H-020, H-025, H-026, H-028</p>
+<p><strong>Good medium-difficulty TDD targets:</strong>
+H-001, H-002, H-008, H-009, H-015, H-023, H-030</p>
+<p><strong>Deepen existing coverage:</strong>
+H-004, H-005, H-006, H-007, H-011, H-013, H-016, H-017, H-018, H-021, H-022, H-029, H-031</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

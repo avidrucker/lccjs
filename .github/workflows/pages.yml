@@ -1,4 +1,4 @@
-name: Build and deploy highlight page
+name: Build and deploy site
 
 on:
   push:
@@ -7,7 +7,10 @@ on:
       - 'docs/lcc.tmLanguage.json'
       - 'demos/**'
       - 'plusdemos/**'
-      - 'scripts/build-highlight.js'
+      - 'docs/research/**'
+      - 'docs/learnings/**'
+      - 'docs/glossary/**'
+      - 'scripts/build-site.js'
   workflow_dispatch:
 
 permissions:
@@ -32,10 +35,10 @@ jobs:
           node-version: '24'
           cache: 'npm'
       - run: npm ci
-      - run: npm run build:highlight
+      - run: npm run build:site
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/highlight
+          path: docs/site
 
   deploy:
     needs: build

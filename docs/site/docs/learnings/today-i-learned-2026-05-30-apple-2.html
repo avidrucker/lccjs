@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-30-apple-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-30 (APPLE) — segment 2</h1>
+<p>Date: 2026-05-30
+Agent: APPLE
+Context: Started from &quot;run the suite, what&#39;s our testing status?&quot; → noticed the one
+skipped suite → converted it to research probes → did probe <strong>#244</strong> → the probe&#39;s
+test run surfaced a real tooling bug → filed + fixed <strong>#247</strong>.</p>
+<hr>
+<h2>1. #244 — OG LCC has no line-length limit; it silently corrupts instead</h2>
+<p>Probed the oracle for a source-line length cap. There is <strong>none, and no
+diagnostic.</strong> OG LCC reads each line into a <strong>fixed 298-char buffer</strong>; lines ≥ 299
+are <strong>silently split</strong> and the overflow tail is parsed as the <em>next source line</em>:</p>
+<ul>
+<li>single over-long line → <strong>exit 0, <code>.e</code> written</strong>, bogus label injected (silent corruption)</li>
+<li>two over-long lines, matching tails → misleading <code>Duplicate label</code></li>
+<li>failure is <strong>non-monotonic</strong> in length (whitespace line fails at 900, passes at 1000) — the tell of an unchecked fixed buffer</li>
+</ul>
+<p>So lcc.js&#39;s explicit 300-char cap is <strong>BY DESIGN and safer</strong>, not a port of an
+oracle limit; &quot;counts the raw line incl. comments&quot; is confirmed correct. Logged as
+parity_deviations BY DESIGN #7 (updated) + OG BUG #13 (new). The OG bug report to
+Dos Reis stays <strong>conditional/deferred</strong> per the #244 scope note.</p>
+<p><strong>Lesson:</strong> &quot;match the oracle&quot; isn&#39;t always the goal — when the oracle&#39;s behavior
+<em>is</em> silent corruption, the right move is a louder, earlier failure, documented as
+an intentional deviation rather than chased as a parity bug.</p>
+<h2>2. #247 — <code>jest tests/new</code> from main runs OTHER agents&#39; worktree tests</h2>
+<p><code>npm test</code> on main went red inside <code>banana-issue-227/tests/new/...</code>. Cause: Jest
+treats <code>tests/new</code> as a <strong>substring path pattern</strong>, so it also matches
+<code>.claude/worktrees/&lt;agent&gt;-issue-N/tests/new/...</code>. With worktree-per-task as the
+default, every parallel run was exposed to other agents&#39; WIP. <code>jest --listTests</code>
+showed <strong>42 worktree files leaking</strong> into a main run.</p>
+<p><strong>The trap (caught before writing code):</strong> a <strong>bare</strong> <code>/.claude/worktrees/</code> ignore
+pattern also matches a worktree&#39;s OWN tests when Jest runs from <em>inside</em> it (its
+path contains <code>.claude/worktrees</code>), silently running <strong>zero</strong> tests there. Must
+anchor with <strong><code>&lt;rootDir&gt;</code></strong> — it resolves to the invoking checkout, so main
+excludes its worktrees while a worktree-local run is never self-excluded. Verified
+both directions; pinned with a 6-test guard replicating Jest&#39;s <code>&lt;rootDir&gt;</code>
+substitution + regex match.</p>
+<p><strong>Lesson:</strong> before adding an exclude pattern over a path the tool can <em>itself</em> run
+from, check the symmetric case — the pattern that excludes &quot;them from here&quot; can
+also exclude &quot;you from there.&quot; <code>--listTests</code> proves a Jest path-filter change
+cheaply and non-destructively.</p>
+<blockquote>
+<p>Sibling note: my segment-1 TIL flagged that the <strong>pre-push pdd scan</strong> false-fails
+from every worktree. #247 is the same family of bug (tooling that doesn&#39;t account
+for <code>.claude/worktrees/</code>), now fixed for the test runner specifically.</p>
+</blockquote>
+<h2>3. Process</h2>
+<ul>
+<li>The <strong>#228 stale-main guard</strong> fired on my first <code>claim</code> (local main 1 behind) and
+blocked it — as intended. Pull <code>--ff-only</code>, re-claim.</li>
+<li>&quot;Don&#39;t overstep&quot; = before claiming, diff every active worktree&#39;s changed files
+against your target. Only banana (#227) was live and touched none of mine; #247
+was unclustered. Cheap check, avoids collisions.</li>
+<li>Converting a permanently-skipped test into either an <strong>active assertion</strong> (when
+research resolves it) or a <strong>deleted placeholder pointing at a findings doc</strong>
+beats leaving it skipped — #244 dropped the suite&#39;s skip count 2→1.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

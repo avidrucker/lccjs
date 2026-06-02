@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>debugger-ilcc-dry — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>DRY analysis: core symbolic debugger vs the <code>ilcc</code>/<code>iinterpreter</code> extension</h1>
+<p><strong>Issue:</strong> #146 (research/ARC spike, ≤60m) · <strong>feeds:</strong> #134 (statechart for <code>iinterpreter.js</code>)
+<strong>Date:</strong> 2026-05-28</p>
+<h2>Question</h2>
+<p>Two stepping/interactive execution paths appear to reimplement overlapping
+logic. Map the overlap, ROI-rank it, and recommend what to consolidate (and what
+to leave separate) — <em>before</em> #134 models a statechart, so the statechart targets
+consolidated code rather than codifying duplication.</p>
+<h2>The two paths</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Core symbolic debugger</th>
+<th>Interactive <code>ilcc</code> extension</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Files</td>
+<td><code>src/core/interpreter.js</code> (<code>debug()</code>, <code>step()</code> diff block, <code>_debugShow*</code>)</td>
+<td><code>src/interactive/iinterpreter.js</code> (466 L) + <code>ilcc.js</code> (174 L)</td>
+</tr>
+<tr>
+<td>Class</td>
+<td><code>Interpreter</code></td>
+<td><code>IInterpreter extends Interpreter</code></td>
+</tr>
+<tr>
+<td>Prompt</td>
+<td><code>mnemonic&gt;&gt;&gt; </code></td>
+<td><code>Input: </code></td>
+</tr>
+<tr>
+<td>Commands</td>
+<td>Enter/q/g/<code>b</code>/<code>r</code>/<code>m</code>/<code>i</code>/<code>h</code>/<code>s</code>/<code>c</code></td>
+<td><code>N</code>/<code>-N</code>/<code>0</code>/<code>a</code>/<code>m</code>/<code>s</code>/<code>h</code>/<code>q</code></td>
+</tr>
+<tr>
+<td>Display</td>
+<td>oracle-parity text (<code>&lt;r0 = 0/5&gt;</code>, <code>pc=… ir=… NZCV=…</code>)</td>
+<td>rich TUI panes (ANSI color, mem grid, stack window, source snippet)</td>
+</tr>
+<tr>
+<td>Direction</td>
+<td>forward-only</td>
+<td>forward <strong>+ backward</strong> (snapshot time-travel)</td>
+</tr>
+<tr>
+<td>Purpose</td>
+<td>byte-exact oracle parity (tested)</td>
+<td>exploratory debugging UX</td>
+</tr>
+</tbody></table>
+<p><strong>Crucial framing:</strong> the <em>execution</em> core (fetch/decode/<code>execute*</code>, <code>loadExecutable</code>,
+<code>signExtend</code>, the 500k cap) is <strong>already shared</strong> — <code>IInterpreter.step()</code> calls
+<code>super.step()</code>. So this is <strong>not</strong> &quot;two interpreters.&quot; The duplication is confined
+to the <strong>debug/display layer</strong>, and the two layers are <em>deliberately different
+products</em> (oracle-faithful vs TUI). That distinction drives the recommendation:
+<strong>share the data/logic beneath them; do NOT merge their presentation.</strong></p>
+<h2>Overlap inventory, ROI-ranked</h2>
+<p>ROI = (shared surface × drift-risk if duplicated) ÷ extraction risk.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Overlap</th>
+<th>Where (duplicated in)</th>
+<th>ROI</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><strong>Changed-state diff</strong> — &quot;which regs/flags/pc changed since the previous step&quot;</td>
+<td>core <code>step()</code> ll.702–744 (inline <code>&lt;rN=old/new&gt;</code>/<code>&lt;NZCV&gt;</code>/<code>&lt;pc&gt;</code>) <strong>vs</strong> <code>iinterpreter.displayRegisters()</code> ll.214–251 (prev/curr snapshot diff)</td>
+<td><strong>HIGH</strong></td>
+<td>Extract a pure <code>diffState(prev, curr)</code> → <code>{regs:[{i,old,new}], flags, pc}</code>. Each debugger <em>renders</em> the result its own way. This is the one piece of real shared <strong>logic</strong> (the rest is presentation), and it&#39;s subtle — drift here = parity bugs.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Hex/format helpers + register-name table</strong> — <code>h4 = v=&gt;(v&amp;0xFFFF).toString(16).padStart(4,&#39;0&#39;)</code>; <code>sp/fp/lr</code> aliasing</td>
+<td>redefined ~6×: <code>iinterpreter</code> ll.217, 258, 279, 280 (REG_ALIASES); core <code>_debugShowRegs</code> l.990, <code>_debugShowMem</code></td>
+<td><strong>HIGH</strong></td>
+<td>Extract <code>format.js</code> (<code>h4</code>, <code>REG_NAMES</code>, <code>REG_ALIASES</code>). Trivial, zero-risk, kills ~6 copies.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Machine-state &quot;view&quot; accessor</strong> — regs/flags/pc/ir + a mem window + a stack window, as plain data</td>
+<td>core reads <code>this.r</code>/<code>this.mem</code> ad hoc in <code>_debugShow*</code>; <code>iinterpreter</code> reads via <code>snapshot[]</code> entries</td>
+<td>MED</td>
+<td>Optional: a normalized <code>stateView</code> (the snapshot shape is already close). Lets both derive panes from one accessor. Defer until #1/#2 land.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Register / memory / stack pane rendering</strong></td>
+<td>core <code>_debugShowRegs</code>/<code>_debugShowAllMem</code>/<code>_debugShowMem</code>/<code>s</code>-cmd <strong>vs</strong> <code>iinterpreter.displayRegisters</code>/<code>displayMemory</code>/<code>displayStack</code></td>
+<td>LOW</td>
+<td><strong>Leave separate.</strong> Output is intentionally different (oracle-exact text vs colorized TUI). A shared renderer would risk drifting the oracle-parity text, which is regression-tested. Share the <em>data</em> (#1, #3), not the layout.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Prompt command dispatch</strong> (ad-hoc string/regex if-chains)</td>
+<td>core <code>debug()</code> ll.880–976 <strong>vs</strong> <code>iinterpreter.runInteractive()</code> ll.383–446</td>
+<td>LOW</td>
+<td><strong>Leave separate.</strong> Two different command <em>languages</em> by design (oracle keys vs TUI keys). A shared command-table pattern is possible but low payoff; not worth coupling.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>CLI driver orchestration</strong> (arg parse → assemble → load → run)</td>
+<td><code>ilcc.js</code> ll.48–153 mirrors <code>lcc.js</code></td>
+<td>LOW</td>
+<td>Out of scope for this spike (debugger DRY); note for a separate driver-DRY ticket if it bites.</td>
+</tr>
+</tbody></table>
+<h2>Recommendation</h2>
+<p><strong>Consolidate the substrate, keep the two debuggers as distinct front-ends.</strong></p>
+<p>Create a small shared debug-support layer that both <code>Interpreter</code> (oracle
+debugger) and <code>IInterpreter</code> (TUI) depend on:</p>
+<ul>
+<li><strong><code>src/core/debug/format.js</code></strong> — <code>h4()</code>, <code>REG_NAMES</code>, <code>REG_ALIASES</code>. (overlap #2)</li>
+<li><strong><code>src/core/debug/stateDelta.js</code></strong> — pure <code>diffState(prev, curr)</code> returning the
+changed regs/flags/pc; no formatting. (overlap #1)</li>
+</ul>
+<p>Explicitly <strong>do not</strong> merge: the two prompt loops, the two command languages, or
+the two presentation layers (#4, #5). The oracle-parity display text in core
+<code>debug()</code>/<code>step()</code> is byte-exact-tested against the real <code>lcc</code>; routing it through
+a shared renderer would put that parity at drift risk for little gain.</p>
+<h3>Hand-off to #134 (statechart)</h3>
+<p>The statechart should model <code>iinterpreter.runInteractive()</code>&#39;s loop — an <strong>exec
+region</strong> (running/paused/stepping/awaiting-input/halted) with an orthogonal
+<strong>display region</strong> (which panes/anchors are active) — and treat the extracted
+<code>stateDelta</code>/<code>format</code> modules as <strong>pure dependencies it calls</strong>, not logic it
+re-embeds. Module boundary for #134: <code>runInteractive</code> = the machine&#39;s event loop;
+<code>renderDisplay</code> = the display region&#39;s side-effect; <code>diffState</code>/<code>format</code> = pure
+deps. The per-opcode <code>step()</code> switch stays a switch (out of scope, per #134).</p>
+<h2>Decomposed build puzzles</h2>
+<p>Both are independently grabbable; do #2-equivalent first (zero-risk warm-up):</p>
+<ul>
+<li><strong>Build A — <code>format.js</code> (#163)</strong> (~30m/DEV, low risk): extract <code>h4</code> + register
+name/alias tables; replace the ~6 local redefinitions across <code>interpreter.js</code>
+and <code>iinterpreter.js</code>. No behavior change; existing tests must stay green.</li>
+<li><strong>Build B — <code>stateDelta.js</code> (#164)</strong> (~45m/DEV, medium risk): extract pure
+<code>diffState(prev, curr)</code>; route core <code>step()</code>&#39;s inline diff and
+<code>iinterpreter.displayRegisters()</code>&#39;s change-detection through it. <strong>Acceptance:
+oracle-parity test output (<code>&lt;rN=old/new&gt;</code>, <code>&lt;NZCV&gt;</code>, <code>&lt;pc&gt;</code>) is byte-identical
+before/after</strong> — this is the risk, so add/run the oracle diff suite as the gate.</li>
+</ul>
+<p>(Overlap #3 <code>stateView</code> is deferred — re-evaluate after A/B; #4/#5/#6 are
+&quot;leave separate&quot; with rationale above.)</p>
+<p>Markers go in at build-start (these doc-tracked build issues are the backstop
+until then; <code>docs/**</code> is not pdd-scanned).</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

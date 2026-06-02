@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-28-003 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-28-003</h1>
+<p>Date: 2026-05-28
+Context: PM/QA session — answered &quot;how are our tests looking?&quot;, then triaged and
+filed the highest-value missing test coverage as scope tickets. Landed #171
+(linker relocation/output-format coverage) and #172 (picture.js/hexDisplay.js
+extract-then-test). Confirmed the plus/ gap was already #166 and did not
+duplicate it.</p>
+<hr>
+<h2>1. &quot;File these as puzzles&quot; means a GH ticket, not an <code>@todo</code> in source — yet</h2>
+<p>The generic <code>yegor-pdd</code> skill says: write the <code>@todo #N:Mm/ROLE</code> marker <em>at the
+exact code site</em>, now. Following that literally here would have been wrong. This
+project&#39;s <em>documented</em> convention (the body of #166 and the header comment of
+<code>scripts/puzzle-status.js</code>) is the opposite for scope tickets:</p>
+<ul>
+<li>the <strong>parent ticket is a GitHub issue</strong>, and</li>
+<li>the child <code>@todo</code> marker is dropped <strong>at the file head only when the puzzle is
+claimed</strong> into a worktree — never at filing time.</li>
+</ul>
+<p>Two structural facts make this load-bearing, not stylistic:</p>
+<ul>
+<li><code>.pddignore</code> excludes <code>*.md</code> and <code>docs/**</code>, so doc/test-coverage &quot;puzzles&quot; are
+<em>not</em> pdd-scanned at all — they are GitHub-tracked instead. A marker in a doc
+would be invisible to the scanner.</li>
+<li><code>puzzle-status.js</code> derives <em>claimed / orphaned</em> state by joining markers ↔
+worktrees ↔ issues. A marker sitting in source with no worktree reads as an
+idle, grabbable puzzle — so pre-seeding five markers for one cohesive effort
+would lie to the reconciler.</li>
+</ul>
+<p><strong>The rule:</strong> when a project documents its own PDD convention, that overrides the
+skill&#39;s default phrasing. Filing = the GH issue in BDD shape; markers come at
+claim. I applied no <code>pdd-tracked</code> label for the same reason — it means &quot;marker
+exists in source,&quot; which isn&#39;t true until claim.</p>
+<h2>2. Read the tracker before filing — the backlog moves under you</h2>
+<p>The user asked for &quot;a research ticket for <code>src/plus/</code>.&quot; I was one <code>gh issue create</code> away from filing it when <code>gh issue list</code> showed <strong>#166 already covered it</strong>
+— a scope ticket filed earlier <em>the same day</em> by a parallel agent, already
+enumerating per-file child puzzles. With three other worktrees live (164, 165,
+til-002), the backlog is a moving target; checking it first turned a duplicate
+into a one-line &quot;already tracked, here&#39;s the link.&quot; Same check confirmed #171/#172
+had no existing twin (searched open <em>and</em> closed).</p>
+<h2>3. &quot;Highest-value test&quot; = risk × testability, not coverage %</h2>
+<p>The user&#39;s intuition was to test linker, picture, and hexDisplay. A 10-minute
+read of the actual modules reordered the value:</p>
+<ul>
+<li><code>picture.js</code> / <code>hexDisplay.js</code> look like easy wins but are <strong>zero-export CLI
+scripts</strong> — all logic inline with <code>fs</code>/<code>console</code>/<code>process.exit</code>. They can&#39;t be
+unit-tested without a refactor first, and their failure mode is <em>visible</em> output
+(easy to eyeball). Refactor-gated + low-risk = lower ROI than they appear.</li>
+<li>The real prize was the <strong>linker relocation math</strong> (<code>adjustExternalReferences</code>,
+<code>adjustLocalReferences</code>): already pure and exported, but only its <em>error paths</em>
+are tested — the actual bit-mask address arithmetic is unasserted, and its
+failure mode is <em>silent</em> machine-code corruption that still loads and &quot;runs&quot;.</li>
+</ul>
+<p>Coverage % alone would have ranked all three equally as &quot;0% / undertested.&quot; The
+ordering came from asking <em>how does this fail, and how cheap is it to assert?</em></p>
+<h2>4. Severity follows failure-visibility, not size</h2>
+<p>#171 → <code>severity:medium</code>: silent corruption, and the 3-demo oracle e2e only
+catches gross mismatches without localizing them. #172 → <code>severity:low</code>: dev
+tools whose output a human reads directly. The bigger file count (#172 touches two
+files + a refactor) did not raise its severity — what a wrong result <em>does to the
+user</em> did.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/171">#171</a></td>
+<td>Scope ticket — linker relocation + multi-module + <code>createExecutable</code> byte-format coverage; 5 child puzzles ≤60m; <code>testing</code>/<code>scope</code>/<code>severity:medium</code>/QA</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/172">#172</a></td>
+<td>Scope ticket — extract+cover <code>picture.js</code>/<code>hexDisplay.js</code> pure helpers; 4 child puzzles ≤60m; <code>testing</code>/<code>scope</code>/<code>severity:low</code>/DEV+QA</td>
+</tr>
+<tr>
+<td>—</td>
+<td>Confirmed <code>src/plus</code>/<code>src/extra</code> gap = existing #166; <strong>not</strong> duplicated</td>
+</tr>
+</tbody></table>
+<p>No source files touched, no markers dropped, no velocity rows (filing ≠ closing).</p>
+<h2>Related artifacts</h2>
+<ul>
+<li><code>scripts/puzzle-status.js</code> — the marker ↔ worktree ↔ issue reconciler whose
+contract drove lesson 1.</li>
+<li><code>.pddignore</code> — why doc puzzles are GH-tracked, not pdd-scanned.</li>
+<li>#166 — the prior-art scope ticket whose body documents the &quot;marker on claim&quot;
+convention.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

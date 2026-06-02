@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>2026-05-25-lcc-oracle-e2e-bst-redundancy — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Learnings — <code>lcc.oracle.e2e</code> and the redundant <code>.bst</code> golden</h1>
+<p>Date: 2026-05-25
+Branch where this work landed: <code>improve-docs-branch-2026-may-25-01</code></p>
+<h2>The bug</h2>
+<p><code>tests/new/lcc.oracle.e2e.spec.js</code> was <strong>structurally broken</strong> in any
+fresh clone of the repo:</p>
+<ul>
+<li>The suite compared LCCjs output against four oracle artifacts per demo:
+<code>.a</code>, <code>.e</code>, <code>.lst</code>, and <code>.bst</code>.</li>
+<li><code>.gitignore:10</code> globally ignored <code>*.bst</code> files, which meant the <code>.bst</code>
+goldens could never be checked in (<code>git ls-files | grep &#39;\.bst$&#39;</code> → 0).</li>
+<li>Without <code>.bst</code> goldens on disk, every demo hit the <code>needsRegen</code> branch
+in the spec and was skipped with &quot;missing golden files&quot;.</li>
+<li>Net effect: <strong>all 24 demos in the suite skipped, every run, on every
+clean checkout</strong>. The suite contributed zero to CI signal.</li>
+</ul>
+<p>The only way to make it run was setting <code>GOLDEN_AUTO_UPDATE=1</code>, which
+forced live regen of the goldens against the installed cuh63 LCC oracle
+— and then crashed on <code>demoF.a:12</code> due to an unrelated parity regression
+in cuh63 6.3&#39;s <code>mov</code> validation (see the separate <code>mov</code> parity bug
+report).</p>
+<h2>The investigation</h2>
+<p>The bug surfaced while running <code>npm install</code> followed by <code>npm test</code> for
+the first time after wiring up the LCC oracle (<code>.env</code> + <code>LCC_ORACLE</code>):</p>
+<ol>
+<li><p><code>npm test</code> reported 24 unexpected skipped tests in <code>lcc.oracle.e2e</code>.
+Coverage was otherwise green.</p>
+</li>
+<li><p>Setting <code>GOLDEN_AUTO_UPDATE=1</code> to force regen crashed on a <code>mov r0, -15</code>
+error from cuh63 6.3.</p>
+</li>
+<li><p>Tracing the skip path revealed <code>needsRegen</code> was <code>true</code> because
+<code>haveGoldenBst</code> was <code>false</code> — no <code>.bst</code> files anywhere in
+<code>tests/goldens/lcc/</code>.</p>
+</li>
+<li><p><code>cat .gitignore | grep bst</code> showed the global <code>*.bst</code> rule. The
+ignore-versus-required conflict was the root cause.</p>
+</li>
+<li><p>Inspecting an <code>.lst</code> and a <code>.bst</code> side-by-side for the same demo
+revealed they are <strong>the same listing in two different bases</strong>:</p>
+<pre><code>.lst  →  0000  d005             mov r0, 5
+.bst  →  0000  1101 0000 0000 0101  mov r0, 5
+</code></pre>
+<p>Every other byte of the two files is identical (timestamp header
+aside). The <code>.bst</code> carries no information not present in <code>.lst</code>.</p>
+</li>
+</ol>
+<h2>The fix</h2>
+<p><code>tests/new/lcc.oracle.e2e.spec.js</code>:</p>
+<ul>
+<li>Removed <code>bstDiff</code> and <code>compareBstFiles</code> from the helpers import.</li>
+<li>Dropped the <code>goldenBst</code> path, the <code>haveGoldenBst</code> flag, the <code>.bst</code>
+arm of <code>needsRegen</code>, the <code>.bst</code> write in the auto-update branch, and
+the <code>.bst</code> comparison + diff in the <code>test()</code> body.</li>
+<li>Added a comment explaining <em>why</em> <code>.bst</code> is not compared (so a future
+contributor doesn&#39;t add it back thinking it&#39;s missing coverage).</li>
+</ul>
+<p>No production code touched; spec is ~20 lines lighter.</p>
+<h2>Benefits / what we gained</h2>
+<table>
+<thead>
+<tr>
+<th>Before</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0 / 24 lcc.oracle.e2e demos passing on a clean clone</td>
+<td><strong>24 / 24 passing</strong></td>
+</tr>
+<tr>
+<td>26 total skipped tests in <code>npm test</code></td>
+<td><strong>2 skipped</strong> (intentional research markers only)</td>
+</tr>
+<tr>
+<td>Required <code>GOLDEN_AUTO_UPDATE=1</code> env var on first run</td>
+<td>Runs out-of-the-box, no env vars needed</td>
+</tr>
+<tr>
+<td>Required live oracle binary on first run</td>
+<td>Live oracle still optional (only needed when <code>.a</code> demos change)</td>
+</tr>
+<tr>
+<td>Conflicted with the global <code>*.bst</code> gitignore</td>
+<td>No <code>.bst</code> goldens needed; gitignore stays as-is</td>
+</tr>
+<tr>
+<td>Test code duplicated the same parity check in two formats</td>
+<td>Single comparison; ~20 fewer lines of spec code</td>
+</tr>
+</tbody></table>
+<h2>General lessons</h2>
+<ol>
+<li><p><strong>Coverage by redundancy is not coverage.</strong> If artifact A is a
+one-to-one reformat of artifact B, comparing both adds maintenance
+cost without adding bug-detection power. The <code>.bst</code> ↔ <code>.lst</code>
+relationship was exactly that. Any parity defect that would have
+been caught by <code>.bst</code> was already caught by <code>.lst</code>.</p>
+</li>
+<li><p><strong>A golden test that conflicts with <code>.gitignore</code> is structurally
+broken, not just misconfigured.</strong> The &quot;skip on missing golden&quot;
+pattern is reasonable per se, but combined with a gitignore that
+forbids committing the goldens, it silently degrades the suite to
+a no-op. Before adding a new golden format, check that the format
+can actually live in version control.</p>
+</li>
+<li><p><strong>Skip-on-missing is invisible.</strong> Jest reports skipped tests
+without colour or count emphasis. A 24-skip suite looks the same
+as a 24-pass suite in casual scrollback. Worth periodically
+auditing <code>test.skip</code> and the skip rates per suite.</p>
+</li>
+<li><p><strong>An apparent &quot;oracle parity&quot; issue can mask a deeper test-design
+issue.</strong> Setting <code>GOLDEN_AUTO_UPDATE=1</code> to &quot;fix the skip&quot; surfaced
+the cuh63 <code>mov</code> regression as if it were the real problem, when
+in fact the real problem was that the suite was structurally
+unable to run in the first place. Following the skip back to its
+root cause (rather than just unblocking auto-update) was what
+exposed the redundant <code>.bst</code> check.</p>
+</li>
+</ol>
+<h2>Related artifacts</h2>
+<ul>
+<li><code>tests/new/lcc.oracle.e2e.spec.js</code> — the spec we simplified.</li>
+<li><code>tests/goldens/lcc/</code> — the golden cache (<code>.a</code>, <code>.e</code>, <code>.lst</code> per demo).</li>
+<li><code>scratch/mov_parity/</code> — the investigation tools for the cuh63 <code>mov</code>
+regression that was uncovered en route.</li>
+<li><code>current_issues.md</code> — living issue log.</li>
+<li><code>docs/init_code_review.md</code> — the May 2026 review that prompted the
+test-coverage assessment.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

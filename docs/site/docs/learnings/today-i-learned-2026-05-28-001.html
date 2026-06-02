@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-28-001 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-28-001</h1>
+<p>Date: 2026-05-28
+Context: WRITER session — filed and closed #162, the QC pass over the
+<code>docs/glossary/*</code> per-module glossaries (assembler / interpreter / linker +
+README). Landed across four worktree passes: <code>c3c1717</code>, <code>08be918</code>, <code>7a231ff</code>,
+<code>1273a13</code> (+ velocity row <code>73f3c53</code>).</p>
+<hr>
+<h2>1. Worktree isolation is not a per-task judgment call</h2>
+<p>The sharpest lesson of the day. I picked up #162 and reasoned that a single-file
+docs edit on <code>main</code> was &quot;low-risk enough&quot; to skip the worktree, since the only
+other live worktree (#146) was unrelated research. The user pushed back twice —
+the second time explicitly: <em>&quot;worktree always, pls don&#39;t even ask that.&quot;</em></p>
+<p><strong>The rule:</strong> whenever parallel-agent activity exists, work in a worktree and
+push trunk-based — full stop. Don&#39;t re-derive that decision from the apparent
+risk of a given task, and don&#39;t frame &quot;worktree vs. not&quot; as a question. By the
+end of the session three <em>other</em> agents had spun up worktrees (#163, #164, #165),
+which is exactly why the discipline is load-bearing: the repo state I&#39;d have been
+editing on <code>main</code> was moving under me the whole time.</p>
+<p>Cost of getting it wrong: I had to migrate the already-applied assembler.md edit
+<em>off</em> <code>main</code> into a worktree and restore <code>main</code> to clean — pure rework that the
+process would have avoided. (Recorded in the <code>parallel-worktree-workflow</code> memory.)</p>
+<h2>2. Spike &quot;inventory&quot; scaffolding is one-shot — delete it when definitions land</h2>
+<p>Each glossary carried a <code>## Candidate term inventory</code> section (the raw output of
+the spike phase) sitting <em>above</em> the polished <code>## Definitions</code>. It was a rawer,
+redundant restatement of the same terms — and it was huge:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Inventory scaffolding</th>
+<th>Share of file</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>assembler.md</code></td>
+<td>374 lines</td>
+<td>~24%</td>
+</tr>
+<tr>
+<td><code>interpreter.md</code></td>
+<td>203 lines</td>
+<td>~41%</td>
+</tr>
+<tr>
+<td><code>linker.md</code></td>
+<td>90 lines</td>
+<td>~34%</td>
+</tr>
+</tbody></table>
+<p>A reader hit the scaffolding <em>first</em>, before any real definition. The spike→write
+pipeline is great for <em>producing</em> the glossary, but the inventory is intermediate
+work product — once the definitions exist it should be deleted, not archived in
+place. Leaving both means the file says everything twice and ages badly.</p>
+<h2>3. When de-noising docs, separate useful refs from process noise</h2>
+<p>The user&#39;s complaint was &quot;ticket numbers and links that seem unclear/unhelpful.&quot;
+Not all references are noise. The distinction that held up:</p>
+<ul>
+<li><strong>Strip:</strong> GitHub issue refs (<code>#31</code>, <code>see #102</code>), <code>populated by spike #109</code>
+headers, <code>resolved per #126</code> inline notes, date stamps (<code>oracle research, 2026-05-26</code>), and refactor-provenance (<code>typed-error refactor, recent</code>).</li>
+<li><strong>Keep:</strong> <code>**Source:**</code> line citations, cross-file <code>[term](other.md#anchor)</code>
+links, and <em>stable</em> bug IDs like <code>OB-001</code> (which point into <code>open_bugs.md</code> and
+carry meaning a reader can act on). A <code>#N</code> GitHub number is noise; an <code>OB-NNN</code>
+ID is a useful pointer.</li>
+</ul>
+<p>Provenance that&#39;s actually a <em>fact</em> (&quot;matches the original LCC as of 12/2024&quot;)
+stays; provenance about <em>how the doc was built</em> goes.</p>
+<h2>4. Verify entry counts against real headings, not memory</h2>
+<p>The README&#39;s per-file counts were partly wrong: interpreter &quot;39 entries&quot; was
+really 32, linker &quot;26&quot; was really 23. The inflation came from counting the
+<code>### (a)</code>–<code>### (g)</code> <em>section dividers</em> as if they were entries. When a count
+appears in docs, recompute it (<code>grep -c &#39;^#### &#39;</code> for the real entry level) — and
+note that assembler uses <code>####</code> under lettered <code>###</code> sections while
+interpreter/linker use flat <code>###</code> entries, so the right grep differs per file.</p>
+<h2>5. Deterministic, asserting edit scripts beat huge <code>old_string</code> blocks</h2>
+<p>Deleting a contiguous ~370-line block is painful and error-prone to express as an
+Edit <code>old_string</code>. A tiny Python pass anchored on content markers
+(<code>## Candidate term inventory … ## Definitions</code>) with <code>re.subn(...)</code> and an
+<strong>assert that exactly one replacement happened</strong> was both safer and self-checking
+— the assert catches the silent no-op where an anchor has drifted. I verified
+each pass by diffing only the definitions body to prove I&#39;d changed <em>nothing</em>
+except the intended de-noising.</p>
+<h2>6. Velocity on a multi-pass ticket is murky — be candid in the notes</h2>
+<p>#162 wasn&#39;t one focused sitting; it was four passes (assembler, interpreter,
+linker, README+close) interleaved with user approvals. <code>finished − started</code> as a
+single span (~18m) overstates active work; the honest number was the <em>sum</em> of the
+four active passes (~12m). I logged <code>actual=12</code>, <code>C=20</code> (aggregated from per-file
+estimates), <code>H=60</code> (the WRITER cap, not a forecast), and used the notes field to
+say plainly that the number includes the process-correction rework from lesson 1.
+The CSV is only trustworthy if the notes own the asterisks.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Commit</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>c3c1717</code></td>
+<td>assembler.md — inventory removed, header slimmed, <code>(a)</code>–<code>(e)</code> dividers retitled</td>
+</tr>
+<tr>
+<td><code>08be918</code></td>
+<td>interpreter.md — inventory removed, header slimmed, <code>(see #102)</code> dropped</td>
+</tr>
+<tr>
+<td><code>7a231ff</code></td>
+<td>linker.md — inventory removed, header slimmed, <code>issue #3</code> reworded</td>
+</tr>
+<tr>
+<td><code>1273a13</code></td>
+<td>README — Status column → coverage descriptions; counts fixed; lineage line removed; <code>Closes #162</code></td>
+</tr>
+<tr>
+<td><code>73f3c53</code></td>
+<td>velocity CSV row for #162</td>
+</tr>
+</tbody></table>
+<p>202 definitions (147 + 32 + 23) preserved verbatim across all passes.</p>
+<h2>Related artifacts</h2>
+<ul>
+<li><code>docs/glossary/</code> — the four cleaned files.</li>
+<li><code>docs/glossary/README.md</code> — entry conventions + rewritten Files table.</li>
+<li><code>docs/puzzle-velocity.csv</code> — the #162 row (and its candid notes).</li>
+<li><code>parallel-worktree-workflow</code> memory — updated with lesson 1.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

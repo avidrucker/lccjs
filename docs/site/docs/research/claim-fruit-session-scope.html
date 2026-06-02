@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>claim-fruit-session-scope — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Claim auto-fruit: worktree-scoped vs session-scoped identity</h1>
+<p><strong>Issue:</strong> #193 (research spike, ≤60m) · <strong>reporter:</strong> banana (surfaced claiming #152)
+<strong>Date:</strong> 2026-05-29 · <strong>spike by:</strong> apple · <strong>relates to:</strong> #188 (concurrency-safe work-tracking)</p>
+<h2>Question</h2>
+<p><code>npm run claim -- &lt;N&gt;</code> in <strong>auto</strong> mode is supposed to hand out &quot;a brand-new fruit
+nobody is using.&quot; On 2026-05-29 it handed banana the identity <strong><code>apple</code></strong> while a
+separate, still-alive <code>apple</code> session was working <code>#168</code>. Why, and what should the
+fix be — given the original design (<a href="../design-agent-worktree-identity.md"><code>design-agent-worktree-identity.md</code></a>)
+deliberately ruled out a registry file?</p>
+<h2>Root cause (confirmed)</h2>
+<p><code>takenFruits()</code> derives the &quot;in use&quot; set <strong>only from live git worktrees</strong>:</p>
+<pre><code class="language-js">// scripts/claim.js
+function takenFruits() {
+  return new Set(listWorktreeBranches().map((b) =&gt; b.fruit).filter(Boolean));
+}
+// listWorktreeBranches() parses `git worktree list --porcelain`
+</code></pre>
+<p>So a fruit is judged free <strong>the instant its last worktree is removed</strong>. Auto picks
+the lowest-index free fruit (<code>claim.js:164-165</code>). Verified empirically: with apple
+and banana both holding live worktrees, <code>node scripts/claim.js 999 --dry-run</code>
+returns <code>cherry</code> — i.e. auto is <em>correct while an agent holds a worktree</em>. The
+collision only opens in the <strong>gap between an agent&#39;s worktrees</strong>: agent-apple had
+closed #168 and removed <code>apple-issue-168</code> in the seconds around banana&#39;s claim, so
+<code>apple</code> looked free even though the apple session was still alive.</p>
+<p><strong>Identity is worktree-scoped, not session-scoped.</strong> That is the whole bug.</p>
+<h2>Why the &quot;obvious&quot; fix does not work</h2>
+<p>The <code>claim.js</code> header comment (lines 26–27) and the design doc (lines 36, 72) both
+assert <em>&quot;a fruit is taken iff a <code>&lt;fruit&gt;/*</code> branch exists — git&#39;s branch namespace
+is the source of truth.&quot;</em> <strong>The implementation does not match that claim</strong> —
+<code>takenFruits()</code> looks at <em>worktree-attached</em> branches, not the full branch
+namespace. (Sub-finding A, below.)</p>
+<p>But reconciling the code to the comment — scanning <code>git branch --list &#39;&lt;fruit&gt;/*&#39;</code>
+instead of the worktree list — <strong>would not fix #193</strong>, because the close protocol
+(<a href="../claude_workflow.md"><code>claude_workflow.md</code></a> step 5) deletes the branch too
+(<code>git branch -D &lt;fruit&gt;/issue-N-...</code>). After a close, <em>both</em> the worktree and the
+branch are gone, so any git-artifact-per-puzzle scheme frees the fruit at close.</p>
+<p>The gap can only be closed by an artifact whose lifetime is the <strong>session</strong>, not a
+single puzzle — something that survives the teardown of any individual worktree.</p>
+<h2>The falsified assumption</h2>
+<p>The design doc already documented this edge case (line 139–141, <em>&quot;Fruit reuse after
+teardown&quot;</em>) but dismissed it:</p>
+<blockquote>
+<p>Two apples then appear in <em>history</em> but never <em>concurrently</em>, which is all
+&quot;who&#39;s working now&quot; needs.</p>
+</blockquote>
+<p>#193 is the <strong>counterexample</strong>: the two apples <em>were</em> concurrent — both sessions
+alive at once — because the design conflated <strong>worktree-liveness</strong> with
+<strong>session-liveness</strong>. When an agent sits between puzzles (worktree removed, session
+thinking/triaging/waiting on the user), it is live but invisible to <code>takenFruits()</code>.
+That interval is common: every agent passes through it on every close→next-claim
+hop. So this is not an exotic race; it is structural.</p>
+<h2>Options</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Approach</th>
+<th>Mechanism</th>
+<th>Honors &quot;no registry file&quot; non-goal?</th>
+<th>Cost</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A</td>
+<td><strong>Session sentinel branch</strong></td>
+<td>First auto-claim also creates a puzzle-independent <code>&lt;fruit&gt;/session</code> branch (no worktree). <code>takenFruits()</code> scans all <code>&lt;fruit&gt;/*</code> branches. Deleted only at session end; stale ones swept by branch-reflog age.</td>
+<td>✅ git <em>is</em> the registry</td>
+<td>med</td>
+<td><strong>Principled fix</strong></td>
+</tr>
+<tr>
+<td>B</td>
+<td>Session lockfile / heartbeat</td>
+<td><code>.claude/agents/&lt;fruit&gt;</code> file with pid + mtime heartbeat; auto excludes fresh/live entries.</td>
+<td>❌ the exact file the doc forbade</td>
+<td>med–high</td>
+<td>Rejected</td>
+</tr>
+<tr>
+<td>C</td>
+<td>Time-window no-recycle</td>
+<td>Auto skips fruits &quot;recently active&quot; per a timestamp source (velocity-CSV <code>finished_iso</code>, or branch reflog).</td>
+<td>~ (heuristic, no new file)</td>
+<td>low</td>
+<td>Weak — fragile window</td>
+</tr>
+<tr>
+<td>D</td>
+<td><strong>Mandatory <code>--as</code> for concurrent work</strong></td>
+<td>Auto stays first-claim-only; when launching ≥2 agents, the human pre-assigns <code>--as &lt;fruit&gt;</code>. Auto is the solo-work fallback.</td>
+<td>✅ no new mechanism</td>
+<td>~0</td>
+<td><strong>Immediate mitigation</strong></td>
+</tr>
+</tbody></table>
+<p>Notes:</p>
+<ul>
+<li><strong>C</strong> both false-positives (skips a genuinely free fruit) and false-negatives (a
+session idle longer than the window still collides). It trades a structural bug
+for a tuned-constant bug. Not recommended.</li>
+<li><strong>B</strong> is what the design explicitly rejected (&quot;any file we maintain in parallel
+would just drift&quot;), and it carries the same teardown-reliability weakness as A
+without A&#39;s benefit of staying inside git.</li>
+<li><strong>A</strong> keeps git as the single source of truth (the design&#39;s stated principle),
+and a sentinel branch is cheap. Its weakness — a crashed session leaves a stale
+<code>&lt;fruit&gt;/session</code> branch — is bounded by a reflog-age sweep (a stale sentinel is
+detectable and harmless; worst case auto suffixes to <code>apple-2</code>, which already
+exists as the exhaustion fallback).</li>
+</ul>
+<h2>Recommendation (ROI-weighted; severity is <strong>low</strong>)</h2>
+<ol>
+<li><p><strong>Now, zero code — adopt D as the stance.</strong> This is already how the project
+operates in practice: the human assigns identities when fanning out
+(&quot;BANANA take #161, CHERRY take #166&quot;). Make it explicit in
+<code>claude_workflow.md</code>: <em>bare <code>auto</code> is only safe for the first claim of a
+<strong>solo</strong> session; when ≥2 agents run, pre-assign <code>--as</code>.</em> This removes the
+collision in the common case at no cost.</p>
+</li>
+<li><p><strong>If/when the collision recurs despite (1) — implement A</strong> as a follow-up DEV
+puzzle (~45m): sentinel <code>&lt;fruit&gt;/session</code> branch + branch-scoped <code>takenFruits()</code></p>
+<ul>
+<li>a reflog-age staleness sweep + session-end cleanup hook. This is the only
+option that actually makes identity session-scoped while honoring the
+no-registry-file principle. Defer until observed-again, per severity:low.</li>
+</ul>
+</li>
+<li><p><strong>Reject B and C.</strong> Record them here so they are not re-proposed.</p>
+</li>
+</ol>
+<p>This deliberately does <strong>not</strong> ship a fix in the spike: severity is low, a logging
+mitigation already exists (see the <code>terminal-agent-name-vs-fruit</code> agent memory —
+log the velocity row under the terminal-given name, not the auto fruit), and the
+principled fix (A) is non-trivial enough to warrant its own bounded puzzle.</p>
+<h2>Proposed follow-up puzzles</h2>
+<ul>
+<li><strong>DEV (~45m), deferred:</strong> implement Option A (session sentinel branch). Gate:
+only schedule if a real apple/apple-style concurrent collision is observed again.</li>
+<li><strong>DOCS (~10m):</strong> Sub-finding A — the <code>claim.js</code> header comment (lines 26–27) and
+<code>design-agent-worktree-identity.md</code> (line 36) claim branch-namespace is the
+source of truth, but <code>takenFruits()</code> is worktree-scoped. Correct the comments to
+describe what the code does, and cross-link this doc. (Cheap; do regardless of A.)</li>
+</ul>
+<h2>Appendix — facts verified during the spike</h2>
+<ul>
+<li><code>node scripts/claim.js 999 --dry-run</code> → <code>cherry</code> while apple + banana hold live
+worktrees (auto is correct under worktree-liveness).</li>
+<li><code>git worktree list --porcelain</code> is the sole input to <code>takenFruits()</code>; no branch
+scan, no file.</li>
+<li>Close (<code>claude_workflow.md</code> step 5) removes the worktree <strong>and</strong> <code>git branch -D</code>s
+the branch — so a branch-namespace scan would not, by itself, fix #193.</li>
+<li>#193 has no code/markdown puzzle marker (markdown-only research issue); nothing
+to flip or delete on close.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

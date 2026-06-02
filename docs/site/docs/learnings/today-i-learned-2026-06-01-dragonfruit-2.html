@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-01-dragonfruit-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-06-01 (DRAGONFRUIT, session 2)</h1>
+<p>A data-layer session: velocity DB schema migrations (#372), model-value backfill
+(#381), model-naming normalization (#378), and a timeout safety-net script (#376).
+Closed four issues. Filed one (#379 — root fix for the getcwd cosmetic error).</p>
+<hr>
+<h2>1. <code>%:z</code> vs <code>%z</code> in bash <code>date</code> — the colon matters to SQLite</h2>
+<p><strong>What happened:</strong> Issue #372 found 113–121 rows with compact timezone offsets like
+<code>2026-05-31T09:00:00-1000</code>. SQLite 3.45.1&#39;s <code>datetime()</code> returns NULL for that form
+— it requires RFC 3339 colon form (<code>-10:00</code>). All duration queries over those rows
+silently produced NULLs with no error.</p>
+<p><strong>The fix in bash:</strong> swap <code>%z</code> for <code>%:z</code> in the capture command:</p>
+<pre><code class="language-bash">date &#39;+%Y-%m-%dT%H:%M:%S%:z&#39;   # outputs -10:00
+date &#39;+%Y-%m-%dT%H:%M:%S%z&#39;    # outputs -1000 — breaks SQLite
+</code></pre>
+<p>The <code>%:z</code> flag is a GNU date extension (available on Linux, not macOS). The docs
+and skill template now use <code>%:z</code>.</p>
+<p><strong>Detection pattern for existing compact-offset rows:</strong></p>
+<pre><code class="language-sql">WHERE started_iso GLOB &#39;*[+-][0-9][0-9][0-9][0-9]&#39;
+  AND length(started_iso) = 24
+</code></pre>
+<p>The <code>GLOB</code> matches a sign char followed by exactly four digits at the end; the
+<code>length</code> check rules out already-correct <code>-10:00</code> form (25 chars).</p>
+<h2>2. An &quot;id &lt; N&quot; migration cutoff is fragile — use a condition, not a boundary</h2>
+<p><strong>What happened:</strong> Issue #372&#39;s original migration script used <code>WHERE id &lt; 130</code> to
+flip the delta sign convention. In practice, 134 rows up to id=207 had the wrong
+sign — agents kept logging <code>actual - h</code> long after id 130 without realising the
+convention had changed.</p>
+<p><strong>Better approach:</strong> express the <em>wrong state</em> directly:</p>
+<pre><code class="language-sql">WHERE ABS(delta_h_min - (actual_min - h_min)) &lt; 0.01
+</code></pre>
+<p>This catches every row that stores <code>actual - h</code> regardless of id, and leaves rows
+with the correct <code>h - actual</code> untouched. An id boundary is a proxy for the real
+condition; the real condition is always more reliable.</p>
+<p><strong>Lesson:</strong> When a migration corrects a value that should equal a derivable
+expression, filter on <code>stored_value ≈ wrong_expression</code> rather than on an
+approximate row-number range.</p>
+<h2>3. Concurrent agents invalidate a DB fix before you can export it</h2>
+<p><strong>What happened:</strong> During #378 I normalized all <code>claude-sonnet-4-6</code> → <code>sonnet-4.6</code>
+in the DB and re-exported the CSV. The test still failed — two new rows with
+<code>claude-sonnet-4-6</code> had landed from concurrent agents between my UPDATE and the
+export.</p>
+<p><strong>The pattern:</strong> in a multi-agent repo, a DB normalization fix has a race window
+between <code>UPDATE</code> and <code>velocity:export</code>. Agents keep writing with the old template
+during that window. The fix for the <em>root cause</em> (template) closes the window
+permanently; the DB sweep needs to run right before the final export, not earlier.</p>
+<p><strong>Practical rule:</strong> always run the normalization UPDATE immediately before
+<code>npm run velocity:export</code> — not earlier in the commit pipeline — so the CSV
+reflects the current DB state. And fix the source template so the race window
+keeps shrinking over time.</p>
+<h2>4. <code>setsid</code> + <code>kill -- -PGID</code> for guaranteed process-tree kill</h2>
+<p><strong>What happened:</strong> Issue #376 — a prior agent ran <code>node lcc.js halt.a</code> from <code>/tmp</code>
+and it hung for 28 minutes at 99.9% CPU because the interpreter was blocked waiting
+for user input that never came. <code>kill PID</code> only kills the top-level node process;
+any grandchildren (spawned via <code>child_process</code>) survive as orphans.</p>
+<p><strong>The solution in <code>lccrun.sh</code>:</strong></p>
+<pre><code class="language-bash">setsid &quot;$@&quot; &amp;          # new session → new process group; PGID = child PID
+CHILD_PGID=&quot;$CHILD_PID&quot;
+# watchdog:
+kill -TERM -- -&quot;$CHILD_PGID&quot;  # sends SIGTERM to every process in the group
+sleep 2
+kill -KILL -- -&quot;$CHILD_PGID&quot;  # SIGKILL stragglers
+</code></pre>
+<p><code>setsid</code> makes the child the leader of a new session, so PGID = child PID. Sending
+to <code>-PGID</code> (negative PID syntax) signals the entire process group. All descendants
+that didn&#39;t create their own process group are reaped.</p>
+<p><strong>Flag-file for timeout detection:</strong> because the watchdog runs in a subshell, it
+can&#39;t set a variable in the parent. A temp file (<code>mktemp</code>, written by the watchdog,
+read by the parent after <code>wait</code>) is the clean IPC mechanism:</p>
+<pre><code class="language-bash">FLAG=$(mktemp)
+trap &#39;rm -f &quot;$FLAG&quot;&#39; EXIT
+# watchdog writes: printf &#39;1&#39; &gt; &quot;$FLAG&quot;
+# parent checks: [[ -s &quot;$FLAG&quot; ]] &amp;&amp; exit 124
+</code></pre>
+<p>Exit code 124 matches <code>timeout(1)</code> convention for &quot;killed by timeout.&quot;</p>
+<hr>
+<h2>What went well</h2>
+<ul>
+<li><strong>Four migrations in a row with no re-orientation overhead.</strong> Having worked on
+the velocity DB in #381 and #378 before #372, the schema shape and tooling
+(<code>velocity:export</code>, <code>velocity:log</code>, the CSV test suite) were already warm.</li>
+<li><strong>The precise sign-flip condition was better than the prescribed one.</strong> Catching
+134 wrong-sign rows instead of ~43 means the DB is actually clean now, not just
+&quot;mostly clean.&quot;</li>
+<li><strong><code>lccrun.sh</code> was fully tested before committing.</strong> Verified all three cases
+(normal exit, non-zero exit passthrough, timeout + exit 124) against real Node
+processes before the commit.</li>
+</ul>
+<h2>What didn&#39;t go well</h2>
+<ul>
+<li><strong>Forgot the squash-before-close pattern once.</strong> After #378 and #381 I already
+knew that velocity rows should be in the same commit as <code>Closes #N</code>, yet #372
+still needed a <code>git reset --soft HEAD~2</code>. The pattern should be automatic by now:
+log the velocity row, stage it, and <code>git commit &quot;... Closes #N&quot;</code> in one shot.</li>
+<li><strong>The <code>%:z</code> fix was in the issue description all along</strong> — I re-derived it from
+first principles (checking SQLite docs) when I could have just followed the spec.
+Read the issue body more carefully before starting.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

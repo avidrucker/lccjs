@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-29-cherry-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-29 (CHERRY, session 2)</h1>
+<p>Date: 2026-05-29
+Agent: CHERRY
+Context: Second CHERRY session of the day (session 1 → #160/#186, the velocity-CSV
+close-protocol fix). This one was assigned work, not self-directed: triage → take
+<strong>#169</strong> (unit tests for <code>stateDelta.js</code>), then <strong>#166</strong> (a scope ticket for
+<code>src/plus</code>/<code>src/extra</code> 0% coverage), then status assessment and issue-comment
+corroboration. Two closes, five child issues spawned, three field-evidence
+comments. The throughline: <em>most of the friction this session came from process
+machinery, not from the code.</em></p>
+<hr>
+<h2>1. When two process docs disagree, the live data is the tiebreaker — and the disagreement is itself a bug</h2>
+<p>Closing #169 I followed <code>claude_workflow.md</code>&#39;s &quot;At close&quot; sequence: commit
+<code>Closes #169</code>, <code>git pull --rebase</code>, <strong>capture the post-rebase SHA</strong> for a second
+<code>docs(velocity)</code> commit. Only when I opened <code>puzzle-velocity.csv</code> to write the row
+did the recent rows tell a different story — <em>&quot;closed_commit empty per #186
+protocol&quot;</em> — and <code>puzzle-velocity.md</code> confirmed a <strong>single-commit</strong> close with an
+empty SHA. I&#39;d been executing a retired protocol. I course-corrected mid-close
+(amended the row into the first commit, left <code>closed_commit</code> empty) and the next
+close (#166) used the current form directly.</p>
+<p>The fix wasn&#39;t just &quot;do it right&quot; — it was recognising the two docs <em>structurally
+contradict</em>, which is already filed as #201. I added a first-hand repro to that
+ticket rather than silently working around it.</p>
+<p><strong>The rule:</strong> when two authority docs prescribe different procedures, don&#39;t pick
+one and hope — reconcile against the <strong>ground-truth artifact</strong> (here, the most
+recent CSV rows, which show what agents <em>actually</em> do). And when docs contradict,
+that contradiction is a defect to report, not a personal lookup to absorb.</p>
+<h2>2. A scope ticket is &quot;done&quot; when it has spawned grabbable children — not when the work is done</h2>
+<p>#166 was 0% coverage across ~2k LOC in 5 files. The reflex is &quot;write tests.&quot; The
+ticket&#39;s own marker said <strong>&quot;Do NOT attempt all 5 files in one puzzle&quot;</strong> — it&#39;s a
+scope ticket, and its deliverable is <em>decomposition</em>: one ≤60m child puzzle per
+file. I filed #196–#200 and closed #166 as a tracker, writing zero test code.</p>
+<p>The value I added wasn&#39;t the split — it was the <strong>seam findings baked into each
+child</strong> so any agent can start cold: <code>disassembler.js</code> has <strong>no <code>module.exports</code></strong>
+(CLI-only → a child must shell out to a golden <code>.e</code> or add an export seam first);
+OB-002 is already <em>fixed</em> so its child pins a <strong>regression</strong>, not a repro; the
+fixtures each child needs already exist (<code>plusdemos/*.ap</code>, <code>tests/goldens/</code>,
+<code>assembler -o</code>). A decomposition that just lists filenames would have pushed the
+real investigation onto five future agents.</p>
+<p><strong>The rule:</strong> read a ticket&#39;s own framing before reaching for the obvious verb. A
+scope/tracker ticket wants children + the non-obvious seam facts that make them
+cold-startable — not a heroic one-shot that blows the microtask cap.</p>
+<h2>3. A guardrail stop on an outward action means <em>confirm</em>, not <em>circumvent</em></h2>
+<p>Filing the 5 child issues was blocked by the auto-classifier: &quot;you were asked to
+<em>do coverage</em>, not <em>file tickets</em> — creating issues in a shared tracker is a scope
+escalation.&quot; It was right. &quot;Take #166&quot; reads as obvious authorization to me, but
+creating five public artifacts in a shared tracker is exactly the kind of
+outward-facing, hard-to-unwind action that deserves an explicit yes. I stopped,
+laid out the prepared decomposition via <code>AskUserQuestion</code>, got the go-ahead, then
+filed.</p>
+<p><strong>The rule:</strong> when a guardrail blocks an irreversible/outward action, treat it as a
+prompt to surface the plan and get explicit sign-off — never as an obstacle to
+route around. The classifier and I were modelling &quot;scope&quot; differently; the user
+breaks the tie.</p>
+<h2>4. Verify an outward effect actually happened — &quot;Closes #N&quot; can lag</h2>
+<p>After pushing #166 with <code>Closes #166</code>, my immediate state check showed the issue
+still <strong>OPEN</strong>. The keyword hadn&#39;t fired yet (direct-to-<code>main</code> pushes can lag a few
+seconds). I&#39;d staged a fallback (<code>gh issue close</code> <em>only if</em> still open after a
+short wait) — and on recheck it had already closed on its own, so the fallback was
+correctly skipped.</p>
+<p><strong>The rule:</strong> don&#39;t assume a side effect landed because the command that should
+cause it succeeded. Re-read the actual state, give async effects a beat, and guard
+any manual fallback with a fresh check so you don&#39;t double-act.</p>
+<h2>5. When you hit a documented bug live, log the instance — it converts theory to verified</h2>
+<p>Three open tickets describe process bugs I bumped into this session: #201 (the
+contradicting close docs), and #194/#195 (claim <code>auto</code> reusing a fruit in the
+close→next-claim gap). Rather than restate them, I commented with the concrete
+session repro: I followed the stale doc on #169; <code>auto</code> recycled <code>apple</code> from a
+just-closed session on my first claim, then <em>correctly</em> gave <code>cherry</code> on my second
+only because other agents still held worktrees at that instant. That timing
+dependence is the exact structural fragility #194 predicts.</p>
+<p><strong>The rule:</strong> a bug report with a real, dated, named repro is worth more than a
+sharper restatement. If you trip the wire a ticket describes, leave the footprint
+on the ticket — you&#39;re the verification the reporter couldn&#39;t self-provide.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/169">#169</a></td>
+<td><strong>Closed</strong> — <code>tests/new/stateDelta.unit.spec.js</code>, 10 cases over <code>diffRegisters</code>/<code>diffFlags</code>/<code>pcChanged</code> (issue named a nonexistent <code>diffState</code>; tested the real API + noted the divergence). Single-commit close.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/166">#166</a></td>
+<td><strong>Closed as tracker</strong> — decomposed into 5 per-file child puzzles with seam findings; no test code written by design.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/196">#196–#200</a></td>
+<td><strong>Filed</strong> — disassembler / assemblerplus / interpreterplus / lccplus / linkerStepsPrinter smoke + OB-### repro children (each ≤45m, fixtures + repro pointers inline).</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/201">#201</a>, <a href="https://github.com/avidrucker/lccjs/issues/194">#194</a>, <a href="https://github.com/avidrucker/lccjs/issues/195">#195</a></td>
+<td><strong>Commented</strong> — first-hand session repros corroborating the close-doc contradiction and the claim-fruit gap.</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>Added <code>terminal-agent-name-vs-fruit</code> — log velocity under the terminal name (CHERRY), not the claim-tool&#39;s auto fruit.</td>
+</tr>
+</tbody></table>
+<h2>Open threads for tomorrow</h2>
+<ul>
+<li><strong>#196–#200 are unclaimed children</strong> ready to grab — the highest-ROI being #196
+(disassembler, largest untested file; resolve the export-seam-vs-subprocess
+choice first).</li>
+<li><strong>#201</strong> is a cheap, high-value WRITER fix and I&#39;m now a witness to it biting —
+worth prioritising so the next agent isn&#39;t misled the way I was.</li>
+<li><strong>#194/#195</strong> (claim-fruit gap) stay gated on recurrence per #193; my #194
+comment adds a second data point toward &quot;it recurs.&quot;</li>
+</ul>
+<h2>Related artifacts</h2>
+<ul>
+<li><a href="./today-i-learned-2026-05-29-cherry.md">TIL 2026-05-29 (CHERRY, session 1)</a> —
+same agent, earlier today; its lesson 2 (&quot;derive, don&#39;t store a rebased value&quot;)
+is <em>why</em> the #186 single-commit protocol I tripped over in lesson 1 here exists.
+Session 1 built the fix; session 2 felt the doc that hadn&#39;t caught up (#201).</li>
+<li><a href="./today-i-learned-2026-05-29-apple.md">TIL 2026-05-29 (APPLE)</a> and the #203
+self-audit — the sibling &quot;process adherence&quot; thread; my lessons 3–4 are the
+outward-action half of the same discipline.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

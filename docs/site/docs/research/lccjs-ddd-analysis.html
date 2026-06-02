@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>lccjs-ddd-analysis — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>DDD Analysis: <code>avidrucker/lccjs</code></h1>
+<blockquote>
+<p>A thorough critique of the lccjs project through the lens of Domain-Driven Design.</p>
+</blockquote>
+<hr>
+<h2>What DDD Actually Requires (Brief Framing)</h2>
+<p>Domain-Driven Design centers on a few key ideas: identifying the <strong>core domain</strong> and making it the most protected, expressive part of the codebase; building a <strong>ubiquitous language</strong> shared by the code and the people who work on it; separating the <strong>domain model</strong> from infrastructure and application concerns; and using <strong>bounded contexts</strong> to isolate sub-domains that have their own models and rules.</p>
+<p>For LCC.js, the core domain is the LCC ISA — its instructions, machine model, assembly rules, linking contract, and execution semantics. Everything else (file I/O, report formatting, CLI parsing, oracle parity testing) is infrastructure or application layer.</p>
+<hr>
+<h2>Where LCC.js Does DDD Well</h2>
+<h3>1. The toolchain pipeline maps naturally to bounded contexts, and the project honors that</h3>
+<p>The three core modules — <code>assembler.js</code>, <code>interpreter.js</code>, <code>linker.js</code> — represent distinct bounded contexts with distinct domain models. Assembly is about transforming <em>source text</em> into <em>machine words</em> through a <em>symbol table</em>. Execution is about simulating a <em>virtual machine</em> with <em>registers</em>, <em>memory</em>, and a <em>fetch-decode-execute cycle</em>. Linking is about resolving <em>cross-module references</em> across <em>object modules</em>. The project keeps these cleanly separated rather than collapsing them into a monolith. That&#39;s exactly what bounded contexts call for.</p>
+<h3>2. The pure API / CLI wrapper split is a meaningful domain/infrastructure boundary</h3>
+<p>The documented and enforced separation — <code>assembleSource(...)</code> and <code>executeBuffer(...)</code> as pure, stateless seams vs. <code>main(...)</code> as the CLI wrapper that owns file I/O and console output — is the single biggest DDD win in this codebase. DDD calls this separating the domain layer from the infrastructure layer. The project does it consciously, documents it in <code>core.md</code> and each module&#39;s <code>docs/</code> file, and enforces it with typed errors that substitute for CLI exits in the pure path. That&#39;s mature practice.</p>
+<h3>3. Typed errors represent meaningful domain failures</h3>
+<p><code>AssemblerError</code>, <code>InterpreterRuntimeError</code>, <code>InvalidExecutableFormatError</code>, <code>LinkerError</code> — these aren&#39;t generic JavaScript <code>Error</code> subclasses grabbed for convenience. Each one signals a distinct failure mode in a specific bounded context. That&#39;s the DDD principle of making domain concepts explicit in code rather than relying on string-matching error messages or exit codes. The shared location in <code>src/utils/errors.js</code> is a minor architectural awkwardness (see below), but the concept is right.</p>
+<h3>4. Ubiquitous language is present in the ISA layer</h3>
+<p>The instruction names (<code>mov</code>, <code>dout</code>, <code>halt</code>, <code>trap</code>, <code>.start</code>, <code>.globl</code>, <code>.word</code>), the file extension conventions (<code>.a</code>, <code>.e</code>, <code>.o</code>, <code>.ap</code>, <code>.ep</code>), and the structural terms (symbol table, load point, object module, executable image) are all used consistently across the codebase, docs, and tests. The <code>docs/lcc-isa.md</code> and <code>docs/lccplus-isa.md</code> serve as the ubiquitous language reference that anchors the whole project. This is exactly what a domain glossary should do.</p>
+<h3>5. The <code>src/utils</code> separation respects the concept of shared kernel</h3>
+<p>DDD defines a &quot;shared kernel&quot; as code jointly owned by multiple bounded contexts. <code>reportArtifacts.js</code>, <code>fileArtifacts.js</code>, and <code>errors.js</code> serve all three core modules without belonging to any one of them. The project has correctly identified these as cross-cutting concerns and extracted them, rather than duplicating them inside each core module.</p>
+<h3>6. Experiments and oracle parity testing have a DDD analog: anti-corruption layers</h3>
+<p>The <code>experiments/</code> directory and oracle parity tests (<code>lcc.oracle.e2e.spec.js</code>) are, in DDD terms, an anti-corruption layer — a translation mechanism that mediates between LCC.js&#39;s model and the &quot;legacy&quot; oracle LCC binary. Rather than letting oracle behavior silently leak into the LCC.js model, the project explicitly documents deviations in <code>docs/parity_deviations.md</code>. That&#39;s disciplined context integration.</p>
+<hr>
+<h2>Where LCC.js Does DDD Poorly</h2>
+<h3>1. The domain model lives inside large, stateful classes with no explicit model objects</h3>
+<p>This is the biggest gap. The Assembler class holds the symbol table, the current pass, the line counter, the output buffer, the error list, and the report state all as mutable instance fields. The Interpreter holds memory, registers, PC, and execution state the same way. DDD would push for these to be <strong>explicit, named domain objects</strong>: a <code>SymbolTable</code>, a <code>MachineState</code>, an <code>InstructionWord</code>, an <code>ObjectModule</code>, an <code>ExecutableImage</code>. Right now those concepts exist only implicitly inside the large classes. You can&#39;t pass a <code>SymbolTable</code> to another function — it&#39;s always <code>this.symbolTable</code> on the Assembler class. You can&#39;t reason about or test a <code>MachineState</code> in isolation — it&#39;s tangled into the Interpreter&#39;s execution logic.</p>
+<h3>2. The linker&#39;s internal data structures have no domain semantics</h3>
+<p>From <code>linker.md</code>, the linker manages <code>mca</code>, <code>GTable</code>, <code>ETable</code>, <code>eTable</code>, <code>VTable</code>, <code>ATable</code>. These abbreviated names are the opposite of ubiquitous language — they&#39;re implementation artifacts. In DDD terms, the linker&#39;s domain model includes concepts like <code>GlobalSymbolTable</code>, <code>ExternalReferenceTable</code>, <code>AddressAdjustmentTable</code>, <code>ObjectModule</code>, <code>RelocatableReference</code>. Using cryptic one-letter-prefixed names obscures the domain and makes the linker a much harder context to work in. The docs acknowledge the linker is &quot;the least refactored core module&quot; — but the problem is conceptual, not just organizational.</p>
+<h3>3. <code>src/utils/errors.js</code> is in the wrong place for DDD</h3>
+<p>Typed errors are domain concerns — <code>AssemblerError</code> belongs in the assembler&#39;s bounded context, not in a shared utilities folder. Moving them to <code>src/utils</code> implies they&#39;re infrastructure, when they&#39;re actually the failure vocabulary of the domain. DDD would put each error type in its own bounded context, either inside the module or in an explicit <code>domain/</code> subfolder. The current arrangement works, but it blurs the line between shared kernel and domain model.</p>
+<h3>4. The <code>lcc.js</code> orchestrator has no domain concept behind it — it&#39;s pure application layer wearing a core module label</h3>
+<p><code>lcc.js</code> lives in <code>src/core/</code> alongside the assembler, interpreter, and linker, but it&#39;s fundamentally different — it&#39;s an application service, not a domain component. DDD distinguishes between the <strong>domain layer</strong> (where rules and models live) and the <strong>application layer</strong> (which orchestrates domain operations for a specific use case). The orchestrator should live in <code>src/app/lcc.js</code> or <code>src/cli/lcc.js</code> to make that distinction visible. Its current placement in <code>src/core/</code> implies it&#39;s coordinate with the assembler and linker, which it isn&#39;t — it depends on all of them.</p>
+<h3>5. The <code>plus</code> variants are a parallel bounded context that&#39;s currently a second-class copy</h3>
+<p><code>src/plus/assemblerplus.js</code> and <code>interpreterplus.js</code> represent a genuine extension to the domain — the LCC+ ISA adds real new domain concepts (non-blocking input, screen manipulation, timed delays, the <code>.lccplus</code> directive). But the current structure implies these are just &quot;plus-sized&quot; versions of the core modules. DDD would model this as either a separate bounded context (<code>src/plus/</code> with its own domain model) or as an extension of the core domain via well-defined extension points. Without explicit extension seams in the core, LCC+ is forced to fork the entire assembler/interpreter rather than composing with it. The <code>docs/lccplus-isa.md</code> correctly calls out LCC+ as an addendum, but the code hasn&#39;t followed that conceptual separation cleanly.</p>
+<h3>6. Report generation is partially a domain concern that&#39;s been mislabeled as infrastructure</h3>
+<p><code>.lst</code> and <code>.bst</code> files aren&#39;t just output artifacts — they&#39;re part of the domain&#39;s observability model, the structured view of an assembly or execution run. <code>genStats.js</code> and <code>reportArtifacts.js</code> sit in <code>src/utils/</code> but they encode domain knowledge: what fields go in a listing, what column widths mean, how addresses are formatted. A DDD purist would say this is &quot;domain service&quot; logic that happens to produce text, and it should live closer to the assembler/interpreter domain model, not in a shared utilities basket.</p>
+<h3>7. <code>name.js</code> leaks filesystem state into what should be a pure domain concern</h3>
+<p>The <code>name.nnn</code> file is essentially the author&#39;s name for report headers. <code>name.js</code> resolves it from the current working directory and prompts for it if absent. This is a filesystem-and-interactive-IO concern that&#39;s currently tangled with report generation. In DDD terms, the domain concept is just &quot;a <code>UserName</code> string,&quot; and the application layer is responsible for resolving it (from a file, a CLI arg, an env var, whatever). The domain shouldn&#39;t know or care where the name came from. The existing pure API already offers a workaround (passing <code>userName</code> in options), but <code>name.js</code> pulls the filesystem dependency into a utility that core modules depend on.</p>
+<hr>
+<h2>Concrete Recommendations for Improvement</h2>
+<h3>1. Extract explicit domain objects from the large classes</h3>
+<p>Rather than keeping <code>this.symbolTable</code> as a raw object inside Assembler, define a <code>SymbolTable</code> class with methods like <code>define(label, address)</code>, <code>lookup(label)</code>, <code>hasForwardRefs()</code>. Similarly extract <code>MachineState</code> (registers + memory) from Interpreter, and <code>ObjectModule</code> (header + code bytes + relocation tables) from Linker. These become the core domain model — testable independently, passable between contexts, and named in the ubiquitous language.</p>
+<h3>2. Rename the linker&#39;s internal tables using domain language</h3>
+<table>
+<thead>
+<tr>
+<th>Current Name</th>
+<th>Suggested Name</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mca</code></td>
+<td><code>moduleCurrentAddress</code> / <code>allocationPointer</code></td>
+</tr>
+<tr>
+<td><code>GTable</code></td>
+<td><code>GlobalSymbolTable</code></td>
+</tr>
+<tr>
+<td><code>ETable</code> / <code>eTable</code></td>
+<td><code>ExternalReferenceTable</code></td>
+</tr>
+<tr>
+<td><code>VTable</code></td>
+<td><code>VirtualAddressTable</code></td>
+</tr>
+<tr>
+<td><code>ATable</code></td>
+<td><code>AddressAdjustmentTable</code></td>
+</tr>
+</tbody></table>
+<p>This costs nothing in runtime and buys enormous clarity for anyone working in the linker context.</p>
+<h3>3. Move <code>lcc.js</code> to <code>src/cli/</code> or <code>src/app/</code></h3>
+<p>This makes the layered architecture explicit:</p>
+<pre><code>src/core/     → domain layer (assembler, interpreter, linker)
+src/cli/      → application/infrastructure layer (lcc.js orchestrator, CLI wrappers)
+src/utils/    → shared kernel (errors, file helpers, report generation)
+</code></pre>
+<p>The orchestrator is an application service, not a peer of the assembler.</p>
+<h3>4. Consider a <code>src/domain/</code> layer for pure value objects</h3>
+<p>An <code>Instruction</code> value object (opcode + operands + encoding), an <code>AssemblyListing</code> (the structured result of a pass, not just a raw buffer), an <code>ExecutionTrace</code> (the sequence of machine states during a run) — these are domain concepts that currently only exist as implicit shapes in return values and internal state. Making them explicit classes with names from the ubiquitous language would bring the codebase much closer to DDD&#39;s ideal.</p>
+<h3>5. Model LCC+ as a composed extension, not a forked parallel</h3>
+<p>Introduce explicit extension points in the core assembler and interpreter: an <code>InstructionSet</code> interface that the plus variants can extend, a <code>TrapHandler</code> registry that lets new trap implementations register alongside built-ins. Then <code>assemblerplus.js</code> becomes something like:</p>
+<pre><code class="language-js">new Assembler({ instructionSet: lccPlusISA })
+</code></pre>
+<p>...rather than a separate class that reimplements the entire assembly pipeline.</p>
+<h3>6. Elevate <code>errors.js</code> into the domain layer</h3>
+<p>Move typed errors to <code>src/core/errors.js</code> (or into each module&#39;s own file) and treat them as first-class domain vocabulary. The current <code>src/utils/errors.js</code> placement is a minor but real conceptual misclassification.</p>
+<h3>7. Make <code>UserName</code> a plain value passed into the application layer</h3>
+<p><code>name.js</code> should become an application-layer concern: the CLI resolves <code>name.nnn</code> or prompts before calling any core API, then passes the resolved string in as <code>userName</code>. This keeps the domain model completely free of file I/O and interactive prompts.</p>
+<hr>
+<h2>Summary Scorecard</h2>
+<table>
+<thead>
+<tr>
+<th>DDD Principle</th>
+<th>Rating</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bounded context separation</td>
+<td>✅ Strong</td>
+<td>Assembler / Interpreter / Linker are clearly distinct</td>
+</tr>
+<tr>
+<td>Ubiquitous language (ISA layer)</td>
+<td>✅ Strong</td>
+<td>ISA docs serve as living glossary</td>
+</tr>
+<tr>
+<td>Domain / infrastructure separation</td>
+<td>✅ Good</td>
+<td>Pure API / CLI split is meaningful and enforced</td>
+</tr>
+<tr>
+<td>Typed errors as domain vocabulary</td>
+<td>✅ Good</td>
+<td>Right idea, slightly wrong location</td>
+</tr>
+<tr>
+<td>Anti-corruption layer (oracle parity)</td>
+<td>✅ Strong</td>
+<td>Explicitly documented deviations, separate test suite</td>
+</tr>
+<tr>
+<td>Explicit domain model objects</td>
+<td>⚠️ Weak</td>
+<td>Domain concepts live implicitly inside large stateful classes</td>
+</tr>
+<tr>
+<td>Ubiquitous language (linker internals)</td>
+<td>⚠️ Weak</td>
+<td>Cryptic abbreviated table names obscure the domain</td>
+</tr>
+<tr>
+<td>Layered architecture visibility</td>
+<td>🔶 Moderate</td>
+<td><code>lcc.js</code> is an app service parked in the domain layer</td>
+</tr>
+<tr>
+<td>LCC+ as composed extension</td>
+<td>⚠️ Weak</td>
+<td>Currently a forked parallel, not a domain extension</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Closing Assessment</h2>
+<p>The project&#39;s documentation quality is frankly excellent for a solo/small-team educational project, and it reflects genuine architectural thinking. The main DDD gap is one that&#39;s common in toolchain projects: the <em>behavior</em> is well-partitioned but the <em>domain model objects</em> are still implicit, living inside large stateful classes rather than as first-class named types.</p>
+<p>Closing that gap — even incrementally, starting with <code>SymbolTable</code> and <code>MachineState</code> — would bring the codebase much closer to what DDD practitioners would recognize as an expressed domain model. The structural bones are good. The next step is making the domain concepts visible as objects, not just as behavior.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

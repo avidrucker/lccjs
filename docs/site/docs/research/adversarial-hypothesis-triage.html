@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>adversarial-hypothesis-triage — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Adversarial Hypothesis Triage — #404</h1>
+<p><strong>Architect:</strong> FIG · <strong>2026-06-01</strong> · <strong>Parent:</strong> #246, #382<br><strong>Input:</strong> <code>docs/research/adversarial_hypotheses.md</code> (31 hypotheses)<br><strong>Deliverable:</strong> Decision record + sequenced filing plan for the TDD campaign</p>
+<hr>
+<h2>Decision record</h2>
+<h3>1. Priority order — revised</h3>
+<p>The doc&#39;s recommended first-seven (H-010, H-003, H-012, H-020, H-025, H-026, H-028)
+is directionally correct but misordered. Adversarial re-ranking:</p>
+<table>
+<thead>
+<tr>
+<th>Rank</th>
+<th>Hypothesis</th>
+<th>Why this slot</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><strong>H-026</strong> linker odd-buffer crash</td>
+<td>Node <code>ERR_OUT_OF_RANGE</code> — uncaught exception, hardest failure mode, most concrete repro</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>H-025</strong> duplicate global symbols</td>
+<td>Silent last-wins; linked program calls wrong function; no error surfaced</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>H-020</strong> div/rem by zero → silent 0</td>
+<td><code>Infinity / NaN</code> coerces to 0 in Uint16Array; program continues wrong</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>H-012</strong> shift count overflow</td>
+<td>4-bit field with no bound → count 16 corrupts opcode bits silently</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>H-008</strong> adjacent commas → silent 0</td>
+<td>H-010&#39;s tokenizer twin: <code>add r0,,r1</code> may silently encode as <code>add r0, r1, #0</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>H-010</strong> evaluateImmediate null→0</td>
+<td><code>parseNumber(undefined)→null</code>, <code>isNaN(null)===false</code> → 0; but earlier operand checks may catch it — verify first</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>H-028</strong> disassembler round-trip</td>
+<td>No round-trip test exists; #166 closed without covering fidelity</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>H-017</strong> stale inputFileName on reuse</td>
+<td>Pure-seam caller risk; concrete, isolated</td>
+</tr>
+</tbody></table>
+<p>H-010 drops from rank 1 to rank 6 because <code>assembleADD</code> likely has an earlier operand-count
+check that fires before <code>evaluateImmediate</code> is reached with <code>undefined</code>. If the earlier guard
+is absent, H-010 immediately re-promotes. The test decides.</p>
+<h3>2. Batch size</h3>
+<p><strong>31 individual tickets is too many</strong> — it floods the backlog and buries the high-signal items.
+Decision: file high-priority hypotheses as individual TEST(/FIX) tickets; batch medium-priority
+hypotheses by subsystem with the solver expected to write all tests in the batch and report
+which are bugs vs confirmed-correct behavior.</p>
+<p>Filing breakdown:</p>
+<ul>
+<li><strong>8 individual tickets</strong> — top-priority items, likely real bugs, ≤35m each</li>
+<li><strong>4 subsystem-batch tickets</strong> — medium-priority items grouped by module, ~45–55m each</li>
+<li><strong>4 routed to existing issues</strong> — #218 owns oracle-gated parity questions; no new tickets</li>
+<li><strong>1 LCC+ smoke prerequisite</strong> — must precede H-030 adversarial ticket</li>
+<li><strong>Total new tickets: 14</strong> (8 individual + 4 batch + 1 LCC+ smoke + 1 H-031 design)</li>
+</ul>
+<h3>3. Overlap with #166 and #218</h3>
+<table>
+<thead>
+<tr>
+<th>Hypothesis</th>
+<th>Disposition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-028 (disassembler round-trip)</td>
+<td><strong>File new ticket.</strong> #166 is CLOSED and covered only crash-on-known-input, not round-trip fidelity. Gap is real.</td>
+</tr>
+<tr>
+<td>H-009 (branch pcoffset9 boundary)</td>
+<td><strong>Route to #218.</strong> Add as a comment on the open parity-backlog issue.</td>
+</tr>
+<tr>
+<td>H-013 (sra vs shift siblings inconsistency)</td>
+<td><strong>Route to #218.</strong> Oracle-gated ISA question.</td>
+</tr>
+<tr>
+<td>H-016 (bl numeric literal)</td>
+<td><strong>Route to #218.</strong> Oracle-gated parity question.</td>
+</tr>
+<tr>
+<td>H-019 (octal parsing)</td>
+<td><strong>Route to #218.</strong> Explicitly in scope of that issue already.</td>
+</tr>
+</tbody></table>
+<h3>4. LCC+ (H-030)</h3>
+<p><strong>Yes, a smoke test must come first.</strong> H-030 adversarially tests instance reuse — but with 0%
+coverage there is no baseline. File a &quot;LCC+ assembler smoke test&quot; ticket first (assemble a
+minimal valid <code>.ap</code> program, check the <code>.ep</code> output is non-empty and parseable). H-030 becomes
+a follow-on tagged &quot;after smoke test.&quot;</p>
+<h3>5. H-031 (REPORT_MULTI_ERRORS design constraint)</h3>
+<p><strong>File as a small TEST ticket</strong> — not a fix, not a docs update. The deliverable is a passing
+test that encodes the constraint: assert that two bad lines produce exactly one error in the
+<code>errors</code> array. This is behavioral verification of a design choice, which is exactly what the
+TDD workflow is for.</p>
+<h3>6. Oracle-gated hypotheses</h3>
+<p>H-001 does NOT need the oracle — the error-message expectation is internal. Oracle-gated items
+(H-009, H-013, H-016, H-019) are routed to #218 where that infrastructure already lives.</p>
+<hr>
+<h2>Full disposition table (all 31)</h2>
+<table>
+<thead>
+<tr>
+<th>H-ID</th>
+<th>Sev</th>
+<th>Disposition</th>
+<th>Ticket / Route</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-001</td>
+<td>🔴</td>
+<td><strong>FILE individual</strong></td>
+<td>Assembler: unterminated string error points to wrong line</td>
+</tr>
+<tr>
+<td>H-002</td>
+<td>🟡</td>
+<td><strong>BATCH (assembler-error-quality)</strong></td>
+<td>Likely not a bug; verify</td>
+</tr>
+<tr>
+<td>H-003</td>
+<td>🔴</td>
+<td><strong>BATCH (assembler-encoding)</strong></td>
+<td><code>*+0x10</code> hex suffix parse — real edge case</td>
+</tr>
+<tr>
+<td>H-004</td>
+<td>🟡</td>
+<td><strong>BATCH (assembler-encoding)</strong></td>
+<td><code>.org N == locCtr</code> no-op boundary; probably correct</td>
+</tr>
+<tr>
+<td>H-005</td>
+<td>🔴</td>
+<td><strong>BATCH (assembler-encoding)</strong></td>
+<td><code>.blkw 65536</code> off-by-one; verify intentionality</td>
+</tr>
+<tr>
+<td>H-006</td>
+<td>🟡</td>
+<td><strong>BATCH (assembler-error-quality)</strong></td>
+<td>Duplicate label error line number</td>
+</tr>
+<tr>
+<td>H-007</td>
+<td>🟡</td>
+<td><strong>BATCH (assembler-error-quality)</strong></td>
+<td><code>.word foo bar</code> silent second-token ignore</td>
+</tr>
+<tr>
+<td>H-008</td>
+<td>🔴</td>
+<td><strong>FILE individual</strong></td>
+<td>Adjacent commas → possible silent 0 encode</td>
+</tr>
+<tr>
+<td>H-009</td>
+<td>🟡</td>
+<td><strong>ROUTE → #218</strong></td>
+<td>Branch pcoffset9 boundary; oracle-gated</td>
+</tr>
+<tr>
+<td>H-010</td>
+<td>🔴</td>
+<td><strong>FILE individual</strong></td>
+<td>evaluateImmediate null→0 (rank 6; may be guarded earlier)</td>
+</tr>
+<tr>
+<td>H-011</td>
+<td>🟡</td>
+<td><strong>BATCH (assembler-error-quality)</strong></td>
+<td><code>.start</code> error names the missing label</td>
+</tr>
+<tr>
+<td>H-012</td>
+<td>🔴</td>
+<td><strong>FILE individual</strong></td>
+<td>Shift count overflow → opcode corruption</td>
+</tr>
+<tr>
+<td>H-013</td>
+<td>🟡</td>
+<td><strong>ROUTE → #218</strong></td>
+<td><code>sra</code> vs siblings shift-0 inconsistency; oracle-gated</td>
+</tr>
+<tr>
+<td>H-014</td>
+<td>🟡</td>
+<td><strong>BATCH (assembler-error-quality)</strong></td>
+<td><code>ret 32</code> range check message</td>
+</tr>
+<tr>
+<td>H-015</td>
+<td>🔴</td>
+<td><strong>BATCH (assembler-error-quality)</strong></td>
+<td><code>dout 5</code> gives &quot;Bad register&quot; — error quality</td>
+</tr>
+<tr>
+<td>H-016</td>
+<td>🟡</td>
+<td><strong>ROUTE → #218</strong></td>
+<td><code>bl 5</code> numeric literal — oracle-gated</td>
+</tr>
+<tr>
+<td>H-017</td>
+<td>🔴</td>
+<td><strong>FILE individual</strong></td>
+<td>Stale <code>inputFileName</code> on instance reuse</td>
+</tr>
+<tr>
+<td>H-018</td>
+<td>🟡</td>
+<td><strong>BATCH (assembler-encoding)</strong></td>
+<td>Multiple trailing blank lines in listing</td>
+</tr>
+<tr>
+<td>H-019</td>
+<td>🔴</td>
+<td><strong>ROUTE → #218</strong></td>
+<td>Octal parsing; already in scope of that issue</td>
+</tr>
+<tr>
+<td>H-020</td>
+<td>🔴</td>
+<td><strong>FILE individual</strong></td>
+<td>div/rem by zero → silent 0</td>
+</tr>
+<tr>
+<td>H-021</td>
+<td>🔴</td>
+<td><strong>BATCH (interpreter)</strong></td>
+<td><code>instructionsCap</code> override verification</td>
+</tr>
+<tr>
+<td>H-022</td>
+<td>🟡</td>
+<td><strong>BATCH (interpreter)</strong></td>
+<td>Custom SP before first push; stats reporting</td>
+</tr>
+<tr>
+<td>H-023</td>
+<td>🔴</td>
+<td><strong>BATCH (interpreter)</strong></td>
+<td>LDR/STR at 0xFFFF via negative offset wrap</td>
+</tr>
+<tr>
+<td>H-024</td>
+<td>🟡</td>
+<td><strong>BATCH (interpreter)</strong></td>
+<td>SEXT_PARITY_TABLE selector &gt; 15 fallthrough</td>
+</tr>
+<tr>
+<td>H-025</td>
+<td>🔴</td>
+<td><strong>FILE individual</strong></td>
+<td>Duplicate global symbols — silent last-wins</td>
+</tr>
+<tr>
+<td>H-026</td>
+<td>🔴</td>
+<td><strong>FILE individual</strong></td>
+<td>Linker odd-buffer crash (ERR_OUT_OF_RANGE)</td>
+</tr>
+<tr>
+<td>H-027</td>
+<td>🟡</td>
+<td><strong>BATCH (linker)</strong></td>
+<td>CLI edge cases: zero input files, missing <code>-o</code> arg</td>
+</tr>
+<tr>
+<td>H-028</td>
+<td>🔴</td>
+<td><strong>FILE individual</strong></td>
+<td>Disassembler round-trip fidelity</td>
+</tr>
+<tr>
+<td>H-029</td>
+<td>🟡</td>
+<td><strong>BATCH (disassembler)</strong></td>
+<td>Extended-group opcode disambiguation</td>
+</tr>
+<tr>
+<td>H-030</td>
+<td>🔴</td>
+<td><strong>FILE individual</strong> (after smoke)</td>
+<td>AssemblerPlus instance-reuse state leak</td>
+</tr>
+<tr>
+<td>H-031</td>
+<td>🟡</td>
+<td><strong>FILE individual</strong></td>
+<td>REPORT_MULTI_ERRORS constraint verification</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Sequenced filing plan</h2>
+<h3>Tier 1 — individual tickets, file now, high-priority</h3>
+<p>File in this order (each is a ≤35m DEV/TEST puzzle):</p>
+<ol>
+<li><p><strong>H-026</strong> — <code>TEST: linker parseObjectModuleBuffer crashes on odd-length code section (ERR_OUT_OF_RANGE)</code><br>Role: TEST · H:30m · Agent: any<br>Deliverable: failing test confirming the crash; fix is a <code>LinkerError</code> check before the last read.</p>
+</li>
+<li><p><strong>H-025</strong> — <code>TEST: linker silently accepts duplicate global symbols — verify error or document first-wins/last-wins</code><br>Role: TEST · H:30m · Agent: any<br>Deliverable: test with two <code>.o</code> files exporting same label; confirm error or deterministic winner.</p>
+</li>
+<li><p><strong>H-020</strong> — <code>TEST: interpreter div/rem by zero — verify runtime error, not silent 0</code><br>Role: TEST · H:30m · Agent: any<br>Deliverable: failing test demonstrating silent 0; fix is a zero-divisor guard in executeTRAP.</p>
+</li>
+<li><p><strong>H-012</strong> — <code>TEST: assembler shift count (srl/sll/rol/ror) not range-checked — count 16 overflows opcode field</code><br>Role: TEST · H:30m · Agent: any<br>Deliverable: test encoding <code>srl r0, 16</code>; confirm either error or machine-word corruption.</p>
+</li>
+<li><p><strong>H-008</strong> — <code>TEST: assembler adjacent-comma tokenizer — add r0,,r1 may silently encode as add r0,r1,#0</code><br>Role: TEST · H:30m · Agent: any<br>Deliverable: tests for <code>add r0,,r1</code> and <code>add r0, r1,</code>; confirm clean error, not silent 0.</p>
+</li>
+<li><p><strong>H-010</strong> — <code>TEST: evaluateImmediate — parseNumber(undefined) returns null which isNaN check passes as 0</code><br>Role: TEST · H:30m · Agent: any<br>Deliverable: test that <code>add r0, r1</code> (missing immediate) errors, not silently encodes 0.</p>
+</li>
+<li><p><strong>H-028</strong> — <code>TEST: disassembler round-trip fidelity — assemble→disassemble→re-assemble must be byte-identical</code><br>Role: TEST · H:45m · Agent: any<br>Deliverable: parametric round-trip test for each major instruction type; report any deviations.</p>
+</li>
+<li><p><strong>H-017</strong> — <code>TEST: assembler instance reuse — stale inputFileName leaks into second assembleSource call</code><br>Role: TEST · H:25m · Agent: any<br>Deliverable: test calling assembleSource twice on same instance, no filename in second call; assert no stale filename.</p>
+</li>
+<li><p><strong>H-001</strong> — <code>TEST: assembler unterminated string literal — error should report line 1, not the next line with a closing quote</code><br>Role: TEST · H:25m · Agent: any<br>Deliverable: test for <code>.stringz &quot;hello</code> without closing quote; assert error on line 1.</p>
+</li>
+<li><p><strong>LCC+ smoke</strong> — <code>TEST: AssemblerPlus smoke test — assemble a minimal valid .ap program end-to-end</code><br>Role: TEST · H:30m · Agent: any · <strong>Prerequisite for H-030</strong><br>Deliverable: test that assembles a minimal <code>.ap</code> (with <code>.lccplus</code> directive), produces <code>.ep</code>, verifies non-empty output.</p>
+</li>
+<li><p><strong>H-030</strong> — <code>TEST: AssemblerPlus instance reuse — resetAssemblyState must clear plus-specific state</code><br>Role: TEST · H:30m · Agent: any · <strong>Depends on LCC+ smoke ticket above</strong><br>Deliverable: test assembling two <code>.ap</code> programs on same instance; verify second result is clean.</p>
+</li>
+<li><p><strong>H-031</strong> — <code>TEST: REPORT_MULTI_ERRORS=false constraint — verify exactly one error returned when two bad lines present</code><br>Role: TEST · H:20m · Agent: any<br>Deliverable: passing test asserting <code>errors.length === 1</code> with two-bad-line source.</p>
+</li>
+</ol>
+<h3>Tier 2 — subsystem batch tickets</h3>
+<p>Each batch asks the solver to write tests for all hypotheses in the group and report which are bugs vs confirmed-correct behavior. Split into individual follow-on tickets only for actual bugs found.</p>
+<ol start="13">
+<li><p><strong>Assembler error-quality batch</strong> (H-002, H-006, H-007, H-011, H-014, H-015)<br>Role: TEST · H:55m<br>Hypotheses: label-colon-in-string, duplicate-label line number, <code>.word foo bar</code>, <code>.start nonexistent</code> message, <code>ret 32</code> range message, <code>dout 5</code> register message.</p>
+</li>
+<li><p><strong>Assembler encoding/boundary batch</strong> (H-003, H-004, H-005, H-018)<br>Role: TEST · H:45m<br>Hypotheses: <code>*+0x10</code> hex PC-relative, <code>.org N==locCtr</code> no-op, <code>.blkw 65536</code> off-by-one, trailing blank lines in listing.</p>
+</li>
+<li><p><strong>Interpreter behavior batch</strong> (H-021, H-022, H-023, H-024)<br>Role: TEST · H:50m<br>Hypotheses: instructionsCap override, custom SP before push, 0xFFFF memory wrap, SEXT_PARITY_TABLE selector &gt; 15.</p>
+</li>
+<li><p><strong>Linker + disassembler batch</strong> (H-027, H-029)<br>Role: TEST · H:40m<br>Hypotheses: linker CLI edge cases (zero input files, missing -o arg), disassembler extended-group opcode disambiguation.</p>
+</li>
+</ol>
+<h3>Routes to #218 (no new tickets)</h3>
+<p>Add a single comment to #218 listing: H-009 (branch pcoffset9 boundary), H-013 (sra shift-0), H-016 (bl numeric literal), H-019 (octal parsing). These are pure oracle-parity questions that belong in that tracking issue.</p>
+<hr>
+<h2>Adversarial critique of the original doc&#39;s priority list</h2>
+<table>
+<thead>
+<tr>
+<th>Original claim</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&quot;H-010 is the highest-risk item&quot;</td>
+<td><strong>Overstated.</strong> H-026 and H-025 are higher-severity — a Node crash and a silent wrong-function-call beat a potential null→0 that may be guarded upstream. H-010 is still important (rank 6).</td>
+</tr>
+<tr>
+<td>&quot;H-003 is a start-here item&quot;</td>
+<td><strong>Downgraded.</strong> <code>*+0x10</code> hex PC-relative offsets are a rare usage pattern. Medium priority; batched rather than individual.</td>
+</tr>
+<tr>
+<td>H-030 standalone</td>
+<td><strong>Needs smoke test first.</strong> Filing H-030 without any baseline LCC+ coverage is premature — can&#39;t tell if the test fails because of the hypothesis or because the whole LCC+ pipeline is broken.</td>
+</tr>
+<tr>
+<td>&quot;H-028: partly tracked in #166&quot;</td>
+<td><strong>Incorrect.</strong> #166 is CLOSED and covered crash-on-input, not round-trip fidelity. H-028 is fully untracked.</td>
+</tr>
+<tr>
+<td>Severity count: 12 🔴</td>
+<td><strong>Recount: 14.</strong> The table in the issue says 12 High but lists 14 hypothesis IDs. Minor doc error; doesn&#39;t affect triage.</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-31-dragonfruit-3 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-31 (DRAGONFRUIT, session 3)</h1>
+<p>An afternoon/evening session: closed #263 (OG LCC blank-.e research), #311 (Guard 2
+keyword check), and #346 (Guard 1 false-positive fix). Three DEV puzzles plus one
+RESEARCH, each producing concrete non-obvious findings.</p>
+<hr>
+<h2>1. OG LCC leaves a partial <code>.e</code> on <em>every</em> assembly error — not just undefined labels</h2>
+<p><strong>What happened:</strong> OG BUG #10 in <code>parity_deviations.md</code> documented the blank-<code>.e</code>
+footgun for the undefined-label case. The #263 scope question was: is it specific to
+undefined labels, or universal? After probing 8 distinct error types (undefined label,
+range error, bad register, bad directive, missing operand, duplicate label, no-comma
+negative immediate, valid control), every single error case left at least a partial
+<code>.e</code> on disk.</p>
+<p>Two sizes correlate with which pass the error fires in:</p>
+<ul>
+<li><strong>Pass-2 errors</strong> (most types): 2-byte <code>.e</code> — the full <code>6f 43</code> magic header</li>
+<li><strong>Pass-1 errors</strong> (duplicate label): 1-byte <code>.e</code> — just <code>6f</code>, the first magic byte</li>
+</ul>
+<p>Both cases also write <code>.lst</code> and <code>.bst</code>. Executing the 2-byte blank <code>.e</code> triggers
+&quot;Possible infinite loop&quot; and ~100 MB of <code>brz</code> trace output.</p>
+<p><strong>Why it matters:</strong> The footgun is broader than documented. Any build script that
+ignores exit codes and runs the <code>.e</code> after a failed assembly will hang — for any error
+type, not just undefined labels. LCC.js&#39;s all-or-nothing output is the correct design.</p>
+<p><strong>What to do:</strong> Frame the upstream report (ticket #264/WRITER) as a <em>general</em> finding
+with the undefined-label repro as the clearest entry point, not as a label-specific bug.</p>
+<hr>
+<h2>2. OG LCC requires cwd + basename invocation — absolute paths produce &quot;Bad command line switch&quot;</h2>
+<p><strong>What happened:</strong> The probe script initially called <code>$ORACLE /abs/path/to/file.a</code>.
+Every invocation returned exit 2 and &quot;Bad command line switch: /abs/path/...&quot; — even a
+simple <code>/tmp/valid_test.a</code>. Reading <code>tests/helpers/runOracle.js</code> revealed the
+convention: the oracle must be invoked with <code>cwd</code> set to the file&#39;s directory and only
+the <strong>basename</strong> as the argument. A <code>name.nnn</code> file must also exist in <code>cwd</code>.</p>
+<p><strong>Why it matters:</strong> Any probe or test that calls the oracle with an absolute path will
+silently get exit 2 rather than running the assembly. The failure looks like a path
+error, not a usage error, and the exit code (2 vs 1) is different from an assembly
+error.</p>
+<p><strong>What to do:</strong> Always invoke the oracle via <code>spawnSync(oraclePath, [basename], { cwd: dir })</code>.
+Copy the pattern from <code>runOracle.js</code> rather than improvising.</p>
+<hr>
+<h2>3. The velocity commit must reference <code>Closes #N</code> — don&#39;t layer it on top of the close commit</h2>
+<p><strong>What happened:</strong> For #263, I committed the research doc with <code>Closes #263</code> in the
+message, then committed the velocity CSV row separately on top. <code>close.js</code> checks
+<code>HEAD</code>&#39;s commit body for <code>Closes #N</code> — the velocity commit was HEAD, so it blocked.
+I soft-reset (<code>git reset --soft HEAD~1</code>) to unstage the velocity commit, then included
+<code>Closes #N</code> in the velocity commit&#39;s body instead.</p>
+<p><strong>Why it matters:</strong> Close.js&#39;s &quot;HEAD must reference Closes #N&quot; check is intentional —
+it proves the agent authored the close, not the tool. But it means the velocity CSV
+commit must be the HEAD commit and must include <code>Closes #N</code>, OR both commits must
+include it (GitHub is idempotent about closing).</p>
+<p><strong>What to do:</strong> Either include the velocity CSV in the same commit as <code>Closes #N</code>, or
+include <code>Closes #N</code> in the velocity commit&#39;s body. Don&#39;t split them with the velocity
+commit on top and no issue reference.</p>
+<hr>
+<h2>4. Regex-from-end extracts simple trailing CSV fields without a full parser</h2>
+<p><strong>What happened:</strong> Guard 1&#39;s fix (#346) needed to extract the <code>agent</code> column from CSV
+rows. The <code>notes</code> field (column 12) can contain commas and is quoted, making a naive
+<code>fields[13]</code> unreliable. But <code>agent</code> (col 13) and <code>model</code> (col 14) are always simple
+identifiers — no commas, no quotes. Anchoring a regex to <code>$</code> extracts them cleanly:
+<code>row.match(/,([A-Za-z][A-Za-z0-9]*),([A-Za-z0-9.-]*)$/)</code>.</p>
+<p><strong>Why it matters:</strong> This avoids a full CSV parser (which would be overkill for a
+machine-generated, well-structured file) while correctly handling the one messy field.
+The pattern generalises: when a CSV row ends with N simple, predictable fields, working
+from the right is more robust than counting columns from the left through free-text.</p>
+<p><strong>What to do:</strong> When extracting a late column from a CSV row with an earlier free-text
+field, check if the target columns are simple enough to anchor from the end rather than
+parsing the full row.</p>
+<hr>
+<h2>5. The SHA-rewrite issue consistently orphans the worktree — cleanup does not happen automatically</h2>
+<p><strong>What happened:</strong> BANANA s3 noted that after the close.js SHA-rewrite error (#350),
+&quot;the worktree was cleaned up&quot; in their observed case. In two of my closes (#311 and
+#346), the opposite happened: the error fired and the worktree was <strong>not</strong> removed — I
+had to manually run <code>git worktree remove</code>, <code>git branch -D</code>, and <code>git pull --ff-only</code>
+each time.</p>
+<p><strong>Why it matters:</strong> The inconsistency between BANANA&#39;s and my observations means the
+cleanup-after-stale-SHA path is non-deterministic or timing-dependent. The safe
+assumption is that cleanup will <em>not</em> happen automatically, and the manual teardown
+sequence is always needed after this error. The <code>--keep</code> flag is not needed; the
+worktree simply persists and the agent must clean it up.</p>
+<p><strong>What to do:</strong> After seeing &quot;push reported success but SHA is NOT on origin/main&quot;,
+verify the commit IS on origin/main (<code>git log --oneline origin/main | head</code>), then
+manually tear down: <code>git worktree remove .claude/worktrees/&lt;branch&gt;</code>,
+<code>git branch -D &lt;branch&gt;</code>, <code>git pull --ff-only origin main</code>. Filed as #350 for a
+structural fix.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

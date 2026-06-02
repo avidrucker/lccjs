@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-31-cherry-3 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-31 (CHERRY, #3)</h1>
+<p>Evening session: closed out the #309 footgun spikes — decomposed #309 into #315/#316,
+built <strong>Guard 1</strong> (#310, velocity-row ticket-match in <code>close.js</code>), then ran the #316
+serial-tool-use enforcement spike, filing #349 and corroborating #350. The throughline
+is uncomfortable and useful: I kept committing the <em>exact</em> footgun I was building a guard
+against, and the only thing that reliably stopped it was structure, not resolve.</p>
+<h2>1. I hit the batching footgun <em>while building its guard</em> — structure beat willpower</h2>
+<p>Across #304/#309/#310 I lost an implementation to a batched <code>git reset --hard</code>, fired an
+11-call batch with a <strong>fabricated SHA</strong>, and nearly posted a comment full of confabulated
+numbers — every instance the same shape (<code>deliberate-tool-pacing</code> in memory, violated
+anyway). The user caught me twice. What finally held was <strong>plan-mode with a binding
+one-tool-call-per-step list</strong>: &quot;issue one call, READ its result, decide, next.&quot; Every clean
+stretch happened under that discipline; every lapse was a &quot;let me just batch the verify&quot;
+reflex. <strong>Takeaway:</strong> this is the #281 enforcement-asymmetry lesson lived from the inside —
+a known prose rule does not survive self-directed multi-step work; an external forcing
+function (plan mode, or a guard) does. That firsthand failure <em>is</em> the primary evidence for
+#316, and the reason its recommended fix is a <code>PostToolBatch</code> hook, not a sharper rule.</p>
+<h2>2. My own Guard 1 caught my own closing commits — twice, correctly</h2>
+<p><code>close.js</code> re-exports the velocity CSV from shared SQLite, which sweeps in <em>other</em> agents&#39;
+rows when my base is stale; my commit then &quot;adds&quot; rows for tickets I&#39;m not closing. Guard 1
+(#310) blocked the close on both #310 and #316 with &quot;the CSV row(s) record ticket #X, but
+you are closing #Y.&quot; Both times the right move was <strong>sync + re-export, never <code>--skip</code></strong> — the
+guard was correct, my base was stale. <strong>Takeaway:</strong> a guard that fires on its author&#39;s own
+work two tasks after shipping is the strongest possible validation; and a guard-block means
+<em>fix the precondition</em>, not bypass — the same &quot;stop, don&#39;t circumvent&quot; rule that the close
+sequence already taught, now enforced by code I wrote.</p>
+<h2>3. Adversarially verify a load-bearing research claim against the <em>primary</em> source</h2>
+<p>The #316 deliverable hinged on whether a <code>PostToolBatch</code> hook exists. Two sub-agents said
+yes; one &quot;confirmed&quot; it while emitting a ~30-item hook list I judged hallucinated and even
+flagged a prompt-injection in its own results. I trusted <strong>neither</strong> and <code>WebFetch</code>ed the
+official docs myself — which confirmed <em>both</em> the (genuinely large) hook list <strong>and</strong>
+<code>PostToolBatch</code>. I was half-wrong: my skepticism correctly <em>triggered</em> but the claim was
+true. <strong>Takeaway:</strong> for a ticket literally about confabulation, the method has to match the
+message — verify the one fact the recommendation rests on against the source of truth, and
+write down the gap you <em>couldn&#39;t</em> close (the truncated <code>tool_calls[]</code> schema) as a hand-off
+to the DEV puzzle rather than asserting it.</p>
+<h2>4. The success route is the dangerous one — <code>close.js</code> mutates its own cwd, and the SHA gate mis-fires</h2>
+<p>Two distinct &quot;it worked, therefore it broke&quot; cases. (a) <code>npm run close</code> <em>succeeds</em> by
+removing its worktree, which kills the shell&#39;s cwd and cancels anything I chained after it —
+so close must be the <strong>lone last call</strong> in its block. (b) On #316, <code>close.js</code> stored
+<code>sha = headSha()</code> before its push loop, but the loop rebased (a 1-behind race) and pushed a
+<strong>rewritten</strong> SHA; the teardown gate then checked the stale pre-rebase SHA, found it absent,
+and refused teardown — even though the issue closed fine. That&#39;s #350, reproduced; my case
+<em>left the worktree behind</em> (the gate <code>die()</code>s → teardown unreachable) where #312&#39;s
+<em>tore it down anyway</em>, which makes #312 the real anomaly. <strong>Takeaway:</strong> verify a destructive
+tool&#39;s effect against ground truth, not its exit message — a success can be the failure, and
+a captured identifier (a SHA) goes stale the instant the tool rebases under you.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>plus-shadow-hazard-baseline — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Plus-subclass shadow hazard baseline (#425)</h1>
+<p>Static analysis of every method in <code>AssemblerPlus</code> / <code>InterpreterPlus</code> that overrides
+a core method, and whether each override delegates to <code>super</code>. Run: 2026-06-01.</p>
+<p>This is the <strong>&quot;before&quot; baseline</strong> for H2 Puzzle B (#417). Re-run after #417 closes to
+confirm the hazard count dropped to 2 (the two intentional overrides: <code>handleDirective</code>
+and <code>writeOutputFile</code>).</p>
+<hr>
+<h2>AssemblerPlus (<code>src/plus/assemblerplus.js</code>)</h2>
+<p>Extends <code>Assembler</code> (<code>src/core/assembler.js</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Calls super?</th>
+<th>Classification</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>constructor</code></td>
+<td>✅ <code>super()</code></td>
+<td>intentional — adds <code>isLCCPlusFile</code> state</td>
+</tr>
+<tr>
+<td><code>main</code></td>
+<td>❌ no</td>
+<td><strong>shadow hazard</strong> — full reimplementation</td>
+</tr>
+<tr>
+<td><code>handleInstruction</code></td>
+<td>✅ <code>super.handleInstruction()</code> in <code>default</code></td>
+<td>intentional extension</td>
+</tr>
+<tr>
+<td><code>handleDirective</code></td>
+<td>✅ <code>super.handleDirective()</code> in <code>else</code></td>
+<td>intentional extension</td>
+</tr>
+<tr>
+<td><code>writeOutputFile</code></td>
+<td>✅ <code>super.writeOutputFile(&#39;p&#39;)</code></td>
+<td>intentional wrapper</td>
+</tr>
+</tbody></table>
+<p>Non-constructor overrides: <strong>4</strong> · Shadow hazards: <strong>1</strong></p>
+<h3>Shadow hazard detail — <code>AssemblerPlus.main</code></h3>
+<p><code>AssemblerPlus.main()</code> reimplements the full two-pass CLI flow (args parsing, pass1,
+pass2, startLabel resolution, <code>writeOutputFile()</code>) without calling <code>super.main()</code>. Any
+change to <code>Assembler.main()</code> (new flags, error-reporting changes, new option handling)
+must be manually ported to <code>AssemblerPlus.main()</code> or it silently diverges.</p>
+<p>The duplication is intentional in the short term (LCC+ needs <code>.ep</code> extension, <code>.ap</code>
+validation, no <code>-nostats</code> flag) but it&#39;s the primary maintenance surface for M7 risk.</p>
+<hr>
+<h2>InterpreterPlus (<code>src/plus/interpreterplus.js</code>)</h2>
+<p>Extends <code>Interpreter</code> (<code>src/core/interpreter.js</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Calls super?</th>
+<th>Classification</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>constructor</code></td>
+<td>✅ <code>super()</code></td>
+<td>intentional — adds <code>keyQueue</code>, <code>seed</code>, <code>disableInfiniteLoopDetection</code></td>
+</tr>
+<tr>
+<td><code>main</code></td>
+<td>❌ no</td>
+<td><strong>shadow hazard</strong> — full reimplementation</td>
+</tr>
+<tr>
+<td><code>loadExecutableBuffer</code></td>
+<td>❌ no</td>
+<td><strong>shadow hazard</strong> — full reimplementation (highest risk)</td>
+</tr>
+<tr>
+<td><code>executeTRAP</code></td>
+<td>✅ <code>super.executeTRAP()</code> in <code>default</code></td>
+<td>intentional extension</td>
+</tr>
+<tr>
+<td><code>executeCase10</code></td>
+<td>✅ <code>super.executeCase10()</code> in <code>default</code></td>
+<td>intentional extension</td>
+</tr>
+</tbody></table>
+<p>Non-constructor overrides: <strong>4</strong> · Shadow hazards: <strong>2</strong></p>
+<h3>Shadow hazard detail — <code>InterpreterPlus.main</code></h3>
+<p>Same pattern as AssemblerPlus: full reimplementation with no <code>super.main()</code> call. LCC+
+uses a non-blocking event loop (<code>startNonBlockingLoop</code>) rather than the synchronous
+<code>run()</code> loop, so delegation is non-trivial — but changes to option parsing in
+<code>Interpreter.main()</code> still diverge silently.</p>
+<h3>Shadow hazard detail — <code>InterpreterPlus.loadExecutableBuffer</code> (highest risk)</h3>
+<p>The core&#39;s <code>loadExecutableBuffer</code> handles <code>o</code>-header parsing, <code>S</code>/<code>G</code>/<code>A</code> entries, and
+memory loading. <code>InterpreterPlus</code> completely reimplements this to handle the <code>op</code>
+two-byte header. If the core <code>.e</code> format ever gains a new header entry type, the plus
+interpreter won&#39;t parse it. There is no super call, no shared parsing path, and no test
+that would catch a format drift.</p>
+<p>This is the override most likely to cause a hard-to-diagnose runtime failure after a
+core change.</p>
+<hr>
+<h2>Totals</h2>
+<table>
+<thead>
+<tr>
+<th>Subclass</th>
+<th>Non-constructor overrides</th>
+<th>Super-delegating (intentional)</th>
+<th>Shadow hazards</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AssemblerPlus</td>
+<td>4</td>
+<td>3</td>
+<td>1</td>
+</tr>
+<tr>
+<td>InterpreterPlus</td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+</tr>
+<tr>
+<td><strong>Combined</strong></td>
+<td><strong>8</strong></td>
+<td><strong>5</strong></td>
+<td><strong>3</strong></td>
+</tr>
+</tbody></table>
+<p>Shadow hazard list:</p>
+<ol>
+<li><code>AssemblerPlus.main</code> — CLI entry reimplementation</li>
+<li><code>InterpreterPlus.main</code> — CLI entry reimplementation (uses different event model)</li>
+<li><code>InterpreterPlus.loadExecutableBuffer</code> — header parsing reimplementation (<strong>highest risk</strong>)</li>
+</ol>
+<hr>
+<h2><code>@todo</code> markers</h2>
+<p>No new markers added. All three hazards are already in scope for Puzzle B (#417)&#39;s
+registration-cutover refactor. If #417 proves narrower than expected (e.g. it only
+covers <code>handleInstruction</code>/<code>executeTRAP</code>/<code>executeCase10</code> dispatch methods and not
+<code>loadExecutableBuffer</code>), file a follow-on to address the buffer-parsing duplication.</p>
+<h2>Expected post-#417 state</h2>
+<p>After H2 Puzzle B&#39;s registration cutover, the override table should collapse to:</p>
+<table>
+<thead>
+<tr>
+<th>Subclass</th>
+<th>Survivors</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AssemblerPlus</td>
+<td><code>handleDirective</code>, <code>writeOutputFile</code></td>
+</tr>
+<tr>
+<td>InterpreterPlus</td>
+<td><code>executeTRAP</code> (or eliminated if dispatch is registration-driven)</td>
+</tr>
+</tbody></table>
+<p>Re-run this analysis then to confirm.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

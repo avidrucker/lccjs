@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-28-002 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-28-002</h1>
+<p>Date: 2026-05-28
+Context: A long multi-thread session. PDD infra (<code>.pddignore</code> + wrapper, #141;
+formalizing demo TODOs, #142); a new <code>puzzle-triage</code> skill; a <code>claude-config</code>
+skills-hygiene pass; backlog triage + severity labeling; the <strong>sext
+research → bug-report-for-Prof-Dos-Reis</strong> workflow (split #144 into #150–#153,
+wrote the report under #150, opened follow-up #159); and the <strong>debugger DRY</strong>
+thread (spike #146 → extractions #163 <code>format.js</code> and #164 <code>stateDelta.js</code>, with
+red-green test follow-ups #168/#169). Sibling doc: <code>today-i-learned-2026-05-28-001.md</code>.</p>
+<hr>
+<h2>1. pdd&#39;s marker scan is a case-sensitive <em>substring</em> match — uppercase <code>TODO</code> trips even inside a larger token</h2>
+<p>The proposed &quot;discussion placeholder&quot; <code>AT_TODO</code> turned out to <em>be</em> the trap. pdd
+aborts the entire scan on <code>AT_TODO</code> (<code>TODO must have a leading space…</code>) because it
+finds the substring <code>TODO</code> after the <code>_</code>. Verified empirically in a temp dir:
+<strong>uppercase trips, lowercase <code>at_todo</code> is invisible.</strong> So the only safe spelling
+is lowercase, and any uppercase variant (<code>AT_TODO</code>, <code>AT-TODO</code>, …) reintroduces the
+bug. Corollary discovered the hard way: the scanner&#39;s own config file
+(<code>.pddignore</code>) gets scanned too, so it must list <em>itself</em> as an exclude and avoid
+literal markers in its comments. (Recorded in the <code>pdd-yegor-pm-discipline</code> memory.)</p>
+<h2>2. Finished research = close the ticket; awaiting a human reply = a <em>new blocked follow-up</em>, not a reopen</h2>
+<p>When the sext report (#150) was written but pending Prof Dos Reis&#39;s answer, the
+instinct was to reopen #150 and mark it blocked. That conflates two different
+states: &quot;deliverable done&quot; (which is closeable + velocity-logged) and &quot;waiting on
+external input.&quot; The clean model — and the repo&#39;s own documented research-ticket
+convention — is: <strong>close #150</strong> (the report was the work), and open a separate
+<strong>blocked</strong> follow-up (#159) that <em>pre-scopes the actions for each possible reply</em>.</p>
+<p>General rule that fell out:</p>
+<ul>
+<li>ticket still has actionable work → keep it <strong>open/blocked</strong> (e.g. #40);</li>
+<li>deliverable done, only an external reply remains → <strong>close + open a blocked
+follow-up</strong>.</li>
+</ul>
+<p>Reopening a closed-with-deliverable ticket is the anti-pattern: it muddies
+&quot;closed = done,&quot; desyncs the velocity record, and (in BDD terms) reads as &quot;the
+work was rejected.&quot;</p>
+<h2>3. Extracting &quot;duplicated&quot; logic: share the substrate, not the presentation — and distrust <em>superficial</em> similarity</h2>
+<p>The debugger DRY work (#146 → #164) looked like &quot;two debuggers diff machine
+state; dedupe it.&quot; Reading <strong>both</strong> call sites in full changed the plan:</p>
+<ul>
+<li>the <strong>register</strong> diff <em>is</em> genuinely shared (element-wise value comparison) →
+extracted as pure <code>diffRegisters()</code>, routed through both;</li>
+<li>the <strong>flag/pc</strong> display only <em>looks</em> shared. The core debugger renders
+<strong>fire-once</strong> — it shows <code>&lt;NZCV=…&gt;</code>/<code>&lt;pc=…&gt;</code> when an instruction <em>set</em> them
+(<code>flagsSet</code>/<code>hasJumped</code>), not when the value changed — because that&#39;s what the
+real <code>lcc</code> does and the output is byte-exact-tested. The TUI renders on
+value-change. Extracting flag/pc &quot;together&quot; would have silently broken oracle
+parity.</li>
+</ul>
+<p>So: extract the pure data/diff both <em>truly</em> compute; keep parity-sensitive
+<strong>presentation</strong> per-consumer (documented the non-share in the module). Read both
+sites before extracting — don&#39;t trust a spike&#39;s high-level &quot;they&#39;re the same.&quot;
+And because the TUI consumer (<code>displayRegisters</code>) had <strong>no direct unit test</strong>, I
+added a throwaway equivalence check (a node one-liner asserting only-changed
+regs/flags highlight, nothing on the initial snapshot) <em>and</em> logged the gap as a
+real follow-up (#169) rather than letting &quot;the suite is green&quot; stand in for &quot;this
+path is tested.&quot;</p>
+<h2>4. Closing an issue isn&#39;t done until its source marker is gone — stale-marker debt is silent</h2>
+<p>Twice the pre-push gate caught a <code>@todo #N</code> left in <code>TODOS.md</code> after its issue had
+closed (#116, closed by another agent; #146, closed by me) — <code>puzzle:status</code>
+flagged them STALE. The close checklist has to include <strong>removing/updating the
+marker</strong>, even markdown ones (pdd doesn&#39;t scan <code>*.md</code>, but the reconciler does).
+The gate catching it is the backstop, not the plan — and a marker outliving its
+issue looks like live work to every other agent until someone notices.</p>
+<h2>5. A measurement-method bug produces a <em>confident wrong claim</em> — verify the method, retract immediately</h2>
+<p>I stated the interpreter/linker glossaries were &quot;empty stubs (0 definitions).&quot;
+Wrong — and not because the data was bad: I&#39;d grepped <code>^#### </code>, but those files
+use <code>###</code> for entries (only <code>assembler.md</code> uses <code>####</code> under lettered <code>###</code>
+sections). The <em>count method</em> was broken, so a real, populated artifact read as
+empty. Caught and retracted it the same turn. (The same <code>####</code>-vs-<code>###</code>
+discrepancy bit <code>-001</code> §4 independently on the same day — it&#39;s a real footgun in
+this repo.) Lesson: when a count or conclusion is surprising, suspect the
+measurement before the data; and when you&#39;ve asserted something false, say so
+plainly and right away.</p>
+<h2>6. &quot;Blocked&quot; and &quot;Icebox&quot; are different kinds of <em>not now</em> (from building <code>puzzle-triage</code>)</h2>
+<p>Building the <code>puzzle-triage</code> skill (severity-ranked &quot;what&#39;s next&quot;) forced a
+distinction worth keeping: a <strong>blocked</strong> item re-enters the actionable queue
+<em>automatically</em> the moment its blocker clears (no new decision); an <strong>icebox</strong>
+item (<code>proposal</code>/<code>wontfix</code>) only re-enters when someone <em>schedules</em> it (a fresh
+decision). Both are &quot;not now,&quot; but conflating them hides which shelved work is
+merely waiting vs. genuinely parked. (The user renamed my original &quot;Parked&quot; →
+&quot;Icebox&quot; — the clearer word for &quot;a decision put this aside.&quot;)</p>
+<hr>
+<h2>What landed (this agent)</h2>
+<table>
+<thead>
+<tr>
+<th>Issue / item</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>#141</strong></td>
+<td><code>.pddignore</code> + <code>scripts/run-pdd.sh</code> wrapper — scan coverage as editable config; coined the lowercase <code>at_todo</code> placeholder rule</td>
+</tr>
+<tr>
+<td><strong>#142</strong></td>
+<td>Formalized 12 informal demo <code>TODO:</code> notes into <code>@todo</code> markers; un-ignored <code>demos/</code>+<code>plusdemos/</code></td>
+</tr>
+<tr>
+<td><strong><code>puzzle-triage</code></strong></td>
+<td>New skill (0.1.0 → 0.1.1, in <code>claude-config</code>) — severity-ranked queue, ⛔ Blocked / 💤 Icebox sections</td>
+</tr>
+<tr>
+<td>skills hygiene</td>
+<td>Fixed <code>yegor-pdd</code> VERSION drift → 0.3.0; pushed the pending <code>puzzle-triage</code> commits; audited all skill repos</td>
+</tr>
+<tr>
+<td><strong>#147</strong></td>
+<td>Glossary README status table refreshed (stub → complete) — note: overlapped the other agent&#39;s #162</td>
+</tr>
+<tr>
+<td><strong>#9</strong></td>
+<td>Closed as superseded by the (complete, closed) glossary effort #107</td>
+</tr>
+<tr>
+<td><strong>#144 → #150–#153</strong></td>
+<td>Split the demo-research tracker into four <code>research</code> tickets</td>
+</tr>
+<tr>
+<td><strong>#150</strong></td>
+<td>sext <strong>research &amp; bug report</strong> for Prof Dos Reis (<code>docs/research/sext-semantics-report.md</code>); <strong>#159</strong> opened to act on his reply</td>
+</tr>
+<tr>
+<td><strong>#157 / #158</strong></td>
+<td>Logged the two incidental findings (lccjs <code>.string \n</code>; broken <code>sext_sweep.a</code> fixture)</td>
+</tr>
+<tr>
+<td><strong>#146</strong></td>
+<td>Debugger DRY ARC spike (<code>docs/research/debugger-ilcc-dry.md</code>); decomposed into #163/#164</td>
+</tr>
+<tr>
+<td><strong>#163</strong></td>
+<td>Extracted <code>src/core/debug/format.js</code> (h4 + register tables); deduped 5 copies</td>
+</tr>
+<tr>
+<td><strong>#164</strong></td>
+<td>Extracted <code>src/core/debug/stateDelta.js</code> (<code>diffRegisters</code>); routed core debugger + TUI</td>
+</tr>
+<tr>
+<td><strong>#168 / #169</strong></td>
+<td>Red-green TEST follow-ups for <code>format.js</code> / <code>stateDelta.js</code> (each its own ticket + <code>@todo</code>)</td>
+</tr>
+</tbody></table>
+<h2>Related artifacts</h2>
+<ul>
+<li><code>docs/research/sext-semantics-report.md</code> — the report for Prof Dos Reis (awaiting reply, tracked by blocked #159).</li>
+<li><code>docs/research/debugger-ilcc-dry.md</code> — the DRY spike&#39;s ROI map.</li>
+<li><code>src/core/debug/format.js</code>, <code>src/core/debug/stateDelta.js</code> — the new shared substrate (consumed next by #134&#39;s statechart).</li>
+<li><code>.pddignore</code>, <code>scripts/run-pdd.sh</code> — the #141 scan-config infra.</li>
+<li><code>puzzle-triage</code> skill (in <code>avidrucker/claude-config</code>).</li>
+<li><code>docs/puzzle-velocity.csv</code> — rows for #141, #142, #147, #150, #146, #163, #164.</li>
+<li><code>pdd-yegor-pm-discipline</code> memory — updated with the substring-trap + <code>.pddignore</code> mechanism.</li>
+</ul>
+<h2>Open threads for tomorrow</h2>
+<ul>
+<li><strong>#134</strong> — the iinterpreter statechart spike now has consolidated code to target.</li>
+<li><strong>#168 / #169</strong> — quick red-green TEST puzzles to lock the <code>format</code>/<code>stateDelta</code> contracts.</li>
+<li><strong>#159</strong> — blocked until Prof Dos Reis replies on sext (report is ready to send).</li>
+<li><strong>#151 / #152 / #153</strong> — the other three demo-research questions (jmp suffixes, cea, malloc/free leak).</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

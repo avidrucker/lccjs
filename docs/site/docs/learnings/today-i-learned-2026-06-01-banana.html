@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-01-banana — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-06-01 (BANANA)</h1>
+<p>Three tickets: schema extension (#438), a shell stdin bug (#451), and a research spike (#454).
+Short session, mechanical work — the most interesting things were in the gaps between the tasks.</p>
+<hr>
+<h2>1. <code>setsid &quot;$@&quot; &amp;</code> silently drops stdin in non-interactive bash</h2>
+<p><code>lccrun.sh</code> uses <code>setsid</code> + <code>&amp;</code> to put the child in a new session (so <code>kill -- -PGID</code> can
+reach all descendants) and background it (so the parent can run the watchdog). The problem:
+POSIX specifies that bash redirects background-job stdin to <code>/dev/null</code> when job control is
+disabled — which is always the case in non-interactive scripts. The <code>&amp;</code> is the culprit; <code>setsid</code>
+alone doesn&#39;t cause the drop.</p>
+<p>Fix: gate on <code>[ -t 0 ]</code>. When stdin is an interactive terminal, drop it to <code>/dev/null</code> as
+before (a setsid&#39;d child can&#39;t use a TTY anyway — it&#39;d get SIGTTIN). When stdin is a pipe,
+file, or <code>/dev/null</code>, pass it through with <code>&lt;&amp;0</code>.</p>
+<pre><code class="language-bash">if [ -t 0 ]; then
+  setsid &quot;$@&quot; &lt;/dev/null &amp;
+else
+  setsid &quot;$@&quot; &lt;&amp;0 &amp;
+fi
+</code></pre>
+<p><strong>Lesson:</strong> <code>&amp;</code> in a non-interactive script is a stdin-drop, not just &quot;run in background.&quot;
+Always gate stdin explicitly when the child needs it.</p>
+<hr>
+<h2>2. The example in the schema doc is the real root cause — not the skill</h2>
+<p>The velocity CSV test enforces <code>model</code> values like <code>sonnet-4.6</code> (pattern <code>/^[a-z]+-\d+\.\d+$/</code>).
+Agents kept logging <code>claude-sonnet-4-6</code> instead and needing a corrective DB UPDATE.</p>
+<p>I assumed the puzzle-velocity SKILL.md example was the culprit (an old memory note said so).
+It wasn&#39;t — the skill had already been fixed and shows <code>sonnet-4.6</code> correctly. The actual
+source of confusion was <code>docs/velocity-schema.md</code> line 28, whose example still read
+<code>claude-sonnet-4-6</code>. Agents read the schema doc while building the JSON, copied the example,
+and got a failing test.</p>
+<p><strong>Lesson:</strong> when a mistake repeats, trace it to the template agents actually copy from,
+not the one that looks most authoritative. A stale example in a reference doc is more
+dangerous than no example at all.</p>
+<hr>
+<h2>3. Research findings need a follow-up ticket, not just a comment</h2>
+<p>After posting the #454 findings as a comment on the issue, the user pointed out: no one
+will look at a closed research issue unless something links back to it with an actionable.
+The comment is the right place for findings, but it needs a companion DEV ticket that
+references it — otherwise the finding is invisible.</p>
+<p>Filed #459 as the one-line schema doc fix, referencing #454 as context. That&#39;s the entry
+point that keeps the research findable.</p>
+<p><strong>Lesson:</strong> a research comment without a follow-up ticket is a finding that will be
+re-discovered (or re-violated) later. File the DEV ticket before closing the research issue.</p>
+<hr>
+<h2>4. velocity-seed.js had a silent off-by-one for months</h2>
+<p>While adding the <code>repo</code> column in #438, I noticed <code>velocity-seed.js</code> mapped <code>r[0]</code> to
+<code>ticket</code>, <code>r[1]</code> to <code>title</code>, etc. — but the CSV has <code>id</code> as the first column (<code>r[0]</code>). The
+seed was silently reading <code>id</code> as <code>ticket</code>, <code>ticket</code> as <code>title</code>, and so on for every field.</p>
+<p>The seed is only used for disaster recovery (re-seed from CSV), so the bug never surfaced.
+Fixed the column mapping as part of the same commit.</p>
+<p><strong>Lesson:</strong> positional CSV parsing is fragile. When the export gains a new leading column,
+every downstream positional mapping silently shifts. Header-based mapping would have been
+immune.</p>
+<hr>
+<h2>What went well</h2>
+<ul>
+<li><strong>Research pre-done = fast DEV.</strong> CHERRY and APPLE did the #451 root-cause analysis in
+#444. The code change took under 10 minutes, most of it testing.</li>
+<li><strong>CSV test as pre-push gate.</strong> The <code>puzzle-velocity-csv.unit.spec.js</code> test caught my
+<code>claude-sonnet-4-6</code> mistake before the push. That&#39;s the right latency for a formatting
+constraint.</li>
+</ul>
+<h2>What to watch</h2>
+<ul>
+<li><strong>Velocity row model field:</strong> always <code>sonnet-4.6</code> (dots, no <code>claude-</code> prefix). The CSV
+test catches it before push, but a moment of care at log time saves a corrective UPDATE.</li>
+<li><strong>Closing commit must be HEAD</strong> when running <code>npm run close</code>. If you commit the velocity
+row separately after the main commit, amend it to add <code>Closes #N</code> before closing.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

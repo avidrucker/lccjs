@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>og-lcc-author-name-noninteractive — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>OG-LCC author-name handling &amp; non-interactive <code>.o</code> production (#241)</h1>
+<p><strong>Role:</strong> RESEARCH · parent: #241 · for a design discussion with <strong>Charlie</strong>.
+<strong>Sibling theme:</strong> non-interactive-hostile CLI across the toolchain (LCC+
+interpreter off-TTY crash; discovered during #200 linker-fixture work).</p>
+<h2>Question</h2>
+<p>When the core assembler writes a <code>.o</code> object module, it prompts on stdin for an
+author name (embedded in the <code>.o</code>/report header). With no interactive input this
+blocks or exits non-zero, so <code>.o</code> production in scripts/CI/test-fixtures is
+hostile. What is the <em>right</em> non-interactive behavior, and — since the <code>.o</code>
+author field is OG-LCC&#39;s convention — <strong>how does OG LCC itself populate it
+non-interactively?</strong></p>
+<h2>Method</h2>
+<p>Clean-room differential test: a fresh temp dir per run (so no <code>name.nnn</code> cache
+masks the prompt), <code>demos/m1.a</code> as the input (it has <code>.extern sub</code> / <code>.global</code>,
+so both tools take the <code>.o</code>-producing path). Compared LCC.js
+(<code>node src/core/assembler.js</code>) against the oracle (<code>cuh63/lcc</code>, via <code>LCC_ORACLE</code>)
+under two stdin conditions: <code>/dev/null</code> (no input) and a piped <code>Tester, Auto</code>.</p>
+<h2>Findings</h2>
+<h3>1. OG LCC has NO flag / env / config for the author — only <code>name.nnn</code></h3>
+<p>This is the headline answer to the issue&#39;s &quot;OG-LCC angle.&quot; The oracle offers no
+<code>--name</code>, no <code>LCC_AUTHOR</code>, no config file. Its sole non-interactive mechanism is
+the <strong><code>name.nnn</code> cache file in the current working directory</strong>: on the first
+prompt it writes the entered name to <code>./name.nnn</code>, and every later invocation in
+that cwd reads <code>name.nnn</code> and skips the prompt entirely.</p>
+<p><strong>LCC.js already mirrors this faithfully.</strong> <code>src/utils/name.js#createNameFile</code>
+checks for <code>name.nnn</code> in cwd, returns its contents if present, otherwise prompts
+and writes it. The resolution is deliberately cwd-relative (not input-file
+relative) &quot;so direct CLI use and oracle-driven tests stay aligned&quot; (comment at
+<code>name.js:10</code>). So the parity-correct non-interactive recipe <strong>already works
+today</strong>: drop a <code>name.nnn</code> in the working dir (or run once interactively to
+create it), and all subsequent <code>.o</code> builds are silent and exit cleanly.</p>
+<h3>2. Clean-room behavior matrix (no <code>name.nnn</code> in cwd)</h3>
+<table>
+<thead>
+<tr>
+<th>stdin</th>
+<th>LCC.js</th>
+<th>Oracle</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/dev/null</code></td>
+<td>prompt → <code>Name cannot be empty</code> → <strong>exit 1</strong>; <strong><code>m1.o</code> written anyway</strong>, no <code>.lst</code>/<code>.bst</code>, no <code>name.nnn</code></td>
+<td>prompt → <code>Unable to read name</code> → <strong>exit 1</strong>; <strong>no artifacts</strong>, no <code>name.nnn</code></td>
+</tr>
+<tr>
+<td>piped <code>Tester, Auto\n</code></td>
+<td>assembles → <code>m1.o</code> + <code>m1.lst</code> + <code>m1.bst</code> + <code>name.nnn</code> → <strong>exit 0</strong></td>
+<td>assembles → <code>m1.o</code> + <code>m1.lst</code> + <code>m1.bst</code> + <code>name.nnn</code> → <strong>exit 1</strong></td>
+</tr>
+</tbody></table>
+<p>With a pre-existing <code>name.nnn</code> in cwd, <strong>both</strong> tools skip the prompt and assemble
+non-interactively — the intended path.</p>
+<h3>3. Two parity deltas surfaced (candidate follow-ups, not in #241 scope)</h3>
+<ul>
+<li><strong>(A) Non-atomic output on name failure.</strong> LCC.js calls <code>writeOutputFile()</code>
+(<code>assembler.js:555</code>) <strong>before</strong> <code>createNameFile()</code> (<code>assembler.js:561</code>). So when
+the name prompt fails (empty/EOF), the <code>.o</code> is <em>already on disk</em> even though the
+process exits 1 — the &quot;wrote a valid <code>.o</code> but exited non-zero&quot; symptom in the
+issue. The oracle writes nothing in the same failure. Fix would be to resolve
+the name <strong>before</strong> <code>writeOutputFile()</code> so a name failure aborts atomically.</li>
+<li><strong>(B) Success exit-code divergence.</strong> On a <em>successful</em> <code>.o</code> assemble LCC.js
+exits <strong>0</strong>; the oracle exits <strong>1</strong>. This looks like a pre-existing,
+separate deviation (not the subject of #241) and should be characterized on its
+own ticket if parity matters here.</li>
+</ul>
+<h2>Recommendation (for the Charlie design discussion)</h2>
+<ol>
+<li><p><strong>Primary: do nothing to the mechanism — document <code>name.nnn</code>.</strong> The
+parity-correct, already-implemented non-interactive path is the cwd
+<code>name.nnn</code> cache. The real gap is discoverability: CI/scripts/fixtures should
+seed a <code>name.nnn</code>. This matches the oracle exactly and needs no code change.
+(The repo&#39;s own test helpers already do this — see <code>tests/helpers/</code>.)</p>
+</li>
+<li><p><strong>Optional ergonomic add (LCC.js-only, non-parity): <code>LCC_AUTHOR</code> env var.</strong>
+If a friendlier knob is wanted, honor <code>process.env.LCC_AUTHOR</code> (and/or a
+<code>--name</code> flag) in <code>createNameFile</code> <em>before</em> the prompt, falling back to
+<code>name.nnn</code> then the prompt. This is a deliberate <strong>extension</strong> beyond the
+oracle (which has no such knob), so it must be documented as an LCC.js-only
+convenience, not parity. Low cost, isolated to <code>name.js</code>.</p>
+</li>
+<li><p><strong>Avoid: silently defaulting to a placeholder when stdin is not a TTY.</strong>
+It diverges from the oracle (which errors), and a wrong/blank author silently
+baked into a <code>.o</code> header is worse than a clear failure. If anything, prefer a
+clear typed error on EOF over a placeholder.</p>
+</li>
+<li><p><strong>Independently of #241, fix delta (A)</strong> — resolve the name before writing the
+<code>.o</code> so failures are atomic and match the oracle&#39;s all-or-nothing output.
+Worth its own small DEV puzzle.</p>
+</li>
+</ol>
+<h2>Status</h2>
+<p>Researched and characterized. No code change under #241 (research role). The
+non-interactive answer is <strong><code>name.nnn</code> in cwd</strong> (already supported, oracle-faithful);
+deltas (A) and (B) are candidate follow-up tickets for the owner to file.</p>
+<p><strong>Evidence:</strong> clean-room runs reproduced above; <code>src/utils/name.js</code>,
+<code>src/core/assembler.js:548-576</code>, <code>src/core/lcc.js:31-37</code>.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

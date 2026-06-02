@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>velocity-data-integrity-audit — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>DATA (M1): Velocity Data Integrity Audit</h1>
+<p><strong>Issue:</strong> #424<br><strong>Agent:</strong> ELDERBERRY<br><strong>Date:</strong> 2026-06-01<br><strong>Scope:</strong> <code>~/.lccjs/velocity.db</code> vs <code>docs/puzzle-velocity.csv</code> — SQLite/CSV diff, orphaned SHA check, post-hoc C-estimate detection, delta sign consistency</p>
+<hr>
+<h2>1. SQLite / CSV Diff</h2>
+<p><strong>Method:</strong> Compared all <code>id</code> values in the DB against all data rows in the CSV (skipping the 2-line header).</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Row count</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SQLite (<code>~/.lccjs/velocity.db</code>)</td>
+<td>299</td>
+</tr>
+<tr>
+<td>CSV data rows</td>
+<td>297</td>
+</tr>
+</tbody></table>
+<p><strong>Rows in DB but not CSV: IDs 307 and 308</strong></p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>ticket</th>
+<th>title</th>
+<th>agent</th>
+<th>started_iso</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>307</td>
+<td>411</td>
+<td>assemblerplus.js: named constants for trap vectors</td>
+<td>BANANA</td>
+<td>2026-06-01T15:51:55-1000</td>
+</tr>
+<tr>
+<td>308</td>
+<td>423</td>
+<td>DEV (N1b): disassembler.js exit seam — replace 6 bare process.exit with fatalExit</td>
+<td>DRAGONFRUIT</td>
+<td>2026-06-01T15:52:16-1000</td>
+</tr>
+</tbody></table>
+<p><strong>Verdict:</strong> Stale export — two rows logged after the last <code>velocity:export</code> run. No data loss; the DB is the canonical store.</p>
+<p><strong>Action:</strong> <code>npm run velocity:export</code> from any current checkout will sync.</p>
+<hr>
+<h2>2. Orphaned SHA Check</h2>
+<p><strong>Method:</strong> Queried all non-null <code>closed_commit</code> values (62 rows), then ran <code>git cat-file -e &lt;sha&gt;^{commit}</code> against each in the lccjs repo.</p>
+<p><strong>Result:</strong> 6 SHAs do not resolve in lccjs git history.</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>ticket</th>
+<th>title</th>
+<th>SHA</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>23</td>
+<td>137</td>
+<td>Claude skill (1/4a) SKILL.md router + 4 inline pitfalls</td>
+<td>87f6405</td>
+</tr>
+<tr>
+<td>24</td>
+<td>138</td>
+<td>Claude skill (1/4b) isa-quickref + calling-convention references</td>
+<td>9d20e00</td>
+</tr>
+<tr>
+<td>27</td>
+<td>139</td>
+<td>Claude skill (1/4c) pitfalls + idioms-and-patterns references</td>
+<td>0cb31de</td>
+</tr>
+<tr>
+<td>29</td>
+<td>140</td>
+<td>Claude skill (1/4d) house-style reference + README pointer</td>
+<td>fa7043a</td>
+</tr>
+<tr>
+<td>35</td>
+<td>148</td>
+<td>Skill: enumerate closed LCC trap set inline in SKILL.md</td>
+<td>fafa31a</td>
+</tr>
+<tr>
+<td>36</td>
+<td>149</td>
+<td>Skill: nl idiom callout + house-style scoping clarification</td>
+<td>497dc1a</td>
+</tr>
+</tbody></table>
+<p><strong>Verdict:</strong> Not true orphans. All 6 rows have notes explicitly documenting <strong>&quot;cross-repo close: SHA in avidrucker/claude-config&quot;</strong> — the work landed in the paired skill config repo, not lccjs. The SHAs are valid commits in <code>avidrucker/claude-config</code>. This is a documented pattern for cross-repo puzzle closes.</p>
+<p><strong>Action:</strong> No data fix needed. The existing <code>velocity-log-storage.md</code> notes this pattern (row 59). A future schema enhancement could add a <code>repo</code> field (defaulting to <code>lccjs</code>) to make cross-repo SHAs unambiguous to tooling.</p>
+<hr>
+<h2>3. Post-hoc C-estimate Detection</h2>
+<h3>3a. Null / missing <code>c_min</code> (27 rows)</h3>
+<p>These rows have no C estimate at all. Two subgroups:</p>
+<ul>
+<li><strong>Early rows (IDs 1–5):</strong> Five WRITER rows from tickets #119–123 (assembler.js term inventory). C-tracking predates these; null is expected.</li>
+<li><strong>Issueless PM rows and early session gaps:</strong> Many PM/RESEARCH rows in IDs 62–248 range, mostly pre-C-tracking discipline. Examples: rows 62, 63 (DATA), 71, 73, 81, 84, 85 (PM), 88, 89, 98, 100, 101, 110, 159, 171, 211, 216, 221, 228, 231, 239, 248. Null C here is honest — the estimate wasn&#39;t captured.</li>
+</ul>
+<p><strong>Verdict:</strong> No retroactive manipulation detected. Null C is accurate for the eras and roles involved.</p>
+<h3>3b. <code>c_min == actual_min</code> exactly (2 rows)</h3>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>ticket</th>
+<th>title</th>
+<th>role</th>
+<th>h_min</th>
+<th>c_min</th>
+<th>actual_min</th>
+<th>agent</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>108</td>
+<td>227</td>
+<td>Fix: claim.js refuses an already-CLOSED issue</td>
+<td>DEV</td>
+<td>20</td>
+<td>15</td>
+<td>15</td>
+<td>BANANA</td>
+</tr>
+<tr>
+<td>136</td>
+<td>—</td>
+<td>PM: file #286 + #287 + comments on #277/#284</td>
+<td>PM</td>
+<td>10</td>
+<td>5</td>
+<td>5</td>
+<td>APPLE</td>
+</tr>
+</tbody></table>
+<p><strong>Verdict:</strong> Suspicious but not conclusive. A 15-minute estimate and a 15-minute actual for a DEV fix (row 108) is plausible — the estimate was tight and the task hit it. Row 136 (C=5, actual=5) is a PM row where 5-minute PM tasks are common. Neither has a note indicating the C was set retroactively. Flag for awareness; insufficient evidence to mark as post-hoc.</p>
+<hr>
+<h2>4. Delta Sign Convention Errors (bonus finding)</h2>
+<p><strong>Method:</strong> Verified <code>delta_h_min == h_min - actual_min</code> and <code>delta_c_min == c_min - actual_min</code> for all rows with non-null values.</p>
+<p><strong>2 rows with sign-flipped deltas</strong> (both DRAGONFRUIT):</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>ticket</th>
+<th>h_min</th>
+<th>actual_min</th>
+<th>delta_h_min</th>
+<th>correct</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>303</td>
+<td>412</td>
+<td>20</td>
+<td>3</td>
+<td><strong>-17</strong></td>
+<td>+17</td>
+</tr>
+<tr>
+<td>308</td>
+<td>423</td>
+<td>30</td>
+<td>2</td>
+<td><strong>-28</strong></td>
+<td>+28</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>ticket</th>
+<th>c_min</th>
+<th>actual_min</th>
+<th>delta_c_min</th>
+<th>correct</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>303</td>
+<td>412</td>
+<td>10</td>
+<td>3</td>
+<td><strong>-7</strong></td>
+<td>+7</td>
+</tr>
+<tr>
+<td>308</td>
+<td>423</td>
+<td>10</td>
+<td>2</td>
+<td><strong>-8</strong></td>
+<td>+8</td>
+</tr>
+</tbody></table>
+<p><strong>Verdict:</strong> The delta fields were computed as <code>actual_min - estimate</code> (i.e. actual overrun) rather than the schema convention <code>estimate - actual</code> (headroom remaining). Both rows are from DRAGONFRUIT in the same session. The sign flip makes these rows produce incorrect calibration math if delta fields are used directly.</p>
+<p><strong>Action:</strong> Correct in SQLite with UPDATE. The CSV will sync on next export.</p>
+<pre><code class="language-sql">UPDATE velocity SET delta_h_min = 17,  delta_c_min = 7  WHERE id = 303;
+UPDATE velocity SET delta_h_min = 28,  delta_c_min = 8  WHERE id = 308;
+</code></pre>
+<hr>
+<h2>5. Model Format — Status</h2>
+<p>All 299 rows in the DB use canonical short-form model names (<code>sonnet-4.6</code>, <code>opus-4.8</code>, etc.) or NULL. The <code>puzzle-velocity-csv.unit.spec.js</code> test failure seen in the #410 worktree was against a stale CSV export; the current CSV (as of this worktree) passes the model-format assertion.</p>
+<hr>
+<h2>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Severity</th>
+<th>Count</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DB rows missing from CSV</td>
+<td>Low</td>
+<td>2</td>
+<td><code>npm run velocity:export</code></td>
+</tr>
+<tr>
+<td>Orphaned SHAs (cross-repo)</td>
+<td>None</td>
+<td>6</td>
+<td>Document as expected; optional schema <code>repo</code> field</td>
+</tr>
+<tr>
+<td>Null <code>c_min</code></td>
+<td>None</td>
+<td>27</td>
+<td>Expected for early/PM rows; no fix</td>
+</tr>
+<tr>
+<td><code>c_min == actual_min</code> (suspicious)</td>
+<td>Low</td>
+<td>2</td>
+<td>Monitor; insufficient evidence for correction</td>
+</tr>
+<tr>
+<td>Negative delta fields</td>
+<td>Medium</td>
+<td>2 rows × 2 fields</td>
+<td>UPDATE rows 303 and 308 in SQLite</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

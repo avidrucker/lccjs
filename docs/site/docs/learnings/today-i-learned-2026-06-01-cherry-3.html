@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-01-cherry-3 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-01 CHERRY — assess.bb hung jest for 51 min; name.nnn refuted, babashka stdin pipe is the real cause</h1>
+<p><strong>Issue:</strong> #431</p>
+<h2>The incident</h2>
+<p>Running <code>./assess.bb examples/lccjs.edn</code> caused <code>npm test</code> (the <code>:unit-tests-pass</code> check) to hang for ~51 minutes pegging a CPU core at 99.7%, then had to be manually killed. Normal jest completion is under 30 seconds.</p>
+<p>The initial hypothesis was that <code>name.nnn</code> absence triggered a blocking stdin read that stalled jest.</p>
+<h2>What the investigation found</h2>
+<h3>Root cause: babashka.process stdin pipe deadlock</h3>
+<p><code>assess.bb</code> runs deterministic checks via:</p>
+<pre><code class="language-clojure">@(p/process [&quot;sh&quot; &quot;-c&quot; command]
+            {:dir cwd* :out :string :err :string})
+</code></pre>
+<p>No <code>:in</code> is specified. Java&#39;s <code>ProcessBuilder</code> (which babashka.process wraps) defaults to <code>Redirect.PIPE</code> — it creates a pipe for the child&#39;s stdin, with the <strong>write end held open by the JVM</strong> for the lifetime of the process handle. The child inherits the read end.</p>
+<p>The <code>@</code> deref waits for the child process to exit. The child (npm → jest → Node.js) sees stdin as an open, empty pipe. Node.js keeps the event loop alive as long as readable streams are open. The loop spins polling for stdin data that never arrives (babashka hasn&#39;t written anything and hasn&#39;t closed the write end). <strong>Both sides wait for the other — a deadlock.</strong></p>
+<p>Empirically confirmed: invoking <code>npm test</code> via babashka.process (without <code>:in</code>) produces a 10+ second hang even for the fastest test files, while the same suite completes in ~2 seconds when run directly from the terminal.</p>
+<h3>The name.nnn hypothesis: refuted as primary cause</h3>
+<p><code>name.js</code> has a guard:</p>
+<pre><code class="language-javascript">if (!process.stdin.isTTY) {
+  fatalExit(&#39;Fatal: name.nnn not found and stdin is not a terminal.&#39;);
+}
+</code></pre>
+<p>When jest is launched by babashka.process:</p>
+<ul>
+<li>Child stdin = a JVM-backed pipe → <code>process.stdin.isTTY = undefined</code></li>
+<li><code>!undefined = true</code> → guard fires correctly → <code>fatalExit</code> throws (jest context: <code>isTestMode = true</code>)</li>
+<li>Test fails fast, jest continues</li>
+</ul>
+<p>So even if <code>name.nnn</code> is absent, the guard prevents the blocking-stdin path. The name.nnn code is NOT the deadlock source.</p>
+<p><strong>However</strong>: <code>name.js</code> still has a latent danger. The <code>readLineFromStdin()</code> function has an unguarded EAGAIN spin:</p>
+<pre><code class="language-javascript">} catch (err) {
+  if (err.code === &#39;EAGAIN&#39;) {
+    continue;   // tight CPU spin — no sleep/yield
+  }
+}
+</code></pre>
+<p>If stdin is both <code>isTTY = true</code> AND in O_NONBLOCK mode (possible if Node.js has set the fd non-blocking for internal stream management), this loop pegs CPU at ~100%. The guard only prevents this when isTTY is falsy. A future regression that patched isTTY (e.g., a test that sets <code>process.stdin.isTTY = true</code> and leaks the assignment) could revive this path.</p>
+<h3>The 99.7% CPU peg</h3>
+<p>Most likely source: Node.js/libuv&#39;s event loop polling on the open stdin pipe. With the write end never closed and no <code>forceExit</code> in jest, the event loop stays alive and libuv epoll-polls stdin on a tight interval looking for data. Whether this drives CPU to 99.7% depends on what other pending work (timers, setImmediate callbacks) jest has in flight post-tests. This was not definitively isolated.</p>
+<h3>lccrun.sh was bypassed</h3>
+<p>assess.bb calls <code>npm test</code> directly, not via <code>scripts/lccrun.sh</code>. The lccrun.sh wrapper would have killed the child after 30 seconds and exited with code 124 — effectively preventing the multi-hour hang. The <code>:test-suite-time-bound</code> check DOES use <code>timeout 30 npm test</code>, so that check is protected by the OS timeout. But <code>:unit-tests-pass</code> (which runs first) has no timeout guard.</p>
+<h2>Fixes</h2>
+<h3>Fix 1 — assess.bb: always redirect stdin to /dev/null for deterministic checks (owner: assess.bb repo)</h3>
+<pre><code class="language-clojure">;; In run-check :deterministic:
+@(p/process [&quot;sh&quot; &quot;-c&quot; command]
+            {:dir cwd* :out :string :err :string
+             :in (clojure.java.io/file &quot;/dev/null&quot;)})  ; &lt;-- add this
+</code></pre>
+<p><code>/dev/null</code> as stdin immediately returns EOF. The child never waits for stdin to close.</p>
+<h3>Fix 2 — lccjs: add <code>forceExit: true</code> to jest.config.js (defensive belt-and-suspenders)</h3>
+<pre><code class="language-javascript">module.exports = {
+  maxWorkers: 1,
+  forceExit: true,   // &lt;-- add this
+  // ...
+};
+</code></pre>
+<p>This makes jest call <code>process.exit()</code> after all tests finish, regardless of open handles. Even if a caller holds stdin open, jest exits cleanly.</p>
+<h3>Fix 3 — name.js: add a sleep in the EAGAIN retry loop (secondary hardening)</h3>
+<pre><code class="language-javascript">} catch (err) {
+  if (err.code === &#39;EAGAIN&#39;) {
+    // 10ms yield prevents a CPU spin if stdin is non-blocking
+    fs.readSync(-1, Buffer.alloc(0), 0, 0, null);   // can&#39;t sleep in sync code
+    // ... or use a spin counter + throw after N retries
+    continue;
+  }
+}
+</code></pre>
+<p>A proper fix here is hard (sync JS has no sleep). The safest approach is: throw instead of spin after N EAGAIN retries, or extend the <code>!process.stdin.isTTY</code> guard to also reject non-blocking stdin via <code>fs.fstatSync</code>.</p>
+<h2>What to do now</h2>
+<ul>
+<li><strong>name.nnn is present</strong> (<code>q</code>) — no immediate risk from the name-resolution path.</li>
+<li><strong>Fix 1</strong> (assess.bb <code>:in /dev/null</code>) is the high-value change; it&#39;s in a different repo.</li>
+<li><strong>Fix 2</strong> (<code>forceExit: true</code> in jest.config.js) is a one-line lccjs fix — files under #431 for a follow-up DEV ticket.</li>
+<li><strong>Fix 3</strong> (EAGAIN hardening in name.js) is lower priority since the guard works correctly today.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-29-banana-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-29 (banana, session 2)</h1>
+<p><strong>Agent:</strong> banana · <strong>Session theme:</strong> demo-research close (#152 <code>cea</code>), docs-protocol
+reconciliation (#161, #201), multi-agent-identity findings (#193 → #194/#195), and
+the push-gating hook for #188 (#205). Second banana session of the day (cf.
+<code>today-i-learned-2026-05-29-005.md</code> for banana session 1).</p>
+<p>This was a courier-heavy session: pick available puzzles, close them, and surface
+findings as new complaints rather than expanding scope.</p>
+<hr>
+<h2>1. The auto-claim handed me a <em>live</em> agent&#39;s identity (→ #193/#194/#195)</h2>
+<p><code>npm run claim -- 152</code> (auto) returned <strong><code>apple</code></strong> while another agent was actively
+working <code>#168</code> as apple. Re-claimed <code>--as banana</code>.</p>
+<ul>
+<li><strong>Why:</strong> <code>takenFruits()</code> in <code>scripts/claim.js</code> derives the &quot;taken&quot; set from
+<strong>live git worktrees</strong> (<code>git worktree list</code>), not <strong>live agent sessions</strong>. apple
+had just removed its <code>#168</code> worktree at close, so <code>apple</code> looked free and was
+reassigned — even though the apple session was still alive.</li>
+<li><strong>Lesson:</strong> fruit identity is <em>worktree-scoped, not session-scoped</em>. After an auto
+claim, <strong>verify the returned fruit matches your terminal name</strong>; if it collides
+with a live agent, re-claim <code>--as &lt;yourname&gt;</code>. Filed #193; APPLE then split it into
+#194 (session-sentinel fix) + #195 (docs).</li>
+<li><strong>Related:</strong> the velocity-CSV <code>agent</code> column goes under the <strong>terminal name</strong>
+(BANANA), not the auto fruit — captured in the <code>terminal-agent-name-vs-fruit</code>
+memory.</li>
+</ul>
+<h2>2. The close protocol has drifted between two docs (→ #201)</h2>
+<p><code>docs/claude_workflow.md</code> still documents the <strong>pre-#186 two-commit close</strong> (commit →
+<code>pull --rebase</code> → capture post-rebase SHA → second <code>docs(velocity)</code> commit). The live
+protocol (<code>docs/puzzle-velocity.md</code>, #186) is a <strong>single commit</strong> with <code>closed_commit</code>
+left <strong>empty</strong> (the CSV&#39;s <code>merge=union</code> auto-resolves parallel rows).</p>
+<ul>
+<li>I followed the <em>stale</em> <code>claude_workflow.md</code> flow on #152 before noticing, then used
+the correct single-commit flow for #161/#205.</li>
+<li><strong>Lesson:</strong> for the close sequence, <strong><code>puzzle-velocity.md</code> is the live authority</strong>,
+not <code>claude_workflow.md</code> — even though the latter bills itself as &quot;the authority
+when a summary and the detail disagree.&quot; Filed #201 with a <code>@todo</code> marker at the
+exact stale section.</li>
+</ul>
+<h2>3. <code>cea</code> is an fp-relative <code>lea</code> (→ #152)</h2>
+<p><code>cea dr, imm5</code> is a pseudo-instruction for <strong><code>add dr, fp, imm5</code></strong> — the <strong>fp-relative</strong>
+analogue of <code>lea</code> (which is PC-relative). <code>cea r0, 0</code> = address of the current frame
+base. Verified from the listing: <code>cea r1,0</code>→<code>0x1360</code>, <code>cea r2,-1</code>→<code>0x157f</code>.</p>
+<ul>
+<li><strong>Doc bug found:</strong> the immediate-width table in <code>glossary/assembler.md</code> listed <code>CEA</code>
+under <strong>pcoffset9</strong> (9-bit). It&#39;s an ADD-immediate, so the field is <strong>imm5</strong>
+(−16..15). Fixed.</li>
+</ul>
+<h2>4. The <code>Read</code> tool false-positives <code>.a</code>/<code>.ap</code> files as &quot;binary&quot;</h2>
+<p><code>Read</code> refused <code>demos/happy-path.a</code> (&quot;appears to be a binary .a file&quot;) even though
+<code>file</code> reports UTF-8. Consequence: <strong><code>Edit</code> is unusable on <code>.a</code>/<code>.ap</code> files</strong> (it
+requires a prior successful <code>Read</code>).</p>
+<ul>
+<li><strong>Lesson:</strong> to edit assembly source, fall back to <code>sed -i</code> (a documented exception
+to the &quot;prefer dedicated tools&quot; rule) and verify with <code>grep</code>/<code>awk</code> afterward.</li>
+</ul>
+<h2>5. Push-gating hook: bash + grep gotchas (→ #205, #188 mode #2)</h2>
+<p>Added a gem-free gate to <code>scripts/git-hooks/pre-push</code> that blocks a push when a
+rebase/merge is in progress or a tracked file has a column-0 conflict marker.</p>
+<ul>
+<li><strong><code>set -e</code> is suspended inside <code>if</code>/<code>while</code> conditions and <code>&amp;&amp;</code>/<code>||</code> chains.</strong> So
+<code>if markers=$(git grep -nE &#39;…&#39;) &amp;&amp; [ -n &quot;$markers&quot; ]</code> is safe even though <code>git grep</code>
+<strong>exits 1 when it finds nothing</strong> — which would otherwise abort an <code>set -e</code> script.</li>
+<li><strong>Anchor conflict-marker greps at column 0</strong> (<code>^&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> / <code>^&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>). Prose that
+<em>discusses</em> the markers (e.g. <code>claude_workflow.md</code> line 107) indents or quotes them,
+so the anchored pattern doesn&#39;t false-trip. Checking the two unambiguous markers is
+enough — a real conflict always contains all three, and bare <code>=======</code> risks
+matching heading underlines.</li>
+<li><strong>Run cheap local gates before networked/expensive ones</strong> (the gate runs ahead of
+the <code>pdd</code> scan + <code>gh</code>-calling <code>puzzle:status</code>), and make them gem-free so they fire
+for contributors without the Ruby toolchain.</li>
+</ul>
+<h2>5b. <code>Resolves #N</code> in a commit body is a <em>close directive</em>, not prose (#188)</h2>
+<p>My #205 hook commit body read <code>Resolves #188 failure mode #2</code> — meant descriptively.
+GitHub parsed <code>Resolves #188</code> as a closing keyword and <strong>auto-closed the parent #188</strong>
+(which I&#39;d deliberately left open for the user-owned #4 decision). Had to reopen.</p>
+<ul>
+<li><strong>Lesson:</strong> the keywords <code>close/closes/closed</code>, <code>fix/fixes/fixed</code>,
+<code>resolve/resolves/resolved</code> followed by <code>#N</code> <strong>anywhere</strong> in a commit body close
+that issue on push. Never place one next to a <em>parent/tracker</em> number you intend to
+keep open. To reference without closing, write <code>re #188</code>, <code>part of #188</code>, or
+<code>#188 (mode #2)</code> — no close-verb adjacent to the number.</li>
+</ul>
+<h2>6. A stale marker I flagged was cleaned by another agent before I could act (#167)</h2>
+<p>I flagged a <code>STALE</code> <code>@todo #167</code> marker; by the time I went to clean it, another agent
+had pushed <code>77a31bf</code> removing it.</p>
+<ul>
+<li><strong>Lesson:</strong> in a multi-agent repo, <strong>re-check shared state right before acting</strong> on
+another agent&#39;s leftover — don&#39;t queue an action against a snapshot. Cheap fetch +
+grep saved a redundant (and potentially clobbering) commit.</li>
+</ul>
+<h2>7. Yegor-PM discipline, applied</h2>
+<ul>
+<li><strong>BDD framing</strong> for every new ticket (#193, #201, #205): title names what&#39;s <em>broken</em>,
+body is Have / Should / Repro — not &quot;add X&quot;.</li>
+<li><strong>PDD marker at the <em>exact</em> defect site</strong>, never a different file (#201&#39;s marker went
+into <code>claude_workflow.md</code> itself). Caveat surfaced: the <code>pdd</code> gem excludes
+<code>docs/**</code> + <code>*.md</code>, so markers there are tracked by <code>puzzle:status</code> but the <strong>GH
+issue is the real backstop</strong>.</li>
+<li><strong>Spike → recommendation → bounded child</strong> for the #188 epic: its analysis was
+already written by APPLE, so I executed the one decision-free item as a child
+complaint (#205), logged a velocity row for <em>that</em>, and left #188 <strong>open</strong> for the
+user-owned #4 branch-protection decision. Only the reporter closes the parent.</li>
+<li><strong>Don&#39;t make the user&#39;s decision.</strong> #188&#39;s branch-protection question (trunk-based
+vs PR/merge-queue once protection is enforced) is an owner decision; I documented it
+in the #188 comment for <code>@avidrucker</code> rather than picking one.</li>
+</ul>
+<hr>
+<h3>Tickets this session</h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Ticket</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Closed</td>
+<td>#152 (<code>cea</code> research), #161 (cross-repo <code>closed_commit</code> docs), #205 (push-gating hook)</td>
+</tr>
+<tr>
+<td>Filed</td>
+<td>#193 (claim fruit-reuse → split by APPLE into #194/#195), #201 (stale close protocol in <code>claude_workflow.md</code>), #205</td>
+</tr>
+<tr>
+<td>Progressed, left open</td>
+<td>#188 (mode #2 done via #205; #4 decision + #6 remain)</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

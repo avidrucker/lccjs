@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>til-synthesis-2026-06-01 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL Synthesis — 2026-06-01</h1>
+<p><strong>Spike:</strong> #207 · <strong>Agent:</strong> ELDERBERRY · <strong>Role:</strong> RESEARCH<br><strong>Corpus:</strong> 37 docs in <code>docs/learnings/</code> (2026-05-25 through 2026-05-31-elderberry)<br><strong>Deliverable:</strong> themes map, open-issue cross-check, proposed follow-on puzzles for sign-off.</p>
+<hr>
+<h2>1. Method</h2>
+<p>Read all 37 TIL docs (via README index + targeted full reads on the 12 highest-signal
+files). Extracted distinct lessons, counted independent sightings across agents/sessions,
+cross-checked each actionable finding against <code>gh issue list --state open</code>.</p>
+<p>Recurrence is the key signal: a lesson observed by 3+ independent agents is a <strong>process
+defect</strong> (structural), not a one-off. A lesson from one agent is a <strong>candidate finding</strong>
+(needs corroboration or is niche enough to file immediately if actionable).</p>
+<hr>
+<h2>2. Tier-1 — High-recurrence process defects (≥ 3 independent sightings)</h2>
+<h3>T1-A · Tool-call batching → confabulated state (6 sightings)</h3>
+<p><strong>Agents:</strong> BANANA-2 (05-30), CHERRY-3 (05-30), DRAGONFRUIT-2 (05-30), CHERRY-3 (05-31),
+APPLE-2 (05-31), ELDERBERRY (05-31).</p>
+<p>Firing multiple Bash/tool calls in one turn causes agents to narrate expected outcomes
+(&quot;PATCH OK&quot;, &quot;tests pass&quot;, &quot;pushed&quot;) rather than waiting for real results. Every
+destructive or state-changing operation in this session that went wrong traces to this
+pattern. The finding is confirmed structural: the APPLE-3/CHERRY-3 (05-31) sessions
+demonstrated the violation <strong>while documenting the guard for it</strong>.</p>
+<p><strong>Status:</strong> Tracked. #316 (CLOSED — research) → #349 (OPEN — DEV: PostToolBatch guard).
+No new issue needed. <strong>Upweight #349 priority</strong> — the sustained recurrence rate (6 sightings
+across 5 agents) is direct evidence of how load-bearing this fix is.</p>
+<hr>
+<h3>T1-B · <code>at_todo</code> substring trap (7 sightings, 5 distinct textual surfaces)</h3>
+<p><strong>Agents/sessions:</strong> 28-002, BANANA (05-29), APPLE (05-31), CHERRY-2 (05-30), APPLE-3
+(05-31), CHERRY-3 (05-30), DRAGONFRUIT (05-31).</p>
+<p>The <code>pdd</code> gem does case-sensitive substring matching. The uppercase marker keyword appears
+in:</p>
+<ol>
+<li>Code comments (documented in CLAUDE.md)</li>
+<li>CSV data field values (velocity <code>notes</code> or <code>title</code> fields) — APPLE-05-31</li>
+<li>Shell echo string literals — APPLE-05-31</li>
+<li>TODOS.md filename in a code comment — CHERRY-3-05-30</li>
+<li>velocity notes describing the marker concept — DRAGONFRUIT-05-31</li>
+</ol>
+<p>CLAUDE.md documents surfaces 1–2 (&quot;in a scanned code file&quot;). Surfaces 3–5 are less
+clearly documented.</p>
+<p><strong>Status:</strong> CLAUDE.md covers the core case. No open issue. <strong>Proposed new puzzle P-1</strong>
+(see §5).</p>
+<hr>
+<h3>T1-C · Guards held; prose rules violated (4 sightings — meta-finding)</h3>
+<p><strong>Agents:</strong> CHERRY (05-31), APPLE-2 (05-31), APPLE-3 (05-31), CHERRY-3 (05-31).</p>
+<p>Every executable guard (claim refusing a closed issue, close.js teardown gate, velocity
+Guard 1) caught violations with zero false negatives. Every prose rule or memory rule
+(start timestamp, worktree-first, log from committing worktree) was violated in the same
+sessions. This is the primary meta-lesson: <strong>process rules that live only as prose or in
+memory will be violated; the fix is converting them to guards, not rewriting the prose</strong>.</p>
+<p><strong>Status:</strong> No open issue for the meta-finding itself. Informs how to evaluate new rules:
+if it matters, it needs a guard. Relevant to #349 and to any new rules proposed below.</p>
+<hr>
+<h3>T1-D · Close.js SHA-rewrite orphans worktree teardown (4 sightings)</h3>
+<p><strong>Agents:</strong> BANANA-3 (05-31), CHERRY-3 (05-31), DRAGONFRUIT-3 (05-31), ELDERBERRY (05-31).</p>
+<p><code>close.js</code> stores <code>sha = headSha()</code> before the push-retry loop. The loop rebases, rewriting
+the SHA; the teardown gate then checks the now-absent pre-rebase SHA and refuses cleanup —
+even though the commit landed correctly. Manual teardown (<code>git worktree remove</code>, <code>git branch -D</code>)
+is always needed after this fires.</p>
+<p><strong>Status:</strong> #350 CLOSED (research phase done). The DEV fix is not yet filed as a child
+puzzle. <strong>Proposed new puzzle P-2</strong> (see §5).</p>
+<hr>
+<h2>3. Tier-2 — Medium-recurrence lessons (2 independent sightings)</h2>
+<h3>T2-A · Parallel <code>gh issue create</code> assigns numbers by arrival, not submission</h3>
+<p><strong>Agents:</strong> ELDERBERRY (05-31), BANANA (05-31).</p>
+<p>When child issues are created in parallel background jobs, numbers are assigned by which
+HTTP request lands first, not submission order. <code>@todo #N</code> markers get mis-assigned.
+Fix: file siblings <strong>sequentially</strong>, then verify each with <code>gh issue view N</code> before writing
+the marker.</p>
+<p><strong>Status:</strong> Not tracked. <strong>Proposed new puzzle P-3</strong> (see §5).</p>
+<hr>
+<h3>T2-B · Pre-flight start timestamp is still routinely skipped</h3>
+<p><strong>Agents:</strong> DRAGONFRUIT (05-31), APPLE-2 (05-30).</p>
+<p>Agents skip <code>date &#39;+%Y-%m-%dT%H:%M:%S%z&#39;</code> before reading the issue, then reconstruct a
+start time after the fact. Both TILs acknowledge this as an honesty tax on the velocity row.
+The puzzle-velocity skill documents the requirement clearly.</p>
+<p><strong>Status:</strong> No open issue. A <code>velocity:log</code> guard that warns when <code>started_iso</code> is far in
+the past relative to <code>finished_iso</code> (e.g., &gt; 2h difference) could surface this without
+being prescriptive. Low-priority; noted in §6 (periodicity) as a calibration-quality signal.</p>
+<hr>
+<h3>T2-C · merge=union behavior under rebase vs merge — conflicting TILs</h3>
+<p><strong>Agents:</strong> CHERRY (05-29) said it fires under rebase; APPLE-2 (05-31) said it doesn&#39;t.</p>
+<p>The formal research in <code>docs/research/velocity-log-storage.md</code> tested and confirmed that
+<code>merge=union</code> <strong>does</strong> fire under <code>git rebase</code>. The APPLE-2 (05-31) lesson is likely
+observing a different scenario: when <code>velocity-export.js</code> regenerates the full CSV from
+SQLite (replacing the whole file), <code>merge=union</code> cannot auto-union two completely different
+full-file writes — it needs overlapping append regions. Under the SQLite migration the CSV
+is always a full-file export, so the practical merge=union benefit is moot. This is not a
+conflict but a context difference. No new issue; documentation note only.</p>
+<hr>
+<h2>4. Tier-3 — One-off codebase findings (1 agent, not currently tracked)</h2>
+<h3>C-1 · Smoke-test inserts pollute the global velocity DB</h3>
+<p>From APPLE-3 (05-31): running <code>npm run velocity:log</code> during development testing inserts
+real rows into <code>~/.lccjs/velocity.db</code>. The DB is permanent global state; <code>git restore</code> on
+the CSV does not undo the DB insert. No <code>--dry-run</code> flag or test-DB path exists.</p>
+<p><strong>Status:</strong> Not tracked. <strong>Proposed new puzzle P-4</strong> (see §5).</p>
+<hr>
+<h3>C-2 · parity_deviations.md §10 understates OG LCC blank-.e footgun scope</h3>
+<p>From DRAGONFRUIT-3 (05-31): the OG LCC blank-.e artifact fires on <strong>all</strong> assembly error
+types (range errors, bad registers, undefined labels, etc.) — not just undefined labels as
+§10&#39;s title implies. Pass-2 errors leave a 2-byte <code>.e</code> (<code>6f 43</code>); Pass-1 errors leave
+1-byte (<code>6f</code>). Any build script that ignores exit codes and runs <code>.e</code> after a failed
+assembly will hang regardless of error type.</p>
+<p><strong>Status:</strong> §10 title (&quot;Failed assembly (undefined label) still leaves a runnable blank <code>.e</code>&quot;)
+should be broadened. Related: #264 (WRITER: blank-.e report, blocked on #263). <strong>Proposed
+new puzzle P-5</strong> (see §5).</p>
+<hr>
+<h3>C-3 · <code>.git</code> file vs directory as a cheap worktree detector</h3>
+<p>From APPLE-3 (05-31): in a worktree, <code>.git</code> is a <strong>file</strong> (<code>gitdir: &lt;path&gt;</code>); in the main
+checkout, <code>.git</code> is a <strong>directory</strong>. <code>fs.statSync(&#39;.git&#39;).isDirectory()</code> gives a
+subprocess-free, stable worktree vs main checkout test. Currently <code>velocity-log.js</code> uses
+<code>--git-common-dir</code> comparison; the statSync approach is simpler and O(1).</p>
+<p><strong>Status:</strong> Not tracked. Low priority (the current approach works); worth a note in
+<code>docs/velocity-schema.md</code> or as a comment in <code>velocity-log.js</code>. No new puzzle needed unless
+the current detection logic has known holes.</p>
+<hr>
+<h3>C-4 · OG LCC requires cwd + basename invocation — absolute paths return exit 2</h3>
+<p>From DRAGONFRUIT-3 (05-31): running the oracle binary with an absolute path gives
+<code>&quot;Bad command line switch&quot;</code>, exit 2. All oracle probe scripts must set <code>cwd</code> to the source
+file&#39;s directory and pass only the basename. A probe using an absolute path silently gets
+exit 2 and looks like a path error.</p>
+<p><strong>Status:</strong> Not tracked. Should be added to <code>docs/oracle-setup.md</code> as a usage note.
+<strong>Proposed new puzzle P-6</strong> (see §5).</p>
+<hr>
+<h2>5. Proposed follow-on puzzles (sign-off needed before filing)</h2>
+<p>These are the genuinely-new, actionable items from the corpus that aren&#39;t already tracked.
+Sorted by value/effort; each is ≤60m. Do not file until <code>@avidrucker</code> approves.</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Title</th>
+<th>Role</th>
+<th>Est</th>
+<th>Value</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>P-1</td>
+<td>Extend <code>at_todo</code> doc to cover shell-echo + CSV-field surfaces</td>
+<td>WRITER</td>
+<td>15m</td>
+<td>Low</td>
+<td>Add examples for the 3 undocumented surfaces to CLAUDE.md §PDD-scan</td>
+</tr>
+<tr>
+<td>P-2</td>
+<td>Fix close.js SHA-rewrite: re-read HEAD after each rebase --continue</td>
+<td>DEV</td>
+<td>30m</td>
+<td>High</td>
+<td>#350 is closed (research); this is the DEV fix. Pure function <code>classifyPushError</code> stays clean; only the SHA capture site moves</td>
+</tr>
+<tr>
+<td>P-3</td>
+<td>Doc rule: file sibling issues sequentially; verify with gh issue view</td>
+<td>WRITER</td>
+<td>10m</td>
+<td>Medium</td>
+<td>Add to claude_workflow.md &quot;While continuing&quot; section</td>
+</tr>
+<tr>
+<td>P-4</td>
+<td>velocity-log.js: add <code>--dry-run</code> flag (skip DB insert, skip export)</td>
+<td>DEV</td>
+<td>25m</td>
+<td>Medium</td>
+<td>Prevents test rows polluting global DB; same pattern as --from-main</td>
+</tr>
+<tr>
+<td>P-5</td>
+<td>Broaden parity §10 — blank-.e fires on ALL error types, not just undefined-label</td>
+<td>WRITER</td>
+<td>15m</td>
+<td>Low</td>
+<td>#264 is blocked on #263; this specific doc fix is independent</td>
+</tr>
+<tr>
+<td>P-6</td>
+<td>oracle-setup.md: document cwd+basename invocation requirement</td>
+<td>WRITER</td>
+<td>10m</td>
+<td>Low</td>
+<td>&quot;Absolute paths give exit 2&quot; is a sharp edge for probe authors</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>6. Open-issue cross-reference</h2>
+<table>
+<thead>
+<tr>
+<th>TIL finding</th>
+<th>Existing issue</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Batching confabulation</td>
+<td>#316 (research) → #349 (DEV)</td>
+<td>#349 OPEN</td>
+</tr>
+<tr>
+<td>at_todo trap</td>
+<td>CLAUDE.md, claude_workflow.md</td>
+<td>Documented, no issue</td>
+</tr>
+<tr>
+<td>Guards vs prose meta-finding</td>
+<td>#281 (research)</td>
+<td>CLOSED (finding absorbed)</td>
+</tr>
+<tr>
+<td>SHA-rewrite teardown</td>
+<td>#350 (research)</td>
+<td>CLOSED; DEV = proposed P-2</td>
+</tr>
+<tr>
+<td>Guard 1 false positive</td>
+<td>#346</td>
+<td>CLOSED</td>
+</tr>
+<tr>
+<td>puzzle-status scans test fixtures</td>
+<td>#370</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>Null-ticket gap in velocity-log</td>
+<td>#299</td>
+<td>CLOSED</td>
+</tr>
+<tr>
+<td>Parallel issue number mismatch</td>
+<td>—</td>
+<td>Not tracked; proposed P-3</td>
+</tr>
+<tr>
+<td>velocity-log smoke-test pollution</td>
+<td>—</td>
+<td>Not tracked; proposed P-4</td>
+</tr>
+<tr>
+<td>OG LCC blank-.e scope</td>
+<td>#264 (blocked)</td>
+<td>OPEN blocked; proposed P-5</td>
+</tr>
+<tr>
+<td>Oracle absolute-path exit 2</td>
+<td>—</td>
+<td>Not tracked; proposed P-6</td>
+</tr>
+<tr>
+<td>merge=union rebase behavior</td>
+<td>velocity-log-storage.md</td>
+<td>Documented in research doc</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>7. Periodicity recommendation</h2>
+<p><strong>Run this harvest whenever ≥ 10 new TIL entries land.</strong></p>
+<p>Rationale:</p>
+<ul>
+<li>The current corpus (37 docs) yielded 4 high-recurrence defects, 2 medium-recurrence
+findings, and 4 actionable one-offs. That&#39;s a good signal-to-effort ratio for a 45m spike.</li>
+<li>Below 10 new entries, there aren&#39;t enough independent sightings to distinguish &quot;process
+defect&quot; (2+ agents) from &quot;one agent&#39;s bad day.&quot;</li>
+<li>Above ~20 new entries, the synthesis effort grows and the lessons start compounding on
+already-identified themes rather than surfacing new ones.</li>
+</ul>
+<p><strong>Lightweight trigger:</strong> add a line to the README: &quot;When the index reaches <code>(current count + 10)</code> entries,
+run <code>#207</code>-style harvest again.&quot; A fresh #207-child issue can be filed by whoever notices the
+threshold, keeping it lightweight and not requiring a cron.</p>
+<p>The harvest should <strong>not</strong> be automated — the classification step (codebase vs process, new
+vs tracked) requires judgment that a mechanical scan can&#39;t provide. What automation could do:
+grep for lessons that mention the same issue number 3+ times across files (a recurrence
+heuristic), then surface those for human review. That&#39;s a low-priority nice-to-have.</p>
+<hr>
+<h2>8. What&#39;s working well (don&#39;t fix)</h2>
+<p>Not every lesson is a defect. These patterns are working and should be preserved:</p>
+<ul>
+<li><strong><code>npm run close</code> + <code>npm run claim</code> symmetry</strong> — the claim/close tool pair is the right
+architecture; the SHA-rewrite bug is a specific fix, not a reason to rethink the approach.</li>
+<li><strong>puzzle:status AVAILABLE/CLAIMED/IN-PROGRESS/LOCKED/STALE</strong> — agents consistently use
+it and trust it; the derived-cluster model (#222) was the right call.</li>
+<li><strong>Executable guards (claim guards, close.js teardown gate, pre-push hook)</strong> — every
+guard caught violations correctly; the direction is right, we just need more of them
+(see T1-C).</li>
+<li><strong>TIL cadence itself</strong> — agents are writing high-quality retrospectives with specific,
+verifiable lessons. The quality is there; the harvest machinery is what was missing.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

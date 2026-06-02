@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-31-apple-3 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-31 (APPLE, session 3)</h1>
+<p>Afternoon/evening session: #299 fix + DB cleanup, #229/#230 (identity consolidation), #321 (artifacts-summary audit + 6 follow-up issues), CSV-from-main footgun research (#319), and two rounds of <code>fruit-agent-orchestrate</code> scoping.</p>
+<hr>
+<h2>1. Prose violations happen even while you&#39;re documenting the prohibition</h2>
+<p>The apple-2 TIL (earlier today) documented &quot;don&#39;t commit the CSV from the main checkout.&quot; In this session I did it twice — once logging the #299 velocity row, once logging the PM triage row — and both times while actively working on the research that would eventually produce the guard to prevent exactly this.</p>
+<p>This is the cleanest possible evidence that the #281 finding is structural, not a knowledge gap. The rule was known, freshly written, and sitting in context. It was violated anyway. The only fix is an executable guard. BANANA shipped it in #312 (CWD check in <code>velocity-log.js</code>); the remaining gap (<code>npm run velocity:export</code> from main) is tracked in #320.</p>
+<h2>2. Detecting &quot;am I in a worktree?&quot; — the <code>.git</code> file vs directory trick</h2>
+<p><code>velocity-export.js</code> writes the CSV relative to <code>__dirname</code>, so it always writes to the correct <code>docs/</code> for whichever checkout is running — main or worktree. The problem is that &quot;the correct docs/ for main&quot; is the wrong place to commit from. The reliable detection:</p>
+<pre><code class="language-js">const dotGit = path.join(__dirname, &#39;..&#39;, &#39;.git&#39;);
+fs.statSync(dotGit).isDirectory()  // true → main checkout; false → worktree (.git is a file)
+</code></pre>
+<p>In a worktree, <code>.git</code> is a plain file containing <code>gitdir: &lt;path&gt;</code>. In the main checkout, <code>.git</code> is a directory. This is stable, cheap, and requires no <code>git</code> subprocess. Documented in <code>docs/research/csv-from-main-footgun.md</code> (#319).</p>
+<h2>3. Research deliverables should name the exact implementation site</h2>
+<p>The #319 research doc placed the <code>@todo #320</code> marker at <code>exportCSV()</code> in <code>velocity-export.js</code> and included the exact implementation sketch (the statSync check above). This made the DEV handoff immediate: BANANA could read the doc and know where and what to implement, rather than re-deriving it.</p>
+<p>The contrast with a vague deliverable (&quot;a guard would help here&quot;) is the difference between a ticket that unblocks work and one that spawns another research round. Naming the function, file, and implementation approach in the research output is worth the extra paragraph.</p>
+<h2>4. Smoke-test inserts pollute the global DB and need manual cleanup</h2>
+<p>Testing the null-ticket fix for #299 by running <code>npm run velocity:log</code> inserted rows 160 and 161 into <code>~/.lccjs/velocity.db</code>. Because the DB is global (not per-checkout), those rows survived the <code>git restore</code> I ran on the CSV in the worktree. Had to delete them with <code>sqlite3</code> directly before re-exporting. The lesson: the DB is permanent state — testing a write-path tool requires thinking about global side effects, not just local file changes. Consider using a test DB or a <code>--dry-run</code> flag for validation runs.</p>
+<h2>5. Consolidating duplicated prose: one canonical doc + one-line summaries elsewhere (#229/#230)</h2>
+<p>The agent-identity precedence rule was restated in 6 places and had already drifted in 3 of them after #212. The fix: <code>docs/design-agent-worktree-identity.md</code> becomes the single canonical home; every other location gets one sentence + a link. The canonical doc also received the &quot;sync main before claiming&quot; note from #223 R1 that had never been folded in.</p>
+<p>The general pattern: any rule that lives in N places will drift in some of them. The right response is not to update all N — it is to make N=1 and link from everywhere else.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-05-31-apple — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-05-31 (APPLE)</h1>
+<p>Context: commit-quality sprint — CC audit (#280), commit conventions in CLAUDE.md
+(#282), commit-msg hook (#283), setup docs (#285), gitignore enriched CSV (#286),
+artifacts-summary.md (#287). A PM-heavy session with no production-code changes.</p>
+<h2>1. The <code>at_todo</code> trap bites shell script <em>example strings</em>, not just markers</h2>
+<p>Writing the <code>commit-msg</code> hook, I put a realistic example in an <code>echo</code> line:</p>
+<pre><code class="language-bash">echo &quot;  Fix: research: graduate @todo (#208)&quot;
+</code></pre>
+<p>The PDD scanner (<code>pdd</code> gem) tripped on the literal substring in that string at
+push time — same parse-error it gives for a malformed marker. Previous agents
+documented the trap for code comments (CHERRY s3 #2) and CSV data (DRAGONFRUIT).
+This is the third surface: <strong>any tracked file</strong>, including shell scripts, can carry
+the forbidden string inside a string literal or echo argument.</p>
+<p><strong>Takeaway:</strong> before committing any file that references the puzzle marker keyword
+— even in an example, a comment, or an echo — de-literalize it (rename the example,
+break the word, or rephrase). The scanner is textual; context doesn&#39;t protect you.</p>
+<h2>2. Parallel issue filing breaks cross-links — file sequentially when numbers matter</h2>
+<p>I filed #282 (WRITER) and #283 (DEV) in one parallel tool call to save a turn.
+Because I didn&#39;t know the resulting issue numbers in advance, the body of #283
+referenced <code>#281</code> (wrong) as the sibling. Had to <code>gh issue edit</code> to fix it after
+the fact — an extra round-trip that cost more than the &quot;saved&quot; turn.</p>
+<p><strong>Takeaway:</strong> when two issues need to cross-reference each other, file them
+sequentially. The second filing can name the first&#39;s number correctly. Parallel
+filing is fine when issues are independent; it&#39;s a hazard when they&#39;re siblings.</p>
+<h2>3. Git worktree <code>.git</code> is a file — hook installers must use <code>--git-common-dir</code></h2>
+<p><code>scripts/setup-hooks.sh</code> initially assumed <code>.git/hooks/</code> is always a directory
+(the normal clone case). In a worktree, <code>.git</code> is a file containing a <code>gitdir:</code>
+pointer to the real git directory elsewhere. The first run of <code>npm run setup</code> from
+a worktree failed: <code>ln: failed to access &#39;.git/hooks/commit-msg&#39;: Not a directory</code>.</p>
+<p>The fix: use <code>git rev-parse --git-common-dir</code> to locate the shared hooks directory,
+then resolve it to an absolute path (because git returns it relative in normal
+clones). That one call works from both regular clones and worktrees.</p>
+<p><strong>Takeaway:</strong> any script that assumes <code>.git</code> is a directory will silently or
+loudly break in a worktree. Use <code>--git-common-dir</code> (shared state) or <code>--git-dir</code>
+(worktree-local state) depending on which you actually need.</p>
+<h2>4. Committed derived artifacts create two failure modes: silent staleness and crash risk</h2>
+<p><code>stats/puzzle-velocity-enriched.csv</code> was committed to make notebooks &quot;render without
+a rebuild.&quot; In practice it created two problems: (a) it silently went stale whenever
+new rows landed in <code>puzzle-velocity.csv</code> and <code>enrich.py</code> wasn&#39;t re-run, and (b)
+<code>enrich.py</code>&#39;s non-idempotent write (truncate-on-crash, #277) could ship a
+half-written artifact to main.</p>
+<p>The fix was mechanical — add to <code>.gitignore</code>, <code>git rm --cached</code> — but the root
+question is the right one to ask upfront: <strong>is this file authored by a human or
+produced by running a command?</strong> If the latter, it&#39;s a derived artifact and belongs
+in <code>.gitignore</code> by default.</p>
+<p><strong>Takeaway:</strong> &quot;committed so it renders without a rebuild&quot; is almost always the
+wrong trade-off. Regenerate at analysis time; document the regeneration command
+clearly; keep the repo free of stale snapshots.</p>
+<h2>5. Two-tier coverage prevents artifact catalogs from becoming file-tree dumps</h2>
+<p>For <code>docs/artifacts-summary.md</code>, the first instinct was to enumerate every file
+in <code>docs/learnings/</code>, <code>docs/research/</code>, etc. That would produce a hundred-row
+table that goes stale on every new TIL and adds zero value over <code>ls</code>.</p>
+<p>The right cut: <strong>generated/derived artifacts get a full row</strong> (producer, committed
+status, value, staleness) because those details aren&#39;t self-documenting from the
+filename. <strong>Authored doc families get one pattern-level row</strong> (e.g.
+<code>today-i-learned-*.md</code>) because the naming convention already communicates purpose
+and the index in <code>README.md</code> is the right place for per-file detail.</p>
+<p><strong>Takeaway:</strong> when cataloging a repo&#39;s artifacts, ask &quot;does the reader need to
+know <em>how this specific file is produced and when it goes stale</em>?&quot; If yes, full
+row. If the filename and directory already answer that, a pattern row is enough.</p>
+<h2>6. Understand <em>why</em> a workaround exists before the thing it compensates for changes</h2>
+<p>The <code>puzzle-velocity.csv</code> entry in <code>artifacts-summary.md</code> called out <code>merge=union</code>
+in <code>.gitattributes</code> as the mechanism that lets parallel agents append rows without
+conflicts. Noting the SQLite migration (#284) in the same breath made the connection
+obvious: <code>merge=union</code> is a workaround for a CSV backing store, not a permanent
+feature. When the store changes, the workaround evaporates.</p>
+<p>The user confirmed this, and we posted a forward note on #287 to update the doc
+once the migration lands.</p>
+<p><strong>Takeaway:</strong> document <em>why</em> a technique is in place, not just <em>that</em> it&#39;s in
+place. &quot;Why&quot; tells the next agent whether it&#39;s load-bearing or compensatory — and
+compensatory techniques have a defined retirement condition.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-01-elderberry-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-01 — ELDERBERRY (session 2)</h1>
+<p><strong>Tickets closed:</strong> #402 (ARC), #410 (DEV), #424 (DATA), #371 (DEV), #441 (docs)<br><strong>Filed as follow-ons:</strong> #414, #415, #418, #421 (from #402), #436 (from #424)<br><strong>Roles:</strong> ARC × 1, DEV × 3, DATA × 1</p>
+<hr>
+<h2>Lessons</h2>
+<h3>1. Parity deviation doc is part of the fix, not optional follow-up</h3>
+<p>When #371 replaced the misleading <code>Assembling …</code> message with <code>Loading … (no assembly pass) — N word(s)</code>, the inline code comment already noted the oracle prints nothing for
+<code>.bin</code>/<code>.hex</code> inputs. That&#39;s a documented divergence — it belongs in
+<code>docs/parity_deviations.md</code> as a BY DESIGN entry the moment the behavior ships.</p>
+<p>The user caught it immediately after close. The recovery took a filed issue (#441),
+a worktree, and a separate commit. Total extra cost: ~10 minutes.</p>
+<p><strong>Rule:</strong> any time you change user-visible output that differs from oracle behavior,
+check <code>parity_deviations.md</code> before closing. If the deviation isn&#39;t there, add it in
+the same commit as the fix.</p>
+<hr>
+<h3>2. A research ticket needs a link back from the issue, not just a committed doc</h3>
+<p>After closing #424 (data integrity audit), the report was committed to
+<code>docs/research/velocity-data-integrity-audit.md</code> — but no comment was posted on the
+GitHub issue pointing to it. Anyone reading the closed ticket sees no deliverable.</p>
+<p>The user caught it: &quot;did you leave the audit findings somewhere as a doc, or as a
+comment on the ticket?&quot;</p>
+<p><strong>Rule:</strong> for any RESEARCH or DATA ticket whose deliverable is a file, post a comment
+on the issue with the path (or a GitHub link) immediately before or after closing.
+The commit message is not visible from the issue view.</p>
+<hr>
+<h3>3. File the follow-on ticket before you close the parent</h3>
+<p>Both #424 and #402 generated follow-on work. The right sequence:</p>
+<ol>
+<li>Identify the follow-ons while writing the deliverable</li>
+<li>File the follow-on tickets (with parent links)</li>
+<li><em>Then</em> close the parent</li>
+</ol>
+<p>Closing first and filing later risks the follow-ons being forgotten — especially if
+the session ends between steps. The follow-on is part of completing the parent.</p>
+<hr>
+<h3>4. Negative delta fields are a sign-convention bug, not just a data quirk</h3>
+<p>The velocity schema uses <code>delta_h_min = h_min − actual_min</code> (headroom remaining —
+positive when under-estimate). Two DRAGONFRUIT rows (IDs 303/308) had it backwards:
+<code>actual − estimate</code>, producing negative values. The data looked plausible at a glance
+(fast actual on a short task) but would produce wrong calibration math if delta fields
+are aggregated directly.</p>
+<p><strong>Rule:</strong> when logging, delta = estimate − actual. Positive = you had time to spare.
+Negative means you went over, which is unusual and worth a note. A delta of −28 should
+be a red flag, not a silent entry.</p>
+<hr>
+<h3>5. &quot;Cross-repo SHA&quot; is a real pattern — document it in the notes field</h3>
+<p>Six velocity rows had <code>closed_commit</code> SHAs that don&#39;t resolve in the lccjs git history.
+All six had notes explicitly saying &quot;cross-repo close: SHA in avidrucker/claude-config.&quot;
+The audit confirmed they&#39;re valid commits in the sibling repo, not orphans.</p>
+<p>The lesson isn&#39;t about the SHAs — it&#39;s that the notes field did its job. Because prior
+agents wrote &quot;cross-repo close: SHA in …&quot; at log time, the audit took 30 seconds to
+resolve instead of becoming an investigation. Contextual notes written at close time
+pay off whenever anyone audits the data later.</p>
+<hr>
+<h2>What went well</h2>
+<ul>
+<li><strong>ARC + DATA + DEV mix closed cleanly.</strong> The DDD gap analysis (#402) produced four
+well-scoped follow-on tickets; none required back-and-forth to define scope.</li>
+<li><strong>Velocity integrity audit found real issues.</strong> Two sign-flipped delta rows corrected
+in SQLite; stale CSV re-exported. The audit was the point — finding nothing would
+have been an equally valid outcome.</li>
+<li><strong>All 50 test suites passed on every DEV fix</strong> without needing snapshot updates.
+Small, targeted changes (3 lines changed in #371, 4 in #410) are easy to verify.</li>
+</ul>
+<h2>What didn&#39;t go well</h2>
+<ul>
+<li><strong>Two protocol misses caught by the user</strong> (#371 missing parity doc, #424 missing
+issue comment). Both are now in memory and in this TIL. The common cause: treating
+&quot;code committed&quot; as &quot;ticket done&quot; instead of working through the full close checklist.</li>
+<li><strong>Had to file #441 as a separate issue</strong> to do a 20-line doc edit, because the #371
+worktree was already torn down. Worktree discipline means you can&#39;t retroactively edit
+the same branch — the overhead of a new issue + claim + close is the correct cost of
+catching something after close, not a workaround.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>
