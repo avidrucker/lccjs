@@ -26,8 +26,8 @@ const retroLightTheme = {
   name: 'retro-console-light',
   settings: [
     { settings: { background: '#d0cf9d', foreground: '#233501' } },
-    { scope: ['comment'],                                          settings: { foreground: '#8d9a4a' } },
-    { scope: ['keyword', 'keyword.other', 'keyword.control'],     settings: { foreground: '#446710' } },
+    { scope: ['comment'],                                          settings: { foreground: '#446710', fontStyle: 'italic' } },
+    { scope: ['keyword', 'keyword.other', 'keyword.control'],     settings: { foreground: '#446710', fontStyle: 'bold'   } },
     { scope: ['entity.name.label', 'string', 'constant.numeric'], settings: { foreground: '#233501' } },
   ],
 };

@@ -136,11 +136,11 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#8D9A4A">    halt</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-light" hidden>
-      <pre class="shiki retro-console-light" style="background-color:#d0cf9d;color:#233501" tabindex="0"><code><span class="line"><span style="color:#8D9A4A">; demoA.a: simple program assembly/execution and test input/output caching</span></span>
-<span class="line"><span style="color:#446710">    mov</span><span style="color:#233501"> r0, 5</span></span>
-<span class="line"><span style="color:#446710">    dout</span><span style="color:#233501"> r0</span></span>
-<span class="line"><span style="color:#446710">    nl</span></span>
-<span class="line"><span style="color:#446710">    halt</span></span></code></pre>
+      <pre class="shiki retro-console-light" style="background-color:#d0cf9d;color:#233501" tabindex="0"><code><span class="line"><span style="color:#446710;font-style:italic">; demoA.a: simple program assembly/execution and test input/output caching</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">    mov</span><span style="color:#233501"> r0, 5</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">    dout</span><span style="color:#233501"> r0</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">    halt</span></span></code></pre>
     </div>
   </section>
 
@@ -294,20 +294,20 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#D0CF9D">buffer:     </span><span style="color:#8D9A4A">.zero</span><span style="color:#D0CF9D"> 10</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-light" hidden>
-      <pre class="shiki retro-console-light" style="background-color:#d0cf9d;color:#233501" tabindex="0"><code><span class="line"><span style="color:#8D9A4A">; demoO.a: program that tests IO and LST generation thoroughly</span></span>
-<span class="line"><span style="color:#446710">            lea</span><span style="color:#233501"> r0, prompt</span></span>
-<span class="line"><span style="color:#446710">            sout</span><span style="color:#233501"> r0</span></span>
-<span class="line"><span style="color:#446710">            lea</span><span style="color:#233501"> r0, buffer</span></span>
-<span class="line"><span style="color:#446710">            sin</span><span style="color:#233501"> r0</span></span>
-<span class="line"><span style="color:#446710">            lea</span><span style="color:#233501"> r1, hi</span></span>
-<span class="line"><span style="color:#446710">            sout</span><span style="color:#233501"> r1</span></span>
-<span class="line"><span style="color:#446710">            sout</span><span style="color:#233501"> r0</span></span>
-<span class="line"><span style="color:#446710">            nl</span></span>
-<span class="line"><span style="color:#446710">            m</span></span>
-<span class="line"><span style="color:#446710">            halt</span></span>
-<span class="line"><span style="color:#233501">prompt:     </span><span style="color:#446710">.string</span><span style="color:#233501"> "Name: "</span></span>
-<span class="line"><span style="color:#233501">hi:         </span><span style="color:#446710">.string</span><span style="color:#233501"> "Hi "</span></span>
-<span class="line"><span style="color:#233501">buffer:     </span><span style="color:#446710">.zero</span><span style="color:#233501"> 10</span></span></code></pre>
+      <pre class="shiki retro-console-light" style="background-color:#d0cf9d;color:#233501" tabindex="0"><code><span class="line"><span style="color:#446710;font-style:italic">; demoO.a: program that tests IO and LST generation thoroughly</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">            lea</span><span style="color:#233501"> r0, prompt</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">            sout</span><span style="color:#233501"> r0</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">            lea</span><span style="color:#233501"> r0, buffer</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">            sin</span><span style="color:#233501"> r0</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">            lea</span><span style="color:#233501"> r1, hi</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">            sout</span><span style="color:#233501"> r1</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">            sout</span><span style="color:#233501"> r0</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">            nl</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">            m</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">            halt</span></span>
+<span class="line"><span style="color:#233501">prompt:     </span><span style="color:#446710;font-weight:bold">.string</span><span style="color:#233501"> "Name: "</span></span>
+<span class="line"><span style="color:#233501">hi:         </span><span style="color:#446710;font-weight:bold">.string</span><span style="color:#233501"> "Hi "</span></span>
+<span class="line"><span style="color:#233501">buffer:     </span><span style="color:#446710;font-weight:bold">.zero</span><span style="color:#233501"> 10</span></span></code></pre>
     </div>
   </section>
 
@@ -398,13 +398,13 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#8D9A4A">    halt</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-light" hidden>
-      <pre class="shiki retro-console-light" style="background-color:#d0cf9d;color:#233501" tabindex="0"><code><span class="line"><span style="color:#8D9A4A">; demo program that tests the detection of division by zero</span></span>
-<span class="line"><span style="color:#446710">    mov</span><span style="color:#233501"> r0, 3</span></span>
-<span class="line"><span style="color:#446710">    mov</span><span style="color:#233501"> r1, 0</span></span>
-<span class="line"><span style="color:#446710">    div</span><span style="color:#233501"> r0, r1</span></span>
-<span class="line"><span style="color:#446710">    dout</span><span style="color:#233501"> r0</span></span>
-<span class="line"><span style="color:#446710">    nl</span></span>
-<span class="line"><span style="color:#446710">    halt</span></span></code></pre>
+      <pre class="shiki retro-console-light" style="background-color:#d0cf9d;color:#233501" tabindex="0"><code><span class="line"><span style="color:#446710;font-style:italic">; demo program that tests the detection of division by zero</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">    mov</span><span style="color:#233501"> r0, 3</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">    mov</span><span style="color:#233501"> r1, 0</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">    div</span><span style="color:#233501"> r0, r1</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">    dout</span><span style="color:#233501"> r0</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">    halt</span></span></code></pre>
     </div>
   </section>
 
@@ -594,24 +594,24 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#D0CF9D">onesecond: </span><span style="color:#8D9A4A">.word</span><span style="color:#D0CF9D"> 1000</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-light" hidden>
-      <pre class="shiki retro-console-light" style="background-color:#d0cf9d;color:#233501" tabindex="0"><code><span class="line"><span style="color:#8D9A4A">; plusB.ap: clear and sleep</span></span>
-<span class="line"><span style="color:#8D9A4A">; This program prints out the letters 'a' through 'f'</span></span>
-<span class="line"><span style="color:#8D9A4A">; in the terminal 'typewriter' style</span></span>
-<span class="line"><span style="color:#446710">     .lccplus</span></span>
-<span class="line"><span style="color:#446710">      clear</span><span style="color:#8D9A4A"> ; clears the screen of anything else that was in the terminal</span></span>
-<span class="line"><span style="color:#446710">      ld</span><span style="color:#233501"> r1, onesecond </span><span style="color:#8D9A4A">; load 1000 into r1 to represent milliseconds</span></span>
-<span class="line"><span style="color:#446710">      mov</span><span style="color:#233501"> r0, </span><span style="color:#233501">'a'</span><span style="color:#8D9A4A"> ; our initialized 'current char' to print goes into r0</span></span>
-<span class="line"><span style="color:#446710">      mov</span><span style="color:#233501"> r2, </span><span style="color:#233501">'f'</span><span style="color:#8D9A4A"> ; this is our 'terminal char'</span></span>
-<span class="line"><span style="color:#233501">loop: </span><span style="color:#446710">cmp</span><span style="color:#233501"> r0, r2 </span><span style="color:#8D9A4A">; check to see how the current compares with the terminal</span></span>
-<span class="line"><span style="color:#446710">      brgt</span><span style="color:#233501"> done </span><span style="color:#8D9A4A">; if the current is greater than the terminal, branch to done label</span></span>
-<span class="line"><span style="color:#446710">      aout</span><span style="color:#233501"> r0 </span><span style="color:#8D9A4A">; print the current char</span></span>
-<span class="line"><span style="color:#446710">      sleep</span><span style="color:#233501"> r1 </span><span style="color:#8D9A4A">; pause for 1 second</span></span>
-<span class="line"><span style="color:#446710">      add</span><span style="color:#233501"> r0, r0, 1 </span><span style="color:#8D9A4A">; increment the char</span></span>
-<span class="line"><span style="color:#446710">      br</span><span style="color:#233501"> loop </span><span style="color:#8D9A4A">; go back to the loop label</span></span>
-<span class="line"><span style="color:#233501">done: </span><span style="color:#446710">nl</span></span>
-<span class="line"><span style="color:#446710">      halt</span><span style="color:#8D9A4A"> ; end the program</span></span>
+      <pre class="shiki retro-console-light" style="background-color:#d0cf9d;color:#233501" tabindex="0"><code><span class="line"><span style="color:#446710;font-style:italic">; plusB.ap: clear and sleep</span></span>
+<span class="line"><span style="color:#446710;font-style:italic">; This program prints out the letters 'a' through 'f'</span></span>
+<span class="line"><span style="color:#446710;font-style:italic">; in the terminal 'typewriter' style</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">     .lccplus</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">      clear</span><span style="color:#446710;font-style:italic"> ; clears the screen of anything else that was in the terminal</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">      ld</span><span style="color:#233501"> r1, onesecond </span><span style="color:#446710;font-style:italic">; load 1000 into r1 to represent milliseconds</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">      mov</span><span style="color:#233501"> r0, </span><span style="color:#233501">'a'</span><span style="color:#446710;font-style:italic"> ; our initialized 'current char' to print goes into r0</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">      mov</span><span style="color:#233501"> r2, </span><span style="color:#233501">'f'</span><span style="color:#446710;font-style:italic"> ; this is our 'terminal char'</span></span>
+<span class="line"><span style="color:#233501">loop: </span><span style="color:#446710;font-weight:bold">cmp</span><span style="color:#233501"> r0, r2 </span><span style="color:#446710;font-style:italic">; check to see how the current compares with the terminal</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">      brgt</span><span style="color:#233501"> done </span><span style="color:#446710;font-style:italic">; if the current is greater than the terminal, branch to done label</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">      aout</span><span style="color:#233501"> r0 </span><span style="color:#446710;font-style:italic">; print the current char</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">      sleep</span><span style="color:#233501"> r1 </span><span style="color:#446710;font-style:italic">; pause for 1 second</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">      add</span><span style="color:#233501"> r0, r0, 1 </span><span style="color:#446710;font-style:italic">; increment the char</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">      br</span><span style="color:#233501"> loop </span><span style="color:#446710;font-style:italic">; go back to the loop label</span></span>
+<span class="line"><span style="color:#233501">done: </span><span style="color:#446710;font-weight:bold">nl</span></span>
+<span class="line"><span style="color:#446710;font-weight:bold">      halt</span><span style="color:#446710;font-style:italic"> ; end the program</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#233501">onesecond: </span><span style="color:#446710">.word</span><span style="color:#233501"> 1000</span></span></code></pre>
+<span class="line"><span style="color:#233501">onesecond: </span><span style="color:#446710;font-weight:bold">.word</span><span style="color:#233501"> 1000</span></span></code></pre>
     </div>
   </section>
   <footer>
