@@ -327,3 +327,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 335,445,"SPIKE: velocity data — what else can we ask, what experiments to run",SPIKE,60,40,27,33,13,2026-06-01T18:20:00-1000,2026-06-01T18:47:45-1000,,"6 SQL queries on live DB; h_min-vs-c_min MAE, cap-exceeded rate, within-agent drift, delta shape, session-position, agent ranking; comment posted on issue",FIG,sonnet-4.6,lccjs
 336,449,GitHub Pages showcase: Shiki + LCC grammar,DEV,240,40,4,236,36,2026-06-01T18:45:29-1000,2026-06-01T18:49:34-1000,,docs/showcase/index.html with Shiki CDN; dual grammar path (stable+fallback for pre-#448); .nojekyll; needs repo Settings Pages config and #448 to fully wire,ELDERBERRY,sonnet-4.6,lccjs
 337,452,,DEV,,,,,,,,,,APPLE,,lccjs
+338,451,fix(lccrun): piped stdin dropped,DEV,30,20,6,24,14,2026-06-01T18:45:52-10:00,2026-06-01T18:51:25-10:00,,,BANANA,sonnet-4.6,lccjs

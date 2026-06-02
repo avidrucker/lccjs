@@ -46,7 +46,16 @@ trap 'rm -f "$FLAG"' EXIT
 
 # setsid puts the child in a new session → new process group (PGID = child PID).
 # kill -- -PGID then reaches all descendants, not only the top-level node PID.
-setsid "$@" &
+#
+# TTY-gated stdin: bash redirects background-job stdin to /dev/null when job
+# control is disabled (POSIX). Pass stdin through for pipes/files; only drop it
+# when stdin is a TTY (where setsid disconnects from the terminal anyway and
+# forwarding it would cause SIGTTIN).
+if [ -t 0 ]; then
+  setsid "$@" </dev/null &
+else
+  setsid "$@" <&0 &
+fi
 CHILD_PID=$!
 CHILD_PGID="$CHILD_PID"
 
