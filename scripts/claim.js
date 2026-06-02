@@ -39,6 +39,7 @@
 'use strict';
 
 const { execSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 // Lowest-index-first. Common, unambiguous, easy to say aloud over a call.
@@ -392,6 +393,13 @@ function main() {
         sh(`git branch -D ${branch}`, true);
         continue;
       }
+    }
+
+    // Copy .env from repo root into the new worktree so oracle tests run without
+    // a manual cp step. Silent no-op if .env doesn't exist (CI / fresh clone).
+    const rootEnv = path.join(root, '.env');
+    if (fs.existsSync(rootEnv)) {
+      try { fs.copyFileSync(rootEnv, path.join(wtPath, '.env')); } catch (_) {}
     }
 
     // In auto mode, stake a session-sentinel branch so this fruit stays taken
