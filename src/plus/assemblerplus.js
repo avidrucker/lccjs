@@ -19,6 +19,15 @@ class AssemblerPlus extends Assembler {
   constructor() {
     super();
     this.isLCCPlusFile = false;  // Will turn true if we encounter .lccplus
+    const t = this._instructionTable;
+    t['clear']  = { encoder: (ops) => this.assembleTrap(ops, TRAP_CLEAR),  operandShape: '[sr]' };
+    t['sleep']  = { encoder: (ops) => this.assembleTrap(ops, TRAP_SLEEP),  operandShape: '[sr]' };
+    t['nbain']  = { encoder: (ops) => this.assembleTrap(ops, TRAP_NBAIN),  operandShape: '[sr]' };
+    t['cursor'] = { encoder: (ops) => this.assembleTrap(ops, TRAP_CURSOR), operandShape: '[sr]' };
+    t['srand']  = { encoder: (ops) => this.assembleTrap(ops, TRAP_SRAND),  operandShape: '[sr]' };
+    t['rand']   = { encoder: (ops) => this.assembleRAND(ops),              operandShape: 'dr, sr' };
+    t['millis'] = { encoder: (ops) => this.assembleTrap(ops, TRAP_MILLIS), operandShape: '[sr]' };
+    t['resetc'] = { encoder: (ops) => this.assembleTrap(ops, TRAP_RESETC), operandShape: '[sr]' };
   }
 
   main(args) {
@@ -89,61 +98,6 @@ class AssemblerPlus extends Assembler {
 
     // Finally write the .ep file
     this.writeOutputFile();
-  }
-
-  // convenience function for writing a machine word and incrementing locCtr
-  writeAndInc(macword) {
-    if (macword !== null) {
-      this.writeMachineWord(macword);
-      this.locCtr += 1;
-    }
-  }
-
-  handleInstruction(mnemonic, operands) {
-    if (this.pass === 1) {
-      this.locCtr += 1;
-      return;
-    }
-    let machineWord = null;
-  
-    switch (mnemonic) {
-      case 'clear':
-        machineWord = this.assembleTrap(operands, TRAP_CLEAR);
-        // Here, WE do the writing/incrementing for "clear"
-        this.writeAndInc(machineWord);
-        break;
-      case 'sleep':
-        machineWord = this.assembleTrap(operands, TRAP_SLEEP);
-        this.writeAndInc(machineWord);
-        break;
-      case 'nbain':
-        machineWord = this.assembleTrap(operands, TRAP_NBAIN);
-        this.writeAndInc(machineWord);
-        break;
-      case 'cursor':
-        machineWord = this.assembleTrap(operands, TRAP_CURSOR);
-        this.writeAndInc(machineWord);
-        break;
-      case 'srand':
-        machineWord = this.assembleTrap(operands, TRAP_SRAND);
-        this.writeAndInc(machineWord);
-        break;
-      case 'rand':
-        machineWord = this.assembleRAND(operands);
-        this.writeAndInc(machineWord);
-        break;
-      case 'millis':
-        machineWord = this.assembleTrap(operands, TRAP_MILLIS);
-        this.writeAndInc(machineWord);
-        break;
-      case 'resetc':
-        machineWord = this.assembleTrap(operands, TRAP_RESETC);
-        this.writeAndInc(machineWord);
-        break;
-      default:
-        // Here we let the parent handle the assembling, writing, and incrementing
-        super.handleInstruction(mnemonic, operands);
-    }
   }
 
   // assembly+: rand dr, sr1

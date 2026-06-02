@@ -33,7 +33,7 @@ The repo ships **two parallel toolchains** and the file extension picks which on
 - **Core (LCC):** `.a` source → assembler → `.e` (executable) or `.o` (object); linker combines `.o` → `.e`; interpreter runs `.e`. Entry point `src/core/lcc.js`.
 - **Plus (LCC+):** `.ap` source → `.ep` executable. `src/plus/*plus.js` **subclass** the core assembler/interpreter to add extended pseudo-instructions (`clear`, `sleep`, `nbain`, `cursor`, `rand`/`srand`, `millis`, `resetc`) and require a `.lccplus` directive for valid output. Entry point `src/plus/lccplus.js`.
 
-When changing core assembler/interpreter behavior, check whether the plus subclasses override the method you're touching (`handleInstruction`, `handleDirective`, `writeOutputFile`, trap handlers) — a core change can silently break LCC+ or be shadowed by it.
+When changing core assembler/interpreter behavior, check whether the plus subclasses override the method you're touching (`handleDirective`, `writeOutputFile`, trap handlers in InterpreterPlus) — a core change can silently break LCC+ or be shadowed by it. `AssemblerPlus.handleInstruction` no longer exists as an override (#417): plus mnemonics are registered directly into `_instructionTable` in the constructor, so adding a core mnemonic to the table cannot be shadowed.
 
 > Note: `src/plus/linkerplus.js` does not exist yet; LCC+ has no linker. Multi-module `.ap` linking is planned, not implemented.
 
