@@ -1477,7 +1477,7 @@ class Assembler {
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
-    let macword = OP_EXT | (sr << 9) | (ct << 5) | 0x0005;
+    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | 0x0005;
     return macword;
   }
 
@@ -1539,7 +1539,7 @@ class Assembler {
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
-    let macword = OP_EXT | (sr << 9) | (ct << 5) | 0x0006;
+    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | 0x0006;
     return macword;
   }
 
@@ -1551,7 +1551,7 @@ class Assembler {
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
-    let macword = OP_EXT | (sr << 9) | (ct << 5) | 0x0002;
+    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | 0x0002;
     return macword;
   }
 
@@ -1561,9 +1561,9 @@ class Assembler {
       this.failAssembly('Missing register', 1);
     };
     let ct = null;
-    if (operands[1]) ct = this.evaluateImmediate(operands[1], 0, 15);
+    if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
-    let macword = OP_EXT | (sr << 9) | (ct << 5) | 0x0003;
+    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | 0x0003;
     return macword;
   }
 
@@ -1575,7 +1575,7 @@ class Assembler {
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
-    let macword = OP_EXT | (sr << 9) | (ct << 5) | 0x0004;
+    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | 0x0004;
     return macword;
   }
 

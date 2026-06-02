@@ -213,7 +213,7 @@ the label name.
 
 ## ASSEMBLER — Instruction Encoding
 
-### H-012 🔴 `assembleSRL/SLL/ROL/ROR` shift count is not range-checked
+### H-012 🟢 `assembleSRL/SLL/ROL/ROR` shift count is not range-checked
 **Hypothesis:** `assembleSRL` / `assembleSLL` / `assembleROL` /
 `assembleROR` accept the count via `evaluateImmediateNaive`, which caps at
 16 bits but does **no range check**. A shift count of 0 (no-op) or 16+
@@ -223,6 +223,8 @@ overflow into bit 9 and corrupt the opcode encoding.
 
 **Test idea:** `srl r0, 16` — what machine word is produced? Does it
 accidentally encode a valid but wrong instruction?
+
+**Probe result (#512):** Confirmed bug. Oracle: `srl r0, 16` → `a002` (ct=0, 4-bit wrap: 16&0xF=0). lccjs before fix: `a202` (ct=16 unmasked → bit 9 set, corrupting sr field to 1). Fixed in #512 by adding `& 0xF` masking to all four siblings. No parity deviation — lccjs now matches oracle (silently truncates count to 4 bits).
 
 ---
 
@@ -239,7 +241,9 @@ words.
 
 **Probe result (#502):** `sra r0` → `0xa023`; `sra r0, 0` → `0xa003`; `sra r0, 1` → `0xa023`. Oracle and lccjs produce identical encodings for all three forms. `sra r0, 0` is a valid distinct encoding (count=0 field), not an error. No deviation.
 
-**Decision (#513):** ct=0 is **valid and distinct** — a no-op (identity) operation. Confirmed by runtime: `sra r0, 0` on +5 → 5, on -4 → -4 (value unchanged). The ISA doc already states the valid range as 0–15. Interpreter ct=0 safety was confirmed by #51. No code change needed; lower bound of `evaluateImmediate(0, 15)` in `assembleSRA` is correct. Siblings (SRL/SLL/ROL/ROR) should also accept ct=0 when range checks are added per #512.
+**Decision (#513):** ct=0 is **valid and distinct** — a no-op (identity) operation. Confirmed by runtime: `sra r0, 0` on +5 → 5, on -4 → -4 (value unchanged). The ISA doc already states the valid range as 0–15. Interpreter ct=0 safety was confirmed by #51. Note: the upper-boundary conclusion below (ct=16 via oracle probe) supersedes the "range check is correct" part of this decision.
+
+**Probe result (#512, ct=16):** Oracle accepts `sra r0, 16` → `a003` (ct=0, 4-bit wrap). lccjs before fix rejected it ("out of range"). Fixed in #512: `assembleSRA` now uses `evaluateImmediateNaive` + `& 0xF` masking, matching oracle. No parity deviation.
 
 ---
 

@@ -304,4 +304,43 @@ describe('Assembler Unit Tests', () => {
       expect(a.determineOperandType('*-1')).toBe('star');
     });
   });
+
+  describe('shift count 4-bit masking — all five shift instructions (#512)', () => {
+    // Oracle: any shift count is silently accepted; only the low 4 bits encode
+    // into the ct field (bits 8-5). ct=16 → ct & 0xF = 0, same as "sXX r0" default.
+    // ct=15 is the max in-range value; verifying it encodes correctly guards
+    // against off-by-one in the mask.
+    //
+    // .e layout: 'o' 'C' [word0-lo] [word0-hi] ... (little-endian)
+    // → first instruction word = outputBytes.readUInt16LE(2)
+
+    function firstWord(source) {
+      const asm = new Assembler();
+      const result = asm.assembleSource(source, { inputFileName: 'test.a' });
+      return result.outputBytes.readUInt16LE(2);
+    }
+
+    const CASES = [
+      { instr: 'srl', eopcode: 0x02 },
+      { instr: 'sra', eopcode: 0x03 },
+      { instr: 'sll', eopcode: 0x04 },
+      { instr: 'rol', eopcode: 0x05 },
+      { instr: 'ror', eopcode: 0x06 },
+    ];
+
+    CASES.forEach(({ instr, eopcode }) => {
+      test(`${instr} r0, 15 — ct=15 encodes correctly (no mask boundary issue)`, () => {
+        // OP_EXT=0xA000 | sr=0 | ct=15 shifted to bits 8-5 | eopcode
+        const expected = 0xA000 | (15 << 5) | eopcode; // 0xA1E0 | eopcode
+        expect(firstWord(`  ${instr} r0, 15\n  halt\n`)).toBe(expected);
+      });
+
+      test(`${instr} r0, 16 — ct=16 wraps to ct=0, no sr-field corruption (#512)`, () => {
+        // Before fix: ct=16 unmasked → (16<<5)=0x200 set bit 9 (sr field), corrupt
+        // After fix: (16 & 0xF)=0 → ct=0, matching oracle a002/a003/etc.
+        const expected = 0xA000 | (0 << 5) | eopcode;
+        expect(firstWord(`  ${instr} r0, 16\n  halt\n`)).toBe(expected);
+      });
+    });
+  });
 });

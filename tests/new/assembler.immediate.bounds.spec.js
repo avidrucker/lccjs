@@ -77,25 +77,26 @@ describe('evaluateImmediate boundary tests', () => {
     });
   });
 
-  // ── ct: [0..15] ───────────────────────────────────────────────────────────
-  // Only sra routes through evaluateImmediate for the shift count.
-  // srl/rol/ror use evaluateImmediateNaive and therefore have no bounds check.
+  // ── ct (shift count) — all five shift instructions (#512) ────────────────
+  // All five (sra/srl/sll/rol/ror) now use evaluateImmediateNaive + (ct & 0xF)
+  // masking, matching oracle: any count is accepted; only the low 4 bits are
+  // encoded. The prior sra-only range check [0,15] was an untracked deviation.
 
-  describe('ct [0..15] (sra shift count)', () => {
-    test('below min (-1) → out of range', () => {
-      asmExpectError('  sra r0, -1\n  halt', 'out of range');
+  describe('ct — sra shift count (no longer range-checked, #512)', () => {
+    test('negative count (-1) → no error (silently encodes as ct=15 via wrap)', () => {
+      asm('  sra r0, -1\n  halt');
     });
 
-    test('min (0) → no error', () => {
+    test('count 0 → no error', () => {
       asm('  sra r0, 0\n  halt');
     });
 
-    test('max (15) → no error', () => {
+    test('count 15 (max 4-bit) → no error', () => {
       asm('  sra r0, 15\n  halt');
     });
 
-    test('above max (16) → out of range', () => {
-      asmExpectError('  sra r0, 16\n  halt', 'out of range');
+    test('count 16 → no error (silently encodes as ct=0 via 4-bit wrap)', () => {
+      asm('  sra r0, 16\n  halt');
     });
   });
 
