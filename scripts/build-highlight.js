@@ -49,9 +49,11 @@ const CSS = `
   font-family:"UnifontMedium";
   src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
 }
+:root { --mono-font:monospace; }
 body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
 body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
-body.retro pre.shiki { font-family:"UnifontMedium",monospace; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 body {
   background:var(--bg); color:var(--fg);
@@ -74,11 +76,11 @@ h1 { font-size:1.5rem; margin-bottom:.3rem; }
 }
 section { margin:2rem 0; }
 .sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
-.filename { font-family:monospace; font-size:.9rem; color:var(--fg); }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
 .description { font-size:.8rem; color:var(--muted); }
-pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
 footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
-code { font-family:monospace; }
+code { font-family:var(--mono-font); }
 `;
 
 const JS = `
