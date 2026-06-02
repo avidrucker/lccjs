@@ -181,6 +181,83 @@ class Assembler {
      * Built after pass 2 for .a files; null for .bin/.hex/object modules.
      */
     this.sourceMap = null;
+
+    this._instructionTable = this._buildCoreTable();
+  }
+
+  _buildCoreTable() {
+    return {
+      // BR family — mnemonic passed through for condition-code lookup
+      'br':    { encoder: (ops) => this.assembleBR('br',   ops), operandShape: 'label' },
+      'bral':  { encoder: (ops) => this.assembleBR('bral', ops), operandShape: 'label' },
+      'brz':   { encoder: (ops) => this.assembleBR('brz',  ops), operandShape: 'label' },
+      'bre':   { encoder: (ops) => this.assembleBR('bre',  ops), operandShape: 'label' },
+      'brnz':  { encoder: (ops) => this.assembleBR('brnz', ops), operandShape: 'label' },
+      'brne':  { encoder: (ops) => this.assembleBR('brne', ops), operandShape: 'label' },
+      'brn':   { encoder: (ops) => this.assembleBR('brn',  ops), operandShape: 'label' },
+      'brp':   { encoder: (ops) => this.assembleBR('brp',  ops), operandShape: 'label' },
+      'brlt':  { encoder: (ops) => this.assembleBR('brlt', ops), operandShape: 'label' },
+      'brgt':  { encoder: (ops) => this.assembleBR('brgt', ops), operandShape: 'label' },
+      'brc':   { encoder: (ops) => this.assembleBR('brc',  ops), operandShape: 'label' },
+      'brb':   { encoder: (ops) => this.assembleBR('brb',  ops), operandShape: 'label' },
+      // MOV family — mnemonic passed through for dispatch
+      'mov':   { encoder: (ops) => this.assembleMOV('mov', ops), operandShape: 'dr, sr|imm9' },
+      'mvi':   { encoder: (ops) => this.assembleMOV('mvi', ops), operandShape: 'dr, imm9' },
+      'mvr':   { encoder: (ops) => this.assembleMOV('mvr', ops), operandShape: 'dr, sr' },
+      // Arithmetic / logic
+      'add':   { encoder: (ops) => this.assembleADD(ops),  operandShape: 'dr, sr1, sr2|imm5' },
+      'sub':   { encoder: (ops) => this.assembleSUB(ops),  operandShape: 'dr, sr1, sr2|imm5' },
+      'cmp':   { encoder: (ops) => this.assembleCMP(ops),  operandShape: 'sr1, sr2|imm5' },
+      'and':   { encoder: (ops) => this.assembleAND(ops),  operandShape: 'dr, sr1, sr2|imm5' },
+      'not':   { encoder: (ops) => this.assembleNOT(ops),  operandShape: 'dr, sr' },
+      'or':    { encoder: (ops) => this.assembleOR(ops),   operandShape: 'dr, sr' },
+      'xor':   { encoder: (ops) => this.assembleXOR(ops),  operandShape: 'dr, sr' },
+      'sext':  { encoder: (ops) => this.assembleSEXT(ops), operandShape: 'dr, sr' },
+      'mul':   { encoder: (ops) => this.assembleMUL(ops),  operandShape: 'dr, sr' },
+      'div':   { encoder: (ops) => this.assembleDIV(ops),  operandShape: 'dr, sr' },
+      'rem':   { encoder: (ops) => this.assembleREM(ops),  operandShape: 'dr, sr' },
+      // Shifts / rotates
+      'srl':   { encoder: (ops) => this.assembleSRL(ops),  operandShape: 'sr[, ct]' },
+      'sra':   { encoder: (ops) => this.assembleSRA(ops),  operandShape: 'sr[, ct]' },
+      'sll':   { encoder: (ops) => this.assembleSLL(ops),  operandShape: 'sr[, ct]' },
+      'rol':   { encoder: (ops) => this.assembleROL(ops),  operandShape: 'sr[, ct]' },
+      'ror':   { encoder: (ops) => this.assembleROR(ops),  operandShape: 'sr[, ct]' },
+      // Stack
+      'push':  { encoder: (ops) => this.assemblePUSH(ops), operandShape: 'sr' },
+      'pop':   { encoder: (ops) => this.assemblePOP(ops),  operandShape: 'dr' },
+      // Memory
+      'ld':    { encoder: (ops) => this.assembleLD(ops),   operandShape: 'dr, label' },
+      'st':    { encoder: (ops) => this.assembleST(ops),   operandShape: 'sr, label' },
+      'ldr':   { encoder: (ops) => this.assembleLDR(ops),  operandShape: 'dr, baser, offset6' },
+      'str':   { encoder: (ops) => this.assembleSTR(ops),  operandShape: 'sr, baser, offset6' },
+      'lea':   { encoder: (ops) => this.assembleLea(ops),  operandShape: 'dr, label' },
+      'cea':   { encoder: (ops) => this.assembleCEA(ops),  operandShape: 'dr, imm5' },
+      // Control flow
+      'call':  { encoder: (ops) => this.assembleBL(ops),   operandShape: 'label' },
+      'jsr':   { encoder: (ops) => this.assembleBL(ops),   operandShape: 'label' },
+      'bl':    { encoder: (ops) => this.assembleBL(ops),   operandShape: 'label' },
+      'jsrr':  { encoder: (ops) => this.assembleBLR(ops),  operandShape: 'baser[, offset6]' },
+      'blr':   { encoder: (ops) => this.assembleBLR(ops),  operandShape: 'baser[, offset6]' },
+      'jmp':   { encoder: (ops) => this.assembleJMP(ops),  operandShape: 'baser[, offset6]' },
+      'ret':   { encoder: (ops) => this.assembleRET(ops),  operandShape: '[offset6]' },
+      // No-operand traps (constant machine word)
+      'halt':  { encoder: (_ops) => OP_TRAP,  operandShape: '(none)' },
+      'nl':    { encoder: (_ops) => 0xF001,   operandShape: '(none)' },
+      // Register-bearing traps
+      'dout':  { encoder: (ops) => this.assembleTrap(ops, 0x0002), operandShape: '[sr]' },
+      'udout': { encoder: (ops) => this.assembleTrap(ops, 0x0003), operandShape: '[sr]' },
+      'hout':  { encoder: (ops) => this.assembleTrap(ops, 0x0004), operandShape: '[sr]' },
+      'aout':  { encoder: (ops) => this.assembleTrap(ops, 0x0005), operandShape: '[sr]' },
+      'sout':  { encoder: (ops) => this.assembleTrap(ops, 0x0006), operandShape: '[sr]' },
+      'din':   { encoder: (ops) => this.assembleTrap(ops, 0x0007), operandShape: '[sr]' },
+      'hin':   { encoder: (ops) => this.assembleTrap(ops, 0x0008), operandShape: '[sr]' },
+      'ain':   { encoder: (ops) => this.assembleTrap(ops, 0x0009), operandShape: '[sr]' },
+      'sin':   { encoder: (ops) => this.assembleTrap(ops, 0x000A), operandShape: '[sr]' },
+      'm':     { encoder: (ops) => this.assembleTrap(ops, 0x000B), operandShape: '[sr]' },
+      'r':     { encoder: (ops) => this.assembleTrap(ops, 0x000C), operandShape: '[sr]' },
+      's':     { encoder: (ops) => this.assembleTrap(ops, 0x000D), operandShape: '[sr]' },
+      'bp':    { encoder: (ops) => this.assembleTrap(ops, 0x000E), operandShape: '(none)' },
+    };
   }
 
   /**
@@ -1222,166 +1299,12 @@ class Assembler {
       return;
     }
 
-    let machineWord = null;
-    mnemonic = mnemonic.toLowerCase();
-    switch (mnemonic) {
-      case 'br':
-      case 'bral':
-      case 'brz':
-      case 'bre':
-      case 'brnz':
-      case 'brne':
-      case 'brn':
-      case 'brp':
-      case 'brlt':
-      case 'brgt':
-      case 'brc':
-      case 'brb':
-        machineWord = this.assembleBR(mnemonic, operands);
-        break;
-      case 'add':
-        machineWord = this.assembleADD(operands);
-        break;
-      case 'sub':
-        machineWord = this.assembleSUB(operands);
-        break;
-      case 'cmp':
-        machineWord = this.assembleCMP(operands);
-        break;
-      case 'mov':
-      case 'mvi':
-      case 'mvr':
-        machineWord = this.assembleMOV(mnemonic, operands);
-        break;
-      case 'push':
-        machineWord = this.assemblePUSH(operands);
-        break;
-      case 'pop':
-        machineWord = this.assemblePOP(operands);
-        break;
-      case 'srl':
-        machineWord = this.assembleSRL(operands);
-        break;
-      case 'sra':
-        machineWord = this.assembleSRA(operands);
-        break;
-      case 'sll':
-        machineWord = this.assembleSLL(operands);
-        break;
-      case 'rol':
-        machineWord = this.assembleROL(operands);
-        break;
-      case 'ror':
-        machineWord = this.assembleROR(operands);
-        break;
-      case 'mul':
-        machineWord = this.assembleMUL(operands);
-        break;
-      case 'div':
-        machineWord = this.assembleDIV(operands);
-        break;
-      case 'rem':
-        machineWord = this.assembleREM(operands);
-        break;
-      case 'or':
-        machineWord = this.assembleOR(operands);
-        break;
-      case 'xor':
-        machineWord = this.assembleXOR(operands);
-        break;
-      // mvr case is handled in the mov function
-      case 'sext':
-        machineWord = this.assembleSEXT(operands);
-        break;
-      case 'ld':
-        machineWord = this.assembleLD(operands);
-        break;
-      case 'st':
-        machineWord = this.assembleST(operands);
-        break;
-      case 'call':
-      case 'jsr':
-      case 'bl':
-        machineWord = this.assembleBL(operands);
-        break;
-      case 'jsrr':
-      case 'blr':
-        machineWord = this.assembleBLR(operands);
-        break;
-      case 'and':
-        machineWord = this.assembleAND(operands);
-        break;
-      case 'ldr':
-        machineWord = this.assembleLDR(operands);
-        break;
-      case 'str':
-        machineWord = this.assembleSTR(operands);
-        break;
-      case 'jmp':
-        machineWord = this.assembleJMP(operands);
-        break;
-      case 'ret':
-        machineWord = this.assembleRET(operands);
-        break;
-      case 'not':
-        machineWord = this.assembleNOT(operands);
-        break;
-      case 'lea':
-        machineWord = this.assembleLea(operands);
-        break;
-      case 'cea':
-        machineWord = this.assembleCEA(operands);
-        break;
-      case 'halt':
-        machineWord = OP_TRAP;
-        break;
-      case 'nl':
-        machineWord = 0xF001;
-        break;
-      case 'dout':
-        machineWord = this.assembleTrap(operands, 0x0002);
-        break;
-      case 'udout':
-        machineWord = this.assembleTrap(operands, 0x0003);
-        break;
-      case 'hout':
-        machineWord = this.assembleTrap(operands, 0x0004);
-        break;
-      case 'aout':
-        machineWord = this.assembleTrap(operands, 0x0005);
-        break;
-      case 'sout':
-        machineWord = this.assembleTrap(operands, 0x0006); // Trap vector for sout is 6
-        break;
-      case 'din':
-        machineWord = this.assembleTrap(operands, 0x0007); // Trap vector for din is 7
-        break;
-      case 'hin':
-        machineWord = this.assembleTrap(operands, 0x0008); // Trap vector for hin is 8
-        break;
-      case 'ain':
-        machineWord = this.assembleTrap(operands, 0x0009); // Trap vector for ain is 9
-        break;
-      case 'sin':
-        machineWord = this.assembleTrap(operands, 0x000A); // Trap vector for sin is 10
-        break;
-      case 'm':
-        machineWord = this.assembleTrap(operands, 0x000B); // Trap vector for m is 11
-        break;
-      case 'r':
-        machineWord = this.assembleTrap(operands, 0x000C); // Trap vector for r is 12
-        break;
-      case 's':
-        machineWord = this.assembleTrap(operands, 0x000D); // Trap vector for s is 13
-        break;
-      case 'bp':
-        machineWord = this.assembleTrap(operands, 0x000E); // Trap vector for bp is 14
-        break;
-      default:
-        this.error("Invalid operation"); // this.error(`Invalid mnemonic or directive: ${mnemonic}`);
-        return;
+    const desc = this._instructionTable[mnemonic.toLowerCase()];
+    if (!desc) {
+      this.error("Invalid operation");
+      return;
     }
-
+    const machineWord = desc.encoder(operands);
     if (machineWord !== null) {
       this.writeMachineWord(machineWord);
       this.locCtr += 1;
