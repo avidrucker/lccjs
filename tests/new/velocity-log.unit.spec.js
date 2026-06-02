@@ -55,3 +55,42 @@ describe('velocity-log — negative delta validation (#440)', () => {
     expect(result.stderr).not.toMatch(/delta_c_min must be/);
   });
 });
+
+describe('velocity-log — model canonical format validation (#453)', () => {
+  test('rejects full model ID (claude-sonnet-4-6) with exit 1 and error message', () => {
+    const result = run({ role: 'DEV', agent: 'TEST', model: 'claude-sonnet-4-6' });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/canonical format/);
+    expect(result.stderr).toMatch(/claude-sonnet-4-6/);
+  });
+
+  test('rejects full model ID (claude-opus-4-8) with exit 1', () => {
+    const result = run({ role: 'DEV', agent: 'TEST', model: 'claude-opus-4-8' });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/canonical format/);
+  });
+
+  test('accepts canonical short-form sonnet-4.6 (fails later on bad ticket)', () => {
+    const result = run({ role: 'DEV', agent: 'TEST', model: 'sonnet-4.6', ticket: 'bad' });
+    expect(result.stderr).not.toMatch(/canonical format/);
+    expect(result.stderr).toMatch(/ticket/);
+  });
+
+  test('accepts canonical short-form opus-4.8 (fails later on bad ticket)', () => {
+    const result = run({ role: 'DEV', agent: 'TEST', model: 'opus-4.8', ticket: 'bad' });
+    expect(result.stderr).not.toMatch(/canonical format/);
+    expect(result.stderr).toMatch(/ticket/);
+  });
+
+  test('allows omitted model field (fails later on bad ticket)', () => {
+    const result = run({ role: 'DEV', agent: 'TEST', ticket: 'bad' });
+    expect(result.stderr).not.toMatch(/canonical format/);
+    expect(result.stderr).toMatch(/ticket/);
+  });
+
+  test('allows empty string model field (fails later on bad ticket)', () => {
+    const result = run({ role: 'DEV', agent: 'TEST', model: '', ticket: 'bad' });
+    expect(result.stderr).not.toMatch(/canonical format/);
+    expect(result.stderr).toMatch(/ticket/);
+  });
+});
