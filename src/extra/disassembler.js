@@ -4,6 +4,7 @@
 // LCC.js Disassembler - Execution Order Processing with WIP Disassembly
 
 const fs = require('fs');
+const { fatalExit } = require('../utils/cliExit');
 
 // Main Disassembler Class
 class Disassembler {
@@ -55,8 +56,7 @@ class Disassembler {
         try {
             buffer = fs.readFileSync(fileName);
         } catch (err) {
-            console.error(`Cannot open file ${fileName}`);
-            process.exit(1);
+            fatalExit(`Cannot open file ${fileName}`, 1);
         }
 
         let offset = 0;
@@ -64,8 +64,7 @@ class Disassembler {
 
         // Parse Header
         if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-            console.error('Invalid file signature');
-            process.exit(1);
+            fatalExit('Invalid file signature', 1);
         }
 
         // Read header entries until 'C' is encountered
@@ -79,8 +78,7 @@ class Disassembler {
             if (entryType === 'S') {
                 // Read next 2 bytes as start address (little endian)
                 if (offset + 1 >= fileSize) {
-                    console.error('Unexpected end of file while reading start address');
-                    process.exit(1);
+                    fatalExit('Unexpected end of file while reading start address', 1);
                 }
                 this.startAddress = buffer.readUInt16LE(offset);
                 offset += 2;
@@ -92,8 +90,7 @@ class Disassembler {
                 offset += 2; // Skip address
                 while (offset < fileSize && buffer[offset++] !== 0);
                 if (buffer[offset - 1] !== 0) {
-                    console.error(`Invalid file: ${entryType} entry label has no null terminator`);
-                    process.exit(1);
+                    fatalExit(`Invalid file: ${entryType} entry label has no null terminator`, 1);
                 }
                 continue;
             }
@@ -104,8 +101,7 @@ class Disassembler {
                 continue;
             }
 
-            console.error(`Unknown header entry type: ${entryType}`);
-            process.exit(1);
+            fatalExit(`Unknown header entry type: ${entryType}`, 1);
         }
 
         // Read Machine Words (16-bit, little endian)
@@ -890,8 +886,7 @@ class Disassembler {
 // Main Execution Entry Point
 if (require.main === module) {
     if (process.argv.length !== 3) {
-        console.error('Usage: node disassembler.js <filename>');
-        process.exit(1);
+        fatalExit('Usage: node disassembler.js <filename>', 1);
     }
 
     const fileName = process.argv[2];
