@@ -119,8 +119,7 @@ grammar via Shiki, on a public GitHub Pages site and/or a Tampermonkey
 userscript.
 
 - [x] spike Shiki + custom-grammar approaches for LCC highlighting (Pages site and/or Tampermonkey userscript)
-- [ ] build GitHub Pages showcase rendering curated .a/.ap snippets via Shiki + custom TextMate grammar
-  <!-- @inprogress #449:240m/DEV build GitHub Pages showcase with Shiki highlighting for LCC .a/.ap — index.html in docs/showcase/, grammar at docs/lcc.tmLanguage.json (depends on #448), deploy from /docs on main. See #449 -->
+- [x] build GitHub Pages showcase rendering curated .a/.ap snippets via Shiki + custom TextMate grammar
 
 ## Interactive Debugger Architecture
 
