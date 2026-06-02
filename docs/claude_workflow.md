@@ -174,13 +174,12 @@ npm run velocity:log -- '{"ticket":N,"role":"DEV","agent":"BANANA",...}'
 git add -A
 git commit -m "... Closes #N"
 
-# 3. cd to the MAIN repo root first — prevents the noisy getcwd error that
-#    occurs when close tears the worktree out from under the shell's CWD.
-#    The "Shell re-root: cd <path>" line in close output gives the path.
-cd <main-repo-root>   # e.g. ~/Documents/Study/JavaScript/lccjs
-# Land + clean up (loops fetch/rebase/push until landed on origin/main,
-# removes worktree + branch — ONLY if push succeeded). Do NOT run
-# `git pull` after close — close handles the main checkout sync.
+# 3. Land + clean up — run this from the WORKTREE root (not a subdirectory,
+#    not the main checkout). close.sh detects the branch from the git CWD, so
+#    the working directory must be the worktree at this step. After teardown
+#    npm's process may print a getcwd error; that is cosmetic — see step 5.
+#    (loops fetch/rebase/push until landed on origin/main, removes worktree.)
+#    Do NOT run `git pull` after close — close handles the main checkout sync.
 npm run close N
 ```
 
