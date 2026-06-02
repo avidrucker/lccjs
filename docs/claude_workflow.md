@@ -174,11 +174,13 @@ npm run velocity:log -- '{"ticket":N,"role":"DEV","agent":"BANANA",...}'
 git add -A
 git commit -m "... Closes #N"
 
-# 3. Land + clean up (loops fetch/rebase/push until it lands on origin/main,
-#    then removes the worktree + branch — ONLY if the push succeeded).
-#    close.js also fast-forward-pulls the main checkout and prints a
-#    "Shell re-root: cd <path>" line — do NOT run `git pull` manually after
-#    close; the shell CWD is the now-deleted worktree and the command will fail.
+# 3. cd to the MAIN repo root first — prevents the noisy getcwd error that
+#    occurs when close tears the worktree out from under the shell's CWD.
+#    The "Shell re-root: cd <path>" line in close output gives the path.
+cd <main-repo-root>   # e.g. ~/Documents/Study/JavaScript/lccjs
+# Land + clean up (loops fetch/rebase/push until landed on origin/main,
+# removes worktree + branch — ONLY if push succeeded). Do NOT run
+# `git pull` after close — close handles the main checkout sync.
 npm run close N
 ```
 
@@ -204,7 +206,7 @@ Do **not** `git commit --amend` to backfill the SHA — amend orphans the origin
 
 3. **Post a closing comment on the issue** — always, regardless of whether there is a tracker. For research tickets: 1–3 sentences summarising the finding and the DEV child (if filed). For DEV tickets: one line noting what changed and the commit SHA. Use an issue comment, not a body edit (comments are append-only; body edits race with parallel agents). If there is a tracker checkbox, update it in the same comment.
 4. Mark any related TaskCreate tasks as complete via TaskUpdate.
-5. **Worktree teardown + main sync** — handled automatically by `npm run close` (confirms commit on `origin/main`, removes worktree + branch, then fast-forward-pulls the main checkout). Do **not** run `git pull` after close — close handles the sync. (#352) As of #379, `close.sh` cd's to the main repo root *before* invoking `close.js`, so bash's own CWD is never the deleted worktree. npm's parent process retains the stale CWD and may still print `pwd: error retrieving current directory: getcwd: cannot access parent directories` at exit — this is cosmetic and expected; the close itself succeeded. Verify success via `CLOSE OK` in stdout; do **not** re-run close on this basis. close.js prints `Shell re-root: cd <path>` just before exit; use that path if you need to issue further commands from main. (#352, #360, #379) If using the fallback path, confirm first (`git branch -r --contains HEAD` → `origin/main`), then run the `&&`-gated chain above. This is **mandatory**: a worktree left after close looks like a live claim to every other agent and to `puzzle:status`.
+5. **Worktree teardown + main sync** — handled automatically by `npm run close` (confirms commit on `origin/main`, removes worktree + branch, then fast-forward-pulls the main checkout). Do **not** run `git pull` after close — close handles the sync. (#352) Running close from the main repo root (step 3 above) prevents the `getcwd: cannot access parent directories` error entirely. If you forget and run it from inside the worktree, the error is cosmetic — the close itself still succeeded; verify via `CLOSE OK` in stdout and do **not** re-run close on that basis. close.js prints `Shell re-root: cd <path>` just before exit; use that path if you need to issue further commands from main. (#352, #360, #379, #413) If using the fallback path, confirm first (`git branch -r --contains HEAD` → `origin/main`), then run the `&&`-gated chain above. This is **mandatory**: a worktree left after close looks like a live claim to every other agent and to `puzzle:status`.
 6. Report what changed in 1-2 sentences. Include the velocity Δ if it's interesting.
 
 **What I do *not* do at close:**
