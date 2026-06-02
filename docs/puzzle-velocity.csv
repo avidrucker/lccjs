@@ -340,3 +340,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 350,465,TIL doc ELDERBERRY session 3,WRITER,15,5,5,10,0,2026-06-01T19:14:00-1000,2026-06-01T19:19:00-1000,,"5 lessons: stale marker, dual-path loader, lcc-tools false assumption, companion-issue check, npm name drift",ELDERBERRY,sonnet-4.6,lccjs
 351,464,,WRITER,,,,,,,,,,APPLE,sonnet-4.6,lccjs
 352,466,Re-run day-five notebook on 339-row / 264-cal snapshot,DATA,30,20,12,18,8,2026-06-01T19:35:00-1000,2026-06-01T19:47:00-1000,,nbconvert execute + output extraction; 4 new findings vs prior run,FIG,sonnet-4.6,lccjs
+353,466,Add commentary cells to day-five notebook — re-run #2 findings,DATA,20,15,10,10,5,2026-06-01T19:56:00-1000,2026-06-01T20:06:34-1000,,Updated 5 stale Read cells + appended re-run #2 findings block to §6 takeaways,FIG,sonnet-4.6,lccjs
