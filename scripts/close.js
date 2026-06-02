@@ -24,7 +24,7 @@
  *
  * Usage (after committing `Closes #N`):
  *   node scripts/close.js <issue>                    # from inside the worktree
- *   node scripts/close.js <issue> --branch <name>    # from main root; branch auto-detected by close.sh
+ *   node scripts/close.js <issue> --branch <name>    # from main checkout (branch must be supplied explicitly)
  *   node scripts/close.js <issue> --max 8        # more push-race retries (default 5)
  *   node scripts/close.js <issue> --dry-run      # show the plan, change nothing
  *   node scripts/close.js <issue> --keep         # land the commit but DON'T tear down
@@ -544,8 +544,8 @@ function main() {
   const issue = opts.issue;
 
   // --- pre-flight: refuse to start unless the close is real and the tree sane.
-  // --branch lets close.sh pass the branch name after cd-ing to main root, so
-  // close.js need not be launched from the worktree CWD. (#379)
+  // --branch lets the caller pass the branch when invoking from the main
+  // checkout (where HEAD is not the puzzle branch). (#379)
   const branch = opts.branch || currentBranch();
   if (!branch || !/\/issue-\d+/.test(branch)) {
     die(`current branch "${branch || '?'}" is not a <fruit>/issue-<N> worktree branch. ` +
@@ -555,9 +555,9 @@ function main() {
     die(`branch "${branch}" does not match issue #${issue}. Wrong worktree?`);
   }
 
-  // When --branch is supplied, close.sh has already cd'd to main root so npm's
-  // process CWD survives teardown. Chdir into the worktree here so all
-  // subsequent git operations run in the right context. (#379)
+  // When --branch is supplied, the caller invoked from the main checkout (not
+  // the worktree), so npm's CWD survives teardown. Chdir into the worktree
+  // here so all subsequent git operations run in the right context. (#379)
   const root = mainRoot();
   const wtPath = path.join(root, '.claude', 'worktrees', branch.split('/')[0] + '-issue-' + issue);
   if (opts.branch) {
