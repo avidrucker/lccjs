@@ -39,6 +39,7 @@ Exported read-only copy: **`docs/puzzle-velocity.csv`** — committed to git, au
 | `SPIKE` | Scoped research with a concrete finding/decision deliverable |
 | `ARC` | Architecture decision |
 | `PM` | Project management (filing issues, triage, planning) |
+| `REVIEW` | Ratification / sign-off on an artifact someone else produced |
 | `COMBO` | Multi-role work in a single session |
 | `DATA` | Data analysis, CSV enrichment, notebook re-runs |
 | `CHORE` | Housekeeping with no feature/fix value (removing dead code, cleanup) |

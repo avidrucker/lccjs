@@ -51,6 +51,7 @@ puzzle, plus a comment header line. Empty fields mean "not tracked".
 | `DATA` | data analysis — stats, notebooks, calibration of this very log |
 | `RESEARCH` | empirical investigation answering a question by experiment; no production code ships |
 | `SPIKE` | bounded ≤60m investigation to scope/refresh an epic before writing puzzles (per `yegor-spikes`) |
+| `REVIEW` | ratification / sign-off on an artifact someone else produced — distinct from RESEARCH (probing) and ARC (deciding) |
 | `COMBO` | a task that genuinely spanned 2+ roles; the notes name which (used over a forced single tag) |
 
 ## The two estimates

@@ -397,3 +397,5 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 407,512,mask shift count to 4 bits in all five shift encoders,DEV,30,25,,,,,2026-06-02T12:21:00-1000,,"oracle probe confirmed silent 4-bit wrap for all five; removed SRA range check, added ct&0xF masking to all",APPLE,sonnet-4.6,lccjs
 408,508,add OG BUG #21 to reports_summary.md and mark send-ready,WRITER,20,10,10,10,0,,2026-06-02T12:48:02-1000,,"report had no relative links; added row 21 to status table, narrative section, coverage note",FIG,sonnet-4.6,lccjs
 409,515,test: bp non-interactive parity oracle e2e,DEV,20,15,1,19,14,2026-06-02T12:49:16-1000,2026-06-02T12:50:13-1000,,7 tests: 6 LCC.js assertions + 1 oracle deviation proof; two-bp latch test; all green,CHERRY,sonnet-4.6,lccjs
+410,,,ARCHITECT,,,,,,,,,,TEST,,lccjs
+411,519,add REVIEW to valid role vocabulary,PM,20,15,,,,,2026-06-02T12:54:39-1000,,"audit found 2 non-canonical roles: REVIEW (added) and ARCHITECT (typo for ARC, row 378, needs human correction)",APPLE,sonnet-4.6,lccjs

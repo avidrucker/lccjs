@@ -94,3 +94,27 @@ describe('velocity-log — model canonical format validation (#453)', () => {
     expect(result.stderr).toMatch(/ticket/);
   });
 });
+
+describe('velocity-log — role vocabulary (#519)', () => {
+  // velocity-log.js runs at require-time, so we scan the source instead of importing.
+  const fs = require('fs');
+  const src = fs.readFileSync(require.resolve('../../scripts/velocity-log'), 'utf8');
+
+  // Extract the VALID_ROLES Set literal from the source.
+  const match = src.match(/const VALID_ROLES\s*=\s*new Set\(\[([^\]]+)\]\)/);
+  const roles = match ? match[1].match(/'([A-Z]+)'/g).map(s => s.replace(/'/g, '')) : [];
+
+  test('REVIEW is in VALID_ROLES (#519)', () => {
+    expect(roles).toContain('REVIEW');
+  });
+
+  test('ARCHITECT is not in VALID_ROLES (typo for ARC — DB row 378 needs manual correction)', () => {
+    expect(roles).not.toContain('ARCHITECT');
+  });
+
+  test('all ten original roles are still present', () => {
+    ['DEV', 'TEST', 'WRITER', 'RESEARCH', 'SPIKE', 'ARC', 'PM', 'COMBO', 'DATA', 'CHORE'].forEach(r => {
+      expect(roles).toContain(r);
+    });
+  });
+});
