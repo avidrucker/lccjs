@@ -109,3 +109,7 @@ No production code touched; spec is ~20 lines lighter.
 - `current_issues.md` — living issue log.
 - `docs/init_code_review.md` — the May 2026 review that prompted the
   test-coverage assessment.
+
+## Resolution
+
+Resolved: test simplified in `6c3deb2` — this entry is a historical record.
