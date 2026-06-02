@@ -373,3 +373,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 383,493,TIL 2026-06-02 CHERRY — closing comment prose is invisible to the tracker,WRITER,15,5,1,14,4,2026-06-02T10:46:29-1000,2026-06-02T10:47:09-1000,,First TIL of the day; covers Rule 10 insight from #476/#490,CHERRY,sonnet-4.6,lccjs
 384,495,WRITER: TIL doc 2026-06-02 BANANA,WRITER,15,5,1,14,4,2026-06-02T10:47:03-1000,2026-06-02T10:47:25-1000,,,BANANA,sonnet-4.6,lccjs
 385,494,TIL 2026-06-02 APPLE session 1,WRITER,15,5,1,14,4,2026-06-02T10:46:55-1000,2026-06-02T10:47:32-1000,,"3 sections: Shiki VS Code format, CSS --mono-font var, close-sequence split with build artifacts",APPLE,sonnet-4.6,lccjs
+386,497,TIL — untracked files on main dont carry into new git worktrees,WRITER,10,8,1,9,7,2026-06-02T10:47:48-1000,2026-06-02T10:48:32-1000,,,FIG,sonnet-4.6,lccjs
