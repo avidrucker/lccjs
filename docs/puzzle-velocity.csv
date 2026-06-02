@@ -379,3 +379,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 389,392,add resolution marker to bst-redundancy learnings entry,WRITER,15,5,5,10,0,,2026-06-02T11:14:08-1000,,,FIG,sonnet-4.6,lccjs
 390,492,close sequence splits when build artifact must be committed,RESEARCH,30,20,20,10,0,2026-06-02T10:55:00-10:00,2026-06-02T11:14:30-10:00,,CI already rebuilds docs/site on push; gitignore is best practice. Protocol note added to claude_workflow.md.,ELDERBERRY,sonnet-4.6,lccjs
 391,461,"ARC: review closed #218, decide parity backlog next steps",ARC,30,20,3,27,17,2026-06-02T11:12:21-1000,2026-06-02T11:15:15-1000,,"Filed #500 (.org probe), #501 (bp probe), #502 (H-bundle). TODOS.md line-56 already [x]. sext blocked on #159.",DRAGONFRUIT,sonnet-4.6,lccjs
+392,496,widen OP_EXT eopcode mask 4-bit to 5-bit in hexToMnemonic,DEV,20,15,,,,,2026-06-02T11:16:03-1000,,start not captured; actual_min omitted,APPLE,sonnet-4.6,lccjs
