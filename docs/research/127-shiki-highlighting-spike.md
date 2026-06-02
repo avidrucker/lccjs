@@ -33,10 +33,9 @@ The grammar covers the full token set found by surveying ~60 `.a` and ~17 `.ap` 
 The drafted grammar is drop-in ready for `createHighlighter({ langs: [lccGrammar] })`.
 
 **Known limitation:** The single-letter mnemonics `m` (dump memory) `r` (dump registers)
-`s` (dump stack) are included but will over-match in label contexts. In practice they're
-rare in live source and always appear at the start of an instruction line; a TextMate
-`beginCaptures`/`end` rule could scope them more tightly but is out-of-scope for this
-spike.
+`s` (dump stack) were omitted in the original spike draft — see `docs/lcc.tmLanguage.json`
+for the corrected grammar that adds them (fixed in #458). They are anchored with a
+start-of-field pattern to avoid over-matching label references.
 
 ---
 
