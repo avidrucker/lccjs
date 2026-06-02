@@ -23,6 +23,10 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
   (agent = the worktree fruit identity: APPLE, BANANA, CHERRY, …).
 - `YYYY-MM-DD-<topic>.md` — older topic-scoped retrospectives.
 
+## Writing guidelines
+
+> **Jargon rule:** When using a project-specific term (workflow jargon, tool names, role codes), define it on first use in the doc or link to the [`claude_workflow.md` Concept glossary](../claude_workflow.md#concept-glossary-one-liners). If the term isn't in the glossary yet, add it there first (see [#479](https://github.com/avidrucker/lccjs/issues/479)).
+
 ## Index
 
 | Doc | Date | Agent | Themes |
