@@ -822,4 +822,20 @@ describe('Interpreter Unit Tests', () => {
       expect(doutPos).toBeLessThanOrEqual(haltPos);
     });
   });
+
+  describe('hexToMnemonic — OP_EXT eopcode mask width', () => {
+    test('eopcode ≥ 16 does not alias a lower eopcode (5-bit mask fix #496)', () => {
+      const interp = new Interpreter();
+      // eopcode 0x10 (16): bits[4:0]=10000 — no entry in extendedMnemonics yet, must report Unknown
+      // With the old 4-bit mask (& 0x000F) this aliased to eopcode 0 → 'PUSH' (wrong).
+      const word = 0xA010; // OP_EXT opcode (0xA000) | eopcode 0x10
+      expect(interp.hexToMnemonic(word)).toMatch(/Unknown/i);
+    });
+
+    test('eopcode 13 (SEXT, highest currently registered) still resolves correctly', () => {
+      const interp = new Interpreter();
+      const word = 0xA00D; // OP_EXT | eopcode 0xD
+      expect(interp.hexToMnemonic(word)).toBe('SEXT');
+    });
+  });
 });

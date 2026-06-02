@@ -811,7 +811,7 @@ class Interpreter {
         0xC: 'MVR',
         0xD: 'SEXT'
       };
-      mnemonic = extendedMnemonics[hex & 0x000F] || `Unknown(${hex.toString(16)})`;
+      mnemonic = extendedMnemonics[hex & 0x001F] || `Unknown(${hex.toString(16)})`;
     }
     
     if(mnemonic === 'TRAP') {
