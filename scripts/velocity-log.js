@@ -59,6 +59,12 @@ for (const f of REQUIRED) {
 if (input.ticket != null && (typeof input.ticket !== 'number' || !Number.isInteger(input.ticket) || input.ticket <= 0)) {
   die('"ticket" must be a positive integer when provided');
 }
+if (typeof input.delta_h_min === 'number' && input.delta_h_min < 0) {
+  die(`delta_h_min must be >= 0 (got ${input.delta_h_min}); convention is estimate - actual`);
+}
+if (typeof input.delta_c_min === 'number' && input.delta_c_min < 0) {
+  die(`delta_c_min must be >= 0 (got ${input.delta_c_min}); convention is estimate - actual`);
+}
 if (VALID_ROLES.size > 0 && !VALID_ROLES.has(input.role)) {
   // Warn but don't block — role taxonomy may expand (#284 Q3)
   console.warn(`velocity-log: unknown role "${input.role}" (valid: ${[...VALID_ROLES].join(', ')})`);
