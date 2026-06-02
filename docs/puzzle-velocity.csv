@@ -334,3 +334,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 344,455,Showcase grammar audited against LCC ISA,RESEARCH,60,30,3,57,27,2026-06-01T19:05:05-10:00,2026-06-01T19:08:21-10:00,,"lcc-tools extension not available; ISA-vs-grammar diff done from assembler source. Found 3 gaps: sext, .globl, m/r/s debug traps. LCC+ coverage complete.",CHERRY,sonnet-4.6,lccjs
 345,390,archive 19 stale docs/research/ spike outputs,CHORE,30,8,3,27,5,2026-06-01T19:05:48-1000,2026-06-01T19:08:53-1000,,deleted 18 docs/research/ + 1 docs/ file per triage list; kept init_code_review.md (banner path via #214); kept docs-triage-2026-06-01.md as evidence trail,ELDERBERRY,sonnet-4.6,lccjs
 346,453,,DEV,,,,,,,,,,APPLE,sonnet-4.6,lccjs
+347,460,Add rule 6 to RULES.md — no out-of-scope work,CHORE,5,5,4,1,1,2026-06-01T19:15:00-1000,2026-06-01T19:19:00-1000,,Restoring and extending RULES.md after FIG deleted it without authorization while closing #218,FIG,sonnet-4.6,lccjs
