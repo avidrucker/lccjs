@@ -221,6 +221,7 @@ exactly at the limit. Verify both boundary values assemble and that
 <code>assembleLD</code>/<code>assembleST</code>/<code>assembleLea</code>.</p>
 <p><strong>Test idea:</strong> Craft a program where a branch lands exactly 256
 instructions behind and 255 ahead. Assemble and verify encoded bits.</p>
+<p><strong>Probe result (#502):</strong> Oracle and lccjs agree exactly. +255 assembles as <code>0x00ff</code>; -256 assembles as <code>0x0100</code>. Both reject +256 and -257 with identical &quot;pcoffset9 out of range&quot; errors. No deviation.</p>
 <hr>
 <h3>H-010 🔴 <code>evaluateImmediate</code> accepts <code>NaN</code> string — <code>parseNumber(undefined)</code> returns <code>null</code></h3>
 <p><strong>Hypothesis:</strong> <code>evaluateImmediate(valueStr, min, max)</code> calls
@@ -268,6 +269,7 @@ assembles a 0-count which may behave differently from the oracle. Verify
 <code>sra r0</code> (no count) vs <code>sra r0, 0</code> produce the same or different encoding.</p>
 <p><strong>Test idea:</strong> <code>sra r0</code> vs <code>sra r0, 0</code> vs <code>sra r0, 1</code> — compare machine
 words.</p>
+<p><strong>Probe result (#502):</strong> <code>sra r0</code> → <code>0xa023</code>; <code>sra r0, 0</code> → <code>0xa003</code>; <code>sra r0, 1</code> → <code>0xa023</code>. Oracle and lccjs produce identical encodings for all three forms. <code>sra r0, 0</code> is a valid distinct encoding (count=0 field), not an error. No deviation.</p>
 <hr>
 <h3>H-014 🟡 <code>assembleRET offset6</code> — offset6 is not range-checked</h3>
 <p><strong>Hypothesis:</strong> <code>assembleRET</code> calls <code>evaluateImmediate(operands[0], -32, 31)</code> which IS range-checked. But <code>assembleJMP</code> offset6 path also uses
@@ -294,6 +296,7 @@ error immediately, but the intent might be to jump to an absolute address.
 Oracle behavior: does <code>bl 5</code> error on the oracle? If oracle accepts it,
 lccjs has a deviation.</p>
 <p><strong>Test idea:</strong> <code>bl 5</code> — does it assemble? Does the oracle?</p>
+<p><strong>Probe result (#502):</strong> Both reject <code>bl 5</code>. Oracle: &quot;Undefined label&quot; (treats <code>5</code> as a syntactically valid but undefined label). lccjs: &quot;Bad label&quot; (rejects <code>5</code> as an invalid label name). No behavioral deviation; error message wording differs. lccjs&#39;s stricter upfront validation is acceptable.</p>
 <hr>
 <h2>ASSEMBLER — Edge Cases / State</h2>
 <h3>H-017 🔴 <code>assembleSource</code> called twice on the same instance without explicit reset</h3>
@@ -326,6 +329,7 @@ LCC treats <code>0</code>-prefixed integers as octal, lccjs would silently produ
 wrong values for <code>.word 0777</code> style literals.</p>
 <p><strong>Test idea:</strong> <code>.word 0777</code> — what value does lccjs assemble? What does
 the oracle produce?</p>
+<p><strong>Probe result (#502):</strong> Oracle assembled <code>.word 0777</code> as <code>0x0309</code> (777 decimal) and printed &quot;777&quot; at runtime. lccjs also assembles as <code>0x0309</code>. Both treat <code>0</code>-prefixed integers as decimal. No deviation — hypothesis disproved.</p>
 <hr>
 <h2>INTERPRETER</h2>
 <h3>H-020 🔴 Division by zero — <code>div</code> trap behavior</h3>

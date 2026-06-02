@@ -87,7 +87,7 @@ code { font-family:var(--mono-font); }
 <strong>Reported binary:</strong> <code>lcc</code> (Linux build from <code>lnx/</code> subfolder of the cuh package)
 <strong>Reported version string:</strong> <code>LCC Assemble/Link/Interpret/Debug Ver 6.3</code> (as printed in <code>.lst</code> headers)</p>
 <p>This report extends an earlier finding
-(<a href="./cuh63-ldr-str-silent-miscompile-bug-report.md"><code>docs/cuh63-ldr-str-silent-miscompile-bug-report.md</code></a>)
+(<a href="https://github.com/avidrucker/lccjs/blob/main/docs/cuh63-ldr-str-silent-miscompile-bug-report.md"><code>docs/cuh63-ldr-str-silent-miscompile-bug-report.md</code></a>)
 from two instructions (<code>ldr</code>/<code>str</code>) to the full set of instructions whose operands
 include a signed integer in the <strong>no-comma (space-separated) syntax</strong>. A wider probe
 (<code>public_experiments/nocomma_negative_immediate_family/</code>) shows the root cause —
@@ -395,7 +395,7 @@ and the no-comma path would accept the full signed range the ISA defines.</p>
 <h2>Relationship to prior reports</h2>
 <p><strong>Companion to the <code>ldr</code>/<code>str</code> report:</strong> this is an extension of the
 silent-miscompile finding in
-<a href="./cuh63-ldr-str-silent-miscompile-bug-report.md"><code>docs/cuh63-ldr-str-silent-miscompile-bug-report.md</code></a>.
+<a href="https://github.com/avidrucker/lccjs/blob/main/docs/cuh63-ldr-str-silent-miscompile-bug-report.md"><code>docs/cuh63-ldr-str-silent-miscompile-bug-report.md</code></a>.
 That report&#39;s &quot;Scope verification&quot; section concluded the bug was isolated to
 <code>ldr</code>/<code>str</code>, based on a narrower probe that did not test <code>jmp</code>, <code>blr</code>, or
 <code>jsrr</code>. The wider probe (<code>public_experiments/nocomma_negative_immediate_family/</code>)
@@ -404,7 +404,7 @@ family. The two reports are intended to be sent together as a single upstream
 notification.</p>
 <p><strong>Distinct from the <code>mov</code> report (OB-008):</strong> a separate report covers cuh63 6.3&#39;s
 rejection of <code>mov dr, imm9</code> with a negative immediate —
-<a href="./cuh63-mov-immediate-bug-report.md"><code>docs/cuh63-mov-immediate-bug-report.md</code></a>.
+<a href="https://github.com/avidrucker/lccjs/blob/main/docs/cuh63-mov-immediate-bug-report.md"><code>docs/cuh63-mov-immediate-bug-report.md</code></a>.
 That issue is specifically the <code>mov</code> pseudo-instruction&#39;s validation logic
 (it rejects values the underlying <code>mvi</code> would accept); it is not a
 comma-vs-no-comma syntax issue and the <code>mvi</code> instruction is itself unaffected.
@@ -415,7 +415,7 @@ bundled with this one at the sender&#39;s discretion.</p>
 <p>The differential probe that produced the tables above is checked into the
 LCC.js parity-testing repository:</p>
 <ul>
-<li><a href="../public_experiments/nocomma_negative_immediate_family/"><code>public_experiments/nocomma_negative_immediate_family/</code></a>
+<li><a href="https://github.com/avidrucker/lccjs/tree/main/public_experiments/nocomma_negative_immediate_family/"><code>public_experiments/nocomma_negative_immediate_family/</code></a>
 — <code>probe.js</code> assembles a one-instruction program for each case (comma and
 no-comma, positive and negative) under both cuh63 6.3 and LCC.js and diffs
 the emitted <code>.e</code> hex. Runnable with <code>LCC_ORACLE=/path/to/cuh63/lcc node probe.js</code>.</li>

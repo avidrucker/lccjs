@@ -967,6 +967,115 @@ would regress user feedback without any oracle-parity benefit.</p>
 <p><strong>Source:</strong> <code>src/core/assembler.js</code> — <code>.bin</code> branch (~line 386) and <code>.hex</code> branch (~line 397).</p>
 <p><strong>GitHub issue:</strong> <a href="https://github.com/avidrucker/lccjs/issues/371">#371</a></p>
 <hr>
+<h3>22. <code>bp</code> in non-interactive context: oracle enters step-trace mode; LCC.js continues cleanly (#501)</h3>
+<p><code>bp</code> is the software breakpoint instruction. In a TTY session it pauses execution and
+enters the interactive debugger. In a non-interactive (non-TTY) context both runtimes
+auto-continue past the breakpoint — but they diverge in what they print.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Oracle (cuh63 6.3)</th>
+<th>LCC.js</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Assembly</td>
+<td>Succeeds (both passes)</td>
+<td>Succeeds (both passes)</td>
+</tr>
+<tr>
+<td><code>bp</code> message</td>
+<td><code>software breakpoint</code></td>
+<td><code>software breakpoint</code></td>
+</tr>
+<tr>
+<td>Post-<code>bp</code> execution</td>
+<td>Continues with per-instruction step traces</td>
+<td>Continues cleanly, no traces</td>
+</tr>
+<tr>
+<td>Step trace example</td>
+<td><code>dout&gt;&gt;&gt;  2:         dout r0</code></td>
+<td><em>(none)</em></td>
+</tr>
+<tr>
+<td>Program output (<code>dout r0</code> = 7)</td>
+<td>Present, interleaved with traces</td>
+<td>Present, no interleaving</td>
+</tr>
+<tr>
+<td>Runtime exit</td>
+<td>Exits normally after <code>halt</code></td>
+<td>Exits normally after <code>halt</code></td>
+</tr>
+</tbody></table>
+<p><strong>Oracle detail:</strong> after hitting <code>bp</code> in a non-TTY context, the oracle enters the same
+stepping debug mode as in §19 — but unlike <code>ret</code>/<code>jmp r0</code>, which loop infinitely and
+flood stdout, a well-formed program runs to <code>halt</code> and terminates normally. The oracle
+prints one trace line per instruction (<code>&lt;mnemonic&gt;&gt;&gt;  &lt;pc&gt;:         &lt;instruction&gt;</code>) before
+executing each instruction following the breakpoint; program output is interleaved with
+the trace lines.</p>
+<p><strong>LCC.js behavior:</strong> <code>bp</code> in non-interactive context prints <code>software breakpoint</code> and
+continues execution without step traces. Program output appears cleanly with no
+interleaving.</p>
+<p><strong>Why BY DESIGN (beneficial deviation):</strong></p>
+<ul>
+<li>LCC.js&#39;s clean output is strictly better for automated callers (CI, agents, test
+suites) — step traces interleaved with program output corrupt any downstream parsing.</li>
+<li>The oracle&#39;s step-trace behavior is a side effect of the interactive debugger being
+activated in a non-TTY session. Useful in a TTY context (actual single-step
+debugging); misleading in automated ones.</li>
+<li>No change to LCC.js is needed; the behavior is already correct.</li>
+</ul>
+<p><strong>Note on §19 relationship:</strong> §19 (<code>ret</code>/<code>jmp r0</code> debug-dump flood) and this deviation
+share the same root cause — the oracle enters step mode after any breakpoint-triggering
+event. §19&#39;s program loops infinitely so the step dump is catastrophic; here the program
+terminates normally so the step dump is bounded.</p>
+<p><strong>Source:</strong> <code>src/core/interpreter.js</code> — <code>bp</code> trap handler.</p>
+<p><strong>Evidence:</strong> <code>experiments/bp_basic.a</code> probe — run #501.</p>
+<p><strong>GitHub issue:</strong> <a href="https://github.com/avidrucker/lccjs/issues/501">#501</a></p>
+<hr>
+<h3>23. <code>.org</code> invalid operand: oracle prints <code>Bad number</code>; LCC.js prints <code>Invalid number for .org directive</code> (#500)</h3>
+<p>When the operand of a <code>.org</code> directive cannot be parsed as a number (e.g. <code>.org banana</code>),
+the two assemblers emit the same exit code and error shape but different diagnostic text.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Oracle (cuh63 6.3)</th>
+<th>LCC.js</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>error text</td>
+<td><code>Bad number</code></td>
+<td><code>Invalid number for .org directive</code></td>
+</tr>
+<tr>
+<td>error channel</td>
+<td>stdout</td>
+<td>stderr</td>
+</tr>
+<tr>
+<td>exit code</td>
+<td><code>1</code></td>
+<td><code>1</code></td>
+</tr>
+<tr>
+<td>artifacts emitted</td>
+<td>1-byte blank <code>.e</code> (see OG BUG §10)</td>
+<td>none</td>
+</tr>
+</tbody></table>
+<p>The error-channel and blank-artifact differences are covered by existing deviations
+(§10 / §11 / §12); this entry records only the message-text divergence.</p>
+<p><strong>Why BY DESIGN:</strong> <code>Bad number</code> is the oracle&#39;s generic parse-failure message reused across
+multiple directive contexts. <code>Invalid number for .org directive</code> is more informative: it
+identifies the affected directive, reducing user confusion. LCC.js-stricter-is-safer applies.</p>
+<p><strong>Source:</strong> <code>src/core/assembler.js:1109</code> (<code>failAssembly(&#39;Invalid number for .org directive&#39;, 1)</code>).</p>
+<p><strong>GitHub issue:</strong> <a href="https://github.com/avidrucker/lccjs/issues/500">#500</a> (probe evidence)</p>
+<hr>
 <h2>Pending parity investigations (stubs)</h2>
 <p><em>None pending.</em></p>
 <hr>
@@ -1063,6 +1172,16 @@ would regress user feedback without any oracle-parity benefit.</p>
 <td>2026-06-01</td>
 <td>OG BUG #21 added (#270)</td>
 <td>Successful <code>.o</code> assemble: oracle exits 1 (&quot;needs linking&quot;), LCC.js exits 0. Oracle&#39;s exit 1 is specific to the <code>.o</code> path — both exit 0 on <code>.e</code> assemble+run. Classified OG BUG: exit 1 conflates &quot;no runnable output&quot; with &quot;error&quot;; LCC.js exit 0 is semantically correct.</td>
+</tr>
+<tr>
+<td>2026-06-02</td>
+<td>Deviation 22 added (#501)</td>
+<td><code>bp</code> in non-interactive context: both runtimes auto-continue past <code>bp</code> (oracle does NOT flood stdout). Oracle enters step-trace mode, printing <code>&lt;mnemonic&gt;&gt;&gt;  &lt;pc&gt;:   &lt;instruction&gt;</code> before each instruction after the breakpoint; LCC.js continues cleanly with no traces. Classified BY DESIGN (clean output better for automated callers). Same root cause as §19 (oracle debug-dump mode) but bounded because the program terminates normally.</td>
+</tr>
+<tr>
+<td>2026-06-02</td>
+<td>BY DESIGN §23 added (#500)</td>
+<td><code>.org</code> invalid operand: oracle emits <code>Bad number</code>; LCC.js emits <code>Invalid number for .org directive</code>. Classified BY DESIGN (more informative). Forward-gap padding confirmed byte-identical (parity achieved); <code>.orig</code> synonym confirmed parity-complete. Parity test added: <code>tests/new/assembler.org.oracle.e2e.spec.js</code>.</td>
 </tr>
 </tbody></table>
 

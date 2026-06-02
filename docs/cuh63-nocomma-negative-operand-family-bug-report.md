@@ -7,7 +7,7 @@
 **Reported version string:** `LCC Assemble/Link/Interpret/Debug Ver 6.3` (as printed in `.lst` headers)
 
 This report extends an earlier finding
-([`docs/cuh63-ldr-str-silent-miscompile-bug-report.md`](./cuh63-ldr-str-silent-miscompile-bug-report.md))
+([`docs/cuh63-ldr-str-silent-miscompile-bug-report.md`](https://github.com/avidrucker/lccjs/blob/main/docs/cuh63-ldr-str-silent-miscompile-bug-report.md))
 from two instructions (`ldr`/`str`) to the full set of instructions whose operands
 include a signed integer in the **no-comma (space-separated) syntax**. A wider probe
 (`public_experiments/nocomma_negative_immediate_family/`) shows the root cause —
@@ -259,7 +259,7 @@ and the no-comma path would accept the full signed range the ISA defines.
 
 **Companion to the `ldr`/`str` report:** this is an extension of the
 silent-miscompile finding in
-[`docs/cuh63-ldr-str-silent-miscompile-bug-report.md`](./cuh63-ldr-str-silent-miscompile-bug-report.md).
+[`docs/cuh63-ldr-str-silent-miscompile-bug-report.md`](https://github.com/avidrucker/lccjs/blob/main/docs/cuh63-ldr-str-silent-miscompile-bug-report.md).
 That report's "Scope verification" section concluded the bug was isolated to
 `ldr`/`str`, based on a narrower probe that did not test `jmp`, `blr`, or
 `jsrr`. The wider probe (`public_experiments/nocomma_negative_immediate_family/`)
@@ -269,7 +269,7 @@ notification.
 
 **Distinct from the `mov` report (OB-008):** a separate report covers cuh63 6.3's
 rejection of `mov dr, imm9` with a negative immediate —
-[`docs/cuh63-mov-immediate-bug-report.md`](./cuh63-mov-immediate-bug-report.md).
+[`docs/cuh63-mov-immediate-bug-report.md`](https://github.com/avidrucker/lccjs/blob/main/docs/cuh63-mov-immediate-bug-report.md).
 That issue is specifically the `mov` pseudo-instruction's validation logic
 (it rejects values the underlying `mvi` would accept); it is not a
 comma-vs-no-comma syntax issue and the `mvi` instruction is itself unaffected.
@@ -283,7 +283,7 @@ bundled with this one at the sender's discretion.
 The differential probe that produced the tables above is checked into the
 LCC.js parity-testing repository:
 
-- [`public_experiments/nocomma_negative_immediate_family/`](../public_experiments/nocomma_negative_immediate_family/)
+- [`public_experiments/nocomma_negative_immediate_family/`](https://github.com/avidrucker/lccjs/tree/main/public_experiments/nocomma_negative_immediate_family/)
   — `probe.js` assembles a one-instruction program for each case (comma and
   no-comma, positive and negative) under both cuh63 6.3 and LCC.js and diffs
   the emitted `.e` hex. Runnable with `LCC_ORACLE=/path/to/cuh63/lcc node probe.js`.

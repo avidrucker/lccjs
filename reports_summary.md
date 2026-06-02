@@ -18,14 +18,14 @@ Last updated: 2026-06-02 (#258 — full no-comma negative-operand family report 
 
 | # | Area | Symptom (one line) | Severity | Report status |
 |---|------|--------------------|----------|---------------|
-| 1 | `ldr`/`str` no-comma neg `offset6` | negative offset silently encodes as **0** (silent miscompile) | **High** | Report **drafted**, not sent · superseded by family report (see #7/#8) |
+| 1 | `ldr`/`str` no-comma neg `offset6` | negative offset silently encodes as **0** (silent miscompile) | **High** | Family report **send-ready** (see #7/#8) · pending human email (#506) |
 | 2 | `mov` immediate range (OB-008) | `mov` rejects negatives its own `mvi` accepts | Medium | Report **drafted**, not sent · gate now clear **→ Charlie** |
 | 3 | `jmp` with missing register | **segfaults** (vs a clean error) | Low* | No report (preserved deviation) |
 | 4 | undefined-label `br` | leaves a runnable **blank `.e`** for a *failed* assemble | Low* | No report (footgun, premise-corrected) |
 | 5 | long source line | no length check; line **silently split** into bogus source | Medium | Report **drafted**, not sent (#260) |
 | 6 | `sext` non-`2^k−1` selector | returns silent garbage; contract unspecified | Low–Med | **SENT** — awaiting reply (#159) |
-| 7 | no-comma neg `offset6` on `jmp`/`blr`/`jsrr` | same silent-→0 as #1, on more instructions | **High** | **Drafted** — covered in family report `cuh63-nocomma-negative-operand-family-bug-report.md` |
-| 8 | no-comma neg `imm5`/`imm9` | `add`/`sub`/`and`/`cmp`/`mvi` **reject** a negative that the comma form accepts | Medium | **Drafted** — covered in family report `cuh63-nocomma-negative-operand-family-bug-report.md` |
+| 7 | no-comma neg `offset6` on `jmp`/`blr`/`jsrr` | same silent-→0 as #1, on more instructions | **High** | **Send-ready** — covered in family report · pending human email (#506) |
+| 8 | no-comma neg `imm5`/`imm9` | `add`/`sub`/`and`/`cmp`/`mvi` **reject** a negative that the comma form accepts | Medium | **Send-ready** — covered in family report · pending human email (#506) |
 
 \* "Low" severity but a genuine defect; classified low because the trigger is a
 malformed/edge-case program rather than valid everyday source.
@@ -65,7 +65,7 @@ written yet. **NEW**: surfaced by this pass, not yet in any ledger.
 - **Family report (primary):** [`docs/cuh63-nocomma-negative-operand-family-bug-report.md`](./docs/cuh63-nocomma-negative-operand-family-bug-report.md) — covers all seven instructions; ready to send.
 - **Original `ldr`/`str` report:** [`docs/cuh63-ldr-str-silent-miscompile-bug-report.md`](./docs/cuh63-ldr-str-silent-miscompile-bug-report.md) — superseded by the family report; retained as a historical record with an update notice.
 - **Evidence:** [`public_experiments/nocomma_negative_immediate_family/`](./public_experiments/nocomma_negative_immediate_family/), [`public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/`](./public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/)
-- **Status: drafted, not sent** — family report is complete (#258). Sending is the human's call; recommend bundling with the `mov` report (#2/OB-008) at sender's discretion.
+- **Status: send-ready, pending human email** — report finalised with absolute GitHub URLs (#506); PDF conversion and email are the human's action. Once sent, flip this row to **SENT** and file a follow-up issue (parallel to #159) to act on any reply. Recommend deciding whether to bundle with the `mov` report (#2/OB-008) before sending.
 
 ### 2. `mov` rejects negative immediates that `mvi` accepts (OB-008)
 - **Symptom:** the shipped ISA summary defines `mov dr, imm9` as a pseudo-instruction
