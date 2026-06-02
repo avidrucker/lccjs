@@ -45,7 +45,6 @@ class AssemblerPlus extends Assembler {
     this.outputFileName = this.constructOutputFileName(this.inputFileName, '.ep');
 
     // Now do the standard 2-pass logic from parent
-    console.log('Starting LCC+ assembly pass 1');
     this.pass = 1;
     this.locCtr = 0;
     this.lineNum = 0;
@@ -59,7 +58,6 @@ class AssemblerPlus extends Assembler {
       fatalExit('Errors encountered during Pass 1', 1);
     }
 
-    console.log('Starting LCC+ assembly pass 2');
     this.pass = 2;
     this.locCtr = 0;
     this.lineNum = 0;
@@ -82,7 +80,6 @@ class AssemblerPlus extends Assembler {
 
     // Finally write the .ep file
     this.writeOutputFile();
-    console.log(`Output file = ${this.outputFileName}`);
   }
 
   // convenience function for writing a machine word and incrementing locCtr
