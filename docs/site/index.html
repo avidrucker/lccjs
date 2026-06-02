@@ -95,6 +95,7 @@ code { font-family:var(--mono-font); }
     <option value="nord">Nord</option>
     <option value="tokyo-night">Tokyo Night</option>
     <option value="solarized-light">Solarized Light</option>
+    <option value="zenburn">Zenburn</option>
     <option value="retro-console-dark">Retro Console Dark</option>
     <option value="retro-console-light">Retro Console Light</option>
     </select>
@@ -162,6 +163,13 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">    dout</span><span style="color:#268BD2"> r0</span></span>
 <span class="line"><span style="color:#859900">    nl</span></span>
 <span class="line"><span style="color:#859900">    halt</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoA.a: simple program assembly/execution and test input/output caching</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoA.a: simple program assembly/execution and test input/output caching</span></span>
@@ -312,6 +320,22 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#657B83">hi:         </span><span style="color:#859900">.string</span><span style="color:#2AA198"> "Hi "</span></span>
 <span class="line"><span style="color:#657B83">buffer:     </span><span style="color:#859900">.zero</span><span style="color:#D33682"> 10</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoO.a: program that tests IO and LST generation thoroughly</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            lea</span><span style="color:#DEDEDE"> r0, prompt</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            lea</span><span style="color:#DEDEDE"> r0, buffer</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            sin</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            lea</span><span style="color:#DEDEDE"> r1, hi</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            m</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            halt</span></span>
+<span class="line"><span style="color:#DEDEDE">prompt:     </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Name: "</span></span>
+<span class="line"><span style="color:#DEDEDE">hi:         </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Hi "</span></span>
+<span class="line"><span style="color:#DEDEDE">buffer:     </span><span style="color:#F0DFAF;font-weight:bold">.zero</span><span style="color:#8CD0D3"> 10</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoO.a: program that tests IO and LST generation thoroughly</span></span>
 <span class="line"><span style="color:#8D9A4A">            lea</span><span style="color:#D0CF9D"> r0, prompt</span></span>
@@ -422,6 +446,15 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">    dout</span><span style="color:#268BD2"> r0</span></span>
 <span class="line"><span style="color:#859900">    nl</span></span>
 <span class="line"><span style="color:#859900">    halt</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demo program that tests the detection of division by zero</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    div</span><span style="color:#DEDEDE"> r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demo program that tests the detection of division by zero</span></span>
@@ -608,6 +641,26 @@ code { font-family:var(--mono-font); }
 <span class="line"></span>
 <span class="line"><span style="color:#657B83">onesecond: </span><span style="color:#859900">.word</span><span style="color:#D33682"> 1000</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; plusB.ap: clear and sleep</span></span>
+<span class="line"><span style="color:#7F9F7F">; This program prints out the letters 'a' through 'f'</span></span>
+<span class="line"><span style="color:#7F9F7F">; in the terminal 'typewriter' style</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">     .lccplus</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">      clear</span><span style="color:#7F9F7F"> ; clears the screen of anything else that was in the terminal</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">      ld</span><span style="color:#DEDEDE"> r1, onesecond </span><span style="color:#7F9F7F">; load 1000 into r1 to represent milliseconds</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">      mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#CC9393">'a'</span><span style="color:#7F9F7F"> ; our initialized 'current char' to print goes into r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">      mov</span><span style="color:#DEDEDE"> r2, </span><span style="color:#CC9393">'f'</span><span style="color:#7F9F7F"> ; this is our 'terminal char'</span></span>
+<span class="line"><span style="color:#DEDEDE">loop: </span><span style="color:#F0DFAF;font-weight:bold">cmp</span><span style="color:#DEDEDE"> r0, r2 </span><span style="color:#7F9F7F">; check to see how the current compares with the terminal</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">      brgt</span><span style="color:#DEDEDE"> done </span><span style="color:#7F9F7F">; if the current is greater than the terminal, branch to done label</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">      aout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; print the current char</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">      sleep</span><span style="color:#DEDEDE"> r1 </span><span style="color:#7F9F7F">; pause for 1 second</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">      add</span><span style="color:#DEDEDE"> r0, r0, </span><span style="color:#8CD0D3">1</span><span style="color:#7F9F7F"> ; increment the char</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">      br</span><span style="color:#DEDEDE"> loop </span><span style="color:#7F9F7F">; go back to the loop label</span></span>
+<span class="line"><span style="color:#DEDEDE">done: </span><span style="color:#F0DFAF;font-weight:bold">nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">      halt</span><span style="color:#7F9F7F"> ; end the program</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">onesecond: </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 1000</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; plusB.ap: clear and sleep</span></span>
 <span class="line"><span style="color:#446710">; This program prints out the letters 'a' through 'f'</span></span>
@@ -712,6 +765,13 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">    dout</span><span style="color:#268BD2"> r0</span></span>
 <span class="line"><span style="color:#859900">    nl</span></span>
 <span class="line"><span style="color:#859900">    halt</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoA.a: simple program assembly/execution and test input/output caching</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoA.a: simple program assembly/execution and test input/output caching</span></span>
@@ -1062,6 +1122,47 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#657B83">buffer1: </span><span style="color:#859900">.zero</span><span style="color:#D33682"> 10</span></span>
 <span class="line"><span style="color:#657B83">buffer2: </span><span style="color:#859900">.zero</span><span style="color:#D33682"> 10</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; example program to test string input and output</span></span>
+<span class="line"><span style="color:#7F9F7F">; furthermore, this program will also be used to</span></span>
+<span class="line"><span style="color:#7F9F7F">; test lst/bst file generation with comments and</span></span>
+<span class="line"><span style="color:#7F9F7F">; blank lines when lcc.js is used to assemble and</span></span>
+<span class="line"><span style="color:#7F9F7F">; interpret from a .a file all in one go, versus </span></span>
+<span class="line"><span style="color:#7F9F7F">; when using interpreter.js by itself on a .e file</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r0, ask </span><span style="color:#7F9F7F">; example comment on a line of code</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r0, buffer1    </span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sin</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r1, hi</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r0, buffer1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r1, period</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r1, ask2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r1, buffer2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sin</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r2, hi</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r2, space</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r2, period</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r2 </span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span><span style="color:#7F9F7F"> ; the next 2 lines are intentionally blank</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">ask:  </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "What's your first name? "</span></span>
+<span class="line"><span style="color:#DEDEDE">ask2: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "What's your last name? "</span></span>
+<span class="line"><span style="color:#DEDEDE">hi:   </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Hi, "</span></span>
+<span class="line"><span style="color:#DEDEDE">period: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "."</span></span>
+<span class="line"><span style="color:#DEDEDE">space: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> " "</span></span>
+<span class="line"><span style="color:#DEDEDE">buffer1: </span><span style="color:#F0DFAF;font-weight:bold">.zero</span><span style="color:#8CD0D3"> 10</span></span>
+<span class="line"><span style="color:#DEDEDE">buffer2: </span><span style="color:#F0DFAF;font-weight:bold">.zero</span><span style="color:#8CD0D3"> 10</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; example program to test string input and output</span></span>
 <span class="line"><span style="color:#446710">; furthermore, this program will also be used to</span></span>
@@ -1222,6 +1323,15 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">    halt</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#657B83">x:  </span><span style="color:#859900">.word</span><span style="color:#D33682"> 5</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#F0DFAF;font-weight:bold">    ld</span><span style="color:#DEDEDE"> r0, x</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    add</span><span style="color:#DEDEDE"> r0, r0, </span><span style="color:#8CD0D3">2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">x:  </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 5</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#8D9A4A">    ld</span><span style="color:#D0CF9D"> r0, x</span></span>
@@ -1415,6 +1525,27 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">    dout</span></span>
 <span class="line"><span style="color:#859900">    nl</span></span>
 <span class="line"><span style="color:#859900">    halt</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">    ; mova r0, 5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    add</span><span style="color:#DEDEDE"> r0, r0, </span><span style="color:#8CD0D3">2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r1, r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    add</span><span style="color:#DEDEDE"> r1, r1, </span><span style="color:#8CD0D3">3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mvi</span><span style="color:#DEDEDE"> r2, </span><span style="color:#8CD0D3">2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mvr</span><span style="color:#DEDEDE"> r3, r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    add</span><span style="color:#DEDEDE"> r3, r3, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">    ; mova r0, 5</span></span>
@@ -1624,6 +1755,26 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">            ret</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#657B83">x:          </span><span style="color:#859900">.word</span><span style="color:#D33682"> 5</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#DEDEDE">startup:    </span><span style="color:#F0DFAF;font-weight:bold">bl</span><span style="color:#DEDEDE"> main</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">main:       </span><span style="color:#F0DFAF;font-weight:bold">push</span><span style="color:#DEDEDE"> lr</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            push</span><span style="color:#DEDEDE"> fp</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            mov</span><span style="color:#DEDEDE"> fp, sp</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            ld</span><span style="color:#DEDEDE"> r0, x</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            add</span><span style="color:#DEDEDE"> r0, r0, </span><span style="color:#8CD0D3">2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            mov</span><span style="color:#DEDEDE"> sp, fp</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            pop</span><span style="color:#DEDEDE"> fp</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            pop</span><span style="color:#DEDEDE"> lr</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            ret</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">x:          </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 5</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#D0CF9D">startup:    </span><span style="color:#8D9A4A">bl</span><span style="color:#D0CF9D"> main</span></span>
@@ -1935,6 +2086,39 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">    halt</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#657B83">x:  </span><span style="color:#859900">.word</span><span style="color:#D33682"> 0xffff</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#CC9393">'B'</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    aout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">65</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    aout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">0xff</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">-15</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    udout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    ld</span><span style="color:#DEDEDE"> r0, x</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    udout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    add</span><span style="color:#DEDEDE"> r0, r0, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    udout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">x:  </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 0xffff</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#8D9A4A">    mov</span><span style="color:#D0CF9D"> r0, </span><span style="color:#D0CF9D">'B'</span></span>
@@ -2337,6 +2521,47 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#657B83">signed: </span><span style="color:#859900">.string</span><span style="color:#2AA198"> " signed"</span></span>
 <span class="line"><span style="color:#657B83">unsigned: </span><span style="color:#859900">.string</span><span style="color:#2AA198"> " unsigned"</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r0, prompt3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    ain</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r1, reply</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    aout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r0, prompt1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    din</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r1, reply</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r1, signed</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r1, reply</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    udout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r1, unsigned</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r0, prompt2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    hin</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r1, reply</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">prompt1: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Enter a negative number: "</span></span>
+<span class="line"><span style="color:#DEDEDE">prompt2: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Enter a hex number: "</span></span>
+<span class="line"><span style="color:#DEDEDE">prompt3: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Enter a single character: "</span></span>
+<span class="line"><span style="color:#DEDEDE">reply: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "You entered: "</span></span>
+<span class="line"><span style="color:#DEDEDE">signed: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> " signed"</span></span>
+<span class="line"><span style="color:#DEDEDE">unsigned: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> " unsigned"</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#8D9A4A">    lea</span><span style="color:#D0CF9D"> r0, prompt3</span></span>
 <span class="line"><span style="color:#8D9A4A">    sout</span><span style="color:#D0CF9D"> r0</span></span>
@@ -2570,6 +2795,24 @@ code { font-family:var(--mono-font); }
 <span class="line"></span>
 <span class="line"><span style="color:#657B83">x: </span><span style="color:#859900">.word</span><span style="color:#D33682"> -100</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#F0DFAF;font-weight:bold">    ld</span><span style="color:#DEDEDE"> r0, x</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">-5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r2, </span><span style="color:#8CD0D3">10</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    add</span><span style="color:#DEDEDE"> r2, r2, </span><span style="color:#8CD0D3">-12</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r3, </span><span style="color:#8CD0D3">5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    sub</span><span style="color:#DEDEDE"> r3, r3, </span><span style="color:#8CD0D3">8</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">x: </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> -100</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#8D9A4A">    ld</span><span style="color:#D0CF9D"> r0, x</span></span>
 <span class="line"><span style="color:#8D9A4A">    dout</span><span style="color:#D0CF9D"> r0</span></span>
@@ -2692,6 +2935,16 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">          sub</span><span style="color:#268BD2"> r0</span><span style="color:#657B83">, </span><span style="color:#268BD2">r0</span><span style="color:#657B83">, </span><span style="color:#D33682">1</span></span>
 <span class="line"><span style="color:#859900">          br</span><span style="color:#657B83"> start</span></span>
 <span class="line"><span style="color:#657B83">end:      </span><span style="color:#859900">halt</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#F0DFAF;font-weight:bold">          mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">10</span></span>
+<span class="line"><span style="color:#DEDEDE">start:    </span><span style="color:#F0DFAF;font-weight:bold">cmp</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          bre</span><span style="color:#DEDEDE"> end</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          sub</span><span style="color:#DEDEDE"> r0, r0, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          br</span><span style="color:#DEDEDE"> start</span></span>
+<span class="line"><span style="color:#DEDEDE">end:      </span><span style="color:#F0DFAF;font-weight:bold">halt</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#8D9A4A">          mov</span><span style="color:#D0CF9D"> r0, 10</span></span>
@@ -2872,6 +3125,25 @@ code { font-family:var(--mono-font); }
 <span class="line"></span>
 <span class="line"><span style="color:#657B83">lastchar: </span><span style="color:#859900">.word</span><span style="color:#2AA198"> 'c'</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#F0DFAF;font-weight:bold">            mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#CC9393">'a'</span></span>
+<span class="line"><span style="color:#DEDEDE">outerloop:  </span><span style="color:#F0DFAF;font-weight:bold">ld</span><span style="color:#DEDEDE"> r2, lastchar</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            cmp</span><span style="color:#DEDEDE"> r1, r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            bre</span><span style="color:#DEDEDE"> postoloop</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">0</span></span>
+<span class="line"><span style="color:#DEDEDE">innerloop:  </span><span style="color:#F0DFAF;font-weight:bold">cmp</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">-1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            bre</span><span style="color:#DEDEDE"> postiloop</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            aout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            add</span><span style="color:#DEDEDE"> r0, r0, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            br</span><span style="color:#DEDEDE"> innerloop</span></span>
+<span class="line"><span style="color:#DEDEDE">postiloop:  </span><span style="color:#F0DFAF;font-weight:bold">add</span><span style="color:#DEDEDE"> r1, r1, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            br</span><span style="color:#DEDEDE"> outerloop</span></span>
+<span class="line"><span style="color:#DEDEDE">postoloop:  </span><span style="color:#F0DFAF;font-weight:bold">halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">lastchar: </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#CC9393"> 'c'</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#8D9A4A">            mov</span><span style="color:#D0CF9D"> r1, </span><span style="color:#D0CF9D">'a'</span></span>
 <span class="line"><span style="color:#D0CF9D">outerloop:  </span><span style="color:#8D9A4A">ld</span><span style="color:#D0CF9D"> r2, lastchar</span></span>
@@ -3044,6 +3316,22 @@ code { font-family:var(--mono-font); }
 <span class="line"></span>
 <span class="line"><span style="color:#657B83">x:      </span><span style="color:#859900">.word</span><span style="color:#D33682"> 7</span></span>
 <span class="line"><span style="color:#657B83">y:      </span><span style="color:#859900">.word</span><span style="color:#D33682"> 23</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; program that tests the m command</span></span>
+<span class="line"><span style="color:#7F9F7F">; demonstrates that disassembly of programs</span></span>
+<span class="line"><span style="color:#7F9F7F">; with unused labels outputs unlabeled data</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        m</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r2, </span><span style="color:#8CD0D3">11</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        st</span><span style="color:#DEDEDE"> r2, x</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        m</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">x:      </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 7</span></span>
+<span class="line"><span style="color:#DEDEDE">y:      </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 23</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; program that tests the m command</span></span>
@@ -3243,6 +3531,26 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">        r</span><span style="color:#657B83"> </span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#859900">        halt</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; program that tests the r command</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        r</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r2, </span><span style="color:#8CD0D3">11</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        r</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">-1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        add</span><span style="color:#DEDEDE"> r2, r0, r1</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        r</span><span style="color:#DEDEDE"> </span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; program that tests the r command</span></span>
@@ -3595,6 +3903,44 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">          pop</span><span style="color:#268BD2"> lr</span></span>
 <span class="line"><span style="color:#859900">          ret</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; program that tests the s command</span></span>
+<span class="line"><span style="color:#7F9F7F">; and also compares .lst/.bst file</span></span>
+<span class="line"><span style="color:#7F9F7F">; generation with empty lines at</span></span>
+<span class="line"><span style="color:#7F9F7F">; the end of the file</span></span>
+<span class="line"><span style="color:#DEDEDE">startup:  s</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"><span style="color:#DEDEDE">          </span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          push</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          s</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          bl</span><span style="color:#DEDEDE"> main</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          add</span><span style="color:#DEDEDE"> sp, sp, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">main:     </span><span style="color:#F0DFAF;font-weight:bold">push</span><span style="color:#DEDEDE"> lr</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          push</span><span style="color:#DEDEDE"> fp</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          mov</span><span style="color:#DEDEDE"> fp, sp</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          s</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          push</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">10</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          push</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#DEDEDE">          </span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          s</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          mov</span><span style="color:#DEDEDE"> sp, fp</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          pop</span><span style="color:#DEDEDE"> fp</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          pop</span><span style="color:#DEDEDE"> lr</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          ret</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; program that tests the s command</span></span>
 <span class="line"><span style="color:#446710">; and also compares .lst/.bst file</span></span>
@@ -3750,6 +4096,15 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">    nl</span></span>
 <span class="line"><span style="color:#859900">    halt</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demo program that tests the detection of division by zero</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    div</span><span style="color:#DEDEDE"> r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demo program that tests the detection of division by zero</span></span>
 <span class="line"><span style="color:#8D9A4A">    mov</span><span style="color:#D0CF9D"> r0, 3</span></span>
@@ -3903,6 +4258,22 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#657B83">hi:         </span><span style="color:#859900">.string</span><span style="color:#2AA198"> "Hi "</span></span>
 <span class="line"><span style="color:#657B83">buffer:     </span><span style="color:#859900">.zero</span><span style="color:#D33682"> 10</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoO.a: program that tests IO and LST generation thoroughly</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            lea</span><span style="color:#DEDEDE"> r0, prompt</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            lea</span><span style="color:#DEDEDE"> r0, buffer</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            sin</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            lea</span><span style="color:#DEDEDE"> r1, hi</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            sout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            m</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">            halt</span></span>
+<span class="line"><span style="color:#DEDEDE">prompt:     </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Name: "</span></span>
+<span class="line"><span style="color:#DEDEDE">hi:         </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Hi "</span></span>
+<span class="line"><span style="color:#DEDEDE">buffer:     </span><span style="color:#F0DFAF;font-weight:bold">.zero</span><span style="color:#8CD0D3"> 10</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoO.a: program that tests IO and LST generation thoroughly</span></span>
 <span class="line"><span style="color:#8D9A4A">            lea</span><span style="color:#D0CF9D"> r0, prompt</span></span>
@@ -4054,6 +4425,20 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">       bl</span><span style="color:#657B83"> hi</span></span>
 <span class="line"><span style="color:#859900">       halt</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoP.a tests the setting of the entry point</span></span>
+<span class="line"><span style="color:#7F9F7F">; via the S header while leaving the load point </span></span>
+<span class="line"><span style="color:#7F9F7F">; at the default 0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">       .start</span><span style="color:#DEDEDE"> main</span></span>
+<span class="line"><span style="color:#DEDEDE">hi:    </span><span style="color:#F0DFAF;font-weight:bold">lea</span><span style="color:#DEDEDE"> r0, msg</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">       sout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">       ret</span></span>
+<span class="line"><span style="color:#DEDEDE">msg:   </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Hi</span><span style="color:#CFBFAF;font-weight:bold">\n</span><span style="color:#CC9393">"</span></span>
+<span class="line"><span style="color:#7F9F7F">;===============</span></span>
+<span class="line"><span style="color:#DEDEDE">main:  </span><span style="color:#F0DFAF;font-weight:bold">bl</span><span style="color:#DEDEDE"> hi </span><span style="color:#7F9F7F">; entry point is here</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">       bl</span><span style="color:#DEDEDE"> hi</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">       halt</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoP.a tests the setting of the entry point</span></span>
 <span class="line"><span style="color:#446710">; via the S header while leaving the load point </span></span>
@@ -4176,6 +4561,17 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">    halt</span><span style="color:#93A1A1;font-style:italic">      ; 2</span></span>
 <span class="line"><span style="color:#657B83">x:  </span><span style="color:#859900">.word</span><span style="color:#657B83"> y   </span><span style="color:#93A1A1;font-style:italic">; 3</span></span>
 <span class="line"><span style="color:#657B83">y:  </span><span style="color:#859900">.word</span><span style="color:#D33682"> 10</span><span style="color:#93A1A1;font-style:italic">  ; 4</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoQ.a tests using labels as operands to .word</span></span>
+<span class="line"><span style="color:#7F9F7F">; directives. The program should output 10.</span></span>
+<span class="line"><span style="color:#7F9F7F">; Also, what would happen if we were to run</span></span>
+<span class="line"><span style="color:#7F9F7F">; this program using a load point of 0x3000?</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    ld</span><span style="color:#DEDEDE"> r0, x  </span><span style="color:#7F9F7F">; 0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0   </span><span style="color:#7F9F7F">; 1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span><span style="color:#7F9F7F">      ; 2</span></span>
+<span class="line"><span style="color:#DEDEDE">x:  </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#DEDEDE"> y   </span><span style="color:#7F9F7F">; 3</span></span>
+<span class="line"><span style="color:#DEDEDE">y:  </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 10</span><span style="color:#7F9F7F">  ; 4</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoQ.a tests using labels as operands to .word</span></span>
@@ -4645,6 +5041,61 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#93A1A1;font-style:italic">;   2 while preserving the sign.</span></span>
 <span class="line"><span style="color:#93A1A1;font-style:italic">; - Logical right shift (`srl`) is useful for unsigned </span></span>
 <span class="line"><span style="color:#93A1A1;font-style:italic">;   binary arithmetic and bit manipulation.</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoR.a: Demonstrating shift commands srl, sra, sll</span></span>
+<span class="line"><span style="color:#7F9F7F">;</span></span>
+<span class="line"><span style="color:#7F9F7F">; This program shows the effects of shifting operations </span></span>
+<span class="line"><span style="color:#7F9F7F">; on positive and negative numbers.</span></span>
+<span class="line"><span style="color:#7F9F7F">; We use dout to display the results and nl for new lines.</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Initialize r0 with a positive number</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">16</span><span style="color:#7F9F7F">      ; r0 = 16 (binary 0000 0000 0001 0000)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; Shift r0 right logically by 1 (divide by 2, zeros shifted in)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        srl</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">1</span><span style="color:#7F9F7F">       ; r0 = r0 >> 1 (logical shift right)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; After srl, r0 should be 8 (binary 0000 0000 0000 1000)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0         </span><span style="color:#7F9F7F">; Output: 8</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Initialize r1 with a negative number</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">-16</span><span style="color:#7F9F7F">     ; r1 = -16 (binary 1111 1111 1111 0000)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; Shift r1 right logically by 1 (zeros shifted in)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        srl</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">1</span><span style="color:#7F9F7F">       ; r1 = r1 >> 1 (logical shift right)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; After srl, r1 becomes a large positive number due to zeros shifted in</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r1         </span><span style="color:#7F9F7F">; Output: 32760</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Now shift r1 right arithmetically by 1 (sign bit replicated)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">-16</span><span style="color:#7F9F7F">     ; Reset r1 to -16</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sra</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">1</span><span style="color:#7F9F7F">       ; r1 = r1 >> 1 (arithmetic shift right)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; After sra, r1 remains negative</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r1         </span><span style="color:#7F9F7F">; Output: -8</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Shift r0 left logically by 1 (multiply by 2)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">16</span><span style="color:#7F9F7F">      ; Reset r0 to 16</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sll</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">1</span><span style="color:#7F9F7F">       ; r0 = r0 &#x3C;&#x3C; 1 (logical shift left)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; After sll, r0 should be 32 (binary 0000 0000 0010 0000)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0         </span><span style="color:#7F9F7F">; Output: 32</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Demonstrate that shifting left multiplies by powers of 2</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; Shift r0 left by 2 (multiply by 4)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">3</span><span style="color:#7F9F7F">       ; r0 = 3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sll</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">2</span><span style="color:#7F9F7F">       ; r0 = r0 &#x3C;&#x3C; 2</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; After sll, r0 should be 12 (3 * 4)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0         </span><span style="color:#7F9F7F">; Output: 12</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">; Practical applications:</span></span>
+<span class="line"><span style="color:#7F9F7F">; - Left shift (`sll`) is used for fast multiplication by </span></span>
+<span class="line"><span style="color:#7F9F7F">;   powers of 2.</span></span>
+<span class="line"><span style="color:#7F9F7F">; - Right shift (`sra`) is used for division by powers of </span></span>
+<span class="line"><span style="color:#7F9F7F">;   2 while preserving the sign.</span></span>
+<span class="line"><span style="color:#7F9F7F">; - Logical right shift (`srl`) is useful for unsigned </span></span>
+<span class="line"><span style="color:#7F9F7F">;   binary arithmetic and bit manipulation.</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoR.a: Demonstrating shift commands srl, sra, sll</span></span>
@@ -5146,6 +5597,54 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#93A1A1;font-style:italic">; - Rotate operations are used in cryptography algorithms like RSA and AES for data scrambling.</span></span>
 <span class="line"><span style="color:#93A1A1;font-style:italic">; - Rotating bits helps implement circular buffers and cyclic redundancy checks (CRCs).</span></span>
 <span class="line"><span style="color:#93A1A1;font-style:italic">; - Useful in graphics programming for color transformations and pixel manipulations.</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoS.a: Demonstrating rotate commands rol, ror</span></span>
+<span class="line"><span style="color:#7F9F7F">;</span></span>
+<span class="line"><span style="color:#7F9F7F">; This program shows how bits are rotated in registers.</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Initialize r0 with a specific bit pattern</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        ld</span><span style="color:#DEDEDE"> r0, num  </span><span style="color:#7F9F7F">; r0 = binary 1000 0000 0000 0001</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; Rotate r0 left by 1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#DEDEDE">	</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        rol</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">1</span><span style="color:#7F9F7F">       ; r0 = rol(r0, 1)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; After rol, r0 should be 0x0003 (binary 0000 0000 0000 0011)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0         </span><span style="color:#7F9F7F">; Output: 3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Rotate r0 right by 1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        ror</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">1</span><span style="color:#7F9F7F">       ; r0 = ror(r0, 1)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; After ror, r0 should be back to 0x8001</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0         </span><span style="color:#7F9F7F">; Output: 8001</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Rotate r1 left by 4</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        ld</span><span style="color:#DEDEDE"> r1, num2  </span><span style="color:#7F9F7F">; r1 = binary 0001 0010 0011 0100</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        rol</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">4</span><span style="color:#7F9F7F">       ; r1 = rol(r1, 4)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; After rol, r1 should be 0x2341 (rotated bits)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r1         </span><span style="color:#7F9F7F">; Output: 2341</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Rotate r1 right by 4</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        ror</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">4</span><span style="color:#7F9F7F">       ; r1 = ror(r1, 4)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; After ror, r1 should be back to 0x1234</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r1         </span><span style="color:#7F9F7F">; Output: 1234</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">num: </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 0x8001</span></span>
+<span class="line"><span style="color:#DEDEDE">num2: </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 0x1234</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">; Practical applications:</span></span>
+<span class="line"><span style="color:#7F9F7F">; - Rotate operations are used in cryptography algorithms like RSA and AES for data scrambling.</span></span>
+<span class="line"><span style="color:#7F9F7F">; - Rotating bits helps implement circular buffers and cyclic redundancy checks (CRCs).</span></span>
+<span class="line"><span style="color:#7F9F7F">; - Useful in graphics programming for color transformations and pixel manipulations.</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoS.a: Demonstrating rotate commands rol, ror</span></span>
@@ -5673,6 +6172,59 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#93A1A1;font-style:italic">; - **OR** is used for setting specific bits without altering others.</span></span>
 <span class="line"><span style="color:#93A1A1;font-style:italic">; - **XOR** is used for toggling bits and is fundamental in encryption algorithms.</span></span>
 <span class="line"><span style="color:#93A1A1;font-style:italic">; - Bit manipulation is crucial in low-level programming, embedded systems, and optimization tasks.</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoT.a: Demonstrating bitwise operations and, or, xor</span></span>
+<span class="line"><span style="color:#7F9F7F">;</span></span>
+<span class="line"><span style="color:#7F9F7F">; This program shows how to use bitwise operations for masking and modifying bits.</span></span>
+<span class="line"><span style="color:#7F9F7F">; We use dout and hout to display the results.</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Initialize r0 with a value</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">0xAA</span><span style="color:#7F9F7F">    ; r0 = 0x00AA</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Use AND to clear bits (masking)</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">0xF0</span><span style="color:#7F9F7F">    ; Mask to keep only the upper 4 bits</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        and</span><span style="color:#DEDEDE"> r2, r0, r1  </span><span style="color:#7F9F7F">; r2 = r0 &#x26; r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r2         </span><span style="color:#7F9F7F">; Output: 00A0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Use OR to set bits</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">0xF</span><span style="color:#7F9F7F">     ; Mask to set lower 4 bits</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        or</span><span style="color:#DEDEDE"> r0, r1       </span><span style="color:#7F9F7F">; r0 = r0 | r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0         </span><span style="color:#7F9F7F">; Output: 00AF</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Use XOR to toggle bits</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">0xFF</span><span style="color:#7F9F7F">    ; Mask to toggle all bits</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        xor</span><span style="color:#DEDEDE"> r0, r1      </span><span style="color:#7F9F7F">; r0 = r0 ^ r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0         </span><span style="color:#7F9F7F">; Output: 50  </span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">        ; Practical example: Checking if bit 3 is set (bit indexing from 0)</span></span>
+<span class="line"><span style="color:#7F9F7F">        ; Let's check if bit 3 (from LSB) is set in r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">0x8</span><span style="color:#7F9F7F">     ; Mask for bit 3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        and</span><span style="color:#DEDEDE"> r2, r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        cmp</span><span style="color:#DEDEDE"> r2, </span><span style="color:#8CD0D3">0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        bre</span><span style="color:#DEDEDE"> bit_not_set</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        lea</span><span style="color:#DEDEDE"> r3, msg_set</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sout</span><span style="color:#DEDEDE"> r3         </span><span style="color:#7F9F7F">; Output: "Bit 3 is set"</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        br</span><span style="color:#DEDEDE"> end_msg</span></span>
+<span class="line"><span style="color:#DEDEDE">bit_not_set:</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        lea</span><span style="color:#DEDEDE"> r3, msg_not_set</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sout</span><span style="color:#DEDEDE"> r3         </span><span style="color:#7F9F7F">; Output: "Bit 3 is not set"</span></span>
+<span class="line"><span style="color:#DEDEDE">end_msg:</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">msg_set:     </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Bit 3 is set"</span></span>
+<span class="line"><span style="color:#DEDEDE">msg_not_set: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Bit 3 is not set"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">; Practical applications:</span></span>
+<span class="line"><span style="color:#7F9F7F">; - **AND** is used for masking bits to clear or check specific bits.</span></span>
+<span class="line"><span style="color:#7F9F7F">; - **OR** is used for setting specific bits without altering others.</span></span>
+<span class="line"><span style="color:#7F9F7F">; - **XOR** is used for toggling bits and is fundamental in encryption algorithms.</span></span>
+<span class="line"><span style="color:#7F9F7F">; - Bit manipulation is crucial in low-level programming, embedded systems, and optimization tasks.</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoT.a: Demonstrating bitwise operations and, or, xor</span></span>
@@ -6275,6 +6827,67 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#93A1A1;font-style:italic">; - Sign extension is necessary when converting smaller signed integers to larger ones.</span></span>
 <span class="line"><span style="color:#93A1A1;font-style:italic">; - Ensures correct arithmetic when dealing with data from sources with different bit widths.</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoU.a: Demonstrating the sext instruction</span></span>
+<span class="line"><span style="color:#7F9F7F">;</span></span>
+<span class="line"><span style="color:#7F9F7F">; This program shows how sign extension works.</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">0xFF</span><span style="color:#7F9F7F"> ; 0b 1111 1111</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        lea</span><span style="color:#DEDEDE"> r2, adj</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sext</span><span style="color:#DEDEDE"> r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        lea</span><span style="color:#DEDEDE"> r2, result</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">0x11</span><span style="color:#7F9F7F"> ; 0b 0001 0001</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        lea</span><span style="color:#DEDEDE"> r2, adj</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sext</span><span style="color:#DEDEDE"> r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        lea</span><span style="color:#DEDEDE"> r2, result</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">15</span></span>
+<span class="line"><span style="color:#DEDEDE">repeat:</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        cmp</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">-1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        bre</span><span style="color:#DEDEDE"> done</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        ld</span><span style="color:#DEDEDE"> r0, x </span><span style="color:#7F9F7F">; 0b 0001 0010 0011 0100</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        lea</span><span style="color:#DEDEDE"> r2, adj</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sext</span><span style="color:#DEDEDE"> r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        lea</span><span style="color:#DEDEDE"> r2, result</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sub</span><span style="color:#DEDEDE"> r1, r1, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        br</span><span style="color:#DEDEDE"> repeat</span></span>
+<span class="line"><span style="color:#DEDEDE">done:</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">x:      </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 0x1234</span></span>
+<span class="line"><span style="color:#DEDEDE">adj:    </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Sign extending field # "</span></span>
+<span class="line"><span style="color:#DEDEDE">result: </span><span style="color:#F0DFAF;font-weight:bold">.string</span><span style="color:#CC9393"> "Result: "</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7F9F7F">; Practical applications:</span></span>
+<span class="line"><span style="color:#7F9F7F">; - Sign extension is necessary when converting smaller signed integers to larger ones.</span></span>
+<span class="line"><span style="color:#7F9F7F">; - Ensures correct arithmetic when dealing with data from sources with different bit widths.</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoU.a: Demonstrating the sext instruction</span></span>
 <span class="line"><span style="color:#446710">;</span></span>
@@ -6563,6 +7176,26 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#859900">        rem</span><span style="color:#268BD2"> r0</span><span style="color:#657B83">, </span><span style="color:#268BD2">r1</span></span>
 <span class="line"><span style="color:#859900">        dout</span><span style="color:#268BD2"> r0</span><span style="color:#93A1A1;font-style:italic"> ; should output 1</span></span>
 <span class="line"><span style="color:#859900">        halt</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoV.a demos the usage of mul, div, and rem instructions</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">10</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mul</span><span style="color:#DEDEDE"> r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; should output 30</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">10</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        div</span><span style="color:#DEDEDE"> r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; should output 5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">10</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        rem</span><span style="color:#DEDEDE"> r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; should output 1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoV.a demos the usage of mul, div, and rem instructions</span></span>
@@ -7035,6 +7668,59 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#657B83">        </span></span>
 <span class="line"><span style="color:#657B83">x:     </span><span style="color:#859900">.word</span><span style="color:#D33682"> 0xffff</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoW.a tests flag setting and branching instructions</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sub</span><span style="color:#DEDEDE"> r0, r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints -1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        brn</span><span style="color:#DEDEDE"> @L1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"><span style="color:#DEDEDE">@L1     </span><span style="color:#F0DFAF;font-weight:bold">mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">4</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        add</span><span style="color:#DEDEDE"> r0, r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 7</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        brp</span><span style="color:#DEDEDE"> @L2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"><span style="color:#DEDEDE">@L2:    </span><span style="color:#F0DFAF;font-weight:bold">mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        mov</span><span style="color:#DEDEDE"> r1, </span><span style="color:#8CD0D3">5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        sub</span><span style="color:#DEDEDE"> r0, r0, r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        brz</span><span style="color:#DEDEDE"> @L3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"><span style="color:#DEDEDE">@L3     </span><span style="color:#F0DFAF;font-weight:bold">mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">6</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        cmp</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 6</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        brgt</span><span style="color:#DEDEDE"> @L4</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"><span style="color:#DEDEDE">@L4:    </span><span style="color:#F0DFAF;font-weight:bold">mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">7</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        cmp</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">8</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 7</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        brlt</span><span style="color:#DEDEDE"> @L5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"><span style="color:#DEDEDE">@L5:    </span><span style="color:#F0DFAF;font-weight:bold">mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        cmp</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        brnz</span><span style="color:#DEDEDE"> @L6</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"><span style="color:#DEDEDE">@L6:    </span><span style="color:#F0DFAF;font-weight:bold">ld</span><span style="color:#DEDEDE"> r0, x</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        add</span><span style="color:#DEDEDE"> r0, r0, </span><span style="color:#8CD0D3">1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        brc</span><span style="color:#DEDEDE"> @L7</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"><span style="color:#DEDEDE">@L7:    </span><span style="color:#F0DFAF;font-weight:bold">ld</span><span style="color:#DEDEDE"> r0, x</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        hout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints ffff</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">        halt</span></span>
+<span class="line"><span style="color:#DEDEDE">        </span></span>
+<span class="line"><span style="color:#DEDEDE">x:     </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 0xffff</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoW.a tests flag setting and branching instructions</span></span>
 <span class="line"><span style="color:#8D9A4A">        mov</span><span style="color:#D0CF9D"> r0, 1</span></span>
@@ -7420,6 +8106,40 @@ code { font-family:var(--mono-font); }
 <span class="line"></span>
 <span class="line"><span style="color:#657B83">x:             </span><span style="color:#859900">.word</span><span style="color:#D33682"> 0xffff</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoX.a uses hex arguments, implicit r0 for out commands, and cea</span></span>
+<span class="line"><span style="color:#DEDEDE">startup:        </span><span style="color:#F0DFAF;font-weight:bold">bl</span><span style="color:#DEDEDE"> main</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                halt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">main:           </span><span style="color:#F0DFAF;font-weight:bold">push</span><span style="color:#DEDEDE"> lr </span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                push</span><span style="color:#DEDEDE"> fp</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                mov</span><span style="color:#DEDEDE"> fp, sp </span><span style="color:#7F9F7F">; comment </span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                cea</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">0x0</span><span style="color:#7F9F7F"> ; compute effective address, same as `add r0, fp, 0x0`</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">0xf</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                mov</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">0x00ff</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                hout</span><span style="color:#7F9F7F"> ; same as `hout r0`</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                mvi</span><span style="color:#DEDEDE"> r0, </span><span style="color:#8CD0D3">-256</span><span style="color:#7F9F7F">  ; was mov r0, 0xff00 — invalid (>imm9 range); mvi -256 produces same machine code</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                add</span><span style="color:#DEDEDE"> r0, r0, </span><span style="color:#8CD0D3">0xf</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                dout</span><span style="color:#7F9F7F"> ; same as `dout r0`</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                nl</span><span style="color:#DEDEDE"> </span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                ld</span><span style="color:#DEDEDE"> r0, x </span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                hout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                mov</span><span style="color:#DEDEDE"> sp, fp</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                pop</span><span style="color:#DEDEDE"> fp </span><span style="color:#7F9F7F">; comment</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                pop</span><span style="color:#DEDEDE"> lr</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">                ret</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DEDEDE">x:             </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 0xffff</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoX.a uses hex arguments, implicit r0 for out commands, and cea</span></span>
 <span class="line"><span style="color:#D0CF9D">startup:        </span><span style="color:#8D9A4A">bl</span><span style="color:#D0CF9D"> main</span></span>
@@ -7710,6 +8430,33 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#657B83">y:        </span><span style="color:#859900">.word</span><span style="color:#D33682"> 17</span></span>
 <span class="line"><span style="color:#657B83">z:        </span><span style="color:#859900">.word</span><span style="color:#657B83"> x+2    </span><span style="color:#93A1A1;font-style:italic">; assembled to the address of y</span></span>
 <span class="line"><span style="color:#657B83">a:        </span><span style="color:#859900">.word</span><span style="color:#657B83"> y-1    </span><span style="color:#93A1A1;font-style:italic">; assembled to the address of x+1</span></span></code></pre>
+    </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoY.a uses label offsets for ld and .word</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          ld</span><span style="color:#DEDEDE"> r0, x     </span><span style="color:#7F9F7F">; loads 5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          dout</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          ld</span><span style="color:#DEDEDE"> r1, x+1   </span><span style="color:#7F9F7F">; loads 11</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          dout</span><span style="color:#DEDEDE"> r1</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          ld</span><span style="color:#DEDEDE"> r2, x+2   </span><span style="color:#7F9F7F">; loads 17</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          dout</span><span style="color:#DEDEDE"> r2</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          ld</span><span style="color:#DEDEDE"> r3, y-2   </span><span style="color:#7F9F7F">; loads 5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          dout</span><span style="color:#DEDEDE"> r3</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          ld</span><span style="color:#DEDEDE"> r0, a    </span><span style="color:#7F9F7F">; loads 20</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          dout</span><span style="color:#DEDEDE"> r0</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          ld</span><span style="color:#DEDEDE"> r4, z     </span><span style="color:#7F9F7F">; loads 21</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          dout</span><span style="color:#DEDEDE"> r4</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          halt</span></span>
+<span class="line"><span style="color:#DEDEDE">x:        </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">          .word</span><span style="color:#8CD0D3"> 11</span></span>
+<span class="line"><span style="color:#DEDEDE">y:        </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 17</span></span>
+<span class="line"><span style="color:#DEDEDE">z:        </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#DEDEDE"> x+2    </span><span style="color:#7F9F7F">; assembled to the address of y</span></span>
+<span class="line"><span style="color:#DEDEDE">a:        </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#DEDEDE"> y-1    </span><span style="color:#7F9F7F">; assembled to the address of x+1</span></span></code></pre>
     </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoY.a uses label offsets for ld and .word</span></span>
@@ -8020,6 +8767,37 @@ code { font-family:var(--mono-font); }
 <span class="line"><span style="color:#657B83">c: </span><span style="color:#859900">.word</span><span style="color:#657B83"> a</span></span>
 <span class="line"><span style="color:#657B83">d: </span><span style="color:#859900">.word</span><span style="color:#657B83"> a+1</span></span></code></pre>
     </div>
+    <div class="theme-panel" data-theme="zenburn" hidden>
+      <pre class="shiki zenburn" style="background-color:#3f3f3f;color:#dedede" tabindex="0"><code><span class="line"><span style="color:#7F9F7F">; demoZ.a uses label offsets with st, br, and lea</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    ld</span><span style="color:#DEDEDE"> r0, a </span><span style="color:#7F9F7F">; loads 5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    ld</span><span style="color:#DEDEDE"> r0, a+1 </span><span style="color:#7F9F7F">; loads 11</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 11</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    ld</span><span style="color:#DEDEDE"> r0, c </span><span style="color:#7F9F7F">; loads the address of a, which is 24dec</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 24</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    ld</span><span style="color:#DEDEDE"> r0, d </span><span style="color:#7F9F7F">; loads the address of a, which is 24, +1 = 25</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 25</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    add</span><span style="color:#DEDEDE"> r0, r0, </span><span style="color:#8CD0D3">5</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    st</span><span style="color:#DEDEDE"> r0, c-1 </span><span style="color:#7F9F7F">; stores 30 at b</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    ld</span><span style="color:#DEDEDE"> r1, b</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r1 </span><span style="color:#7F9F7F">; prints 30</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    br</span><span style="color:#DEDEDE"> e+1</span></span>
+<span class="line"><span style="color:#DEDEDE">e:  </span><span style="color:#F0DFAF;font-weight:bold">add</span><span style="color:#DEDEDE"> r1, r1, </span><span style="color:#8CD0D3">5</span><span style="color:#7F9F7F"> ; this line gets skipped</span></span>
+<span class="line"><span style="color:#DEDEDE">f:  </span><span style="color:#F0DFAF;font-weight:bold">dout</span><span style="color:#DEDEDE"> r1 </span><span style="color:#7F9F7F">; prints 30 again</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    nl</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    lea</span><span style="color:#DEDEDE"> r0, a </span><span style="color:#7F9F7F">; loads the address of a, which is 24</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    dout</span><span style="color:#DEDEDE"> r0 </span><span style="color:#7F9F7F">; prints 24</span></span>
+<span class="line"><span style="color:#F0DFAF;font-weight:bold">    halt</span></span>
+<span class="line"><span style="color:#DEDEDE">a: </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 5</span></span>
+<span class="line"><span style="color:#DEDEDE">b: </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#8CD0D3"> 11</span></span>
+<span class="line"><span style="color:#DEDEDE">c: </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#DEDEDE"> a</span></span>
+<span class="line"><span style="color:#DEDEDE">d: </span><span style="color:#F0DFAF;font-weight:bold">.word</span><span style="color:#DEDEDE"> a+1</span></span></code></pre>
+    </div>
     <div class="theme-panel" data-theme="retro-console-dark" hidden>
       <pre class="shiki retro-console-dark" style="background-color:#233501;color:#d0cf9d" tabindex="0"><code><span class="line"><span style="color:#446710">; demoZ.a uses label offsets with st, br, and lea</span></span>
 <span class="line"><span style="color:#8D9A4A">    ld</span><span style="color:#D0CF9D"> r0, a </span><span style="color:#446710">; loads 5</span></span>
@@ -8090,7 +8868,7 @@ code { font-family:var(--mono-font); }
 
   <script>
 (function () {
-  var DARK = new Set(["github-dark","monokai","one-dark-pro","dracula","nord","tokyo-night","retro-console-dark"]);
+  var DARK = new Set(["github-dark","monokai","one-dark-pro","dracula","nord","tokyo-night","zenburn","retro-console-dark"]);
   var sel = document.getElementById('theme-select');
   function apply(t) {
     document.querySelectorAll('.theme-panel').forEach(function (p) {
