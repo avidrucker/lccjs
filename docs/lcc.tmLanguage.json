@@ -27,7 +27,7 @@
     },
     "directive": {
       "name": "keyword.other.directive.lcc",
-      "match": "\\.(?:start|org|word|fill|stringz|string|asciz|zero|space|blkw|lccplus|extern|globl|global)\\b"
+      "match": "\\.(?:start|org|orig|word|fill|stringz|string|asciz|zero|space|blkw|lccplus|extern|globl|global)\\b"
     },
     "label_def": {
       "name": "entity.name.label.lcc",
@@ -65,7 +65,7 @@
     "mnemonic_core": {
       "comment": "Arithmetic, logic, data movement, debug",
       "name": "keyword.mnemonic.lcc",
-      "match": "\\b(?:add|sub|mul|div|rem|and|or|xor|not|sll|srl|sra|rol|ror|mov|mvi|mvr|ld|ldr|st|str|lea|cea|cmp|sext|push|pop|halt|bp)\\b"
+      "match": "\\b(?:add|sub|mul|div|rem|and|or|xor|not|sll|srl|sra|rol|ror|mov|mvi|mvr|ld|ldr|st|str|lea|cea|cmp|sext|push|pop|halt)\\b"
     },
     "mnemonic_plus": {
       "comment": "LCC+ extension pseudo-instructions (.lccplus required)",
@@ -87,7 +87,7 @@
     "mnemonic_debug": {
       "comment": "Single-letter debug traps — anchored to avoid over-matching label refs",
       "name": "keyword.mnemonic.debug.lcc",
-      "match": "^\\s+(?:m|r|s)(?=\\s*(;|$))"
+      "match": "^\\s+(?:m|r|s|bp)(?=\\s*(;|$))"
     },
     "label_ref": {
       "name": "variable.other.label.lcc",
