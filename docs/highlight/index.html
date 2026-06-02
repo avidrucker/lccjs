@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LCC Assembly — Syntax Highlighting</title>
+  <style>
+:root { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:2.5rem; }
+.subtitle a, footer a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover { text-decoration:underline; }
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:monospace; font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:monospace; }
+</style>
+</head>
+<body>
+  <h1>LCC Assembly — Syntax Highlighting</h1>
+  <p class="subtitle">
+    Four curated samples highlighted with the custom TextMate grammar
+    (<a href="../lcc.tmLanguage.json"><code>docs/lcc.tmLanguage.json</code></a>)
+    via <a href="https://shiki.style">Shiki</a>.
+    Grammar covers core LCC and LCC+ instruction sets.
+  </p>
+
+  <section>
+    <div class="sample-header">
+      <span class="filename">demos/demoA.a</span>
+      <span class="description">Hello register — mov, dout, halt</span>
+    </div>
+    <pre class="shiki github-dark" style="background-color:#24292e;color:#e1e4e8" tabindex="0"><code><span class="line"><span style="color:#6A737D">; demoA.a: simple program assembly/execution and test input/output caching</span></span>
+<span class="line"><span style="color:#F97583">    mov</span><span style="color:#79B8FF"> r0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">5</span></span>
+<span class="line"><span style="color:#79B8FF">    dout</span><span style="color:#79B8FF"> r0</span></span>
+<span class="line"><span style="color:#79B8FF">    nl</span></span>
+<span class="line"><span style="color:#F97583">    halt</span></span></code></pre>
+  </section>
+
+  <section>
+    <div class="sample-header">
+      <span class="filename">demos/demoO.a</span>
+      <span class="description">I/O with labels and directives</span>
+    </div>
+    <pre class="shiki github-dark" style="background-color:#24292e;color:#e1e4e8" tabindex="0"><code><span class="line"><span style="color:#6A737D">; demoO.a: program that tests IO and LST generation thoroughly</span></span>
+<span class="line"><span style="color:#F97583">            lea</span><span style="color:#79B8FF"> r0</span><span style="color:#E1E4E8">, prompt</span></span>
+<span class="line"><span style="color:#79B8FF">            sout</span><span style="color:#79B8FF"> r0</span></span>
+<span class="line"><span style="color:#F97583">            lea</span><span style="color:#79B8FF"> r0</span><span style="color:#E1E4E8">, buffer</span></span>
+<span class="line"><span style="color:#79B8FF">            sin</span><span style="color:#79B8FF"> r0</span></span>
+<span class="line"><span style="color:#F97583">            lea</span><span style="color:#79B8FF"> r1</span><span style="color:#E1E4E8">, hi</span></span>
+<span class="line"><span style="color:#79B8FF">            sout</span><span style="color:#79B8FF"> r1</span></span>
+<span class="line"><span style="color:#79B8FF">            sout</span><span style="color:#79B8FF"> r0</span></span>
+<span class="line"><span style="color:#79B8FF">            nl</span></span>
+<span class="line"><span style="color:#E1E4E8">            m</span></span>
+<span class="line"><span style="color:#F97583">            halt</span></span>
+<span class="line"><span style="color:#B392F0">prompt:</span><span style="color:#F97583">     .string</span><span style="color:#9ECBFF"> "Name: "</span></span>
+<span class="line"><span style="color:#B392F0">hi:</span><span style="color:#F97583">         .string</span><span style="color:#9ECBFF"> "Hi "</span></span>
+<span class="line"><span style="color:#B392F0">buffer:</span><span style="color:#F97583">     .zero</span><span style="color:#79B8FF"> 10</span></span></code></pre>
+  </section>
+
+  <section>
+    <div class="sample-header">
+      <span class="filename">demos/demoN.a</span>
+      <span class="description">Division-by-zero trap</span>
+    </div>
+    <pre class="shiki github-dark" style="background-color:#24292e;color:#e1e4e8" tabindex="0"><code><span class="line"><span style="color:#6A737D">; demo program that tests the detection of division by zero</span></span>
+<span class="line"><span style="color:#F97583">    mov</span><span style="color:#79B8FF"> r0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">3</span></span>
+<span class="line"><span style="color:#F97583">    mov</span><span style="color:#79B8FF"> r1</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">0</span></span>
+<span class="line"><span style="color:#F97583">    div</span><span style="color:#79B8FF"> r0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">r1</span></span>
+<span class="line"><span style="color:#79B8FF">    dout</span><span style="color:#79B8FF"> r0</span></span>
+<span class="line"><span style="color:#79B8FF">    nl</span></span>
+<span class="line"><span style="color:#F97583">    halt</span></span></code></pre>
+  </section>
+
+  <section>
+    <div class="sample-header">
+      <span class="filename">plusdemos/charTypewriter.ap</span>
+      <span class="description">LCC+ — clear, sleep, aout loop</span>
+    </div>
+    <pre class="shiki github-dark" style="background-color:#24292e;color:#e1e4e8" tabindex="0"><code><span class="line"><span style="color:#6A737D">; plusB.ap: clear and sleep</span></span>
+<span class="line"><span style="color:#6A737D">; This program prints out the letters 'a' through 'f'</span></span>
+<span class="line"><span style="color:#6A737D">; in the terminal 'typewriter' style</span></span>
+<span class="line"><span style="color:#F97583">     .lccplus</span></span>
+<span class="line"><span style="color:#F97583">      clear</span><span style="color:#6A737D"> ; clears the screen of anything else that was in the terminal</span></span>
+<span class="line"><span style="color:#F97583">      ld</span><span style="color:#79B8FF"> r1</span><span style="color:#E1E4E8">, onesecond </span><span style="color:#6A737D">; load 1000 into r1 to represent milliseconds</span></span>
+<span class="line"><span style="color:#F97583">      mov</span><span style="color:#79B8FF"> r0</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">'a'</span><span style="color:#6A737D"> ; our initialized 'current char' to print goes into r0</span></span>
+<span class="line"><span style="color:#F97583">      mov</span><span style="color:#79B8FF"> r2</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">'f'</span><span style="color:#6A737D"> ; this is our 'terminal char'</span></span>
+<span class="line"><span style="color:#B392F0">loop:</span><span style="color:#F97583"> cmp</span><span style="color:#79B8FF"> r0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">r2</span><span style="color:#6A737D"> ; check to see how the current compares with the terminal</span></span>
+<span class="line"><span style="color:#F97583">      brgt</span><span style="color:#E1E4E8"> done </span><span style="color:#6A737D">; if the current is greater than the terminal, branch to done label</span></span>
+<span class="line"><span style="color:#79B8FF">      aout</span><span style="color:#79B8FF"> r0</span><span style="color:#6A737D"> ; print the current char</span></span>
+<span class="line"><span style="color:#F97583">      sleep</span><span style="color:#79B8FF"> r1</span><span style="color:#6A737D"> ; pause for 1 second</span></span>
+<span class="line"><span style="color:#F97583">      add</span><span style="color:#79B8FF"> r0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">r0</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">1</span><span style="color:#6A737D"> ; increment the char</span></span>
+<span class="line"><span style="color:#F97583">      br</span><span style="color:#E1E4E8"> loop </span><span style="color:#6A737D">; go back to the loop label</span></span>
+<span class="line"><span style="color:#B392F0">done:</span><span style="color:#79B8FF"> nl</span></span>
+<span class="line"><span style="color:#F97583">      halt</span><span style="color:#6A737D"> ; end the program</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">onesecond:</span><span style="color:#F97583"> .word</span><span style="color:#79B8FF"> 1000</span></span></code></pre>
+  </section>
+  <footer>
+    Built by <code>npm run build:highlight</code> &mdash;
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

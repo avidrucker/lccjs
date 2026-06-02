@@ -1,6 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "LCC Assembly",
+  "name": "lcc",
+  "displayName": "LCC Assembly",
+  "aliases": ["lcc-assembly"],
   "scopeName": "source.lcc",
   "fileTypes": ["a", "ap"],
   "patterns": [

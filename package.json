@@ -14,11 +14,13 @@
     "velocity:seed": "node scripts/velocity-seed.js",
     "velocity:log": "node scripts/velocity-log.js",
     "velocity:export": "node scripts/velocity-export.js",
-    "lccrun": "bash scripts/lccrun.sh"
+    "lccrun": "bash scripts/lccrun.sh",
+    "build:highlight": "node scripts/build-highlight.js"
   },
   "devDependencies": {
     "better-sqlite3": "^12.10.0",
     "dotenv": "^17.2.3",
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "shiki": "^4.1.0"
   }
 }
