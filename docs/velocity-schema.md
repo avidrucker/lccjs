@@ -25,7 +25,7 @@ Exported read-only copy: **`docs/puzzle-velocity.csv`** — committed to git, au
 | `closed_commit` | TEXT | YES | Always NULL at close time — rebase rewrites the SHA. Derive on demand: `git log --grep "Closes #N" -1 --format=%h` |
 | `notes` | TEXT | YES | Free-form. Avoid literal `@todo #N:Est/ROLE` strings (triggers `puzzle:status` scanner). |
 | `agent` | TEXT | YES | Terminal/worktree name under which the work ran (e.g. `BANANA`). NULL for pre-#180 historical rows. |
-| `model` | TEXT | YES | Claude model ID used (e.g. `claude-sonnet-4-6`). NULL for rows predating the column (#275). |
+| `model` | TEXT | YES | Claude model short-form used (e.g. `sonnet-4.6`). NULL for rows predating the column (#275). |
 | `repo` | TEXT | YES | Repository the `closed_commit` SHA belongs to. Default `lccjs`; set to `claude-config` for cross-repo closes. NULL for rows predating the column (#438). |
 
 ## Valid `role` values
