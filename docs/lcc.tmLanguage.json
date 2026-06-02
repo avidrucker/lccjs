@@ -54,7 +54,7 @@
     },
     "mnemonic_io": {
       "comment": "I/O traps — visually distinct from control flow",
-      "name": "support.function.io.lcc",
+      "name": "keyword.other.io.lcc",
       "match": "\\b(?:dout|udout|hout|aout|sout|nl|din|hin|ain|sin)\\b"
     },
     "mnemonic_branch": {
@@ -90,7 +90,7 @@
       "match": "^\\s+(?:m|r|s|bp)(?=\\s*(;|$))"
     },
     "label_ref": {
-      "name": "variable.other.label.lcc",
+      "name": "entity.name.label.lcc",
       "match": "\\b[@A-Za-z_][A-Za-z0-9_@]*(?:[+-][0-9]+)?\\b"
     }
   }
