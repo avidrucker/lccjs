@@ -587,6 +587,29 @@ corrected in same commit.
 
 ---
 
+### 20. `.bin` / `.hex` loading message: LCC.js prints a diagnostic; oracle is silent (#371)
+
+When a `.bin` or `.hex` file is loaded, no assembly pass runs — the file is parsed
+directly into the output buffer. LCC.js prints a user-facing loading line; the oracle
+prints nothing in either case.
+
+| | Oracle (cuh63 6.3) | LCC.js |
+|---|---|---|
+| `.bin` input message | *(none)* | `Loading <file> (no assembly pass) — N word(s)` |
+| `.hex` input message | *(none)* | `Loading <file> (no assembly pass) — N word(s)` |
+
+**Why BY DESIGN:** the original `Assembling …` message (present before #371) was already
+LCC.js-only behavior, noted in inline code comments as a deliberate user-feedback choice.
+The wording was misleading because no assembly pass runs; #371 replaced it with an
+accurate loading message that also reports the word count. Removing the message entirely
+would regress user feedback without any oracle-parity benefit.
+
+**Source:** `src/core/assembler.js` — `.bin` branch (~line 386) and `.hex` branch (~line 397).
+
+**GitHub issue:** [#371](https://github.com/avidrucker/lccjs/issues/371)
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -612,3 +635,4 @@ _None pending._
 | 2026-06-01 | Deviation 18 added (#375) | Non-interactive stdin + absent `name.nnn`: LCC.js now exits immediately with a fatal diagnostic instead of hanging at ~100% CPU. OG LCC blocks indefinitely. Classified BY DESIGN (fail-fast is safer). |
 | 2026-06-01 | §3 OG BUG #3 corrigendum (#261) | Segfault claim not reproducible in cuh63 6.3. Oracle exits 1 with "Missing operand" and leaves `.e`/`.lst`/`.bst` artifact files (same pattern as OG BUG #10). Entry rewritten: BY DESIGN (no-artifact behavior beneficial). Full probe: `docs/research/jmp-missing-operand-segfault.md`. |
 | 2026-06-01 | §3 blast-radius table corrected + Deviation 19 added (#385) | `ret` bare / `jmp r0` row: LCC.js column was `Missing operand` / `none ✓` — both wrong. Actual: LCC.js says `Possible infinite loop` (runtime, exit=1) and leaves `.e(4B)`. Oracle says `Possible infinite loop` then floods stdout in a debug-dump loop (never exits; killed at timeout). `jmp r0` row added. Footnote corrected. New deviation §19 documents the runtime divergence; classified BY DESIGN (beneficial). |
+| 2026-06-01 | Deviation 20 added (#371, #441) | `.bin`/`.hex` loading message: LCC.js prints `Loading <file> (no assembly pass) — N word(s)`; oracle is silent. Message predated #371 (was `Assembling …`); #371 improved wording. Classified BY DESIGN. |
