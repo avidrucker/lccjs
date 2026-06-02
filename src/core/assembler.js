@@ -1216,7 +1216,6 @@ class Assembler {
     }
   }
 
-  // @inprogress #253:60m/ARC scope-spike: replace this mnemonic switch (and handleDirective, plus the assemblerplus.js subclass that re-opens both via default:super) with a mnemonic->descriptor table {mnemonic:{encoder,operandShape}} that plus registers extra entries into instead of subclassing. Design in docs/research/, then decompose into >=2 puzzles. See #246 H2 + docs/research/codebase-quality-hotspots.md
   handleInstruction(mnemonic, operands) {
     if (this.pass === 1) {
       this.locCtr += 1;
