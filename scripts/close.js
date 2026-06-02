@@ -483,7 +483,12 @@ function tryLand() {
       // Auto-resolve: two agents committed divergent CSV snapshots. Re-export
       // from SQLite (the source of truth, already has both rows) then continue.
       const exportScript = path.join(__dirname, 'velocity-export.js');
-      const exported = shCapture(`node "${exportScript}"`);
+      // Pass --force so the isMainCheckout() guard in velocity-export.js is
+      // bypassed: when close.js is invoked via --branch from the main checkout,
+      // __dirname resolves to the main scripts/ dir, making isMainCheckout()
+      // return true and silently skip the export (exit 0). --force ensures the
+      // re-export always runs during conflict resolution regardless of invoke path.
+      const exported = shCapture(`node "${exportScript}" --force`);
       if (!exported.ok) {
         sh('git rebase --abort', true);
         die('velocity CSV conflict: auto-resolve via velocity-export.js failed. ' +

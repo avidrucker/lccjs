@@ -656,3 +656,19 @@ describe('close.js markerStillPresent() — Check B (#359)', () => {
     expect(lines).toHaveLength(2);
   });
 });
+
+describe('close.js velocity CSV conflict-resolution source guard (#503)', () => {
+  // Regression: when close.js is invoked via --branch from the main checkout,
+  // __dirname resolves to the main scripts/ dir, so velocity-export.js's
+  // isMainCheckout() sees .git as a directory and silently skips the export
+  // (exits 0). The auto-resolve must pass --force to bypass that guard.
+  test('velocity-export.js is invoked with --force in the conflict-resolution block', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(require.resolve('../../scripts/close.js'), 'utf8');
+    // Capture the conflict-resolution block — the re-export call and its immediate context.
+    const block = src.slice(src.indexOf('isVelocityCsvOnlyConflict'), src.indexOf('log(\'velocity CSV conflict auto-resolved'));
+    // velocity-export.js path is on one line; --force is on the next shCapture line.
+    expect(block).toMatch(/velocity-export/);
+    expect(block).toMatch(/shCapture\(`node[^`]*--force`\)/);
+  });
+});
