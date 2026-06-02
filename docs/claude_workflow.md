@@ -76,6 +76,14 @@ is to be ready when asked (#377).
 
 ## At start (picking up a puzzle)
 
+**Pre-claim check (run this before `npm run claim`):**
+
+```bash
+git status   # look for untracked or modified files in the main checkout
+```
+
+If any file your ticket will touch is untracked or modified on main, commit or stash it first — untracked files do not carry into the new worktree, so branching from a dirty main means the worktree starts from a stale committed state. (#469)
+
 **Before reading the issue:**
 
 1. Capture the start timestamp:
@@ -105,7 +113,7 @@ is to be ready when asked (#377).
 
 - **Stay in scope.** Anything outside the ticket gets logged as a finding, not pursued.
 - **Surface findings as I notice them.** Open questions, unexpected behaviour, brittle code — these become candidate follow-up puzzles. I usually mention them at close so the user decides whether to file new tickets.
-- **Research findings go in issue comments, not TIL docs.** When a research ticket or spike produces findings, post them as a comment on the originating GitHub issue — not as a `docs/learnings/today-i-learned-*.md` file. Only write a TIL entry when: (a) the user explicitly asks ("write a TIL", "add to learnings"), or (b) the knowledge is durable, genuinely cross-ticket, and belongs in a persistent learning log rather than on one ticket. When in doubt, use the issue comment. (#437)
+- **Research findings go in issue comments, not TIL docs.** When a research ticket or spike produces findings, post them as a comment on the originating GitHub issue — not as a `docs/learnings/today-i-learned-*.md` file. Only write a TIL entry when: (a) the user explicitly asks ("write a TIL", "add to learnings"), or (b) the knowledge is durable, genuinely cross-ticket, and belongs in a persistent learning log rather than on one ticket. When in doubt, use the issue comment. (#437) When a TIL entry IS appropriate, treat it as work: file an issue, claim a worktree, commit from it, log velocity, and close via `npm run close` — RULES.md 4, 5, 8, 9 apply unconditionally. (#469)
 - **Correcting a sibling issue's description.** If I find a factual error in *another* issue's description (wrong cross-ref, stale dependency, outdated premise), I do **not** silently rewrite the body. I redline it: `~~strikethrough~~` the wrong text in place, add a `> ⚠️ **SEE COMMENTS FOR CORRECTIONS**` banner at the top, and post the correction as a comment — so the original stays visible and the fix is additive. The `yegor-tickets` skill owns this convention (#300).
 - **Verify as I go.** For code changes: assemble, run tests, exercise the change. For doc changes: re-read for accuracy and link sanity. For research: cite source line numbers so the reasoning is checkable.
 - **Wrap tool invocations with `lccrun.sh`.** Any shell call to `lcc.js`, `interpreter.js`, `linker.js`, or the oracle binary (`$LCC_ORACLE`) that could read from stdin **must** go through `scripts/lccrun.sh`:
