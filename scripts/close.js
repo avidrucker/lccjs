@@ -37,7 +37,7 @@
 
 'use strict';
 
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const os   = require('os');
 const path = require('path');
 
@@ -651,23 +651,10 @@ function main() {
     return;
   }
 
-  // --- teardown: only reachable past the gate. Run from main root (the
-  // worktree dir is about to vanish under us).
+  // --- teardown: only reachable past the gate. Run from main root.
   process.chdir(root);
-  const removed = sh(`git worktree remove "${wtPath}"`, true);
-  if (removed === null) {
-    // Don't fail the close over a stubborn worktree — the work is safely on
-    // main. Tell the human how to finish the teardown by hand.
-    log(`could not auto-remove ${wtPath} (uncommitted junk? open shell?). ` +
-        `Work is safe on origin/main. Remove it manually: git worktree remove --force "${wtPath}"`);
-  }
-  sh(`git branch -D ${branch}`, true);
-  sh('git worktree prune', true);
 
-  // Pull main while chdir'd at root — agents often run `git pull` right after
-  // close, but by then the shell CWD is the now-deleted worktree, causing
-  // "CWD deleted; recovered to /home" failures. Doing it here eliminates
-  // that footgun. (#352)
+  // Pull main first — doesn't depend on the worktree and runs from root. (#352)
   const pullResult = shCapture('git pull --ff-only origin main');
   if (pullResult.ok) {
     log('main checkout synced.');
@@ -678,6 +665,14 @@ function main() {
 
   report({ issue, branch, wtPath, sha: landedSha, kept: false, dry: false });
   log(`Shell re-root: cd "${root}"`);
+
+  // Defer the filesystem teardown to a detached subprocess so that npm and
+  // any shell it spawns for post-run lifecycle checks can exit while the
+  // worktree directory still exists — prevents getcwd failures on npm exit
+  // (#533, #541). The closing commit is already on origin/main at this point.
+  spawn('bash', ['-c',
+    `git worktree remove "${wtPath}" && git branch -D ${branch} && git worktree prune`
+  ], { detached: true, stdio: 'ignore', cwd: root }).unref();
 }
 
 if (require.main === module) main();
