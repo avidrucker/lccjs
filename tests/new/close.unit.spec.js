@@ -657,6 +657,23 @@ describe('close.js markerStillPresent() — Check B (#359)', () => {
   });
 });
 
+describe('close.js deferred teardown warning (#551)', () => {
+  const fs = require('fs');
+  const src = fs.readFileSync(require.resolve('../../scripts/close.js'), 'utf8');
+
+  test('spawn stdio is not "ignore" — stderr is inherited so the warning can reach the terminal', () => {
+    // stdio: 'ignore' discards all output including the warning echo; must use an array.
+    const spawnBlock = src.slice(src.indexOf('spawn(\'bash\''));
+    expect(spawnBlock).not.toMatch(/stdio:\s*'ignore'/);
+    expect(spawnBlock).toMatch(/stdio:\s*\[/);
+  });
+
+  test('shell command includes a warning echo on teardown failure', () => {
+    const spawnBlock = src.slice(src.indexOf('spawn(\'bash\''));
+    expect(spawnBlock).toMatch(/\|\|\s*echo.*deferred teardown may have failed/);
+  });
+});
+
 describe('close.js velocity CSV conflict-resolution source guard (#503)', () => {
   // Regression: when close.js is invoked via --branch from the main checkout,
   // __dirname resolves to the main scripts/ dir, so velocity-export.js's

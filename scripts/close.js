@@ -671,8 +671,9 @@ function main() {
   // worktree directory still exists — prevents getcwd failures on npm exit
   // (#533, #541). The closing commit is already on origin/main at this point.
   spawn('bash', ['-c',
-    `git worktree remove "${wtPath}" && git branch -D ${branch} && git worktree prune`
-  ], { detached: true, stdio: 'ignore', cwd: root }).unref();
+    `git worktree remove "${wtPath}" && git branch -D ${branch} && git worktree prune` +
+    " || echo '[close] warning: deferred teardown may have failed — check: git worktree list' >&2"
+  ], { detached: true, stdio: ['ignore', 'inherit', 'inherit'], cwd: root }).unref();
 }
 
 if (require.main === module) main();
