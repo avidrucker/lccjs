@@ -44,7 +44,6 @@
 ;----------------------------------------------------------------
 ; startup: clears screen, hides cursor, calls main
 ;----------------------------------------------------------------
-; @todo #583:60m/DEV extract moveSnake logic from main
 startup:    clear ; clear screen
             mov   r0, 0
             cursor r0   ; hide cursor
@@ -398,92 +397,10 @@ main:       push lr
             bre @gameOver
 
             bl  updateDirection
-            lea r1, snake
-            push r1
-            bl getSnakeHeadXY
-            add sp, sp, 1
-            ; New head coordinates are based on the current snake head
-            ; r2 = row, r3 = col
-
-            ld r0, direction
-
-            ; Apply the next step based on the current direction
-            cmp r0, 3
-            brne @notUp
-                sub r2, r2, 1
-                br @wrapped
-    @notUp:
-            cmp r0, 2
-            brne @notRight
-                add r3, r3, 1
-                br @wrapped
-    @notRight:
+            bl  moveSnake
             cmp r0, 1
-            brne @notDown
-                add r2, r2, 1
-                br @wrapped
-    @notDown:
-            cmp r0, 0
-            brne @noKey
-                sub r3, r3, 1
-                br @wrapped
-    @noKey:
-            br @wrapped
-    @wrapped:
-            push r3
-            push r2
-            bl wrapCoord
-            add sp, sp, 2
-            ; after wrapCoord, r2=wrappedRow, r3=wrappedCol
-
-            push r3
-            push r2
-            lea r0, snake
-            push r0
-            bl checkCollision
-            add sp, sp, 3
-            cmp r0, 1
-            brne @noColl2
-    @collision:
-            br @gameOver
-    @noColl2:
-            push r3 ; save r3
-            push r2 ; save r2
-
-            ; Add the new head segment
-            push r3
-            push r2
-            lea r0, snake
-            push r0
-            bl appendSnakeHead
-            add sp, sp, 3
-
-            pop r2 ; restore r2
-            pop r3 ; restore r3
-
-            ; Check whether the snake ate the fruit. If not, trim the tail.
-            ld r0, fruitRow
-            cmp r2, r0
-            brne @removeTail
-            ld r0, fruitCol
-            cmp r3, r0
-            brne @removeTail
-            bl placeFruitSafely
-
-            ld r0, snakeLen
-            add r0, r0, 1
-            st r0, snakeLen
-
-            br @doneStep
-    @removeTail:
-            lea r0, snake
-            push r0
-            bl removeSnakeTail
-            add sp, sp, 1
-    @doneStep:
-            ld r0, sleepTime
-            sleep r0
-            br @loopGame
+            bre @gameOver
+            br  @loopGame
 
     @gameOver:
             bl  gameOverScreen
@@ -560,6 +477,124 @@ gameOverScreen:
         pop fp
         pop lr
         ret
+
+;================================================================
+; moveSnake: advance the snake one step using the current direction.
+;   Reads/writes globals: direction, snake, fruitRow, fruitCol, snakeLen.
+;   Returns: r0=0 ok (sleep already done), r0=1 collision (no sleep).
+;
+;   All global data labels are accessed via local .word pointers below
+;   (see @snakePtrMS etc.) because this subroutine is too far from the
+;   data section for 9-bit PC-relative lea/ld to reach directly.
+;================================================================
+moveSnake:
+        push lr
+        push fp
+        mov fp, sp
+
+        ld  r0, @snakePtrMS     ; r0 = &snake
+        push r0
+        bl getSnakeHeadXY
+        add sp, sp, 1
+        ; r2 = head row, r3 = head col
+
+        ld  r1, @directionPtrMS
+        ldr r0, r1, 0           ; r0 = direction
+
+        cmp r0, 3
+        brne @notUp
+            sub r2, r2, 1
+            br @wrapped
+    @notUp:
+        cmp r0, 2
+        brne @notRight
+            add r3, r3, 1
+            br @wrapped
+    @notRight:
+        cmp r0, 1
+        brne @notDown
+            add r2, r2, 1
+            br @wrapped
+    @notDown:
+        cmp r0, 0
+        brne @noKey
+            sub r3, r3, 1
+            br @wrapped
+    @noKey:
+        br @wrapped
+    @wrapped:
+        push r3
+        push r2
+        bl wrapCoord
+        add sp, sp, 2
+        ; r2=wrappedRow, r3=wrappedCol
+
+        push r3
+        push r2
+        ld  r0, @snakePtrMS     ; r0 = &snake
+        push r0
+        bl checkCollision
+        add sp, sp, 3
+        cmp r0, 1
+        brne @noColl
+        mov r0, 1       ; collision — return immediately, no sleep
+        mov sp, fp
+        pop fp
+        pop lr
+        ret
+
+    @noColl:
+        push r3 ; save r3
+        push r2 ; save r2
+
+        push r3
+        push r2
+        ld  r0, @snakePtrMS     ; r0 = &snake
+        push r0
+        bl appendSnakeHead
+        add sp, sp, 3
+
+        pop r2 ; restore r2
+        pop r3 ; restore r3
+
+        ; Check whether the snake ate the fruit. If not, trim the tail.
+        ld  r1, @fruitRowPtrMS
+        ldr r0, r1, 0           ; r0 = fruitRow
+        cmp r2, r0
+        brne @removeTail
+        ld  r1, @fruitColPtrMS
+        ldr r0, r1, 0           ; r0 = fruitCol
+        cmp r3, r0
+        brne @removeTail
+        bl placeFruitSafely
+
+        ld  r1, @snakeLenPtrMS
+        ldr r0, r1, 0           ; r0 = snakeLen
+        add r0, r0, 1
+        str r0, r1, 0           ; snakeLen = r0 (r1 still holds the ptr)
+
+        br @doneStep
+    @removeTail:
+        ld  r0, @snakePtrMS     ; r0 = &snake
+        push r0
+        bl removeSnakeTail
+        add sp, sp, 1
+    @doneStep:
+        ld  r1, @sleepTimePtrMS
+        ldr r0, r1, 0           ; r0 = sleepTime
+        sleep r0
+        mov r0, 0       ; no collision
+        mov sp, fp
+        pop fp
+        pop lr
+        ret
+
+@snakePtrMS:     .word snake
+@directionPtrMS: .word direction
+@fruitRowPtrMS:  .word fruitRow
+@fruitColPtrMS:  .word fruitCol
+@snakeLenPtrMS:  .word snakeLen
+@sleepTimePtrMS: .word sleepTime
 
 ;================================================================
 ; printScore
