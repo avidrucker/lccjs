@@ -422,3 +422,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 434,547,TIL: assembler.main() silently downgrades typed errors to plain Error,WRITER,10,5,1,9,4,2026-06-03T07:14:01-1000,2026-06-03T07:14:21-1000,,TIL from #526 implementation finding,BANANA,sonnet-4.6,lccjs
 435,158,remove sext_sweep.a — broken and superseded,CHORE,15,5,5,10,0,2026-06-03T07:31:00-1000,2026-06-03T07:36:54-1000,,delete only; no tests referenced the file,FIG,sonnet-4.6,lccjs
 436,540,fix velocity rows 446 and 452 missing model field,DEV,15,5,2,13,3,2026-06-03T07:37:21-1000,2026-06-03T07:39:00-1000,,both APPLE rows from 2026-06-01 session; surrounding rows all sonnet-4.6; set model=sonnet-4.6 for DB ids 328 and 337,CHERRY,sonnet-4.6,lccjs
+437,528,add setCV / BR condition-code unit tests (non-oracle),DEV,45,20,8,37,12,2026-06-03T07:36:59-1000,2026-06-03T07:44:50-1000,,,ELDERBERRY,sonnet-4.6,lccjs
