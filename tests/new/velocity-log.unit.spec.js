@@ -5,10 +5,10 @@ const path = require('path');
 
 const SCRIPT = path.join(__dirname, '..', '..', 'scripts', 'velocity-log.js');
 
-function run(input, extraArgs = []) {
+function run(input, extraArgs = [], extraEnv = {}) {
   return spawnSync(process.execPath, [SCRIPT, JSON.stringify(input), ...extraArgs], {
     encoding: 'utf8',
-    env: process.env,
+    env: { ...process.env, ...extraEnv },
   });
 }
 
@@ -137,5 +137,162 @@ describe('velocity-log — role vocabulary (#519)', () => {
     ['DEV', 'TEST', 'WRITER', 'RESEARCH', 'SPIKE', 'ARC', 'PM', 'COMBO', 'DATA', 'CHORE'].forEach(r => {
       expect(roles).toContain(r);
     });
+  });
+});
+
+describe('velocity-log — --update-id flag (#536)', () => {
+  const os = require('os');
+  const fs = require('fs');
+  const Database = require('better-sqlite3');
+
+  const CREATE_TABLE = `
+    CREATE TABLE IF NOT EXISTS velocity (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ticket INTEGER, title TEXT, role TEXT, h_min REAL, c_min REAL,
+      actual_min REAL, delta_h_min REAL, delta_c_min REAL,
+      started_iso TEXT, finished_iso TEXT, closed_commit TEXT,
+      notes TEXT, agent TEXT, model TEXT, repo TEXT DEFAULT 'lccjs'
+    )
+  `;
+  const CREATE_INDEX = `
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_velocity_session
+      ON velocity(ticket, agent, started_iso)
+      WHERE started_iso IS NOT NULL
+  `;
+
+  let testDbPath;
+  let testCsvPath;
+  let testDb;
+
+  beforeEach(() => {
+    // Use pid + counter for unique temp file names (no Date.now in workflow scripts,
+    // but tests are plain JS — Math.random() is fine here).
+    const suffix = `${process.pid}-${Math.floor(Math.random() * 1e9)}`;
+    testDbPath  = path.join(os.tmpdir(), `vel-test-${suffix}.db`);
+    testCsvPath = path.join(os.tmpdir(), `vel-test-${suffix}.csv`);
+    testDb = new Database(testDbPath);
+    testDb.exec(CREATE_TABLE);
+    testDb.exec(CREATE_INDEX);
+  });
+
+  afterEach(() => {
+    try { testDb.close(); } catch (_) {}
+    for (const p of [testDbPath, testCsvPath, testCsvPath + '.tmp']) {
+      try { fs.unlinkSync(p); } catch (_) {}
+    }
+  });
+
+  function runWithTestDb(input, extraArgs = []) {
+    return run(input, extraArgs, { VELOCITY_DB: testDbPath, VELOCITY_CSV: testCsvPath });
+  }
+
+  test('--update-id with non-existent id exits 1 with "row not found — nothing updated"', () => {
+    const result = runWithTestDb({ role: 'DEV', agent: 'TEST' }, ['--update-id', '99999']);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/row 99999 not found/);
+    expect(result.stderr).toMatch(/nothing updated/);
+  });
+
+  test('--update-id updates an existing row and prints confirmation', () => {
+    const { lastInsertRowid } = testDb
+      .prepare("INSERT INTO velocity (role, agent, repo) VALUES ('DEV', 'APPLE', 'lccjs')")
+      .run();
+    testDb.close();
+
+    const result = runWithTestDb(
+      { role: 'ARC', agent: 'BANANA', ticket: 42 },
+      ['--update-id', String(lastInsertRowid)]
+    );
+    expect(result.status).toBe(0);
+    expect(result.stdout).toMatch(new RegExp(`Updated row id=${lastInsertRowid}`));
+    expect(result.stdout).toMatch(/ticket #42/);
+
+    testDb = new Database(testDbPath);
+    const row = testDb.prepare('SELECT * FROM velocity WHERE id = ?').get(lastInsertRowid);
+    expect(row.role).toBe('ARC');
+    expect(row.agent).toBe('BANANA');
+    expect(row.ticket).toBe(42);
+  });
+});
+
+describe('velocity-log — duplicate row rejected by unique index (#536)', () => {
+  const os = require('os');
+  const fs = require('fs');
+  const Database = require('better-sqlite3');
+
+  const CREATE_TABLE = `
+    CREATE TABLE IF NOT EXISTS velocity (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ticket INTEGER, title TEXT, role TEXT, h_min REAL, c_min REAL,
+      actual_min REAL, delta_h_min REAL, delta_c_min REAL,
+      started_iso TEXT, finished_iso TEXT, closed_commit TEXT,
+      notes TEXT, agent TEXT, model TEXT, repo TEXT DEFAULT 'lccjs'
+    )
+  `;
+  const CREATE_INDEX = `
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_velocity_session
+      ON velocity(ticket, agent, started_iso)
+      WHERE started_iso IS NOT NULL
+  `;
+
+  let testDbPath;
+  let testCsvPath;
+  let testDb;
+
+  beforeEach(() => {
+    const suffix = `${process.pid}-${Math.floor(Math.random() * 1e9)}`;
+    testDbPath  = path.join(os.tmpdir(), `vel-dup-${suffix}.db`);
+    testCsvPath = path.join(os.tmpdir(), `vel-dup-${suffix}.csv`);
+    testDb = new Database(testDbPath);
+    testDb.exec(CREATE_TABLE);
+    testDb.exec(CREATE_INDEX);
+  });
+
+  afterEach(() => {
+    try { testDb.close(); } catch (_) {}
+    for (const p of [testDbPath, testCsvPath, testCsvPath + '.tmp']) {
+      try { fs.unlinkSync(p); } catch (_) {}
+    }
+  });
+
+  test('second insert with same (ticket, agent, started_iso) exits 1 with "duplicate row"', () => {
+    // Seed the first row directly
+    testDb
+      .prepare(
+        "INSERT INTO velocity (ticket, agent, started_iso, role, repo) VALUES (100, 'TEST', '2026-01-01T00:00:00Z', 'DEV', 'lccjs')"
+      )
+      .run();
+    testDb.close();
+
+    const result = run(
+      { ticket: 100, agent: 'TEST', started_iso: '2026-01-01T00:00:00Z', role: 'ARC' },
+      [],
+      { VELOCITY_DB: testDbPath, VELOCITY_CSV: testCsvPath }
+    );
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/duplicate row/);
+    expect(result.stderr).toMatch(/--update-id/);
+  });
+
+  test('two rows with NULL started_iso for the same ticket/agent do not conflict', () => {
+    // First insert (NULL started_iso — goes through script to test full path)
+    const first = run(
+      { ticket: 200, agent: 'TEST', role: 'DEV' },
+      [],
+      { VELOCITY_DB: testDbPath, VELOCITY_CSV: testCsvPath }
+    );
+    expect(first.status).toBe(0);
+
+    // Reopen because first run closed it via velocity-export
+    testDb = new Database(testDbPath);
+    testDb.close();
+
+    // Second insert with same ticket/agent but still NULL started_iso — should succeed
+    const second = run(
+      { ticket: 200, agent: 'TEST', role: 'ARC' },
+      [],
+      { VELOCITY_DB: testDbPath, VELOCITY_CSV: testCsvPath }
+    );
+    expect(second.status).toBe(0);
   });
 });

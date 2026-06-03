@@ -14,6 +14,7 @@
     "velocity:seed": "node scripts/velocity-seed.js",
     "velocity:log": "node scripts/velocity-log.js",
     "velocity:export": "node scripts/velocity-export.js",
+    "velocity:migrate": "node scripts/velocity-migrate.js",
     "lccrun": "bash scripts/lccrun.sh",
     "build:site": "node scripts/build-site.js"
   },

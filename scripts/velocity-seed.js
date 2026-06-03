@@ -44,6 +44,14 @@ CREATE TABLE IF NOT EXISTS velocity (
 );
 `.trim();
 
+// Partial unique index: NULL started_iso rows are excluded so undated rows
+// for the same ticket/agent don't conflict with each other.
+const CREATE_INDEX = `
+CREATE UNIQUE INDEX IF NOT EXISTS uq_velocity_session
+  ON velocity(ticket, agent, started_iso)
+  WHERE started_iso IS NOT NULL;
+`.trim();
+
 // Parse a single CSV line respecting RFC 4180 quote-doubling.
 // Handles quoted fields (including embedded commas and "" escapes).
 function parseCSVLine(line) {
@@ -114,6 +122,7 @@ async function main() {
   }
 
   db.exec(CREATE_TABLE);
+  db.exec(CREATE_INDEX);
 
   // Read and parse CSV
   const lines = fs.readFileSync(CSV, 'utf8').split('\n').filter(Boolean);

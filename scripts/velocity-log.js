@@ -27,7 +27,7 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const { exportCSV } = require('./velocity-export');
 
-const DB_PATH  = path.join(os.homedir(), '.lccjs', 'velocity.db');
+const DB_PATH  = process.env.VELOCITY_DB || path.join(os.homedir(), '.lccjs', 'velocity.db');
 const REQUIRED = ['role', 'agent'];
 
 const VALID_ROLES = new Set([
@@ -39,8 +39,29 @@ function die(msg) {
   process.exit(1);
 }
 
-// --- Parse arg ---
-const rawArg = process.argv[2];
+// --- Parse args ---
+// Flags: --from-main, --update-id N  (order-independent)
+// Positional: first arg that doesn't start with '--' is the JSON payload.
+const fromMain = process.argv.includes('--from-main');
+
+let updateId = null;
+// Track which argv positions are consumed as flag values so they aren't
+// mistaken for the JSON payload below.
+const flagValuePositions = new Set();
+const updateIdIdx = process.argv.indexOf('--update-id');
+if (updateIdIdx !== -1) {
+  const idStr = process.argv[updateIdIdx + 1];
+  const n = Number(idStr);
+  if (!idStr || !Number.isInteger(n) || n <= 0) die('--update-id requires a positive integer row id');
+  updateId = n;
+  flagValuePositions.add(updateIdIdx + 1); // mark the id as consumed
+}
+
+// The JSON payload is the first non-flag, non-flag-value argument.
+const rawArg = process.argv.slice(2).find((a, relIdx) => {
+  const absIdx = relIdx + 2;
+  return !a.startsWith('--') && !flagValuePositions.has(absIdx);
+});
 if (!rawArg) {
   die('Usage: velocity-log.js \'{"ticket":N,"role":"DEV","agent":"BANANA",...}\'');
 }
@@ -80,7 +101,6 @@ if (VALID_ROLES.size > 0 && !VALID_ROLES.has(input.role)) {
 // --from-main escapes the guard for legitimate cases: a PM/RESEARCH row when
 // the task has no worktree of its own but another agent's worktree is active.
 // #319 (research) closed: option (a) — die before insert + --from-main escape — is the chosen approach.
-const fromMain = process.argv.includes('--from-main');
 if (!fromMain && !process.cwd().includes('.claude/worktrees')) {
   let activeWorktrees = [];
   try {
@@ -98,49 +118,86 @@ if (!fromMain && !process.cwd().includes('.claude/worktrees')) {
   }
 }
 
-// --- Insert ---
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
-
-const insert = db.prepare(`
-  INSERT INTO velocity
-    (ticket, title, role, h_min, c_min, actual_min, delta_h_min, delta_c_min,
-     started_iso, finished_iso, closed_commit, notes, agent, model, repo)
-  VALUES
-    (@ticket, @title, @role, @h_min, @c_min, @actual_min, @delta_h_min, @delta_c_min,
-     @started_iso, @finished_iso, @closed_commit, @notes, @agent, @model, @repo)
-`);
-
+// --- Insert or Update ---
 const toNum = v => (v == null || v === '') ? null : Number(v);
 const toStr = v => (v == null || v === '') ? null : String(v);
 
-let result;
-try {
-  result = insert.run({
-    ticket:        input.ticket,
-    title:         toStr(input.title),
-    role:          input.role,
-    h_min:         toNum(input.h_min),
-    c_min:         toNum(input.c_min),
-    actual_min:    toNum(input.actual_min),
-    delta_h_min:   toNum(input.delta_h_min),
-    delta_c_min:   toNum(input.delta_c_min),
-    started_iso:   toStr(input.started_iso),
-    finished_iso:  toStr(input.finished_iso),
-    closed_commit: toStr(input.closed_commit),
-    notes:         toStr(input.notes),
-    agent:         input.agent,
-    model:         toStr(input.model),
-    repo:          toStr(input.repo) ?? 'lccjs',
-  });
-} catch (e) {
-  die(`DB insert failed: ${e.message}`);
-} finally {
-  db.close();
-}
+const rowData = {
+  ticket:        input.ticket,
+  title:         toStr(input.title),
+  role:          input.role,
+  h_min:         toNum(input.h_min),
+  c_min:         toNum(input.c_min),
+  actual_min:    toNum(input.actual_min),
+  delta_h_min:   toNum(input.delta_h_min),
+  delta_c_min:   toNum(input.delta_c_min),
+  started_iso:   toStr(input.started_iso),
+  finished_iso:  toStr(input.finished_iso),
+  closed_commit: toStr(input.closed_commit),
+  notes:         toStr(input.notes),
+  agent:         input.agent,
+  model:         toStr(input.model),
+  repo:          toStr(input.repo) ?? 'lccjs',
+};
+
+const db = new Database(DB_PATH);
+db.pragma('journal_mode = WAL');
 
 const ticketLabel = input.ticket != null ? `ticket #${input.ticket}` : 'no ticket';
-console.log(`Inserted row id=${result.lastInsertRowid} (${ticketLabel})`);
+
+if (updateId !== null) {
+  // UPDATE path
+  let notFound = false;
+  let updateError = null;
+  try {
+    const existing = db.prepare('SELECT id FROM velocity WHERE id = ?').get(updateId);
+    if (!existing) {
+      notFound = true;
+    } else {
+      db.prepare(`
+        UPDATE velocity SET
+          ticket=@ticket, title=@title, role=@role, h_min=@h_min, c_min=@c_min,
+          actual_min=@actual_min, delta_h_min=@delta_h_min, delta_c_min=@delta_c_min,
+          started_iso=@started_iso, finished_iso=@finished_iso, closed_commit=@closed_commit,
+          notes=@notes, agent=@agent, model=@model, repo=@repo
+        WHERE id = @id
+      `).run({ ...rowData, id: updateId });
+    }
+  } catch (e) {
+    updateError = e;
+  } finally {
+    db.close();
+  }
+  if (notFound) die(`row ${updateId} not found — nothing updated`);
+  if (updateError) die(`DB update failed: ${updateError.message}`);
+  console.log(`Updated row id=${updateId} (${ticketLabel})`);
+} else {
+  // INSERT path
+  const insert = db.prepare(`
+    INSERT INTO velocity
+      (ticket, title, role, h_min, c_min, actual_min, delta_h_min, delta_c_min,
+       started_iso, finished_iso, closed_commit, notes, agent, model, repo)
+    VALUES
+      (@ticket, @title, @role, @h_min, @c_min, @actual_min, @delta_h_min, @delta_c_min,
+       @started_iso, @finished_iso, @closed_commit, @notes, @agent, @model, @repo)
+  `);
+  let result;
+  let insertError = null;
+  try {
+    result = insert.run(rowData);
+  } catch (e) {
+    insertError = e;
+  } finally {
+    db.close();
+  }
+  if (insertError) {
+    if (insertError.message && insertError.message.includes('UNIQUE constraint failed')) {
+      die(`duplicate row rejected: a velocity row already exists for this (ticket, agent, started_iso); use --update-id to correct the existing row`);
+    }
+    die(`DB insert failed: ${insertError.message}`);
+  }
+  console.log(`Inserted row id=${result.lastInsertRowid} (${ticketLabel})`);
+}
 
 // --- Auto-export CSV ---
 exportCSV();

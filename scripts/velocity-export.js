@@ -17,8 +17,8 @@ const os   = require('os');
 const path = require('path');
 const Database = require('better-sqlite3');
 
-const DB_PATH = path.join(os.homedir(), '.lccjs', 'velocity.db');
-const CSV     = path.join(__dirname, '..', 'docs', 'puzzle-velocity.csv');
+const DB_PATH = process.env.VELOCITY_DB  || path.join(os.homedir(), '.lccjs', 'velocity.db');
+const CSV     = process.env.VELOCITY_CSV || path.join(__dirname, '..', 'docs', 'puzzle-velocity.csv');
 const TMP     = CSV + '.tmp';
 
 const COLS = [
