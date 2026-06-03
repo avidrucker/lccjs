@@ -149,21 +149,15 @@ removeSnakeTail:
             mov fp, sp
 
             ldr r0, fp, 2   ; r0=&snake
-            ldr r1, r0, 0   ; r1=*snake
+            ldr r1, r0, 0   ; r1=*snake (oldHead ptr)
             cmp r1, 0
             bre @skip
-            ; not empty
-            ldr r1, r1, 2   ; r2 = oldHead->next
-            str r1, r0, 0   ; *snake = oldHead->next
-
-            ; Normally we’d call free(r1) here, but we have no free in LCC stub.
-            ; We'll skip it or do a stub:
-            ; push r1
-            ; bl myFreeStub
-            ; add sp, sp, 1
-            ; The memory-leak question for this free-stub pattern was tracked in
-            ; #153 — closed wontfix 2026-05-29; the same question lives on in #144
-            ; and feeds the #202 code-quality pass.
+            ; not empty — save oldHead, advance list, reclaim
+            mov r2, r1       ; r2 = oldHead
+            ldr r1, r1, 2    ; r1 = oldHead->next
+            str r1, r0, 0    ; *snake = oldHead->next
+            mov r0, r2       ; r0 = oldHead (arg to free)
+            bl  free
     @skip:
             mov r0, 0
             mov sp, fp
@@ -660,15 +654,30 @@ wrapCoord:
 @boardSizePtr:    .word boardSize
 
 ;================================================================
-; malloc stub:
-;   Uses a simple bump pointer at @avail and returns the old value.
-;   There is no free in this demo, so removed snake segments are not
-;   reclaimed.
+; malloc(r1 = size): Pattern 1 fixed-size free list.
+;   Checks @freeList first; falls back to bump allocator if empty.
 ;================================================================
 malloc:
-          ld r0, @avail
-          add r1, r0, r1
-          st r1, @avail
+          ld   r0, @freeList
+          cmp  r0, 0
+          bre  @bump
+          ldr  r2, r0, 0       ; r2 = node->next
+          st   r2, @freeList   ; freeList = node->next
+          ret                  ; r0 = recycled block address
+@bump:
+          ld   r0, @avail
+          add  r1, r0, r1
+          st   r1, @avail
           ret
 
-@avail:   .word *+1
+;================================================================
+; free(r0 = ptr to 3-word node): link freed node onto @freeList.
+;================================================================
+free:
+          ld   r1, @freeList
+          str  r1, r0, 0       ; node->next = old head
+          st   r0, @freeList   ; freeList = node
+          ret
+
+@freeList: .word 0             ; head of free list (0 = empty)
+@avail:    .word *+1           ; bump pointer
