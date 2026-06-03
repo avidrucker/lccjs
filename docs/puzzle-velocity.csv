@@ -486,3 +486,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 498,607,docs/dynamic-memory.md — evergreen malloc/free reference,DEV,25,15,,,,,2026-06-03T14:00:00-1000,,"covers C vs LCC assembly, bump pointer, free-list, freeList placement constraint, Pattern 1 impl, steady-state, comparison table",ELDERBERRY,sonnet-4.6,lccjs
 499,600,PM: ping @ItBeCharlie on human-decision-required issues,PM,10,8,1,9,7,2026-06-03T13:50:37-1000,2026-06-03T13:51:37-1000,,posted @ItBeCharlie comments on #518 (ct=0 proofs ruling) and #517 (4 arch decisions); previous @charlie tags were inert,APPLE,sonnet-4.6,lccjs
 500,605,Tab key inserts 4-space indent in playground textarea,DEV,15,5,3,12,2,,2026-06-03T13:53:37-1000,,"one keydown listener, exact impl from issue spec",fig,sonnet-4.6,lccjs
+501,604,FIX: Showcase lang source.lcc → lcc,DEV,15,10,1,14,9,2026-06-03T13:54:08-1000,2026-06-03T13:54:35-1000,,two-line fix; grep + two Edit calls,DRAGONFRUIT,sonnet-4.6,lccjs
