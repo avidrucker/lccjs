@@ -32,5 +32,6 @@ progress-report.md
 progress-report-2.md
 progress-report-3.md
 refactor-plan-wave-2.md
-.claude/
+.claude/*
+!.claude/settings.json
 stats/puzzle-velocity-enriched.csv
