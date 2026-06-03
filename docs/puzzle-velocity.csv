@@ -420,3 +420,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 432,545,TIL 2026-06-03 FIG — no PII in issues; silent-failure tradeoffs,WRITER,15,10,,,,2026-06-03T06:55:00-1000,2026-06-03T07:13:59-1000,,multi-turn session; actual_min includes human review turns,FIG,sonnet-4.6,lccjs
 433,546,TIL 2026-06-03 CHERRY — test harness checked the wrong surface,WRITER,10,8,1,9,7,2026-06-03T07:13:03-1000,2026-06-03T07:14:04-1000,,writeSync binary corruption lesson from #527; kw shadow mentioned as related class,CHERRY,sonnet-4.6,lccjs
 434,547,TIL: assembler.main() silently downgrades typed errors to plain Error,WRITER,10,5,1,9,4,2026-06-03T07:14:01-1000,2026-06-03T07:14:21-1000,,TIL from #526 implementation finding,BANANA,sonnet-4.6,lccjs
+435,158,remove sext_sweep.a — broken and superseded,CHORE,15,5,5,10,0,2026-06-03T07:31:00-1000,2026-06-03T07:36:54-1000,,delete only; no tests referenced the file,FIG,sonnet-4.6,lccjs
