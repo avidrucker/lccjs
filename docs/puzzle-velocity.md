@@ -96,10 +96,26 @@ A row tracks **work/time, not file changes.** Tasks that ship **no code** —
 `PM` (tracker updates, issue triage), `RESEARCH`, `SPIKE` — still get a row; the
 DB already has many (PM #143/#204, RESEARCH #203, SPIKE #193/#166). The only
 skips are: (a) `~/.lccjs/velocity.db` doesn't exist *and* you haven't been asked to
-set it up, or (b) a **sub-minute** fast-clarification turn. "No repo files
-changed" means only that no worktree was needed for the *work itself* — it never
-means "no velocity row." If such a task lacks a ticket to key the row to, file one
-(the #204 retroactive-ticket precedent). See #216.
+set it up, (b) a **sub-minute** fast-clarification turn, or (c) a **pure
+tracker/epic** — see the umbrella test below. "No repo files changed" means only
+that no worktree was needed for the *work itself* — it never means "no velocity
+row." If such a task lacks a ticket to key the row to, file one (the #204
+retroactive-ticket precedent). See #216.
+
+**Tracker/epic vs scope-spike — the umbrella test (#225)**
+
+The deciding question: *does this issue represent distinct work, or is it just an
+umbrella over rows that already exist?*
+
+| Issue type | Row? | Rule |
+|---|---|---|
+| **Tracker / epic** (umbrella only — collects child issues, does no work itself) | **No** | Children log all the work; a row here double-counts. Precedent: #108, #144. |
+| **Scope-decomposition spike** (bounded deliverable: site inventory + child breakdown + ROI) | **One row** | The scoping act is distinct from the children's implementation. `actual_min` must reflect the decomposition only, never a sum of child work. Precedent: #166, #171. |
+| **Spike / RESEARCH** (findings, no children) | **One row** | Its own deliverable. |
+| **Child puzzle** | **One row each** | The implementation work. |
+
+A scope-spike row is not double-logging — it records the scoping; the children
+record their implementation separately.
 
 `docs/puzzle-velocity.csv` is now a **generated read-only export** — `velocity-log.js`
 writes to SQLite and auto-exports the full CSV after every INSERT. Format details
