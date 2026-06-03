@@ -236,6 +236,58 @@ function assessBaseStaleness(base, behind) {
   return { checksRemote, behind: n, stale: checksRemote && n > 0 };
 }
 
+// Marker keyword strings split to avoid tripping the PDD substring scanner,
+// which flags the at_todo keyword (any case) as a substring in scanned source files.
+const todoKw = '@' + 'todo';
+const inprogressKw = '@' + 'inprogress';
+
+// Pure: find the first at_todo #N marker in `content` and flip it to at_inprogress #N.
+// The negative lookahead (?![0-9]) guards against matching #42 inside #420.
+// Returns { updated, flipped, line } where `line` is the 1-indexed line number (0 if
+// none found) and `updated` is the modified string. No file I/O — unit-testable.
+function applyMarkerFlip(content, issue) {
+  const re = new RegExp(`${todoKw} (#${issue}(?![0-9]))`);
+  const match = content.match(re);
+  if (!match) return { updated: content, flipped: false, line: 0 };
+  const updated = content.replace(re, `${inprogressKw} $1`);
+  const line = content.slice(0, content.indexOf(match[0])).split('\n').length;
+  return { updated, flipped: true, line };
+}
+
+// Side-effectful: search the worktree for an at_todo #N marker and flip it in-place.
+// Prints a one-liner on success, skip, double-flip guard, or write failure.
+// The modified file is left unstaged — the agent commits it in their own commit.
+function flipMarker(issue, wtPath) {
+  const inprogress = sh(`git -C "${wtPath}" grep -l "${inprogressKw} #${issue}"`, true);
+  if (inprogress && inprogress.trim()) {
+    console.log(`[claim] ${inprogressKw} #${issue} already present — skipping flip`);
+    return;
+  }
+  const grep = sh(`git -C "${wtPath}" grep -nE "${todoKw} #${issue}([^0-9]|$)"`, true);
+  if (!grep || !grep.trim()) {
+    console.log(`[claim] no ${todoKw} #${issue} marker found — skipping flip`);
+    return;
+  }
+  const firstLine = grep.trim().split('\n')[0];
+  const relFile = firstLine.split(':')[0];
+  const absFile = path.join(wtPath, relFile);
+  let content;
+  try { content = fs.readFileSync(absFile, 'utf8'); } catch (e) {
+    console.error(`[claim] warn: could not read ${relFile}: ${e.message}`);
+    return;
+  }
+  const { updated, flipped, line } = applyMarkerFlip(content, issue);
+  if (!flipped) {
+    console.log(`[claim] no ${todoKw} #${issue} marker found — skipping flip`);
+    return;
+  }
+  try { fs.writeFileSync(absFile, updated, 'utf8'); } catch (e) {
+    console.error(`[claim] warn: could not write ${relFile}: ${e.message}`);
+    return;
+  }
+  console.log(`[claim] flipped ${todoKw} #${issue} → ${inprogressKw} in ${relFile}:${line}`);
+}
+
 // Read an issue's title + state in one best-effort gh round-trip (#227). Returns
 // { title, state } with state upper-cased, or null when gh is unavailable / the
 // issue is unknown -- callers MUST treat null as "proceed", never as a block.
@@ -406,6 +458,7 @@ function main() {
     // across the gap between this worktree's teardown and the next auto-claim (#194).
     if (!identity.name) createSessionSentinel(fruit);
 
+    flipMarker(issue, wtPath);
     report(fruit, branch, wtPath, base, identity.modeLabel, false);
     return;
   }
@@ -426,7 +479,7 @@ function report(fruit, branch, wtPath, base, mode, dry) {
     console.log('');
     console.log('  next:');
     console.log(`    cd ${short}`);
-    console.log('    # flip the puzzle marker @todo #N → @inprogress #N so it reads as claimed');
+    console.log(`    # (claim already flipped the ${todoKw} #N marker to ${inprogressKw} #N if one was found)`);
     console.log('    # reuse this identity for later worktrees:  npm run claim -- <issue> --as ' + fruit);
   }
   console.log(bar);
@@ -441,4 +494,5 @@ module.exports = {
   parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
   checkIdentityName, readIssue, shouldBlockClaim,
   sentinelBranch, isSentinelStaleByAge,
+  applyMarkerFlip,
 };

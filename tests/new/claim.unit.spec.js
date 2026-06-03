@@ -7,6 +7,7 @@ const {
   assessBaseStaleness,
   sentinelBranch,
   isSentinelStaleByAge,
+  applyMarkerFlip,
 } = require('../../scripts/claim');
 
 // Pure identity-resolution seam from scripts/claim.js. These tests exercise the
@@ -242,5 +243,52 @@ describe('claim.js identity resolution', () => {
       // 8 days old → stale under the 7-day default
       expect(isSentinelStaleByAge(now - 8 * 24 * 3600, now)).toBe(true);
     });
+  });
+});
+
+// #565: applyMarkerFlip() — pure seam for @todo→@inprogress rewrite.
+// flipMarker() (the I/O wrapper) is not tested here; git/fs calls keep it integration-only.
+describe('applyMarkerFlip()', () => {
+  test('flips @todo to @inprogress, preserving the :Est/ROLE remainder', () => {
+    const content = '// @todo #42:30m/DEV fix the thing\n';
+    const { updated, flipped, line } = applyMarkerFlip(content, '42');
+    expect(flipped).toBe(true);
+    expect(line).toBe(1);
+    expect(updated).toBe('// @inprogress #42:30m/DEV fix the thing\n');
+  });
+
+  test('does not match a larger issue number (@todo #420 must not match issue 42)', () => {
+    const { flipped } = applyMarkerFlip('// @todo #420:30m/DEV\n', '42');
+    expect(flipped).toBe(false);
+  });
+
+  test('matches when marker is at end of line with no trailing character', () => {
+    const { flipped, updated } = applyMarkerFlip('// @todo #99\n', '99');
+    expect(flipped).toBe(true);
+    expect(updated).toBe('// @inprogress #99\n');
+  });
+
+  test('returns content unchanged and flipped=false when no marker present', () => {
+    const content = 'no markers here\n';
+    const { updated, flipped } = applyMarkerFlip(content, '42');
+    expect(flipped).toBe(false);
+    expect(updated).toBe(content);
+  });
+
+  test('reports the correct 1-indexed line number for multi-line content', () => {
+    const content = 'line one\nline two\n// @todo #7:15m/DEV something\nline four\n';
+    const { line } = applyMarkerFlip(content, '7');
+    expect(line).toBe(3);
+  });
+
+  test('does not match @inprogress — already-flipped content returns flipped=false', () => {
+    const { flipped } = applyMarkerFlip('// @inprogress #42:30m/DEV fix the thing\n', '42');
+    expect(flipped).toBe(false);
+  });
+
+  test('only flips the first occurrence when multiple @todo #N lines exist', () => {
+    const content = '// @todo #5:10m/DEV first\n// @todo #5:10m/DEV second\n';
+    const { updated } = applyMarkerFlip(content, '5');
+    expect(updated).toBe('// @inprogress #5:10m/DEV first\n// @todo #5:10m/DEV second\n');
   });
 });
