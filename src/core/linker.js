@@ -13,6 +13,9 @@ class Linker {
     // the constructor just delegates, so a field can't be added in one place and
     // forgotten in the other (which would leak state across reused link() runs).
     this.resetState();
+    // verboseModeOn is a configuration property (not per-link state) — it must
+    // survive resetState() calls so callers can set it once before link().
+    this.verboseModeOn = false;
   }
 
   // Reset all per-link state so the same Linker instance can be reused across
@@ -31,7 +34,6 @@ class Linker {
     this.objectModules = [];     // List of object modules to process
     this.inputFiles = [];        // List of input files
     this.outputFileName = null;  // Output file name
-    this.verboseModeOn = false;
   }
 
   main(args) {
