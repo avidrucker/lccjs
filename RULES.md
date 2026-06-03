@@ -10,3 +10,4 @@
 8. I will always close via `npm run close <N>`. I will never `git push` directly to main.
 9. Every worktree must be tied to an open GitHub issue. If none exists, I will file one before claiming.
 10. At close time, any work discovered but not done — deferred scope, a found bug, or an open design question — must become a ticket before the closing commit. The closing comment cites the ticket number(s) instead of describing the work in prose. Prose in a closing comment is not discoverable; a ticket is. (See `docs/research/followup-trigger-brainstorming.md` for the options considered.)
+11. When fixing or reviewing a write-path bug in a test harness, I will add a regression test that reads back what was written through the actual write surface (e.g. `virtualFs`) and asserts the bytes are intact. A test that only checks the producer's in-memory state leaves the write path dark.
