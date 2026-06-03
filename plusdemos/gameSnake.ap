@@ -44,7 +44,6 @@
 ;----------------------------------------------------------------
 ; startup: clears screen, hides cursor, calls main
 ;----------------------------------------------------------------
-; @todo #582:60m/DEV extract updateDirection + gameOverScreen from main
 ; @todo #583:60m/DEV extract moveSnake logic from main
 startup:    clear ; clear screen
             mov   r0, 0
@@ -404,40 +403,7 @@ main:       push lr
             cmp r4, r0
             bre @gameOver
 
-            ; Update direction from keyboard input
-            mov r0, 'w'
-            cmp r4, r0
-            brne @checkD
-                mov r1, 3
-                br @guardDir
-    @checkD:
-            mov r0, 'd'
-            cmp r4, r0
-            brne @checkS
-                mov r1, 2
-                br @guardDir
-    @checkS:
-            mov r0, 's'
-            cmp r4, r0
-            brne @checkA
-                mov r1, 1
-                br @guardDir
-    @checkA:
-            mov r0, 'a'
-            cmp r4, r0
-            brne @doneDir
-                mov r1, 0
-    @guardDir:
-            ; Reject candidate if it is the exact opposite of the current direction.
-            ; opposite(d) = (d + 2) % 4  —  encoding: 0=L,1=D,2=R,3=U; pairs (0,2),(1,3)
-            ld  r0, direction
-            add r0, r0, 2
-            mov r2, 4
-            rem r0, r2          ; r0 = (current + 2) % 4
-            cmp r0, r1
-            bre @doneDir        ; candidate is opposite — ignore keypress
-            st  r1, direction   ; accepted — commit new direction
-    @doneDir:
+            bl  updateDirection
             lea r1, snake
             push r1
             bl getSnakeHeadXY
@@ -526,19 +492,80 @@ main:       push lr
             br @loopGame
 
     @gameOver:
-            ld  r0, @GMsgPtr
-            sout r0
-            nl
-
-            ld  r0, @enterAnyKeyPtr
-            sout r0
-            nl
-
-            ain r4
+            bl  gameOverScreen
             mov sp, fp
             pop fp
             pop lr
             ret
+
+;================================================================
+; updateDirection: reads r4 (last key), updates direction global
+;================================================================
+updateDirection:
+        push lr
+        push fp
+        mov fp, sp
+
+        mov r0, 'w'
+        cmp r4, r0
+        brne @checkD
+            mov r1, 3
+            br @guardDir
+    @checkD:
+        mov r0, 'd'
+        cmp r4, r0
+        brne @checkS
+            mov r1, 2
+            br @guardDir
+    @checkS:
+        mov r0, 's'
+        cmp r4, r0
+        brne @checkA
+            mov r1, 1
+            br @guardDir
+    @checkA:
+        mov r0, 'a'
+        cmp r4, r0
+        brne @doneDir
+            mov r1, 0
+    @guardDir:
+        ; Reject candidate if it is the exact opposite of the current direction.
+        ; opposite(d) = (d + 2) % 4  —  encoding: 0=L,1=D,2=R,3=U; pairs (0,2),(1,3)
+        ld  r0, direction
+        add r0, r0, 2
+        mov r2, 4
+        rem r0, r2          ; r0 = (current + 2) % 4
+        cmp r0, r1
+        bre @doneDir        ; candidate is opposite — ignore keypress
+        st  r1, direction   ; accepted — commit new direction
+    @doneDir:
+        mov sp, fp
+        pop fp
+        pop lr
+        ret
+
+;================================================================
+; gameOverScreen: prints game-over message and waits for keypress
+;================================================================
+gameOverScreen:
+        push lr
+        push fp
+        mov fp, sp
+
+        ld  r0, @GMsgPtr
+        sout r0
+        nl
+
+        ld  r0, @enterAnyKeyPtr
+        sout r0
+        nl
+
+        ain r4
+
+        mov sp, fp
+        pop fp
+        pop lr
+        ret
 
 ;================================================================
 ; printScore
