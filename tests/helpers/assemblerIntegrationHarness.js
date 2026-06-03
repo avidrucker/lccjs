@@ -59,22 +59,17 @@ function setupAssemblerIntegrationHarness(Assembler) {
 
     fs.openSync.mockImplementation((filePath, flags) => {
       if (flags === 'w') {
-        virtualFs[filePath] = '';
+        virtualFs[filePath] = Buffer.alloc(0);
       }
       return filePath;
     });
 
-    fs.writeSync.mockImplementation((fd, buffer) => {
+    fs.writeSync.mockImplementation((fd, chunk) => {
       if (!Object.prototype.hasOwnProperty.call(virtualFs, fd)) {
         throw new Error(`Invalid file descriptor: ${fd}`);
       }
-      if (Buffer.isBuffer(buffer)) {
-        virtualFs[fd] += buffer.toString('utf-8');
-      } else if (typeof buffer === 'string') {
-        virtualFs[fd] += buffer;
-      } else {
-        virtualFs[fd] += String(buffer);
-      }
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, 'utf8');
+      virtualFs[fd] = Buffer.concat([virtualFs[fd], buf]);
     });
 
     fs.closeSync.mockImplementation(() => {});

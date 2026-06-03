@@ -404,3 +404,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 416,522,"audit test suite for brittleness, robustness, and quality",RESEARCH,60,45,7,53,38,2026-06-03T03:06:52-1000,2026-06-03T03:13:52-1000,,surveyed all test files; filed 6 sub-issues #526-531,BANANA,sonnet-4.6,lccjs
 417,523,Correct two non-canonical role values in velocity.db,DATA,10,10,,,,,2026-06-03T03:43:20-1000,,UPDATE row 378 ARCHITECT→ARC; DELETE row 410 (blank test debris). Verified via SELECT before and after. No code changes.,APPLE,sonnet-4.6,lccjs
 418,525,update oracle-setup.md — claim now auto-copies .env into worktrees,WRITER,10,5,1,9,4,2026-06-03T05:53:01-1000,2026-06-03T05:53:32-1000,,,ELDERBERRY,sonnet-4.6,lccjs
+419,527,fix assemblerIntegrationHarness writeSync corrupts binary output,DEV,30,20,2,28,18,2026-06-03T05:54:03-1000,2026-06-03T05:56:20-1000,,openSync init Buffer.alloc(0); writeSync Buffer.concat pattern; regression test added,CHERRY,sonnet-4.6,lccjs

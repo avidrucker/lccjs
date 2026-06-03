@@ -194,4 +194,20 @@ describe('Assembler', () => {
     });
   });
 
+  // -------------------------------------------------------------------------
+  // Regression: writeSync must store Buffer, not corrupt binary via UTF-8 (#527)
+  // -------------------------------------------------------------------------
+  describe('binary output integrity', () => {
+    test('virtualFs output is a Buffer with intact oC signature after assembly', () => {
+      const aFilePath = 'sig.a';
+      virtualFs[aFilePath] = '  halt\n';
+      assembler.main([aFilePath]);
+      const output = virtualFs['sig.e'];
+      expect(Buffer.isBuffer(output)).toBe(true);
+      // Minimal program has no header entries → oC are the first two bytes
+      expect(output[0]).toBe(0x6F); // 'o'
+      expect(output[1]).toBe(0x43); // 'C'
+    });
+  });
+
 });
