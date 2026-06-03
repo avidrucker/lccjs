@@ -25,23 +25,24 @@ function makeIp() {
 }
 
 /**
- * Temporarily set process.stdin.isTTY to `true` for the duration of `fn`,
+ * Temporarily set process.stdout.isTTY to `true` for the duration of `fn`,
  * then restore the original descriptor.  Used to test the TTY-gated branches
  * of executeToggleCursor and executeResetCursor without actually being on a TTY.
+ * (Guards check stdout.isTTY because the escape sequences target stdout.)
  */
 function withFakeTTY(fn) {
-  const orig = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY');
+  const orig = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY');
   try {
-    Object.defineProperty(process.stdin, 'isTTY', {
+    Object.defineProperty(process.stdout, 'isTTY', {
       value: true, configurable: true, writable: true,
     });
     fn();
   } finally {
     if (orig) {
-      Object.defineProperty(process.stdin, 'isTTY', orig);
+      Object.defineProperty(process.stdout, 'isTTY', orig);
     } else {
       // isTTY was not an own property (inherits undefined) — remove the override
-      delete process.stdin.isTTY;
+      delete process.stdout.isTTY;
     }
   }
 }
@@ -202,7 +203,7 @@ describe('InterpreterPlus — executeToggleCursor / cursor (trap 18)', () => {
   afterEach(() => writeSpy.mockRestore());
 
   test('off-TTY: no stdout.write calls regardless of register value', () => {
-    // Jest runs with stdin piped, so isTTY is undefined/falsy by default.
+    // Jest runs with stdout piped, so stdout.isTTY is undefined/falsy by default.
     const ip = makeIp();
     ip.dr = 0;
     ip.r[0] = 0; // hide request

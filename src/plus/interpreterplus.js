@@ -369,7 +369,7 @@ class InterpreterPlus extends Interpreter {
     // by default, in the beginning of all programs, the cursor is visible
     // if the passed in register is 0, hide the cursor
     // if the passed in register is non-zero, show the cursor
-    if (!process.stdin.isTTY) return; // no terminal cursor off-TTY; don't leak the escape into piped output
+    if (!process.stdout.isTTY) return; // escape targets stdout — guard on stdout, not stdin
     if (this.r[this.dr] === 0) {
       process.stdout.write('\u001B[?25l');
       //process.stdout.write(ansiEscapes.cursorHide); // hide cursor
@@ -413,7 +413,7 @@ class InterpreterPlus extends Interpreter {
   }
 
   executeResetCursor() {
-    if (!process.stdin.isTTY) return; // no terminal to home off-TTY; don't leak the escape into piped output
+    if (!process.stdout.isTTY) return; // escape targets stdout — guard on stdout, not stdin
     process.stdout.write('\u001B[H'); // move cursor to home
   }
 }
