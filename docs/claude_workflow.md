@@ -143,6 +143,25 @@ If any file your ticket will touch is untracked or modified on main, commit or s
 
 ---
 
+## What NOT to post publicly
+
+GitHub issues, PR comments, and commit messages are **public and indexed by web crawlers**. Never include any of the following in issue bodies, comments, or commit messages:
+
+- **Personal email addresses** — use placeholders: `[your email]`, `[Prof. Dos Reis's email]`, `[sender email]`.
+- **Credentials and tokens** — API keys, passwords, OAuth tokens, personal access tokens, `.env` values.
+- **Phone numbers** — any telephone or SMS contact details.
+- **Other PII** — anything that uniquely identifies a real person and that they have not already published themselves in this context.
+
+**The distinction for email addresses:**
+- Repo *files* intended as offline artifacts (e.g. `docs/cuh63-*.md`, PDFs for external distribution) → real author attribution email is acceptable there.
+- Inline *issue/comment text* → always use a placeholder, never the real address.
+
+When drafting an email template or message for review in an issue, replace every real address with a bracketed placeholder before posting. Cite this section if declining to include a real address in public-facing content.
+
+Triggered by #507 (personal email in a review comment); rule documented in #537.
+
+---
+
 ## While paused
 
 A pause happens in two shapes:
