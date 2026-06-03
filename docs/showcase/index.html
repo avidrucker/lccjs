@@ -382,7 +382,7 @@ async function main() {
   // Replace plain placeholders with highlighted HTML.
   for (const { wrapId, statusId, code } of SAMPLES) {
     try {
-      const html = hl.codeToHtml(code, { lang: 'source.lcc', theme: 'github-dark' });
+      const html = hl.codeToHtml(code, { lang: 'lcc', theme: 'github-dark' });
       setHighlighted(wrapId, html);
       setStatus(statusId, '');
     } catch (err) {
@@ -396,7 +396,7 @@ async function main() {
 
   function renderPlayground() {
     try {
-      const html = hl.codeToHtml(playInput.value, { lang: 'source.lcc', theme: 'github-dark' });
+      const html = hl.codeToHtml(playInput.value, { lang: 'lcc', theme: 'github-dark' });
       playOutput.innerHTML = html;
       setStatus('status-playground', '');
     } catch (err) {
