@@ -2203,7 +2203,7 @@ class Assembler {
         : '';
       return `[assembler] Error on line ${this.lineNum} of ${this.inputFileName}:\n    ${this.currentLine}\n${message}${typeClause}`;
     }
-    return `Error on line ${this.lineNum} of ${this.inputFileName}: ${message}`;
+    return `Error on line ${this.lineNum} of ${this.inputFileName}:\n${this.currentLine}\n${message}`;
   }
 
   error(message, verboseContext = null) {

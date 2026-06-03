@@ -351,7 +351,7 @@ describe('Assembler Unit Tests', () => {
       expect(asm.verboseModeOn).toBe(false);
     });
 
-    test('compact format (verboseModeOn=false): line N + message, no source line', () => {
+    test('compact format (verboseModeOn=false): 3-line oracle format with source line', () => {
       const asm = new Assembler();
       asm.lineNum = 5;
       asm.inputFileName = 'test.a';
@@ -360,7 +360,8 @@ describe('Assembler Unit Tests', () => {
       const msg = asm.formatAssemblerError('Undefined label');
       expect(msg).toContain('line 5');
       expect(msg).toContain('Undefined label');
-      expect(msg).not.toContain('ld r0, foo');
+      expect(msg).toContain('ld r0, foo');
+      expect(msg).toMatch(/Error on line 5 of test\.a:\n.*ld r0, foo\nUndefined label/);
     });
 
     test('verbose format (verboseModeOn=true): includes source line', () => {
