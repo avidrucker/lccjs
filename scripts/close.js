@@ -541,6 +541,11 @@ function report({ issue, branch, wtPath, sha, kept, dry }) {
   console.log(`CLOSE ${dry ? 'DRYRUN' : 'OK'} issue=${issue} branch=${branch || ''} sha=${sha || ''}${kept ? ' kept=1' : ''}`);
 }
 
+function logCommentPrompt(issue, sha) {
+  const s = sha ? sha.slice(0, 12) : '(sha)';
+  log(`Post your closing comment:\n  gh issue comment ${issue} --body "Closed in ${s}. <your summary here>"`);
+}
+
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
@@ -648,6 +653,7 @@ function main() {
 
   if (opts.keep) {
     report({ issue, branch, wtPath, sha: landedSha, kept: true, dry: false });
+    logCommentPrompt(issue, landedSha);
     return;
   }
 
@@ -665,6 +671,7 @@ function main() {
 
   report({ issue, branch, wtPath, sha: landedSha, kept: false, dry: false });
   log(`Shell re-root: cd "${root}"`);
+  logCommentPrompt(issue, landedSha);
 
   // Defer the filesystem teardown to a detached subprocess so that npm and
   // any shell it spawns for post-run lifecycle checks can exit while the
@@ -686,4 +693,5 @@ module.exports = {
   computeVelocityMismatch,
   extractKeywords, keywordsOverlap,
   velocityRowExists, markerStillPresent,
+  logCommentPrompt,
 };
