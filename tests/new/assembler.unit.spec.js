@@ -432,6 +432,20 @@ describe('Assembler Unit Tests', () => {
       expect(errCall[0]).toContain('expected: num');
     });
 
+    test('verbose Bad number error includes found/expected when shift-count operand is a label', () => {
+      const asm = new Assembler();
+      asm.verboseModeOn = true;
+      asm.lineNum = 1;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  srl r1, myLabel';
+      console.error.mockClear();
+      expect(() => asm.evaluateImmediateNaive('myLabel')).toThrow();
+      const errCall = console.error.mock.calls.find(c => c[0] && c[0].includes('found:'));
+      expect(errCall).toBeDefined();
+      expect(errCall[0]).toContain('found: label');
+      expect(errCall[0]).toContain('expected: num');
+    });
+
     test('verbose Bad register error includes found/expected when operand is a num', () => {
       const asm = new Assembler();
       asm.verboseModeOn = true;

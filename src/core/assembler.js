@@ -2182,7 +2182,8 @@ class Assembler {
     }
     let value = this.parseNumber(valueStr);
     if (isNaN(value)) {
-      this.failAssembly(`Bad number`, 1); // `Not a valid number: ${valueStr}`
+      this.failAssembly('Bad number', 1,
+        { found: this.determineOperandType(valueStr), expected: 'num' });
     }
     return value & 0xFFFF;
   }
