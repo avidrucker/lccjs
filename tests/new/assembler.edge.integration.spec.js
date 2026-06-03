@@ -1080,4 +1080,59 @@ x: .word 10
       assembler.main(['pcoffset11.a']);
     }).toThrow();
   });
+
+  // ── malformed sign forms (#555) ───────────────────────────────────────────
+  // JS parseInt accepts a single leading +/- but rejects compound signs.
+  // +-5, --5, ++5 → parseInt returns NaN → "Bad number" error.
+  // +5 (unary plus) → parseInt("+5", 10) = 5 → valid.
+
+  test('218. add with +-5 immediate → Bad number (compound sign)', () => {
+    virtualFs['add-compound-sign.a'] = '  add r0, r1, +-5\n  halt';
+    expect(() => assembler.main(['add-compound-sign.a'])).toThrow();
+  });
+
+  test('219. add with --5 immediate → Bad number (double minus)', () => {
+    virtualFs['add-double-minus.a'] = '  add r0, r1, --5\n  halt';
+    expect(() => assembler.main(['add-double-minus.a'])).toThrow();
+  });
+
+  test('220. add with ++5 immediate → Bad number (double plus)', () => {
+    virtualFs['add-double-plus.a'] = '  add r0, r1, ++5\n  halt';
+    expect(() => assembler.main(['add-double-plus.a'])).toThrow();
+  });
+
+  test('221. add with +5 immediate → no error (unary plus accepted by parseInt)', () => {
+    virtualFs['add-unary-plus.a'] = '  add r0, r1, +5\n  halt';
+    assembler.main(['add-unary-plus.a']);
+    expect(assembler.errorFlag).toBe(false);
+  });
+
+  // ── trailing comma / empty operands (#555) ────────────────────────────────
+  // The tokenizer treats commas as whitespace-equivalent delimiters; it never
+  // pushes an empty token.  A trailing comma or double comma silently drops the
+  // missing slot, so the instruction sees fewer operands than expected and errors.
+
+  test('222. add with trailing comma → Missing operand (3rd slot is undefined)', () => {
+    virtualFs['add-trailing-comma.a'] = '  add r0, r1,\n  halt';
+    expect(() => assembler.main(['add-trailing-comma.a'])).toThrow();
+  });
+
+  test('223. add with double comma → Missing operand (middle slot collapses)', () => {
+    virtualFs['add-double-comma.a'] = '  add r0, , r1\n  halt';
+    expect(() => assembler.main(['add-double-comma.a'])).toThrow();
+  });
+
+  // ── malformed offset syntax variants (#555) ───────────────────────────────
+  // offset6 goes through evaluateImmediate → parseNumber → parseInt.
+  // Compound signs are rejected the same way as in imm5 above.
+
+  test('224. ldr with +-3 offset → Bad number (compound sign in offset6)', () => {
+    virtualFs['ldr-compound-sign.a'] = '  ldr r0, r1, +-3\n  halt';
+    expect(() => assembler.main(['ldr-compound-sign.a'])).toThrow();
+  });
+
+  test('225. str with --2 offset → Bad number (double minus in offset6)', () => {
+    virtualFs['str-double-minus.a'] = '  str r0, r1, --2\n  halt';
+    expect(() => assembler.main(['str-double-minus.a'])).toThrow();
+  });
 });

@@ -82,10 +82,10 @@ This file is the current actionable backlog. Completed historical refactor steps
 
 ## Test Coverage
 
-- [ ] add more direct edge-case tests for assembler numeric and operand forms
-  - [ ] malformed sign forms
-  - [ ] trailing commas / empty operands
-  - [ ] more malformed offset syntax variants
+- [x] add more direct edge-case tests for assembler numeric and operand forms (#555 closed)
+  - [x] malformed sign forms
+  - [x] trailing commas / empty operands
+  - [x] more malformed offset syntax variants
 - [ ] add more LCC/linker routing edge-case coverage
   - [ ] mixed extension link scenarios
   - [ ] `-o` edge cases
