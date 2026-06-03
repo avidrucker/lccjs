@@ -1,0 +1,2 @@
+; probe: br with numeric operand
+        br 5

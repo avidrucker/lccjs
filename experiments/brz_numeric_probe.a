@@ -1,0 +1,2 @@
+; probe: brz with numeric operand
+        brz 5

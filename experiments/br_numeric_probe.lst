@@ -1,0 +1,19 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Wed Jun  3 05:56:25 2026
+TestUser
+
+Header
+o
+C
+
+Loc   Code           Source Code
+           ; probe: br with numeric operand
+Error on line 2 of br_numeric_probe.a:
+        br 5
+Undefined label
+
+========================================== Program statistics
+Input file name       =      br_numeric_probe.a
+Instructions executed =    0 (hex)     0 (dec)
+Program size          =    0 (hex)     0 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)

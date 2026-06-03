@@ -1,0 +1,2 @@
+; probe: brgt with numeric operand
+        brgt 5
