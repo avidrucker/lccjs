@@ -312,9 +312,12 @@ class InterpreterPlus extends Interpreter {
   }
 
   executeLccPlusBreakpoint() {
+    if (!process.stdin.isTTY) {
+      process.stderr.write('lcc+: breakpoint hit off-TTY — interactive terminal required; exiting.\n');
+      fatalExit('breakpoint hit off-TTY', 1);
+      return;
+    }
     this.running = false;
-    // wait for the user to press any key, then once they have
-    // pressed any key, resume execution
     process.stdin.once('data', () => {
       this.running = true;
       this.startNonBlockingLoop();

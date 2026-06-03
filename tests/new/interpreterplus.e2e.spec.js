@@ -20,6 +20,13 @@ const ESC = String.fromCharCode(27); // 0x1b — start of any ANSI cursor escape
 // Pinned identically in interpreterplus.unit.spec.js against the pure LCG seam.
 const GOLDEN = [12, 17, 4, 1, 8, 9, 4, 1, 8, 5, 20, 1, 8, 17, 12, 13, 16, 5, 12, 5];
 
+// Minimal .ap source that immediately hits a bp breakpoint.
+// Written inline so the test has no external fixture dependency.
+const BP_AP_SOURCE = `        .lccplus
+        bp
+        halt
+`;
+
 describe('interpreterplus CLI off-TTY (#259)', () => {
   test('a write-only .ep runs to completion with a non-TTY stdin (no setRawMode crash)', () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-iplus-offtty-'));
@@ -47,6 +54,34 @@ describe('interpreterplus CLI off-TTY (#259)', () => {
       expect(run.stdout).toContain(GOLDEN.join('\n'));
       // And no terminal cursor-control escape leaks into the piped output.
       expect(run.stdout).not.toContain(ESC);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('bp off-TTY fast-fail (#561)', () => {
+  test('bp prints diagnostic to stderr and exits 1 when stdin is not a TTY', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-bp-offtty-'));
+    try {
+      const apPath = path.join(tmpDir, 'bp_test.ap');
+      fs.writeFileSync(apPath, BP_AP_SOURCE);
+      const asm = spawnSync(process.execPath, [ASSEMBLER, 'bp_test.ap'], {
+        cwd: tmpDir, encoding: 'utf8', timeout: 10000,
+      });
+      expect(asm.status).toBe(0);
+      const epPath = path.join(tmpDir, 'bp_test.ep');
+      expect(fs.existsSync(epPath)).toBe(true);
+
+      // input: '' gives a non-TTY stdin — bp must not hang
+      const run = spawnSync(process.execPath, [INTERPRETER, 'bp_test.ep'], {
+        cwd: tmpDir, encoding: 'utf8', input: '', timeout: 5000,
+      });
+
+      expect(run.status).toBe(1);
+      expect(run.stderr).toContain(
+        'lcc+: breakpoint hit off-TTY — interactive terminal required; exiting.'
+      );
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
