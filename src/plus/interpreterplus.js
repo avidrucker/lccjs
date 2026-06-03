@@ -17,7 +17,7 @@ const ASYNC_BATCH_SIZE = 500;
 function resetProcessStdin() {
   // setRawMode is TTY-only; off a TTY there is no raw mode to leave and no
   // terminal cursor to restore (the escape would leak into piped output).
-  // This chokepoint is reached via fatalExit/exit-handler/HALT/Ctrl-C. (#259)
+  // This chokepoint is reached via fatalExit/exit-handler/HALT/Ctrl-C.
   if (!process.stdin.isTTY) return;
   process.stdin.setRawMode(false);
   process.stdin.pause();
@@ -128,7 +128,7 @@ class InterpreterPlus extends Interpreter {
     // is no live keyboard to read. Skip raw-mode + the data listener entirely;
     // the keyQueue then stays empty, so nbain returns 0 ("no key") on every poll
     // (its existing empty-queue branch). Write-only programs run to completion;
-    // input-driven programs simply see no keypresses. (#259)
+    // input-driven programs simply see no keypresses.
     if (this.nonBlockingInput && process.stdin.isTTY) {
       // set up raw mode for non-blocking input
       process.stdin.setRawMode(true);
@@ -366,7 +366,7 @@ class InterpreterPlus extends Interpreter {
     // by default, in the beginning of all programs, the cursor is visible
     // if the passed in register is 0, hide the cursor
     // if the passed in register is non-zero, show the cursor
-    if (!process.stdin.isTTY) return; // no terminal cursor off-TTY; don't leak the escape into piped output (#259)
+    if (!process.stdin.isTTY) return; // no terminal cursor off-TTY; don't leak the escape into piped output
     if (this.r[this.dr] === 0) {
       process.stdout.write('\u001B[?25l');
       //process.stdout.write(ansiEscapes.cursorHide); // hide cursor
@@ -410,7 +410,7 @@ class InterpreterPlus extends Interpreter {
   }
 
   executeResetCursor() {
-    if (!process.stdin.isTTY) return; // no terminal to home off-TTY; don't leak the escape into piped output (#259)
+    if (!process.stdin.isTTY) return; // no terminal to home off-TTY; don't leak the escape into piped output
     process.stdout.write('\u001B[H'); // move cursor to home
   }
 }

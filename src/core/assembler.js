@@ -627,7 +627,7 @@ class Assembler {
 
     // For object modules, resolve the author name BEFORE writing any output so a
     // name-resolution failure (empty input / EOF on a non-TTY) aborts atomically,
-    // leaving nothing on disk — matching OG LCC's all-or-nothing behavior. (#269)
+    // leaving nothing on disk — matching OG LCC's all-or-nothing behavior.
     if (this.isObjectModule) {
       // Get the userName using nameHandler so the generated reports match current behavior.
       try {
@@ -1851,7 +1851,7 @@ class Assembler {
       } else {
         // Translate to 'mvi dr, imm9' — same range (-256..255) and machine code as mvi.
         // Charlie confirmed: mov dr, imm9 is a pseudo-instruction for mvi dr, imm9.
-        // The oracle's rejection of negatives is a known oracle bug (OB-001 / #31).
+        // The oracle's rejection of negatives is a known oracle bug (OB-001).
         let imm9 = this.evaluateImmediate(operands[1], -256, 255, "mov immediate value");
         if (imm9 === null) {
           this.failAssembly('Missing number', 1);

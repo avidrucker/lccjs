@@ -17,7 +17,7 @@ class Linker {
 
   // Reset all per-link state so the same Linker instance can be reused across
   // multiple link() calls without state leaking from one run into the next.
-  // This is the single definition of the per-link field set (see #254 / #246 H3).
+  // This is the single definition of the per-link field set.
   resetState() {
     this.machineCode = [];
     this.mcaIndex = 0;
@@ -149,10 +149,10 @@ class Linker {
   link(filenames, outputFileName) {
     this.resetState();
     this.inputFiles = filenames; // Save input files
-    // Oracle research (2026-05-26): the oracle `lcc` binary defaults to `link.e`
-    // in the CWD; the oracle standalone `linker` binary defaults to `linktest.e`
-    // in the CWD.  Both oracle tools use CWD, not the directory of the first .o
-    // file (issue #3 requested the latter, but that would diverge from oracle).
+    // The oracle `lcc` binary defaults to `link.e` in the CWD; the oracle standalone
+    // `linker` binary defaults to `linktest.e` in the CWD. Both use CWD, not the
+    // directory of the first .o file (placing output next to the input would diverge
+    // from oracle behavior).
     // LCC.js invoked via `lcc.js` always receives an explicit outputFileName, so
     // this fallback only applies to standalone `linker.js` invocations — where it
     // should say 'linktest.e' to match the oracle standalone linker.

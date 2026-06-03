@@ -894,7 +894,7 @@ if (require.main === module) {
     disassembler.disassemble(fileName);
 }
 
-// Export seam (#196): the class is otherwise reachable only via the CLI above.
+// Export seam: the class is otherwise reachable only via the CLI above.
 // The per-instruction disassemble*/signExtend methods are pure (word -> text),
 // which makes them unit-testable without file I/O — see tests/new/disassembler.unit.spec.js.
 module.exports = Disassembler;

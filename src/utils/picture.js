@@ -145,6 +145,6 @@ if (require.main === module) {
     }
 }
 
-// Export seam (#172): the pure parse/format helpers were previously buried in
-// the CLI driver at module level (0% coverage). See tests/new/picture.unit.spec.js.
+// Export seam: readNullTerminatedString/parseObjectPicture/formatPicture are pure
+// functions — unit-testable without file I/O. See tests/new/picture.unit.spec.js.
 module.exports = { readNullTerminatedString, parseObjectPicture, formatPicture };

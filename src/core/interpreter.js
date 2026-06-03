@@ -856,7 +856,7 @@ class Interpreter {
     return `${line.toString(16).padStart(3, ' ')}: ${source.toString(16).padStart(4, '0')}`;
   }
 
-  // Phase 1 of oracle debugger parity (#102):
+  // Interactive debug interface — state, commands, and loop semantics:
   //   - State format: source text (from sourceMap) instead of hex machine word
   //   - Commands: Enter=step, q=quit, g=continue, r=regs, m/m addr [n]=memory,
   //               i=next-instr, h=help, s=stack
@@ -1386,7 +1386,7 @@ class Interpreter {
 
   executeSIN() {
     let address = this.r[this.sr];
-    // Destructure isEOF so we can throw consistently with din/hin/ain (#529).
+    // Destructure isEOF so we can throw consistently with din/hin/ain.
     let { inputLine: input, isSimulated, isEOF } = this.readLineFromStdin();
 
     if (isEOF) {

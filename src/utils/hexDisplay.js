@@ -68,6 +68,6 @@ if (require.main === module) {
     }
 }
 
-// Export seam (#172): isPrintableASCII + formatHexLine were previously buried in
-// the CLI loop at module level (0% coverage). See tests/new/hexDisplay.unit.spec.js.
+// Export seam: isPrintableASCII + formatHexLine are pure functions — unit-testable
+// without file I/O. See tests/new/hexDisplay.unit.spec.js.
 module.exports = { isPrintableASCII, formatHexLine };

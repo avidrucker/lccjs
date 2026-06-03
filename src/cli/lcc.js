@@ -68,7 +68,7 @@ class LCC {
     this.inputFileName = this.args[0];
 
     // -i flag: delegate entirely to the interactive debugger (ILCC).
-    // Supported: .a, .bin, .hex (assembled first) and .e (loaded directly). (#395)
+    // Supported: .a, .bin, .hex (assembled first) and .e (loaded directly).
     if (this.options.interactive) {
       this.runInteractiveMode();
       return;
@@ -83,7 +83,7 @@ class LCC {
 
     // Resolve the author name before any assembly or execution — matches oracle
     // behavior (oracle always prompts for name first). Writes name.nnn if absent;
-    // subsequent calls in assembler/interpreter just read from the file. (#398)
+    // subsequent calls in assembler/interpreter just read from the file.
     // Guards:
     //   - linking (.o → .e): linker writes no report artifacts, name not needed.
     //   - generateStats=false: no .lst/.bst will be written, name not needed.

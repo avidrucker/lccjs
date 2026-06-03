@@ -1,10 +1,9 @@
 // stateDelta.js — pure machine-state diff helpers for the debug / interactive layers.
 //
-// Extracted from the register-comparison logic duplicated in interpreter.js
-// (step() diff block) and iinterpreter.js (displayRegisters). See #164 and the DRY
-// spike docs/research/debugger-ilcc-dry.md (overlap #1). Pure functions — no machine
-// state, no I/O, no formatting — so both the oracle-parity debugger and the
-// interactive TUI share the "what changed" computation while each renders it itself.
+// Canonical home for the register/flag diff computation shared across interpreter.js
+// and iinterpreter.js. Pure functions — no machine state, no I/O, no formatting —
+// so both the oracle-parity debugger and the interactive TUI share the "what changed"
+// computation while each renders it itself.
 //
 // IMPORTANT — flags/pc are NOT fully shared by design:
 //   The core oracle debugger (interpreter.js) renders flags/pc *fire-once* — it shows

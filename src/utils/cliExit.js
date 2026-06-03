@@ -1,9 +1,8 @@
 // cliExit.js — shared CLI exit/error scaffolding for the toolchain's wrapper paths.
 //
-// This block (`isTestMode` + `fatalExit` / `cliErrorExit` / `cliWrappedErrorExit`)
-// was copy-pasted across 8 entry points in src/ (core assembler/interpreter/linker/lcc,
-// the interactive ilcc, and the plus subclasses) and had begun to drift. Extracted to
-// one canonical home so the exit contract is edited in a single place. See #167.
+// Centralised here so `isTestMode` + `fatalExit` / `cliErrorExit` / `cliWrappedErrorExit`
+// stay consistent across assembler, interpreter, linker, lcc, ilcc, and the plus
+// subclasses — edit the exit contract in one place, not eight.
 //
 // These belong on the **wrapper side** of the pure-seam boundary documented in
 // docs/core-behavior-matrix.md: they own console output and process exit. The pure

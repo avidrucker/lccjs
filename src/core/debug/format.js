@@ -1,9 +1,7 @@
 // format.js — shared display-formatting helpers for the debug / interactive layers.
 //
-// Extracted from src/core/interpreter.js and src/interactive/iinterpreter.js to
-// remove the ~5 copy-pasted definitions of the 4-digit-hex helper and to give the
-// register name/alias tables a single canonical home. See #163 and the DRY spike
-// docs/research/debugger-ilcc-dry.md (overlap #2). Pure formatting only — no
+// Canonical home for the 4-digit-hex helper and the register name/alias tables,
+// shared across interpreter.js and iinterpreter.js. Pure formatting only — no
 // machine state, no I/O — so both the oracle-parity debugger and the interactive
 // TUI can depend on it without coupling their presentation.
 
