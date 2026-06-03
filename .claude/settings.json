@@ -5,8 +5,8 @@
         "hooks": [
           {
             "type": "command",
-            "comment": "EXPERIMENT (#349) — schema-discovery logger. Replace with serial-tool-guard.js once real payload schema is confirmed. Remove this block to disable.",
-            "command": "node scripts/hooks/posttoolbatch-logger.js"
+            "comment": "EXPERIMENT (#349) — serial-tool-use guard. Remove this block to disable. Schema confirmed from Claude Code docs (tool_calls[].{tool_name,tool_input,tool_use_id,output,was_blocked,error}).",
+            "command": "node scripts/hooks/serial-tool-guard.js"
           }
         ]
       }
