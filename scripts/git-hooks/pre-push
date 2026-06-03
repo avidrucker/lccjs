@@ -29,8 +29,10 @@ cd "$(git rev-parse --show-toplevel)"
 # files, lands a broken tree on main and corrupts every parallel agent's next
 # rebase. This guard needs no gem and runs first. Conflict markers at column 0
 # never occur outside an unresolved conflict — prose that discusses them indents
-# or quotes them, so the anchored grep won't false-trip on docs (e.g. this repo's
-# own claude_workflow.md, which mentions the markers mid-line).
+# or quotes them. *.md files are excluded: markdown docs may contain fenced
+# code-block examples showing what conflict markers look like (e.g. TIL docs
+# explaining the close.js CSV conflict footgun), and unresolved conflicts in
+# docs can't break the build (#577).
 if [ -d "$(git rev-parse --git-path rebase-merge)" ] || [ -d "$(git rev-parse --git-path rebase-apply)" ]; then
   echo "[pre-push] BLOCKED — a rebase is in progress. Finish it (git rebase --continue / --abort) before pushing."
   echo "Bypass with: git push --no-verify"
@@ -41,7 +43,7 @@ if [ -f "$(git rev-parse --git-path MERGE_HEAD)" ]; then
   echo "Bypass with: git push --no-verify"
   exit 1
 fi
-if markers=$(git grep -nE '^(<<<<<<<|>>>>>>>)' -- 2>/dev/null) && [ -n "$markers" ]; then
+if markers=$(git grep -nE '^(<<<<<<<|>>>>>>>)' -- ':!*.md' 2>/dev/null) && [ -n "$markers" ]; then
   echo "[pre-push] BLOCKED — conflict markers in tracked files:"
   echo "$markers" | head -20
   echo "Resolve the conflict before pushing. Bypass with: git push --no-verify"
