@@ -39,6 +39,8 @@ cp .env.example .env
 
 `.env` is gitignored; `.env.example` is the checked-in template.
 
+> **Note for worktree users:** If you start work via `npm run claim`, `.env` is automatically copied from the repo root into the worktree — no manual copy needed. Make sure `.env` is configured at the repo root once (this step) and every subsequent `claim` inherits it.
+
 **4. Run the oracle suites:**
 
 ```bash
