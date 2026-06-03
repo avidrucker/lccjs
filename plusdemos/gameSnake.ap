@@ -409,30 +409,35 @@ main:       push lr
             cmp r4, r0
             brne @checkD
                 mov r1, 3
-                st r1, direction
-                br @doneDir
+                br @guardDir
     @checkD:
             mov r0, 'd'
             cmp r4, r0
             brne @checkS
                 mov r1, 2
-                st r1, direction
-                br @doneDir
+                br @guardDir
     @checkS:
             mov r0, 's'
             cmp r4, r0
             brne @checkA
                 mov r1, 1
-                st r1, direction
-                br @doneDir
+                br @guardDir
     @checkA:
             mov r0, 'a'
             cmp r4, r0
             brne @doneDir
                 mov r1, 0
-                st r1, direction
+    @guardDir:
+            ; Reject candidate if it is the exact opposite of the current direction.
+            ; opposite(d) = (d + 2) % 4  —  encoding: 0=L,1=D,2=R,3=U; pairs (0,2),(1,3)
+            ld  r0, direction
+            add r0, r0, 2
+            mov r2, 4
+            rem r0, r2          ; r0 = (current + 2) % 4
+            cmp r0, r1
+            bre @doneDir        ; candidate is opposite — ignore keypress
+            st  r1, direction   ; accepted — commit new direction
     @doneDir:
-            ; @todo #581:30m/DEV add opposite-direction guard before st r1, direction
             lea r1, snake
             push r1
             bl getSnakeHeadXY
