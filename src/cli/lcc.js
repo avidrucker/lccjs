@@ -144,6 +144,7 @@ class LCC {
 
     // Create the Linker
     const linker = new Linker();
+    linker.verboseModeOn = !!this.options.verbose;
 
     // Perform actual linking; LinkerError is caught here to preserve OG LCC's
     // exit-0-on-linker-error behavior — the error message was already logged by

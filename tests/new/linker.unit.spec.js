@@ -482,4 +482,28 @@ describe('Linker Unit Tests', () => {
 
     expect(linker.link).toHaveBeenCalledWith(['a.o'], 'custom.e');
   });
+
+  // -v / --verbose wiring (#564)
+  describe('verboseModeOn and error() prefix', () => {
+    test('verboseModeOn defaults to false', () => {
+      const linker = new Linker();
+      expect(linker.verboseModeOn).toBe(false);
+    });
+
+    test('error() with verboseModeOn=false logs message without [linker] prefix', () => {
+      const linker = new Linker();
+      linker.verboseModeOn = false;
+      console.error.mockClear();
+      expect(() => linker.error('bad input')).toThrow();
+      expect(console.error).toHaveBeenCalledWith('bad input');
+    });
+
+    test('error() with verboseModeOn=true logs [linker] prefix then throws', () => {
+      const linker = new Linker();
+      linker.verboseModeOn = true;
+      console.error.mockClear();
+      expect(() => linker.error('bad input')).toThrow();
+      expect(console.error).toHaveBeenCalledWith('[linker] bad input');
+    });
+  });
 });

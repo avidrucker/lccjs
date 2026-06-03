@@ -880,7 +880,7 @@ describe('Interpreter Unit Tests', () => {
         .toThrow('boom');
     });
 
-    test('raiseRuntimeError() with verboseModeOn=true emits [verbose] line to stderr then throws', () => {
+    test('raiseRuntimeError() with verboseModeOn=true emits [interpreter] line to stderr then throws', () => {
       const interp = new Interpreter();
       interp.verboseModeOn = true;
       interp.pc = 0x0010;
@@ -889,11 +889,11 @@ describe('Interpreter Unit Tests', () => {
       console.error.mockClear();
       expect(() => interp.raiseRuntimeError(new InterpreterRuntimeError('oops')))
         .toThrow('oops');
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('[verbose]'));
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('[interpreter]'));
       expect(console.error).toHaveBeenCalledWith(expect.stringContaining('PC=0x0010'));
     });
 
-    test('raiseRuntimeError() without verbose emits no [verbose] prefix', () => {
+    test('raiseRuntimeError() without verbose emits no [interpreter] prefix', () => {
       const interp = new Interpreter();
       interp.verboseModeOn = false;
       interp.pc = 0x0010;
@@ -901,7 +901,36 @@ describe('Interpreter Unit Tests', () => {
       console.error.mockClear();
       expect(() => interp.raiseRuntimeError(new InterpreterRuntimeError('oops')))
         .toThrow('oops');
-      expect(console.error).not.toHaveBeenCalledWith(expect.stringContaining('[verbose]'));
+      expect(console.error).not.toHaveBeenCalledWith(expect.stringContaining('[interpreter]'));
+    });
+
+    // -v enrichment (#564)
+    test('raiseRuntimeError() with sourceMap resolves PC to source line in verbose output', () => {
+      const interp = new Interpreter();
+      interp.verboseModeOn = true;
+      interp.pc = 0x0002;
+      interp.r = [0, 1, 2, 3, 4, 5, 6, 7];
+      interp.sourceMap = {
+        addressToLine: new Map([[0x0002, { lineNumber: 7, sourceLine: '  halt' }]]),
+      };
+      console.error.mockClear();
+      expect(() => interp.raiseRuntimeError(new InterpreterRuntimeError('boom')))
+        .toThrow('boom');
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('line 7'));
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('halt'));
+    });
+
+    test('raiseRuntimeError() without sourceMap emits no source line', () => {
+      const interp = new Interpreter();
+      interp.verboseModeOn = true;
+      interp.pc = 0x0002;
+      interp.r = [0, 1, 2, 3, 4, 5, 6, 7];
+      interp.sourceMap = null;
+      console.error.mockClear();
+      expect(() => interp.raiseRuntimeError(new InterpreterRuntimeError('boom')))
+        .toThrow('boom');
+      const call = console.error.mock.calls[0][0];
+      expect(call).not.toContain('line');
     });
   });
 });

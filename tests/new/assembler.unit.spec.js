@@ -374,5 +374,76 @@ describe('Assembler Unit Tests', () => {
       expect(msg).toContain('Undefined label');
       expect(msg).toContain('ld r0, foo');
     });
+
+    // -v enrichment (#564)
+    test('verbose format includes [assembler] subsystem prefix', () => {
+      const asm = new Assembler();
+      asm.lineNum = 3;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  add r0, r1, cheese';
+      asm.verboseModeOn = true;
+      const msg = asm.formatAssemblerError('Bad number');
+      expect(msg).toContain('[assembler]');
+    });
+
+    test('compact format does NOT include [assembler] prefix', () => {
+      const asm = new Assembler();
+      asm.lineNum = 3;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  add r0, r1, cheese';
+      asm.verboseModeOn = false;
+      const msg = asm.formatAssemblerError('Bad number');
+      expect(msg).not.toContain('[assembler]');
+    });
+
+    test('verbose format with verboseContext includes found/expected clause', () => {
+      const asm = new Assembler();
+      asm.lineNum = 2;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  add r0, r1, myLabel';
+      asm.verboseModeOn = true;
+      const msg = asm.formatAssemblerError('Bad number', { found: 'label', expected: 'num' });
+      expect(msg).toContain('found: label');
+      expect(msg).toContain('expected: num');
+    });
+
+    test('compact format ignores verboseContext entirely', () => {
+      const asm = new Assembler();
+      asm.lineNum = 2;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  add r0, r1, myLabel';
+      asm.verboseModeOn = false;
+      const msg = asm.formatAssemblerError('Bad number', { found: 'label', expected: 'num' });
+      expect(msg).not.toContain('found:');
+      expect(msg).not.toContain('expected:');
+    });
+
+    test('verbose Bad number error includes found/expected when operand is a label', () => {
+      const asm = new Assembler();
+      asm.verboseModeOn = true;
+      asm.lineNum = 1;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  add r0, r1, myLabel';
+      console.error.mockClear();
+      expect(() => asm.evaluateImmediate('myLabel', -16, 15, 'imm5')).toThrow();
+      const errCall = console.error.mock.calls.find(c => c[0] && c[0].includes('found:'));
+      expect(errCall).toBeDefined();
+      expect(errCall[0]).toContain('found: label');
+      expect(errCall[0]).toContain('expected: num');
+    });
+
+    test('verbose Bad register error includes found/expected when operand is a num', () => {
+      const asm = new Assembler();
+      asm.verboseModeOn = true;
+      asm.lineNum = 1;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  add r0, 5, r1';
+      console.error.mockClear();
+      expect(() => asm.getRegister('5')).toThrow();
+      const errCall = console.error.mock.calls.find(c => c[0] && c[0].includes('found:'));
+      expect(errCall).toBeDefined();
+      expect(errCall[0]).toContain('found: num');
+      expect(errCall[0]).toContain('expected: register');
+    });
   });
 });

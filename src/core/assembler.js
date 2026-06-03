@@ -1910,7 +1910,8 @@ class Assembler {
     }
 
     if (!this.isRegister(regStr)) {
-      this.failAssembly('Bad register', 1); // this.error(`Invalid register: ${regStr}`);
+      this.failAssembly('Bad register', 1,
+        { found: this.determineOperandType(regStr), expected: 'register' }); // this.error(`Invalid register: ${regStr}`);
     }
     if (regStr === "fp") {
       regStr = "r5";
@@ -2161,7 +2162,8 @@ class Assembler {
     let value = this.parseNumber(valueStr);
 
     if (isNaN(value)) {
-      this.failAssembly(`Bad number`, 1);
+      this.failAssembly(`Bad number`, 1,
+        { found: this.determineOperandType(valueStr), expected: 'num' });
     }
 
     if (value < min || value > max) {
@@ -2185,23 +2187,26 @@ class Assembler {
     return value & 0xFFFF;
   }
 
-  failAssembly(message, code = 1) {
-    this.error(message);
+  failAssembly(message, code = 1, verboseContext = null) {
+    this.error(message, verboseContext);
 
     if (REPORT_MULTI_ERRORS) {
       this.abortAssembly(message, code);
     }
   }
 
-  formatAssemblerError(message) {
+  formatAssemblerError(message, verboseContext = null) {
     if (this.verboseModeOn) {
-      return `Error on line ${this.lineNum} of ${this.inputFileName}:\n    ${this.currentLine}\n${message}`;
+      const typeClause = verboseContext
+        ? `\nfound: ${verboseContext.found}, expected: ${verboseContext.expected}`
+        : '';
+      return `[assembler] Error on line ${this.lineNum} of ${this.inputFileName}:\n    ${this.currentLine}\n${message}${typeClause}`;
     }
     return `Error on line ${this.lineNum} of ${this.inputFileName}: ${message}`;
   }
 
-  error(message) {
-    const errorMsg = this.formatAssemblerError(message);
+  error(message, verboseContext = null) {
+    const errorMsg = this.formatAssemblerError(message, verboseContext);
     console.error(errorMsg);
     this.errors.push(errorMsg);
     this.errorFlag = true;

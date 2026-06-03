@@ -1763,7 +1763,12 @@ class Interpreter {
       const regs = this.r
         ? this.r.map((v, i) => `r${i}=0x${(v || 0).toString(16).padStart(4, '0')}`).join(' ')
         : '';
-      console.error(`[verbose] ${pc} ${regs}`);
+      const mapEntry = this.sourceMap && this.sourceMap.addressToLine &&
+        this.sourceMap.addressToLine.get(this.pc);
+      const srcLine = mapEntry
+        ? ` | line ${mapEntry.lineNumber}: ${mapEntry.sourceLine.trim()}`
+        : '';
+      console.error(`[interpreter] ${pc} ${regs}${srcLine}`);
     }
 
     throw error;

@@ -31,6 +31,7 @@ class Linker {
     this.objectModules = [];     // List of object modules to process
     this.inputFiles = [];        // List of input files
     this.outputFileName = null;  // Output file name
+    this.verboseModeOn = false;
   }
 
   main(args) {
@@ -332,7 +333,8 @@ class Linker {
   }
 
   error(message) {
-    console.error(`${message}`); // linker error
+    const prefix = this.verboseModeOn ? '[linker] ' : '';
+    console.error(`${prefix}${message}`);
     throw new LinkerError(message);
   }
 }
