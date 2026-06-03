@@ -296,3 +296,106 @@ describe('velocity-log — duplicate row rejected by unique index (#536)', () =>
     expect(second.status).toBe(0);
   });
 });
+
+// --- auto-fetch title (#567) ---
+describe('velocity-log — auto-fetch title when omitted (#567)', () => {
+  const os = require('os');
+  const fs = require('fs');
+  const Database = require('better-sqlite3');
+
+  const CREATE_TABLE = `
+    CREATE TABLE IF NOT EXISTS velocity (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ticket INTEGER, title TEXT, role TEXT, h_min REAL, c_min REAL,
+      actual_min REAL, delta_h_min REAL, delta_c_min REAL,
+      started_iso TEXT, finished_iso TEXT, closed_commit TEXT,
+      notes TEXT, agent TEXT, model TEXT, repo TEXT DEFAULT 'lccjs'
+    )
+  `;
+  const CREATE_INDEX = `
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_velocity_session
+      ON velocity(ticket, agent, started_iso)
+      WHERE started_iso IS NOT NULL
+  `;
+
+  let testDbPath, testCsvPath, fakeGh, testDb;
+
+  beforeEach(() => {
+    const suffix = `${process.pid}-${Math.floor(Math.random() * 1e9)}`;
+    testDbPath  = path.join(os.tmpdir(), `vel-gh-${suffix}.db`);
+    testCsvPath = path.join(os.tmpdir(), `vel-gh-${suffix}.csv`);
+    fakeGh = path.join(os.tmpdir(), `fake-gh-${suffix}.sh`);
+
+    testDb = new Database(testDbPath);
+    testDb.exec(CREATE_TABLE);
+    testDb.exec(CREATE_INDEX);
+    testDb.close();
+  });
+
+  afterEach(() => {
+    for (const p of [testDbPath, testCsvPath, testCsvPath + '.tmp', fakeGh]) {
+      try { fs.unlinkSync(p); } catch (_) {}
+    }
+  });
+
+  function makeFakeGh(output, exitCode = 0) {
+    const script = exitCode === 0
+      ? `#!/bin/sh\necho "${output}"\n`
+      : `#!/bin/sh\nexit 1\n`;
+    fs.writeFileSync(fakeGh, script, { mode: 0o755 });
+  }
+
+  function runWithFakeGh(input, fakeGhPath) {
+    return run(input, [], {
+      VELOCITY_DB: testDbPath,
+      VELOCITY_CSV: testCsvPath,
+      VELOCITY_LOG_GH: fakeGhPath || fakeGh,
+    });
+  }
+
+  test('auto-fetches title from gh when title is omitted', () => {
+    makeFakeGh('Fetched Issue Title From GitHub');
+    const result = runWithFakeGh({ ticket: 567, role: 'DEV', agent: 'TEST' });
+    expect(result.status).toBe(0);
+
+    const db = new Database(testDbPath);
+    const row = db.prepare('SELECT title FROM velocity ORDER BY id DESC LIMIT 1').get();
+    db.close();
+    expect(row.title).toBe('Fetched Issue Title From GitHub');
+  });
+
+  test('explicit title is not overridden by auto-fetch', () => {
+    makeFakeGh('Should Not Appear');
+    const result = runWithFakeGh({ ticket: 567, role: 'DEV', agent: 'TEST', title: 'My Explicit Title' });
+    expect(result.status).toBe(0);
+
+    const db = new Database(testDbPath);
+    const row = db.prepare('SELECT title FROM velocity ORDER BY id DESC LIMIT 1').get();
+    db.close();
+    expect(row.title).toBe('My Explicit Title');
+  });
+
+  test('falls back to "#N (title unavailable)" and warns when gh fails', () => {
+    makeFakeGh('', 1); // exit 1 → execSync throws
+    const result = runWithFakeGh({ ticket: 567, role: 'DEV', agent: 'TEST' });
+    expect(result.status).toBe(0);
+    expect(result.stderr).toMatch(/could not fetch title.*#567.*fallback/);
+
+    const db = new Database(testDbPath);
+    const row = db.prepare('SELECT title FROM velocity ORDER BY id DESC LIMIT 1').get();
+    db.close();
+    expect(row.title).toBe('#567 (title unavailable)');
+  });
+
+  test('no auto-fetch when ticket is absent (issueless PM row)', () => {
+    makeFakeGh('Should Not Be Called');
+    // ticket-less row: gh should never be invoked
+    const result = runWithFakeGh({ role: 'PM', agent: 'TEST' });
+    expect(result.status).toBe(0);
+
+    const db = new Database(testDbPath);
+    const row = db.prepare('SELECT title FROM velocity ORDER BY id DESC LIMIT 1').get();
+    db.close();
+    expect(row.title).toBeNull();
+  });
+});

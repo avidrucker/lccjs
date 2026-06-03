@@ -118,6 +118,28 @@ if (!fromMain && !process.cwd().includes('.claude/worktrees')) {
   }
 }
 
+// --- Auto-fetch title (#567) ---
+// When title is omitted and a ticket number is present, call gh to fill it in.
+// VELOCITY_LOG_GH lets tests inject a fake gh binary without touching PATH.
+if ((input.title == null || input.title === '') && input.ticket != null) {
+  const ghCmd = process.env.VELOCITY_LOG_GH || 'gh';
+  try {
+    const fetched = execSync(
+      `"${ghCmd}" issue view ${input.ticket} --json title -q .title`,
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 5000 }
+    ).trim();
+    if (fetched) {
+      input.title = fetched;
+    } else {
+      console.warn(`velocity-log: warn: gh returned empty title for #${input.ticket} — using fallback`);
+      input.title = `#${input.ticket} (title unavailable)`;
+    }
+  } catch (_) {
+    console.warn(`velocity-log: warn: could not fetch title for #${input.ticket} via gh — using fallback`);
+    input.title = `#${input.ticket} (title unavailable)`;
+  }
+}
+
 // --- Insert or Update ---
 const toNum = v => (v == null || v === '') ? null : Number(v);
 const toStr = v => (v == null || v === '') ? null : String(v);
