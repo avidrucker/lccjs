@@ -1,61 +1,57 @@
-# Today I Learned — 2026-06-03 (FIG-2)
+# TIL 2026-06-03 (FIG-2) — Showcase playground: Shiki lang-ID and textarea UX
 
-Session: assembler edge-case tests (#555), velocity row eligibility rule (#225),
-and enrich.py retirement research (#288).
+## Context
 
----
-
-## 1. The assembler tokenizer silently drops trailing and double commas
-
-When adding edge-case tests for malformed operands (#555), I discovered that the
-tokenizer treats commas exactly like whitespace — as a token *delimiter*, not a
-token in itself. It only pushes a token when `currentToken !== ''`, so:
-
-- `add r0, r1,` (trailing comma) → tokens `["add", "r0", "r1"]`
-- `add r0, , r1` (double comma) → tokens `["add", "r0", "r1"]`
-
-Both silently produce the same three-token list. The "missing operand" error comes
-from the *instruction handler* (`assembleADD` checking `operands[2] === undefined`),
-not from any parse-phase complaint about the comma syntax.
-
-This matters for debugging: a user who writes `add r0, r1,` expecting an error like
-"unexpected trailing comma" gets a less obvious "Missing operand" message instead.
-Worth knowing when writing tests that distinguish *syntactic* rejection from
-*semantic* rejection.
-
-**Corollary:** unary `+5` is silently valid. JavaScript's `parseInt("+5", 10)`
-returns `5`, so the assembler accepts `add r0, r1, +5` without complaint. Only
-*compound* signs (`+-5`, `--5`, `++5`) produce `NaN` and trigger "Bad number".
+Implementing #602: live-edit textarea with Shiki syntax highlighting on
+`docs/showcase/index.html`. Verified in headless Chrome via Playwright.
 
 ---
 
-## 2. SQL VIEWs cover at most 3 of 18 enriched columns in this pipeline
+## 1. Shiki v1 registers custom grammars under `name`, not `scopeName`
 
-When researching whether to retire `enrich.py` (#288), I found that the enrichment
-splits cleanly into three tiers:
+When loading a custom TextMate grammar:
 
-| Tier | What it needs | SQL VIEW? |
-|---|---|---|
-| Git churn (7 cols) | `git show --numstat` subprocess | ❌ |
-| GitHub issue times (2 cols) | `gh api` subprocess | ❌ |
-| Notes flags (5 regex cols) | `re.compile` patterns | ❌ (no built-in REGEXP) |
-| Pure ratios (`c_ratio`, `h_ratio`, `span_min`) | Arithmetic on existing cols | ✅ |
+```js
+createHighlighter({ langs: [grammar], themes: ['github-dark'] })
+```
 
-Only the 3 pure-arithmetic columns can live in a VIEW. The other 15 require either
-a subprocess or regex — capabilities that standard SQLite doesn't provide. A VIEW
-is additive (nice-to-have for quick CLI queries), but it cannot replace `enrich.py`.
+Shiki v1 registers the language under `grammar.name`. Our grammar has:
 
-The general principle: before deciding to "move enrichment to SQL", enumerate
-*each* enriched column's data dependencies. Subprocess calls and regex are the
-immediate disqualifiers.
+```json
+{ "name": "lcc", "scopeName": "source.lcc", ... }
+```
+
+So the correct call is `lang: 'lcc'`, not `lang: 'source.lcc'`. The showcase page
+uses `lang: 'source.lcc'` throughout. In headless Chrome this fails:
+
+```
+Highlight error: Language `source.lcc` not found, you may need to load it first
+```
+
+This affects all four sections (three static + new playground). The page appears
+to work on GitHub Pages — likely because the browser caches a Shiki bundle that
+registers aliases differently, or because production fetches a slightly different
+CDN bundle. Needs a targeted fix: change `codeToHtml` calls to `lang: 'lcc'`,
+or align the grammar's `name` to `source.lcc`. Filed as #603.
 
 ---
 
-## What landed
+## 2. Tab key moves focus out of a code-editing textarea
 
-| Artifact | Change |
+Default browser behavior: Tab in a textarea shifts focus to the next element.
+For a syntax-highlight playground, visitors expect Tab to indent. The fix is a
+`keydown` listener that intercepts Tab, calls `event.preventDefault()`, and inserts
+four spaces via selection-range manipulation. Filed as #604.
+
+---
+
+## Implementation notes for #602
+
+| Detail | Decision |
 |---|---|
-| [#555](https://github.com/avidrucker/lccjs/issues/555) | 8 new assembler edge tests (218–225): compound signs, trailing/double commas, malformed offset6. |
-| [#225](https://github.com/avidrucker/lccjs/issues/225) | Velocity row eligibility rule (tracker→no row, scope-spike→one row) in `docs/puzzle-velocity.md` + `puzzle-velocity` skill. |
-| [#288](https://github.com/avidrucker/lccjs/issues/288) | Research verdict: keep `enrich.py`; findings at `docs/research/retire-enrich-py.md`. |
-| [#570](https://github.com/avidrucker/lccjs/issues/570) | This TIL. |
+| Layout | CSS Grid 1fr 1fr, collapses to single column at 680 px |
+| Min height | Both panels 320px — even when code is short |
+| Populate timing | textarea.value = STARTER_CODE before await — visible instantly |
+| Debounce | 150 ms setTimeout on input — matches issue spec |
+| Scope | renderPlayground closes over hl inside main() — no globals added |
+| Error path | status-playground shows Shiki errors in red, consistent with static sections |
