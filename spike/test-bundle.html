@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<!-- Smoke-test for the lcc browser bundle on a file:// page (spike #591).
+     After building (see webpack.config.js), open this file directly in a browser.
+     No server, no special headers required. -->
+<html lang="en">
+<head><meta charset="utf-8"><title>lcc bundle smoke test</title></head>
+<body>
+<pre id="out"></pre>
+<script src="../dist/lcc.bundle.js"></script>
+<script>
+const src = `
+.orig x3000
+  mvi r0, 65    ; ASCII 'A'
+  aout r0
+  halt
+.end
+`;
+let output = '';
+const asm = new lcc.Assembler();
+const buf = asm.assembleSource(src);
+const interp = new lcc.Interpreter({ write: m => { output += m; } });
+interp.executeBuffer(buf);
+document.getElementById('out').textContent =
+  'Output: ' + JSON.stringify(output) + '\nExpected: "A"';
+</script>
+</body>
+</html>
