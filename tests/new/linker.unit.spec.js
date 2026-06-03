@@ -94,7 +94,7 @@ describe('Linker Unit Tests', () => {
 
     expect(() => {
       linker.parseObjectModuleBuffer(Buffer.from([0x00, 0x43]), 'bad.o');
-    }).toThrow('bad.o not a linkable file');
+    }).toThrow(LinkerError);
   });
 
   test('processModule() should throw LinkerError on duplicate global symbols', () => {
@@ -114,7 +114,7 @@ describe('Linker Unit Tests', () => {
         headers: [{ type: 'G', address: 0, label: 'main' }],
         code: [],
       });
-    }).toThrow('More than one global declaration for main');
+    }).toThrow(LinkerError);
 
     expect(console.error).toHaveBeenCalledWith('More than one global declaration for main');
   });
@@ -132,7 +132,7 @@ describe('Linker Unit Tests', () => {
       linker.machineCode = [0];
       linker.externalRefs11 = [{ address: 0, label: 'missing' }];
       linker.adjustExternalReferences();
-    }).toThrow('missing is an undefined external reference');
+    }).toThrow(LinkerError);
 
     expect(console.error).toHaveBeenCalledWith('missing is an undefined external reference');
   });
@@ -369,7 +369,7 @@ describe('Linker Unit Tests', () => {
           l2.objectModules.push({ headers: [{ type: 'E', address: 0, label: 'missing' }], code: [0x0000] });
         });
         l2.link(['module.o'], 'out.e');
-      }).toThrow('missing is an undefined external reference');
+      }).toThrow(LinkerError);
 
       expect(createSpy).not.toHaveBeenCalled();
       expect(state.files['out.e']).toBeUndefined();

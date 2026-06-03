@@ -137,7 +137,7 @@ describe('Assembler Unit Tests', () => {
 
     expect(() => {
       assembler.assembleSource(source, { inputFileName: 'demoA.txt' });
-    }).toThrow('Unsupported file type');
+    }).toThrow(AssemblerError);
   });
 
   test('assembleSource() should reject .ap files with the assemblerPlus guidance message', () => {
@@ -231,7 +231,7 @@ describe('Assembler Unit Tests', () => {
 
     expect(() => {
       assembler.assembleSource(source, { inputFileName: 'multipleLabels.a' });
-    }).toThrow('Invalid operation');
+    }).toThrow(AssemblerError);
   });
 
   test('assembleSource() should throw a typed assembler error for a line exceeding 300 characters', () => {

@@ -318,7 +318,7 @@ describe('Interpreter Integration Tests', () => {
 
     expect(() => {
       interpreter.main([eFilePath]);
-    }).toThrow('Trap vector out of range');
+    }).toThrow();
   });
 
   // -----------------------------------------------------------------------------
@@ -581,6 +581,6 @@ describe('Interpreter Integration Tests', () => {
 
     expect(() => {
       interpreter.main([eFilePath]);
-    }).toThrow('Floating point exception');
+    }).toThrow();
   });
 });

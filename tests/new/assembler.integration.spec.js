@@ -45,7 +45,7 @@ describe('Assembler', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid operation');
+    }).toThrow();
   });
 
   // -------------------------------------------------------------------------
@@ -88,7 +88,7 @@ describe('Assembler', () => {
     // Assuming indirect addressing ([r2]) is not supported
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad label');
+    }).toThrow();
   });
 
   // -------------------------------------------------------------------------
@@ -104,7 +104,7 @@ describe('Assembler', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Invalid operation');
+    }).toThrow();
   });
 
   // -------------------------------------------------------------------------

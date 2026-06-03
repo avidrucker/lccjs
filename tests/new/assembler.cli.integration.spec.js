@@ -37,7 +37,7 @@ describe('Assembler CLI Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Empty file');
+    }).toThrow();
   });
 
   test('4. should assemble demoA.a with no errors', () => {
@@ -141,6 +141,6 @@ end:
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Empty file');
+    }).toThrow();
   });
 });

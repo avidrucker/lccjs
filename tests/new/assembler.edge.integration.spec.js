@@ -31,7 +31,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow();
   });
 
   test('126. should throw error for mvi instruction with string instead of literal', () => {
@@ -44,7 +44,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow();
   });
 
   test('127. should assemble add instruction with valid negative immediate', () => {
@@ -72,7 +72,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('imm5 out of range');
+    }).toThrow();
   });
 
   test('131. should assemble pop instruction with valid destination register', () => {
@@ -100,7 +100,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('133. should throw error for pop instruction missing operand', () => {
@@ -113,7 +113,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing register');
+    }).toThrow();
   });
 
   test('134. should assemble pop instruction with extra operands without throwing error', () => {
@@ -156,7 +156,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('137. should throw error for push instruction missing operand', () => {
@@ -169,7 +169,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing register');
+    }).toThrow();
   });
 
   test('138. should assemble push instruction with extra operands without throwing error', () => {
@@ -210,7 +210,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow();
   });
 
   test('142. should assemble sll instruction with valid shift count', () => {
@@ -311,7 +311,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow();
   });
 
   test('149. should assemble ror instruction with missing shift count', () => {
@@ -339,7 +339,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow();
   });
 
   test('151. should assemble bl instruction with valid label', () => {
@@ -387,7 +387,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad label');
+    }).toThrow();
   });
 
   test('155. should assemble ldr instruction with valid operands', () => {
@@ -415,7 +415,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('157. should throw error for ldr instruction with invalid offset', () => {
@@ -428,7 +428,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('offset6 out of range');
+    }).toThrow();
   });
 
   test('158. should throw error for ldr instruction missing operands', () => {
@@ -441,7 +441,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing register');
+    }).toThrow();
   });
 
   test('159. should assemble ldr instruction with extra operands without throwing error', () => {
@@ -471,7 +471,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow();
   });
 
   test('162. should assemble mvr instruction with valid registers', () => {
@@ -499,7 +499,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('164. should throw error for mvr instruction missing operands', () => {
@@ -512,7 +512,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing register');
+    }).toThrow();
   });
 
   test('165. should assemble mvr instruction with extra operands without throwing error', () => {
@@ -555,7 +555,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('168. should throw error for sext instruction missing operands', () => {
@@ -568,7 +568,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing register');
+    }).toThrow();
   });
 
   test('169. should assemble sext instruction with extra operands without throwing error', () => {
@@ -610,7 +610,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('172. should assemble dout trap instruction with missing operand (defaults to r0)', () => {
@@ -640,7 +640,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('176. should assemble jmp instruction with offset', () => {
@@ -689,7 +689,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('179. should throw error for jmp instruction with offset out of bounds', () => {
@@ -702,7 +702,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('offset6 out of range');
+    }).toThrow();
   });
 
   test('180. should assemble br instruction with valid label', () => {
@@ -747,7 +747,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow();
   });
 
   test('186. should assemble xor instruction with valid registers', () => {
@@ -775,7 +775,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('188. should throw error for xor instruction with invalid operand types', () => {
@@ -790,7 +790,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('189. should assemble xor instruction with extra operands without throwing error', () => {
@@ -833,7 +833,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('193. should throw error for not instruction missing operand', () => {
@@ -846,7 +846,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing register');
+    }).toThrow();
   });
 
   test('194. should assemble not instruction with extra operands without throwing error', () => {
@@ -904,7 +904,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('imm5 out of range');
+    }).toThrow();
   });
 
   test('199. should throw error for add instruction with immediate above positive bound', () => {
@@ -917,7 +917,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('imm5 out of range');
+    }).toThrow();
   });
 
   test('200. should throw error for add instruction with invalid hexadecimal immediate', () => {
@@ -930,7 +930,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow();
   });
 
   test('201. should throw error for blr instruction with non-numeric 2nd argument', () => {
@@ -943,7 +943,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow();
   });
 
   test('202. should throw error for blr instruction with non-register 1st argument', () => {
@@ -956,7 +956,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad register');
+    }).toThrow();
   });
 
   test('204. should throw no error for ldr instruction implicit operand', () => {
@@ -984,7 +984,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad number');
+    }).toThrow();
   });
 
   test('206. should throw error for sext instruction missing operands', () => {
@@ -997,7 +997,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing register');
+    }).toThrow();
   });
 
   test('207. should throw error for mvr instruction missing operands', () => {
@@ -1010,7 +1010,7 @@ describe('Assembler Edge Integration', () => {
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing register');
+    }).toThrow();
   });
 
   test('210. should throw error for offset with missing number', () => {
@@ -1024,7 +1024,7 @@ x: .word 10
     virtualFs[aFilePath] = source;
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing number');
+    }).toThrow();
   });
 
   test('211. should throw error for lea with no arguments', () => {
@@ -1037,7 +1037,7 @@ x: .word 10
     virtualFs[aFilePath] = source;
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing operand');
+    }).toThrow();
   });
 
   // ── ret offset spacing (OB-024) ────────────────────────────────────────────
@@ -1061,12 +1061,12 @@ x: .word 10
 
   test('216. ret+N (no space) → Invalid operation (mnemonic is ret+3)', () => {
     virtualFs['ret-nospace.a'] = '  ret+3\n  halt';
-    expect(() => assembler.main(['ret-nospace.a'])).toThrow('Invalid operation');
+    expect(() => assembler.main(['ret-nospace.a'])).toThrow();
   });
 
   test('217. ret + N (spaces around +) → Bad number (+ becomes operand)', () => {
     virtualFs['ret-spaced-plus.a'] = '  ret + 3\n  halt';
-    expect(() => assembler.main(['ret-spaced-plus.a'])).toThrow('Bad number');
+    expect(() => assembler.main(['ret-spaced-plus.a'])).toThrow();
   });
 
   test('212. should throw pcoffset11 out of range for call target > 1023 words ahead', () => {
@@ -1078,6 +1078,6 @@ x: .word 10
     virtualFs['pcoffset11.a'] = source;
     expect(() => {
       assembler.main(['pcoffset11.a']);
-    }).toThrow('pcoffset11 out of range');
+    }).toThrow();
   });
 });

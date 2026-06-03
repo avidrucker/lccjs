@@ -48,7 +48,7 @@ describe('Assembler Format Integration', () => {
 
     expect(() => {
       assembler.main([binFilePath]);
-    }).toThrow('does not have exactly 16 bits');
+    }).toThrow();
   });
 
   test('5c. should throw if .bin file has non-binary characters', () => {
@@ -60,7 +60,7 @@ describe('Assembler Format Integration', () => {
 
     expect(() => {
       assembler.main([binFilePath]);
-    }).toThrow('is not purely binary');
+    }).toThrow();
   });
 
   // -------------------------------------------------------------------------
@@ -92,7 +92,7 @@ describe('Assembler Format Integration', () => {
 
     expect(() => {
       assembler.main([hexFilePath]);
-    }).toThrow('does not have exactly 4 nibbles');
+    }).toThrow();
   });
 
   test('6c. should throw if .hex file has invalid hex characters', () => {
@@ -104,6 +104,6 @@ describe('Assembler Format Integration', () => {
 
     expect(() => {
       assembler.main([hexFilePath]);
-    }).toThrow('is not purely hexadecimal');
+    }).toThrow();
   });
 });

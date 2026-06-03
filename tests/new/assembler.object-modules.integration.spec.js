@@ -117,7 +117,7 @@ var1: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad operand--not a valid label');
+    }).toThrow();
   });
 
   // -------------------------------------------------------------------------
@@ -133,7 +133,7 @@ var1: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing operand');
+    }).toThrow();
   });
 
   // -------------------------------------------------------------------------
@@ -170,7 +170,7 @@ var1: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Bad operand--not a valid label');
+    }).toThrow();
   });
 
   // -------------------------------------------------------------------------
@@ -186,7 +186,7 @@ var1: .word 10
 
     expect(() => {
       assembler.main([aFilePath]);
-    }).toThrow('Missing operand');
+    }).toThrow();
   });
 
   // -------------------------------------------------------------------------

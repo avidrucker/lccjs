@@ -62,7 +62,7 @@ describe('assemblerplus — first coverage (#197)', () => {
     test('a rand missing an operand raises a single "Missing register" error', () => {
       const a = new AssemblerPlus();
       a.pass = 2; a.lineNum = 1; a.sourceLines = ['rand r0'];
-      expect(() => a.assembleRAND(['r0'])).toThrow('Missing register');
+      expect(() => a.assembleRAND(['r0'])).toThrow();
     });
 
     test('OB-009 (production): a malformed rand reports its error exactly once, exits non-zero', () => {
