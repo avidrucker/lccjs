@@ -242,6 +242,33 @@ describe('Interpreter Unit Tests', () => {
     }).toThrow(InterpreterRuntimeError);
   });
 
+  test('executeBuffer() sin throws InterpreterRuntimeError when inputBuffer is empty (EOF on stdin)', () => {
+    // Decision (#529): SIN with an empty inputBuffer falls through to stdin;
+    // when stdin signals EOF, SIN throws InterpreterRuntimeError — consistent
+    // with din/hin/ain. Storing an empty string silently would mask a likely
+    // bug (the caller forgot to supply input).
+    const source = `
+      lea r0, buffer
+      sin r0
+      halt
+      buffer: .zero 8
+    `;
+    const assembler = new Assembler();
+    const assembly = assembler.assembleSource(source, { inputFileName: 'sinEof.a' });
+    const interpreter = new Interpreter();
+
+    jest.spyOn(interpreter, 'readLineFromStdin').mockReturnValue(
+      { inputLine: '', isSimulated: false, isEOF: true }
+    );
+
+    expect(() => {
+      interpreter.executeBuffer(assembly.outputBytes, {
+        inputFileName: 'sinEof.e',
+        inputBuffer: '',
+      });
+    }).toThrow(InterpreterRuntimeError);
+  });
+
   test('executeBuffer() should reject incomplete S header entries', () => {
     const executable = Buffer.from([0x6f, 0x53, 0x00]);
     const interpreter = new Interpreter();

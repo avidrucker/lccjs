@@ -1386,7 +1386,12 @@ class Interpreter {
 
   executeSIN() {
     let address = this.r[this.sr];
-    let { inputLine: input, isSimulated } = this.readLineFromStdin();
+    // Destructure isEOF so we can throw consistently with din/hin/ain (#529).
+    let { inputLine: input, isSimulated, isEOF } = this.readLineFromStdin();
+
+    if (isEOF) {
+      this.raiseRuntimeError(new InterpreterRuntimeError('sin: unexpected EOF on stdin'));
+    }
 
     for (let i = 0; i < input.length; i++) {
       this.mem[address] = input.charCodeAt(i);
