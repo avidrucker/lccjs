@@ -59,6 +59,14 @@ upstream tracker, a pure research spike, a scope/tracker ticket) lives as a
 GitHub issue alone. The marker exists only to make owed work visible *while you're
 reading the code where it's owed*.
 
+### Tracker tickets — file a child issue first
+
+If the issue you're working is a **tracker** (its body says "stays open until
+children resolve"), you must file a **concrete child issue** for your chosen
+sub-item *before* claiming a worktree or starting any work. Velocity is logged on
+the child; the tracker stays open. No exceptions for small or obvious items.
+(RULES.md #12; see also `claude_workflow.md` §"While continuing".)
+
 ## Part 2 — The marker's three states
 
 The marker is the live, in-code signal of where a puzzle stands:
@@ -105,7 +113,10 @@ Resolving a puzzle is a deletion, not a status change. In order:
    GitHub auto-closes `#N` from the `Closes #N` keyword once the commit lands;
    close.js verifies this and closes it explicitly if the keyword lagged.
 6. **Post a closing comment on the issue** summarising what changed (an append-only
-   comment, not a body edit — body edits race with parallel agents).
+   comment, not a body edit — body edits race with parallel agents). For **research
+   tickets**: post findings here, not in a `docs/learnings/` TIL file. Write a TIL
+   only when the knowledge is durable and cross-ticket. (See `claude_workflow.md`
+   §"While continuing" for the full rule.)
 
 > **Don't hand-push at close.** `git pull --rebase && git push origin HEAD:main`
 > followed by a manual `git worktree remove` is the *unhardened* sequence that
@@ -136,10 +147,19 @@ before the marker rather than after.
 ```bash
 gh issue create --label severity:low --label documentation   # 1. make the issue (#N)
 # ... write the @todo #N marker at the code site ...
-npm run claim -- N            # claim a worktree; then flip @todo #N -> @inprogress #N
+
+# --- picking up a puzzle ---
+date '+%Y-%m-%dT%H:%M:%S%z'  # capture t₀ BEFORE reading the issue (start time)
+# set your C estimate (forward-looking: how long will this actually take?) — before reading
+gh issue view N               # now read the issue
+npm run claim -- N --as apple # claim a worktree; in fan-out (≥2 agents running in parallel)
+                              # always pre-assign --as <fruit>; bare 'auto' is unsafe (#386)
+# then immediately flip @todo #N -> @inprogress #N in the worktree
 npm run puzzle:status         # AVAILABLE / CLAIMED / IN-PROGRESS / LOCKED / BLOCKED / STALE
 npm run puzzles               # pdd scan (pre-push hook runs this too)
-# ... do the work, then close: ...
+
+# --- closing ---
+date '+%Y-%m-%dT%H:%M:%S%z'  # capture t₁ BEFORE the closing commit (finish time)
 npm run velocity:log -- '{"ticket":N,"role":"ROLE","agent":"NAME"}'  # row -> SQLite, auto-exports the CSV
 # ... delete the @todo / @inprogress marker ...
 git add -A && git commit -m "... Closes #N"   # one commit: marker deletion + exported CSV
@@ -152,3 +172,7 @@ npm run close N               # loops rebase/push until on origin/main, then tea
 - [`puzzle-velocity.md`](./puzzle-velocity.md) — the time-tracking row you log at close.
 - [`learnings/2026-05-26-pdd-adoption.md`](./learnings/2026-05-26-pdd-adoption.md) —
   why PDD was adopted here and the 0pdd-manual decision.
+- [`scripts/lccrun.sh`](../scripts/lccrun.sh) — wrap every `lcc.js`, `assembler.js`,
+  `interpreter.js`, or oracle (`$LCC_ORACLE`) shell invocation in this script to
+  prevent indefinite hangs when `name.nnn` is absent and stdin is not a TTY (#376).
+  Full protocol in `claude_workflow.md` §"While continuing".
