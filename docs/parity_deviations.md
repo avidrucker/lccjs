@@ -337,8 +337,45 @@ line 1735.
 
 ## LCC.js BUG — LCC.js deviates from OG LCC (fix pending)
 
-_None currently — see Changelog for OB-001 (#31 closed), OB-002 (#32 closed),
-and OB-026 (#59 decided → BY DESIGN §17)._
+### 25. `br`/`brz`/`brn` (full BR family) with numeric token: oracle says `Undefined label`; LCC.js silently assembles (#524)
+
+When a bare integer is used as the branch target of any BR-family mnemonic (`br`, `brz`,
+`brn`, `brp`, `brgt`, `brc`/`brb`, `bral`, and their aliases), LCC.js silently assembles
+the instruction (treating the integer as an absolute address), while the oracle correctly
+rejects it.
+
+| | Oracle (cuh63 6.3) | LCC.js |
+|---|---|---|
+| Input | `br 5` | `br 5` |
+| Error text | `Undefined label` | *(none)* |
+| Exit code | 1 | 0 |
+| Artifacts | 1-byte blank `.e` (OG BUG §10) | valid `.e` (2 bytes, encoded branch) |
+
+Confirmed for `br 5`, `brz 5`, `brn 5`, `brp 5`, `brgt 5`.
+
+**Cause (LCC.js):** `assembleBR` (`src/core/assembler.js:1342`) calls
+`evaluateOperand(label, 'e')` directly at line 1377 with no prior label validation.
+`evaluateOperand` calls `parseNumber(operand)` first — for a bare integer like `5` this
+returns `5` (not NaN), so the operand is immediately treated as an absolute address and
+`pcoffset9 = 5 − locCtr − 1` is encoded with no error or warning.
+
+**Contrast with §24 (`bl 5`):** In §24, both tools reject a numeric token — oracle with
+`Undefined label`, LCC.js with `Bad label` — because `assembleBL` gates through
+`isValidLabel(label)` before any operand evaluation. `assembleBR` has no equivalent gate.
+
+**Why LCC.js BUG:** A branch operand must be a label (a symbolic address reference). The
+oracle correctly defers the token to symbol-table lookup, where it fails as "undefined".
+LCC.js bypasses this by numerically parsing the token before label lookup. The fix is to
+add a label-validation gate in `assembleBR` analogous to `assembleBL`'s guard.
+
+**Scope:** all mnemonics routed through `assembleBR` (see `codes` map at line 1343):
+`brz`, `bre`, `brnz`, `brne`, `brn`, `brp`, `brlt`, `brgt`, `brc`, `brb`, `br`, `bral`.
+
+**Source:** `src/core/assembler.js:1342` (`assembleBR`) — missing `isValidLabel` gate.
+
+**Evidence:** `docs/research/br-numeric-operand-parity.md`; probe run 2026-06-03.
+
+**GitHub issue:** [#524](https://github.com/avidrucker/lccjs/issues/524)
 
 ---
 
@@ -801,3 +838,4 @@ _None pending._
 | 2026-06-02 | Deviation 22 added (#501) | `bp` in non-interactive context: both runtimes auto-continue past `bp` (oracle does NOT flood stdout). Oracle enters step-trace mode, printing `<mnemonic>>>  <pc>:   <instruction>` before each instruction after the breakpoint; LCC.js continues cleanly with no traces. Classified BY DESIGN (clean output better for automated callers). Same root cause as §19 (oracle debug-dump mode) but bounded because the program terminates normally. |
 | 2026-06-02 | OG BUG §24 added (#510) | `bl` / `call` / `jsr` with numeric token: oracle `Undefined label` vs LCC.js `Bad label`. Oracle accepts digit-led tokens as syntactically valid label names (defers rejection to lookup); LCC.js rejects upfront via `isValidLabel`. Classified OG BUG — upfront syntactic validation is correct. |
 | 2026-06-02 | BY DESIGN §23 added (#500) | `.org` invalid operand: oracle emits `Bad number`; LCC.js emits `Invalid number for .org directive`. Classified BY DESIGN (more informative). Forward-gap padding confirmed byte-identical (parity achieved); `.orig` synonym confirmed parity-complete. Parity test added: `tests/new/assembler.org.oracle.e2e.spec.js`. |
+| 2026-06-03 | LCC.js BUG §25 added (#524) | BR-family with numeric token: oracle rejects all variants (`br 5`, `brz 5`, `brn 5`, `brp 5`, `brgt 5`) with `Undefined label` (exit 1); LCC.js silently assembles (exit 0). Root cause: `assembleBR` calls `evaluateOperand` without a label-validation gate, unlike `assembleBL` (§24). Classified LCC.js BUG — fix is to add `isValidLabel` guard in `assembleBR`. Evidence: `docs/research/br-numeric-operand-parity.md`. |
