@@ -1,0 +1,6 @@
+; helloWorld.a: print Hello, World! and halt
+        lea r0, msg
+        sout r0
+        nl
+        halt
+msg:    .string "Hello, World!"

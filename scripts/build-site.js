@@ -51,9 +51,10 @@ const THEMES = [
 const DEFAULT_THEME = 'github-dark';
 
 const CURATED_SAMPLES = [
-  { file: 'demos/demoA.a',               label: 'demos/demoA.a',               title: 'Hello register — mov, dout, halt' },
-  { file: 'demos/demoO.a',               label: 'demos/demoO.a',               title: 'I/O with labels and directives' },
-  { file: 'demos/demoN.a',               label: 'demos/demoN.a',               title: 'Division-by-zero trap' },
+  { file: 'demos/helloWorld.a', label: 'demos/helloWorld.a', title: 'Hello, World! — lea, sout, halt' },
+];
+
+const LCCPLUS_SAMPLES = [
   { file: 'plusdemos/charTypewriter.ap', label: 'plusdemos/charTypewriter.ap', title: 'LCC+ — clear, sleep, aout loop' },
 ];
 
@@ -237,8 +238,11 @@ ${themeOptions}
   </div>
 `;
 
-  // 4 curated snippets.
   const curatedSections = CURATED_SAMPLES.map(({ file, label, title }) =>
+    renderSnippet(hl, file, label, title)
+  ).join('\n');
+
+  const lccplusSections = LCCPLUS_SAMPLES.map(({ file, label, title }) =>
     renderSnippet(hl, file, label, title)
   ).join('\n');
 
@@ -265,6 +269,9 @@ ${curatedSections}
 
   <h2>Alphabet demo suite (demoA – demoZ)</h2>
 ${alphabetSections}
+
+  <h2>LCC+ demos</h2>
+${lccplusSections}
   <footer>
     Built by <code>npm run build:site</code> &mdash;
     <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
@@ -282,7 +289,7 @@ ${alphabetSections}
   });
   const landingFile = path.join(OUT_DIR, 'index.html');
   fs.writeFileSync(landingFile, landingHtml);
-  console.log(`build:site — landing: ${path.relative(ROOT, landingFile)} (${THEMES.length} themes × ${CURATED_SAMPLES.length + demoLetters.length} samples)`);
+  console.log(`build:site — landing: ${path.relative(ROOT, landingFile)} (${THEMES.length} themes × ${CURATED_SAMPLES.length + demoLetters.length + LCCPLUS_SAMPLES.length} samples)`);
 
   // ── Docs subpages ─────────────────────────────────────────────────────────────
 
