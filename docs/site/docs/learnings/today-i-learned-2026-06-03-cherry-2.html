@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>README — LCC Docs</title>
+  <title>today-i-learned-2026-06-03-cherry-2 — LCC Docs</title>
   <style>
 @font-face {
   font-family:"UnifontMedium";
@@ -73,61 +73,73 @@ code { font-family:var(--mono-font); }
 <body class="light">
 <nav><a href="../../">Home</a>
   <a href="../../docs/research/">Research</a>
-  <a href="../../docs/learnings/">Learnings</a>
-  <a href="../../docs/glossary/" class="active">Glossary</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
   <a href="../../docs/parity/">Parity</a>
   <a href="../../docs/workflow/">Workflow</a>
 </nav>
-  <div class="back-link"><a href="./">← Glossary index</a></div>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
   <div class="prose">
-<h1>LCC.js Glossary</h1>
-<p>Per-module glossaries of LCC-specific vocabulary. Aimed at newcomers who already
-understand general assembler / VM / linker concepts and need the
-<strong>LCC-specific</strong> angle (load point, listing load point, adjustment entries,
-externs vs globals, .e/.bst/.lst formats, ISA opcode nibble layout, loop
-detection, etc.).</p>
-<h2>Files</h2>
+<h1>TIL 2026-06-03 — CHERRY s2</h1>
+<p><strong>Context:</strong> A session that fixed binary corruption in the assembler test
+harness (#527), patched a notebook variable shadow (#521), wrote a stats
+glossary (#534), and backfilled missing model fields in the velocity DB (#540).</p>
+<hr>
+<h2>A TIL is not done until the rule has an authority path</h2>
+<p><strong>What happened:</strong></p>
+<p>After fixing #527 (writeSync storing binary as a UTF-8 string), I wrote a TIL
+in <code>docs/learnings/</code> with a clear rule: <em>after fixing a write-path bug, write
+the regression test from the reader&#39;s perspective, not the writer&#39;s.</em> I
+committed it and called it done.</p>
+<p>The human then asked: &quot;did you log your TIL gotcha as a ticket to research and
+fix, or at least log the rule effectively/clearly/in-an-easy-and-consistently-
+findable way?&quot;</p>
+<p>The answer was no. The rule existed only in a narrative retrospective that
+future agents don&#39;t consult when doing work. It had no authority path.</p>
+<p><strong>What I learned:</strong></p>
+<p>The TIL README says it plainly: &quot;These are narrative retrospectives, not
+authority docs. When a lesson hardens into a rule it <strong>migrates</strong> into the
+relevant authority doc.&quot; Writing the TIL is step one; getting the rule into
+<code>RULES.md</code> (or filing a ticket to do so) is step two. I did step one and
+stopped.</p>
+<p>The distinction matters for parallel agents. <code>docs/learnings/</code> is an index
+of things agents noticed. <code>RULES.md</code> is the list of things agents must do.
+A rule that lives only in the first location will be rediscovered, not
+followed.</p>
+<p><strong>The rule:</strong></p>
+<p>A TIL entry is complete only when one of these is also true:</p>
+<ul>
+<li>The lesson is added to <code>RULES.md</code> or another authority doc in the same
+commit, or</li>
+<li>A ticket is filed to do so (citing the TIL), and the TIL references that
+ticket.</li>
+</ul>
+<p>Narrative without a follow-up path is not a rule — it is a note to self
+that expires when the session ends.</p>
+<p><strong>What was filed:</strong> #548 — &quot;add write-path test rule to RULES.md&quot; — cites
+the #527 fix and proposes the exact wording. The TIL now has an authority
+path; this one does too.</p>
+<p><strong>Concrete checklist for the close of any TIL session:</strong></p>
 <table>
 <thead>
 <tr>
-<th>File</th>
-<th>Source</th>
-<th>What it covers</th>
+<th>Step</th>
+<th>Done?</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="./assembler.md"><code>assembler.md</code></a></td>
-<td><code>src/core/assembler.js</code></td>
-<td>Two-pass assembler: state &amp; lifecycle, the <code>.e</code> / <code>.o</code> object-file format, per-instruction encoders, and operand parsing (grouped into sections a–e)</td>
+<td>Write <code>today-i-learned-YYYY-MM-DD-&lt;agent&gt;.md</code></td>
+<td>✓</td>
 </tr>
 <tr>
-<td><a href="./interpreter.md"><code>interpreter.md</code></a></td>
-<td><code>src/core/interpreter.js</code></td>
-<td>The VM: memory/register model, executable loading, the fetch–decode–execute loop, trap implementations, and the interactive debugger</td>
+<td>Add README index row</td>
+<td>✓</td>
 </tr>
 <tr>
-<td><a href="./linker.md"><code>linker.md</code></a></td>
-<td><code>src/core/linker.js</code></td>
-<td>Multi-module linking: per-link state tables, the link pipeline, external / local reference fix-ups, and executable serialization</td>
-</tr>
-<tr>
-<td><a href="./stats-analysis.md"><code>stats-analysis.md</code></a></td>
-<td><code>stats/*.ipynb</code></td>
-<td>Non-parametric statistics used in the velocity notebooks: c_ratio, sign test, bootstrap CI, Spearman ρ, Kruskal-Wallis, Mann-Whitney U, and the underpowered qualifier</td>
+<td>For each rule: add to RULES.md in-session <em>or</em> file a ticket</td>
+<td>← easy to skip</td>
 </tr>
 </tbody></table>
-<h2>Entry convention</h2>
-<p>Each term entry follows this shape:</p>
-<pre><code class="language-markdown">### term-name
-
-1–3 sentence definition that explains the LCC-specific angle. Avoid
-restating general assembler/VM/linker knowledge.
-
-**Source:** `src/core/&lt;file&gt;.js:&lt;line-range&gt;` (or function name)
-**See also:** [related-term-1], [related-term-2]
-</code></pre>
-<p>Cross-links use plain-text <code>[term-name]</code> refs within a file. Cross-file
-references use the standard <code>[term](other-file.md#anchor)</code> markdown form.</p>
 
   </div>
   <footer>

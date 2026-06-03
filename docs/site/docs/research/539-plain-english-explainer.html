@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>README — LCC Docs</title>
+  <title>539-plain-english-explainer — LCC Docs</title>
   <style>
 @font-face {
   font-family:"UnifontMedium";
@@ -72,62 +72,65 @@ code { font-family:var(--mono-font); }
 </head>
 <body class="light">
 <nav><a href="../../">Home</a>
-  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/research/" class="active">Research</a>
   <a href="../../docs/learnings/">Learnings</a>
-  <a href="../../docs/glossary/" class="active">Glossary</a>
+  <a href="../../docs/glossary/">Glossary</a>
   <a href="../../docs/parity/">Parity</a>
   <a href="../../docs/workflow/">Workflow</a>
 </nav>
-  <div class="back-link"><a href="./">← Glossary index</a></div>
+  <div class="back-link"><a href="./">← Research index</a></div>
   <div class="prose">
-<h1>LCC.js Glossary</h1>
-<p>Per-module glossaries of LCC-specific vocabulary. Aimed at newcomers who already
-understand general assembler / VM / linker concepts and need the
-<strong>LCC-specific</strong> angle (load point, listing load point, adjustment entries,
-externs vs globals, .e/.bst/.lst formats, ISA opcode nibble layout, loop
-detection, etc.).</p>
-<h2>Files</h2>
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>Source</th>
-<th>What it covers</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><a href="./assembler.md"><code>assembler.md</code></a></td>
-<td><code>src/core/assembler.js</code></td>
-<td>Two-pass assembler: state &amp; lifecycle, the <code>.e</code> / <code>.o</code> object-file format, per-instruction encoders, and operand parsing (grouped into sections a–e)</td>
-</tr>
-<tr>
-<td><a href="./interpreter.md"><code>interpreter.md</code></a></td>
-<td><code>src/core/interpreter.js</code></td>
-<td>The VM: memory/register model, executable loading, the fetch–decode–execute loop, trap implementations, and the interactive debugger</td>
-</tr>
-<tr>
-<td><a href="./linker.md"><code>linker.md</code></a></td>
-<td><code>src/core/linker.js</code></td>
-<td>Multi-module linking: per-link state tables, the link pipeline, external / local reference fix-ups, and executable serialization</td>
-</tr>
-<tr>
-<td><a href="./stats-analysis.md"><code>stats-analysis.md</code></a></td>
-<td><code>stats/*.ipynb</code></td>
-<td>Non-parametric statistics used in the velocity notebooks: c_ratio, sign test, bootstrap CI, Spearman ρ, Kruskal-Wallis, Mann-Whitney U, and the underpowered qualifier</td>
-</tr>
-</tbody></table>
-<h2>Entry convention</h2>
-<p>Each term entry follows this shape:</p>
-<pre><code class="language-markdown">### term-name
-
-1–3 sentence definition that explains the LCC-specific angle. Avoid
-restating general assembler/VM/linker knowledge.
-
-**Source:** `src/core/&lt;file&gt;.js:&lt;line-range&gt;` (or function name)
-**See also:** [related-term-1], [related-term-2]
+<h1>Plain-English explainer: #539 findings</h1>
+<p><strong>Date:</strong> 2026-06-03<br><strong>Companion to:</strong> <code>539-main-typed-error-propagation.md</code><br><strong>Issue:</strong> #539 — ARC: decide whether main() wrappers should propagate typed errors</p>
+<hr>
+<h2>What was the problem?</h2>
+<p>When tests call <code>assembler.main()</code>, errors come back as a generic <code>Error</code> instead
+of the specific <code>AssemblerError</code> type — so tests can&#39;t tell <em>what kind</em> of thing
+went wrong.</p>
+<p>Think of it like a smoke alarm that just beeps. You know <em>something</em> is wrong, but
+not whether it&#39;s a fire, a dead battery, or steam from your shower. The current
+integration tests are like that: <code>.toThrow()</code> tells you &quot;something threw,&quot; but not
+&quot;an assembly error threw.&quot; A bug that causes the <em>wrong kind</em> of error — say, a
+file-system crash instead of a syntax error — would still pass the test.</p>
+<h2>Why was it happening?</h2>
+<p>There are two ways to call the assembler in this codebase:</p>
+<ol>
+<li><strong><code>assembleSource()</code></strong> — the clean, programmatic API. Throws <code>AssemblerError</code> by
+default. Used by unit tests. ✓</li>
+<li><strong><code>assembler.main()</code></strong> — the CLI entry point. Deliberately suppresses <code>AssemblerError</code>
+and falls back to a plain <code>Error</code> instead. ✗</li>
+</ol>
+<p><code>main()</code> suppresses the typed error because it was designed as a CLI wrapper — in
+real use (not tests), it just calls <code>process.exit()</code>, so the error <em>type</em> never
+mattered to the shell. But 230+ integration tests call <code>main()</code> and are stuck with
+the dumb smoke alarm.</p>
+<p>The suppression was a single line:</p>
+<pre><code class="language-js">// assembler.main() — the override that caused the problem
+this.assembleSource(sourceCode, {
+  throwOnAssemblyError: false,  // ← overrides the pure API&#39;s &quot;true&quot; default
+});
 </code></pre>
-<p>Cross-links use plain-text <code>[term-name]</code> refs within a file. Cross-file
-references use the standard <code>[term](other-file.md#anchor)</code> markdown form.</p>
+<h2>Why does it matter?</h2>
+<p>A test that asserts <code>.toThrow()</code> passes whether the assembler crashes with a syntax
+error, a missing file, or an unexpected internal exception. The test proves &quot;something
+went wrong&quot; — not &quot;the right thing went wrong.&quot; As the test suite grows, this makes
+bugs harder to catch: an assembler that throws the wrong error for the wrong reason
+would still pass 230 tests.</p>
+<h2>What is the fix?</h2>
+<p>Remove the <code>throwOnAssemblyError: false</code> override in <code>assembler.main()</code>. Because
+<code>AssemblerError</code> extends the built-in <code>Error</code>, every existing bare <code>.toThrow()</code> test
+still passes — they now just receive a <em>more specific</em> error. Tests can then be
+upgraded incrementally to assert <code>.toThrow(AssemblerError)</code>.</p>
+<p>The outer <code>lcc.js</code> wrapper already catches any throw from <code>assembler.main()</code> and
+converts it to a plain exit — so production behavior (exit codes, console output)
+is completely unchanged.</p>
+<h2>What are we not fixing yet?</h2>
+<p><code>interpreter.main()</code> has the same conceptual problem but different internal
+plumbing — no equivalent <code>throwOnError</code> flag exists there. That&#39;s a separate,
+smaller-scope ticket to keep changes reviewable.</p>
+<h2>Where to read the full analysis</h2>
+<p><code>docs/research/539-main-typed-error-propagation.md</code> — option-by-option breakdown
+with code excerpts, test counts, and the recommended implementation steps.</p>
 
   </div>
   <footer>

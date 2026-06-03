@@ -250,7 +250,7 @@ the undefined label, not a generic message.</p>
 the label name.</p>
 <hr>
 <h2>ASSEMBLER — Instruction Encoding</h2>
-<h3>H-012 🔴 <code>assembleSRL/SLL/ROL/ROR</code> shift count is not range-checked</h3>
+<h3>H-012 🟢 <code>assembleSRL/SLL/ROL/ROR</code> shift count is not range-checked</h3>
 <p><strong>Hypothesis:</strong> <code>assembleSRL</code> / <code>assembleSLL</code> / <code>assembleROL</code> /
 <code>assembleROR</code> accept the count via <code>evaluateImmediateNaive</code>, which caps at
 16 bits but does <strong>no range check</strong>. A shift count of 0 (no-op) or 16+
@@ -259,6 +259,7 @@ machine word (<code>ct &lt;&lt; 5</code> with bits 5..8). A count of 16 (<code>0
 overflow into bit 9 and corrupt the opcode encoding.</p>
 <p><strong>Test idea:</strong> <code>srl r0, 16</code> — what machine word is produced? Does it
 accidentally encode a valid but wrong instruction?</p>
+<p><strong>Probe result (#512):</strong> Confirmed bug. Oracle: <code>srl r0, 16</code> → <code>a002</code> (ct=0, 4-bit wrap: 16&amp;0xF=0). lccjs before fix: <code>a202</code> (ct=16 unmasked → bit 9 set, corrupting sr field to 1). Fixed in #512 by adding <code>&amp; 0xF</code> masking to all four siblings. No parity deviation — lccjs now matches oracle (silently truncates count to 4 bits).</p>
 <hr>
 <h3>H-013 🔴 <code>assembleSRA</code> uses <code>evaluateImmediate(0, 15)</code> — shift 0 is allowed but shift 16 is rejected</h3>
 <p><strong>Hypothesis:</strong> Unlike its siblings, <code>assembleSRA</code> calls <code>evaluateImmediate</code>
@@ -270,6 +271,8 @@ assembles a 0-count which may behave differently from the oracle. Verify
 <p><strong>Test idea:</strong> <code>sra r0</code> vs <code>sra r0, 0</code> vs <code>sra r0, 1</code> — compare machine
 words.</p>
 <p><strong>Probe result (#502):</strong> <code>sra r0</code> → <code>0xa023</code>; <code>sra r0, 0</code> → <code>0xa003</code>; <code>sra r0, 1</code> → <code>0xa023</code>. Oracle and lccjs produce identical encodings for all three forms. <code>sra r0, 0</code> is a valid distinct encoding (count=0 field), not an error. No deviation.</p>
+<p><strong>Decision (#513):</strong> ct=0 is <strong>valid and distinct</strong> — a no-op (identity) operation. Confirmed by runtime: <code>sra r0, 0</code> on +5 → 5, on -4 → -4 (value unchanged). The ISA doc already states the valid range as 0–15. Interpreter ct=0 safety was confirmed by #51. Note: the upper-boundary conclusion below (ct=16 via oracle probe) supersedes the &quot;range check is correct&quot; part of this decision.</p>
+<p><strong>Probe result (#512, ct=16):</strong> Oracle accepts <code>sra r0, 16</code> → <code>a003</code> (ct=0, 4-bit wrap). lccjs before fix rejected it (&quot;out of range&quot;). Fixed in #512: <code>assembleSRA</code> now uses <code>evaluateImmediateNaive</code> + <code>&amp; 0xF</code> masking, matching oracle. No parity deviation.</p>
 <hr>
 <h3>H-014 🟡 <code>assembleRET offset6</code> — offset6 is not range-checked</h3>
 <p><strong>Hypothesis:</strong> <code>assembleRET</code> calls <code>evaluateImmediate(operands[0], -32, 31)</code> which IS range-checked. But <code>assembleJMP</code> offset6 path also uses

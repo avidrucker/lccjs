@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>560-free-implementation-in-lcc-assembly — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Research: free() in LCC(+) assembly (#560)</h1>
+<p><strong>Date:</strong> 2026-06-03<br><strong>Agent:</strong> APPLE<br><strong>Parent:</strong> #560 · Related: #153, #144</p>
+<hr>
+<h2>Verdict</h2>
+<p>A real <code>free()</code> is implementable in the base LCC ISA. LCC+ adds nothing useful for
+memory management. For <code>gameSnake.ap</code> specifically, the simplest and most efficient
+approach is a <strong>fixed-size free list</strong> — zero extra words per block, minimal code.
+The bump allocator leak is, however, benign in practice (bounded memory budget;
+the game ends long before exhausting the address space).</p>
+<hr>
+<h2>Memory model</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Address space</td>
+<td>65 536 words (0x0000–0xFFFF), 16 bits each</td>
+</tr>
+<tr>
+<td>Stack</td>
+<td>grows DOWN from 0xFFFF; r6 = sp</td>
+</tr>
+<tr>
+<td>Frame pointer</td>
+<td>r5 = fp</td>
+</tr>
+<tr>
+<td>Link register</td>
+<td>r7 = lr</td>
+</tr>
+<tr>
+<td>Heap (bump)</td>
+<td>grows UP from end of code/data</td>
+</tr>
+<tr>
+<td>Bump pointer</td>
+<td><code>@avail</code> in <code>gameSnake.ap</code>, initialised to <code>*+1</code></td>
+</tr>
+</tbody></table>
+<p>The code + static data region and the heap share the low end of the address space;
+the stack lives at the high end. A bump allocator growing up and a stack growing down
+collide in the middle — the same layout as classic 8/16-bit micros.</p>
+<hr>
+<h2>ISA capabilities relevant to a free() implementation</h2>
+<p>The base ISA has everything needed:</p>
+<ul>
+<li><strong>Indirect load/store with offset:</strong> <code>ldr dr, base, offset6</code> and <code>str sr, base, offset6</code>
+— essential for reading/writing block headers and linked-list next pointers.</li>
+<li><strong>Arithmetic:</strong> <code>add</code>, <code>sub</code> — can adjust pointers by constant offsets.</li>
+<li><strong>Bitwise:</strong> <code>and</code>, <code>or</code>, <code>not</code>, <code>xor</code> — can manipulate a free/allocated flag in a header.</li>
+<li><strong>Conditional branches + compare</strong> — enough for list traversal.</li>
+<li><strong><code>push</code>/<code>pop</code></strong> — stack discipline for calling conventions.</li>
+</ul>
+<p><strong>Practical constraints:</strong></p>
+<ul>
+<li><code>imm9</code> range is −256..255 and <code>imm5</code> is −16..15. Loading a bitmask like <code>0x8000</code>
+requires a shift: <code>mvi r0, 1</code> + <code>sll r0, 15</code>. Not expensive, just not a single
+instruction.</li>
+<li><code>offset6</code> in <code>ldr</code>/<code>str</code> is 6-bit signed (−32..31), sufficient for struct fields
+up to 31 words offset from the base pointer.</li>
+</ul>
+<p><strong>LCC+ additions:</strong> <code>rand</code>, <code>srand</code>, <code>millis</code>, <code>sleep</code>, <code>clear</code>, <code>cursor</code>, <code>nbain</code>,
+<code>resetc</code> — none of these assist with memory management. LCC+ has no
+memory-management traps.</p>
+<hr>
+<h2>Three allocator patterns, from simplest to most general</h2>
+<h3>Pattern 1 — Fixed-size free list (best fit for gameSnake)</h3>
+<p>Works when all allocations are the same size. <code>gameSnake</code> allocates only snake nodes,
+each exactly <strong>3 words</strong> (row, col, next). A singly-linked free list costs nothing
+extra per allocated block — the freed block&#39;s first word becomes the next pointer
+while it sits on the free list.</p>
+<pre><code class="language-asm">; Global state (one word each):
+@freeList:  .word 0          ; head of free list (0 = empty)
+@avail:     .word *+1        ; bump pointer (existing)
+
+; malloc(r1 = size in words) — modified to check free list first
+malloc:
+        ld   r0, @freeList
+        cmp  r0, 0
+        bre  @bump            ; free list empty → fall through to bump
+        ldr  r2, r0, 0        ; r2 = node-&gt;next
+        st   r2, @freeList    ; freeList = node-&gt;next
+        ret                   ; r0 = recycled block address
+@bump:
+        ld   r0, @avail
+        add  r1, r0, r1
+        st   r1, @avail
+        ret
+
+; free(r0 = ptr to 3-word node)
+free:
+        ld   r1, @freeList    ; r1 = current head
+        str  r1, r0, 0        ; node-&gt;next = old head  (reuse first word)
+        st   r0, @freeList    ; freeList = node
+        ret
+</code></pre>
+<p><strong>Overhead:</strong> 0 extra words per allocated block. 1 global word (<code>@freeList</code>).<br><strong>Code size:</strong> ~10 instructions for malloc + ~4 for free.<br><strong>Limitation:</strong> only works for fixed-size allocations. All freed blocks are 3 words;
+calling <code>malloc(3)</code> always gets a 3-word block back.</p>
+<h3>Pattern 2 — Implicit free list (variable-size, general)</h3>
+<p>Each block gets a <strong>1-word header</strong> before the payload storing the block size and a
+free/allocated bit. <code>free()</code> marks the header and coalesces adjacent free blocks
+during the next <code>malloc()</code> scan.</p>
+<pre><code>Memory layout:
+  [header: size | free_bit] [word 0] [word 1] ... [word size-2]
+   ^ ptr - 1                ^ ptr returned to caller
+</code></pre>
+<p><code>malloc(n)</code> searches from the start of the heap for a free block of size ≥ n.
+<code>free(ptr)</code> sets the free bit in <code>mem[ptr - 1]</code>.</p>
+<p><strong>Overhead:</strong> 1 extra word per block always.<br><strong>Complexity:</strong> requires a linear scan of the heap on every <code>malloc()</code> — O(heap size).</p>
+<h3>Pattern 3 — Explicit free list (variable-size, faster malloc)</h3>
+<p>Extends Pattern 2: each free block stores a next-pointer in its first payload word,
+so <code>malloc()</code> only traverses the free list rather than the whole heap.</p>
+<p><strong>Overhead:</strong> 1-word header always; free blocks additionally use 1 payload word for
+the next pointer (so minimum allocatable size = 2 words).<br><strong>Complexity:</strong> <code>malloc()</code> is O(free list length), <code>free()</code> is O(1) for insertion;
+O(heap size) only for coalescing passes.</p>
+<hr>
+<h2>Is the gameSnake leak worth fixing?</h2>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Leak per tail removal</td>
+<td>3 words (one node)</td>
+</tr>
+<tr>
+<td>Max snake length</td>
+<td>boardSize² = 100 nodes (10×10 grid)</td>
+</tr>
+<tr>
+<td>Max total leaked words</td>
+<td>~300 words (= 600 bytes)</td>
+</tr>
+<tr>
+<td>Total address space</td>
+<td>65 536 words</td>
+</tr>
+<tr>
+<td>Fraction of address space leaked at max</td>
+<td>~0.5%</td>
+</tr>
+</tbody></table>
+<p>The snake length is bounded by the board (100 cells). The game ends (win or collision)
+long before exhausting the address space. <strong>The bump-allocator leak is benign for a
+demo of this scale.</strong></p>
+<p>That said, Pattern 1 is so cheap (4 instructions for <code>free</code>, ~5 extra for the
+<code>malloc</code> fast path, 1 global word) that adding it is a reasonable code-quality
+improvement — not a correctness fix. Whether to do so is the call made in #153
+(closed wontfix) and #202 (code-quality pass).</p>
+<hr>
+<h2>Summary answers to the sub-questions</h2>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Can a free-list allocator be written in the base ISA?</td>
+<td><strong>Yes.</strong> All required operations exist.</td>
+</tr>
+<tr>
+<td>Does LCC+ add any helpful instruction?</td>
+<td><strong>No.</strong> Its extensions are I/O-oriented.</td>
+</tr>
+<tr>
+<td>Minimum heap metadata overhead?</td>
+<td><strong>0 words</strong> (fixed-size list) or <strong>1 word/block</strong> (variable-size).</td>
+</tr>
+<tr>
+<td>Is the gameSnake leak worth fixing?</td>
+<td><strong>Pragmatically no</strong> — bounded budget, game ends first. Low-cost Pattern 1 would be a nice cleanup if #202 is ever worked.</td>
+</tr>
+<tr>
+<td>Simplest viable allocator pattern?</td>
+<td><strong>Fixed-size free list (Pattern 1)</strong> — trivial to implement, zero runtime overhead per block.</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

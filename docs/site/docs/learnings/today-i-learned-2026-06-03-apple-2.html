@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>README — LCC Docs</title>
+  <title>today-i-learned-2026-06-03-apple-2 — LCC Docs</title>
   <style>
 @font-face {
   font-family:"UnifontMedium";
@@ -73,61 +73,83 @@ code { font-family:var(--mono-font); }
 <body class="light">
 <nav><a href="../../">Home</a>
   <a href="../../docs/research/">Research</a>
-  <a href="../../docs/learnings/">Learnings</a>
-  <a href="../../docs/glossary/" class="active">Glossary</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
   <a href="../../docs/parity/">Parity</a>
   <a href="../../docs/workflow/">Workflow</a>
 </nav>
-  <div class="back-link"><a href="./">← Glossary index</a></div>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
   <div class="prose">
-<h1>LCC.js Glossary</h1>
-<p>Per-module glossaries of LCC-specific vocabulary. Aimed at newcomers who already
-understand general assembler / VM / linker concepts and need the
-<strong>LCC-specific</strong> angle (load point, listing load point, adjustment entries,
-externs vs globals, .e/.bst/.lst formats, ISA opcode nibble layout, loop
-detection, etc.).</p>
-<h2>Files</h2>
+<h1>Today I Learned — 2026-06-03 (APPLE-2)</h1>
+<p><strong>Date:</strong> 2026-06-03<br><strong>Agent:</strong> APPLE<br><strong>Context:</strong> Decision-issue audit (#549) — reviewing five open <code>decision</code>-labeled issues
+to confirm block status or post rulings so downstream work can proceed.</p>
+<hr>
+<h2>1. A &quot;blocked&quot; label can go stale when its dependency closes</h2>
+<p>Issue #40 (OB-008, <code>mov</code> rejecting negatives) had two sequential blockers recorded in
+comments: first Charlie&#39;s range decision for <code>mov</code> (#31), then Prof. Dos Reis&#39;s reply.
+But #31 closed months ago with Charlie&#39;s ruling confirmed. Nobody updated #40&#39;s block
+context, so the issue still looked like it was waiting on Charlie — when actually the
+block had evolved: the decision is made, only a human email-send step remains.</p>
+<p><strong>The rule:</strong> when a dependency issue closes, check whether any issue that names it as
+a blocker has been updated. A stale block comment leaves the next agent confused about
+what&#39;s actually needed.</p>
+<hr>
+<h2>2. &quot;human-decision-required&quot; is a hard gate — don&#39;t approximate with a research comment</h2>
+<p>Issue #518 (ARC: validate ct=0 shift decision) has three well-formed proofs in its body
+and a comment already pinging Charlie. An AI agent reviewing the audit is tempted to
+&quot;confirm&quot; the proofs as a de-facto ruling. That would be wrong: the label exists because
+the decision has ISA-level implications (hardware behavior, course spec) that only the
+architect can weigh. A confirmation comment from an AI agent would look like a ruling
+but carry no authority.</p>
+<p><strong>The rule:</strong> when <code>human-decision-required</code> is set, the correct audit output is
+confirming the block is still valid and the decision package is ready — not approximating
+the decision itself.</p>
+<hr>
+<h2>3. A ticket that says &quot;deferred&quot; is not waiting for a decision — it&#39;s already decided</h2>
+<p>Issue #234 (inline estimate analysis) was labeled <code>decision</code> but its body opens with
+&quot;<strong>deferred</strong> — address only in a dedicated estimate/calibration session.&quot; The behavior
+fix (no inline analysis during normal work) was captured in agent memory at filing time.
+The decision is made; the ticket is open only as a tracker for the deferred calibration
+work.</p>
+<p>Auditing this as &quot;needs a ruling&quot; would be wrong — the ruling was the act of filing the
+ticket. The right audit output is confirming the decision is in effect and the remaining
+work is correctly deferred.</p>
+<p><strong>The rule:</strong> check whether a <code>decision</code> label means &quot;we need to decide&quot; or &quot;we decided,
+and the ticket tracks what follows.&quot; The body usually makes this clear.</p>
+<hr>
+<h2>What landed</h2>
 <table>
 <thead>
 <tr>
-<th>File</th>
-<th>Source</th>
-<th>What it covers</th>
+<th>Issue</th>
+<th>Action</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="./assembler.md"><code>assembler.md</code></a></td>
-<td><code>src/core/assembler.js</code></td>
-<td>Two-pass assembler: state &amp; lifecycle, the <code>.e</code> / <code>.o</code> object-file format, per-instruction encoders, and operand parsing (grouped into sections a–e)</td>
+<td><a href="https://github.com/avidrucker/lccjs/issues/518">#518</a></td>
+<td>Block confirmed valid; awaits Charlie architect sign-off.</td>
 </tr>
 <tr>
-<td><a href="./interpreter.md"><code>interpreter.md</code></a></td>
-<td><code>src/core/interpreter.js</code></td>
-<td>The VM: memory/register model, executable loading, the fetch–decode–execute loop, trap implementations, and the interactive debugger</td>
+<td><a href="https://github.com/avidrucker/lccjs/issues/234">#234</a></td>
+<td>Decision already in effect; ticket correctly deferred.</td>
 </tr>
 <tr>
-<td><a href="./linker.md"><code>linker.md</code></a></td>
-<td><code>src/core/linker.js</code></td>
-<td>Multi-module linking: per-link state tables, the link pipeline, external / local reference fix-ups, and executable serialization</td>
+<td><a href="https://github.com/avidrucker/lccjs/issues/225">#225</a></td>
+<td>Rule confirmed (tracker → no row; scope-spike → one row; spike → one row; child → one row). Implementation phase can proceed.</td>
 </tr>
 <tr>
-<td><a href="./stats-analysis.md"><code>stats-analysis.md</code></a></td>
-<td><code>stats/*.ipynb</code></td>
-<td>Non-parametric statistics used in the velocity notebooks: c_ratio, sign test, bootstrap CI, Spearman ρ, Kruskal-Wallis, Mann-Whitney U, and the underpowered qualifier</td>
+<td><a href="https://github.com/avidrucker/lccjs/issues/159">#159</a></td>
+<td>Block confirmed valid; awaiting Prof. Dos Reis reply.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/40">#40</a></td>
+<td>Block context updated: #31 closed, Charlie&#39;s decision made; current block is human email-send only.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/549">#549</a></td>
+<td>This audit.</td>
 </tr>
 </tbody></table>
-<h2>Entry convention</h2>
-<p>Each term entry follows this shape:</p>
-<pre><code class="language-markdown">### term-name
-
-1–3 sentence definition that explains the LCC-specific angle. Avoid
-restating general assembler/VM/linker knowledge.
-
-**Source:** `src/core/&lt;file&gt;.js:&lt;line-range&gt;` (or function name)
-**See also:** [related-term-1], [related-term-2]
-</code></pre>
-<p>Cross-links use plain-text <code>[term-name]</code> refs within a file. Cross-file
-references use the standard <code>[term](other-file.md#anchor)</code> markdown form.</p>
 
   </div>
   <footer>

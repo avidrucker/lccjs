@@ -175,6 +175,7 @@ is to be ready when asked (#377).</p>
 <h2>While continuing (doing the work)</h2>
 <ul>
 <li><strong>Stay in scope.</strong> Anything outside the ticket gets logged as a finding, not pursued.</li>
+<li><strong>Tracker tickets require a child issue before any work.</strong> If the assigned ticket is a tracker (body says &quot;stays open until children resolve&quot;), file a concrete child issue for the chosen sub-item <em>before</em> claiming a worktree or starting work. Velocity is logged on the child; the tracker stays open. No exceptions for small or obvious items. (RULES.md #12)</li>
 <li><strong>Surface findings as I notice them — file tickets immediately and unilaterally.</strong> Open questions, unexpected behaviour, brittle code, or deferred work discovered mid-task all become GitHub issues, filed without asking permission. The tracker is the only shared memory that survives context compaction and agent rotation; if something isn&#39;t filed, it disappears. Filing is not a destructive action — a wrong ticket can be closed immediately. Cite the new number inline and move on: &quot;Filed #N for X — continuing.&quot; Do <strong>not</strong> ask &quot;should I create a ticket?&quot; or &quot;want me to file an issue?&quot; (#511)</li>
 <li><strong>Research findings go in issue comments, not TIL docs.</strong> When a research ticket or spike produces findings, post them as a comment on the originating GitHub issue — not as a <code>docs/learnings/today-i-learned-*.md</code> file. Only write a TIL entry when: (a) the user explicitly asks (&quot;write a TIL&quot;, &quot;add to learnings&quot;), or (b) the knowledge is durable, genuinely cross-ticket, and belongs in a persistent learning log rather than on one ticket. When in doubt, use the issue comment. (#437) When a TIL entry IS appropriate, treat it as work: file an issue, claim a worktree, commit from it, log velocity, and close via <code>npm run close</code> — RULES.md 4, 5, 8, 9 apply unconditionally. (#469)</li>
 <li><strong>Correcting a sibling issue&#39;s description.</strong> If I find a factual error in <em>another</em> issue&#39;s description (wrong cross-ref, stale dependency, outdated premise), I do <strong>not</strong> silently rewrite the body. I redline it: <code>~~strikethrough~~</code> the wrong text in place, add a <code>&gt; ⚠️ **SEE COMMENTS FOR CORRECTIONS**</code> banner at the top, and post the correction as a comment — so the original stays visible and the fix is additive. The <code>yegor-tickets</code> skill owns this convention (#300).</li>
@@ -206,6 +207,22 @@ Do NOT <code>git add</code> a file I just edited unless I&#39;ve confirmed the e
 <li><strong><code>npm run puzzle:status</code></strong> reconciles every marker against live worktrees and GitHub issue state — it shows each puzzle as <code>AVAILABLE</code> / <code>CLAIMED</code> / <code>IN-PROGRESS</code> / <code>LOCKED</code> (a clustermate is in progress) / <code>BLOCKED</code> (a <code>blocked</code> label or an open <code>blocked_by</code> dep) / <code>STALE</code>, and attributes claimed/in-progress rows to the owning agent (<code>… by apple</code>) when the worktree branch carries a fruit identity. Run it before grabbing a puzzle (don&#39;t grab a <code>CLAIMED</code>/<code>IN-PROGRESS</code> one) and after closing (a <code>STALE</code> row means a marker outlived its closed issue — delete it). <code>-- --strict</code> exits non-zero on any stale marker, for gating.</li>
 <li><strong>I remove my worktree when I finish</strong> (this is mandatory, not optional — see &quot;At close&quot; below). A worktree left on disk after the issue is closed is cruft: it looks like a live claim to other agents and to <code>puzzle:status</code>, but no one is in it. The owning agent cleans up its own worktree; do not assume someone else will.</li>
 </ul>
+<hr>
+<h2>What NOT to post publicly</h2>
+<p>GitHub issues, PR comments, and commit messages are <strong>public and indexed by web crawlers</strong>. Never include any of the following in issue bodies, comments, or commit messages:</p>
+<ul>
+<li><strong>Personal email addresses</strong> — use placeholders: <code>[your email]</code>, <code>[Prof. Dos Reis&#39;s email]</code>, <code>[sender email]</code>.</li>
+<li><strong>Credentials and tokens</strong> — API keys, passwords, OAuth tokens, personal access tokens, <code>.env</code> values.</li>
+<li><strong>Phone numbers</strong> — any telephone or SMS contact details.</li>
+<li><strong>Other PII</strong> — anything that uniquely identifies a real person and that they have not already published themselves in this context.</li>
+</ul>
+<p><strong>The distinction for email addresses:</strong></p>
+<ul>
+<li>Repo <em>files</em> intended as offline artifacts (e.g. <code>docs/cuh63-*.md</code>, PDFs for external distribution) → real author attribution email is acceptable there.</li>
+<li>Inline <em>issue/comment text</em> → always use a placeholder, never the real address.</li>
+</ul>
+<p>When drafting an email template or message for review in an issue, replace every real address with a bracketed placeholder before posting. Cite this section if declining to include a real address in public-facing content.</p>
+<p>Triggered by #507 (personal email in a review comment); rule documented in #537.</p>
 <hr>
 <h2>While paused</h2>
 <p>A pause happens in two shapes:</p>

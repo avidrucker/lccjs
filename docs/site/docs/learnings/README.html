@@ -356,6 +356,24 @@ silently recur for the next.</p>
 <td>CHERRY</td>
 <td>The &quot;~45m/DEV decomplect&quot; estimate is a guess not a contract — grep the consumers first (#255 was ~450 refs + a public-API decision → architect #388; #251 was internal-only → a real 45m extraction); &quot;no behavior change&quot; earns a <em>mechanical</em> proof (84-file corpus diff #256, exhaustive 65536-word <code>decode</code> equivalence #251); a refactor&#39;s verify-diff is a bug detector — file what it finds, don&#39;t fix inline (pre-existing <code>.o</code> crash → #384); learn to see the embedded architectural decision and hand it off (#384/#388); velocity-logger sharp edges (fixed role set, canonical <code>opus-4.8</code> not <code>claude-opus-4-8</code>, <code>--from-main</code> <em>after</em> the JSON); use the assigned name, not the claim tool&#39;s auto fruit (#386).</td>
 </tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-03-cherry.md">TIL 2026-06-03 CHERRY</a></td>
+<td>2026-06-03</td>
+<td>CHERRY</td>
+<td>Checking the producer&#39;s in-memory state doesn&#39;t verify the write path — the harness&#39;s <code>writeSync</code> silently corrupted binary output for months, invisible because all tests read <code>assembler.outputBuffer</code> directly instead of reading back through <code>virtualFs</code> (#527).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-03-cherry-2.md">TIL 2026-06-03 CHERRY s2</a></td>
+<td>2026-06-03</td>
+<td>CHERRY</td>
+<td>A TIL is not done until the rule has an authority path — a lesson in <code>docs/learnings/</code> is a narrative note; it only becomes enforceable when it lands in <code>RULES.md</code> or a ticket is filed to put it there (#548).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-03-cherry-3.md">TIL 2026-06-03 CHERRY s3</a></td>
+<td>2026-06-03</td>
+<td>CHERRY</td>
+<td><code>npm run close</code> requires &quot;Closes #N&quot; in HEAD — committing the velocity CSV after the closing commit breaks it; log velocity and stage the CSV before the final close commit (#571). <code>bp</code> is a synchronization point, not a poll — it has no coherent off-TTY idle contract and needs a fail-fast guard (#272/#561).</td>
+</tr>
 </tbody></table>
 <h2>Recurring threads (informal — #207 will formalize)</h2>
 <p>A few lessons already recur across multiple agents/sessions — exactly the signal

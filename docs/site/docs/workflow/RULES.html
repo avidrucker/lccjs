@@ -92,6 +92,9 @@ code { font-family:var(--mono-font); }
 <li>I will always close via <code>npm run close &lt;N&gt;</code>. I will never <code>git push</code> directly to main.</li>
 <li>Every worktree must be tied to an open GitHub issue. If none exists, I will file one before claiming.</li>
 <li>At close time, any work discovered but not done — deferred scope, a found bug, or an open design question — must become a ticket before the closing commit. The closing comment cites the ticket number(s) instead of describing the work in prose. Prose in a closing comment is not discoverable; a ticket is. (See <code>docs/research/followup-trigger-brainstorming.md</code> for the options considered.)</li>
+<li>When fixing or reviewing a write-path bug in a test harness, I will add a regression test that reads back what was written through the actual write surface (e.g. <code>virtualFs</code>) and asserts the bytes are intact. A test that only checks the producer&#39;s in-memory state leaves the write path dark.</li>
+<li>For any tracker ticket (one that says &quot;stays open until children resolve&quot;), I will always file a concrete child issue for the chosen sub-item before doing any work — unconditionally, not just &quot;if the item is large enough.&quot; The child issue is where velocity is logged and where the work is tracked. No exceptions for &quot;small&quot; or &quot;obvious&quot; items.</li>
+<li>I will wrap every shell invocation of <code>lcc.js</code>, <code>assembler.js</code>, <code>interpreter.js</code>, <code>linker.js</code>, or the oracle binary (<code>$LCC_ORACLE</code>) in <code>scripts/lccrun.sh</code>. Bare invocations block indefinitely when <code>name.nnn</code> is absent and stdin is not a TTY (#376).</li>
 </ol>
 
   </div>

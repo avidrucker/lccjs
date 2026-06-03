@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>202-gamesnake-code-quality — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>gameSnake.ap Code-Quality Assessment (#202)</h1>
+<p><strong>Agent:</strong> BANANA · <strong>Date:</strong> 2026-06-03 · <strong>Rubric:</strong> avi-code-quality concern catalog</p>
+<hr>
+<h2>Verdict</h2>
+<p><code>plusdemos/gameSnake.ap</code> (637 lines) is <strong>working but organically overgrown</strong>. The core
+algorithms (linked list, collision, wrapping, random fruit placement) are correct and
+well-commented. The main quality problems are:</p>
+<ol>
+<li><code>main</code> is 158 lines and should be decomposed into three extracted subroutines.</li>
+<li>Several small dead-code / comment-accuracy issues accumulate into noise.</li>
+<li>One correctness bug: no opposite-direction guard (pressing the reverse key kills you
+instantly).</li>
+<li>Two efficiency smells worth knowing about (not blocking, but worth fixing eventually).</li>
+</ol>
+<p>No structural rework is needed — targeted refactors and one bug fix bring the file to
+a clearly good shape. Total estimated follow-up effort: ~200m across 5 puzzles.</p>
+<hr>
+<h2>File statistics</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Total lines</td>
+<td>637</td>
+</tr>
+<tr>
+<td>Subroutines</td>
+<td>13</td>
+</tr>
+<tr>
+<td>Global data section (lines 215–236)</td>
+<td>22 lines</td>
+</tr>
+<tr>
+<td>Largest subroutine</td>
+<td><code>main</code> — 158 lines</td>
+</tr>
+<tr>
+<td>Second largest</td>
+<td><code>printBoard</code> — 76 lines</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Findings</h2>
+<h3>:simplicity — <code>main</code> is 158 lines (far above ≤60 target)</h3>
+<p><code>main</code> (lines 374–531) does: snake initialisation, the game loop (render + input + direction
+update + movement + collision + fruit + sleep), and the game-over screen. These are four
+distinct responsibilities.</p>
+<p>Recommended extraction (each ≤60m puzzle):</p>
+<ul>
+<li><code>initSnake</code> — lines 378–388: set <code>snake=0</code>, append starting segment</li>
+<li><code>updateDirection</code> — lines 403–429: wasd chain → <code>direction</code> store</li>
+<li><code>moveSnake</code> — lines 431–516: compute new head, wrap, collision, append, fruit, tail trim</li>
+<li><code>gameOverScreen</code> — lines 518–531: print messages, wait for key</li>
+</ul>
+<p>After extraction <code>main</code> would be ~40 lines: init → loop (resetc → print → score → input →
+updateDir → moveSnake → sleep) → gameOver.</p>
+<h3>:simplicity — <code>printBoard</code> mixes iteration with collision detection</h3>
+<p><code>printBoard</code> (lines 294–369) loops 10×10=100 cells and calls <code>checkCollision</code> for each.
+<code>checkCollision</code> traverses the full snake list, so per-frame rendering is
+O(board² × snake_length). For a 10×10 board with a 50-segment snake: 5 000 node traversals
+per frame. Tolerable today but worth noting.</p>
+<p>A cheap fix: walk the snake list once before the loop and build a flat row[] / col[] array,
+then check membership in O(1) per cell. Deferred — low priority for a ≤10×10 game.</p>
+<h3>:correctness — no opposite-direction guard (instant-death bug)</h3>
+<p>The direction-update chain (lines 403–429) does not prevent reversing. If the snake is
+moving right (direction=2) and the player presses <code>a</code> (direction=0), the new head steps
+into the cell the old head just vacated, which is still in the snake list. <code>checkCollision</code>
+finds it and triggers game over immediately.</p>
+<p>Fix: before writing to <code>direction</code>, compare the candidate with the current direction and
+reject if <code>new_dir == (current_dir + 2) % 4</code>. Belongs in its own puzzle since it requires
+knowing the direction encoding.</p>
+<h3>:readability — <code>@noKey</code> is a dead fall-through</h3>
+<p>Lines 459–462:</p>
+<pre><code>@noKey:
+    br @wrapped
+@wrapped:
+</code></pre>
+<p><code>@noKey</code> is used only as the <code>brne</code> target when direction=0 is <em>not</em> matched, but that
+branch would fall through to <code>@wrapped</code> anyway. The explicit <code>br @wrapped</code> is dead.</p>
+<h3>:readability — wrong register name in <code>removeSnakeTail</code> comment</h3>
+<p>Line 153:</p>
+<pre><code>ldr r1, r1, 2   ; r2 = oldHead-&gt;next
+</code></pre>
+<p>The destination is <code>r1</code>, not <code>r2</code>. The comment was not updated when the register was changed.</p>
+<h3>:readability — historical <code>DONE:</code> block and dead dev-mode lines</h3>
+<p>Lines 24–32: five <code>DONE:</code> markers document completed work. That information is in Git
+history, not needed in the source.</p>
+<p>Lines 361–363:</p>
+<pre><code>; Uncomment these two lines for step-by-step dev mode
+; r
+; bp
+</code></pre>
+<p>Commented-out instructions are dead code. Either remove them or wire them to a <code>devMode</code>
+global so they can be activated without editing the source.</p>
+<h3>:readability — <code>getSnakeHeadXY</code> local labels are not indented</h3>
+<p>The local labels <code>@loopGL:</code>, <code>@doneGL:</code>, <code>@empty:</code> (lines 568, 577, 583) are at column 0,
+unlike every other subroutine&#39;s local labels which are indented 4–12 spaces. Minor but
+inconsistent.</p>
+<h3>:maintainability — <code>wrapCoord</code> double-loads <code>boardSize</code></h3>
+<p>Lines 605–610:</p>
+<pre><code>ld  r1, @boardSizePtr
+ldr r0, r1, 0
+add r2, r2, r0
+rem r2, r0
+ld  r1, @boardSizePtr   ; ← r0 not clobbered; this is dead
+ldr r0, r1, 0           ; ← dead
+add r3, r3, r0
+rem r3, r0
+</code></pre>
+<p><code>r0</code> holds <code>boardSize</code> after the first <code>ldr</code>. The second <code>ld</code>/<code>ldr</code> pair can be deleted.</p>
+<h3>:maintainability — <code>printScore</code> uses indirect pointer for <code>snakeLen</code></h3>
+<p>Lines 543–545:</p>
+<pre><code>ld  r1, @snakeLenPtr
+ldr r0, r1, 0
+dout r0
+</code></pre>
+<p><code>ld r0, snakeLen</code> is equivalent and one instruction shorter. The rest of the file uses
+direct <code>ld</code> for globals (e.g., <code>ld r0, fruitRow</code> at line 274). Inconsistent.</p>
+<h3>:maintainability — dead frame-pointer setup in no-arg subroutines</h3>
+<p><code>placeFruitRandom</code> (lines 241–261) and <code>printScore</code> (lines 536–552) each do
+<code>push fp / mov fp, sp</code> but take no arguments and allocate no locals. Neither accesses <code>fp</code>
+after setup. The <code>mov sp, fp</code> epilog is also a no-op (sp was never moved below fp).</p>
+<h3>Memory leak (known, tracked in #144)</h3>
+<p><code>removeSnakeTail</code> leaves freed nodes unreachable. The comment at lines 156–163 correctly
+documents this. The memory-leak question is open in #144 and feeds the free-implementation
+spike at <code>docs/research/560-free-implementation-in-lcc-assembly.md</code>.</p>
+<hr>
+<h2>Feature backlog re-evaluation (#143 items)</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Verdict</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Opposite-direction guard</td>
+<td><strong>Re-surface as bug fix</strong></td>
+<td>Not a feature — it&#39;s a correctness defect. File now.</td>
+</tr>
+<tr>
+<td>Pause</td>
+<td>Worth doing</td>
+<td>Adds <code>paused</code> global + toggle in game loop. Natural after <code>main</code> refactor.</td>
+</tr>
+<tr>
+<td>Win condition</td>
+<td>Worth doing</td>
+<td><code>snakeLen &gt;= boardSize²</code> check on each fruit eat. ~20m.</td>
+</tr>
+<tr>
+<td>Vim HJKL controls</td>
+<td>Worth doing</td>
+<td>Trivial once <code>updateDirection</code> is extracted (~15m extension).</td>
+</tr>
+<tr>
+<td>Variable board size</td>
+<td>Defer</td>
+<td>Requires replacing all hardcoded <code>10</code> constants. Do after main refactor.</td>
+</tr>
+<tr>
+<td>Replay</td>
+<td>Defer</td>
+<td>Requires <code>initSnake</code> extraction first (see main refactor).</td>
+</tr>
+<tr>
+<td>High-score</td>
+<td>Defer</td>
+<td>In-session only (no file I/O in LCC+). Fine after refactor; not urgent.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Follow-up puzzles filed</h2>
+<p>Five new issues were filed as a result of this assessment. @todo markers are planted at
+the relevant code sites in this commit.</p>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Title</th>
+<th>H-estimate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>#581</td>
+<td>Fix opposite-direction guard</td>
+<td>30m</td>
+</tr>
+<tr>
+<td>#582</td>
+<td>Extract <code>updateDirection</code> + <code>gameOverScreen</code> from <code>main</code></td>
+<td>60m</td>
+</tr>
+<tr>
+<td>#583</td>
+<td>Extract <code>moveSnake</code> logic from <code>main</code></td>
+<td>60m</td>
+</tr>
+<tr>
+<td>#584</td>
+<td>Dead-code + comment hygiene (7 items)</td>
+<td>40m</td>
+</tr>
+<tr>
+<td>#585</td>
+<td>Direct-access + frame-setup micro-cleanups (3 items)</td>
+<td>20m</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

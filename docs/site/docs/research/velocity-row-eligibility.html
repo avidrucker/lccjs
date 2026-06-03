@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>README — LCC Docs</title>
+  <title>velocity-row-eligibility — LCC Docs</title>
   <style>
 @font-face {
   font-family:"UnifontMedium";
@@ -72,62 +72,67 @@ code { font-family:var(--mono-font); }
 </head>
 <body class="light">
 <nav><a href="../../">Home</a>
-  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/research/" class="active">Research</a>
   <a href="../../docs/learnings/">Learnings</a>
-  <a href="../../docs/glossary/" class="active">Glossary</a>
+  <a href="../../docs/glossary/">Glossary</a>
   <a href="../../docs/parity/">Parity</a>
   <a href="../../docs/workflow/">Workflow</a>
 </nav>
-  <div class="back-link"><a href="./">← Glossary index</a></div>
+  <div class="back-link"><a href="./">← Research index</a></div>
   <div class="prose">
-<h1>LCC.js Glossary</h1>
-<p>Per-module glossaries of LCC-specific vocabulary. Aimed at newcomers who already
-understand general assembler / VM / linker concepts and need the
-<strong>LCC-specific</strong> angle (load point, listing load point, adjustment entries,
-externs vs globals, .e/.bst/.lst formats, ISA opcode nibble layout, loop
-detection, etc.).</p>
-<h2>Files</h2>
+<h1>Research: velocity row eligibility — tracker vs scope-spike (#225)</h1>
+<p><strong>Status:</strong> Confirmed. Rule codified in <code>docs/puzzle-velocity.md</code> §&quot;What gets logged&quot;.</p>
+<h2>Question</h2>
+<p>Which issues earn a velocity CSV row? Specifically: do tracker/epic issues
+(umbrella issues that collect children) get a row, or only their children?</p>
+<h2>Finding</h2>
+<p>The deciding test is not &quot;is this a parent issue?&quot; but <strong>&quot;does this issue
+represent distinct work, or is it just an umbrella over rows that already
+exist?&quot;</strong></p>
+<p>Confirmed via audit of existing rows (APPLE, #549):</p>
 <table>
 <thead>
 <tr>
-<th>File</th>
-<th>Source</th>
-<th>What it covers</th>
+<th>Pattern</th>
+<th>Row?</th>
+<th>Precedent</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="./assembler.md"><code>assembler.md</code></a></td>
-<td><code>src/core/assembler.js</code></td>
-<td>Two-pass assembler: state &amp; lifecycle, the <code>.e</code> / <code>.o</code> object-file format, per-instruction encoders, and operand parsing (grouped into sections a–e)</td>
+<td>Pure tracker/epic (no work of its own)</td>
+<td>No</td>
+<td>#108, #144 — zero rows in CSV</td>
 </tr>
 <tr>
-<td><a href="./interpreter.md"><code>interpreter.md</code></a></td>
-<td><code>src/core/interpreter.js</code></td>
-<td>The VM: memory/register model, executable loading, the fetch–decode–execute loop, trap implementations, and the interactive debugger</td>
+<td>Scope-decomposition spike (inventory + child breakdown deliverable)</td>
+<td>One row</td>
+<td>#166 (SPIKE, 20 min actual), #171 (SPIKE, 4 min actual)</td>
 </tr>
 <tr>
-<td><a href="./linker.md"><code>linker.md</code></a></td>
-<td><code>src/core/linker.js</code></td>
-<td>Multi-module linking: per-link state tables, the link pipeline, external / local reference fix-ups, and executable serialization</td>
+<td>Spike / RESEARCH (findings, no children)</td>
+<td>One row</td>
+<td>#203, #193, #216</td>
 </tr>
 <tr>
-<td><a href="./stats-analysis.md"><code>stats-analysis.md</code></a></td>
-<td><code>stats/*.ipynb</code></td>
-<td>Non-parametric statistics used in the velocity notebooks: c_ratio, sign test, bootstrap CI, Spearman ρ, Kruskal-Wallis, Mann-Whitney U, and the underpowered qualifier</td>
+<td>Child puzzle</td>
+<td>One row each</td>
+<td>All implementation tickets</td>
 </tr>
 </tbody></table>
-<h2>Entry convention</h2>
-<p>Each term entry follows this shape:</p>
-<pre><code class="language-markdown">### term-name
-
-1–3 sentence definition that explains the LCC-specific angle. Avoid
-restating general assembler/VM/linker knowledge.
-
-**Source:** `src/core/&lt;file&gt;.js:&lt;line-range&gt;` (or function name)
-**See also:** [related-term-1], [related-term-2]
-</code></pre>
-<p>Cross-links use plain-text <code>[term-name]</code> refs within a file. Cross-file
-references use the standard <code>[term](other-file.md#anchor)</code> markdown form.</p>
+<h2>Audit findings</h2>
+<p>No violations found:</p>
+<ul>
+<li><strong>#108, #144</strong> (pure trackers): 0 rows — correct.</li>
+<li><strong>#166</strong> (scope-decomp SPIKE: file 5 children for plus/extra coverage): 1 SPIKE row, <code>actual_min=20</code> — legitimate; the 5 children (#196–#200) log implementation separately.</li>
+<li><strong>#171</strong> (scope-decomp SPIKE: scope linker test decomposition): 1 SPIKE row, <code>actual_min=4</code> — legitimate.</li>
+<li><strong>#221</strong> (PM: create 3 trackers): 1 PM row for the curation act — correct; the 3 trackers themselves get no rows.</li>
+</ul>
+<h2>Rule</h2>
+<p>A scope-spike row is <strong>not double-logging</strong> — it records the scoping act; the
+children&#39;s rows record their implementation. The constraint is that
+<code>actual_min</code> on the scope-spike must never absorb child work time.</p>
+<p>Rule written into <code>docs/puzzle-velocity.md</code> &quot;What gets logged&quot; and the
+<code>puzzle-velocity</code> skill &quot;Skip when&quot;. See #225.</p>
 
   </div>
   <footer>

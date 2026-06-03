@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>README — LCC Docs</title>
+  <title>today-i-learned-2026-06-03-fig — LCC Docs</title>
   <style>
 @font-face {
   font-family:"UnifontMedium";
@@ -73,61 +73,73 @@ code { font-family:var(--mono-font); }
 <body class="light">
 <nav><a href="../../">Home</a>
   <a href="../../docs/research/">Research</a>
-  <a href="../../docs/learnings/">Learnings</a>
-  <a href="../../docs/glossary/" class="active">Glossary</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
   <a href="../../docs/parity/">Parity</a>
   <a href="../../docs/workflow/">Workflow</a>
 </nav>
-  <div class="back-link"><a href="./">← Glossary index</a></div>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
   <div class="prose">
-<h1>LCC.js Glossary</h1>
-<p>Per-module glossaries of LCC-specific vocabulary. Aimed at newcomers who already
-understand general assembler / VM / linker concepts and need the
-<strong>LCC-specific</strong> angle (load point, listing load point, adjustment entries,
-externs vs globals, .e/.bst/.lst formats, ISA opcode nibble layout, loop
-detection, etc.).</p>
-<h2>Files</h2>
+<h1>Today I Learned — 2026-06-03 (FIG)</h1>
+<p>Short session: PM tickets (#507, #537, #542) and a follow-up on Elderberry&#39;s close-script
+fix (#541). Two sharp lessons came out of the day.</p>
+<hr>
+<h2>1. Never put real email addresses in public GitHub issue comments</h2>
+<p>When drafting a bug-report email for review in a GitHub issue, the temptation is to
+write a realistic draft — recipient address, sender address, the works. Don&#39;t.</p>
+<p>GitHub issue text is public and indexed. A real email address in a comment will be
+crawled, scraped, and added to spam lists within days. The owner didn&#39;t consent to
+publishing it there, and there&#39;s no &quot;un-ring the bell&quot; — even after editing the
+comment, the original content may be cached.</p>
+<p>The right approach: use placeholders (<code>[your email]</code>, <code>[Prof. Dos Reis&#39;s email]</code>) in
+any draft posted for review. The human fills in the real addresses in their mail client
+just before hitting send — the only place where an email address belongs in plaintext.</p>
+<p><strong>The distinction worth remembering:</strong> a repo file intended to become an offline PDF
+artifact (like <code>docs/cuh63-*.md</code>) is different from inline GitHub content. Author
+attribution in a formatted report is normal; the same email pasted into an issue comment
+is an exposure. Same text, different channel, very different risk.</p>
+<hr>
+<h2>2. Moving a step out-of-band makes its failures invisible</h2>
+<p><code>npm run close</code> used to delete the worktree synchronously, which caused a spurious
+<code>pwd: error</code> from npm&#39;s own post-run cleanup (#533). The fix (#541) was to spawn the
+teardown (<code>git worktree remove</code> + <code>git branch -D</code> + <code>git worktree prune</code>) as a detached
+subprocess and let <code>close.js</code> exit first — no more <code>pwd</code> error.</p>
+<p>It works. But the tradeoff is that any failure in the detached subprocess produces no
+output. If the worktree removal fails silently, the user has no signal until they run
+<code>git worktree list</code> and notice the stray.</p>
+<p>This is a general pattern: when you defer work to keep the happy path clean, you often
+push error visibility off the critical path too. The error doesn&#39;t disappear — it just
+surfaces somewhere less obvious, or not at all unless you go looking.</p>
+<p><strong>The rule:</strong> whenever a step is moved out-of-band (detached subprocess, fire-and-forget
+callback, background job), ask: <em>how will I know if it failed?</em> If the answer is
+&quot;I won&#39;t,&quot; that&#39;s worth a follow-up check mechanism. (#542 tracks the assessment for
+this specific case.)</p>
+<hr>
+<h2>What landed</h2>
 <table>
 <thead>
 <tr>
-<th>File</th>
-<th>Source</th>
-<th>What it covers</th>
+<th>Artifact</th>
+<th>Change</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="./assembler.md"><code>assembler.md</code></a></td>
-<td><code>src/core/assembler.js</code></td>
-<td>Two-pass assembler: state &amp; lifecycle, the <code>.e</code> / <code>.o</code> object-file format, per-instruction encoders, and operand parsing (grouped into sections a–e)</td>
+<td><a href="https://github.com/avidrucker/lccjs/issues/507">#507</a></td>
+<td>Email draft posted for OG BUG #13 (long-line silent split); personal email stripped after initial post.</td>
 </tr>
 <tr>
-<td><a href="./interpreter.md"><code>interpreter.md</code></a></td>
-<td><code>src/core/interpreter.js</code></td>
-<td>The VM: memory/register model, executable loading, the fetch–decode–execute loop, trap implementations, and the interactive debugger</td>
+<td><a href="https://github.com/avidrucker/lccjs/issues/537">#537</a></td>
+<td>Ticket filed: document &quot;no PII in issues/comments&quot; rule in workflow docs.</td>
 </tr>
 <tr>
-<td><a href="./linker.md"><code>linker.md</code></a></td>
-<td><code>src/core/linker.js</code></td>
-<td>Multi-module linking: per-link state tables, the link pipeline, external / local reference fix-ups, and executable serialization</td>
+<td><a href="https://github.com/avidrucker/lccjs/issues/542">#542</a></td>
+<td>Ticket filed: assess silent-failure risk of deferred worktree removal in close.js.</td>
 </tr>
 <tr>
-<td><a href="./stats-analysis.md"><code>stats-analysis.md</code></a></td>
-<td><code>stats/*.ipynb</code></td>
-<td>Non-parametric statistics used in the velocity notebooks: c_ratio, sign test, bootstrap CI, Spearman ρ, Kruskal-Wallis, Mann-Whitney U, and the underpowered qualifier</td>
+<td><a href="https://github.com/avidrucker/lccjs/issues/545">#545</a></td>
+<td>This TIL.</td>
 </tr>
 </tbody></table>
-<h2>Entry convention</h2>
-<p>Each term entry follows this shape:</p>
-<pre><code class="language-markdown">### term-name
-
-1–3 sentence definition that explains the LCC-specific angle. Avoid
-restating general assembler/VM/linker knowledge.
-
-**Source:** `src/core/&lt;file&gt;.js:&lt;line-range&gt;` (or function name)
-**See also:** [related-term-1], [related-term-2]
-</code></pre>
-<p>Cross-links use plain-text <code>[term-name]</code> refs within a file. Cross-file
-references use the standard <code>[term](other-file.md#anchor)</code> markdown form.</p>
 
   </div>
   <footer>

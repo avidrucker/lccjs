@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-03-cherry-3 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-03 — CHERRY s3</h1>
+<p><strong>Context:</strong> A session that added the write-path test rule to RULES.md (#548),
+refreshed stale items in ROADMAP.md (#27), and wrote the LCC+ off-TTY
+interactive contract spec (#272), deciding the <code>nbain</code> idle-player vs <code>bp</code>
+fail-fast postures.</p>
+<hr>
+<h2><code>npm run close</code> requires &quot;Closes #N&quot; in HEAD — commit ordering matters</h2>
+<p><strong>What happened:</strong></p>
+<p>Closing #548 went like this:</p>
+<ol>
+<li>Feature commit: <code>docs: add write-path test rule to RULES.md</code> — message
+included <code>Closes #548</code>.</li>
+<li>Then I ran <code>npm run velocity:log</code>, which auto-exported the CSV.</li>
+<li>Committed the CSV separately: <code>data(velocity): log row for #548</code>.</li>
+<li>Ran <code>npm run close 548</code> → <strong>rejected</strong>: &quot;HEAD commit does not reference
+&#39;Closes #548&#39;.&quot;</li>
+</ol>
+<p>The feature commit had the close reference, but the velocity CSV commit was
+now HEAD — and the close script checks HEAD, not the full log.</p>
+<p>The same thing happened closing #272.</p>
+<p><strong>What I learned:</strong></p>
+<p>The <code>npm run close</code> guard is strict: the close reference must be in the
+<strong>HEAD</strong> commit at the moment <code>close</code> is called. It doesn&#39;t scan the recent
+log; it reads only HEAD. Any commit made after the closing commit — even a
+purely mechanical one like exporting the velocity CSV — breaks the check.</p>
+<p><strong>The fix I used (both sessions):</strong> an empty commit to re-surface the
+reference:</p>
+<pre><code class="language-bash">git commit --allow-empty -m &quot;close: finalize #N — &lt;short description&gt;
+
+Closes #N&quot;
+npm run close -- N --skip-keyword-check
+</code></pre>
+<p>This works, but it&#39;s a workaround. It leaves an extra empty commit in the
+log that wouldn&#39;t need to be there.</p>
+<p><strong>The better approach:</strong> commit the velocity CSV <em>in the same commit</em> as
+&quot;Closes #N&quot;, or run <code>velocity:log</code> and stage the CSV <em>before</em> the closing
+commit so everything lands together:</p>
+<pre><code class="language-bash"># 1. feature work committed (no Closes #N yet)
+git commit -m &quot;docs: ...&quot;
+
+# 2. log velocity — CSV is now staged
+npm run velocity:log -- &#39;{...}&#39;
+git add docs/puzzle-velocity.csv
+
+# 3. ONE closing commit that includes the CSV and the Closes reference
+git commit -m &quot;docs: ... + velocity row
+
+Closes #N&quot;
+
+# 4. close succeeds — Closes #N is in HEAD
+npm run close -- N
+</code></pre>
+<p><strong>The rule:</strong></p>
+<p>Run <code>npm run velocity:log</code> and stage the exported CSV <em>before</em> writing the
+closing commit, so the CSV and the <code>Closes #N</code> reference land in the same
+HEAD commit. Never commit the velocity CSV after the closing commit; if you
+do, you need an empty commit to unblock <code>npm run close</code>.</p>
+<hr>
+<h2><code>bp</code> is a synchronization point; <code>nbain</code> is a poll — they have different off-TTY contracts</h2>
+<p><strong>What happened:</strong></p>
+<p>While writing the #272 contract spec, I had to decide whether to treat
+<code>nbain</code> and <code>bp</code> the same off-TTY. Both are &quot;interactive&quot; traps, but they
+need different postures.</p>
+<p><strong>What I learned:</strong></p>
+<p><code>nbain</code> (non-blocking input poll) already returns <code>0</code> (&quot;no key pressed&quot;) when
+the <code>keyQueue</code> is empty. Off-TTY the queue never fills, so it returns <code>0</code>
+forever. This is semantically correct — an idle player who never presses
+anything is exactly what &quot;no key&quot; means. The loop can run forever, but that is
+a valid interpretation, not a bug.</p>
+<p><code>bp</code> (breakpoint trap) calls <code>process.stdin.once(&#39;data&#39;, …)</code> to resume on a
+keypress. Off-TTY, <code>data</code> never fires → <code>this.running</code> stays <code>false</code> → the
+non-blocking loop never restarts → the program <strong>hangs</strong>. There is no coherent
+&quot;idle&quot; interpretation for a breakpoint: a synchronization point that requires
+a response can never be satisfied when there is no input source. The program is
+stuck, not idle.</p>
+<p><strong>The rule:</strong></p>
+<p>A trap that <em>polls</em> for input (returns &quot;nothing&quot; on an empty queue) degrades
+gracefully off-TTY. A trap that <em>blocks</em> waiting for a specific event can never
+make progress off-TTY and needs a guard. When designing new interactive traps
+for LCC+, ask: &quot;does this trap have a coherent &#39;no input available&#39; return
+value?&quot; If yes, idle-player semantics apply. If not, add an off-TTY early-exit
+guard.</p>
+<p><strong>Authority path:</strong> The contract is now in
+<code>docs/research/lccplus-off-tty-interactive-contract.md</code> (#272). The <code>bp</code> guard
+implementation is tracked as DEV puzzle #561.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

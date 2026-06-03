@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>stats-analysis — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/" class="active">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+</nav>
+  <div class="back-link"><a href="./">← Glossary index</a></div>
+  <div class="prose">
+<h1>Stats-analysis glossary</h1>
+<p>Vocabulary used in the <code>stats/</code> notebooks. Aimed at readers who understand
+the lccjs velocity dataset but have not studied non-parametric statistics.</p>
+<p>Each entry answers four questions:</p>
+<ul>
+<li><strong>What it is</strong> — plain-language one-liner</li>
+<li><strong>Why it&#39;s used here</strong> — why it fits this particular dataset</li>
+<li><strong>How to read the output</strong> — what the numbers mean and what conclusions they license</li>
+<li><strong>Caveats</strong> — when to distrust the result or withhold conclusions</li>
+</ul>
+<hr>
+<h2>Dataset concepts</h2>
+<h3>c_ratio</h3>
+<p>The ratio of Claude&#39;s pre-task time prediction to the actual wall-clock time:
+<code>c_ratio = c_min / actual_min</code>. A value greater than 1 means the estimate was
+higher than reality (Claude finished faster than predicted); a value below 1
+means it ran over. The median <code>c_ratio</code> is the primary calibration metric
+across all analysis sections.</p>
+<p><strong>Why it&#39;s used here:</strong> It separates two distinct quantities — the human&#39;s
+budget (H, enforces Yegor&#39;s ≤60 m cap) and Claude&#39;s own forward-looking
+prediction (C) — so that systematic over-estimation can be measured and
+corrected over time.</p>
+<p><strong>How to read the output:</strong> A median of 3× means that, across the dataset,
+Claude completes tasks in roughly one-third of the time it predicted. The
+distribution is right-skewed (a few very-high-ratio outliers), so the median
+is more representative than the mean.</p>
+<p><strong>Caveats:</strong> <code>actual_min</code> is wall-clock elapsed time from <code>started_iso</code> to
+<code>finished_iso</code>. For multi-turn tasks with human idle gaps between turns, the
+measured time includes that idle time, making <code>c_ratio</code> an upper bound on true
+agent wall-clock. Rows missing either <code>c_min</code> or <code>actual_min</code> are excluded
+from all ratio analysis (the &quot;calibration-usable&quot; subset).</p>
+<p><strong>Notebook location:</strong> Defined and explained in the &quot;Key concept: c_ratio&quot;
+cell; used in §1 (global), §2 (per-day), §3 (per-agent), §4 (per-role),
+§5 (per-model), §6 (ELDERBERRY drill-down).</p>
+<p><strong>See also:</strong> [calibration-usable subset], [underpowered]</p>
+<hr>
+<h3>calibration-usable subset</h3>
+<p>The subset of velocity rows that have both a populated <code>c_min</code> (Claude&#39;s
+pre-task estimate) and an <code>actual_min &gt; 0</code> (measured elapsed time). All ratio
+analysis operates on this subset; counts and distributions in §0 cover all
+rows.</p>
+<p><strong>Why rows are excluded:</strong> Rows logged before the C-estimate protocol was
+introduced have no <code>c_min</code>; spontaneous PM/triage turns often start without a
+prediction and are logged retroactively. Excluding them keeps ratio statistics
+honest — a missing estimate is not the same as a zero estimate.</p>
+<p><strong>Notebook location:</strong> §0 prints both totals and explains the drop.</p>
+<p><strong>See also:</strong> [c_ratio]</p>
+<hr>
+<h2>Statistical tests</h2>
+<h3>sign test (binomial test)</h3>
+<p>A non-parametric test that asks: ignoring magnitudes, are more observations on
+one side of a threshold than the other? Here it tests whether significantly
+more than 50% of tasks completed with <code>c_ratio &gt; 1</code> (ran faster than
+predicted). The null hypothesis is a fair coin (50/50 split).</p>
+<p><strong>Why it&#39;s used here:</strong> The dataset is heavily right-skewed and non-normal.
+The sign test makes no distributional assumptions — it only counts which side
+of the threshold each observation falls on — making it ideal when the
+distribution shape is unknown or irregular.</p>
+<p><strong>How to read the output:</strong> A very small p-value (e.g. 8.69×10⁻⁶³) means the
+observed split (e.g. 293/314) is astronomically unlikely under the null.
+<code>stats.binomtest(n_over, n, 0.5, alternative=&#39;greater&#39;)</code> in SciPy performs
+this test one-sided (asking whether the proportion is <em>greater</em> than 0.5).</p>
+<p><strong>Caveats:</strong> The sign test discards magnitude information. It can produce a
+significant result even when most <code>c_ratio</code> values are only slightly above 1.
+Always report the median alongside the p-value to convey effect size.</p>
+<p><strong>Notebook location:</strong> §1 (global over-estimation finding).</p>
+<p><strong>See also:</strong> [c_ratio], [bootstrap CI]</p>
+<hr>
+<h3>bootstrap CI</h3>
+<p>A confidence interval estimated by resampling. The procedure draws <code>n</code> random
+samples with replacement from the observed data 10,000 times, computes the
+median of each resample, then takes the 2.5th and 97.5th percentiles of those
+10,000 medians as the 95% CI.</p>
+<p><strong>Why it&#39;s used here:</strong> Bootstrap CIs make no normality assumption and are
+valid for any statistic (here: medians) on small, skewed samples. The dataset
+is right-skewed and too small in most per-group slices (per-agent, per-day)
+for analytical CIs to be reliable.</p>
+<p><strong>How to read the output:</strong> A CI of [3.00–3.75] means the true median
+<code>c_ratio</code> is estimated to lie in that range with 95% confidence — if the
+sampling process were repeated many times, 95% of the resulting CIs would
+contain the true value. Wider CIs reflect more uncertainty (fewer rows or
+higher variance).</p>
+<p><strong>Caveats:</strong> Bootstrap CIs inherit the biases of the underlying sample. If the
+sample is not representative (e.g. RESEARCH-heavy on one particular day), the
+CI reflects that skew. A wide CI is a signal to withhold strong conclusions,
+not to ignore the estimate entirely.</p>
+<p><strong>Notebook location:</strong> §1 (global median), §3 (per-day medians via bar
+chart error bars).</p>
+<p><strong>See also:</strong> [sign test], [underpowered]</p>
+<hr>
+<h3>Spearman ρ (Spearman rank correlation)</h3>
+<p>A non-parametric correlation coefficient that measures the strength of a
+<em>monotone</em> (consistently increasing or decreasing) relationship between two
+variables. Here it tests whether the per-day median <code>c_ratio</code> changes
+consistently over the six-day window — i.e., whether calibration is trending
+in one direction over time.</p>
+<p><strong>Why it&#39;s used here:</strong> Day-buckets are ordinal (time-ordered) but the medians
+are not normally distributed. Spearman ρ measures monotone trend without
+assuming linearity or normality. A positive ρ means medians tend to rise over
+time; negative means they fall.</p>
+<p><strong>How to read the output:</strong> ρ ranges from −1 to +1. A p-value ≥ 0.05 means
+the observed trend is not statistically significant — it could easily arise by
+chance. In the notebooks this consistently yields p ≈ 0.46 across 6 day-
+buckets, meaning &quot;no detectable learning curve yet.&quot;</p>
+<p><strong>Caveats:</strong> With only 6 day-buckets, Spearman has very low statistical power.
+The test can only reliably detect a <em>perfect or near-perfect</em> monotone (all six
+buckets in ascending order). Non-detection is not evidence of no trend — it is
+evidence that the sample size is too small. The notebooks note &quot;revisit at
+n_days ≥ 10.&quot;</p>
+<p><strong>Notebook location:</strong> §2 (per-day calibration drift).</p>
+<p><strong>See also:</strong> [bootstrap CI], [underpowered]</p>
+<hr>
+<h3>Kruskal-Wallis (KW)</h3>
+<p>A non-parametric test for whether two or more independent groups have the same
+distribution. It is the rank-based analogue of a one-way ANOVA. Here it tests
+whether <code>c_ratio</code> distributions differ across agents (§3) or models (§5).</p>
+<p><strong>Why it&#39;s used here:</strong> The groups (agents, models) have different sample
+sizes, and <code>c_ratio</code> is right-skewed and non-normal. Kruskal-Wallis tests for
+any distributional difference without assuming normality or equal variance.
+Singletons (n = 1) are excluded because a single observation provides no
+within-group spread.</p>
+<p><strong>How to read the output:</strong> The H statistic is analogous to an F-statistic —
+larger values indicate greater between-group divergence relative to within-
+group spread. The p-value tests whether H is larger than expected by chance
+under the null (all groups drawn from the same distribution). A non-significant
+result (p ≥ 0.05) means the observed differences could plausibly arise from
+sampling variation alone.</p>
+<p><strong>Caveats:</strong> Kruskal-Wallis is sensitive to <em>any</em> distributional difference,
+not just differences in median. A significant result does not identify <em>which</em>
+groups differ — post-hoc pairwise tests (e.g. Dunn&#39;s test) are needed for
+that. In the notebooks the test is consistently non-significant (p ≈ 0.62–
+0.72 for agents), which is partly a power issue: with 6 groups each at
+n = 29–73, detecting moderate effect sizes requires more data.</p>
+<p><strong>Notebook location:</strong> §3 (per-agent, stored as <code>agent_kw</code>), §5 (per-model,
+stored as <code>model_kw</code>).</p>
+<p><strong>See also:</strong> [Mann-Whitney U], [underpowered]</p>
+<hr>
+<h3>Mann-Whitney U (MWU)</h3>
+<p>A non-parametric test for whether two independent groups tend to produce
+different values. It counts how many times an observation from group A exceeds
+an observation from group B across all pairs, producing a U statistic; the
+p-value tests whether the observed U is unlikely under the null that both
+groups are drawn from the same distribution. The two-sided variant tests for
+any directional difference.</p>
+<p><strong>Why it&#39;s used here:</strong> §6 compares ELDERBERRY&#39;s <code>c_ratio</code> to the fleet&#39;s
+within each role — a series of two-group comparisons. MWU is the natural
+follow-on to KW when the question narrows to exactly two groups. Like KW, it
+makes no normality assumption and handles the skewed, small-n per-role slices
+better than a t-test.</p>
+<p><strong>How to read the output:</strong> The <code>U</code> column is the raw Mann-Whitney statistic
+(higher U means group A tended to exceed group B more often). The <code>p_mwu</code>
+column is the two-sided p-value: small values (e.g. &lt; 0.05) indicate the
+groups differ significantly; large values (e.g. 0.19–0.72) mean the observed
+gap could easily be sampling noise. An underpowered row (n &lt; 5 in either
+group) shows <code>U</code> and <code>p_mwu</code> as <code>NaN</code> — the test is not run because the
+result would be unreliable.</p>
+<p><strong>Caveats:</strong> MWU tests for stochastic dominance (does one group tend to produce
+higher values?), not specifically for differences in medians, though it is
+often interpreted that way. Small n makes the p-value conservative — the test
+may miss a real difference. In §6 none of the per-role p-values cross 0.05,
+consistent with the roles being individually underpowered even when the overall
+ELDERBERRY–fleet gap looks substantial.</p>
+<p><strong>Notebook location:</strong> §6 (ELDERBERRY vs. fleet per-role comparison, <code>p_mwu</code>
+column).</p>
+<p><strong>See also:</strong> [Kruskal-Wallis], [underpowered]</p>
+<hr>
+<h3>underpowered</h3>
+<p>A test or estimate is underpowered when the sample size is too small to
+reliably detect a real effect of the expected magnitude. In these notebooks the
+term appears as a binary flag (<code>underpowered = True</code>) on any per-role MWU
+comparison where either group has fewer than 5 observations.</p>
+<p><strong>Why the threshold is n &lt; 5:</strong> With fewer than 5 observations in a group, the
+minimum achievable p-value from a MWU test (even with a perfect rank
+separation) cannot reach 0.05 for a two-sided test. The test is structurally
+unable to produce a significant result regardless of how large the true effect
+is. Running and reporting it would create a false sense of precision.</p>
+<p><strong>How to interpret underpowered results:</strong> A non-significant result from an
+underpowered comparison does <em>not</em> mean the groups are the same — it means
+&quot;we do not have enough data to tell.&quot; Treat such rows as directional
+observations only. If the effect is important, collect more data before
+drawing conclusions.</p>
+<p><strong>Caveats:</strong> The n &lt; 5 cutoff used in §6 is a practical rule of thumb, not a
+universal standard. Some analyses use n &lt; 10 or n &lt; 20 as the threshold for
+caution. The notebooks also flag small-n roles in §4 with a dynamic threshold
+of n ≤ 6 (<code>small_n = True</code>), which is a related but separate concept (it
+signals that a <em>descriptive</em> estimate, not a test, is based on few
+observations).</p>
+<p><strong>Notebook location:</strong> §4 (<code>small_n</code> flag per role), §6 (<code>underpowered</code> column
+in the MWU table).</p>
+<p><strong>See also:</strong> [Kruskal-Wallis], [Mann-Whitney U], [bootstrap CI]</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

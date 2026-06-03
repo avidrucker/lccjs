@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-03-elderberry-s2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-03 — ELDERBERRY s2</h1>
+<p><strong>Context:</strong> Session covering #505 (upstream bug-report tracker audit), #144
+(demo-questions tracker closure), #297 (workflow ownership map research), and
+follow-up issue filings (#560, #565–#568, #573).</p>
+<hr>
+<h2>1. A tracker&#39;s &quot;Done when&quot; and the human&#39;s close instruction can diverge — follow the human</h2>
+<p><strong>What happened:</strong> Issue #505 (&quot;Tracker: send and track upstream cuh63 6.3 bug
+reports&quot;) has a &quot;Done when: All child send issues are closed&quot; criterion. At the
+time I was assigned it, the children (#40, #159, #507) were still open. The human
+explicitly said to close #505 once the tracker artifact (the updated
+<code>reports_summary.md</code> + comment) was in place.</p>
+<p><strong>The tension:</strong> the issue&#39;s own acceptance criterion wasn&#39;t met. The instinct is
+to leave the tracker open until children close.</p>
+<p><strong>The rule:</strong> when the human&#39;s explicit close instruction and the issue&#39;s own
+&quot;Done when&quot; diverge, follow the human. A tracker&#39;s &quot;Done when&quot; is aspirational
+scope written at filing time. The human who assigned the ticket knows whether the
+deliverable (the artifact) is what actually matters for the session, independent
+of the long-tail children. Close on instruction; let the children live.</p>
+<hr>
+<h2>2. A broken internal link is a deliverable in its own right</h2>
+<p><strong>What happened:</strong> While closing tracker #144 (demo research questions), I found
+that <code>docs/lcc-isa.md</code> contains a live reference to
+<code>./research/jmp-condition-suffix-mnemonics.md</code> — a file that was created by BANANA
+for #151 and then deleted in the #390 archive sweep. The link was silently broken.</p>
+<p><strong>What I did:</strong> Restored the file verbatim from git history (<code>git show 74bffb0:docs/research/...</code>) as part of the #144 closure commit, alongside the new
+consolidated summary.</p>
+<p><strong>The rule:</strong> when research archiving deletes a file that another doc references,
+the reference becomes a broken link — which is a real defect, not a cosmetic issue.
+Before closing a tracker whose children involved research docs, grep for references
+to those docs and verify the files still exist. If a file was intentionally archived
+but is still linked, either restore it or update the link to point at the archive
+or the replacement.</p>
+<hr>
+<h2>3. &quot;Most forgotten step&quot; is the highest-ROI automation target</h2>
+<p><strong>What happened:</strong> The #297 workflow ownership map revealed that
+<code>@todo → @inprogress</code> flip is the step most consistently skipped across all agents
+— because it&#39;s manual, easy to forget, and has no enforcement. This makes
+<code>npm run puzzle:status</code> report puzzles as <code>AVAILABLE</code> during active work.</p>
+<p><strong>The pattern:</strong> when mapping a workflow to find automation opportunities, sort by
+&quot;most frequently omitted&quot; rather than &quot;most complex.&quot; The highest-ROI fix is almost
+always the simplest step that everybody skips, not the hardest step that is done
+correctly when it is done at all.</p>
+<p><strong>Takeaway:</strong> For the lccjs workflow specifically — always flip the marker on
+claim. Until #565 automates it, the habit is: immediately after <code>npm run claim N</code>
+completes, grep for <code>@todo #N</code> and flip it before doing any other work.</p>
+<hr>
+<h2>4. <code>reports_summary.md</code> can silently contain stale or wrong claims</h2>
+<p><strong>What happened:</strong> Auditing <code>reports_summary.md</code> for #505, I found that row #3
+(&quot;jmp with missing register → <strong>segfaults</strong>&quot;) was factually wrong: the segfault
+claim had been corrected in parity deviation #3&#39;s corrigendum (#261) months prior,
+but <code>reports_summary.md</code> still said &quot;segfaults.&quot; The file had drifted from
+<code>parity_deviations.md</code>.</p>
+<p><strong>The pattern:</strong> when two docs describe the same fact (one as the authoritative
+record, one as a summary), the summary can silently diverge after the authority is
+updated. The fix is either to keep the summary as a pointer (&quot;see
+<code>parity_deviations.md</code> §3&quot;) or to audit both in the same commit whenever either
+changes.</p>
+<p><strong>Takeaway:</strong> When doing a tracker audit that involves a summary doc, always
+cross-check the summary&#39;s factual claims against the authoritative source. Don&#39;t
+assume the summary is current just because it&#39;s recent.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Role</th>
+<th>Deliverable</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>#505</td>
+<td>PM</td>
+<td>Updated <code>reports_summary.md</code>: added OG BUGs #19/#24, corrected row #3 segfault claim, expanded coverage section; tracker comment posted</td>
+</tr>
+<tr>
+<td>#144</td>
+<td>RESEARCH</td>
+<td>Restored <code>jmp-condition-suffix-mnemonics.md</code> (broken link repair); wrote <code>144-demo-research-closure.md</code> consolidating all four demo-question findings incl. gameSnake bump-allocator leak analysis</td>
+</tr>
+<tr>
+<td>#297</td>
+<td>RESEARCH</td>
+<td>Wrote <code>297-workflow-ownership-map.md</code>: full step-ownership table, 8 uncharted gaps, 10 improvements ranked by ROI</td>
+</tr>
+<tr>
+<td>#560</td>
+<td>PM</td>
+<td>Filed: research how free() could work in LCC(+) assembly</td>
+</tr>
+<tr>
+<td>#565–#567</td>
+<td>PM</td>
+<td>Filed DEV tickets for improvements A/B/C from #297</td>
+</tr>
+<tr>
+<td>#568</td>
+<td>PM</td>
+<td>Filed tracker for all 8 uncharted workflow gaps</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

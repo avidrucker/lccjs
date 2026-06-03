@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>README — LCC Docs</title>
+  <title>tokenizer-comma-parity — LCC Docs</title>
   <style>
 @font-face {
   font-family:"UnifontMedium";
@@ -72,62 +72,137 @@ code { font-family:var(--mono-font); }
 </head>
 <body class="light">
 <nav><a href="../../">Home</a>
-  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/research/" class="active">Research</a>
   <a href="../../docs/learnings/">Learnings</a>
-  <a href="../../docs/glossary/" class="active">Glossary</a>
+  <a href="../../docs/glossary/">Glossary</a>
   <a href="../../docs/parity/">Parity</a>
   <a href="../../docs/workflow/">Workflow</a>
 </nav>
-  <div class="back-link"><a href="./">← Glossary index</a></div>
+  <div class="back-link"><a href="./">← Research index</a></div>
   <div class="prose">
-<h1>LCC.js Glossary</h1>
-<p>Per-module glossaries of LCC-specific vocabulary. Aimed at newcomers who already
-understand general assembler / VM / linker concepts and need the
-<strong>LCC-specific</strong> angle (load point, listing load point, adjustment entries,
-externs vs globals, .e/.bst/.lst formats, ISA opcode nibble layout, loop
-detection, etc.).</p>
-<h2>Files</h2>
+<h1>Tokenizer Comma Parity Research (#574)</h1>
+<p><strong>Date:</strong> 2026-06-03<br><strong>Agent:</strong> ELDERBERRY<br><strong>Parent context:</strong> #220 (core behavior backlog), TIL #570</p>
+<h2>Research questions</h2>
+<ol>
+<li>What does the oracle do with <code>add r0, r1,</code> (trailing comma) and <code>add r0, , r1</code> (double comma)?</li>
+<li>If oracle gives a generic error, is matching LCC.js behavior correct?</li>
+</ol>
+<h2>Test cases</h2>
+<pre><code class="language-asm">; trailing_comma.a
+  add r0, r1,
+  halt
+</code></pre>
+<pre><code class="language-asm">; double_comma.a
+  add r0, , r1
+  halt
+</code></pre>
+<p>Both were run through LCC.js (<code>node src/core/assembler.js</code>) and the oracle
+(<code>experiments/runOracleExperiment.js</code>) on 2026-06-03.</p>
+<h2>Results</h2>
+<h3>Trailing comma (<code>add r0, r1,</code>)</h3>
 <table>
 <thead>
 <tr>
-<th>File</th>
-<th>Source</th>
-<th>What it covers</th>
+<th></th>
+<th>LCC.js</th>
+<th>Oracle</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="./assembler.md"><code>assembler.md</code></a></td>
-<td><code>src/core/assembler.js</code></td>
-<td>Two-pass assembler: state &amp; lifecycle, the <code>.e</code> / <code>.o</code> object-file format, per-instruction encoders, and operand parsing (grouped into sections a–e)</td>
+<td>Exit code</td>
+<td>1</td>
+<td>1</td>
 </tr>
 <tr>
-<td><a href="./interpreter.md"><code>interpreter.md</code></a></td>
-<td><code>src/core/interpreter.js</code></td>
-<td>The VM: memory/register model, executable loading, the fetch–decode–execute loop, trap implementations, and the interactive debugger</td>
+<td>Error message</td>
+<td><code>Missing operand</code></td>
+<td><code>Missing operand</code></td>
 </tr>
 <tr>
-<td><a href="./linker.md"><code>linker.md</code></a></td>
-<td><code>src/core/linker.js</code></td>
-<td>Multi-module linking: per-link state tables, the link pipeline, external / local reference fix-ups, and executable serialization</td>
-</tr>
-<tr>
-<td><a href="./stats-analysis.md"><code>stats-analysis.md</code></a></td>
-<td><code>stats/*.ipynb</code></td>
-<td>Non-parametric statistics used in the velocity notebooks: c_ratio, sign test, bootstrap CI, Spearman ρ, Kruskal-Wallis, Mann-Whitney U, and the underpowered qualifier</td>
+<td>Artifacts generated</td>
+<td>none</td>
+<td>stub <code>.e</code> (2 B), <code>.lst</code>, <code>.bst</code></td>
 </tr>
 </tbody></table>
-<h2>Entry convention</h2>
-<p>Each term entry follows this shape:</p>
-<pre><code class="language-markdown">### term-name
-
-1–3 sentence definition that explains the LCC-specific angle. Avoid
-restating general assembler/VM/linker knowledge.
-
-**Source:** `src/core/&lt;file&gt;.js:&lt;line-range&gt;` (or function name)
-**See also:** [related-term-1], [related-term-2]
+<p>Oracle stderr (exact):</p>
+<pre><code>Starting assembly pass 1
+Starting assembly pass 2
+Error on line 1 of trailing_comma1.a:
+  add r0, r1,
+Missing operand
 </code></pre>
-<p>Cross-links use plain-text <code>[term-name]</code> refs within a file. Cross-file
-references use the standard <code>[term](other-file.md#anchor)</code> markdown form.</p>
+<p>LCC.js stderr (exact):</p>
+<pre><code>Starting assembly pass 1
+Starting assembly pass 2
+Error on line 1 of experiments/trailing_comma.a: Missing operand
+</code></pre>
+<h3>Double comma (<code>add r0, , r1</code>)</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>LCC.js</th>
+<th>Oracle</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Exit code</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Error message</td>
+<td><code>Missing operand</code></td>
+<td><code>Missing operand</code></td>
+</tr>
+<tr>
+<td>Artifacts generated</td>
+<td>none</td>
+<td>stub <code>.e</code> (2 B), <code>.lst</code>, <code>.bst</code></td>
+</tr>
+</tbody></table>
+<p>Oracle stderr (exact):</p>
+<pre><code>Starting assembly pass 1
+Starting assembly pass 2
+Error on line 1 of double_comma1.a:
+  add r0, , r1
+Missing operand
+</code></pre>
+<p>LCC.js stderr (exact):</p>
+<pre><code>Starting assembly pass 1
+Starting assembly pass 2
+Error on line 1 of experiments/double_comma.a: Missing operand
+</code></pre>
+<h2>Conclusions</h2>
+<p><strong>Q1 — Oracle parity:</strong> Oracle produces &quot;Missing operand&quot; for both cases. No
+more specific comma-aware diagnostic exists in the oracle.</p>
+<p><strong>Q2 — Diagnostic quality:</strong> Since oracle and LCC.js both give &quot;Missing operand&quot;,
+LCC.js behavior is parity-correct. No change to <code>tokenizeLine</code> or the error
+message is warranted from parity reasoning.</p>
+<p><strong>Tokenizer design:</strong> Treating commas as pure delimiters (only push non-empty
+tokens) is the correct choice by oracle parity. Changing this to detect empty
+slots would touch the tokenizer contract for no parity gain and would be a
+separate design decision.</p>
+<h2>Side finding: error display format divergence (not comma-specific)</h2>
+<p>The oracle always emits a <strong>three-line error format</strong>:</p>
+<pre><code>Error on line N of file:
+  &lt;source line (2-space indent)&gt;
+&lt;error message&gt;
+</code></pre>
+<p>LCC.js emits a <strong>single-line format</strong> by default:</p>
+<pre><code>Error on line N of file: &lt;error message&gt;
+</code></pre>
+<p>LCC.js only echoes the source line in <code>-v</code>/<code>--verbose</code> mode, and uses a
+different format (<code>[assembler]</code> prefix, 4-space indent).</p>
+<p>This divergence is <strong>pre-existing and not comma-specific</strong> — it affects every
+assembler error. It is not currently documented in <code>docs/parity_deviations.md</code>.
+A follow-on issue should decide whether to adopt the oracle&#39;s always-on source
+echo or leave the current verbose-flag design. Filed as a separate concern; not
+in scope for #574.</p>
+<h2>Artifact generation on error</h2>
+<p>The oracle generates stub <code>.e</code> (2 bytes), <code>.lst</code>, and <code>.bst</code> files even when
+assembly fails. LCC.js generates nothing on error. This is already documented
+in <code>docs/parity_deviations.md</code> §3 and §10.</p>
 
   </div>
   <footer>
