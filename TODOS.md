@@ -86,10 +86,10 @@ This file is the current actionable backlog. Completed historical refactor steps
   - [x] malformed sign forms
   - [x] trailing commas / empty operands
   - [x] more malformed offset syntax variants
-- [ ] add more LCC/linker routing edge-case coverage
-  - [ ] mixed extension link scenarios
-  - [ ] `-o` edge cases
-  - [ ] custom-named output report behavior
+- [x] add more LCC/linker routing edge-case coverage (#557 closed)
+  - [x] mixed extension link scenarios
+  - [x] `-o` edge cases
+  - [x] custom-named output report behavior
 - [ ] keep research-marked tests current with oracle findings
 - [x] lock in `.e`-path LST hex-only parity vs oracle (no source/comments), whitespace-lenient (#156, closed in 048bff4)
 - [x] establish first test coverage for `src/plus/*` and `src/extra/*` — scope ticket #166 decomposed into per-file children #196 (disassembler), #197 (assemblerplus), #198 (interpreterplus), #199 (lccplus), #200 (linkerStepsPrinter)

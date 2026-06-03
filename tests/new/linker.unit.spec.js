@@ -472,4 +472,14 @@ describe('Linker Unit Tests', () => {
       linker.main(['-o', 'custom.e']);
     }).toThrow('Error: No input object modules specified');
   });
+
+  // -o edge cases (#557)
+  test('main() with -o flag passes the custom output filename to link()', () => {
+    const linker = new Linker();
+    jest.spyOn(linker, 'link').mockImplementation(() => {});
+
+    linker.main(['-o', 'custom.e', 'a.o']);
+
+    expect(linker.link).toHaveBeenCalledWith(['a.o'], 'custom.e');
+  });
 });

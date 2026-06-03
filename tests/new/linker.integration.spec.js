@@ -315,4 +315,23 @@ foo:      .word 99
         .toThrow(LinkerError);
     });
   });
+
+  // -o / custom output path (#557)
+  describe('custom -o output path', () => {
+    test('link() with custom output name writes to that path, not the default linktest.e', () => {
+      const linker = new Linker();
+      jest.spyOn(linker, 'readObjectModule').mockImplementation(() => {
+        linker.objectModules.push({
+          headers: [{ type: 'S', address: 0 }],
+          code: [0xf000],
+        });
+      });
+
+      linker.link(['module.o'], 'custom-output.e');
+
+      expect(linker.outputFileName).toBe('custom-output.e');
+      expect(state.files['custom-output.e']).toBeDefined();
+      expect(state.files['linktest.e']).toBeUndefined();
+    });
+  });
 });

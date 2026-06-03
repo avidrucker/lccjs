@@ -90,6 +90,17 @@ describe('LCC Unit Tests', () => {
     expect(lcc.handleSingleFile).not.toHaveBeenCalled();
   });
 
+  // -o in link mode (#557)
+  test('main() with -o and .o input preserves the custom output name for linkObjectFiles', () => {
+    const lcc = new LCC();
+    jest.spyOn(lcc, 'linkObjectFiles').mockImplementation(() => {});
+
+    lcc.main(['-o', 'custom.e', 'a.o']);
+
+    expect(lcc.outputFileName).toBe('custom.e');
+    expect(lcc.linkObjectFiles).toHaveBeenCalledWith(['a.o']);
+  });
+
   test('buildReportArtifacts() should resolve the user name only when reports are being built', () => {
     const lcc = new LCC();
     const assembler = new Assembler();
