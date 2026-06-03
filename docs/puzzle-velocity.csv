@@ -451,3 +451,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 463,563,TIL 2026-06-03 APPLE-3: comment-cleanup patterns and fixed-size free list,WRITER,15,10,1,14,9,2026-06-03T11:25:49-1000,2026-06-03T11:26:45-1000,,4 learnings from #554 and #560 sessions,APPLE,sonnet-4.6,lccjs
 464,569,,WRITER,10,8,7,,,2026-06-03T11:22:00-10:00,2026-06-03T11:29:39-10:00,,TIL: close.js auto-resolve leaves column-0 CSV conflict markers; fix is velocity-export.js + amend,DRAGONFRUIT,,lccjs
 465,570,docs(learnings): TIL 2026-06-03 FIG-2,DEV,20,10,1,19,9,2026-06-03T11:29:14-10:00,2026-06-03T11:29:57-10:00,,TIL doc covering tokenizer comma-dropping (#555) and SQL VIEW limits (#288). docs/learnings/today-i-learned-2026-06-03-fig-2.md,FIG,sonnet-4.6,lccjs
+466,572,docs(learnings): TIL 2026-06-03 BANANA,WRITER,15,8,2,13,6,2026-06-03T11:29:03-1000,2026-06-03T11:30:38-1000,,dual-channel assembler error insight + tracker child-issue rule,BANANA,sonnet-4.6,lccjs
