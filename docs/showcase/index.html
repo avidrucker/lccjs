@@ -110,6 +110,35 @@
       body { padding: 1rem 1rem 3rem; }
       header h1 { font-size: 1.3rem; }
     }
+
+    /* ── Playground ──────────────────────────────────────────── */
+    .playground {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    @media (max-width: 680px) {
+      .playground { grid-template-columns: 1fr; }
+    }
+    #playground-input {
+      width: 100%;
+      min-height: 320px;
+      font-family: var(--font-code);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      resize: vertical;
+      outline: none;
+      tab-size: 4;
+      -moz-tab-size: 4;
+    }
+    #playground-input:focus { border-color: var(--accent); }
+    #playground-output { min-height: 320px; }
   </style>
 </head>
 <body>
@@ -148,6 +177,18 @@
     <div class="status" id="status-rps"></div>
   </section>
 
+  <section>
+    <h2>Try it</h2>
+    <p class="desc">Write LCC assembly on the left — syntax highlighting updates as you type.</p>
+    <div class="playground">
+      <textarea id="playground-input"
+        spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+        aria-label="LCC assembly editor"></textarea>
+      <div class="code-wrap" id="playground-output"><pre class="plain"></pre></div>
+    </div>
+    <div class="status" id="status-playground">Initialising Shiki…</div>
+  </section>
+
 </main>
 
 <footer>
@@ -157,6 +198,32 @@
 </footer>
 
 <script type="module">
+
+// ── Playground starter code ─────────────────────────────────────────────────
+
+const STARTER_CODE = `\
+; LCC assembly — edit me!
+        .start main
+
+main:   mov  r0, 42        ; decimal literal
+        mov  r1, 0xFF      ; hex literal
+        mov  r2, 'Z'       ; character literal
+        mov  r3, -7        ; negative decimal
+
+        add  r4, r0, r1    ; r4 = 297
+        sub  r5, r4, r0    ; r5 = 255
+        mul  r0, r1        ; r0 = 10710
+        cmp  r0, 0
+        brp  positive
+        br   done
+positive:
+        dout r0
+        nl
+done:   lea  r0, msg
+        sout r0
+        halt
+
+msg:    .string "done!\\n"`;
 
 // ── Sample source programs ──────────────────────────────────────────────────
 
@@ -287,6 +354,9 @@ async function main() {
   // Render plain code immediately — page is useful before Shiki loads.
   for (const { wrapId, code } of SAMPLES) setPlain(wrapId, code);
 
+  // Populate playground textarea immediately so it's readable before Shiki loads.
+  document.getElementById('playground-input').value = STARTER_CODE;
+
   // Load Shiki + grammar in parallel.
   let createHighlighter, grammar;
   try {
@@ -319,6 +389,29 @@ async function main() {
       setStatus(statusId, `Highlight error: ${err.message}`, true);
     }
   }
+
+  // ── Playground (live highlight) ────────────────────────────
+  const playInput  = document.getElementById('playground-input');
+  const playOutput = document.getElementById('playground-output');
+
+  function renderPlayground() {
+    try {
+      const html = hl.codeToHtml(playInput.value, { lang: 'source.lcc', theme: 'github-dark' });
+      playOutput.innerHTML = html;
+      setStatus('status-playground', '');
+    } catch (err) {
+      setStatus('status-playground', `Highlight error: ${err.message}`, true);
+    }
+  }
+
+  let debounceTimer;
+  playInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(renderPlayground, 150);
+  });
+
+  renderPlayground();
+  setStatus('status-playground', '');
 }
 
 main();
