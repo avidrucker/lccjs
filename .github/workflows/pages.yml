@@ -4,13 +4,54 @@ on:
   push:
     branches: [main]
     paths:
+      # grammar + theme assets
       - 'docs/lcc.tmLanguage.json'
-      - 'demos/**'
-      - 'plusdemos/**'
+      - 'docs/themes/**'
+      # curated + LCC+ samples (exact files, not wildcards)
+      - 'demos/helloWorld.a'
+      - 'plusdemos/charTypewriter.ap'
+      # alphabet demo suite — every letter is rendered by build-site.js
+      - 'demos/demoA.a'
+      - 'demos/demoB.a'
+      - 'demos/demoC.a'
+      - 'demos/demoD.a'
+      - 'demos/demoE.a'
+      - 'demos/demoF.a'
+      - 'demos/demoG.a'
+      - 'demos/demoH.a'
+      - 'demos/demoI.a'
+      - 'demos/demoJ.a'
+      - 'demos/demoK.a'
+      - 'demos/demoL.a'
+      - 'demos/demoM.a'
+      - 'demos/demoN.a'
+      - 'demos/demoO.a'
+      - 'demos/demoP.a'
+      - 'demos/demoQ.a'
+      - 'demos/demoR.a'
+      - 'demos/demoS.a'
+      - 'demos/demoT.a'
+      - 'demos/demoU.a'
+      - 'demos/demoV.a'
+      - 'demos/demoW.a'
+      - 'demos/demoX.a'
+      - 'demos/demoY.a'
+      - 'demos/demoZ.a'
+      # folder-based doc sections (wildcard correct — all .md files rendered)
       - 'docs/research/**'
       - 'docs/learnings/**'
       - 'docs/glossary/**'
-      - 'docs/themes/**'
+      # explicit parity docs
+      - 'docs/parity_deviations.md'
+      - 'docs/cuh63-nocomma-negative-operand-family-bug-report.md'
+      - 'docs/cuh63-ldr-str-silent-miscompile-bug-report.md'
+      - 'docs/cuh63-mov-immediate-bug-report.md'
+      - 'docs/cuh63-line-length-silent-split-bug-report.md'
+      - 'docs/cuh63-o-assemble-exit-code-bug-report.md'
+      # workflow docs
+      - 'docs/claude_workflow.md'
+      - 'RULES.md'
+      # build script itself
       - 'scripts/build-site.js'
   workflow_dispatch:
 
