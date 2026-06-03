@@ -4,6 +4,7 @@ test/a2test*
 test/*.e
 demos/*.e
 src/*.e
+tests/fixtures/*.e
 test/*.o
 demos/*.o
 src/*.o
@@ -12,6 +13,7 @@ src/*.o
 test/*.lst
 demos/*.lst
 src/*.lst
+tests/fixtures/*.lst
 name.nnn
 ex0306.a
 demos/demo*1.a
