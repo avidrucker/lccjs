@@ -410,6 +410,17 @@ async function main() {
     debounceTimer = setTimeout(renderPlayground, 150);
   });
 
+  playInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+    const start = playInput.selectionStart;
+    const end   = playInput.selectionEnd;
+    playInput.value = playInput.value.slice(0, start) + '    ' + playInput.value.slice(end);
+    playInput.selectionStart = playInput.selectionEnd = start + 4;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(renderPlayground, 150);
+  });
+
   renderPlayground();
   setStatus('status-playground', '');
 }
