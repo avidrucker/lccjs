@@ -45,7 +45,7 @@ const { isTestMode, fatalExit, cliErrorExit, cliWrappedErrorExit } = require('..
 
 class Interpreter {
   // @todo #255:45m/DEV decomplect: group these ~50 flat fields into cohesive sub-objects (this.cpu = regs+flags+pc, this.io = buffers, this.diag = trace/debug/breakpoint) so machine-state, run-options, and diagnostics stop sharing one namespace. See #246 H4 + docs/research/codebase-quality-hotspots.md
-  constructor() {
+  constructor(options = {}) {
     /**
      * Memory (16-bit unsigned integers)
      */
@@ -95,6 +95,13 @@ class Interpreter {
      * Output string
      */
     this.output = '';
+
+    /**
+     * Output callback — routes user-visible program output.
+     * Browser consumers pass {write: m => (domBuffer += m)} to capture output
+     * without monkey-patching process.stdout.
+     */
+    this._write = options.write ?? (m => process.stdout.write(m));
 
     /**
      * Input buffer for SIN (if needed)
@@ -1499,7 +1506,7 @@ class Interpreter {
   // be followed by a newline, as in the case of
   // aout, dout, sout, etc.
   writeOutput(message) {
-    process.stdout.write(message);
+    this._write(message);
     this.output += message;
   }
 
@@ -1509,9 +1516,9 @@ class Interpreter {
   // without a newline.
   writeDebugOutputOrElse(message) {
     if(this.debugMode) {
-      process.stdout.write(message + "\n");
+      this._write(message + "\n");
     } else {
-      process.stdout.write(message);
+      this._write(message);
     }
     this.output += message;
   }
