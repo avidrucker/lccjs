@@ -38,10 +38,14 @@
 
         .lccplus
         .start  startup
+; @todo #584:40m/DEV dead-code + comment hygiene (7 items — see #202 findings doc)
+; @todo #585:20m/DEV direct-access + dead frame-setup cleanups (3 items)
 
 ;----------------------------------------------------------------
 ; startup: clears screen, hides cursor, calls main
 ;----------------------------------------------------------------
+; @todo #582:60m/DEV extract updateDirection + gameOverScreen from main
+; @todo #583:60m/DEV extract moveSnake logic from main
 startup:    clear ; clear screen
             mov   r0, 0
             cursor r0   ; hide cursor
@@ -428,6 +432,7 @@ main:       push lr
                 mov r1, 0
                 st r1, direction
     @doneDir:
+            ; @todo #581:30m/DEV add opposite-direction guard before st r1, direction
             lea r1, snake
             push r1
             bl getSnakeHeadXY
