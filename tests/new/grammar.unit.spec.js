@@ -120,7 +120,7 @@ describe('comments', () => {
 // ── directives ───────────────────────────────────────────────────────────────
 
 describe('directives', () => {
-  const DIRECTIVE_SCOPE = 'keyword.other.directive.lcc';
+  const DIRECTIVE_SCOPE = 'storage.type.directive.lcc';
 
   test.each([
     ['.word',    'dotWord'],
@@ -250,8 +250,7 @@ describe('LCC+ extension mnemonics', () => {
 
 describe('debug mnemonics', () => {
   const DBG_SCOPE = 'keyword.mnemonic.debug.lcc';
-  // The debug mnemonic pattern requires ^\\s+ so the mnemonic must be on an
-  // indented line without a preceding label.
+  // The debug mnemonic pattern requires leading whitespace (^\\s+ or after a label colon).
   const CASES = [['s','debugS'], ['r','debugR'], ['m','debugM'], ['bp','debugBp']];
 
   test.each(CASES)('%s on indented line', (m, key) => {
@@ -272,16 +271,13 @@ describe('label references', () => {
   });
 });
 
-// ── disabled: bug #596 regressions ──────────────────────────────────────────
-// Each test documents a known grammar bug.  Remove .skip once the fix in #596
-// lands — the test must PASS on the fixed grammar and FAIL on the current one.
+// ── bug #596 regressions ─────────────────────────────────────────────────────
 
-describe('bug #596 regressions (disabled until fixed)', () => {
+describe('bug #596 regressions', () => {
 
-  // Bug #596.1 — @-prefixed local label refs drop the @ from the matched token.
-  // Currently: 'br @loopGame' → ["br", " @" (source.lcc), "loopGame"].
-  // Fixed:     '@loopGame' is ONE token with scope entity.name.label.lcc.
-  test.skip('bug #596.1 — @-prefixed label ref is a single entity.name.label.lcc token (long name)', () => {
+  // Bug #596.1 — @-prefixed label refs now tokenize as one entity.name.label.lcc
+  // token (fixed by replacing leading \\b with (?<![A-Za-z0-9_@]) in label_ref).
+  test('bug #596.1 — @-prefixed label ref is a single entity.name.label.lcc token (long name)', () => {
     const toks = tokens['atLabelLong'] ?? [];
     const atTok = toks.find(t => t.content.startsWith('@'));
     expect(atTok).toBeDefined();
@@ -289,7 +285,7 @@ describe('bug #596 regressions (disabled until fixed)', () => {
     expect(atTok.scope).toBe('entity.name.label.lcc');
   });
 
-  test.skip('bug #596.1 — short @L5 label ref is a single entity.name.label.lcc token', () => {
+  test('bug #596.1 — short @L5 label ref is a single entity.name.label.lcc token', () => {
     const toks = tokens['atLabelShort'] ?? [];
     const atTok = toks.find(t => t.content.startsWith('@'));
     expect(atTok).toBeDefined();
@@ -297,20 +293,16 @@ describe('bug #596 regressions (disabled until fixed)', () => {
     expect(atTok.scope).toBe('entity.name.label.lcc');
   });
 
-  // Bug #596.2 — directive scope shares the "keyword" prefix with all mnemonic
-  // scopes.  Themes that style "keyword.other" catch both directives and I/O
-  // mnemonics with one rule, making them visually indistinguishable.
-  // Fixed: directive scope does NOT begin with "keyword".
-  test.skip('bug #596.2 — directive scope does not share "keyword" prefix with mnemonic scopes', () => {
+  // Bug #596.2 — directive scope is now storage.type.directive.lcc, which does
+  // not share the "keyword" prefix with any mnemonic scope.
+  test('bug #596.2 — directive scope does not share "keyword" prefix with mnemonic scopes', () => {
     const directiveScope = scopeOf('directiveScope', '.word');
     expect(directiveScope).not.toMatch(/^keyword/);
   });
 
-  // Bug #596.3 — debug mnemonic after a label on the same line is not matched.
-  // The mnemonic_debug pattern uses ^\\s+, which fails when a label precedes
-  // the mnemonic; the 's' falls through to label_ref instead.
-  // Fixed: 's' in "startup:   s" → keyword.mnemonic.debug.lcc.
-  test.skip('bug #596.3 — debug mnemonic on a label line gets keyword.mnemonic.debug.lcc', () => {
+  // Bug #596.3 — debug mnemonic after a label on the same line is now matched
+  // (fixed by adding (?<=:)\\s+ alternation to the mnemonic_debug pattern).
+  test('bug #596.3 — debug mnemonic on a label line gets keyword.mnemonic.debug.lcc', () => {
     const toks = tokens['debugAfterLabel'] ?? [];
     const sTok = toks.find(t => t.content.trim() === 's' && !t.content.includes(':'));
     expect(sTok).toBeDefined();

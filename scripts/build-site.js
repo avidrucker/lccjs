@@ -17,6 +17,7 @@ const retroDarkTheme = {
     { settings: { background: '#233501', foreground: '#d0cf9d' } },
     { scope: ['comment'],                                          settings: { foreground: '#446710' } },
     { scope: ['keyword', 'keyword.other', 'keyword.control'],     settings: { foreground: '#8d9a4a' } },
+    { scope: ['storage.type.directive'],                           settings: { foreground: '#c8a35d' } },
     { scope: ['entity.name.label', 'string', 'constant.numeric'], settings: { foreground: '#d0cf9d' } },
   ],
 };
@@ -27,6 +28,7 @@ const retroLightTheme = {
     { settings: { background: '#d0cf9d', foreground: '#233501' } },
     { scope: ['comment'],                                          settings: { foreground: '#446710', fontStyle: 'italic' } },
     { scope: ['keyword', 'keyword.other', 'keyword.control'],     settings: { foreground: '#446710', fontStyle: 'bold'   } },
+    { scope: ['storage.type.directive'],                           settings: { foreground: '#7d4a00' } },
     { scope: ['entity.name.label', 'string', 'constant.numeric'], settings: { foreground: '#233501' } },
   ],
 };

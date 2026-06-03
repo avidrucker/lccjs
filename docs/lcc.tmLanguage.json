@@ -27,7 +27,7 @@
       "match": ";.*$"
     },
     "directive": {
-      "name": "keyword.other.directive.lcc",
+      "name": "storage.type.directive.lcc",
       "match": "\\.(?:start|org|orig|word|fill|stringz|string|asciz|zero|space|blkw|lccplus|extern|globl|global)\\b"
     },
     "label_def": {
@@ -86,9 +86,9 @@
       ]
     },
     "mnemonic_debug": {
-      "comment": "Single-letter debug traps — anchored to avoid over-matching label refs",
+      "comment": "Single-letter debug traps — also matches after a label colon on the same line",
       "name": "keyword.mnemonic.debug.lcc",
-      "match": "^\\s+(?:m|r|s|bp)(?=\\s*(;|$))"
+      "match": "(?:^\\s+|(?<=:)\\s+)(?:m|r|s|bp)(?=\\s*(;|$))"
     },
     "pc_ref": {
       "name": "variable.language.pc.lcc",
@@ -96,7 +96,7 @@
     },
     "label_ref": {
       "name": "entity.name.label.lcc",
-      "match": "\\b[@A-Za-z_][A-Za-z0-9_@]*(?:[+-][0-9]+)?\\b"
+      "match": "(?<![A-Za-z0-9_@])[@A-Za-z_][A-Za-z0-9_@]*(?:[+-][0-9]+)?\\b"
     }
   }
 }
