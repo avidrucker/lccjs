@@ -95,6 +95,27 @@ describe('velocity-log — model canonical format validation (#453)', () => {
   });
 });
 
+describe('velocity-log — invalid role hard-fails (#535)', () => {
+  test('rejects unknown role with exit 1 and error message', () => {
+    const result = run({ role: 'ARCHITECT', agent: 'TEST', ticket: 1 });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/unknown role "ARCHITECT"/);
+    expect(result.stderr).toMatch(/valid:/);
+  });
+
+  test('rejects full-form role name (ARCHITECT instead of ARC)', () => {
+    const result = run({ role: 'ARCHITECT', agent: 'TEST' });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/unknown role/);
+  });
+
+  test('valid role passes role check (fails later on bad ticket)', () => {
+    const result = run({ role: 'ARC', agent: 'TEST', ticket: 'bad' });
+    expect(result.stderr).not.toMatch(/unknown role/);
+    expect(result.stderr).toMatch(/ticket/);
+  });
+});
+
 describe('velocity-log — role vocabulary (#519)', () => {
   // velocity-log.js runs at require-time, so we scan the source instead of importing.
   const fs = require('fs');

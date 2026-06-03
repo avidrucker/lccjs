@@ -70,8 +70,7 @@ if (input.model != null && input.model !== '' && !CANONICAL_MODEL.test(String(in
   die(`"model" must follow canonical format <family>-<major>.<minor> (e.g. sonnet-4.6, opus-4.8) — got "${input.model}"`);
 }
 if (VALID_ROLES.size > 0 && !VALID_ROLES.has(input.role)) {
-  // Warn but don't block — role taxonomy may expand (#284 Q3)
-  console.warn(`velocity-log: unknown role "${input.role}" (valid: ${[...VALID_ROLES].join(', ')})`);
+  die(`unknown role "${input.role}" (valid: ${[...VALID_ROLES].join(', ')})`);
 }
 
 // --- CWD guard (#312) ---
