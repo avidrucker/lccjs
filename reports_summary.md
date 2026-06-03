@@ -12,7 +12,7 @@ series). Each oracle finding's verdict is one of: a confirmed original-LCC bug, 
 intentional/acceptable deviation we simply document, or inconclusive — 100% parity
 is **not** a goal.
 
-Last updated: 2026-06-02 (#508 — OG BUG #21 added to summary; report send-ready).
+Last updated: 2026-06-03 (#505 — tracker audit: OG BUGs #19 and #24 added; row #3 segfault claim corrected; coverage updated).
 
 ## Status at a glance
 
@@ -20,13 +20,15 @@ Last updated: 2026-06-02 (#508 — OG BUG #21 added to summary; report send-read
 |---|------|--------------------|----------|---------------|
 | 1 | `ldr`/`str` no-comma neg `offset6` | negative offset silently encodes as **0** (silent miscompile) | **High** | Family report **send-ready** (see #7/#8) · pending human email (#506) |
 | 2 | `mov` immediate range (OB-008) | `mov` rejects negatives its own `mvi` accepts | Medium | Report **drafted**, not sent · gate now clear **→ Charlie** |
-| 3 | `jmp` with missing register | **segfaults** (vs a clean error) | Low* | No report (preserved deviation) |
+| 3 | `jmp` with no/bad operand | leaves `.e`/`.lst`/`.bst` on error (artifacts-on-error, same pattern as #10); ~~segfaults~~ [claim corrected in #261] | Low* | No report (BY DESIGN) |
 | 4 | undefined-label `br` | leaves a runnable **blank `.e`** for a *failed* assemble | Low* | No report (footgun, premise-corrected) |
 | 5 | long source line | no length check; line **silently split** into bogus source | Medium | Report **drafted**, not sent (#260) |
 | 6 | `sext` non-`2^k−1` selector | returns silent garbage; contract unspecified | Low–Med | **SENT** — awaiting reply (#159) |
 | 7 | no-comma neg `offset6` on `jmp`/`blr`/`jsrr` | same silent-→0 as #1, on more instructions | **High** | **Send-ready** — covered in family report · pending human email (#506) |
 | 8 | no-comma neg `imm5`/`imm9` | `add`/`sub`/`and`/`cmp`/`mvi` **reject** a negative that the comma form accepts | Medium | **Send-ready** — covered in family report · pending human email (#506) |
+| 19 | `ret`/`jmp r0` non-TTY oracle flood | oracle enters step-trace loop, floods stdout indefinitely (never exits); LCC.js detects loop and exits cleanly | Medium | No report (BY DESIGN — #385 closed) |
 | 21 | `.o` assemble exit code | `lcc` exits **1** on successful `.o` assemble ("needs linking") | Medium | Report **send-ready** · pending human email (#508) |
+| 24 | `bl`/`call`/`jsr` numeric token | oracle `Undefined label` vs LCC.js `Bad label` (diagnostic wording only; both exit 1) | Low | No report (BY DESIGN — #510 closed) |
 
 \* "Low" severity but a genuine defect; classified low because the trigger is a
 malformed/edge-case program rather than valid everyday source.
@@ -123,11 +125,14 @@ report under §1/7/8 above.)_
 These are recorded as OG bugs in `docs/parity_deviations.md` but are **not** slated
 for a report — listed here so the decision is explicit, not an omission.
 
-### 3. `jmp` with no register operand → segmentation fault
-- OG LCC dereferences a null operand and crashes; LCC.js returns a clean
-  `Missing register` error. Parity is impossible without replicating a crash, and
-  the deviation is beneficial, so it's preserved. (`parity_deviations.md` OG BUG #3.)
-  Could be reported as a robustness nit if desired — currently not.
+### 3. `jmp` with no/bad operand → oracle leaves `.e`/`.lst`/`.bst` on error; LCC.js leaves nothing
+- **Corrected claim (#261):** the original report said OG LCC segfaults — not
+  reproducible in cuh63 6.3. Actual behavior: both tools error and exit 1, but
+  the oracle leaves artifact files on disk (same artifacts-on-error pattern as
+  OG BUG #10). LCC.js writes nothing. The segfault story is obsolete; the actual
+  deviation (artifact leftovers) is the same footgun as #4/#10 — and the
+  LCC.js no-artifact behavior is beneficial. (`parity_deviations.md` §3, corrigendum
+  #261.) Not slated for a report.
 
 ### 4. Undefined-label `br` leaves a runnable blank `.e`
 - A `br` to an undefined label correctly errors and exits 1 (premise from the
@@ -137,6 +142,24 @@ for a report — listed here so the decision is explicit, not an omission.
   OG BUG #10.) This same blank-`.e`-on-error behavior is what makes finding #8 leave
   a stray `.e`. Footgun rather than a miscompile; not currently slated for a report.
 
+### 19. `ret` bare / `jmp r0` → oracle enters step-trace debug loop; floods stdout in non-TTY
+- `ret` (= `jmp r7`; r7=0 at startup) and `jmp r0` (r0=0) both assemble correctly
+  and produce an infinite loop at runtime. The oracle detects it, prints `Possible
+  infinite loop`, then enters a stepping debugger — in a non-TTY context this reads
+  EOF at each prompt and floods stdout at ~90 MB/s until killed. LCC.js detects the
+  loop and exits 1 immediately with a single diagnostic line. (`parity_deviations.md`
+  BY DESIGN §19.) Decision: classify as BY DESIGN (beneficial deviation); no report
+  filed. (#385 closed 2026-06-01.)
+
+### 24. `bl` / `call` / `jsr` with a numeric token → oracle `Undefined label`; LCC.js `Bad label`
+- Both assemblers reject `bl 5` (and aliases) with exit 1, but the oracle accepts
+  digit-led tokens as syntactically valid label names and defers rejection to
+  symbol-table lookup time; LCC.js rejects via `isValidLabel` upfront. The
+  observable difference is diagnostic wording only — both are correct exits.
+  (`parity_deviations.md` OG BUG §24.) Decision: BY DESIGN — the LCC.js
+  upfront-syntactic check is intentionally stricter; no upstream report needed.
+  (#510 closed 2026-06-02.)
+
 ---
 
 ## Coverage — what this summary is based on, and what is **not** yet swept
@@ -144,7 +167,10 @@ for a report — listed here so the decision is explicit, not an omission.
 Probed and characterized: the no-comma operand parser across all immediate/offset
 instructions (#1/#7/#8), `mov`/`mvi` immediate ranges (#2), source-line length
 (#5/#244), label length (#244-sibling #245 → parity, no bug), `sext` (#6),
-`jmp`/undefined-label edge cases (#3/#4), `.o`-assemble exit code (#21/#270).
+`jmp`/undefined-label edge cases (#3/#4), `.o`-assemble exit code (#21/#270),
+`ret`/`jmp r0` infinite-loop oracle behavior (#19/#385), `bp` non-TTY step-trace
+(#22/#501), `.org` invalid operand (#23/#500), `bl`/numeric-token label validation
+(#24/#510).
 
 **Not yet swept** (candidate future probes — no claim is made about these):
 - `.word` / `.fill` / `.zero` with out-of-range or negative arguments.
