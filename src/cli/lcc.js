@@ -257,6 +257,10 @@ class LCC {
           case '-h':
             this.printHelp();
             fatalExit('Printing help message after -h flag used.', 0);
+          case '-v':
+          case '--verbose':
+            this.options.verbose = true;
+            break;
           default:
             if (arg.startsWith('-l')) {
               // Load point
@@ -294,6 +298,9 @@ class LCC {
       assembler.listingLoadPoint = this.options.loadPoint;
     }
 
+    // Wire -v/--verbose flag
+    assembler.verboseModeOn = !!this.options.verbose;
+
     // Set input and output file names
     assembler.inputFileName = this.inputFileName;
     assembler.outputFileName = this.outputFileName || this.constructOutputFileName(this.inputFileName);
@@ -324,6 +331,9 @@ class LCC {
     interpreter.options = this.options;
     interpreter.debugMode = !!this.options.debug;
     interpreter.allowRuntimeDebugging = true;
+
+    // Wire -v/--verbose flag
+    interpreter.verboseModeOn = !!this.options.verbose;
 
     // Wire -t flag: enable per-step trace output and attach sourceMap when available
     interpreter.traceMode = !!this.options.trace;

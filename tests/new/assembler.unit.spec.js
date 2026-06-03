@@ -343,4 +343,36 @@ describe('Assembler Unit Tests', () => {
       });
     });
   });
+
+  // -v / --verbose mode (#15)
+  describe('formatAssemblerError() and verboseModeOn', () => {
+    test('verboseModeOn defaults to false', () => {
+      const asm = new Assembler();
+      expect(asm.verboseModeOn).toBe(false);
+    });
+
+    test('compact format (verboseModeOn=false): line N + message, no source line', () => {
+      const asm = new Assembler();
+      asm.lineNum = 5;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  ld r0, foo';
+      asm.verboseModeOn = false;
+      const msg = asm.formatAssemblerError('Undefined label');
+      expect(msg).toContain('line 5');
+      expect(msg).toContain('Undefined label');
+      expect(msg).not.toContain('ld r0, foo');
+    });
+
+    test('verbose format (verboseModeOn=true): includes source line', () => {
+      const asm = new Assembler();
+      asm.lineNum = 5;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  ld r0, foo';
+      asm.verboseModeOn = true;
+      const msg = asm.formatAssemblerError('Undefined label');
+      expect(msg).toContain('line 5');
+      expect(msg).toContain('Undefined label');
+      expect(msg).toContain('ld r0, foo');
+    });
+  });
 });

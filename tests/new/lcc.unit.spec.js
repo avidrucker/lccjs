@@ -177,6 +177,25 @@ describe('LCC Unit Tests', () => {
       expect(lcc.options.efficientMode).toBe(true);
       expect(lcc.options.colorblindMode).toBe(true);
     });
+
+    // -v / --verbose (#15)
+    test('-v sets options.verbose', () => {
+      const lcc = new LCC();
+      lcc.parseArguments(['-v', 'demo.a']);
+      expect(lcc.options.verbose).toBe(true);
+    });
+
+    test('--verbose sets options.verbose', () => {
+      const lcc = new LCC();
+      lcc.parseArguments(['--verbose', 'demo.a']);
+      expect(lcc.options.verbose).toBe(true);
+    });
+
+    test('options.verbose is absent (falsy) without the flag', () => {
+      const lcc = new LCC();
+      lcc.parseArguments(['demo.a']);
+      expect(lcc.options.verbose).toBeFalsy();
+    });
   });
 
   describe('runInteractiveMode() — delegation to ILCC', () => {
@@ -357,6 +376,52 @@ describe('LCC Unit Tests', () => {
     test('interpreter.sourceMap stays null when no assembler is present', () => {
       const interpreter = runWithCapture({ trace: true }, null);
       expect(interpreter.sourceMap).toBeNull();
+    });
+
+    // -v/--verbose wiring to interpreter (#15)
+    test('options.verbose=true sets interpreter.verboseModeOn to true', () => {
+      const interpreter = runWithCapture({ verbose: true });
+      expect(interpreter.verboseModeOn).toBe(true);
+    });
+
+    test('options.verbose absent leaves interpreter.verboseModeOn false', () => {
+      const interpreter = runWithCapture({});
+      expect(interpreter.verboseModeOn).toBe(false);
+    });
+  });
+
+  // -v/--verbose wiring to assembler (#15)
+  describe('assembleFile() — -v flag wiring to assembler', () => {
+    test('options.verbose=true sets assembler.verboseModeOn to true', () => {
+      const lcc = new LCC();
+      lcc.inputFileName = 'demo.a';
+      lcc.options = { verbose: true };
+      let capturedAssembler = null;
+      jest.spyOn(Assembler.prototype, 'main').mockImplementation(function () {
+        capturedAssembler = this;
+      });
+      try {
+        lcc.assembleFile();
+      } finally {
+        Assembler.prototype.main.mockRestore();
+      }
+      expect(capturedAssembler.verboseModeOn).toBe(true);
+    });
+
+    test('options.verbose absent leaves assembler.verboseModeOn false', () => {
+      const lcc = new LCC();
+      lcc.inputFileName = 'demo.a';
+      lcc.options = {};
+      let capturedAssembler = null;
+      jest.spyOn(Assembler.prototype, 'main').mockImplementation(function () {
+        capturedAssembler = this;
+      });
+      try {
+        lcc.assembleFile();
+      } finally {
+        Assembler.prototype.main.mockRestore();
+      }
+      expect(capturedAssembler.verboseModeOn).toBe(false);
     });
   });
 });

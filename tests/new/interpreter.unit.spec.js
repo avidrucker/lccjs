@@ -865,4 +865,43 @@ describe('Interpreter Unit Tests', () => {
       expect(interp.hexToMnemonic(word)).toBe('SEXT');
     });
   });
+
+  // -v / --verbose mode (#15)
+  describe('verboseModeOn and raiseRuntimeError()', () => {
+    test('verboseModeOn defaults to false', () => {
+      const interp = new Interpreter();
+      expect(interp.verboseModeOn).toBe(false);
+    });
+
+    test('raiseRuntimeError() throws the error regardless of verboseModeOn', () => {
+      const interp = new Interpreter();
+      interp.verboseModeOn = false;
+      expect(() => interp.raiseRuntimeError(new InterpreterRuntimeError('boom')))
+        .toThrow('boom');
+    });
+
+    test('raiseRuntimeError() with verboseModeOn=true emits [verbose] line to stderr then throws', () => {
+      const interp = new Interpreter();
+      interp.verboseModeOn = true;
+      interp.pc = 0x0010;
+      interp.r = [0, 1, 2, 3, 4, 5, 6, 7];
+      // console.error is already mocked by the outer beforeAll — clear then inspect.
+      console.error.mockClear();
+      expect(() => interp.raiseRuntimeError(new InterpreterRuntimeError('oops')))
+        .toThrow('oops');
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('[verbose]'));
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('PC=0x0010'));
+    });
+
+    test('raiseRuntimeError() without verbose emits no [verbose] prefix', () => {
+      const interp = new Interpreter();
+      interp.verboseModeOn = false;
+      interp.pc = 0x0010;
+      interp.r = [0, 1, 2, 3, 4, 5, 6, 7];
+      console.error.mockClear();
+      expect(() => interp.raiseRuntimeError(new InterpreterRuntimeError('oops')))
+        .toThrow('oops');
+      expect(console.error).not.toHaveBeenCalledWith(expect.stringContaining('[verbose]'));
+    });
+  });
 });

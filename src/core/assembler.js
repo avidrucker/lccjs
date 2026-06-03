@@ -90,12 +90,18 @@ class Assembler {
     /**
      * Collect errors
      */
-    this.errors = []; 
+    this.errors = [];
+
+    /**
+     * When true, error() includes the source line in the diagnostic.
+     * Set via the -v/--verbose CLI flag.
+     */
+    this.verboseModeOn = false;
 
     /**
      * Buffer to hold machine code words
      */
-    this.outputBuffer = []; 
+    this.outputBuffer = [];
 
     /**
      * Input file name
@@ -2187,8 +2193,15 @@ class Assembler {
     }
   }
 
+  formatAssemblerError(message) {
+    if (this.verboseModeOn) {
+      return `Error on line ${this.lineNum} of ${this.inputFileName}:\n    ${this.currentLine}\n${message}`;
+    }
+    return `Error on line ${this.lineNum} of ${this.inputFileName}: ${message}`;
+  }
+
   error(message) {
-    const errorMsg = `Error on line ${this.lineNum} of ${this.inputFileName}:\n    ${this.currentLine}\n${message}`;
+    const errorMsg = this.formatAssemblerError(message);
     console.error(errorMsg);
     this.errors.push(errorMsg);
     this.errorFlag = true;

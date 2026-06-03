@@ -181,6 +181,12 @@ class Interpreter {
     this.traceMode = false;
 
     /**
+     * When true, runtime errors include PC, opcode, and register state.
+     * Set via the -v/--verbose CLI flag.
+     */
+    this.verboseModeOn = false;
+
+    /**
      * PC-to-source-line map produced by the assembler after pass 2.
      * Shape: { addressToLine: Map<addr, {lineNumber, sourceLine}>, allLines: string[] }
      * Only populated by lcc.js when -t is used and an assembler ran first.
@@ -1750,6 +1756,14 @@ class Interpreter {
 
     if (!(error instanceof Error)) {
       error = new InterpreterRuntimeError(String(error));
+    }
+
+    if (this.verboseModeOn) {
+      const pc = `PC=0x${(this.pc || 0).toString(16).padStart(4, '0')}`;
+      const regs = this.r
+        ? this.r.map((v, i) => `r${i}=0x${(v || 0).toString(16).padStart(4, '0')}`).join(' ')
+        : '';
+      console.error(`[verbose] ${pc} ${regs}`);
     }
 
     throw error;
