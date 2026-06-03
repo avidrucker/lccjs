@@ -171,34 +171,101 @@ awk -F, 'NR>1 {n[$3]++; sa[$3]+=$6} END {for (r in n) print r, n[r], sa[r]/n[r]}
 
 Or just open the CSV in any spreadsheet.
 
-## Calibration takeaways so far
+## Estimate vocabulary (plain language)
 
-After 5 WRITER spikes + 1 ARC + 1 WRITER write-phase + 1 DEV parity char.:
+These terms appear throughout the velocity data. Use the plain-language forms
+in conversation; avoid shorthand like "under C."
 
-- **H is structurally over-budgeted for AI work** (~9-20× across both roles).
-  Expected — reinforces that H is for discipline, not forecasting.
-- **C runs systematically high too**, even after deliberate calibration. 6 C-tracked rows: 2.67× / 3.0× / 3.0× / 2.4× / 3.6× / **2.4×** (mean ≈ 2.8×). On #113 I explicitly halved my gut C from ~20m to 10m and *still* came in at 2.78m actual (3.6× over) — calibration didn't track.
-- **First DEV row holds the WRITER pattern**: #106 (parity characterization — run the repro, then write the deviation entry) came in at **2.4× over C** (C=12m, actual 4.95m), squarely in the WRITER band. Caveat: this was a research-flavored DEV task, *not* a heavy edit→test→rerun loop — so the open question below (does the test loop pull DEV actuals toward H?) is still open.
-- **FIRST OVERRUN — the DEV edit/test loop answers the open question.** #135 (refactor 6 demos: edit each, assemble, run, diff vs baseline — plus debugging a bug in my own transform script) ran **12.85m vs C=10m → 1.28× OVER**. First row where actual exceeded C, and it's exactly the heavy edit→test→rerun DEV loop that #106 wasn't. So **DEV-with-a-real-loop is a different forecasting class than research-flavored DEV** — the loop (and especially mid-task debugging) pulls actuals up, past even a calibrated-low C. The under-pad pattern was a property of *read/write/research* work, not of "DEV" as a role.
-- **Warm-up cost** on the first puzzle of a streak is real: #119 (10m) versus #121-#123 (2-3m) once the pattern was established.
-- **Process overhead bleeds in** — e.g. #120 was longer because of filing 3 follow-up puzzles, not because the inventory work was harder. Worth distinguishing "task work" from "process work" in future estimates.
+| Term / column | Plain English |
+|---|---|
+| **H** | The 60-minute discipline budget set by a human. Governs when a puzzle must be decomposed. **Not a time forecast.** |
+| **C** | My time prediction — how long I think the work will take me, set before starting. |
+| `actual_min` | How long the work actually took (start timestamp to finishing commit). |
+| `delta_c_min` | Minutes saved vs my prediction. Positive = finished faster than predicted; negative = ran longer than predicted. |
+| "finished faster than predicted" | `actual_min < c_min` (previously "under C" — avoid this shorthand). |
+| "ran longer than predicted" | `actual_min > c_min` (previously "over C" — avoid this shorthand). |
+| "used X% of predicted time" | `actual_min / c_min × 100`. E.g. 39% means the work took less than half the predicted time. |
+| "speedup factor" | `c_min / actual_min`. A factor of 2.5 means the work finished 2.5× faster than predicted. |
 
-### Hypotheses on the persistent C over-pad
+Analysis commentary in responses should use the plain-language forms only. No
+inline calibration analysis during normal work sessions — that belongs in a
+focused DATA/RESEARCH session (see #234).
 
-Logged here for later study; not actively investigating yet.
+## Calibration takeaways — updated 2026-06-03 (n=379)
 
-1. **"Weightier" tasks attract more padding regardless of actual difficulty.** #113 was definition-*writing* not term-*inventorying*, and felt like real prose work; I padded C accordingly. Actual wall-clock was similar to the spike rows. The padding is psychological, not predictive.
-2. **I'm calibrating in the wrong direction (mostly).** The read/write/research rows are all underruns, so conservative calibration there tightens nothing. **Update:** #135 broke the streak with the first overrun — but it was a *DEV edit/test-loop* task, a different class. So the real lesson is per-class calibration: keep tightening C on research/write work (still ~2-3× over), but budget DEV-with-loops higher (loops + debugging are unpredictable and can blow past C).
-3. **Sample size still small (n=5).** 3.6× could be inside the noise band; need more data before declaring a real pattern shift.
-4. **Cross-role contamination.** I might be conflating "write some prose" with "diagnose a bug" or "design a refactor" — all of which I'd see as "weighty" but which actually have very different wall-clock profiles for an AI.
+*Early observations (n≈8) are preserved inline as historical context.*
 
-User has explicitly said calibration isn't the priority right now — keep predicting as-is, study the data later when there's more of it.
+### Overall pattern
 
-## Open questions to revisit
+Across 379 rows with both a C prediction and a measured actual:
 
-- Do DEV puzzles (actual code changes with edit/test loops) follow the same
-  ratios, or does the loop dominate and pull actuals closer to H?
-- How does C calibrate across role kinds? Still need DEV + TEST samples.
-- Does this hold for less familiar code or sparsely-commented files?
-- Does C drift over time (over-confidence after a streak of underruns)?
-- Is "amount of prose to type" a better predictor than "amount of code to read"?
+- **93% of tasks finished faster than predicted** (351/379). 5% ran longer; 2% matched exactly.
+- **Average: used 41% of predicted time** (actual = 5.7m, C = 15.7m; 2.44× faster than predicted on average).
+- **H is structurally over-budgeted for AI work**, by 9-20× or more. Expected — H governs discipline, not forecasting.
+- **C is also systematically over-padded**, and the over-pad has not converged despite ~18 months of data. Deliberate calibration attempts (e.g. #113: halved gut C, still finished in 27% of predicted time) did not move the needle.
+
+### Per-role breakdown
+
+| Role | n | Used % of predicted | Speedup factor | Faster / Slower |
+|---|---|---|---|---|
+| TEST | 16 | 24% | 4.1× | 16 / 0 |
+| ARC | 14 | 29% | 3.4× | 14 / 0 |
+| COMBO | 8 | 34% | 2.9× | 8 / 0 |
+| DEV | 115 | 39% | 2.5× | 107 / 6 |
+| SPIKE | 6 | 41% | 2.4× | 6 / 0 |
+| RESEARCH | 70 | 42% | 2.4× | 64 / 5 |
+| WRITER | 102 | 43% | 2.3× | 93 / 6 |
+| PM | 17 | 45% | 2.2× | 15 / 1 |
+| DATA | 24 | 49% | 2.1× | 23 / 1 |
+| REVIEW | 2 | 58% | 1.7× | 2 / 0 |
+| CHORE | 5 | 70% | 1.4× | 3 / 0 |
+
+TEST is the most over-predicted role (used only 24% of C on average; never ran
+longer). CHORE is the most accurate (used 70%; closest to C). DEV is the only
+role with meaningful "ran longer" cases (6/115).
+
+### Answers to early open questions
+
+**Do DEV edit/test loops dominate and pull actuals toward H?**
+At n=115 DEV rows: 107 finished faster, 6 ran longer. The first overrun (#135)
+still holds as a real pattern — heavy edit/test/debug loops can overshoot C
+— but it's the exception (6/115), not the rule. Average DEV speedup is still 2.5×.
+
+**How does C calibrate across roles?**
+Clear gradient: TEST/ARC/COMBO most over-predicted; CHORE/REVIEW most accurate.
+The ranking is stable — read/write/research work is consistently over-padded
+by 2-3×, while more variable loop-heavy or chore work is over-padded by 1-2×.
+
+**Does C drift over time?**
+No visible convergence. The over-pad pattern is stable across the full dataset.
+Attempts to deliberately calibrate lower have not produced lasting improvement.
+
+### Why the over-pad persists
+
+Working hypotheses (not yet investigated empirically):
+
+1. **Psychological weight ≠ wall-clock difficulty.** Tasks that feel heavy
+   (writing prose, making design decisions) attract more padding regardless of
+   their actual duration.
+2. **Calibrating in the wrong direction.** Read/write/research rows are almost
+   always underruns, so "padding conservatively" applies pressure in the wrong
+   direction — the actual is already far below.
+3. **Cross-role contamination.** "DEV" covers both research-flavored
+   investigation (closer to 4×) and genuine edit/test loops (closer to 1-1.5×).
+   Aggregating them masks within-role variance.
+
+### Notable overruns
+
+Rows where actual exceeded C by more than 5 minutes:
+
+| Ticket | Title | Role | C | Actual | Overran by |
+|---|---|---|---|---|---|
+| #303 | TIL BANANA s2 — worktree cleanup, audit | WRITER | 10m | 34m | 24m |
+| #530 | Unit tests for InterpreterPlus traps | DEV | 25m | 44m | 19m |
+| #364 | docs: OB-001 §4 stale — mov silently wraps | WRITER | 15m | 32m | 17m |
+| #141 | adopt .pddignore + lowercase scan | DEV | 12m | 25m | 13m |
+| #406 | disassembler.js flatten with guard clauses | RESEARCH | 2m | 15m | 13m |
+| #314 | model-column data quality | DATA | 20m | 30m | 10m |
+
+Most overruns are in WRITER or DEV. #406 (RESEARCH) is a clear mis-labeling —
+the task involved code refactoring, not pure investigation.
