@@ -1359,6 +1359,9 @@ class Assembler {
     if (label === null || label === undefined) {
       this.failAssembly('Missing operand', 1);
     }
+    if (this.isNumLiteral(operands[0])) {
+      this.failAssembly('Bad label', 1);
+    }
     if(!this.isNumLiteral(operands[0]) && operands[1] && operands[2]) {
 
       // if operands[2] is not a literal value, then it isn't a valid offset

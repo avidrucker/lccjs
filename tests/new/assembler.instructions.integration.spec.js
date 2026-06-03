@@ -931,4 +931,28 @@ label: .word 10
 
     expect(assembler.errorFlag).toBe(false);
   });
+
+  test('95. should throw error for br with bare numeric operand (LCC.js BUG §25 regression)', () => {
+    const aFilePath = 'brNumericOperand.a';
+    virtualFs[aFilePath] = 'br 5\nhalt\n';
+    expect(() => assembler.main([aFilePath])).toThrow();
+  });
+
+  test('96. should throw error for brz with bare numeric operand (LCC.js BUG §25 regression)', () => {
+    const aFilePath = 'brzNumericOperand.a';
+    virtualFs[aFilePath] = `
+      brz 5
+      halt
+    `;
+    expect(() => assembler.main([aFilePath])).toThrow();
+  });
+
+  test('97. should throw error for brn with bare numeric operand (LCC.js BUG §25 regression)', () => {
+    const aFilePath = 'brnNumericOperand.a';
+    virtualFs[aFilePath] = `
+      brn 5
+      halt
+    `;
+    expect(() => assembler.main([aFilePath])).toThrow();
+  });
 });
