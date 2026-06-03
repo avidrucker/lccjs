@@ -37,10 +37,10 @@ This document outlines our **planned improvements, refactors, and example progra
 
 ### ✅ Next Steps
 
-* **Create `compareFiles.js` Utility**
+* ✅ **Create `compareFiles.js` Utility** — shipped at `tests/helpers/compareFiles.js`
 
   * Centralize hex, `.lst`, and `.bst` comparisons.
-* **Introduce Unit Tests**
+* ✅ **Introduce Unit Tests** — shipped in `tests/new/` (unit, integration, oracle/e2e, research categories)
 
   * Add first-pass unit tests for:
 
@@ -51,7 +51,7 @@ This document outlines our **planned improvements, refactors, and example progra
 * **Write Smoke Tests**
 
   * Verify that all binaries are runnable before any other tests.
-* **Implement a Single Test Runner Script**
+* ✅ **Implement a Single Test Runner Script** — shipped as `npm test` (Jest, `--runInBand`)
 
   * Automate running all suites and reporting results in one pass.
 
@@ -101,9 +101,10 @@ Each example will include:
 
 These are longer-term goals:
 
-* **Symbolic Debugger**
+* **Symbolic Debugger** *(partially shipped)*
 
   * Interactive stepping, breakpoints, memory inspection.
+  * Phases 1+2 shipped: `g`/`q`/`r`/`m`/`b`/`i`/`h`/`s` commands, `bp` trap. Numeric step-count (phase 3) and full oracle parity still in progress.
 * **Terminal Graphics Utilities**
 
   * Minimal sprite/tile rendering for richer demos.
