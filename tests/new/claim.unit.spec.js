@@ -9,6 +9,7 @@ const {
   isSentinelStaleByAge,
   applyMarkerFlip,
   buildBannerLines,
+  worktreesWithIssue,
 } = require('../../scripts/claim');
 
 // Pure identity-resolution seam from scripts/claim.js. These tests exercise the
@@ -318,5 +319,46 @@ describe('buildBannerLines() — comment hint (#661)', () => {
     const lines = buildBannerLines(...BASE_ARGS, 5, '99');
     const commentLine = lines.find((l) => l.includes('comments'));
     expect(commentLine).toMatch(/gh issue view 99 --comments/);
+  });
+});
+
+// #665: orphan worktree detection — pure seam for the warnOrphanedWorktrees() I/O
+// wrapper. Tests confirm branch-filtering without any gh or git I/O.
+describe('worktreesWithIssue() — orphan detection seam (#665)', () => {
+  test('extracts issue from a canonical worktree branch', () => {
+    const input = [{ branch: 'apple/issue-637-closing-comment', fruit: 'apple' }];
+    expect(worktreesWithIssue(input)).toEqual([
+      { branch: 'apple/issue-637-closing-comment', fruit: 'apple', issue: 637 },
+    ]);
+  });
+
+  test('skips main branch (no /issue-N pattern)', () => {
+    expect(worktreesWithIssue([{ branch: 'main', fruit: null }])).toEqual([]);
+  });
+
+  test('skips session sentinel branches (<fruit>/session)', () => {
+    expect(worktreesWithIssue([{ branch: 'apple/session', fruit: 'apple' }])).toEqual([]);
+  });
+
+  test('handles mixed entries — returns only those with issue patterns', () => {
+    const input = [
+      { branch: 'main', fruit: null },
+      { branch: 'banana/issue-123-some-work', fruit: 'banana' },
+      { branch: 'cherry/session', fruit: 'cherry' },
+      { branch: 'apple/issue-42-fix-thing', fruit: 'apple' },
+    ];
+    expect(worktreesWithIssue(input)).toEqual([
+      { branch: 'banana/issue-123-some-work', fruit: 'banana', issue: 123 },
+      { branch: 'apple/issue-42-fix-thing', fruit: 'apple', issue: 42 },
+    ]);
+  });
+
+  test('returns empty array for empty input', () => {
+    expect(worktreesWithIssue([])).toEqual([]);
+  });
+
+  test('returns empty array for null/undefined input', () => {
+    expect(worktreesWithIssue(null)).toEqual([]);
+    expect(worktreesWithIssue(undefined)).toEqual([]);
   });
 });

@@ -104,6 +104,19 @@ function listWorktreeBranches() {
   return branches;
 }
 
+// Pure: filter worktree branch entries to those with a parseable /issue-<N>
+// pattern. Returns {branch, fruit, issue}[] — the main checkout (branch 'main')
+// and session sentinels (<fruit>/session) are excluded because they carry no
+// issue number. Exported for unit testing without git I/O. (#665)
+function worktreesWithIssue(branches) {
+  const result = [];
+  for (const { branch, fruit } of (branches || [])) {
+    const m = branch && branch.match(/\/issue-(\d+)/);
+    if (m) result.push({ branch, fruit, issue: Number(m[1]) });
+  }
+  return result;
+}
+
 // Session sentinel: a <fruit>/session branch (no worktree) that keeps a fruit
 // marked "taken" across individual worktree teardowns — closing a puzzle removes
 // both the worktree and the issue branch, but the sentinel survives until the
@@ -332,6 +345,28 @@ function checkIdentityName(identity, opts) {
   return { warn: `"${identity.name}" is not in the known fruit list — using it anyway.` };
 }
 
+// Side-effect: scan live worktrees for orphans — issue branches whose issue is
+// CLOSED, meaning the deferred teardown from a prior npm run close failed (#541,
+// #551). Prints a recovery hint for each stale entry; never blocks the claim.
+// Degrades gracefully when gh is unavailable (state read returns null → skip). (#665)
+function warnOrphanedWorktrees() {
+  const entries = worktreesWithIssue(listWorktreeBranches());
+  if (!entries.length) return;
+  const root = mainRoot();
+  for (const { branch, fruit, issue } of entries) {
+    const state = sh(`gh issue view ${issue} --json state -q .state`, true);
+    if (!state || !state.trim()) continue;
+    if (state.trim().toUpperCase() !== 'CLOSED') continue;
+    const wtPath = path.join(root, '.claude', 'worktrees', `${fruit}-issue-${issue}`);
+    console.error(
+      `[claim] ⚠ stale worktree: "${branch}" references CLOSED issue #${issue}.\n` +
+      `         Deferred teardown may have failed. To clean up:\n` +
+      `           git worktree remove "${wtPath}" --force\n` +
+      `           git branch -D ${branch}`
+    );
+  }
+}
+
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
@@ -394,6 +429,7 @@ function main() {
     }
   }
 
+  warnOrphanedWorktrees();
   const root = mainRoot();
   const mkBranch = (fruit) => `${fruit}/issue-${issue}${slug ? '-' + slug : ''}`;
   const mkPath = (fruit) => path.join(root, '.claude', 'worktrees', `${fruit}-issue-${issue}`);
@@ -510,7 +546,7 @@ function report(fruit, branch, wtPath, base, mode, dry, commentCount, issue) {
 if (require.main === module) main();
 
 module.exports = {
-  FRUITS, slugify, listWorktreeBranches, takenFruits,
+  FRUITS, slugify, listWorktreeBranches, worktreesWithIssue, takenFruits,
   parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
   checkIdentityName, readIssue, shouldBlockClaim,
   sentinelBranch, isSentinelStaleByAge,

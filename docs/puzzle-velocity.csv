@@ -540,3 +540,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 553,666,RESEARCH: design tooling enforcement for Rule 14 scope discipline,RESEARCH,30,20,3,27,17,2026-06-03T20:57:50-1000,2026-06-03T21:00:31-1000,,4-option analysis posted as issue comment. Option 1 (close.js diff stat) recommended; child DEV ticket filed as #671.,CHERRY,sonnet-4.6,lccjs
 554,670,WRITER: TIL doc — GRAPE session 2026-06-03,WRITER,15,8,2,13,6,2026-06-03T20:59:05-1000,2026-06-03T21:00:19-1000,,"4 learnings: point-in-time snapshot semantics, hst_day derivation, day-naming vs clock, agent casing",GRAPE,sonnet-4.6,lccjs
 555,651,write /write-til-doc skill,WRITER,45,20,4,41,16,2026-06-03T20:58:38-1000,2026-06-03T21:02:39-1000,,SKILL.md + REFERENCE.md; covers draft->issue->claim->write->README->velocity->close pipeline,FIG,sonnet-4.6,lccjs
+556,665,DEV: post-close orphaned-worktree check — deferred teardown has no cross-session verification,DEV,20,25,,,,,,,,APPLE,,lccjs
