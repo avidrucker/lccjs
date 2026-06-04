@@ -184,6 +184,11 @@ describe('close.js parseArgs()', () => {
     expect(parseArgs(['379']).branch).toBe(null);
     expect(parseArgs(['379', '--branch', 'lemon/issue-379-fig']).branch).toBe('lemon/issue-379-fig');
   });
+
+  test('--skip-scope-audit sets skipScopeAudit (default false, #671)', () => {
+    expect(parseArgs(['671']).skipScopeAudit).toBe(false);
+    expect(parseArgs(['671', '--skip-scope-audit']).skipScopeAudit).toBe(true);
+  });
 });
 
 // Guard 1 (#310): a full `git show HEAD -- docs/puzzle-velocity.csv` diff. The CSV

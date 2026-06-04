@@ -31,6 +31,7 @@
  *   node scripts/close.js <issue> --no-verify-issue  # skip the gh post-close check
  *   node scripts/close.js <issue> --skip-ticket-match  # bypass Guard 1 velocity-row ticket check (#310)
  *   node scripts/close.js <issue> --skip-keyword-check # bypass Guard 2 issue-title keyword check (#311)
+ *   node scripts/close.js <issue> --skip-scope-audit   # suppress diff-stat scope summary (#671)
  *
  * See docs/research/close-sequence-hardening.md for the full design.
  */
@@ -113,7 +114,7 @@ function parseArgs(argv) {
   const opts = {
     issue: null, max: DEFAULT_MAX_RETRIES, dryRun: false,
     keep: false, verifyIssue: true, skipTicketMatch: false, skipKeywordCheck: false,
-    skipVelocityCheck: false, skipMarkerCheck: false, branch: null,
+    skipVelocityCheck: false, skipMarkerCheck: false, skipScopeAudit: false, branch: null,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -126,6 +127,7 @@ function parseArgs(argv) {
     else if (a === '--skip-keyword-check') opts.skipKeywordCheck = true;
     else if (a === '--skip-velocity-check') opts.skipVelocityCheck = true;
     else if (a === '--skip-marker-check') opts.skipMarkerCheck = true;
+    else if (a === '--skip-scope-audit') opts.skipScopeAudit = true;
     else if (a === '--branch') opts.branch = argv[++i];
     else if (a.startsWith('--')) die(`unknown flag: ${a}`);
     else positionals.push(a);
@@ -596,7 +598,7 @@ function logCommentPrompt(issue, sha) {
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
-    die('usage: node scripts/close.js <issue-number> [--branch <name>] [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match] [--skip-keyword-check] [--skip-velocity-check] [--skip-marker-check]');
+    die('usage: node scripts/close.js <issue-number> [--branch <name>] [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match] [--skip-keyword-check] [--skip-velocity-check] [--skip-marker-check] [--skip-scope-audit]');
   }
   const issue = opts.issue;
 
@@ -634,6 +636,15 @@ function main() {
     die(`No unpushed commit references "Closes #${issue}". Commit the close ` +
         '(marker deletion + `Closes #N`) FIRST, then run close. ' +
         'This tool lands an existing close commit; it does not author one.');
+  }
+  // Scope audit (#671): print git diff --stat origin/main so agents see the full
+  // delta in context before the Guards run. Non-blocking — informational only.
+  if (!opts.skipScopeAudit) {
+    const stat = sh('git diff --stat origin/main', true);
+    if (stat && stat.trim()) {
+      console.log('[close] scope audit (git diff --stat origin/main):');
+      console.log(stat.trimEnd());
+    }
   }
   // Guard 1 (#310): the velocity row in HEAD must record the issue being closed.
   if (!opts.skipTicketMatch) checkVelocityTicketMatch(issue);
