@@ -423,11 +423,16 @@ function checkKeywordMatch(issue, closingCommitSha) {
   const allSubjects = allSubjectsOut.trim().split('\n').filter(Boolean);
   if (allSubjects.some((s) => keywordsOverlap(titleKws, extractKeywords(s)))) return;
 
-  die(`keyword check: no word from issue #${issue} title\n` +
-      `         ("${title.trim()}")\n` +
-      `         appears in any unpushed commit subject\n` +
-      `         ("${subject.trim()}"${allSubjects.length > 1 ? ` + ${allSubjects.length - 1} other(s)` : ''}).\n` +
-      `         Is this the right issue? Pass --skip-keyword-check to override.`);
+  // FC-3 (#650): paraphrase case — title and subject use synonymous vocabulary
+  // with no literal unigram overlap. Show extracted keywords on both sides so the
+  // agent can immediately see the gap and know whether --skip-keyword-check applies.
+  const allSubjectKws = [...new Set(allSubjects.flatMap((s) => extractKeywords(s)))].sort();
+  die(`keyword check: no keyword from issue #${issue} title matched any unpushed commit subject.\n` +
+      `  title:            "${title.trim()}"\n` +
+      `  title keywords:   [${titleKws.join(', ')}]\n` +
+      `  subjects scanned: ${allSubjects.length}\n` +
+      `  subject keywords: [${allSubjectKws.join(', ')}]\n` +
+      `  Paraphrased title? Add --skip-keyword-check to your close command.`);
 }
 
 // Check A I/O wrapper (#359): verify a velocity row for ticket N exists in the

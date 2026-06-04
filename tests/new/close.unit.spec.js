@@ -461,6 +461,27 @@ describe('close.js keywordsOverlap() — Guard 2 decision', () => {
     );
     expect(keywordsOverlap(titleWords, workSubjectWords)).toBe(true);
   });
+
+  // FC-3 (#650): paraphrased commit subjects — synonym pairs that share no unigram
+  // overlap. Guard 2 fires on these and --skip-keyword-check is the correct bypass.
+  // Tests confirm no accidental keyword match saves them, documenting the known gap.
+  test('FC-3: "collate" vs "enumerate" — synonymous verbs, no common keywords', () => {
+    const titleWords = extractKeywords('RESEARCH: collate timestamp drift samples from CSV rows');
+    const subjectWords = extractKeywords('research: enumerate elapsed anomalies found in puzzle logs');
+    expect(keywordsOverlap(titleWords, subjectWords)).toBe(false);
+  });
+
+  test('FC-3: "reduce" vs "eliminate" — synonymous verbs, no common keywords', () => {
+    const titleWords = extractKeywords('DEV: reduce prompt overhead in workflow tooling');
+    const subjectWords = extractKeywords('fix: eliminate dialog friction from agent scripts');
+    expect(keywordsOverlap(titleWords, subjectWords)).toBe(false);
+  });
+
+  test('FC-3: "failure modes" vs "breakdowns" — synonymous nouns, no common keywords', () => {
+    const titleWords = extractKeywords('RESEARCH: collate failure modes from session notes');
+    const subjectWords = extractKeywords('research: enumerate observed breakdowns in puzzle logs');
+    expect(keywordsOverlap(titleWords, subjectWords)).toBe(false);
+  });
 });
 
 // Guard 1 fix (#346): extractRowsFromCsvDiff returns {ticket, agent}[] so
