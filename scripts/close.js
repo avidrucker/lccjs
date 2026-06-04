@@ -411,13 +411,23 @@ function checkKeywordMatch(issue, closingCommitSha) {
   }
   const sha = closingCommitSha || 'HEAD';
   const subject = sh(`git show -s --format=%s ${sha}`, true) || '';
-  if (!keywordsOverlap(extractKeywords(title.trim()), extractKeywords(subject.trim()))) {
-    die(`keyword check: no word from issue #${issue} title\n` +
-        `         ("${title.trim()}")\n` +
-        `         appears in commit subject\n` +
-        `         ("${subject.trim()}").\n` +
-        `         Is this the right issue? Pass --skip-keyword-check to override.`);
-  }
+  const titleKws = extractKeywords(title.trim());
+
+  // Fast path: closing commit subject overlaps directly.
+  if (keywordsOverlap(titleKws, extractKeywords(subject.trim()))) return;
+
+  // Fallback (#645): closing commit may be a content-free close marker
+  // ("chore: close #N"). Scan ALL origin/main..HEAD subjects — the work
+  // commit carries the vocabulary; the marker commit is administrative.
+  const allSubjectsOut = sh('git log origin/main..HEAD --format=%s', true) || '';
+  const allSubjects = allSubjectsOut.trim().split('\n').filter(Boolean);
+  if (allSubjects.some((s) => keywordsOverlap(titleKws, extractKeywords(s)))) return;
+
+  die(`keyword check: no word from issue #${issue} title\n` +
+      `         ("${title.trim()}")\n` +
+      `         appears in any unpushed commit subject\n` +
+      `         ("${subject.trim()}"${allSubjects.length > 1 ? ` + ${allSubjects.length - 1} other(s)` : ''}).\n` +
+      `         Is this the right issue? Pass --skip-keyword-check to override.`);
 }
 
 // Check A I/O wrapper (#359): verify a velocity row for ticket N exists in the

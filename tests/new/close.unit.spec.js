@@ -440,6 +440,27 @@ describe('close.js keywordsOverlap() — Guard 2 decision', () => {
     const subjectWords = extractKeywords('cross-link cluster identity issues');
     expect(keywordsOverlap(titleWords, subjectWords)).toBe(false);
   });
+
+  // Guard 2 fallback (#645): content-free close marker commits ("chore: close #N")
+  // produce no overlap with any substantive title. The fallback scans all unpushed
+  // subjects so the work commit's vocabulary saves the check.
+  test('#645 fallback: "chore: close #N" produces no overlap (documents the problem)', () => {
+    const titleWords = extractKeywords(
+      'DEV: Guard 2 fallback — scan all unpushed subjects when closing commit is content-free'
+    );
+    const closeMarkerWords = extractKeywords('chore: close #645');
+    expect(keywordsOverlap(titleWords, closeMarkerWords)).toBe(false);
+  });
+
+  test('#645 fallback: work commit subject overlaps title (fallback succeeds)', () => {
+    const titleWords = extractKeywords(
+      'DEV: Guard 2 fallback — scan all unpushed subjects when closing commit is content-free'
+    );
+    const workSubjectWords = extractKeywords(
+      'fix(close): Guard 2 fallback — scan unpushed subjects for content-free close markers'
+    );
+    expect(keywordsOverlap(titleWords, workSubjectWords)).toBe(true);
+  });
 });
 
 // Guard 1 fix (#346): extractRowsFromCsvDiff returns {ticket, agent}[] so
