@@ -76,8 +76,7 @@ options:
 
 The second path is what happened here and it works, but it bypasses the close script's
 other checks (branch cleanup, worktree teardown). A future improvement to the close
-script could scan the last N commits rather than only HEAD. Filed as a side note —
-no ticket yet.
+script could scan the last N commits rather than only HEAD. Filed as #619.
 
 ---
 
