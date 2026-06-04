@@ -1,9 +1,16 @@
 const fs = require('fs');
+const Assembler = require('../../src/core/assembler');
 const Linker = require('../../src/core/linker');
 const { LinkerError } = require('../../src/utils/errors');
 const { installMockFileSystem } = require('../helpers/virtualFs');
 
 jest.mock('fs');
+
+function assembleToBytes(source, fileName) {
+  const asm = new Assembler();
+  const result = asm.assembleSource(source, { inputFileName: fileName });
+  return result.outputBytes;
+}
 
 describe('Linker Unit Tests', () => {
   let state;
@@ -504,6 +511,24 @@ describe('Linker Unit Tests', () => {
       console.error.mockClear();
       expect(() => linker.error('bad input')).toThrow();
       expect(console.error).toHaveBeenCalledWith('[linker] bad input');
+    });
+
+    test('verboseModeOn set before link() is preserved through the resetState() call inside link()', () => {
+      const linker = new Linker();
+      linker.verboseModeOn = true;
+
+      state.files['bad.o'] = assembleToBytes(`
+          .extern ghost
+          ld r0, ghost
+          halt
+      `, 'bad.a');
+
+      console.error.mockClear();
+      expect(() => linker.link(['bad.o'], 'out.e')).toThrow(LinkerError);
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('[linker]')
+      );
     });
   });
 });
