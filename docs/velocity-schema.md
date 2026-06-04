@@ -17,7 +17,7 @@ Exported read-only copy: **`docs/puzzle-velocity.csv`** — committed to git, au
 | `role` | TEXT | YES | Work type — see valid values below |
 | `h_min` | REAL | YES | Yegor human-effort estimate in minutes (≤60 hard cap; governs decomposition, not forecasting) |
 | `c_min` | REAL | YES | Claude wall-clock prediction set *before* starting work (for calibration) |
-| `actual_min` | REAL | YES | Elapsed work time in minutes (`finished − started`). NULL when the span includes multi-hour idle gaps (multi-turn sessions) — see notes. |
+| `actual_min` | REAL | YES | Elapsed work time in minutes (`finished − started`). **Valid only when the work performed matches the ticket's stated scope** — if out-of-scope work was absorbed (FM-1/FM-2/FM-3 per `docs/research/601-scope-discipline.md`), annotate the row as invalid in `notes` rather than leaving a misleading value (do not delete the row). NULL when the span includes multi-hour idle gaps (multi-turn sessions) — see notes. |
 | `delta_h_min` | REAL | YES | `h_min − actual_min` (positive = under human budget) |
 | `delta_c_min` | REAL | YES | `c_min − actual_min` (positive = Claude over-estimated) |
 | `started_iso` | TEXT | YES | ISO 8601 timestamp captured *before* `gh issue view` (wall-clock start) |
@@ -80,6 +80,17 @@ For multi-turn sessions with human review time between turns, the raw
 is not a meaningful measure of active work time. In these cases, leave
 `actual_min`, `delta_h_min`, and `delta_c_min` NULL and note the reason in
 the `notes` field. Keep `h_min` and `c_min` (estimates are still valid).
+
+`actual_min` is also invalid as a calibration data point when the elapsed time
+includes work outside the ticket's stated scope — e.g. an unplanned bug fix absorbed
+mid-session (FM-1: bug tax), a triage pass that ran longer than ~5 minutes (FM-2:
+discovery bleed), or a scope creep addition (FM-3). In these cases the measured
+duration reflects a mix of deliverables, making it appear the C estimate was
+wrong when it may have been accurate for the in-scope work alone. When this occurs:
+**do not delete the row** — annotate `notes` with the out-of-scope description (e.g.
+`"actual_min invalid — absorbed FM-1 fix for #N, ~10 min untracked"`) so the
+corruption is visible in the data rather than silent. See
+`docs/research/601-scope-discipline.md` for the full FM taxonomy.
 
 ## Related files
 

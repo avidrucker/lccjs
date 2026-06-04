@@ -29,7 +29,7 @@ puzzle, plus a comment header line. Empty fields mean "not tracked".
 | `role` | string | role tag (see below) |
 | `h_min` | number | **H**uman time estimate in minutes — drives Yegor 60m cap |
 | `c_min` | number / empty | **C**laude time estimate in minutes — my forward-looking prediction |
-| `actual_min` | number | wall-clock minutes from start to closing commit |
+| `actual_min` | number | wall-clock minutes from start to closing commit. **Valid only when the work performed matches the ticket scope** — if out-of-scope work was absorbed, annotate `notes` as invalid rather than leaving a silent corrupted value (see validity note in `docs/velocity-schema.md`). |
 | `delta_h_min` | number | `actual_min − h_min` (negative = under estimate) |
 | `delta_c_min` | number | `actual_min − c_min` (negative = under estimate) |
 | `started_iso` | ISO 8601 / empty | timestamp when I began work (re-reading the issue counts as start); empty for retroactive rows |
@@ -283,3 +283,22 @@ Rows where actual exceeded C by more than 5 minutes:
 
 Most overruns are in WRITER or DEV. #406 (RESEARCH) is a clear mis-labeling —
 the task involved code refactoring, not pure investigation.
+
+### Scope bundling silently corrupts actuals
+
+When a session absorbs out-of-scope work — an unplanned bug fix (FM-1: bug tax), a
+triage pass longer than ~5 minutes (FM-2: discovery bleed), or a scope-creep addition
+(FM-3) — the resulting `actual_min` includes time that belongs to a different
+deliverable. Against the ticket's `c_min` estimate this makes the prediction look
+over-padded when the C estimate may have been accurate for the in-scope work alone.
+The corruption is invisible unless the commit diff is audited against the ticket body.
+Over many tickets it makes calibration appear broken when the underlying estimates are
+sound.
+
+**What to do:** do not delete or blank out `actual_min` (that loses the data point
+entirely). Instead annotate `notes` with a brief description:
+`"actual_min invalid — absorbed FM-1 fix for #N, ~10 min untracked"`.
+This keeps the corruption visible in the data rather than silent, and lets a future
+DATA pass identify and exclude invalid rows from calibration analysis. See
+`docs/research/601-scope-discipline.md` for the full FM taxonomy and
+`docs/velocity-schema.md` for the field-level validity rule.
