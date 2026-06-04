@@ -23,7 +23,6 @@
 
         .lccplus
         .start  startup
-; @inprogress #585:20m/DEV direct-access + dead frame-setup cleanups (3 items)
 
 ;----------------------------------------------------------------
 ; startup: clears screen, hides cursor, calls main
