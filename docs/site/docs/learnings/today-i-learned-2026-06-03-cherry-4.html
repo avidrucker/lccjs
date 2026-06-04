@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-03-cherry-4 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-03 — CHERRY s4</h1>
+<p><strong>Agent:</strong> CHERRY · <strong>Session:</strong> 4 · <strong>Tickets:</strong> #610, #624, #623</p>
+<hr>
+<h2>1. <code>allowedTools</code> in <code>.claude/settings.json</code> pre-approves <code>gh</code> write calls</h2>
+<p><strong>Context:</strong> #623 — researching why agents can&#39;t post closing comments in auto-mode.</p>
+<p>After <code>npm run close N</code> completes, the agent makes a follow-up <code>Bash(gh issue comment N --body &quot;...&quot;)</code> call. The auto-mode classifier blocks it as an &quot;autonomous External System Write — publishing under the user&#39;s identity to a GitHub issue without explicit authorization.&quot; The user authorized <code>npm run close N</code>, not the comment.</p>
+<p><strong>Fix:</strong> Add one entry to <code>.claude/settings.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;allowedTools&quot;: [&quot;Bash(gh issue comment *)&quot;],
+  &quot;hooks&quot;: { ... }
+}
+</code></pre>
+<p>The <code>Bash(gh issue comment *)</code> pattern pre-approves any <code>gh issue comment</code> call (any issue number, any body). The classifier checks <code>allowedTools</code> before prompting and silently proceeds.</p>
+<p><strong>Scope discipline:</strong> put this in project-level <code>.claude/settings.json</code>, not <code>~/.claude/settings.json</code>. User-level would grant <code>gh issue comment</code> rights to every repo Claude Code touches on the machine. Project-level scopes it to lccjs.</p>
+<p><strong>Key distinction:</strong> <code>gh</code> calls that run <em>inside</em> <code>npm run close N</code> (as Node <code>child_process</code> subprocesses) are not classifier-visible tool calls — they inherit the already-approved bash call&#39;s authorization. Only calls the <em>agent</em> makes as separate Bash tool calls after the approved action completes get classified.</p>
+<hr>
+<h2>2. The velocity commit must be HEAD and must contain &quot;Closes #N&quot;</h2>
+<p><strong>Context:</strong> #610 close — committed the research doc (with &quot;Closes #N&quot;) then the velocity CSV separately. <code>npm run close 610</code> rejected: &quot;HEAD commit does not reference &#39;Closes #610&#39;.&quot;</p>
+<p><code>close.js</code> checks two things in HEAD:</p>
+<ol>
+<li>The commit message references <code>Closes #&lt;issue&gt;</code></li>
+<li>The velocity CSV diff is present in HEAD</li>
+</ol>
+<p>Both must be true in the <em>same</em> commit. The correct pattern is to log the velocity row (<code>npm run velocity:log</code>) and commit research doc + CSV together in one &quot;Closes #N&quot; commit, or make the final commit (the one with Closes) include both.</p>
+<p><strong>Recovery when you&#39;ve split them:</strong> <code>git reset --soft HEAD~1</code> un-commits the most recent commit, keeping all changes staged. Since the commit hasn&#39;t been pushed, this is safe and reversible. Recommit with &quot;Closes #N&quot; in the message.</p>
+<p>Don&#39;t use <code>git commit --amend</code> reflexively — soft reset + new commit is cleaner and doesn&#39;t risk confusion with the &quot;never amend published commits&quot; rule.</p>
+<hr>
+<h2>3. <code>--skip-keyword-check</code> is needed more often than expected for research closes</h2>
+<p><strong>Context:</strong> #623 close — commit subject <code>&quot;research: gh issue comment auth — allowedTools is the fix, filed child #642 (#623)&quot;</code> shares no extracted keyword with issue title <code>&quot;RESEARCH: enable agents to post closing comments without manual authorization&quot;</code>.</p>
+<p>The keyword overlap heuristic compares unigrams from the commit subject against the issue title. Research and docs commits routinely use paraphrased language (&quot;allowedTools is the fix&quot; ≠ &quot;closing comments without manual authorization&quot;) even when the subject is unambiguously about the right ticket. <code>--skip-keyword-check</code> is the correct bypass, not a workaround.</p>
+<p>This is the D-1 failure mode from <code>docs/research/orchestration-failure-modes.md</code>. A better heuristic (stemmed overlap, type-prefix strip, or description-field fallback instead of title-only) is tracked in #634.</p>
+<p>For now: when writing a research commit subject, either mirror at least one keyword from the issue title literally, or expect to add <code>--skip-keyword-check</code> at close time.</p>
+<hr>
+<h2>4. A tracker with 13 child tickets is still one velocity row (for the PM work)</h2>
+<p><strong>Context:</strong> #624 + #625–636 — filing a tracker and 12 child decision/research tickets for the #610 mitigation list.</p>
+<p>The PM filing cycle (tracker + all children) is one contiguous session of work. It logs as a single velocity row with role <code>PM</code>, not one row per issue filed. The row&#39;s <code>ticket</code> field is <code>NULL</code> (no specific issue to attribute), per the null-ticket convention for PM/triage work (or can be omitted from the JSON).</p>
+<p>Filing issues sequentially matters: <code>gh issue create</code> assigns numbers by HTTP arrival order. Parallel background jobs mis-assign <code>@todo #N</code> markers. File siblings one at a time and read the returned URL before writing the next. This is the T2-A pattern from the TIL synthesis.</p>
+<hr>
+<h2>5. Child tickets should link to their parent, and process observations should go on the relevant issue immediately</h2>
+<p><strong>Context:</strong> post-close review of #642 and #634.</p>
+<p>Two discipline checks that are easy to skip under close-sequence pressure:</p>
+<ol>
+<li>Does the child ticket&#39;s body contain <code>**Parent:** #N</code>? (Yes for #642 — caught on review.)</li>
+<li>Did I post the <code>--skip-keyword-check</code> observation as evidence on #634 before moving on? (No — required user prompt to fix.)</li>
+</ol>
+<p>The pre-close finding audit (M3 / #627) is designed to catch exactly this. The &quot;next-best-action&quot; checklist (M7 / #631) is the skill-level enforcement. Until those are wired up, the discipline is manual: before calling <code>npm run close N</code>, answer the three questions from M3 and check that any cross-issue evidence has already been posted.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

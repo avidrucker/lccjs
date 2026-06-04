@@ -77,6 +77,7 @@ code { font-family:var(--mono-font); }
   <a href="../../docs/glossary/">Glossary</a>
   <a href="../../docs/parity/">Parity</a>
   <a href="../../docs/workflow/" class="active">Workflow</a>
+  <a href="../../showcase/">Playground</a>
 </nav>
   <div class="back-link"><a href="./">← Workflow index</a></div>
   <div class="prose">
@@ -95,6 +96,9 @@ code { font-family:var(--mono-font); }
 <li>When fixing or reviewing a write-path bug in a test harness, I will add a regression test that reads back what was written through the actual write surface (e.g. <code>virtualFs</code>) and asserts the bytes are intact. A test that only checks the producer&#39;s in-memory state leaves the write path dark.</li>
 <li>For any tracker ticket (one that says &quot;stays open until children resolve&quot;), I will always file a concrete child issue for the chosen sub-item before doing any work — unconditionally, not just &quot;if the item is large enough.&quot; The child issue is where velocity is logged and where the work is tracked. No exceptions for &quot;small&quot; or &quot;obvious&quot; items.</li>
 <li>I will wrap every shell invocation of <code>lcc.js</code>, <code>assembler.js</code>, <code>interpreter.js</code>, <code>linker.js</code>, or the oracle binary (<code>$LCC_ORACLE</code>) in <code>scripts/lccrun.sh</code>. Bare invocations block indefinitely when <code>name.nnn</code> is absent and stdin is not a TTY (#376).</li>
+<li>One deliverable per close. Before writing the close commit, audit <code>git diff origin/main</code>: every change must fall within the ticket&#39;s stated &quot;Should have.&quot; Out-of-scope changes get their own ticket (filed before the close commit), their own worktree, and their own velocity row. Fixes absorbed silently into another ticket&#39;s close are invisible to the tracker and corrupt calibration data. (FM-1: bug tax; FM-2: discovery bleed; FM-3: multi-fix bundling — see <code>docs/research/601-scope-discipline.md</code>.)</li>
+<li>The commit containing &quot;Closes #N&quot; must ALSO include the velocity CSV export in the same commit. Do not commit the work with &quot;Closes #N&quot; and then commit the CSV separately — <code>close.js</code> checks HEAD only, and the second commit becomes HEAD without &quot;Closes #N&quot;, breaking the close gate. Recovery: <code>git reset --soft HEAD~1</code> un-commits the top commit (changes stay staged); then recommit everything together with &quot;Closes #N&quot; in the message. (#654)</li>
+<li><strong>TIL entries are an exempt sub-genre</strong> — they are diary-style learning notes, not bug reports, and are intentionally exempt from BDD structure (no Have/Should have/Repro required) and from the <code>ROLE:</code> title prefix convention. Required format: <code>TIL YYYY-MM-DD AGENT — one-line topic</code> (em-dash, not colon). Rules 4, 5, 8, 9 still apply unconditionally: a GitHub issue is required for the worktree claim, velocity is logged, and the entry is closed via <code>npm run close</code>. A corresponding <code>docs/learnings/today-i-learned-*.md</code> file must accompany each TIL issue. Hygiene audits and BDD coverage scores must exclude TIL issues from their denominator. (#640)</li>
 </ol>
 
   </div>

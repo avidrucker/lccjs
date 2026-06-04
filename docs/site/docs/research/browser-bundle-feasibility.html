@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>browser-bundle-feasibility — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Browser-bundle feasibility — spike findings (#591)</h1>
+<p><strong>Date:</strong> 2026-06-03<br><strong>Agent:</strong> CHERRY<br><strong>Prereq completed:</strong> #592 (writeOutput → <code>this._write</code> callback)</p>
+<hr>
+<h2>Q1: Can <code>assembleSource</code> + <code>executeBuffer({inputBuffer})</code> be bundled with <code>fs</code> polyfilled as no-op?</h2>
+<p><strong>Verdict: YES.</strong></p>
+<p>All <code>fs</code> calls in <code>assembler.js</code> and <code>interpreter.js</code> are on dead-code paths when using the in-memory API:</p>
+<table>
+<thead>
+<tr>
+<th>Call site</th>
+<th>Guard</th>
+<th>Reachable in browser path?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>assembler.js</code> <code>fs.openSync/writeSync/closeSync</code></td>
+<td>Inside <code>writeOutputFile()</code>, called only from <code>main()</code></td>
+<td>No — <code>assembleSource()</code> returns before <code>writeOutputFile()</code></td>
+</tr>
+<tr>
+<td><code>interpreter.js</code> <code>fs.readSync</code> in <code>readLineFromStdin</code></td>
+<td>Guarded by <code>if (this.inputBuffer …)</code> (line 1310)</td>
+<td>No — pre-supplied <code>inputBuffer</code> takes the early-return branch</td>
+</tr>
+<tr>
+<td><code>interpreter.js</code> <code>fs.readSync</code> in <code>readCharFromStdin</code></td>
+<td>Guarded by <code>if (this.inputBuffer …)</code> (line 1366)</td>
+<td>No — same</td>
+</tr>
+<tr>
+<td><code>name.js</code> <code>fs.existsSync/readFileSync/writeFileSync</code></td>
+<td>Guarded by <code>this.generateStats</code> (default <code>false</code>)</td>
+<td>No — <code>generateStats</code> is only set to <code>true</code> by the CLI</td>
+</tr>
+</tbody></table>
+<p>Setting <code>resolve.fallback: {fs: false}</code> in webpack (which makes <code>require(&#39;fs&#39;)</code> resolve to <code>{}</code>) is sufficient. A runtime error only occurs if a dead-code path is reached — which it won&#39;t be for the target use case.</p>
+<p><strong>One caveat:</strong> <code>Buffer.alloc(1)</code> appears in <code>readLineFromStdin</code> and <code>readCharFromStdin</code>. These are also dead-code paths, but webpack 5 no longer auto-polyfills <code>Buffer</code>. If webpack emits a warning, add <code>fallback: {buffer: require.resolve(&#39;buffer/&#39;)}</code>. This has no effect on the live code path; it only satisfies webpack&#39;s static analysis.</p>
+<hr>
+<h2>Q2: Minimum viable <code>webpack.config.js</code> — can Babel be dropped?</h2>
+<p><strong>Verdict: YES, Babel can be dropped.</strong></p>
+<p>lccjs uses CommonJS (<code>require</code>/<code>module.exports</code>), classes, arrow functions, template literals, <code>const</code>/<code>let</code>, optional chaining, and <code>??</code>. All of these are natively supported by Chrome 85+, Firefox 78+, Safari 14+, Edge 85+. No transpilation step is needed for the slide-embed use case.</p>
+<p>Minimum config (see <code>spike/webpack.config.js</code> for the full file):</p>
+<pre><code class="language-js">module.exports = {
+  mode: &#39;production&#39;,
+  entry: &#39;./spike/browser-entry.js&#39;,
+  output: {
+    filename: &#39;lcc.bundle.js&#39;,
+    path: path.resolve(__dirname, &#39;dist&#39;),
+    library: { name: &#39;lcc&#39;, type: &#39;umd&#39;, export: &#39;default&#39; },
+    globalObject: &#39;typeof self !== &quot;undefined&quot; ? self : this&#39;,
+  },
+  resolve: {
+    fallback: {
+      fs:   false,
+      path: require.resolve(&#39;path-browserify&#39;),
+    },
+  },
+};
+</code></pre>
+<p>Dev dependencies needed: <code>webpack</code>, <code>webpack-cli</code>, <code>path-browserify</code> (optionally <code>buffer</code> if the Buffer warning appears).</p>
+<p>The old <code>browserify</code> branch&#39;s config included <code>babel-loader</code>, <code>style-loader</code>, <code>css-loader</code>, a complex <code>processWrapper.js</code>, and a 200-line <code>fsWrapper.js</code> with Proxy-based localStorage simulation — none of that is needed for the in-memory API path.</p>
+<p><strong><code>process.platform</code></strong> is used at module load time to set <code>newline</code>. Webpack 5&#39;s built-in process shim sets <code>process.platform = &#39;browser&#39;</code>, so <code>newline = &#39;\n&#39;</code> (correct for browser output).</p>
+<p><strong><code>process.exit</code></strong> in <code>cliExit.js</code> is called only on fatal errors. For library use (vs CLI), callers should catch thrown typed errors (<code>AssemblerError</code>, <code>InterpreterRuntimeError</code>) rather than relying on <code>process.exit</code>. Webpack&#39;s process shim provides a no-op <code>exit</code>, which is fine.</p>
+<hr>
+<h2>Q3: Does <code>dist/lcc.bundle.js</code> work in a plain <code>&lt;script&gt;</code> tag on a <code>file://</code> page?</h2>
+<p><strong>Verdict: YES — no special headers required.</strong></p>
+<p>The blocking-stdin architecture in the old <code>browserify</code> branch required <code>Atomics.wait()</code> in a Web Worker, which mandates <code>Cross-Origin-Opener-Policy: same-origin</code> + <code>Cross-Origin-Embedder-Policy: require-corp</code>. These headers are unavailable on GitHub Pages without custom server config, on local <code>file://</code> pages, and on most slide-hosting environments.</p>
+<p>The in-memory API avoids this entirely:</p>
+<ul>
+<li>Input is pre-supplied via <code>inputBuffer</code> string — no blocking read, no Web Worker needed</li>
+<li>Output is captured via <code>{write: m =&gt; (domBuffer += m)}</code> — no <code>process.stdout</code> interception</li>
+<li>The bundle runs synchronously in the main thread for short programs</li>
+</ul>
+<p>A <code>&lt;script src=&quot;dist/lcc.bundle.js&quot;&gt;</code> tag on a <code>file://</code> page is sufficient. See <code>spike/test-bundle.html</code> for a smoke-test.</p>
+<hr>
+<h2>Remaining gaps before #593 (minimal browser API)</h2>
+<ol>
+<li><code>Buffer.alloc</code> in dead-code branches — add <code>buffer</code> polyfill or restructure to avoid</li>
+<li>No bundle smoke-test has been executed yet (webpack not installed in this repo; spike config is conceptual)</li>
+<li><code>assembleSource</code> currently returns the binary buffer; the API wrapper for #593 will need to handle errors (thrown <code>AssemblerError</code>) and expose a friendlier interface</li>
+<li>Programs using <code>sin</code>/<code>ain</code>/<code>hin</code> traps with user-supplied <code>inputBuffer</code> work; programs that exhaust the buffer will call <code>fs.readSync</code> and fail — document this limitation clearly</li>
+</ol>
+<hr>
+<h2>References</h2>
+<ul>
+<li>Old browserify branch: <code>origin/browserify</code> (webpack config + polyfills)</li>
+<li>Pure seam documentation: <code>CLAUDE.md</code> &quot;Architecture: pure seams vs CLI wrappers&quot;</li>
+<li>writeOutput decoupling: #592 (merged 2026-06-03)</li>
+<li>Next step: #593 DEV: minimal browser API</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

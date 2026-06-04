@@ -77,6 +77,7 @@ code { font-family:var(--mono-font); }
   <a href="../../docs/glossary/">Glossary</a>
   <a href="../../docs/parity/">Parity</a>
   <a href="../../docs/workflow/" class="active">Workflow</a>
+  <a href="../../showcase/">Playground</a>
 </nav>
   <div class="back-link"><a href="./">← Workflow index</a></div>
   <div class="prose">
@@ -174,19 +175,106 @@ is to be ready when asked (#377).</p>
 <hr>
 <h2>While continuing (doing the work)</h2>
 <ul>
-<li><strong>Stay in scope.</strong> Anything outside the ticket gets logged as a finding, not pursued.</li>
-<li><strong>Tracker tickets require a child issue before any work.</strong> If the assigned ticket is a tracker (body says &quot;stays open until children resolve&quot;), file a concrete child issue for the chosen sub-item <em>before</em> claiming a worktree or starting work. Velocity is logged on the child; the tracker stays open. No exceptions for small or obvious items. (RULES.md #12)</li>
-<li><strong>Surface findings as I notice them — file tickets immediately and unilaterally.</strong> Open questions, unexpected behaviour, brittle code, or deferred work discovered mid-task all become GitHub issues, filed without asking permission. The tracker is the only shared memory that survives context compaction and agent rotation; if something isn&#39;t filed, it disappears. Filing is not a destructive action — a wrong ticket can be closed immediately. Cite the new number inline and move on: &quot;Filed #N for X — continuing.&quot; Do <strong>not</strong> ask &quot;should I create a ticket?&quot; or &quot;want me to file an issue?&quot; (#511)</li>
-<li><strong>Research findings go in issue comments, not TIL docs.</strong> When a research ticket or spike produces findings, post them as a comment on the originating GitHub issue — not as a <code>docs/learnings/today-i-learned-*.md</code> file. Only write a TIL entry when: (a) the user explicitly asks (&quot;write a TIL&quot;, &quot;add to learnings&quot;), or (b) the knowledge is durable, genuinely cross-ticket, and belongs in a persistent learning log rather than on one ticket. When in doubt, use the issue comment. (#437) When a TIL entry IS appropriate, treat it as work: file an issue, claim a worktree, commit from it, log velocity, and close via <code>npm run close</code> — RULES.md 4, 5, 8, 9 apply unconditionally. (#469)</li>
-<li><strong>Correcting a sibling issue&#39;s description.</strong> If I find a factual error in <em>another</em> issue&#39;s description (wrong cross-ref, stale dependency, outdated premise), I do <strong>not</strong> silently rewrite the body. I redline it: <code>~~strikethrough~~</code> the wrong text in place, add a <code>&gt; ⚠️ **SEE COMMENTS FOR CORRECTIONS**</code> banner at the top, and post the correction as a comment — so the original stays visible and the fix is additive. The <code>yegor-tickets</code> skill owns this convention (#300).</li>
-<li><strong>Verify as I go.</strong> For code changes: assemble, run tests, exercise the change. For doc changes: re-read for accuracy and link sanity. For research: cite source line numbers so the reasoning is checkable.</li>
-<li><strong>Wrap tool invocations with <code>lccrun.sh</code>.</strong> Any shell call to <code>lcc.js</code>, <code>interpreter.js</code>, <code>linker.js</code>, or the oracle binary (<code>$LCC_ORACLE</code>) that could read from stdin <strong>must</strong> go through <code>scripts/lccrun.sh</code>:<pre><code class="language-bash">scripts/lccrun.sh [&lt;secs&gt;] node src/core/lcc.js &lt;file&gt;.a      # default 30 s
+<li><p><strong>Stay in scope.</strong> Anything outside the ticket gets logged as a finding, not pursued.</p>
+</li>
+<li><p><strong>Tracker tickets require a child issue before any work.</strong> If the assigned ticket is a tracker (body says &quot;stays open until children resolve&quot;), file a concrete child issue for the chosen sub-item <em>before</em> claiming a worktree or starting work. Velocity is logged on the child; the tracker stays open. No exceptions for small or obvious items. (RULES.md #12)</p>
+</li>
+<li><p><strong>Surface findings as I notice them — file tickets immediately and unilaterally.</strong> Open questions, unexpected behaviour, brittle code, or deferred work discovered mid-task all become GitHub issues, filed without asking permission. The tracker is the only shared memory that survives context compaction and agent rotation; if something isn&#39;t filed, it disappears. Filing is not a destructive action — a wrong ticket can be closed immediately. Cite the new number inline and move on: &quot;Filed #N for X — continuing.&quot; Do <strong>not</strong> ask &quot;should I create a ticket?&quot; or &quot;want me to file an issue?&quot; (#511)</p>
+</li>
+<li><p><strong>Issue titles must use <code>ROLE:</code> prefix — commit format is prohibited.</strong> (#641) Every issue title must begin with an uppercase role word followed by a colon and a space: <code>ROLE: short description</code>. The commit-message format (<code>type(scope): description</code>) is <strong>never</strong> valid as an issue title — do not write <code>fix(linker): …</code> or <code>docs(learnings): …</code> in a GitHub issue title.</p>
+<p>Canonical role vocabulary (use exactly as shown):</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>When to use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DEV</code></td>
+<td>Implementation work, bug fixes, refactors</td>
+</tr>
+<tr>
+<td><code>TEST</code></td>
+<td>Adding or fixing tests</td>
+</tr>
+<tr>
+<td><code>WRITER</code></td>
+<td>Documentation, workflow, RULES.md edits</td>
+</tr>
+<tr>
+<td><code>PM</code></td>
+<td>Project management, triage, tracker upkeep</td>
+</tr>
+<tr>
+<td><code>SPIKE</code></td>
+<td>Time-boxed research with a concrete deliverable</td>
+</tr>
+<tr>
+<td><code>ARCHITECT</code></td>
+<td>Design decisions, ADRs (not <code>ARCH</code> or <code>ARC</code>)</td>
+</tr>
+<tr>
+<td><code>RESEARCH</code></td>
+<td>Open-ended investigation, no immediate code change</td>
+</tr>
+<tr>
+<td><code>REVIEW</code></td>
+<td>Code or PR review tasks</td>
+</tr>
+<tr>
+<td><code>TIL</code></td>
+<td>Today-I-Learned entries (exempt from strict <code>ROLE:</code> format — use <code>TIL YYYY-MM-DD AGENT — description</code>; see #640)</td>
+</tr>
+</tbody></table>
+<p>Non-standard prefixes seen in the wild and their canonical mappings: <code>AUDIT:</code> → <code>REVIEW</code>, <code>DECISION:</code> → <code>ARCHITECT</code>, <code>Q:</code> → <code>SPIKE</code>, <code>HUMAN REVIEW:</code> → <code>REVIEW</code>, <code>Tracker:</code> → <code>PM</code>.</p>
+</li>
+<li><p><strong>Severity label calibration — apply one <code>severity:*</code> label when filing any issue.</strong> The three labels are <code>severity:high</code>, <code>severity:medium</code>, and <code>severity:low</code>. Use this decision tree: (#643)</p>
+<ol>
+<li><strong>Start at <code>severity:medium</code></strong> if the ticket is <code>DEV</code> or <code>TEST</code> and affects runtime behavior, user-visible output, or correctness.</li>
+<li><strong>Escalate to <code>severity:high</code></strong> if it blocks other work, causes data corruption, produces broken output, or is a public-API regression.</li>
+<li><strong>Drop to <code>severity:low</code></strong> only if the ticket is cosmetic, docs, PM, TIL, or a refactor/cleanup with no user-visible change.</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>When to use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>severity:high</code></td>
+<td>Data corruption, broken output, blocking regression, public-API breakage</td>
+</tr>
+<tr>
+<td><code>severity:medium</code></td>
+<td><strong>Default for any DEV or TEST ticket</strong> that affects runtime behavior, user-visible output, or correctness</td>
+</tr>
+<tr>
+<td><code>severity:low</code></td>
+<td>Docs, PM, TIL, refactor/cleanup with no user-visible change, cosmetic issues</td>
+</tr>
+</tbody></table>
+<p>When in doubt: <code>DEV</code> → <code>severity:medium</code>, <code>WRITER</code>/<code>PM</code>/<code>TIL</code> → <code>severity:low</code>.</p>
+</li>
+<li><p><strong>Research findings go in issue comments, not TIL docs.</strong> When a research ticket or spike produces findings, post them as a comment on the originating GitHub issue — not as a <code>docs/learnings/today-i-learned-*.md</code> file. Only write a TIL entry when: (a) the user explicitly asks (&quot;write a TIL&quot;, &quot;add to learnings&quot;), or (b) the knowledge is durable, genuinely cross-ticket, and belongs in a persistent learning log rather than on one ticket. When in doubt, use the issue comment. (#437) When a TIL entry IS appropriate, treat it as work: file an issue, claim a worktree, commit from it, log velocity, and close via <code>npm run close</code> — RULES.md 4, 5, 8, 9 apply unconditionally. (#469)</p>
+</li>
+<li><p><strong>Correcting a sibling issue&#39;s description.</strong> If I find a factual error in <em>another</em> issue&#39;s description (wrong cross-ref, stale dependency, outdated premise), I do <strong>not</strong> silently rewrite the body. I redline it: <code>~~strikethrough~~</code> the wrong text in place, add a <code>&gt; ⚠️ **SEE COMMENTS FOR CORRECTIONS**</code> banner at the top, and post the correction as a comment — so the original stays visible and the fix is additive. The <code>yegor-tickets</code> skill owns this convention (#300).</p>
+</li>
+<li><p><strong>Verify as I go.</strong> For code changes: assemble, run tests, exercise the change. For doc changes: re-read for accuracy and link sanity. For research: cite source line numbers so the reasoning is checkable.</p>
+</li>
+<li><p><strong>Wrap tool invocations with <code>lccrun.sh</code>.</strong> Any shell call to <code>lcc.js</code>, <code>interpreter.js</code>, <code>linker.js</code>, or the oracle binary (<code>$LCC_ORACLE</code>) that could read from stdin <strong>must</strong> go through <code>scripts/lccrun.sh</code>:</p>
+<pre><code class="language-bash">scripts/lccrun.sh [&lt;secs&gt;] node src/core/lcc.js &lt;file&gt;.a      # default 30 s
 scripts/lccrun.sh [&lt;secs&gt;] &quot;$LCC_ORACLE&quot; probe.a
 </code></pre>
-Bare invocations block indefinitely when <code>name.nnn</code> is absent and stdin is not a TTY (agent FIG, 2026-06-01: 28 min at 99.9% CPU). The runner kills the full process group on timeout and exits 124. Only skip the runner for <code>assembler.js</code> or <code>linker.js</code> invocations that provably never reach the interpreter (i.e., <code>--assemble-only</code> / <code>-o</code> output and no <code>-i</code> flag).</li>
-<li><strong>Use TaskUpdate</strong> to mark sub-steps complete if I created tasks. Cleaning up the task list is part of the work.</li>
-<li><strong>Brief, accurate status updates</strong> — one sentence at key moments, not a running monologue.</li>
-<li><strong>Tool-failure discipline.</strong> Any <code>tool_use_error</code> from Edit/Write/Bash means the operation <strong>did not happen</strong> — treat it as a hard block, not advice. Two real failure modes have shipped broken state in this project:<ul>
+<p>Bare invocations block indefinitely when <code>name.nnn</code> is absent and stdin is not a TTY (agent FIG, 2026-06-01: 28 min at 99.9% CPU). The runner kills the full process group on timeout and exits 124. Only skip the runner for <code>assembler.js</code> or <code>linker.js</code> invocations that provably never reach the interpreter (i.e., <code>--assemble-only</code> / <code>-o</code> output and no <code>-i</code> flag).</p>
+</li>
+<li><p><strong>Use TaskUpdate</strong> to mark sub-steps complete if I created tasks. Cleaning up the task list is part of the work.</p>
+</li>
+<li><p><strong>Brief, accurate status updates</strong> — one sentence at key moments, not a running monologue.</p>
+</li>
+<li><p><strong>Tool-failure discipline.</strong> Any <code>tool_use_error</code> from Edit/Write/Bash means the operation <strong>did not happen</strong> — treat it as a hard block, not advice. Two real failure modes have shipped broken state in this project:</p>
+<ul>
 <li><em>Stale read</em> (<code>File has been modified since read</code>) — another agent touched the file between my Read and Edit. The file is unchanged from its pre-Read state; my intended edit is lost.</li>
 <li><em>Classifier outage</em> (<code>Opus temporarily unavailable, auto mode cannot determine safety</code>) — the Edit&#39;s safety check couldn&#39;t run. Write/Edit returns an error; the file is unchanged.
 Do NOT <code>git add</code> a file I just edited unless I&#39;ve confirmed the edit applied — re-read, grep for the new content, or check <code>git diff</code>. A successful tool result for the <em>next</em> call after an error does NOT retroactively apply the failed one. This pattern shipped raw conflict markers in lccjs commit <code>cb798a7</code> (#139 close); followup <code>a19d115</code> cleaned it up. The puzzle-velocity skill 0.4.0 has a grep guard for the rebase-conflict variant specifically; this rule is the general case.</li>
@@ -243,10 +331,37 @@ Do NOT <code>git add</code> a file I just edited unless I&#39;ve confirmed the e
 <h2>At close (finishing the puzzle)</h2>
 <p><strong>Before the closing commit:</strong></p>
 <ol>
-<li>Capture the finish timestamp:<pre><code class="language-bash">date &#39;+%Y-%m-%dT%H:%M:%S%:z&#39;
+<li><p>Capture the finish timestamp:</p>
+<pre><code class="language-bash">date &#39;+%Y-%m-%dT%H:%M:%S%:z&#39;
 </code></pre>
 </li>
-<li>Final verification — does the change actually do what it should?</li>
+<li><p>Final verification — does the change actually do what it should?</p>
+</li>
+<li><p><strong>Pre-close scope audit (mandatory):</strong> Run <code>git diff origin/main</code> and verify every
+changed file and function falls within this ticket&#39;s &quot;Should have.&quot; If any change
+is out of scope:</p>
+<ol>
+<li>File a ticket for it immediately.</li>
+<li>Revert or stash the out-of-scope change.</li>
+<li>Close this ticket with only the in-scope work.</li>
+<li>Pick up the newly filed ticket separately.</li>
+</ol>
+<p>Three failure modes to watch for: bug found mid-implementation (FM-1),
+discovery time absorbed without logging (FM-2), multi-fix bundled under one
+number (FM-3). See <code>docs/research/601-scope-discipline.md</code>.</p>
+</li>
+<li><p><strong>Pre-close finding audit (mandatory, all ticket types):</strong> Before running <code>npm run close N</code>, answer:</p>
+<ol>
+<li>Did you notice any bug, regression, or process failure not in this ticket&#39;s scope? → File a ticket now.</li>
+<li>Does this close change anything that contradicts an open ticket, doc, or TIL entry? → Cross-reference or file a ticket.</li>
+<li>Is there a follow-up question or decision that needs routing to a human? → File a ticket with the <code>humans-only</code> label.</li>
+</ol>
+<p>Green-light only when all three are &quot;no&quot; or &quot;filed #N for it.&quot; (Addresses C-1, C-2, C-3, E-2 from <a href="./research/orchestration-failure-modes.md"><code>docs/research/orchestration-failure-modes.md</code></a>, #627. Skill enforcement layer: M7 / #644.)</p>
+</li>
+<li><p><strong>Research closes — file follow-up tickets for proposals.</strong> If this is a research or spike ticket whose deliverable proposes concrete changes (new rules, doc updates, code modifications), file a follow-up DEV (or SPIKE) ticket for each distinct proposal before running the close sequence. A research close that ends with &quot;here are N proposed changes&quot; but no child issue is half-finished: the findings exist but have no path to implementation. Filing is not optional — a wrong ticket can be closed immediately. Cross-ref: scope-discipline failure mode taxonomy in <a href="./research/601-scope-discipline.md"><code>docs/research/601-scope-discipline.md</code></a>, #615. (#621)</p>
+</li>
+<li><p><strong>Run <code>/next-best-action</code></strong> — the pre-close finding checklist. Answers five questions (bug/regression, process recurrence, doc contradiction, closing loop, deferred decision/external routing). Takes 2–3 minutes; catches the findings most likely to evaporate at close time. Skip only for pure velocity-log-only or sub-minute clarification turns. (#644)</p>
+</li>
 </ol>
 <p><strong>The close sequence</strong> (full protocol in <a href="./puzzle-velocity.md"><code>puzzle-velocity.md</code></a>):</p>
 <pre><code class="language-bash"># 1. Log the velocity row (validates + inserts into ~/.lccjs/velocity.db,

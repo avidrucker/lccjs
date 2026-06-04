@@ -164,7 +164,7 @@ const JS = `
 }());
 `;
 
-// Build the <nav> bar. activeId matches a DOCS_SECTIONS id or 'home'.
+// Build the <nav> bar. activeId matches a DOCS_SECTIONS id, 'home', or 'showcase'.
 function buildNav(rootPath, activeId) {
   const home  = `<a href="${rootPath}"${activeId === 'home' ? ' class="active"' : ''}>Home</a>`;
   const links = DOCS_SECTIONS.map(s => {
@@ -172,7 +172,9 @@ function buildNav(rootPath, activeId) {
     const cls  = activeId === s.id ? ' class="active"' : '';
     return `<a href="${href}"${cls}>${s.label}</a>`;
   });
-  return `<nav>${[home, ...links].join('\n  ')}\n</nav>`;
+  const playgroundCls = activeId === 'showcase' ? ' class="active"' : '';
+  const playground = `<a href="${rootPath}showcase/"${playgroundCls}>Playground</a>`;
+  return `<nav>${[home, ...links, playground].join('\n  ')}\n</nav>`;
 }
 
 // Render one code snippet as a <section> with per-theme panels.
@@ -351,6 +353,131 @@ ${listItems}
     fs.writeFileSync(indexFile, indexHtml);
     console.log(`build:site — ${section.id}: ${path.relative(ROOT, indexFile)} + ${mdEntries.length} pages`);
   }
+
+  // ── Playground page ──────────────────────────────────────────────────────────
+
+  // Copy grammar to site root so the playground page can fetch it at ../lcc.tmLanguage.json.
+  fs.copyFileSync(GRAMMAR_PATH, path.join(OUT_DIR, 'lcc.tmLanguage.json'));
+
+  const playgroundThemeOptions = THEMES.map(({ id, label }) =>
+    `      <option value="${id}"${id === DEFAULT_THEME ? ' selected' : ''}>${label}</option>`
+  ).join('\n');
+
+  // Serialize custom themes so the runtime script can pass them to createHighlighter.
+  const customThemesJson = JSON.stringify([retroDarkTheme, retroLightTheme, zenburnTheme]);
+  const builtinThemeIds  = JSON.stringify(
+    THEMES.filter(t => !t.id.startsWith('retro-console') && t.id !== 'zenburn').map(t => t.id)
+  );
+  const darkIdsJson = JSON.stringify(DARK_IDS);
+
+  const starterCode = fs.readFileSync(path.join(ROOT, 'demos', 'helloWorld.a'), 'utf8').trimEnd();
+  const starterCodeJson = JSON.stringify(starterCode);
+
+  const playgroundScript = `
+<script type="module">
+const CUSTOM_THEMES  = ${customThemesJson};
+const BUILTIN_THEMES = ${builtinThemeIds};
+const DARK           = new Set(${darkIdsJson});
+
+const sel      = document.getElementById('theme-select');
+const textarea = document.getElementById('playground-input');
+const output   = document.getElementById('playground-output');
+const status   = document.getElementById('playground-status');
+
+function applyBodyClass(themeId) {
+  document.body.className = (DARK.has(themeId) ? 'dark' : 'light') +
+    (themeId.startsWith('retro-console') ? ' retro' : '');
+}
+
+(async () => {
+  textarea.value = ${starterCodeJson};
+  applyBodyClass(sel.value);
+
+  let hl;
+  try {
+    const [{ createHighlighter }, grammarRes] = await Promise.all([
+      import('https://esm.sh/shiki@1'),
+      fetch('../lcc.tmLanguage.json'),
+    ]);
+    const grammar = await grammarRes.json();
+    hl = await createHighlighter({ langs: [grammar], themes: [...CUSTOM_THEMES, ...BUILTIN_THEMES] });
+    status.textContent = '';
+  } catch (err) {
+    status.textContent = 'Highlighting unavailable: ' + err.message;
+    return;
+  }
+
+  function render() {
+    const theme = sel.value;
+    applyBodyClass(theme);
+    try {
+      output.innerHTML = hl.codeToHtml(textarea.value, { lang: 'lcc', theme });
+    } catch (err) {
+      status.textContent = 'Highlight error: ' + err.message;
+    }
+  }
+
+  sel.addEventListener('change', render);
+
+  let debounce;
+  textarea.addEventListener('input', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(render, 150);
+  });
+
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+    const s = textarea.selectionStart, en = textarea.selectionEnd;
+    textarea.value = textarea.value.slice(0, s) + '    ' + textarea.value.slice(en);
+    textarea.selectionStart = textarea.selectionEnd = s + 4;
+    clearTimeout(debounce);
+    debounce = setTimeout(render, 150);
+  });
+
+  render();
+})();
+</script>`;
+
+  const playgroundContent = `
+  <h1>Playground</h1>
+  <p class="subtitle">Type LCC assembly below — syntax highlighting updates live.</p>
+  <div class="theme-toolbar">
+    <label for="theme-select">Theme:</label>
+    <select id="theme-select">
+${playgroundThemeOptions}
+    </select>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+    <div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem;">Input</p>
+      <textarea id="playground-input" spellcheck="false" style="width:100%;height:420px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
+    </div>
+    <div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem;">Highlighted output</p>
+      <div id="playground-output" style="min-height:420px;border-radius:6px;overflow:auto;font-size:.85rem;"></div>
+    </div>
+  </div>
+  <p id="playground-status" style="color:#f85149;font-size:.8rem;margin-top:.5rem;"></p>
+  <footer style="margin-top:3.5rem;font-size:.8rem;color:var(--muted);border-top:1px solid var(--border);padding-top:1rem;">
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>`;
+
+  const playgroundDir = path.join(OUT_DIR, 'showcase');
+  fs.mkdirSync(playgroundDir, { recursive: true });
+
+  const playgroundHtml = makePage({
+    title: 'Playground — LCC Assembly',
+    bodyClass: 'dark',
+    nav: buildNav('../', 'showcase'),
+    content: playgroundContent,
+    footer: '',
+    script: '',
+  }).replace('</body>', playgroundScript + '\n</body>');
+
+  const playgroundFile = path.join(playgroundDir, 'index.html');
+  fs.writeFileSync(playgroundFile, playgroundHtml);
+  console.log(`build:site — playground: ${path.relative(ROOT, playgroundFile)}`);
 
   console.log('build:site — done.');
 })();

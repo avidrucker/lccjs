@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-03-apple-4 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-03 (APPLE-4) — close.js HEAD guard fix and closing-comment discipline gap</h1>
+<h2>Context</h2>
+<p>Two puzzles closed this session: #619 (bug fix) and #620 (docs). Both were
+straightforward, but together they surfaced two workflow observations worth keeping.</p>
+<hr>
+<h2>1. <code>npm run close</code> scanned only HEAD — the velocity two-commit protocol broke it</h2>
+<p><strong>The bug (#619).</strong> <code>headClosesIssue()</code> in <code>scripts/close.js</code> ran <code>git log -1</code> —
+checking only the HEAD commit for a <code>Closes #N</code> keyword. The standard velocity
+protocol produces two commits before pushing:</p>
+<ol>
+<li>The fix commit — contains <code>Closes #N</code> in the body.</li>
+<li>The velocity CSV commit — <code>data(velocity): log #N …</code> — no close reference.</li>
+</ol>
+<p>After the velocity commit, HEAD is commit 2. The script refused:</p>
+<pre><code>[close] ✗ HEAD commit does not reference &quot;Closes #619&quot;.
+</code></pre>
+<p>GitHub itself closes the issue correctly (it scans the full push set), but the
+close script&#39;s worktree teardown and branch cleanup are bypassed. The issue was first
+discovered and filed by FIG in #614 / TIL FIG-3; this session delivered the fix.</p>
+<p><strong>The fix.</strong> Replaced <code>headClosesIssue</code> with two functions:</p>
+<ul>
+<li><code>bodyClosesIssue(text, issue)</code> — pure predicate, checks whether any commit text
+contains a GitHub close keyword for the issue. Exported and unit-tested.</li>
+<li><code>findClosingCommitSha(issue)</code> — I/O wrapper that runs
+<code>git log origin/main..HEAD --format=%H</code>, walks each SHA, and returns the first
+commit whose body satisfies <code>bodyClosesIssue</code>. Returns <code>null</code> if none found.</li>
+</ul>
+<p>Guard 2 (keyword check) also needed updating: it was reading
+<code>git log -1 --format=%s</code> (HEAD&#39;s subject). When HEAD is the velocity commit, the
+subject is <code>data(velocity): log #N …</code> — no keywords from the issue title, so Guard 2
+would also have fired a false rejection. The fix passes <code>closingCommitSha</code> to
+<code>checkKeywordMatch</code> so it checks the right commit&#39;s subject.</p>
+<p><strong>Self-hosting proof.</strong> The closing commit for #619 was committed first (with
+<code>Closes #619</code>), then a separate velocity CSV commit was made — putting the velocity
+commit at HEAD, exactly the failing scenario. Running <code>npm run close 619</code> with the
+fixed script succeeded, confirming the fix works end-to-end.</p>
+<p>8 regression tests added for <code>bodyClosesIssue</code>; all 120 unit tests pass.</p>
+<hr>
+<h2>2. The closing-comment step is a discipline gap</h2>
+<p><code>npm run close</code> ends every successful run with:</p>
+<pre><code>[close] Post your closing comment:
+  gh issue comment N --body &quot;Closed in &lt;sha&gt;. &lt;your summary here&gt;&quot;
+</code></pre>
+<p>This session&#39;s APPLE agent (on #619) treated the report-to-human turn as the done
+signal and stopped without executing the comment. The human had to ask why no comment
+was left before APPLE posted it retroactively.</p>
+<p>The prompt is advisory text in the terminal — it does not gate on the comment being
+posted. Agents read it, mentally note it as &quot;a suggested next step,&quot; then summarize
+the work to the human and stop. The comment falls through the gap between &quot;the script
+finished&quot; and &quot;the task is done.&quot;</p>
+<p>Filed as #637. Possible remediation paths: auto-post inside <code>close.js</code> (requires a
+summary string), hard-stop in the workflow skill/docs, or a <code>--comment</code> flag that
+takes a body and posts it in the same script run.</p>
+<p><strong>The discipline rule that works now:</strong> do not report the task as done until
+<code>gh issue comment N</code> has been executed and the URL has been confirmed in terminal
+output. Treat the comment as part of the close sequence, not as an optional courtesy.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/619">#619</a></td>
+<td><code>bodyClosesIssue</code> + <code>findClosingCommitSha</code> replace HEAD-only check; Guard 2 uses closing commit SHA. 8 new tests.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/620">#620</a></td>
+<td><code>actual_min</code> validity condition documented in <code>velocity-schema.md</code> and <code>puzzle-velocity.md</code>.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/637">#637</a></td>
+<td>Bug filed: closing-comment step skipped by agents after <code>npm run close</code>.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/646">#646</a></td>
+<td>This TIL.</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

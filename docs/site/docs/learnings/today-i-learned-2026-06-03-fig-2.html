@@ -77,94 +77,69 @@ code { font-family:var(--mono-font); }
   <a href="../../docs/glossary/">Glossary</a>
   <a href="../../docs/parity/">Parity</a>
   <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
 </nav>
   <div class="back-link"><a href="./">← Learnings index</a></div>
   <div class="prose">
-<h1>Today I Learned — 2026-06-03 (FIG-2)</h1>
-<p>Session: assembler edge-case tests (#555), velocity row eligibility rule (#225),
-and enrich.py retirement research (#288).</p>
+<h1>TIL 2026-06-03 (FIG-2) — Showcase playground: Shiki lang-ID and textarea UX</h1>
+<h2>Context</h2>
+<p>Implementing #602: live-edit textarea with Shiki syntax highlighting on
+<code>docs/showcase/index.html</code>. Verified in headless Chrome via Playwright.</p>
 <hr>
-<h2>1. The assembler tokenizer silently drops trailing and double commas</h2>
-<p>When adding edge-case tests for malformed operands (#555), I discovered that the
-tokenizer treats commas exactly like whitespace — as a token <em>delimiter</em>, not a
-token in itself. It only pushes a token when <code>currentToken !== &#39;&#39;</code>, so:</p>
-<ul>
-<li><code>add r0, r1,</code> (trailing comma) → tokens <code>[&quot;add&quot;, &quot;r0&quot;, &quot;r1&quot;]</code></li>
-<li><code>add r0, , r1</code> (double comma) → tokens <code>[&quot;add&quot;, &quot;r0&quot;, &quot;r1&quot;]</code></li>
-</ul>
-<p>Both silently produce the same three-token list. The &quot;missing operand&quot; error comes
-from the <em>instruction handler</em> (<code>assembleADD</code> checking <code>operands[2] === undefined</code>),
-not from any parse-phase complaint about the comma syntax.</p>
-<p>This matters for debugging: a user who writes <code>add r0, r1,</code> expecting an error like
-&quot;unexpected trailing comma&quot; gets a less obvious &quot;Missing operand&quot; message instead.
-Worth knowing when writing tests that distinguish <em>syntactic</em> rejection from
-<em>semantic</em> rejection.</p>
-<p><strong>Corollary:</strong> unary <code>+5</code> is silently valid. JavaScript&#39;s <code>parseInt(&quot;+5&quot;, 10)</code>
-returns <code>5</code>, so the assembler accepts <code>add r0, r1, +5</code> without complaint. Only
-<em>compound</em> signs (<code>+-5</code>, <code>--5</code>, <code>++5</code>) produce <code>NaN</code> and trigger &quot;Bad number&quot;.</p>
+<h2>1. Shiki v1 registers custom grammars under <code>name</code>, not <code>scopeName</code></h2>
+<p>When loading a custom TextMate grammar:</p>
+<pre><code class="language-js">createHighlighter({ langs: [grammar], themes: [&#39;github-dark&#39;] })
+</code></pre>
+<p>Shiki v1 registers the language under <code>grammar.name</code>. Our grammar has:</p>
+<pre><code class="language-json">{ &quot;name&quot;: &quot;lcc&quot;, &quot;scopeName&quot;: &quot;source.lcc&quot;, ... }
+</code></pre>
+<p>So the correct call is <code>lang: &#39;lcc&#39;</code>, not <code>lang: &#39;source.lcc&#39;</code>. The showcase page
+uses <code>lang: &#39;source.lcc&#39;</code> throughout. In headless Chrome this fails:</p>
+<pre><code>Highlight error: Language `source.lcc` not found, you may need to load it first
+</code></pre>
+<p>This affects all four sections (three static + new playground). The page appears
+to work on GitHub Pages — likely because the browser caches a Shiki bundle that
+registers aliases differently, or because production fetches a slightly different
+CDN bundle. Needs a targeted fix: change <code>codeToHtml</code> calls to <code>lang: &#39;lcc&#39;</code>,
+or align the grammar&#39;s <code>name</code> to <code>source.lcc</code>. Filed as #603.</p>
 <hr>
-<h2>2. SQL VIEWs cover at most 3 of 18 enriched columns in this pipeline</h2>
-<p>When researching whether to retire <code>enrich.py</code> (#288), I found that the enrichment
-splits cleanly into three tiers:</p>
+<h2>2. Tab key moves focus out of a code-editing textarea</h2>
+<p>Default browser behavior: Tab in a textarea shifts focus to the next element.
+For a syntax-highlight playground, visitors expect Tab to indent. The fix is a
+<code>keydown</code> listener that intercepts Tab, calls <code>event.preventDefault()</code>, and inserts
+four spaces via selection-range manipulation. Filed as #604.</p>
+<hr>
+<h2>Implementation notes for #602</h2>
 <table>
 <thead>
 <tr>
-<th>Tier</th>
-<th>What it needs</th>
-<th>SQL VIEW?</th>
+<th>Detail</th>
+<th>Decision</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Git churn (7 cols)</td>
-<td><code>git show --numstat</code> subprocess</td>
-<td>❌</td>
+<td>Layout</td>
+<td>CSS Grid 1fr 1fr, collapses to single column at 680 px</td>
 </tr>
 <tr>
-<td>GitHub issue times (2 cols)</td>
-<td><code>gh api</code> subprocess</td>
-<td>❌</td>
+<td>Min height</td>
+<td>Both panels 320px — even when code is short</td>
 </tr>
 <tr>
-<td>Notes flags (5 regex cols)</td>
-<td><code>re.compile</code> patterns</td>
-<td>❌ (no built-in REGEXP)</td>
+<td>Populate timing</td>
+<td>textarea.value = STARTER_CODE before await — visible instantly</td>
 </tr>
 <tr>
-<td>Pure ratios (<code>c_ratio</code>, <code>h_ratio</code>, <code>span_min</code>)</td>
-<td>Arithmetic on existing cols</td>
-<td>✅</td>
-</tr>
-</tbody></table>
-<p>Only the 3 pure-arithmetic columns can live in a VIEW. The other 15 require either
-a subprocess or regex — capabilities that standard SQLite doesn&#39;t provide. A VIEW
-is additive (nice-to-have for quick CLI queries), but it cannot replace <code>enrich.py</code>.</p>
-<p>The general principle: before deciding to &quot;move enrichment to SQL&quot;, enumerate
-<em>each</em> enriched column&#39;s data dependencies. Subprocess calls and regex are the
-immediate disqualifiers.</p>
-<hr>
-<h2>What landed</h2>
-<table>
-<thead>
-<tr>
-<th>Artifact</th>
-<th>Change</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><a href="https://github.com/avidrucker/lccjs/issues/555">#555</a></td>
-<td>8 new assembler edge tests (218–225): compound signs, trailing/double commas, malformed offset6.</td>
+<td>Debounce</td>
+<td>150 ms setTimeout on input — matches issue spec</td>
 </tr>
 <tr>
-<td><a href="https://github.com/avidrucker/lccjs/issues/225">#225</a></td>
-<td>Velocity row eligibility rule (tracker→no row, scope-spike→one row) in <code>docs/puzzle-velocity.md</code> + <code>puzzle-velocity</code> skill.</td>
+<td>Scope</td>
+<td>renderPlayground closes over hl inside main() — no globals added</td>
 </tr>
 <tr>
-<td><a href="https://github.com/avidrucker/lccjs/issues/288">#288</a></td>
-<td>Research verdict: keep <code>enrich.py</code>; findings at <code>docs/research/retire-enrich-py.md</code>.</td>
-</tr>
-<tr>
-<td><a href="https://github.com/avidrucker/lccjs/issues/570">#570</a></td>
-<td>This TIL.</td>
+<td>Error path</td>
+<td>status-playground shows Shiki errors in red, consistent with static sections</td>
 </tr>
 </tbody></table>
 

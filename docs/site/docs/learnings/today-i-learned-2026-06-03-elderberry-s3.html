@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-03-elderberry-s3 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-03 — ELDERBERRY s3</h1>
+<p><strong>Context:</strong> Session covering #562 (Pattern 1 free-list allocator in gameSnake.ap),
+#603 (site curated-samples dedup + charTypewriter placement), and #594 (pages.yml
+path-trigger scoping).</p>
+<hr>
+<h2>1. <code>@freeList</code> must precede <code>@avail</code> — <code>*+1</code> is position-relative at assembly time</h2>
+<p><strong>What happened:</strong> Implementing Pattern 1 free-list in <code>gameSnake.ap</code>, I needed to
+add a <code>@freeList: .word 0</code> global alongside the existing <code>@avail: .word *+1</code> bump
+pointer. The placement order matters.</p>
+<p><code>@avail: .word *+1</code> initialises the stored value to the address of the word
+immediately after <code>@avail</code> itself — the self-referential <code>*</code> resolves at assembly
+time to wherever <code>@avail</code> sits in the binary. If <code>@freeList</code> were placed <em>after</em>
+<code>@avail</code>, then <code>@avail</code> would initialise to <code>@freeList</code>&#39;s address, and the first
+<code>malloc</code> call would overwrite <code>@freeList</code> with payload data.</p>
+<p><strong>The rule:</strong> any static variable added to a section that ends with
+<code>@avail: .word *+1</code> must be inserted <em>before</em> <code>@avail</code>, not after. The heap starts
+at the first address after <code>@avail</code>; placing statics after it silently puts them
+inside the heap arena.</p>
+<hr>
+<h2>2. Saving a register before an in-place overwrite — the <code>removeSnakeTail</code> pattern</h2>
+<p><strong>What happened:</strong> <code>removeSnakeTail</code> needed to call <code>free(oldHead)</code> after advancing
+the list. The existing code was:</p>
+<pre><code class="language-asm">ldr r1, r0, 0   ; r1 = oldHead
+ldr r1, r1, 2   ; r1 = oldHead-&gt;next  ← oldHead address lost here
+str r1, r0, 0   ; *snake = oldHead-&gt;next
+</code></pre>
+<p><code>oldHead</code> was gone by the time we needed to pass it to <code>free</code>.</p>
+<p><strong>The fix:</strong></p>
+<pre><code class="language-asm">mov r2, r1       ; r2 = oldHead (save before overwrite)
+ldr r1, r1, 2    ; r1 = oldHead-&gt;next
+str r1, r0, 0    ; *snake = oldHead-&gt;next
+mov r0, r2       ; r0 = oldHead (arg to free)
+bl  free
+</code></pre>
+<p><strong>The pattern:</strong> whenever a pointer is needed both as the base for an indirect load
+and as an argument to a subsequent call, save it in a scratch register <em>before</em> the
+load that overwrites it. In LCC assembly there is no stack-spill shortcut; a spare
+register is the only option for a leaf-call caller.</p>
+<hr>
+<h2>3. Issue descriptions go stale when concurrent work changes the scope</h2>
+<p><strong>What happened:</strong> Issue #594 (&quot;pages.yml path triggers are over- and
+under-scoped&quot;) was filed with a &quot;Should have&quot; trigger list that enumerated
+<code>demos/demoA.a</code>, <code>demos/demoO.a</code>, <code>demos/demoN.a</code> — the curated samples at the
+time of filing. By the time #594 was worked, #603 had:</p>
+<ul>
+<li>replaced those three with <code>demos/helloWorld.a</code></li>
+<li>kept all 26 <code>demoA–demoZ</code> files (rendered by the alphabet suite, auto-discovered
+via <code>&#39;ABCDEFGHIJKLMNOPQRSTUVWXYZ&#39;.split(&#39;&#39;)</code>)</li>
+</ul>
+<p>The issue&#39;s &quot;Should have&quot; list was therefore both stale (wrong curated files) and
+incomplete (missed 23 of 26 alphabet demos).</p>
+<p><strong>The rule:</strong> before implementing a CI/config fix, audit the &quot;Should have&quot; against
+the <em>current</em> state of the build script, not just the issue description. When other
+agents closed intervening issues that touched the same files, the spec may have
+drifted. The closing comment should note the discrepancy so reviewers understand why
+the final diff differs from the issue&#39;s stated spec.</p>
+<hr>
+<h2>4. Wildcards in pages.yml path triggers are correct for folder-scanned sections</h2>
+<p><strong>What happened:</strong> The issue title said &quot;replace wildcards with exact rendered-file
+list,&quot; which I initially read as &quot;remove all wildcards.&quot; But <code>docs/research/**</code>,
+<code>docs/learnings/**</code>, <code>docs/glossary/**</code>, and <code>docs/themes/**</code> are wildcard triggers
+that are <em>correctly scoped</em>: <code>build-site.js</code> renders every <code>.md</code> file found in
+those directories via <code>fs.readdirSync</code>. Adding a new <code>.md</code> to <code>docs/research/</code>
+should trigger a rebuild — the wildcard is the right tool.</p>
+<p>The over-scoping problem was specific to <code>demos/**</code> and <code>plusdemos/**</code>, which
+contain files that are never rendered (<code>happy-path.a</code>, <code>gameSnake.ap</code>, etc.).</p>
+<p><strong>The rule:</strong> a wildcard trigger is over-scoped only when the directory contains
+files that are <em>not</em> consumed by the build. Folder-scanned sections should keep
+wildcards; explicit-file sections should enumerate. The two patterns serve different
+purposes and should not be conflated.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Role</th>
+<th>Deliverable</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>#562</td>
+<td>SPIKE</td>
+<td>Pattern 1 fixed-size free list in <code>gameSnake.ap</code>: <code>@freeList</code> global, updated <code>malloc</code>, new <code>free</code> leaf function, <code>removeSnakeTail</code> reclaims tail nodes</td>
+</tr>
+<tr>
+<td>#603</td>
+<td>DEV</td>
+<td>Replaced curated demoA/O/N with <code>demos/helloWorld.a</code>; moved <code>charTypewriter.ap</code> to new &quot;LCC+ demos&quot; section below alphabet suite; rebuilt <code>docs/site/index.html</code></td>
+</tr>
+<tr>
+<td>#594</td>
+<td>DEV</td>
+<td>Fixed <code>pages.yml</code> path triggers: removed <code>demos/**</code>/<code>plusdemos/**</code> wildcards, enumerated all 27 rendered demo files, added 8 previously missing parity/workflow docs</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

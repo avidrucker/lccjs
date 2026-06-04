@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>623-closing-comment-auth — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>RESEARCH: closing comment authorization — #623</h1>
+<p><strong>Date:</strong> 2026-06-03<br><strong>Agent:</strong> CHERRY<br><strong>Role:</strong> RESEARCH</p>
+<hr>
+<h2>Problem</h2>
+<p><code>npm run close N</code> exits after landing the commit and tearing down the worktree, then
+prints a reminder:</p>
+<pre><code>Post your closing comment:
+  gh issue comment 623 --body &quot;Closed in abc123. &lt;your summary here&gt;&quot;
+</code></pre>
+<p>When the agent then calls <code>Bash(gh issue comment N --body &quot;...&quot;)</code> as a separate tool
+call, the auto-mode classifier blocks it:</p>
+<blockquote>
+<p>&quot;The user instructed the agent to close #N via <code>npm run close N</code> (already executed),
+but did not ask for a GitHub issue comment to be posted; this is an autonomous
+External System Write — publishing under the user&#39;s identity to a GitHub issue
+without explicit authorization.&quot;</p>
+</blockquote>
+<p>The agent must stop and request explicit permission before the comment posts.</p>
+<hr>
+<h2>Q1 — Can <code>allowedTools</code> whitelist <code>gh issue comment</code>?</h2>
+<p><strong>Yes.</strong> <code>.claude/settings.json</code> supports an <code>allowedTools</code> array that pre-approves
+tool calls matching a pattern. The auto-mode classifier checks this list before
+deciding whether to prompt.</p>
+<p><strong>Format:</strong></p>
+<pre><code class="language-json">{
+  &quot;allowedTools&quot;: [&quot;Bash(gh issue comment *)&quot;],
+  &quot;hooks&quot;: { ... }
+}
+</code></pre>
+<p>The <code>Bash(gh issue comment *)</code> pattern matches any <code>Bash</code> tool call whose command
+starts with <code>gh issue comment </code> (any issue number, any body). The <code>*</code> glob is the
+Claude Code allowedTools wildcard for remainder-of-command matching.</p>
+<p><strong>Scope options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Scope</th>
+<th>Appropriate?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.claude/settings.json</code></td>
+<td>This project only</td>
+<td><strong>Yes</strong> — correct scope</td>
+</tr>
+<tr>
+<td><code>~/.claude/settings.json</code></td>
+<td>All projects on this machine</td>
+<td>No — too broad; grants comment rights to unrelated repos</td>
+</tr>
+</tbody></table>
+<p>Project-level is right: the closing comment is a lccjs-specific workflow step; it
+should not auto-approve <code>gh issue comment</code> in unrelated projects.</p>
+<hr>
+<h2>Q2 — Should <code>close.js</code> post the comment internally?</h2>
+<p><strong>Partially — but it doesn&#39;t eliminate the need for the allowedTools entry.</strong></p>
+<p><code>close.js</code> calls <code>sh()</code> (Node.js <code>child_process.execSync</code>) for its own <code>gh</code> operations
+(e.g. <code>gh issue view N</code> to check state, <code>gh issue close N</code> if still open). These run
+as subprocesses of the agent&#39;s <code>Bash(npm run close N)</code> call and are <strong>not</strong> classified
+by the auto-mode classifier — they inherit the already-approved bash call&#39;s authorization.</p>
+<p>If <code>close.js</code> posted the comment via <code>sh(&#39;gh issue comment N --body &quot;...&quot;&#39;)</code> internally:</p>
+<ul>
+<li>The permission concern goes away (it&#39;s a subprocess, not a new tool call)</li>
+<li>But the body is a template stub — close.js doesn&#39;t know what the agent wants to say</li>
+<li>Agents cannot retroactively edit a posted comment; they can only reply with a new one</li>
+<li>The result would be two comments: the auto-stub, then the agent&#39;s substantive one</li>
+</ul>
+<p><strong>Verdict:</strong> Moving to close.js solves the permission problem but degrades comment quality. The <code>allowedTools</code> approach solves the permission problem while preserving agent authorship. The M10/#633 ticket tracks the close.js stub option as a separate enhancement; it is not the fix for #623.</p>
+<hr>
+<h2>Q3 — Other blocked close-sequence steps?</h2>
+<p>The classifier blocks <strong>any</strong> agent tool call that writes to an external system without
+explicit authorization. Close-sequence steps to audit:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Runs via</th>
+<th>Classifier sees it?</th>
+<th>Blocked?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>gh issue view N</code> (read)</td>
+<td>close.js <code>sh()</code></td>
+<td>No — subprocess</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>gh issue close N</code> (auto-close)</td>
+<td>close.js <code>sh()</code></td>
+<td>No — subprocess</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>git push ...</code> (in close loop)</td>
+<td>close.js <code>sh()</code></td>
+<td>No — subprocess</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>gh issue comment N --body &quot;...&quot;</code></td>
+<td><strong>Agent Bash call</strong></td>
+<td><strong>Yes</strong></td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td><code>gh issue create ...</code> (PM filing)</td>
+<td>Agent Bash call</td>
+<td>Yes</td>
+<td>When unsolicited</td>
+</tr>
+<tr>
+<td><code>gh issue edit N ...</code></td>
+<td>Agent Bash call</td>
+<td>Yes</td>
+<td>When unsolicited</td>
+</tr>
+</tbody></table>
+<p><strong>Summary:</strong> The closing comment is the only close-sequence step that is both
+(a) required by the protocol and (b) blocked because it&#39;s an agent-level tool call
+made after the already-authorized close action has completed. All close.js-internal
+<code>gh</code> calls are fine.</p>
+<p><code>gh issue create</code> for PM/triage work is only blocked when unsolicited — when the
+user explicitly says &quot;file a ticket for X,&quot; the classifier treats the <code>gh issue create</code>
+call as authorized. The closing comment is different because the user authorized
+&quot;close #N&quot; and the comment is an additional, not-yet-authorized step.</p>
+<hr>
+<h2>Q4 — Right scope for the permission rule?</h2>
+<p><strong>Project-level <code>.claude/settings.json</code>.</strong></p>
+<p>Rationale:</p>
+<ul>
+<li>Closing comments are specific to lccjs&#39;s puzzle workflow; no other project has this
+protocol</li>
+<li>Granting <code>gh issue comment *</code> at user-level would auto-approve comment posting on
+any GitHub repo Claude Code touches on this machine — an undesirable blanket grant</li>
+<li>The project <code>.claude/settings.json</code> is committed to the repo; all agents and
+terminals working lccjs automatically inherit the permission</li>
+</ul>
+<hr>
+<h2>Recommendation</h2>
+<p>Add <code>&quot;Bash(gh issue comment *)&quot;</code> to <code>.claude/settings.json</code> <code>allowedTools</code>.</p>
+<p>This is a one-line config change that:</p>
+<ul>
+<li>Pre-approves the documented final step of the close protocol</li>
+<li>Preserves agent-authored comment bodies (vs. close.js stub)</li>
+<li>Scopes the permission to this project only</li>
+<li>Does not require any change to close.js, claude_workflow.md, or the per-agent workflow</li>
+</ul>
+<p><strong>Child DEV ticket:</strong> filed separately (see issue comment) to wire up the change.</p>
+<hr>
+<h2>What this does NOT fix</h2>
+<ul>
+<li>M10/#633 (close.js auto-stub comment) — still worth doing for sessions where the
+agent forgets to post; that&#39;s a separate enhancement.</li>
+<li><code>gh issue create</code> unsolicted blocks — the allowedTools entry for <code>gh issue comment</code>
+does not cover issue creation. PM filing is already authorized by the user&#39;s
+instruction (&quot;file a ticket for X&quot;) so this is not blocked in practice.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>
