@@ -26,6 +26,15 @@ function processBlock(codeEl) {
   parent.insertAdjacentElement('afterend', out);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function runInjector() {
   document.querySelectorAll('code.language-lcc').forEach(processBlock);
-});
+}
+
+// In a reveal-md static export, DOMContentLoaded fires before Reveal.initialize()
+// processes Markdown into real DOM nodes — code blocks don't exist yet at that point.
+// When Reveal is present, defer until the 'ready' event so slides are fully rendered.
+if (typeof window !== 'undefined' && window.Reveal) {
+  Reveal.addEventListener('ready', runInjector);
+} else {
+  document.addEventListener('DOMContentLoaded', runInjector);
+}
