@@ -66,7 +66,7 @@ debugEnabled:    .word 0        ; 0=hide debug lines, 1=show debug lines
 
 hudMsg:          .string "Flappy Bird: w=flap, q=quit"
 scoreMsg:        .string "Score: "
-gameOverMsg:     .string "GAME OVER - press any key to exit"
+gameOverMsg:     .string "GAME OVER - r=restart, q=quit"
 debugBirdMsg:    .string "bird(row,col,vel)="
 debugPipeMsg:    .string "  pipe(col)="
 debugPipeModeMsg:.string "  mode="
@@ -619,6 +619,8 @@ initializeGame:
     mov  r1, 5
     ld   r2, @birdRowPtr
     str  r1, r2, 0
+    ld   r2, @birdColPtr
+    str  r1, r2, 0
     mov  r1, 0
     ld   r2, @birdVelocityPtr
     str  r1, r2, 0
@@ -686,6 +688,13 @@ main:
     nl
     ain   r0
 
+    mov   r1, 'r'
+    cmp   r0, r1
+    brne  @quitGame
+    bl    initializeGame
+    br    @loopStart
+
+@quitGame:
     mov   sp, fp
     pop   fp
     pop   lr
