@@ -96,7 +96,7 @@ If any file your ticket will touch is untracked or modified on main, commit or s
 
 **Then:**
 
-3. Read the ticket body via `gh issue view <N>`.
+3. Read the ticket body and all comments via `gh issue view <N> --comments`.
 4. Read referenced docs / source files needed for context.
 5. (Optional) `TaskCreate` if the puzzle has 3+ distinct sub-steps worth tracking.
 6. Pick the smallest concrete first step and start.
@@ -370,7 +370,7 @@ inside a token like `AT_TODO`). Rules:
 - **Worktree** — a separate working directory + branch for parallel-agent work. Lives at `.claude/worktrees/<fruit>-issue-<N>/` on branch `<fruit>/issue-<N>-<slug>`, claimed via `npm run claim`. The fruit (apple, banana, …) is the **agent identity** for the session. See `docs/design-agent-worktree-identity.md`.
 - **Trunk-based** — agents push directly to `main` (with `git push origin HEAD:main` from a feature branch). No PRs by default.
 - **velocity row** — a single record logged into `~/.lccjs/velocity.db` (exported to `docs/puzzle-velocity.csv`) for one ticket: role, agent identity, H/C estimates, start/finish timestamps, and actuals. Written via `npm run velocity:log`.
-- **pre-flight** — the discipline of capturing `started_iso` (`date '+%Y-%m-%dT%H:%M:%S%z'`) and running `gh issue view <N>` *before* any work begins. Skipping it forces reconstructed timestamps, which is an honesty tax.
+- **pre-flight** — the discipline of capturing `started_iso` (`date '+%Y-%m-%dT%H:%M:%S%z'`) and running `gh issue view <N> --comments` *before* any work begins. Skipping it forces reconstructed timestamps, which is an honesty tax. The `--comments` flag is essential: research findings, corrections, and scope clarifications are posted as issue comments — omitting it leaves that context invisible (#652).
 - **`at_todo` trap** — the anti-pattern where a doc, CSV field, or comment discussing the marker concept accidentally contains the live `@todo` substring, tripping the case-sensitive `pdd` scanner. Use the lowercase `at_todo` spelling (see above) in non-scanned files to discuss it safely.
 - **phantom marker** — a `@todo` or `@inprogress` marker whose backing GitHub issue is already closed. Shows as `STALE` in `npm run puzzle:status`. Must be deleted from source; leaving it inflates the open-puzzle count and misleads other agents.
 - **fruit identity** — the per-session agent name (APPLE, BANANA, CHERRY, …) used as the worktree branch prefix and the `agent` column in the velocity log. Assigned by the human orchestrator via `--as <fruit>` on `npm run claim`; never auto-named (#386).

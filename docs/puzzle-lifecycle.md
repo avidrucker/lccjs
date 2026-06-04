@@ -151,7 +151,7 @@ gh issue create --label severity:low --label documentation   # 1. make the issue
 # --- picking up a puzzle ---
 date '+%Y-%m-%dT%H:%M:%S%z'  # capture t₀ BEFORE reading the issue (start time)
 # set your C estimate (forward-looking: how long will this actually take?) — before reading
-gh issue view N               # now read the issue
+gh issue view N --comments    # read the issue body AND all comments (#660)
 npm run claim -- N --as apple # claim a worktree; in fan-out (≥2 agents running in parallel)
                               # always pre-assign --as <fruit>; bare 'auto' is unsafe (#386)
 # then immediately flip @todo #N -> @inprogress #N in the worktree
