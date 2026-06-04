@@ -19,7 +19,8 @@
     "lccrun": "bash scripts/lccrun.sh",
     "build": "npm run build:browser && npm run build:site",
     "build:site": "node scripts/build-site.js",
-    "build:browser": "webpack --config webpack.browser.config.js"
+    "build:browser": "webpack --config webpack.browser.config.js",
+    "test:browser": "playwright test tests/browser/"
   },
   "devDependencies": {
     "better-sqlite3": "^12.10.0",
