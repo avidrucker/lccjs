@@ -109,10 +109,7 @@ const DEMOS = [
     failing: 'Assembler silently drops "nl" in "dout r0  nl" (multi-instruction lines not supported)',
   },
   { num: '033', slug: 'division-algorithm',          chapter: 'ch11-integer-arithmetic' },
-  {
-    num: '034', slug: 'command-line-args',            chapter: 'ch12-operating-system-interface',
-    skip: 'Assembly uses .global main + linker startup stub; assembles to .o, cannot run standalone',
-  },
+  { num: '034', slug: 'command-line-args',            chapter: 'ch12-operating-system-interface' },
 ];
 
 const GCC_AVAILABLE = gccAvailable();
