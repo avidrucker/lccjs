@@ -2,6 +2,32 @@
 
 const { assemble, run } = require('./api');
 
+const TERMINAL_CSS = `
+.lcc-output {
+  background: #0a0a0a;
+  color: #4af626;
+  font-family: monospace;
+  font-size: .85rem;
+  line-height: 1.6;
+  padding: 1rem 1.25rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-top: .5rem;
+}
+.lcc-output.lcc-error {
+  color: #ff5555;
+  border-left: 3px solid #f44336;
+}
+`;
+
+function injectStyles() {
+  const style = document.createElement('style');
+  style.textContent = TERMINAL_CSS;
+  document.head.appendChild(style);
+}
+
 function processBlock(codeEl) {
   const src = codeEl.textContent;
   const stdinRaw = codeEl.dataset.stdin || '';
@@ -12,11 +38,11 @@ function processBlock(codeEl) {
 
   const asmResult = assemble(src);
   if (!asmResult.ok) {
-    out.textContent = 'Assembly error:\n' + asmResult.errors;
+    out.textContent = '$ lcc input.a\nAssembly error:\n' + asmResult.errors;
     out.classList.add('lcc-error');
   } else {
     const runResult = run(asmResult.binary, { stdin });
-    out.textContent = runResult.stdout;
+    out.textContent = '$ lcc input.a\n' + runResult.stdout;
     if (runResult.exitCode !== 0) {
       out.classList.add('lcc-error');
     }
@@ -27,6 +53,7 @@ function processBlock(codeEl) {
 }
 
 function runInjector() {
+  injectStyles();
   document.querySelectorAll('code.language-lcc').forEach(processBlock);
 }
 
