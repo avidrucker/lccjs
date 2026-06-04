@@ -51,6 +51,7 @@ const THEMES = [
   { id: 'retro-console-light',  label: 'Retro Console Light',  dark: false },
 ];
 const DEFAULT_THEME = 'github-dark';
+const DOCS_CODE_THEME = 'github-light';
 
 const CURATED_SAMPLES = [
   { file: 'demos/helloWorld.a', label: 'demos/helloWorld.a', title: 'Hello, World! — lea, sout, halt' },
@@ -63,6 +64,7 @@ const LCCPLUS_SAMPLES = [
 // Docs sections to expose as subpages.
 // Use srcDir for folder-based sections; use files[] for explicit per-file lists.
 const DOCS_SECTIONS = [
+  { id: 'guides',    label: 'Guides',    srcDir: path.join(ROOT, 'docs', 'guides')    },
   { id: 'research',  label: 'Research',  srcDir: path.join(ROOT, 'docs', 'research')  },
   { id: 'learnings', label: 'Learnings', srcDir: path.join(ROOT, 'docs', 'learnings') },
   { id: 'glossary',  label: 'Glossary',  srcDir: path.join(ROOT, 'docs', 'glossary')  },
@@ -227,6 +229,18 @@ ${footer}${script ? `\n  <script>${script}</script>` : ''}
   const grammar  = JSON.parse(fs.readFileSync(GRAMMAR_PATH, 'utf8'));
   const themeIds = THEMES.filter(t => !t.id.startsWith('retro-console') && t.id !== 'zenburn').map(t => t.id);
   const hl = await createHighlighter({ themes: [retroDarkTheme, retroLightTheme, zenburnTheme, ...themeIds], langs: [grammar] });
+
+  // Shiki-highlight ```lcc fenced blocks in docs .md files processed by marked.
+  marked.use({
+    renderer: {
+      code(token) {
+        if (token.lang === 'lcc') {
+          return hl.codeToHtml(token.text, { lang: 'lcc', theme: DOCS_CODE_THEME });
+        }
+        return false;
+      },
+    },
+  });
 
   // ── Landing page ─────────────────────────────────────────────────────────────
 

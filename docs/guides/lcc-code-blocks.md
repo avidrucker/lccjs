@@ -19,15 +19,26 @@ This guide covers every way to embed LCC assembly code blocks in a web page, sli
 
 ## Option 1 — `lcc.tmLanguage.json` + Shiki (static site builder)
 
-**What:** The site build pipeline (`npm run build:site`) uses Shiki with `lcc.tmLanguage.json` to syntax-colour curated LCC assembly samples and emit static HTML. No JavaScript runs at page-load time; the highlighted HTML is baked in. The landing page (`docs/site/index.html`) displays the highlighted demos with a live theme switcher.
+**What:** The site build pipeline (`npm run build:site`) uses Shiki with `lcc.tmLanguage.json` to syntax-colour LCC assembly code and emit static HTML. No JavaScript runs at page-load time; the highlighted HTML is baked in.
 
-> **Note:** Arbitrary fenced `` ```lcc `` blocks in `.md` docs files are currently rendered via `marked` (plain HTML, no Shiki). Only the pre-configured samples in `scripts/build-site.js` (`CURATED_SAMPLES`, alphabet demos, `LCCPLUS_SAMPLES`) are Shiki-highlighted. Full `.md`-fenced-block Shiki support is tracked in #740.
+**Where it works:** Any `.md` file processed by `build:site` — including docs under `docs/research/`, `docs/learnings/`, `docs/guides/`, etc. The landing page (`docs/site/index.html`) also displays curated demos with a live theme switcher.
 
-**Where it works:** The landing page produced by `npm run build:site`, including the GitHub Pages site. Does **not** work for standalone HTML files or reveal-md without going through the build pipeline.
+**When to prefer it:** Docs prose that includes illustrative assembly snippets; the static landing page for multi-theme demos.
 
-**When to prefer it:** The static landing page for demonstrating the grammar and syntax colouring across multiple themes.
+**Minimal how-to — inline fenced blocks (docs prose):**
 
-**Minimal how-to:**
+Add a `` ```lcc `` block anywhere in a `.md` file under `docs/`:
+
+```lcc
+        mvi r0, 42
+        dout r0
+        nl
+        halt
+```
+
+Run `npm run build:site`. The generated HTML contains Shiki-coloured `<span>` elements for every `` ```lcc `` block.
+
+**Minimal how-to — curated landing page samples:**
 
 1. Add an entry to `CURATED_SAMPLES` in `scripts/build-site.js`:
    ```javascript
@@ -185,5 +196,6 @@ const output = lcc.run(binary, { stdin: ['42', '7'] });
 ## Status of planned features
 
 - **Interactive stdin** (mid-run input prompt): not yet implemented — tracked in #702 (`pauseOnInput`)
-- **Infinite-loop protection** (step cap, Web Worker): not yet implemented — tracked in #703
+- **Infinite-loop protection** (step cap, Web Worker): implemented in #703
+- **Inline `` ```lcc `` Shiki highlighting in `.md` docs**: implemented in #740
 - **Web front-end feature parity tracking** vs web_ilcc dashboard: #707

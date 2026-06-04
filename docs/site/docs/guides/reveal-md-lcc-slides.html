@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>today-i-learned-2026-05-31-banana-2 — LCC Docs</title>
+  <title>reveal-md-lcc-slides — LCC Docs</title>
   <style>
 @font-face {
   font-family:"UnifontMedium";
@@ -72,44 +72,107 @@ code { font-family:var(--mono-font); }
 </head>
 <body class="light">
 <nav><a href="../../">Home</a>
-  <a href="../../docs/guides/">Guides</a>
+  <a href="../../docs/guides/" class="active">Guides</a>
   <a href="../../docs/research/">Research</a>
-  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/learnings/">Learnings</a>
   <a href="../../docs/glossary/">Glossary</a>
   <a href="../../docs/parity/">Parity</a>
   <a href="../../docs/workflow/">Workflow</a>
   <a href="../../showcase/">Playground</a>
 </nav>
-  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="back-link"><a href="./">← Guides index</a></div>
   <div class="prose">
-<h1>Today I Learned — 2026-05-31 (BANANA s2)</h1>
-<p>A short PM + research session: cleaned up 5 stale worktrees, filed two tickets (#294, #297),
-worked #294 (closed-issue audit), and filed the follow-up ARCHITECT ticket (#301).</p>
+<h1>Authoring reveal-md slides with live LCC code blocks</h1>
+<p>This guide covers the full workflow for creating reveal-md slide decks where LCC assembly code blocks auto-assemble and run in the browser — no server required.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 18 and <code>npm install</code> done in the repo root</li>
+<li><code>reveal-md</code> installed globally: <code>npm install -g reveal-md</code></li>
+</ul>
+<h2>Step 1 — build the injector</h2>
+<pre><code class="language-bash">npm run build:browser
+</code></pre>
+<p>This produces <code>dist/lcc-injector.js</code>. Rebuild whenever the assembler or interpreter source changes.</p>
+<h2>Step 2 — write your slide deck</h2>
+<p>Create a <code>.md</code> file. Any fenced code block with the <code>lcc</code> language tag will be picked up by the injector and executed automatically when the slide is viewed.</p>
+<pre><code class="language-markdown">---
+theme: white
+---
+
+## Hello, LCC
+
+```lcc
+        mvi r0, 42
+        dout r0
+        nl
+        halt
+</code></pre>
 <hr>
-<h2>1. A dirty <code>package-lock.json</code> is not a reason to pause</h2>
-<p>Two worktrees (#290, #291) had &quot;modified or untracked files&quot; blocking a plain <code>git worktree remove</code>.
-The only modified file in each was <code>package-lock.json</code> — a side-effect of node resolution, not real
-work. Force-removing was the right call. The heuristic: if <code>git status</code> shows only <code>package-lock.json</code>
-and nothing in <code>src/</code> or <code>docs/</code>, it&#39;s safe to force-remove.</p>
-<h2>2. Do the data-integrity audit before the process-mapping research</h2>
-<p>#294 (audit closed issues for mis-closes) was done before #297 (map the full workflow).
-The reason: #294 produces concrete evidence (#278 as a confirmed real failure) that #297 can anchor its
-recommendations on. Doing them in reverse order means #297 theorizes about a problem whose
-actual frequency and shape are unknown. Audit first, then map.</p>
-<h2>3. A keyword-overlap heuristic catches gross mismatches — but produces false positives</h2>
-<p>To find <code>Closes #N</code> transpositions, I extracted all commit→issue pairs from git log and
-compared content-word overlap between each commit subject and its issue title.
-Of 9 flagged cases, 7 were false positives: commits that abbreviated the finding
-(<code>#126</code>: &quot;.bst is binary listing&quot;), intentionally closed multiple issues, or used PM language
-that genuinely doesn&#39;t share keywords with the underlying work.</p>
-<p>Only 2 were real: #278 (confirmed transposition, already OPEN/REOPENED) and #188 (partial-scope
-close, also already OPEN/REOPENED). Both were already caught by the human who reviewed them.
-The system is more robust than feared — 233 issues, 1 unrecovered drop.</p>
-<h2>4. File the ARCHITECT ticket immediately; don&#39;t leave guard recommendations as stranded prose</h2>
-<p>The audit doc produced two guard recommendations. The natural next move was to treat them as done
-and move on. Instead, a follow-up ARCHITECT ticket (#301) was filed immediately while the audit
-findings were still fresh context. A recommendation that lives only in a research doc is easy to
-forget; a ticket is a claim on future work that the scheduler can see.</p>
+<h2>Reading input</h2>
+<p>Supply stdin via the <code>data-stdin</code> attribute on the code block&#39;s <code>&lt;code&gt;</code> tag.
+In Markdown this is done with an HTML block directly:</p>
+<pre><code class="language-lcc" data-stdin="7">
+        din r0
+        dout r0
+        nl
+        halt
+</code></pre>
+<pre><code>
+### `data-stdin` constraint
+
+Programs that read more input than is supplied via `data-stdin` will stall — the browser has no interactive console. Pre-supply all required input as a newline-separated string:
+
+```html
+&lt;pre&gt;&lt;code class=&quot;language-lcc&quot; data-stdin=&quot;3&amp;#10;4&quot;&gt;
+        din r0
+        din r1
+        add r0, r0, r1
+        dout r0
+        nl
+        halt
+&lt;/code&gt;&lt;/pre&gt;
+</code></pre>
+<p><code>&amp;#10;</code> is a newline character in HTML. Alternatively, use a JavaScript multiline string in a custom reveal-md template.</p>
+<h2>Step 3 — export a static bundle</h2>
+<pre><code class="language-bash">reveal-md slides.md --static ./out --scripts dist/lcc-injector.js
+</code></pre>
+<p>This writes a self-contained <code>out/</code> directory. The <code>--scripts</code> flag injects <code>lcc-injector.js</code> into every generated HTML page.</p>
+<p><strong>Important:</strong> the path passed to <code>--scripts</code> must be relative to the current working directory, not the output directory. Copy or symlink <code>dist/lcc-injector.js</code> into <code>out/</code> if you need to distribute the bundle alongside the slides.</p>
+<h2>Step 4 — open in a browser</h2>
+<pre><code class="language-bash">open out/index.html        # macOS
+xdg-open out/index.html    # Linux
+</code></pre>
+<p>No web server needed — the injector is built to work over <code>file://</code>. Each <code>language-lcc</code> code block renders its output in a <code>&lt;pre class=&quot;lcc-output&quot;&gt;</code> element injected directly below the block. Assembly errors appear in a styled error box instead.</p>
+<h2>Minimal working example</h2>
+<p>Save as <code>demo.md</code> in the repo root:</p>
+<pre><code class="language-markdown">---
+theme: white
+---
+
+## LCC Demo
+
+```lcc
+        mvi r0, 99
+        dout r0
+        nl
+        halt
+</code></pre>
+<pre><code>
+Then:
+
+```bash
+npm run build:browser
+reveal-md demo.md --static ./demo-out --scripts dist/lcc-injector.js
+open demo-out/index.html
+</code></pre>
+<p>Expected: the slide shows <code>99</code> beneath the code block.</p>
+<h2>Reference</h2>
+<ul>
+<li>Injector source: <code>src/browser/lcc-injector.js</code></li>
+<li>Browser test fixture (standalone HTML, no reveal-md): <code>tests/browser/injector.html</code></li>
+<li>Browser API: <code>docs/api.md</code></li>
+<li>Related issues: #595 (injector), #682 (Reveal.ready hook), #673 (file:// validation)</li>
+</ul>
 
   </div>
   <footer>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>lcc-code-blocks — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/guides/" class="active">Guides</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Guides index</a></div>
+  <div class="prose">
+<h1>LCC code block options — syntax highlighting vs runnable execution</h1>
+<p>This guide covers every way to embed LCC assembly code blocks in a web page, slide deck, or editor. Each option is described by what it does, where it works, when to prefer it, how to wire it up, and why it works (or doesn&#39;t) in a given context.</p>
+<h2>Quick-reference matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th align="center">Syntax highlight</th>
+<th align="center">Runnable</th>
+<th align="center">Interactive stdin</th>
+<th align="center">Works on <code>file://</code></th>
+<th align="center">GitHub Pages</th>
+<th align="center">Reveal.js slides</th>
+<th align="center">Build step</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>lcc.tmLanguage.json</code> + Shiki (site builder)</td>
+<td align="center">✓</td>
+<td align="center">—</td>
+<td align="center">—</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">—</td>
+<td align="center"><code>build:site</code></td>
+</tr>
+<tr>
+<td><code>lcc-injector.js</code> script tag</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">pre-supply only</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"><code>build:browser</code></td>
+</tr>
+<tr>
+<td>Playground page (<code>/showcase/</code>)</td>
+<td align="center">—</td>
+<td align="center">✓</td>
+<td align="center">pre-supply only</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">—</td>
+<td align="center"><code>build:browser</code> + <code>build:site</code></td>
+</tr>
+<tr>
+<td><code>lcc.bundle.js</code> API (custom)</td>
+<td align="center">—</td>
+<td align="center">✓</td>
+<td align="center">pre-supply only</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"><code>build:browser</code></td>
+</tr>
+<tr>
+<td>VS Code grammar</td>
+<td align="center">✓</td>
+<td align="center">—</td>
+<td align="center">—</td>
+<td align="center">n/a</td>
+<td align="center">—</td>
+<td align="center">—</td>
+<td align="center">none</td>
+</tr>
+<tr>
+<td>GitHub markdown</td>
+<td align="center">—</td>
+<td align="center">—</td>
+<td align="center">—</td>
+<td align="center">n/a</td>
+<td align="center">—</td>
+<td align="center">—</td>
+<td align="center">none</td>
+</tr>
+</tbody></table>
+<p><strong>Interactive stdin</strong> (programs that call <code>DIN</code>/<code>SIN</code>/<code>AIN</code>/<code>HIN</code> beyond the pre-supplied buffer) is not yet supported in any in-browser option — see <a href="https://github.com/avidrucker/lccjs/issues/702">#702</a>.</p>
+<hr>
+<h2>Option 1 — <code>lcc.tmLanguage.json</code> + Shiki (static site builder)</h2>
+<p><strong>What:</strong> The site build pipeline (<code>npm run build:site</code>) uses Shiki with <code>lcc.tmLanguage.json</code> to syntax-colour LCC assembly code and emit static HTML. No JavaScript runs at page-load time; the highlighted HTML is baked in.</p>
+<p><strong>Where it works:</strong> Any <code>.md</code> file processed by <code>build:site</code> — including docs under <code>docs/research/</code>, <code>docs/learnings/</code>, <code>docs/guides/</code>, etc. The landing page (<code>docs/site/index.html</code>) also displays curated demos with a live theme switcher.</p>
+<p><strong>When to prefer it:</strong> Docs prose that includes illustrative assembly snippets; the static landing page for multi-theme demos.</p>
+<p><strong>Minimal how-to — inline fenced blocks (docs prose):</strong></p>
+<p>Add a <code>```lcc</code> block anywhere in a <code>.md</code> file under <code>docs/</code>:</p>
+<pre class="shiki github-light" style="background-color:#fff;color:#24292e" tabindex="0"><code><span class="line"><span style="color:#D73A49">        mvi</span><span style="color:#005CC5"> r0</span><span style="color:#24292E">, </span><span style="color:#005CC5">42</span></span>
+<span class="line"><span style="color:#D73A49">        dout</span><span style="color:#005CC5"> r0</span></span>
+<span class="line"><span style="color:#D73A49">        nl</span></span>
+<span class="line"><span style="color:#D73A49">        halt</span></span></code></pre><p>Run <code>npm run build:site</code>. The generated HTML contains Shiki-coloured <code>&lt;span&gt;</code> elements for every <code>```lcc</code> block.</p>
+<p><strong>Minimal how-to — curated landing page samples:</strong></p>
+<ol>
+<li>Add an entry to <code>CURATED_SAMPLES</code> in <code>scripts/build-site.js</code>:<pre><code class="language-javascript">{ file: &#39;demos/myProgram.a&#39;, label: &#39;demos/myProgram.a&#39;, title: &#39;My program description&#39; }
+</code></pre>
+</li>
+<li>Run <code>npm run build:site</code>. The landing page (<code>docs/site/index.html</code>) now contains pre-coloured <code>&lt;span&gt;</code> elements for your sample, with all configured themes.</li>
+</ol>
+<p><strong>Why it doesn&#39;t work elsewhere:</strong> Shiki runs at build time in Node.js. A plain HTML page opened in a browser has no Shiki; neither does a GitHub repository&#39;s Markdown renderer (GitHub has no LCC grammar upstream — see below).</p>
+<hr>
+<h2>Option 2 — <code>lcc-injector.js</code> script tag</h2>
+<p><strong>What:</strong> A self-contained browser script that finds every <code>&lt;code class=&quot;language-lcc&quot;&gt;</code> element on the page, assembles and runs each one using the in-browser LCC bundle, and appends a <code>&lt;pre class=&quot;lcc-output&quot;&gt;</code> result block below it. Also provides Shiki-quality syntax highlighting for blocks that should be display-only (class <code>language-lcc-display</code>).</p>
+<p><strong>Where it works:</strong> Any HTML page — static exports, reveal-md slides, custom pages — opened over <code>file://</code> or served via HTTP/HTTPS.</p>
+<p><strong>When to prefer it:</strong></p>
+<ul>
+<li>Reveal.js / reveal-md slide decks where live code demos are the goal</li>
+<li>Any standalone HTML file that needs both highlighting and execution without a server</li>
+</ul>
+<p><strong>Minimal how-to:</strong></p>
+<ol>
+<li>Build the injector: <code>npm run build:browser</code> → produces <code>dist/lcc-injector.js</code></li>
+<li>Add a code block and include the script at the bottom of <code>&lt;body&gt;</code>:<pre><code class="language-html">&lt;pre&gt;&lt;code class=&quot;language-lcc&quot;&gt;
+        mvi r0, 42
+        dout r0
+        nl
+        halt
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;script src=&quot;dist/lcc-injector.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+</li>
+<li>Open in a browser. A <code>&lt;pre class=&quot;lcc-output&quot;&gt;</code> containing <code>42</code> appears below the block.</li>
+</ol>
+<p><strong>Supplying stdin</strong> (<code>DIN</code>/<code>SIN</code>/<code>AIN</code>/<code>HIN</code> programs): add a <code>data-stdin</code> attribute to the <code>&lt;code&gt;</code> element. Newline-separated values for multiple reads:</p>
+<pre><code class="language-html">&lt;pre&gt;&lt;code class=&quot;language-lcc&quot; data-stdin=&quot;3&amp;#10;4&quot;&gt;
+        din r0
+        din r1
+        add r0, r0, r1
+        dout r0
+        nl
+        halt
+&lt;/code&gt;&lt;/pre&gt;
+</code></pre>
+<p><code>&amp;#10;</code> is a literal newline in HTML. Programs that exhaust <code>data-stdin</code> stall — supply all required input upfront.</p>
+<p><strong>For reveal-md</strong>, pass the script via <code>--scripts</code>:</p>
+<pre><code class="language-bash">reveal-md slides.md --static ./out --scripts dist/lcc-injector.js
+</code></pre>
+<p>See <code>docs/guides/reveal-md-lcc-slides.md</code> for the full reveal-md workflow.</p>
+<p><strong>Why it doesn&#39;t work on GitHub.com:</strong> GitHub&#39;s Markdown renderer sanitises <code>&lt;script&gt;</code> tags and custom attributes. The injector requires DOM access and is a browser-only tool.</p>
+<hr>
+<h2>Option 3 — Playground page (<code>/showcase/</code>)</h2>
+<p><strong>What:</strong> A hosted textarea on the GitHub Pages site where a user types or pastes LCC assembly, clicks Run, and sees the output. No code embedding — this is a standalone interactive tool, not an embeddable component.</p>
+<p><strong>Where it works:</strong> GitHub Pages (<code>/showcase/</code>) and locally over <code>file://</code> from the built site.</p>
+<p><strong>When to prefer it:</strong> Teaching sessions where students want to try programs without installing anything; quick one-off testing during slide demos.</p>
+<p><strong>Minimal how-to:</strong> Navigate to <code>https://&lt;org&gt;.github.io/lccjs/showcase/</code> (or open <code>docs/site/showcase/index.html</code> locally after running <code>npm run build:browser &amp;&amp; npm run build:site</code>). Type assembly, click Run.</p>
+<p><strong>Stdin:</strong> Pre-supply input in the stdin textarea before clicking Run. Interactive mid-run prompts are not yet supported (#702).</p>
+<p><strong>Why it isn&#39;t embeddable:</strong> The playground is a full page, not a web component. Embedding it in another page requires an <code>&lt;iframe&gt;</code> (works but has styling constraints).</p>
+<hr>
+<h2>Option 4 — <code>lcc.bundle.js</code> API (custom integrations)</h2>
+<p><strong>What:</strong> <code>dist/lcc.bundle.js</code> exposes a <code>window.lcc</code> object with two functions:</p>
+<pre><code class="language-javascript">const result = lcc.assemble(src);
+// result: { ok: true, binary: Buffer } | { ok: false, errors: string }
+
+const output = lcc.run(binary, { stdin: [&#39;42&#39;, &#39;7&#39;] });
+// output: { stdout: string, exitCode: number }
+</code></pre>
+<p><strong>Where it works:</strong> Any browser context where you can load a <code>&lt;script&gt;</code> tag — <code>file://</code>, GitHub Pages, custom sites.</p>
+<p><strong>When to prefer it:</strong> Building a custom UI (e.g. a notebook, an interactive tutorial, a grader widget) where you control the layout and want the raw assemble/run primitives without the injector&#39;s auto-discovery behaviour.</p>
+<p><strong>Minimal how-to:</strong></p>
+<pre><code class="language-html">&lt;script src=&quot;dist/lcc.bundle.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+  const src = `
+        mvi r0, 99
+        dout r0
+        nl
+        halt
+  `;
+  const { ok, binary, errors } = lcc.assemble(src);
+  if (!ok) { console.error(errors); }
+  else {
+    const { stdout } = lcc.run(binary);
+    document.getElementById(&#39;output&#39;).textContent = stdout;
+  }
+&lt;/script&gt;
+</code></pre>
+<p><strong>Stdin:</strong> Pass lines as an array to <code>lcc.run(binary, { stdin: [&#39;first line&#39;, &#39;second line&#39;] })</code>. The array is joined with <code>\n</code> and fed into <code>inputBuffer</code>. Same batch-only constraint as Option 2.</p>
+<p><strong>Build step:</strong> <code>npm run build:browser</code> → <code>dist/lcc.bundle.js</code>.</p>
+<hr>
+<h2>Option 5 — VS Code grammar</h2>
+<p><strong>What:</strong> <code>lcc.tmLanguage.json</code> is a TextMate grammar that VS Code (and other editors supporting TextMate grammars) uses to syntax-highlight <code>.a</code> and <code>.ap</code> files.</p>
+<p><strong>Where it works:</strong> Local VS Code with the grammar installed; no browser involvement.</p>
+<p><strong>When to prefer it:</strong> Writing LCC assembly locally. No web embedding use case.</p>
+<p><strong>Minimal how-to:</strong> Not covered here — see the VS Code extension packaging docs.</p>
+<hr>
+<h2>Option 6 — GitHub markdown (<code>.md</code> files on github.com)</h2>
+<p><strong>What:</strong> GitHub&#39;s Markdown renderer applies syntax highlighting via its own Linguist + highlight.js pipeline.</p>
+<p><strong>Status:</strong> LCC has no grammar registered in Linguist / highlight.js upstream. GitHub will render <code>```lcc</code> blocks as plain text with no colouring. <strong>This is a known gap</strong> (#450).</p>
+<p><strong>Workaround:</strong> None currently. Use the static site builder (Option 1) or the injector (Option 2) for highlighted output.</p>
+<hr>
+<h2>Choosing the right option</h2>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Recommended option</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Docs site (syntax colour, no run)</td>
+<td>Option 1 — Shiki + site builder</td>
+</tr>
+<tr>
+<td>Reveal.js slides with live demo</td>
+<td>Option 2 — injector + <code>data-stdin</code></td>
+</tr>
+<tr>
+<td>Student tries code in a browser</td>
+<td>Option 3 — Playground page</td>
+</tr>
+<tr>
+<td>Custom web app or notebook</td>
+<td>Option 4 — bundle API</td>
+</tr>
+<tr>
+<td>Writing assembly in VS Code</td>
+<td>Option 5 — VS Code grammar</td>
+</tr>
+</tbody></table>
+<h2>Status of planned features</h2>
+<ul>
+<li><strong>Interactive stdin</strong> (mid-run input prompt): not yet implemented — tracked in #702 (<code>pauseOnInput</code>)</li>
+<li><strong>Infinite-loop protection</strong> (step cap, Web Worker): implemented in #703</li>
+<li><strong>Inline <code>```lcc</code> Shiki highlighting in <code>.md</code> docs</strong>: implemented in #740</li>
+<li><strong>Web front-end feature parity tracking</strong> vs web_ilcc dashboard: #707</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

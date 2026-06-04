@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>cli-flag-audit — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/guides/">Guides</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>CLI Flag Audit — OG LCC parity, LCCjs-only flags, ilcc co-existence</h1>
+<p><strong>Issue:</strong> #713<br><strong>Role:</strong> RESEARCH<br><strong>Date:</strong> 2026-06-04<br><strong>Agent:</strong> APPLE</p>
+<hr>
+<h2>1. OG LCC flag inventory</h2>
+<p>Source: <code>lcc -h</code> (cuh63 6.3).</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>OG LCC description</th>
+<th>LCCjs equivalent</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>-d</code></td>
+<td>debug</td>
+<td><code>-d</code> (<code>options.debug</code>)</td>
+<td>✓ parity</td>
+</tr>
+<tr>
+<td><code>-m</code></td>
+<td>mem display at end</td>
+<td><code>-m</code> (<code>options.memDisplay</code>)</td>
+<td>✓ parity</td>
+</tr>
+<tr>
+<td><code>-r</code></td>
+<td>reg display at end</td>
+<td><code>-r</code> (<code>options.regDisplay</code>)</td>
+<td>✓ parity</td>
+</tr>
+<tr>
+<td><code>-t</code></td>
+<td>(not described in help; accepts the flag)</td>
+<td><code>-t</code> (<code>options.trace</code>)</td>
+<td>✓ parity</td>
+</tr>
+<tr>
+<td><code>-f</code></td>
+<td>full line display</td>
+<td><code>-f</code> (<code>options.fullLineDisplay</code>)</td>
+<td>✓ parity</td>
+</tr>
+<tr>
+<td><code>-x</code></td>
+<td>4 digit hout</td>
+<td><code>-x</code> (<code>options.hexOutput</code>)</td>
+<td>✓ parity</td>
+</tr>
+<tr>
+<td><code>-l&lt;hex&gt;</code></td>
+<td>load point</td>
+<td><code>-l&lt;hex&gt;</code> (<code>options.loadPoint</code>)</td>
+<td>✓ parity</td>
+</tr>
+<tr>
+<td><code>-o &lt;outfile&gt;</code></td>
+<td>output file name</td>
+<td><code>-o &lt;outfile&gt;</code> (<code>this.outputFileName</code>)</td>
+<td>✓ parity</td>
+</tr>
+<tr>
+<td><code>-h</code></td>
+<td>help</td>
+<td><code>-h</code> (prints help, exits 0)</td>
+<td>✓ parity</td>
+</tr>
+</tbody></table>
+<p><strong>Verdict: OG LCC → LCCjs flag parity is complete.</strong> Every OG LCC flag exists in LCCjs with equivalent behavior. No OG LCC flag is absent.</p>
+<p><strong>Note on <code>-x</code> help text:</strong> both OG LCC and LCCjs print &quot;4 digit hout&quot; (appears to be a shortening of &quot;hex output&quot;). This is parity-correct — a shared typo, not a LCCjs-specific issue.</p>
+<hr>
+<h2>2. LCCjs-only flag inventory</h2>
+<p>Flags in <code>lcc.js</code> that have no OG LCC counterpart.</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>In help text?</th>
+<th>Code site</th>
+<th>Wired to</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>-i</code></td>
+<td>✓ (<code>-i: interactive stepping debugger mode</code>)</td>
+<td><code>lcc.js:246–248</code></td>
+<td><code>options.interactive</code> → <code>runInteractiveMode()</code></td>
+<td>OK</td>
+</tr>
+<tr>
+<td><code>-e</code></td>
+<td>✓ (<code>-e: efficient mode</code>)</td>
+<td><code>lcc.js:249–251</code></td>
+<td><code>options.efficientMode</code> → forwarded to ilcc</td>
+<td>OK</td>
+</tr>
+<tr>
+<td><code>-c</code></td>
+<td>✓ (<code>-c: colorblind mode</code>)</td>
+<td><code>lcc.js:252–254</code></td>
+<td><code>options.colorblindMode</code> → forwarded to ilcc</td>
+<td>OK</td>
+</tr>
+<tr>
+<td><code>-nostats</code></td>
+<td>✗ <strong>missing from help</strong></td>
+<td><code>lcc.js:255–257</code></td>
+<td><code>options.noStats = true</code> — <strong>never read</strong></td>
+<td><strong>GAP 1: dead flag</strong></td>
+</tr>
+<tr>
+<td><code>-v</code> / <code>--verbose</code></td>
+<td>✗ <strong>missing from help</strong></td>
+<td><code>lcc.js:261–264</code></td>
+<td><code>options.verbose</code> → <code>assembler.verboseModeOn</code>, <code>interpreter.verboseModeOn</code>, <code>linker.verboseModeOn</code></td>
+<td><strong>GAP 2: undocumented</strong></td>
+</tr>
+</tbody></table>
+<p><strong>GAP 1 — <code>-nostats</code> is a dead flag:</strong><br><code>parseArguments</code> sets <code>options.noStats = true</code> (line 256) but <code>options.noStats</code> is never read anywhere in <code>lcc.js</code>. The <code>generateStats</code> field (which controls whether <code>.lst</code>/<code>.bst</code> files are written, lines 359–390) is initialized to <code>true</code> and never updated from <code>options.noStats</code>. Effectively, <code>-nostats</code> accepts the flag silently but does nothing. Child ticket filed: see §4.</p>
+<p><strong>GAP 2 — <code>-v</code>/<code>--verbose</code> undocumented:</strong><br><code>-v</code> and <code>--verbose</code> are accepted and functional (they wire <code>verboseModeOn</code> into assembler, interpreter, and linker), but neither appears in <code>printHelp()</code>. A user running <code>lcc -h</code> has no way to discover them. Child ticket filed: see §4.</p>
+<hr>
+<h2>3. <code>ilcc</code> flag inventory</h2>
+<p>Source: <code>ilcc.js</code> help text and <code>parseArguments</code> (lines 119–178).</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>ilcc help text</th>
+<th>Code site</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>-n</code></td>
+<td>batch mode (non-interactive; skip prompt, run to completion)</td>
+<td><code>ilcc.js:125–127</code></td>
+<td>ilcc-specific; no lcc.js counterpart</td>
+</tr>
+<tr>
+<td><code>-m</code></td>
+<td>print memory display after run</td>
+<td><code>ilcc.js:128–130</code></td>
+<td>accepted and documented</td>
+</tr>
+<tr>
+<td><code>-r</code></td>
+<td>print register display after run</td>
+<td><code>ilcc.js:131–133</code></td>
+<td>accepted and documented</td>
+</tr>
+<tr>
+<td><code>-f</code></td>
+<td>full line display</td>
+<td><code>ilcc.js:134–136</code></td>
+<td>accepted and documented</td>
+</tr>
+<tr>
+<td><code>-x</code></td>
+<td>4-digit hex output</td>
+<td><code>ilcc.js:137–139</code></td>
+<td>accepted and documented</td>
+</tr>
+<tr>
+<td><code>-t</code></td>
+<td>trace mode</td>
+<td><code>ilcc.js:140–142</code></td>
+<td>accepted and documented</td>
+</tr>
+<tr>
+<td><code>-e</code></td>
+<td>efficient mode</td>
+<td><code>ilcc.js:143–145</code></td>
+<td>accepted and documented</td>
+</tr>
+<tr>
+<td><code>-c</code></td>
+<td>colorblind mode</td>
+<td><code>ilcc.js:146–148</code></td>
+<td>accepted and documented</td>
+</tr>
+<tr>
+<td><code>-d</code></td>
+<td>debug mode</td>
+<td><code>ilcc.js:149–151</code></td>
+<td>accepted and documented</td>
+</tr>
+<tr>
+<td><code>-h</code></td>
+<td>show this help</td>
+<td><code>ilcc.js:152–155</code></td>
+<td>accepted and documented</td>
+</tr>
+<tr>
+<td><code>-i&lt;N&gt;</code></td>
+<td>instruction cap before automatic halt (default 500000)</td>
+<td><code>ilcc.js:157–158</code></td>
+<td><code>parseInt(arg.substr(2), 10)</code> — ilcc-specific</td>
+</tr>
+<tr>
+<td><code>-l&lt;hex&gt;</code></td>
+<td>load point</td>
+<td><code>ilcc.js:159–160</code></td>
+<td>accepted and documented</td>
+</tr>
+<tr>
+<td><code>-o &lt;file&gt;</code></td>
+<td>output executable name</td>
+<td><code>ilcc.js:161–167</code></td>
+<td>accepted and documented</td>
+</tr>
+</tbody></table>
+<p><strong>ilcc.js help text is accurate and complete</strong> for its own flag set.</p>
+<p><strong><code>-i&lt;N&gt;</code> vs <code>-i</code> naming conflict:</strong><br>In <code>lcc.js</code>, bare <code>-i</code> means &quot;interactive mode.&quot; In <code>ilcc.js</code>, <code>-i&lt;N&gt;</code> (with a number immediately attached, e.g. <code>-i5000</code>) means &quot;instruction cap.&quot; These two tools give <code>-i</code> different meanings, but there is no actual collision — <code>lcc.js -i</code> enters ilcc and never forwards <code>-i&lt;N&gt;</code> to it; <code>ilcc.js</code> is invoked directly if you need <code>-i&lt;N&gt;</code>. The meanings are disjoint in practice but could confuse users who read both help texts. No child ticket needed — worth a cross-reference note in the help texts.</p>
+<hr>
+<h2>4. Flags forwarded from <code>lcc -i</code> to ilcc</h2>
+<p>When <code>lcc.js</code> runs with <code>-i</code>, it delegates to <code>ILCC</code> via <code>runInteractiveMode()</code> (<code>lcc.js:109–133</code>). The docstring at line 104–107 states what is forwarded:</p>
+<blockquote>
+<p>&quot;Forwards -e (efficient), -c (colorblind), -d (debug), -l<hex>, -o flags.&quot;</p>
+</blockquote>
+<p>Confirmed by code inspection:</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Forwarded from <code>lcc -i</code> to ilcc?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>-e</code></td>
+<td>✓ <code>ilcc.options.efficientMode</code></td>
+</tr>
+<tr>
+<td><code>-c</code></td>
+<td>✓ <code>ilcc.options.colorblindMode</code></td>
+</tr>
+<tr>
+<td><code>-d</code></td>
+<td>✓ <code>ilcc.options.debug</code></td>
+</tr>
+<tr>
+<td><code>-l&lt;hex&gt;</code></td>
+<td>✓ <code>ilcc.options.loadPoint</code></td>
+</tr>
+<tr>
+<td><code>-o</code></td>
+<td>✓ <code>ilcc.outputFileName</code></td>
+</tr>
+<tr>
+<td><code>-m</code></td>
+<td>✗ not forwarded</td>
+</tr>
+<tr>
+<td><code>-r</code></td>
+<td>✗ not forwarded</td>
+</tr>
+<tr>
+<td><code>-f</code></td>
+<td>✗ not forwarded</td>
+</tr>
+<tr>
+<td><code>-x</code></td>
+<td>✗ not forwarded</td>
+</tr>
+<tr>
+<td><code>-t</code></td>
+<td>✗ not forwarded</td>
+</tr>
+</tbody></table>
+<p><strong>GAP 3 — <code>-m</code>, <code>-r</code>, <code>-f</code>, <code>-x</code>, <code>-t</code> silently dropped in <code>lcc -i</code>:</strong><br>When a user passes <code>lcc -i -x file.a</code>, the <code>-x</code> flag is parsed by <code>lcc.js</code> → <code>options.hexOutput = true</code>, but <code>runInteractiveMode()</code> does not copy <code>hexOutput</code> (or <code>memDisplay</code>, <code>regDisplay</code>, <code>fullLineDisplay</code>, <code>trace</code>) to the ilcc instance. The flags are silently ignored.</p>
+<p>Whether these omissions are intentional is unclear:</p>
+<ul>
+<li><code>-m</code>/<code>-r</code> (post-run displays): ilcc runs interactively and shows its own live register/memory display, so post-run dumps may be intentionally excluded.</li>
+<li><code>-f</code>/<code>-x</code>/<code>-t</code>: ilcc does accept and use these, so the omission is likely unintentional or undocumented.</li>
+</ul>
+<p>In any case, users have no way to know which flags apply in <code>-i</code> mode from <code>lcc -h</code>. Child ticket filed: see §4.</p>
+<hr>
+<h2>5. Confirmed gaps — child tickets</h2>
+<p>Three confirmed gaps warrant child tickets:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Gap</th>
+<th>Proposed type</th>
+<th>Priority</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>G1</td>
+<td><code>-nostats</code> is a dead flag: sets <code>options.noStats</code> but <code>generateStats</code> is never updated</td>
+<td><code>fix</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td>G2</td>
+<td><code>-v</code>/<code>--verbose</code> undocumented in <code>lcc.js</code> help text</td>
+<td><code>docs</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td>G3</td>
+<td><code>lcc -i</code> silently drops <code>-m</code>/<code>-r</code>/<code>-f</code>/<code>-x</code>/<code>-t</code> — no user-visible explanation</td>
+<td><code>docs</code> or <code>fix</code></td>
+<td>low</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>6. Non-gaps</h2>
+<ul>
+<li>All OG LCC flags (<code>-d</code>, <code>-m</code>, <code>-r</code>, <code>-t</code>, <code>-f</code>, <code>-x</code>, <code>-l&lt;hex&gt;</code>, <code>-o</code>, <code>-h</code>) are present in LCCjs with equivalent behavior.</li>
+<li>LCCjs-only flags <code>-i</code>, <code>-e</code>, <code>-c</code> appear correctly in <code>lcc.js</code> help text.</li>
+<li><code>ilcc.js</code> help text is accurate and complete for its own flag set.</li>
+<li>No OG LCC flag is absent from LCCjs.</li>
+<li>No existing entry in <code>docs/parity_deviations.md</code> relates to CLI flags.</li>
+</ul>
+<hr>
+<h2>Key code sites</h2>
+<ul>
+<li><code>src/cli/lcc.js:195–219</code> — <code>printHelp()</code> (flags in help text)</li>
+<li><code>src/cli/lcc.js:221–290</code> — <code>parseArguments()</code> (all accepted flags)</li>
+<li><code>src/cli/lcc.js:103–133</code> — <code>runInteractiveMode()</code> and its forwarding docstring</li>
+<li><code>src/interactive/ilcc.js:119–178</code> — <code>parseArguments()</code> (ilcc accepted flags)</li>
+<li><code>src/interactive/ilcc.js:180–197</code> — <code>printHelp()</code> (ilcc help text)</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>
