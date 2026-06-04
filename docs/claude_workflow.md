@@ -114,6 +114,24 @@ If any file your ticket will touch is untracked or modified on main, commit or s
 - **Stay in scope.** Anything outside the ticket gets logged as a finding, not pursued.
 - **Tracker tickets require a child issue before any work.** If the assigned ticket is a tracker (body says "stays open until children resolve"), file a concrete child issue for the chosen sub-item *before* claiming a worktree or starting work. Velocity is logged on the child; the tracker stays open. No exceptions for small or obvious items. (RULES.md #12)
 - **Surface findings as I notice them — file tickets immediately and unilaterally.** Open questions, unexpected behaviour, brittle code, or deferred work discovered mid-task all become GitHub issues, filed without asking permission. The tracker is the only shared memory that survives context compaction and agent rotation; if something isn't filed, it disappears. Filing is not a destructive action — a wrong ticket can be closed immediately. Cite the new number inline and move on: "Filed #N for X — continuing." Do **not** ask "should I create a ticket?" or "want me to file an issue?" (#511)
+- **Issue titles must use `ROLE:` prefix — commit format is prohibited.** (#641) Every issue title must begin with an uppercase role word followed by a colon and a space: `ROLE: short description`. The commit-message format (`type(scope): description`) is **never** valid as an issue title — do not write `fix(linker): …` or `docs(learnings): …` in a GitHub issue title.
+
+  Canonical role vocabulary (use exactly as shown):
+
+  | Role | When to use |
+  |------|-------------|
+  | `DEV` | Implementation work, bug fixes, refactors |
+  | `TEST` | Adding or fixing tests |
+  | `WRITER` | Documentation, workflow, RULES.md edits |
+  | `PM` | Project management, triage, tracker upkeep |
+  | `SPIKE` | Time-boxed research with a concrete deliverable |
+  | `ARCHITECT` | Design decisions, ADRs (not `ARCH` or `ARC`) |
+  | `RESEARCH` | Open-ended investigation, no immediate code change |
+  | `REVIEW` | Code or PR review tasks |
+  | `TIL` | Today-I-Learned entries (exempt from strict `ROLE:` format — use `TIL YYYY-MM-DD AGENT — description`; see #640) |
+
+  Non-standard prefixes seen in the wild and their canonical mappings: `AUDIT:` → `REVIEW`, `DECISION:` → `ARCHITECT`, `Q:` → `SPIKE`, `HUMAN REVIEW:` → `REVIEW`, `Tracker:` → `PM`.
+
 - **Research findings go in issue comments, not TIL docs.** When a research ticket or spike produces findings, post them as a comment on the originating GitHub issue — not as a `docs/learnings/today-i-learned-*.md` file. Only write a TIL entry when: (a) the user explicitly asks ("write a TIL", "add to learnings"), or (b) the knowledge is durable, genuinely cross-ticket, and belongs in a persistent learning log rather than on one ticket. When in doubt, use the issue comment. (#437) When a TIL entry IS appropriate, treat it as work: file an issue, claim a worktree, commit from it, log velocity, and close via `npm run close` — RULES.md 4, 5, 8, 9 apply unconditionally. (#469)
 - **Correcting a sibling issue's description.** If I find a factual error in *another* issue's description (wrong cross-ref, stale dependency, outdated premise), I do **not** silently rewrite the body. I redline it: `~~strikethrough~~` the wrong text in place, add a `> ⚠️ **SEE COMMENTS FOR CORRECTIONS**` banner at the top, and post the correction as a comment — so the original stays visible and the fix is additive. The `yegor-tickets` skill owns this convention (#300).
 - **Verify as I go.** For code changes: assemble, run tests, exercise the change. For doc changes: re-read for accuracy and link sanity. For research: cite source line numbers so the reasoning is checkable.
