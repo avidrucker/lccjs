@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<!-- Manual test fixture for lcc-injector.js (#595).
+     Open directly in a browser (file:// works — no server required).
+     Each <code class="language-lcc"> block is auto-assembled and run;
+     a <pre class="lcc-output"> sibling appears below each one. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>lcc-injector test fixture</title>
+  <style>
+    body { font-family: monospace; max-width: 700px; margin: 2em auto; }
+    h2 { margin-top: 2em; }
+    pre { background: #f4f4f4; padding: 0.75em; border-radius: 4px; }
+    .lcc-output { background: #e8f5e9; border-left: 3px solid #4caf50; }
+    .lcc-output.lcc-error { background: #ffebee; border-left-color: #f44336; }
+    .label { font-size: 0.8em; color: #888; margin-bottom: 0.25em; }
+  </style>
+</head>
+<body>
+<h1>lcc-injector.js — browser test fixture</h1>
+<p>Each code block below should have an output box appear beneath it after the page loads.</p>
+
+<!-- ── Test 1: Hello-world output ─────────────────────────────────────────── -->
+<h2>Test 1 — hello-world output</h2>
+<p class="label">Expected output: <code>42</code> followed by a newline.</p>
+<pre><code class="language-lcc">
+        mvi r0, 42
+        dout r0
+        nl
+        halt
+</code></pre>
+
+<!-- ── Test 2: Assembly error display ─────────────────────────────────────── -->
+<h2>Test 2 — assembly error display</h2>
+<p class="label">Expected: an error box describing the assembly failure (bad mnemonic).</p>
+<pre><code class="language-lcc">
+        notanopcode r0, r1
+        halt
+</code></pre>
+
+<!-- ── Test 3: data-stdin input ───────────────────────────────────────────── -->
+<h2>Test 3 — data-stdin input</h2>
+<p class="label">Expected output: <code>7</code> followed by a newline (reads 7 from stdin).</p>
+<pre><code class="language-lcc" data-stdin="7">
+        din r0
+        dout r0
+        nl
+        halt
+</code></pre>
+
+<script src="../../dist/lcc-injector.js"></script>
+</body>
+</html>
