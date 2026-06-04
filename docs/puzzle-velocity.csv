@@ -549,3 +549,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 562,669,fix fig→FIG agent casing in DB,DATA,15,8,6,9,2,2026-06-03T21:24:29-1000,2026-06-03T21:30:14-1000,,4 rows updated agent=fig→FIG; confirmed no lowercase remain,CHERRY,sonnet-4.6,lccjs
 563,668,DEV: add pre-commit hook to block code commits staged directly on main,DEV,45,15,6,,,2026-06-03T21:25:35-1000,2026-06-03T21:31:07-1000,,new scripts/git-hooks/pre-commit; blocks src/scripts/tests staged on main; passes on worktree branches and doc-only commits; updated CLAUDE.md hooks table and setup comment,APPLE,sonnet-4.6,lccjs
 564,613,reveal-md vs FOSS slide alternatives research,RESEARCH,45,25,7,38,18,2026-06-03T21:25:18-1000,2026-06-03T21:31:49-1000,,Marp and Quarto pass file:// constraint; reveal-md and Slidev fail; follow-up DEV #673 filed,GRAPE,sonnet-4.6,lccjs
+565,609,correct assembler.md + interpreter.md — three-caller .bst/.lst framing,WRITER,,,,,,,,,,BANANA,sonnet-4.6,lccjs
