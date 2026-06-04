@@ -9,7 +9,7 @@
 // Or:    npm run build:browser
 //
 // Dev deps required (already in package.json devDependencies):
-//   webpack  webpack-cli  path-browserify
+//   webpack  webpack-cli  path-browserify  process
 'use strict';
 
 const path = require('path');
@@ -22,11 +22,16 @@ const sharedFallback = {
   path: require.resolve('path-browserify'),
   // Buffer is used by the assembler and interpreter; browsers need the polyfill.
   buffer: require.resolve('buffer/'),
+  // Webpack 5 no longer shims process automatically; several modules reference process.*.
+  process: require.resolve('process/browser'),
 };
 
-// Inject Buffer as a global for all modules that use it without require().
+// Inject Buffer and process as globals for modules that use them without require().
 const sharedPlugins = [
-  new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'] }),
+  new webpack.ProvidePlugin({
+    Buffer:  ['buffer', 'Buffer'],
+    process: 'process/browser',
+  }),
 ];
 
 module.exports = [
