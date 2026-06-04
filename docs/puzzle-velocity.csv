@@ -560,3 +560,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 573,678,"DEV (H5): disassembler.js nesting flatten — guard-clause refactor, oracle-diff verified",DEV,,,,,,,,,,fig,sonnet-4.6,lccjs
 574,673,validate reveal-md static export on file://,DEV,30,20,10,20,10,2026-06-03T21:56:47-1000,2026-06-03T22:06:22-1000,,platform+bundle confirmed; injector DOMContentLoaded fires before Reveal Markdown processing — needs Reveal.ready hook; filed #682; closing,GRAPE,sonnet-4.6,lccjs
 575,684,add Tetris to ROADMAP.md planned games,WRITER,,,,,,,,,,BANANA,sonnet-4.6,lccjs
+576,688,add potato token testing and potato input testing to ROADMAP.md,WRITER,,,,,,,,,,BANANA,sonnet-4.6,lccjs
