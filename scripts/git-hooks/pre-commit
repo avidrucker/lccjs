@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# pre-commit: block code-path changes staged on main (#668).
+# Enforces worktree-per-task discipline — code changes always belong in a
+# worktree branch, never committed directly on main.
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [ "$branch" = "main" ]; then
+  offender=$(git diff --cached --name-only | grep -E '^(src|scripts|tests)/' | head -1)
+  if [ -n "$offender" ]; then
+    echo "[pre-commit] BLOCKED — code changes staged directly on main."
+    echo "  First offender: $offender"
+    echo "  Stake a worktree first:  npm run claim <N> --as <fruit>"
+    echo "  Bypass:  git commit --no-verify"
+    exit 1
+  fi
+fi

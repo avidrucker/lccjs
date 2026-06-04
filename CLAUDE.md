@@ -8,7 +8,7 @@ LCC.js is a JavaScript implementation of the LCC toolchain — assembler, linker
 
 ```bash
 # First-time setup (run once after cloning)
-npm run setup                                 # install git hooks (commit-msg + pre-push)
+npm run setup                                 # install git hooks (pre-commit + commit-msg + pre-push)
 
 # Toolchain
 node ./src/cli/lcc.js <infile> [options]   # assemble+run a .a, or run a .e directly, or link .o files
@@ -117,10 +117,11 @@ Code-area scopes (assembler, interpreter, linker, plus, jest, cli, debug, etc.) 
 
 ### Git hooks
 
-`npm run setup` (run once after cloning) installs two hooks via symlink from `scripts/git-hooks/`:
+`npm run setup` (run once after cloning) installs three hooks via symlink from `scripts/git-hooks/`:
 
 | Hook | Enforces | Bypass |
 |------|----------|--------|
+| `pre-commit` | No code changes (`src/`, `scripts/`, `tests/`) staged directly on `main` | `git commit --no-verify` |
 | `commit-msg` | No issue-ID scopes; no compound types | `git commit --no-verify` |
 | `pre-push` | PDD puzzle scan; no conflict markers; no push mid-rebase | `git push --no-verify` |
 
