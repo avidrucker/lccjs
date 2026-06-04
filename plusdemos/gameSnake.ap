@@ -21,24 +21,9 @@
 ; # This version is asynchronous and non-blocking for input.
 ; ############################################################
 
-;; DONE: implement randomly placing the fruit elsewhere after it
-;;       is eaten
-;; DONE: implement sleeping for a while after each move
-;; DONE: confirm correct behavior to ignore non-wasdq keys
-;; DONE: implement placing the food randomly somewhere where the 
-;;       snake segments are not currently located
-;; DONE: implement scoreboard that displays the snake's length
-;; DONE: implement 'dev mode' which prints the board, registers,
-;;       waits for a key press before continuing to next frame
-;; Feature backlog (opposite-direction guard, pause, win condition, variable
-;; board sizes, replay, high-score, vim-style HJKL controls) was tracked in
-;; #143 — closed wontfix 2026-05-29 (priority too low). See #202 for a
-;; code-quality assessment of this file that may re-surface some of these.
-
-
         .lccplus
         .start  startup
-; @todo #584:40m/DEV dead-code + comment hygiene (7 items — see #202 findings doc)
+; @inprogress #584:40m/DEV dead-code + comment hygiene (7 items — see #202 findings doc)
 ; @todo #585:20m/DEV direct-access + dead frame-setup cleanups (3 items)
 
 ;----------------------------------------------------------------
@@ -153,7 +138,7 @@ removeSnakeTail:
             bre @skip
             ; not empty — save oldHead, advance list, reclaim
             mov r2, r1       ; r2 = oldHead
-            ldr r1, r1, 2    ; r1 = oldHead->next
+            ldr r1, r1, 2    ; r1 = (*snake)->next
             str r1, r0, 0    ; *snake = oldHead->next
             mov r0, r2       ; r0 = oldHead (arg to free)
             bl  free
@@ -230,6 +215,10 @@ spaceChar:      .word ' '
 GMsg:           .string "Game Over!"
 enterAnyKey:    .string "Press any key to quit."
 scoreMsg:       .string "Score: "
+@GMsgPtr:         .word GMsg
+@enterAnyKeyPtr:  .word enterAnyKey
+@scoreMsgPtr:     .word scoreMsg
+@snakeLenPtr:     .word snakeLen
 
 ;---------------------------------------------------------
 ; placeFruitRandom: pick a random row/col in [0..9] for the fruit
@@ -354,10 +343,6 @@ printBoard:
             br @rowLoop
 
     @doneRows:
-            ; Uncomment these two lines for step-by-step dev mode
-            ; r
-            ; bp
-
             mov r0, 0
             mov sp, fp
             pop fp
@@ -517,11 +502,9 @@ moveSnake:
             br @wrapped
     @notDown:
         cmp r0, 0
-        brne @noKey
+        brne @wrapped
             sub r3, r3, 1
             br @wrapped
-    @noKey:
-        br @wrapped
     @wrapped:
         push r3
         push r2
@@ -631,7 +614,7 @@ getSnakeHeadXY:
           cmp r1, 0
           bre @empty
 
-@loopGL:
+    @loopGL:
           ldr r2, r1, 0   ; row
           ldr r3, r1, 1   ; col
           ldr r0, r1, 2   ; next
@@ -640,13 +623,13 @@ getSnakeHeadXY:
           mov r1, r0
           br @loopGL
 
-@doneGL:
+    @doneGL:
           mov sp, fp
           pop fp
           pop lr
           ret
 
-@empty:
+    @empty:
           mov r2, 0
           mov r3, 0
           mov sp, fp
@@ -682,10 +665,6 @@ wrapCoord:
           pop lr
           ret
 
-@GMsgPtr:         .word GMsg
-@enterAnyKeyPtr:  .word enterAnyKey
-@scoreMsgPtr:     .word scoreMsg
-@snakeLenPtr:     .word snakeLen
 @boardSizePtr:    .word boardSize
 
 ;================================================================
