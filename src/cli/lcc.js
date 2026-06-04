@@ -194,12 +194,13 @@ class LCC {
 
   printHelp() {
     console.log('Usage: lcc.js <infile>');
-    console.log('Optional args: -d -m -r -t -f -x -i -e -c -l<hex loadpt> -o <outfile> -h');
+    console.log('Optional args: -d -m -r -t -f -x -i -e -c -v -l<hex loadpt> -o <outfile> -h');
     console.log('   -d:   debug, -m mem display at end, -r: reg display at end');
     console.log('   -f:   full line display, -x: 4 digit hout, -h: help');
     console.log('   -i:   interactive stepping debugger mode (.a and .e files only)');
     console.log('   -e:   efficient mode (with -i: forward-only stepping, lower memory)');
     console.log('   -c:   colorblind mode (with -i: alternate ANSI palette)');
+    console.log('   -v / --verbose: verbose output (assembler, interpreter, and linker)');
     console.log('What lcc.js does depends on the extension in the input file name:');
     console.log('   .hex: execute and output .lst, .bst files');
     console.log('   .bin: execute and output .lst, .bst files');
