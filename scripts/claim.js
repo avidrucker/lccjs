@@ -288,15 +288,20 @@ function flipMarker(issue, wtPath) {
   console.log(`[claim] flipped ${todoKw} #${issue} → ${inprogressKw} in ${relFile}:${line}`);
 }
 
-// Read an issue's title + state in one best-effort gh round-trip (#227). Returns
-// { title, state } with state upper-cased, or null when gh is unavailable / the
-// issue is unknown -- callers MUST treat null as "proceed", never as a block.
+// Read an issue's title, state, and comment count in one best-effort gh round-trip
+// (#227, #661). Returns { title, state, commentCount } with state upper-cased, or
+// null when gh is unavailable / the issue is unknown -- callers MUST treat null as
+// "proceed", never as a block.
 function readIssue(issue) {
-  const out = sh(`gh issue view ${issue} --json title,state`, true);
+  const out = sh(`gh issue view ${issue} --json title,state,comments`, true);
   if (!out) return null;
   try {
     const j = JSON.parse(out);
-    return { title: j.title || null, state: String(j.state || '').toUpperCase() };
+    return {
+      title: j.title || null,
+      state: String(j.state || '').toUpperCase(),
+      commentCount: Array.isArray(j.comments) ? j.comments.length : 0,
+    };
   } catch {
     return null;
   }
@@ -411,8 +416,9 @@ function main() {
 
   if (opts.dryRun) {
     const fruit = candidates[0];
+    const dryCommentCount = (info && info.commentCount) || 0;
     console.log('[claim] --dry-run — nothing staked.');
-    report(fruit, mkBranch(fruit), mkPath(fruit), base, identity.modeLabel, true);
+    report(fruit, mkBranch(fruit), mkPath(fruit), base, identity.modeLabel, true, dryCommentCount, issue);
     return;
   }
 
@@ -459,32 +465,46 @@ function main() {
     if (!identity.name) createSessionSentinel(fruit);
 
     flipMarker(issue, wtPath);
-    report(fruit, branch, wtPath, base, identity.modeLabel, false);
+    report(fruit, branch, wtPath, base, identity.modeLabel, false, (info && info.commentCount) || 0, issue);
     return;
   }
 
   die('could not claim a worktree — every candidate fruit was taken or staking failed.');
 }
 
-function report(fruit, branch, wtPath, base, mode, dry) {
+// Pure: build the CLAIMED/WOULD CLAIM banner as an array of lines. Exported for
+// unit testing — callers use report() which logs each line. (#661: commentCount
+// adds a pickup prompt when prior comments exist on the issue.)
+function buildBannerLines(fruit, branch, wtPath, base, mode, dry, commentCount, issue) {
   const short = wtPath.replace(process.env.HOME || '\0', '~');
   const bar = '─'.repeat(58);
-  console.log(bar);
-  console.log(`  ${dry ? 'WOULD CLAIM' : 'CLAIMED'}  ·  agent: ${fruit}  (${mode})`);
-  console.log(bar);
-  console.log(`  branch    ${branch}`);
-  console.log(`  worktree  ${short}`);
-  console.log(`  base      ${base}`);
-  if (!dry) {
-    console.log('');
-    console.log('  next:');
-    console.log(`    cd ${short}`);
-    console.log(`    # (claim already flipped the ${todoKw} #N marker to ${inprogressKw} #N if one was found)`);
-    console.log('    # reuse this identity for later worktrees:  npm run claim -- <issue> --as ' + fruit);
+  const lines = [
+    bar,
+    `  ${dry ? 'WOULD CLAIM' : 'CLAIMED'}  ·  agent: ${fruit}  (${mode})`,
+    bar,
+    `  branch    ${branch}`,
+    `  worktree  ${short}`,
+    `  base      ${base}`,
+  ];
+  if (commentCount > 0) {
+    lines.push(`  comments  ${commentCount} — read them: gh issue view ${issue} --comments`);
   }
-  console.log(bar);
+  if (!dry) {
+    lines.push('');
+    lines.push('  next:');
+    lines.push(`    cd ${short}`);
+    lines.push(`    # (claim already flipped the ${todoKw} #N marker to ${inprogressKw} #N if one was found)`);
+    lines.push('    # reuse this identity for later worktrees:  npm run claim -- <issue> --as ' + fruit);
+  }
+  lines.push(bar);
   // Machine-readable tail for scripting/agents.
-  console.log(`CLAIM ${dry ? 'DRYRUN' : 'OK'} agent=${fruit} branch=${branch} path=${wtPath}`);
+  lines.push(`CLAIM ${dry ? 'DRYRUN' : 'OK'} agent=${fruit} branch=${branch} path=${wtPath}`);
+  return lines;
+}
+
+function report(fruit, branch, wtPath, base, mode, dry, commentCount, issue) {
+  buildBannerLines(fruit, branch, wtPath, base, mode, dry, commentCount, issue)
+    .forEach((l) => console.log(l));
 }
 
 if (require.main === module) main();
@@ -494,5 +514,5 @@ module.exports = {
   parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
   checkIdentityName, readIssue, shouldBlockClaim,
   sentinelBranch, isSentinelStaleByAge,
-  applyMarkerFlip,
+  applyMarkerFlip, buildBannerLines,
 };

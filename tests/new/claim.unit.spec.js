@@ -8,6 +8,7 @@ const {
   sentinelBranch,
   isSentinelStaleByAge,
   applyMarkerFlip,
+  buildBannerLines,
 } = require('../../scripts/claim');
 
 // Pure identity-resolution seam from scripts/claim.js. These tests exercise the
@@ -290,5 +291,32 @@ describe('applyMarkerFlip()', () => {
     const content = '// @todo #5:10m/DEV first\n// @todo #5:10m/DEV second\n';
     const { updated } = applyMarkerFlip(content, '5');
     expect(updated).toBe('// @inprogress #5:10m/DEV first\n// @todo #5:10m/DEV second\n');
+  });
+});
+
+// #661: CLAIMED banner comment-count pickup prompt
+describe('buildBannerLines() — comment hint (#661)', () => {
+  const BASE_ARGS = ['apple', 'apple/issue-42', '/home/user/.claude/worktrees/apple-issue-42', 'main', 'reuse (--as)', false];
+
+  test('includes comments line when commentCount > 0', () => {
+    const lines = buildBannerLines(...BASE_ARGS, 3, '42');
+    expect(lines.some((l) => l.includes('comments  3'))).toBe(true);
+    expect(lines.some((l) => l.includes('gh issue view 42 --comments'))).toBe(true);
+  });
+
+  test('omits comments line when commentCount is 0', () => {
+    const lines = buildBannerLines(...BASE_ARGS, 0, '42');
+    expect(lines.some((l) => /comments/.test(l))).toBe(false);
+  });
+
+  test('omits comments line when commentCount is absent (undefined)', () => {
+    const lines = buildBannerLines(...BASE_ARGS, undefined, '42');
+    expect(lines.some((l) => /comments/.test(l))).toBe(false);
+  });
+
+  test('comments line references the correct issue number', () => {
+    const lines = buildBannerLines(...BASE_ARGS, 5, '99');
+    const commentLine = lines.find((l) => l.includes('comments'));
+    expect(commentLine).toMatch(/gh issue view 99 --comments/);
   });
 });
