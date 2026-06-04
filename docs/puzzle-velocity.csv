@@ -544,3 +544,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 557,664,DATA: day-six notebook date ceiling,DATA,30,20,11,19,9,2026-06-03T20:58:04-1000,2026-06-03T21:09:23-1000,,added hst_day<=2026-06-02 filter; updated §7 prose for fenced-run numbers (316 cal-usable); re-executed clean,DRAGONFRUIT,sonnet-4.6,lccjs
 558,653,WRITER: add README index row for TIL 2026-06-03 CHERRY s4 (missed in #647),WRITER,,,,,,,,,,fig,sonnet-4.6,lccjs
 559,671,add diff-stat pre-flight to close.js,DEV,,,,,,,,,,BANANA,sonnet-4.6,lccjs
+560,656,document skill inventory for lccjs,WRITER,30,20,3,27,17,2026-06-03T21:25:24-1000,2026-06-03T21:27:54-1000,,straight docs write; all skills listed in issue present and found in ~/.claude/skills/; also added next-best-action and write-til-doc as project-relevant extras,ELDERBERRY,sonnet-4.6,lccjs
