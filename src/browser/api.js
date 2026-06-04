@@ -23,27 +23,29 @@ function assemble(src) {
  * Run an LCC executable buffer in memory.
  *
  * @param {Buffer} binary - Executable produced by assemble().binary.
- * @param {{ stdin?: string[], pauseOnInput?: boolean }} [opts]
+ * @param {{ stdin?: string[], pauseOnInput?: boolean, maxSteps?: number }} [opts]
  *   opts.stdin        — pre-supplied input lines fed to DIN/HIN/AIN/SIN traps.
  *   opts.pauseOnInput — when true, returns a sentinel instead of blocking when
  *                       stdin lines are exhausted; call result.resume(moreInput)
  *                       to continue execution.
- * @returns {{ stdout: string, exitCode: number }
+ *   opts.maxSteps     — instruction step cap (0 = unlimited).
+ *                       When hit: execution stops, maxStepsReached is true, exitCode is 2.
+ * @returns {{ stdout: string, exitCode: number, maxStepsReached: boolean }
  *         | { status: 'waiting-for-input', trapType: string,
  *             resume: (moreInput: string) => ... }}
  */
 function run(binary, opts = {}) {
-  const { stdin = [], pauseOnInput = false } = opts;
+  const { stdin = [], pauseOnInput = false, maxSteps = 0 } = opts;
   const inputBuffer = stdin.join('\n') + (stdin.length ? '\n' : '');
   const interp = new Interpreter();
   try {
-    const result = interp.executeBuffer(binary, { inputFileName: 'input.e', inputBuffer, pauseOnInput });
+    const result = interp.executeBuffer(binary, { inputFileName: 'input.e', inputBuffer, pauseOnInput, maxSteps });
     if (result && result.status === 'waiting-for-input') {
       return { status: 'waiting-for-input', trapType: result.trapType, resume: makeResume(interp) };
     }
-    return { stdout: result.output, exitCode: 0 };
+    return { stdout: result.output, exitCode: result.maxStepsReached ? 2 : 0, maxStepsReached: !!result.maxStepsReached };
   } catch (err) {
-    return { stdout: interp.output, exitCode: 1 };
+    return { stdout: interp.output, exitCode: 1, maxStepsReached: false };
   }
 }
 

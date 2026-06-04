@@ -226,6 +226,7 @@ class Interpreter {
     this.v = 0;                        // Overflow flag
     this.running = true;
     this.output = '';                  // Output string
+    this.maxStepsReached = false;      // Set true when maxSteps cap is hit
     this.instructionsExecuted = 0;     // For program statistics
     this.maxStackSize = 0;             // For program statistics
     this.spInitial = 0;                // For tracking stack size
@@ -256,6 +257,7 @@ class Interpreter {
     return {
       inputFileName,
       output: this.output,
+      maxStepsReached: this.maxStepsReached,
       mem: this.mem.slice(),
       registers: this.r.slice(),
       pc: this.pc,
@@ -286,6 +288,7 @@ class Interpreter {
       userName,
       now,
       pauseOnInput = false,
+      maxSteps = 0,
     } = options;
 
     this.inputFileName = inputFileName;
@@ -294,6 +297,7 @@ class Interpreter {
     this.options = runtimeOptions;
     this._pauseOnInput = pauseOnInput;
     this._resumeArgs = { buildReports, userName, now };
+    this.maxSteps = maxSteps;
 
     this.resetExecutionState();
     this.allowRuntimeDebugging = allowDebugOnInfiniteLoop;
@@ -630,7 +634,14 @@ class Interpreter {
   run() {
     this.spInitial = this.r[6]; // Assuming r6 is the stack pointer
 
+    const limit = this.maxSteps || 0;
+    let steps = 0;
     while (this.running) {
+      if (limit > 0 && ++steps > limit) {
+        this.maxStepsReached = true;
+        this.running = false;
+        break;
+      }
       this.step();
     }
   }

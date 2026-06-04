@@ -387,6 +387,16 @@ ${listItems}
   const starterCodeJson = JSON.stringify(starterCode);
 
   const playgroundScript = `
+<style>
+#run-btn { background:var(--fg);color:var(--bg);border:none;border-radius:4px;padding:.4rem 1.1rem;font-size:.9rem;cursor:pointer;font-weight:600; }
+#run-btn:hover { opacity:.85; }
+#stop-btn { background:#c0392b;color:#fff;border:none;border-radius:4px;padding:.4rem 1.1rem;font-size:.9rem;cursor:pointer;font-weight:600;display:none; }
+#stop-btn:hover { opacity:.85; }
+.run-bar { display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem; }
+#exec-output { min-height:300px;border-radius:6px;padding:1.1rem 1.25rem;overflow:auto;font-size:.85rem;line-height:1.6;font-family:var(--mono-font);background:#0a0a0a;color:#4af626;white-space:pre-wrap;word-break:break-word;margin:0; }
+#exec-output.lcc-error { color:#ff5555; }
+.panel-label { font-size:.8rem;color:var(--muted);margin-bottom:.4rem; }
+</style>
 <script src="../dist/lcc.bundle.js"></script>
 <script type="module">
 const CUSTOM_THEMES  = ${customThemesJson};
@@ -400,6 +410,7 @@ const output     = document.getElementById('playground-output');
 const runStatus  = document.getElementById('playground-status');
 const shikiStatus = document.getElementById('shiki-status');
 const runBtn     = document.getElementById('run-btn');
+const stopBtn    = document.getElementById('stop-btn');
 const execOut    = document.getElementById('exec-output');
 
 function applyBodyClass(themeId) {
@@ -407,28 +418,92 @@ function applyBodyClass(themeId) {
     (themeId.startsWith('retro-console') ? ' retro' : '');
 }
 
+let currentWorker = null;
+
+function setRunning(active) {
+  runBtn.style.display  = active ? 'none' : '';
+  stopBtn.style.display = active ? '' : 'none';
+}
+
+function finishRun() {
+  currentWorker = null;
+  setRunning(false);
+}
+
+stopBtn.addEventListener('click', () => {
+  if (currentWorker) {
+    currentWorker.terminate();
+    finishRun();
+    execOut.classList.add('lcc-error');
+    execOut.textContent += '\\n(stopped by user)';
+    runStatus.textContent = 'stopped';
+  }
+});
+
 runBtn.addEventListener('click', () => {
   runStatus.textContent = '';
   execOut.classList.remove('lcc-error');
-  const api = window.lcc;
-  if (!api || typeof api.assemble !== 'function') {
-    execOut.textContent = '(lcc.bundle.js not loaded — execution unavailable)';
+  execOut.textContent = 'Running…';
+
+  let worker;
+  try {
+    worker = new Worker('./lcc-worker.js');
+  } catch (_) {
+    const api = window.lcc;
+    if (!api || typeof api.assemble !== 'function') {
+      execOut.textContent = '(lcc.bundle.js not loaded — execution unavailable)';
+      return;
+    }
+    const src = textarea.value;
+    const stdinLines = stdinInput.value.trim() ? stdinInput.value.split('\\n') : [];
+    const asmResult = api.assemble(src);
+    if (!asmResult.ok) {
+      execOut.classList.add('lcc-error');
+      execOut.textContent = 'Assembly error:\\n' + asmResult.errors;
+      return;
+    }
+    const runResult = api.run(asmResult.binary, { stdin: stdinLines, maxSteps: 50000 });
+    execOut.textContent = runResult.stdout || '(no output)';
+    if (runResult.maxStepsReached) {
+      runStatus.textContent = 'Program did not halt — possible infinite loop';
+      execOut.classList.add('lcc-error');
+    } else if (runResult.exitCode !== 0) {
+      runStatus.textContent = 'exited with code ' + runResult.exitCode;
+    }
     return;
   }
-  const src = textarea.value;
+
+  currentWorker = worker;
+  setRunning(true);
+
+  worker.onmessage = (e) => {
+    const { status, output: out, message } = e.data;
+    execOut.classList.remove('lcc-error');
+    if (status === 'halted') {
+      execOut.textContent = out || '(no output)';
+    } else if (status === 'max-steps-reached') {
+      execOut.classList.add('lcc-error');
+      execOut.textContent = (out || '') + '\\n… (truncated)';
+      runStatus.textContent = 'Program did not halt — possible infinite loop';
+    } else if (status === 'assembly-error') {
+      execOut.classList.add('lcc-error');
+      execOut.textContent = 'Assembly error:\\n' + message;
+    } else {
+      execOut.classList.add('lcc-error');
+      execOut.textContent = 'Error: ' + (message || 'unknown');
+    }
+    worker.terminate();
+    finishRun();
+  };
+
+  worker.onerror = (e) => {
+    execOut.classList.add('lcc-error');
+    execOut.textContent = 'Worker error: ' + e.message;
+    finishRun();
+  };
+
   const stdinLines = stdinInput.value.trim() ? stdinInput.value.split('\\n') : [];
-  const asmResult = api.assemble(src);
-  if (!asmResult.ok) {
-    execOut.classList.add('lcc-error');
-    execOut.textContent = '$ lcc program.a\\nAssembly error:\\n' + asmResult.errors;
-    return;
-  }
-  const runResult = api.run(asmResult.binary, { stdin: stdinLines });
-  execOut.textContent = '$ lcc program.a\\n' + (runResult.stdout || '(no output)');
-  if (runResult.exitCode !== 0) {
-    runStatus.textContent = 'exited with code ' + runResult.exitCode;
-    execOut.classList.add('lcc-error');
-  }
+  worker.postMessage({ type: 'run', src: textarea.value, stdinLines, maxSteps: 50000 });
 });
 
 (async () => {
@@ -443,9 +518,9 @@ runBtn.addEventListener('click', () => {
     ]);
     const grammar = await grammarRes.json();
     hl = await createHighlighter({ langs: [grammar], themes: [...CUSTOM_THEMES, ...BUILTIN_THEMES] });
-    if (shikiStatus) shikiStatus.textContent = '';
+    shikiStatus.textContent = '';
   } catch (err) {
-    if (shikiStatus) shikiStatus.textContent = 'Highlighting unavailable: ' + err.message;
+    shikiStatus.textContent = 'Highlighting unavailable: ' + err.message;
     return;
   }
 
@@ -455,7 +530,7 @@ runBtn.addEventListener('click', () => {
     try {
       output.innerHTML = hl.codeToHtml(textarea.value, { lang: 'lcc', theme });
     } catch (err) {
-      if (shikiStatus) shikiStatus.textContent = 'Highlight error: ' + err.message;
+      shikiStatus.textContent = 'Highlight error: ' + err.message;
     }
   }
 
@@ -492,6 +567,7 @@ ${playgroundThemeOptions}
   </div>
   <div class="run-bar">
     <button id="run-btn">Run</button>
+    <button id="stop-btn">Stop</button>
     <span id="playground-status" style="color:#f85149;font-size:.8rem;"></span>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
@@ -519,13 +595,13 @@ ${playgroundThemeOptions}
   const playgroundDir = path.join(OUT_DIR, 'showcase');
   fs.mkdirSync(playgroundDir, { recursive: true });
 
-  const playgroundCss = `
-#run-btn { background:var(--fg);color:var(--bg);border:none;border-radius:4px;padding:.4rem 1.1rem;font-size:.9rem;cursor:pointer;font-weight:600; }
-#run-btn:hover { opacity:.85; }
-.run-bar { display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem; }
-#exec-output { min-height:300px;border-radius:6px;padding:1.1rem 1.25rem;overflow:auto;font-size:.85rem;line-height:1.6;font-family:var(--mono-font);background:#0a0a0a;color:#4af626;white-space:pre-wrap;word-break:break-word;margin:0; }
-#exec-output.lcc-error { color:#ff5555; }
-.panel-label { font-size:.8rem;color:var(--muted);margin-bottom:.4rem; }`;
+  // Deploy the Web Worker script alongside index.html.
+  const workerSrc = path.join(ROOT, 'src', 'browser', 'lcc-worker.js');
+  const workerDst = path.join(playgroundDir, 'lcc-worker.js');
+  if (fs.existsSync(workerSrc)) {
+    fs.copyFileSync(workerSrc, workerDst);
+    console.log(`build:site — worker: ${path.relative(ROOT, workerDst)}`);
+  }
 
   const playgroundHtml = makePage({
     title: 'Playground — LCC Assembly',
