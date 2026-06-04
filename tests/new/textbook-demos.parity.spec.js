@@ -63,10 +63,7 @@ const DEMOS = [
   { num: '003', slug: 'counting-loop',                chapter: 'ch03-assembly-basics' },
   { num: '004', slug: 'subroutine-call',              chapter: 'ch03-assembly-basics' },
   { num: '005', slug: 'start-directive',              chapter: 'ch03-assembly-basics' },
-  {
-    num: '006', slug: 'word-label-vs-literal',        chapter: 'ch03-assembly-basics',
-    skip: 'C prints 64-bit host pointer via %p; LCC addresses are 16-bit — values are inherently incomparable',
-  },
+  { num: '006', slug: 'word-label-vs-literal',        chapter: 'ch03-assembly-basics' },
   { num: '007', slug: 'signed-comparison',            chapter: 'ch03-assembly-basics', inputs: '3\n5\n' },
   { num: '008', slug: 'label-arithmetic',             chapter: 'ch03-assembly-basics' },
   { num: '009', slug: 'static-linked-list',           chapter: 'ch03-assembly-basics' },
