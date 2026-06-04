@@ -74,7 +74,7 @@ A handful of bool flags that gate runtime behaviours:
 
 - `debugMode` — interactive debugger is active (entered via `-d`, `BP` trap, infinite-loop guard, or breakpoint hit)
 - `traceMode` — emit per-instruction trace to stdout (no interactive prompt); set by `-t`
-- `instructionsCap` (= 500000) — soft cap for the infinite-loop guard
+- `maxSteps` (default 500000; pass `-1` or `Infinity` for unlimited) — step cap for the infinite-loop guard; set via `--max-steps N` on the CLI
 - `disableInfiniteLoopDetection` — bypass the cap entirely; useful for long-running `.ap` programs where the cap fires spuriously
 - `allowRuntimeDebugging` — set per `executeBuffer` call to gate whether cap-hit can enter the debugger
 - `debugBreakpoint` — address set by debug `b <addr>`; cleared on first hit (single-shot)

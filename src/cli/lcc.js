@@ -200,7 +200,7 @@ class LCC {
 
   printHelp() {
     console.log('Usage: lcc.js <infile>');
-    console.log('Optional args: -d -m -r -t -f -x -i -e -c -v -nostats -l<hex loadpt> -o <outfile> -h');
+    console.log('Optional args: -d -m -r -t -f -x -i -e -c -v -nostats --max-steps N -l<hex loadpt> -o <outfile> -h');
     console.log('   -d:   debug, -m mem display at end, -r: reg display at end');
     console.log('   -f:   full line display, -x: 4 digit hout, -h: help');
     console.log('   -i:   interactive stepping debugger mode (.a and .e files only)');
@@ -210,6 +210,7 @@ class LCC {
     console.log('         (-m/-r are post-run batch dumps; interactive mode has no batch path)');
     console.log('   -v / --verbose: verbose output (assembler, interpreter, and linker)');
     console.log('   -nostats: suppress .lst/.bst report generation');
+    console.log('   --max-steps N: set execution step cap (default 500000; use -1 for unlimited)');
     console.log('What lcc.js does depends on the extension in the input file name:');
     console.log('   .hex: execute and output .lst, .bst files');
     console.log('   .bin: execute and output .lst, .bst files');

@@ -344,8 +344,8 @@ interpreter halt with an error, or silently produce a wrong value?
 
 ---
 
-### H-021 🔴 `instructionsCap` triggers on programs with legitimate long loops
-**Hypothesis:** The 500,000-instruction cap fires `Possible infinite loop`
+### H-021 🔴 `maxSteps` cap triggers on programs with legitimate long loops
+**Hypothesis:** The 500,000-step cap (configurable via `--max-steps N`) fires `Possible infinite loop`
 for any program that genuinely runs longer. A program computing a large
 Fibonacci value or doing heavy string processing could hit this. The cap
 is also applied *even when `allowRuntimeDebugging = false`*, so users

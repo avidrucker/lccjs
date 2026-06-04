@@ -17,7 +17,7 @@ The **LCC+js interpretation** extends the standard LCC.js interpreter (`interpre
 
 3. **Uncapped Instruction Execution:**
    - By default, **`interpreter.js`** enforces a 500,000-instruction cap to prevent infinite loops.  
-   - **`interpreterplus.js`** sets `this.instructionsCap = Infinity` (no cap), enabling continuous or long-running real-time applications (e.g., games).
+   - **`interpreterplus.js`** sets `this.disableInfiniteLoopDetection = true` (no cap), enabling continuous or long-running real-time applications (e.g., games).
 
 ---
 

@@ -113,7 +113,7 @@ The ~450 count included all internal `this.*` usages inside `interpreter.js` its
 | `debugBreakpoint` | none (internal) |
 | `disableInfiniteLoopDetection` | none (internal) |
 | `allowRuntimeDebugging` | `lcc.js` (write) |
-| `instructionsCap` | none (internal) |
+| `maxSteps` | `lcc.js` (write via `--max-steps`); `interpreterplus.js` bypasses via `disableInfiniteLoopDetection` |
 | `hasJumped` | none (internal) |
 
 ### `opts` — run-time configuration (set by caller before run)
@@ -190,7 +190,7 @@ inventory suggests 5 groups:
 |--------|--------|-----------------|----------------|
 | `cpu` | `mem, r, pc, ir, n, z, c, v, running` | none | `iinterpreter`, `ilcc.unit.spec.js`, `interactive.unit.spec.js` |
 | `io` | `output, inputBuffer` | `lcc.js`, tests | `createExecutionResult` |
-| `diag` | `traceMode, debugMode, debugBreakpoint, disableInfiniteLoopDetection, allowRuntimeDebugging, instructionsCap, hasJumped` | `lcc.js` (5 fields) | 1 test read (`debugMode`) |
+| `diag` | `traceMode, debugMode, debugBreakpoint, disableInfiniteLoopDetection, allowRuntimeDebugging, maxSteps, hasJumped` | `lcc.js` (5 fields) | 1 test read (`debugMode`) |
 | `opts` | `options, generateStats, inputFileName, sourceMap` | `lcc.js`, tests | none |
 | `acct` | `instructionsExecuted, maxStackSize, loadPoint, spInitial, memMax, headerLines, initialMem` | none | `createExecutionResult`, `iinterpreter` (2 display fields) |
 

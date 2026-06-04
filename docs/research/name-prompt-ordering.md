@@ -26,7 +26,7 @@ lcc.js main()
        └─ executeFile()
             interpreter.allowRuntimeDebugging = true
             interpreter.run()
-              → hits instructionsCap
+              → hits maxSteps cap
               → canEnterInteractiveDebugger() → true (TTY + flag)
               → sets debugMode = true, drops into interactive debugger
               → user types q → run() returns NORMALLY (no throw)
@@ -47,7 +47,7 @@ session. This is the bug.
 ```
 executeFile()
   interpreter.run()
-    → hits instructionsCap
+    → hits maxSteps cap
     → canEnterInteractiveDebugger() → false (not TTY)
     → raiseRuntimeError('Possible infinite loop')   ← throws
   catch(error):
