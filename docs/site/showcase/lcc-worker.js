@@ -5,18 +5,15 @@
 // The worker imports lcc.bundle.js which sets self.lcc = { assemble, run }.
 //
 // Protocol (main → worker):
-//   { type: 'run', src: string, stdinLines: string[], maxSteps: number }
+//   { type: 'run',    src: string, stdinLines: string[], maxSteps: number }
+//   { type: 'resume', input: string }
 //
 // Protocol (worker → main):
-//   { status: 'halted',           output: string }
+//   { status: 'halted',            output: string }
 //   { status: 'max-steps-reached', output: string }
-//   { status: 'assembly-error',   message: string }
-//   { status: 'error',            message: string }
-//
-// pauseOnInput handshake (#694/#702): stubbed — pre-supplied stdinLines are
-// consumed by executeBuffer; programs exhausting stdin will receive an empty
-// string on subsequent reads (interpreter default).  Full interactive pause
-// will be wired once #702 lands.
+//   { status: 'assembly-error',    message: string }
+//   { status: 'error',             message: string }
+//   { status: 'waiting-for-input', partialOutput: string, trapType: string }
 
 const DEFAULT_MAX_STEPS = 50_000;
 
@@ -28,28 +25,46 @@ try {
   // bundle absent (e.g. file:// during local dev before #705 deploys it)
 }
 
-self.onmessage = function (e) {
-  const { type, src, stdinLines = [], maxSteps = DEFAULT_MAX_STEPS } = e.data || {};
+let resumeFn = null;
 
-  if (type !== 'run') return;
-
-  const api = self.lcc;
-  if (!api || typeof api.assemble !== 'function') {
-    self.postMessage({ status: 'error', message: 'lcc bundle not loaded in worker' });
-    return;
-  }
-
-  const asmResult = api.assemble(src);
-  if (!asmResult.ok) {
-    self.postMessage({ status: 'assembly-error', message: asmResult.errors });
-    return;
-  }
-
-  const runResult = api.run(asmResult.binary, { stdin: stdinLines, maxSteps });
-
-  if (runResult.maxStepsReached) {
-    self.postMessage({ status: 'max-steps-reached', output: runResult.stdout });
+function handleResult(result) {
+  if (result && result.status === 'waiting-for-input') {
+    resumeFn = result.resume;
+    self.postMessage({ status: 'waiting-for-input', partialOutput: result.partialOutput || '', trapType: result.trapType });
+  } else if (result && result.maxStepsReached) {
+    resumeFn = null;
+    self.postMessage({ status: 'max-steps-reached', output: result.stdout });
   } else {
-    self.postMessage({ status: 'halted', output: runResult.stdout });
+    resumeFn = null;
+    self.postMessage({ status: 'halted', output: (result && result.stdout) || '' });
+  }
+}
+
+self.onmessage = function (e) {
+  const { type } = e.data || {};
+
+  if (type === 'run') {
+    resumeFn = null;
+    const { src, stdinLines = [], maxSteps = DEFAULT_MAX_STEPS } = e.data;
+
+    const api = self.lcc;
+    if (!api || typeof api.assemble !== 'function') {
+      self.postMessage({ status: 'error', message: 'lcc bundle not loaded in worker' });
+      return;
+    }
+
+    const asmResult = api.assemble(src);
+    if (!asmResult.ok) {
+      self.postMessage({ status: 'assembly-error', message: asmResult.errors });
+      return;
+    }
+
+    handleResult(api.run(asmResult.binary, { stdin: stdinLines, maxSteps, pauseOnInput: true }));
+
+  } else if (type === 'resume') {
+    if (!resumeFn) return;
+    const fn = resumeFn;
+    resumeFn = null;
+    handleResult(fn(e.data.input || ''));
   }
 };

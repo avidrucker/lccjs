@@ -108,12 +108,19 @@ code { font-family:var(--mono-font); }
     <div>
       <p class="panel-label">LCC Assembly</p>
       <div id="editor" style="width:100%;height:280px;border:1px solid var(--muted);border-radius:6px;overflow:hidden;"></div>
-      <p class="panel-label" style="margin-top:.75rem;">stdin lines <span style="font-style:italic;">(one per line — programs exhausting these will fail)</span></p>
+      <p class="panel-label" style="margin-top:.75rem;">stdin <span style="font-style:italic;">(pre-supply lines, or leave blank — an interactive prompt appears when the program waits for input)</span></p>
       <textarea id="stdin-input" spellcheck="false" style="width:100%;height:80px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
     </div>
     <div>
       <p class="panel-label">Output</p>
       <pre id="exec-output">(click Run to execute)</pre>
+      <div id="stdin-prompt" style="display:none;margin-top:.5rem;padding:.65rem .9rem;background:var(--border);border-radius:6px;border:1px solid var(--muted);">
+        <p id="stdin-prompt-label" style="font-size:.8rem;color:var(--fg);margin-bottom:.45rem;font-family:var(--mono-font);"></p>
+        <div style="display:flex;gap:.5rem;align-items:center;">
+          <input id="stdin-prompt-input" type="text" spellcheck="false" autocomplete="off" style="flex:1;background:var(--bg);color:var(--fg);border:1px solid var(--muted);border-radius:4px;padding:.35rem .6rem;font-family:var(--mono-font);font-size:.85rem;" />
+          <button id="stdin-prompt-submit">Submit</button>
+        </div>
+      </div>
     </div>
   </div>
   <section style="margin-top:2rem;">
@@ -136,6 +143,8 @@ code { font-family:var(--mono-font); }
 #exec-output { min-height:300px;border-radius:6px;padding:1.1rem 1.25rem;overflow:auto;font-size:.85rem;line-height:1.6;font-family:var(--mono-font);background:#0a0a0a;color:#4af626;white-space:pre-wrap;word-break:break-word;margin:0; }
 #exec-output.lcc-error { color:#ff5555; }
 .panel-label { font-size:.8rem;color:var(--muted);margin-bottom:.4rem; }
+#stdin-prompt-submit { background:var(--fg);color:var(--bg);border:none;border-radius:4px;padding:.35rem .9rem;font-size:.85rem;cursor:pointer;font-weight:600; }
+#stdin-prompt-submit:hover { opacity:.85; }
 </style>
 <script src="../dist/lcc.bundle.js"></script>
 <script type="module">
@@ -173,12 +182,38 @@ const editor = new EditorView({
   ],
   parent: document.getElementById('editor'),
 });
-const output     = document.getElementById('playground-output');
-const runStatus  = document.getElementById('playground-status');
-const shikiStatus = document.getElementById('shiki-status');
-const runBtn     = document.getElementById('run-btn');
-const stopBtn    = document.getElementById('stop-btn');
-const execOut    = document.getElementById('exec-output');
+const output            = document.getElementById('playground-output');
+const runStatus         = document.getElementById('playground-status');
+const shikiStatus       = document.getElementById('shiki-status');
+const runBtn            = document.getElementById('run-btn');
+const stopBtn           = document.getElementById('stop-btn');
+const execOut           = document.getElementById('exec-output');
+const stdinPrompt       = document.getElementById('stdin-prompt');
+const stdinPromptLabel  = document.getElementById('stdin-prompt-label');
+const stdinPromptInput  = document.getElementById('stdin-prompt-input');
+const stdinPromptSubmit = document.getElementById('stdin-prompt-submit');
+
+const TRAP_LABELS = { din: 'decimal integer', hin: 'hex integer', ain: 'integer', sin: 'string' };
+
+function showPrompt(trapType, onSubmit) {
+  const kind = TRAP_LABELS[trapType] || 'input';
+  stdinPromptLabel.textContent = `Program is waiting for ${kind} input (\`${trapType}\`):`;
+  stdinPromptInput.value = '';
+  stdinPrompt.style.display = '';
+  stdinPromptInput.focus();
+  function submit() {
+    hidePrompt();
+    onSubmit(stdinPromptInput.value);
+  }
+  stdinPromptSubmit.onclick = submit;
+  stdinPromptInput.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); submit(); } };
+}
+
+function hidePrompt() {
+  stdinPrompt.style.display = 'none';
+  stdinPromptSubmit.onclick = null;
+  stdinPromptInput.onkeydown = null;
+}
 
 function applyBodyClass(themeId) {
   document.body.className = (DARK.has(themeId) ? 'dark' : 'light') +
@@ -195,6 +230,7 @@ function setRunning(active) {
 function finishRun() {
   currentWorker = null;
   setRunning(false);
+  hidePrompt();
 }
 
 stopBtn.addEventListener('click', () => {
@@ -229,14 +265,21 @@ runBtn.addEventListener('click', () => {
       execOut.textContent = 'Assembly error:\n' + asmResult.errors;
       return;
     }
-    const runResult = api.run(asmResult.binary, { stdin: stdinLines, maxSteps: 50000 });
-    execOut.textContent = runResult.stdout || '(no output)';
-    if (runResult.maxStepsReached) {
-      runStatus.textContent = 'Program did not halt — possible infinite loop';
-      execOut.classList.add('lcc-error');
-    } else if (runResult.exitCode !== 0) {
-      runStatus.textContent = 'exited with code ' + runResult.exitCode;
-    }
+    (function handleFallback(result) {
+      execOut.classList.remove('lcc-error');
+      if (result.status === 'waiting-for-input') {
+        execOut.textContent = result.partialOutput || '';
+        showPrompt(result.trapType, (input) => handleFallback(result.resume(input)));
+      } else {
+        execOut.textContent = result.stdout || '(no output)';
+        if (result.maxStepsReached) {
+          runStatus.textContent = 'Program did not halt — possible infinite loop';
+          execOut.classList.add('lcc-error');
+        } else if (result.exitCode && result.exitCode !== 0) {
+          runStatus.textContent = 'exited with code ' + result.exitCode;
+        }
+      }
+    })(api.run(asmResult.binary, { stdin: stdinLines, maxSteps: 50000, pauseOnInput: true }));
     return;
   }
 
@@ -244,23 +287,34 @@ runBtn.addEventListener('click', () => {
   setRunning(true);
 
   worker.onmessage = (e) => {
-    const { status, output: out, message } = e.data;
+    const { status, output: out, message, partialOutput, trapType } = e.data;
     execOut.classList.remove('lcc-error');
     if (status === 'halted') {
       execOut.textContent = out || '(no output)';
+      worker.terminate();
+      finishRun();
+    } else if (status === 'waiting-for-input') {
+      execOut.textContent = partialOutput || '';
+      showPrompt(trapType, (userInput) => {
+        worker.postMessage({ type: 'resume', input: userInput });
+      });
     } else if (status === 'max-steps-reached') {
       execOut.classList.add('lcc-error');
       execOut.textContent = (out || '') + '\n… (truncated)';
       runStatus.textContent = 'Program did not halt — possible infinite loop';
+      worker.terminate();
+      finishRun();
     } else if (status === 'assembly-error') {
       execOut.classList.add('lcc-error');
       execOut.textContent = 'Assembly error:\n' + message;
+      worker.terminate();
+      finishRun();
     } else {
       execOut.classList.add('lcc-error');
       execOut.textContent = 'Error: ' + (message || 'unknown');
+      worker.terminate();
+      finishRun();
     }
-    worker.terminate();
-    finishRun();
   };
 
   worker.onerror = (e) => {

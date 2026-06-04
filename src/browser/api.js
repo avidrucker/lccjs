@@ -41,7 +41,7 @@ function run(binary, opts = {}) {
   try {
     const result = interp.executeBuffer(binary, { inputFileName: 'input.e', inputBuffer, pauseOnInput, maxSteps });
     if (result && result.status === 'waiting-for-input') {
-      return { status: 'waiting-for-input', trapType: result.trapType, resume: makeResume(interp) };
+      return { status: 'waiting-for-input', trapType: result.trapType, partialOutput: interp.output, resume: makeResume(interp) };
     }
     return { stdout: result.output, exitCode: result.maxStepsReached ? 2 : 0, maxStepsReached: !!result.maxStepsReached };
   } catch (err) {
@@ -54,7 +54,7 @@ function makeResume(interp) {
     try {
       const result = interp.resume(moreInput.endsWith('\n') ? moreInput : moreInput + '\n');
       if (result && result.status === 'waiting-for-input') {
-        return { status: 'waiting-for-input', trapType: result.trapType, resume: makeResume(interp) };
+        return { status: 'waiting-for-input', trapType: result.trapType, partialOutput: interp.output, resume: makeResume(interp) };
       }
       return { status: 'done', stdout: interp.output, exitCode: 0 };
     } catch (err) {
