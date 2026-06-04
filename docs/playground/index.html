@@ -59,7 +59,7 @@
     }
     #run-btn:hover { opacity: 0.88; }
     #run-btn:disabled { opacity: 0.45; cursor: default; }
-    .stdin-label {
+    .filename-label, .stdin-label {
       display: flex;
       align-items: center;
       gap: 0.4rem;
@@ -67,6 +67,18 @@
       color: var(--muted);
       white-space: nowrap;
     }
+    #filename-input {
+      width: 12ch;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.6rem;
+      font-family: var(--font-code);
+      font-size: 0.82rem;
+    }
+    #filename-input.invalid { border-color: var(--error); }
+    #filename-input::placeholder { color: var(--muted); }
     #stdin-input {
       flex: 1;
       min-width: 120px;
@@ -198,6 +210,12 @@
   <!-- Run bar -->
   <div class="run-bar">
     <button id="run-btn">▶ Run</button>
+    <label class="filename-label">
+      file
+      <input id="filename-input" type="text" value="program.a"
+             spellcheck="false" autocomplete="off" autocorrect="off"
+             aria-label="Assembly filename" />
+    </label>
     <span class="stdin-label">
       stdin
       <input id="stdin-input" type="text" placeholder="one line per entry — separate with ↵" />
@@ -246,13 +264,31 @@ msg:    .string "Hello, World!"`;
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 
-const editor    = document.getElementById('editor');
-const hlWrap    = document.getElementById('hl-wrap');
-const hlStatus  = document.getElementById('hl-status');
-const stdinEl   = document.getElementById('stdin-input');
-const runBtn    = document.getElementById('run-btn');
-const runStatus = document.getElementById('run-status');
-const execOut   = document.getElementById('exec-output');
+const editor      = document.getElementById('editor');
+const hlWrap      = document.getElementById('hl-wrap');
+const hlStatus    = document.getElementById('hl-status');
+const stdinEl     = document.getElementById('stdin-input');
+const runBtn      = document.getElementById('run-btn');
+const runStatus   = document.getElementById('run-status');
+const execOut     = document.getElementById('exec-output');
+const filenameEl  = document.getElementById('filename-input');
+
+// ── Filename ──────────────────────────────────────────────────────────────────
+
+// Returns the current filename value, or 'program.a' if it is empty/invalid.
+function getFilename() {
+  const v = filenameEl.value.trim();
+  return isValidFilename(v) ? v : 'program.a';
+}
+
+function isValidFilename(name) {
+  // Must be non-empty, end in .a, and contain no path separators or null bytes.
+  return name.length > 0 && /\.a$/i.test(name) && !/[/\\:\0]/.test(name);
+}
+
+filenameEl.addEventListener('input', () => {
+  filenameEl.classList.toggle('invalid', !isValidFilename(filenameEl.value.trim()));
+});
 
 // ── Execution ─────────────────────────────────────────────────────────────────
 
