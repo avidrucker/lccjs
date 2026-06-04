@@ -91,6 +91,36 @@ describe('LCC Integration Tests', () => {
     expect(virtualFs['demoA.bst']).toBeUndefined();
   });
 
+  test('-nostats flag suppresses .lst/.bst output (#737)', () => {
+    const lcc = new LCC();
+    const eFilePath = 'demoA.e';
+
+    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x05, 0xD0, 0x02, 0xF0, 0x01, 0xF0, 0x00, 0xF0]);
+    virtualFs['name.nnn'] = 'TestUser\n';
+
+    expect(() => {
+      lcc.main(['-nostats', eFilePath]);
+    }).not.toThrow();
+
+    expect(virtualFs['demoA.lst']).toBeUndefined();
+    expect(virtualFs['demoA.bst']).toBeUndefined();
+  });
+
+  test('without -nostats, .lst/.bst are written (#737)', () => {
+    const lcc = new LCC();
+    const eFilePath = 'demoA.e';
+
+    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x05, 0xD0, 0x02, 0xF0, 0x01, 0xF0, 0x00, 0xF0]);
+    virtualFs['name.nnn'] = 'TestUser\n';
+
+    expect(() => {
+      lcc.main([eFilePath]);
+    }).not.toThrow();
+
+    expect(Buffer.isBuffer(virtualFs['demoA.lst'])).toBe(true);
+    expect(Buffer.isBuffer(virtualFs['demoA.bst'])).toBe(true);
+  });
+
   test('should not require name.nnn when linking object files', () => {
     const lcc = new LCC();
 

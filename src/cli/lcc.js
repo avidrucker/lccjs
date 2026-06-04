@@ -200,7 +200,7 @@ class LCC {
 
   printHelp() {
     console.log('Usage: lcc.js <infile>');
-    console.log('Optional args: -d -m -r -t -f -x -i -e -c -v -l<hex loadpt> -o <outfile> -h');
+    console.log('Optional args: -d -m -r -t -f -x -i -e -c -v -nostats -l<hex loadpt> -o <outfile> -h');
     console.log('   -d:   debug, -m mem display at end, -r: reg display at end');
     console.log('   -f:   full line display, -x: 4 digit hout, -h: help');
     console.log('   -i:   interactive stepping debugger mode (.a and .e files only)');
@@ -209,6 +209,7 @@ class LCC {
     console.log('   Note: -t, -x, -f are forwarded to interactive mode; -m and -r are not');
     console.log('         (-m/-r are post-run batch dumps; interactive mode has no batch path)');
     console.log('   -v / --verbose: verbose output (assembler, interpreter, and linker)');
+    console.log('   -nostats: suppress .lst/.bst report generation');
     console.log('What lcc.js does depends on the extension in the input file name:');
     console.log('   .hex: execute and output .lst, .bst files');
     console.log('   .bin: execute and output .lst, .bst files');
@@ -262,7 +263,7 @@ class LCC {
             this.options.colorblindMode = true;
             break;
           case '-nostats':
-            this.options.noStats = true;
+            this.generateStats = false;
             break;
           case '-h':
             this.printHelp();
