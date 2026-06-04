@@ -20,6 +20,7 @@ The commit-message format (`type(scope): description`) is **never** valid as an 
 | `ARCHITECT` | Design decisions, ADRs (not `ARCH` or `ARC`) |
 | `RESEARCH` | Open-ended investigation, no immediate code change |
 | `REVIEW` | Code or PR review tasks |
+| `DATA` | Data re-runs, notebook analysis, CSV/stats output |
 | `TIL` | Today-I-Learned entry — exempt from `ROLE:` format; use `TIL YYYY-MM-DD AGENT — description` instead (see #640) |
 
 ## Non-standard prefix → canonical mapping
@@ -31,9 +32,10 @@ An architecture decision or ADR          | `ARCHITECT:`
 An open question or time-boxed probe     | `SPIKE:`
 A human-review gate or approval request  | `REVIEW:`
 A tracker / umbrella issue               | `PM:`
+A bug fix, implementation change         | `DEV:`
 A today-I-learned entry                  | `TIL YYYY-MM-DD AGENT — …`
 
-Non-standard prefixes seen in the wild and their redirects: `AUDIT:` → `REVIEW`, `DECISION:` → `ARCHITECT`, `Q:` → `SPIKE`, `HUMAN REVIEW:` → `REVIEW`, `Tracker:` → `PM`.
+Non-standard prefixes seen in the wild and their redirects: `AUDIT:` → `REVIEW`, `DECISION:` → `ARCHITECT`, `Q:` → `SPIKE`, `HUMAN REVIEW:` → `REVIEW`, `Tracker:` / `TRACKER:` → `PM`, `FIX:` → `DEV`.
 
 ## Decision rule
 
