@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-04-banana — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-06-04 (BANANA)</h1>
+<p>A day of test infrastructure and browser playground work: migrating 18 oracle
+tests from live-binary to golden-cache (#692), fixing a missing bundle copy
+that broke the playground&#39;s Run button (#709), and updating the site generator
+to produce the full execution UI rather than a stripped-down preview (#710).</p>
+<hr>
+<h2>1. Golden-cache pattern: commit oracle output once, run tests anywhere</h2>
+<p>The oracle test suite had four files using this pattern:</p>
+<pre><code class="language-js">const itOracle = assertOracleConfigured() ? test : test.skip;
+// ...
+itOracle(&#39;brlt: lccjs .e matches oracle&#39;, () =&gt; {
+  const oracle = Buffer.from(runOracleOnDemo(writeProg(&#39;brlt&#39;)).bytes);
+  expect(jsBytes(&#39;brlt&#39;).equals(oracle)).toBe(true);
+});
+</code></pre>
+<p>Without <code>LCC_ORACLE</code> set (i.e., always in CI), 18 tests silently skipped every
+run. The golden-cache pattern fixes this in three steps:</p>
+<ol>
+<li><strong>Generate once with the binary.</strong> Run <code>GOLDEN_AUTO_UPDATE=1 npm run test:oracle</code>
+— each test calls the oracle, captures its output (binary <code>.e</code> bytes, LST text,
+or raw stdout), and writes it to <code>tests/goldens/&lt;dir&gt;/</code>.</li>
+<li><strong>Commit the golden files.</strong> They become the permanent reference.</li>
+<li><strong>Replace <code>itOracle</code> with a golden-reader.</strong> The test loads the committed file
+and compares lccjs output against it. No oracle binary needed at runtime.</li>
+</ol>
+<pre><code class="language-js">const goldenFile = path.join(GOLDEN_DIR, `${mn}.e`);
+if (!fs.existsSync(goldenFile)) {
+  if (cfg.goldenAutoUpdate &amp;&amp; assertOracleConfigured()) {
+    writeBytes(goldenFile, runOracleOnDemo(writeProg(mn)).bytes);
+  } else {
+    test.skip(`${mn}: missing golden`, () =&gt; {});
+    continue;
+  }
+}
+test(`${mn}: lccjs .e matches oracle golden`, () =&gt; {
+  expect(jsBytes(mn).equals(readBytes(goldenFile))).toBe(true);
+});
+</code></pre>
+<p>Result: the oracle suite went from 106 pass + 18 skip → <strong>124/124 pass</strong> with
+<code>LCC_ORACLE</code> unset. The pattern also works for text output (LST code regions) and
+raw stdout (the <code>bp</code> deviation proof), not just binary files.</p>
+<p><strong>The general lesson:</strong> when a test depends on an external binary for <em>reference
+output</em> (not for <em>execution</em>), replace the live call with a committed snapshot.
+Regenerate the snapshot only when the reference intentionally changes
+(<code>GOLDEN_AUTO_UPDATE=1</code>). Unexpected drift becomes a failing test, not a skip.</p>
+<hr>
+<h2>2. Build generators must own all features — never hand-edit generated output</h2>
+<p>The playground page (<code>docs/site/showcase/index.html</code>) was hand-crafted to add a
+Run button, stdin textarea, terminal output panel, and the
+<code>&lt;script src=&quot;../dist/lcc.bundle.js&quot;&gt;</code> tag. But <code>npm run build:site</code> calls
+<code>build-site.js</code>, which generates and writes the same file — silently overwriting
+everything hand-crafted every time a rebuild ran.</p>
+<p>The correct fix is to move <em>all</em> features into the generator so the committed file
+is always the generated one. Hand-editing generated output is fragile: the next
+build erases the edit with no warning.</p>
+<p>For the CSS, a subtle trap: adding playground-specific rules to the shared <code>CSS</code>
+constant regens <em>every</em> page on the site (all 160+ HTML files) just because the
+playground got a <code>#run-btn</code> style. The fix was a targeted <code>extraCss</code> parameter on
+<code>makePage</code> so the extra rules only appear in the one page that needs them:</p>
+<pre><code class="language-js">function makePage({ ..., extraCss = &#39;&#39; }) {
+  return `...&lt;style&gt;${CSS}${extraCss}&lt;/style&gt;...`;
+}
+
+// Only the playground call passes extra rules:
+makePage({ ..., extraCss: playgroundCss })
+</code></pre>
+<p>This keeps other pages byte-for-byte identical across builds where only the
+playground changes — important when those pages are tracked in git for GitHub Pages.</p>
+<hr>
+<h2>3. Bundle paths: repo root ≠ GitHub Pages root</h2>
+<p>The playground&#39;s script tag was:</p>
+<pre><code class="language-html">&lt;script src=&quot;../dist/lcc.bundle.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>From <code>docs/site/showcase/</code>, <code>..</code> is <code>docs/site/</code> — so the browser looks for
+<code>docs/site/dist/lcc.bundle.js</code>. Webpack writes to repo-root <code>dist/</code>, not there.
+On GitHub Pages the mismatch is permanent: the pages root is <code>docs/site/</code>, so
+<code>/dist/lcc.bundle.js</code> also maps to <code>docs/site/dist/lcc.bundle.js</code>.</p>
+<p>Fix: add a copy step to <code>build-site.js</code>:</p>
+<pre><code class="language-js">const BUNDLE_SRC  = path.join(ROOT, &#39;dist&#39;, &#39;lcc.bundle.js&#39;);
+const BUNDLE_DEST = path.join(OUT_DIR, &#39;dist&#39;, &#39;lcc.bundle.js&#39;);
+fs.mkdirSync(path.dirname(BUNDLE_DEST), { recursive: true });
+fs.copyFileSync(BUNDLE_SRC, BUNDLE_DEST);
+</code></pre>
+<p>And a combined <code>npm run build</code> script so the ordering is enforced:</p>
+<pre><code class="language-json">&quot;build&quot;: &quot;npm run build:browser &amp;&amp; npm run build:site&quot;
+</code></pre>
+<p><strong>The general lesson:</strong> when a build artifact is served from a subdirectory rather
+than the repo root, all paths that cross that boundary need an explicit copy step —
+relative paths that look correct in the source tree will silently 404 in production.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/685">#685</a></td>
+<td>Code quality audit of <code>plusdemos/gameflappyBird.ap</code>: 5-area assessment posted; child ticket #691 filed (restart-after-game-over).</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/692">#692</a></td>
+<td>4 oracle spec files migrated to golden-cache; 18 goldens committed; oracle suite 124/124 with no binary.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/709">#709</a></td>
+<td><code>build:site</code> copies <code>dist/lcc.bundle.js</code> → <code>docs/site/dist/</code>; <code>npm run build</code> added.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/710">#710</a></td>
+<td><code>build-site.js</code> generates full playground: Run button, stdin, terminal panel, run handler, <code>extraCss</code> scoping.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/722">#722</a></td>
+<td>This TIL.</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

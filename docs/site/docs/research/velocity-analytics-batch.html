@@ -267,6 +267,233 @@ code { font-family:var(--mono-font); }
 <td>Resume power analysis at 1,000 actuals</td>
 </tr>
 </tbody></table>
+<hr>
+<h2>Follow-up batch — Q18r, Q28r, Q29r (ticket #706)</h2>
+<p><strong>Date:</strong> 2026-06-04 · <strong>Agent:</strong> FIG · <strong>Dataset:</strong> 582 rows total, 477 with both <code>c_min</code> and <code>actual_min</code></p>
+<hr>
+<h3>Q18r — C-overshoot predictors (role, agent, H-class, c_min)</h3>
+<p><strong>C-overshoot</strong> = actual_min &gt; c_min. Base rate: 22/477 = <strong>4.6%</strong>.</p>
+<p><strong>By role:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>n</th>
+<th>overshoots</th>
+<th>rate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DEV</td>
+<td>155</td>
+<td>9</td>
+<td>5.8%</td>
+</tr>
+<tr>
+<td>RESEARCH</td>
+<td>89</td>
+<td>5</td>
+<td>5.6%</td>
+</tr>
+<tr>
+<td>WRITER</td>
+<td>117</td>
+<td>6</td>
+<td>5.1%</td>
+</tr>
+<tr>
+<td>PM</td>
+<td>25</td>
+<td>1</td>
+<td>4.0%</td>
+</tr>
+<tr>
+<td>DATA</td>
+<td>31</td>
+<td>1</td>
+<td>3.2%</td>
+</tr>
+<tr>
+<td>TEST/SPIKE/REVIEW/COMBO/CHORE/ARC</td>
+<td>56</td>
+<td>0</td>
+<td>0.0%</td>
+</tr>
+</tbody></table>
+<p><strong>By agent</strong> (n ≥ 10):</p>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>n</th>
+<th>overshoots</th>
+<th>rate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DRAGONFRUIT</td>
+<td>59</td>
+<td>5</td>
+<td>8.5%</td>
+</tr>
+<tr>
+<td>CHERRY</td>
+<td>79</td>
+<td>6</td>
+<td>7.6%</td>
+</tr>
+<tr>
+<td>FIG</td>
+<td>48</td>
+<td>2</td>
+<td>4.2%</td>
+</tr>
+<tr>
+<td>APPLE</td>
+<td>93</td>
+<td>3</td>
+<td>3.2%</td>
+</tr>
+<tr>
+<td>ELDERBERRY</td>
+<td>74</td>
+<td>2</td>
+<td>2.7%</td>
+</tr>
+<tr>
+<td>BANANA</td>
+<td>74</td>
+<td>2</td>
+<td>2.7%</td>
+</tr>
+<tr>
+<td>GRAPE</td>
+<td>11</td>
+<td>0</td>
+<td>0.0%</td>
+</tr>
+</tbody></table>
+<p><strong>By H-class:</strong></p>
+<table>
+<thead>
+<tr>
+<th>H-class</th>
+<th>n</th>
+<th>overshoots</th>
+<th>rate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>≤15m</td>
+<td>101</td>
+<td>4</td>
+<td>4.0%</td>
+</tr>
+<tr>
+<td>16–30m</td>
+<td>221</td>
+<td>12</td>
+<td>5.4%</td>
+</tr>
+<tr>
+<td>31–60m</td>
+<td>145</td>
+<td>6</td>
+<td>4.1%</td>
+</tr>
+<tr>
+<td>&gt;60m</td>
+<td>7</td>
+<td>0</td>
+<td>0.0%</td>
+</tr>
+</tbody></table>
+<p><strong>By c_min class (threshold analysis):</strong></p>
+<table>
+<thead>
+<tr>
+<th>c_min class</th>
+<th>n</th>
+<th>overshoots</th>
+<th>rate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>≤5m</td>
+<td>71</td>
+<td>2</td>
+<td>2.8%</td>
+</tr>
+<tr>
+<td>6–10m</td>
+<td>125</td>
+<td>4</td>
+<td>3.2%</td>
+</tr>
+<tr>
+<td>11–20m</td>
+<td>185</td>
+<td>12</td>
+<td>6.5%</td>
+</tr>
+<tr>
+<td>&gt;20m</td>
+<td>97</td>
+<td>5</td>
+<td>5.2%</td>
+</tr>
+</tbody></table>
+<p><strong>Finding:</strong> No single predictor dominates. Roles that require sustained creative output (DEV, RESEARCH, WRITER) overshoot at 5–6%; execution roles (TEST, CHORE, ARC) never overshoot. By agent, DRAGONFRUIT (8.5%) and CHERRY (7.6%) lead; all others are ≤4.2%. H-class shows no threshold — the rate is flat across small and medium puzzles. The clearest threshold signal is in <strong>c_min</strong>: puzzles where the AI self-estimates ≥11m have roughly 2× the overshoot rate of those it estimates ≤10m (6.5% vs. 3%). This suggests the AI&#39;s own uncertainty about a puzzle (expressed as a higher C estimate) is the best single indicator of overshoot risk — not the human-defined H cap.</p>
+<hr>
+<h3>Q28r — ELDERBERRY h_min trend: harder puzzles or genuine drift?</h3>
+<p>Analysis run on 82 ELDERBERRY rows with both <code>h_min</code> and <code>c_min</code> recorded.</p>
+<table>
+<thead>
+<tr>
+<th>Correlation</th>
+<th>Spearman r</th>
+<th>p</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>row_order vs. h_min</td>
+<td>+0.056</td>
+<td>0.62</td>
+<td><strong>no trend</strong> — puzzle difficulty flat</td>
+</tr>
+<tr>
+<td>row_order vs. |delta_c|</td>
+<td>+0.231</td>
+<td>0.037</td>
+<td>confirmed degradation</td>
+</tr>
+<tr>
+<td>partial r(row_order, |delta_c| | h_min)</td>
+<td>+0.270</td>
+<td>0.014</td>
+<td><strong>strengthens</strong> when controlling for h_min</td>
+</tr>
+</tbody></table>
+<p>Early half (rows 1–41) mean h_min: <strong>34.0m</strong>; late half (rows 42–82): <strong>26.8m</strong> — h_min trended slightly <em>downward</em>, meaning ELDERBERRY received <em>easier</em> puzzles over time, not harder ones.</p>
+<p><strong>Finding:</strong> The &quot;harder assignments&quot; hypothesis is ruled out. ELDERBERRY&#39;s h_min shows no upward trend (r=+0.056, p=0.62), and in fact the mean h_min fell from 34m to 27m in the second half. The partial correlation controlling for h_min strengthens (r=+0.270, p=0.014), confirming the drift is independent of puzzle difficulty. ELDERBERRY&#39;s |delta_c| degradation over time is genuine calibration drift — the agent&#39;s C estimates are becoming progressively less accurate relative to actuals, despite no increase in puzzle complexity. Possible causes: accumulated over-confidence in later sessions, or a shift in the types of work within a given h_min tier that is not captured by h_min alone.</p>
+<hr>
+<h3>Q29r — Power target corrected for C-overshoot</h3>
+<p>The Q29 power calculation was framed around detecting a 10% reduction in mean actual_min (effect size ≈ 0.1 SD units). The operationally relevant question is now: <strong>how many rows are needed to detect a halving of the C-overshoot rate from 4.6% to 2.3%, at 80% power?</strong></p>
+<p>Two-proportion z-test (α=0.05, two-sided):</p>
+<ul>
+<li>p₁ = 4.6% (current rate), p₂ = 2.3% (target after protocol change)</li>
+<li><strong>n per group = 985; n total = 1,969</strong></li>
+</ul>
+<p>Current corpus: 477 rows with both fields → <strong>4.1× growth needed</strong>.</p>
+<p>At the current logging rate (~32 rows/month with both <code>c_min</code> and <code>actual_min</code>), reaching 1,969 rows would take approximately <strong>47 months</strong> — not feasible as a prospective experiment on the full corpus.</p>
+<p><strong>Practical alternatives:</strong></p>
+<ol>
+<li><strong>Agent-specific analysis</strong> — DRAGONFRUIT and CHERRY have 8.5% and 7.6% base rates. Detecting a halving of DRAGONFRUIT&#39;s rate (8.5% → 4.25%) at 80% power requires ~420 rows per group — reachable within ~1 year for a single agent if logging remains consistent.</li>
+<li><strong>Higher-threshold overshoot</strong> — use actual_min &gt; 1.5 × c_min as the outcome (a more severe overshoot criterion). Check whether that subset is larger and more concentrated in predictable conditions.</li>
+<li><strong>Continue tracking, don&#39;t run a formal experiment</strong> — with the current n the overshoot rate can be monitored as a quarterly metric; a meaningful shift (e.g., from 4.6% to &lt;2%) would be apparent descriptively before it is significant at α=0.05.</li>
+</ol>
+<p><strong>Summary:</strong> The C-overshoot experiment requires corpus growth that makes a powered study impractical for the full-corpus case. Focus future power-analysis checkpoints on single-agent cohorts with elevated base rates (DRAGONFRUIT, CHERRY).</p>
 
   </div>
   <footer>

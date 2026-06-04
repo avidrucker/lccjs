@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-04-dragonfruit — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-06-04 (DRAGONFRUIT)</h1>
+<p>Date: 2026-06-04
+Agent: DRAGONFRUIT
+Context: Browser playground cluster — closed #675 (webpack build), #687 (terminal
+styling), #702 (pauseOnInput). Filed #705/#709–711/#695 for follow-on gaps.</p>
+<hr>
+<h2>1. &quot;Already done&quot; is a valid close — verify before implementing</h2>
+<p>Picking up #675 (&quot;add a webpack build step&quot;), the first thing to do was actually
+check the repo. <code>webpack.browser.config.js</code>, <code>npm run build:browser</code>, and
+<code>dist/lcc.bundle.js</code> were all already present and working. The issue had been
+implemented as a side-effect of #595 and #682, but never closed.</p>
+<p>The close commit was a single CLAUDE.md docs fix (the <code>build:browser</code> command
+was missing from the Commands section). No webpack work required.</p>
+<p><strong>Lesson:</strong> run the repro steps from the issue before writing any code. A 2-minute
+check saved 30 minutes of implementation, and the docs gap was the only real work.</p>
+<hr>
+<h2>2. Backing up PC is the key to resumable synchronous execution</h2>
+<p>For <code>pauseOnInput</code> (#702), the challenge is suspending a <code>while (this.running) { this.step(); }</code> loop mid-trap without threads or coroutines.</p>
+<p>The trick: when <code>inputBuffer</code> is empty and <code>pauseOnInput</code> is set, decrement <code>this.pc</code> by 1 before throwing the pause signal. <code>step()</code> had already incremented PC past the TRAP instruction — backing it up means the same TRAP re-executes cleanly when <code>resume()</code> re-enters <code>run()</code>. No separate &quot;re-entry state machine&quot; needed; the interpreter&#39;s normal fetch-decode-execute cycle handles the restart.</p>
+<pre><code>step() fetches TRAP → pc++
+readLineFromStdin() sees empty buffer
+  → this.pc--          ← back to TRAP address
+  → throw InputPauseSignal
+executeBuffer() catches signal → returns sentinel
+caller supplies input, calls resume()
+run() → step() → fetches TRAP again → reads from inputBuffer ✓
+</code></pre>
+<p><strong>Lesson:</strong> for synchronous interpreters, &quot;suspend and resume&quot; can be implemented
+with a single <code>pc--</code> + a thrown signal. The CPU&#39;s own program counter is the
+resume pointer.</p>
+<hr>
+<h2>3. Use a signal class, not an Error, for non-error control flow</h2>
+<p><code>InputPauseSignal</code> is not an <code>LccError</code>. It has no stack trace, no <code>message</code>,
+no inheritance from <code>Error</code>. It is just:</p>
+<pre><code class="language-js">class InputPauseSignal {
+  constructor(trapType) { this.trapType = trapType; }
+}
+</code></pre>
+<p>Throwing it lets the signal propagate through the call stack (through
+<code>executeTRAP()</code> → <code>run()</code> → <code>executeBuffer()</code>) without being mistaken for a
+runtime fault by any existing error handler. The catch in <code>executeBuffer</code> checks
+<code>instanceof InputPauseSignal</code> specifically and returns the sentinel; everything
+else re-throws as before.</p>
+<p><strong>Lesson:</strong> <code>throw</code> is a general-purpose non-local exit, not just for errors. A
+lightweight signal class keeps control-flow intent clear and avoids accidentally
+catching real errors.</p>
+<hr>
+<h2>4. A build path and a runtime path can silently diverge</h2>
+<p>After closing #687 (terminal styling), running the playground in a browser
+revealed the Run button always showed &quot;lcc.bundle.js not loaded&quot;. The <code>&lt;script&gt;</code>
+tag in <code>docs/site/showcase/index.html</code> was:</p>
+<pre><code class="language-html">&lt;script src=&quot;../dist/lcc.bundle.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>From <code>docs/site/showcase/</code>, <code>..</code> resolves to <code>docs/site/</code> — so the browser
+looks for <code>docs/site/dist/lcc.bundle.js</code>. Webpack writes to repo-root <code>dist/</code>.
+The paths never cross. Worse: <code>npm run build:site</code> regenerates the playground
+page from <code>build-site.js</code>, which produces a syntax-only page with no Run button
+at all — silently discarding the #676/#687 execution features on every build.</p>
+<p>Two separate tickets filed for the two root causes (#709, #710); a spike for
+verification (#711).</p>
+<p><strong>Lesson:</strong> the path your tool writes to and the path your HTML loads from are
+independent assumptions. Verify both by actually opening the page in a browser
+before closing a browser-facing ticket.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/675">#675</a></td>
+<td>Closed — already implemented; added <code>build:browser</code> to CLAUDE.md Commands</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/687">#687</a></td>
+<td>Terminal styling: <code>#0a0a0a</code>/<code>#4af626</code>, <code>$ lcc</code> prompt prefix, injected CSS</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/702">#702</a></td>
+<td><code>pauseOnInput</code> on <code>executeBuffer</code> + <code>resume()</code> + closure API in <code>api.js</code>; 10 unit tests</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/695">#695</a></td>
+<td>Filed — guide for LCC code block options (syntax-highlight vs runnable)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/705">#705</a></td>
+<td>Filed — tracker for broken playground Run button</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/709">#709–711</a></td>
+<td>Filed — bundle copy step, build:site execution features, e2e verification spike</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

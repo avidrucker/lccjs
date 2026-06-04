@@ -8,7 +8,7 @@ This guide covers every way to embed LCC assembly code blocks in a web page, sli
 |--------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | `lcc.tmLanguage.json` + Shiki (site builder) | ✓ | — | — | ✓ | ✓ | — | `build:site` |
 | `lcc-injector.js` script tag | ✓ | ✓ | pre-supply only | ✓ | ✓ | ✓ | `build:browser` |
-| Playground page (`/playground/`) | — | ✓ | pre-supply only | ✓ | ✓ | — | `build:browser` |
+| Playground page (`/showcase/`) | — | ✓ | pre-supply only | ✓ | ✓ | — | `build:browser` + `build:site` |
 | `lcc.bundle.js` API (custom) | — | ✓ | pre-supply only | ✓ | ✓ | ✓ | `build:browser` |
 | VS Code grammar | ✓ | — | — | n/a | — | — | none |
 | GitHub markdown | — | — | — | n/a | — | — | none |
@@ -19,24 +19,21 @@ This guide covers every way to embed LCC assembly code blocks in a web page, sli
 
 ## Option 1 — `lcc.tmLanguage.json` + Shiki (static site builder)
 
-**What:** The site build pipeline (`npm run build:site`) uses Shiki with `lcc.tmLanguage.json` to syntax-colour every fenced `` ```lcc `` block in the docs source and emit static HTML. No JavaScript runs at page-load time; the highlighted HTML is baked in.
+**What:** The site build pipeline (`npm run build:site`) uses Shiki with `lcc.tmLanguage.json` to syntax-colour curated LCC assembly samples and emit static HTML. No JavaScript runs at page-load time; the highlighted HTML is baked in. The landing page (`docs/site/index.html`) displays the highlighted demos with a live theme switcher.
 
-**Where it works:** Any page produced by `npm run build:site`, including the GitHub Pages site. Does **not** work for standalone HTML files or reveal-md without going through the build pipeline.
+> **Note:** Arbitrary fenced `` ```lcc `` blocks in `.md` docs files are currently rendered via `marked` (plain HTML, no Shiki). Only the pre-configured samples in `scripts/build-site.js` (`CURATED_SAMPLES`, alphabet demos, `LCCPLUS_SAMPLES`) are Shiki-highlighted. Full `.md`-fenced-block Shiki support is tracked in #740.
 
-**When to prefer it:** Static documentation pages where you want professional syntax colouring with zero client-side overhead and no execution needed.
+**Where it works:** The landing page produced by `npm run build:site`, including the GitHub Pages site. Does **not** work for standalone HTML files or reveal-md without going through the build pipeline.
+
+**When to prefer it:** The static landing page for demonstrating the grammar and syntax colouring across multiple themes.
 
 **Minimal how-to:**
 
-1. Write a fenced block in any `.md` source file under `docs/`:
-   ````markdown
-   ```lcc
-           mvi r0, 42
-           dout r0
-           nl
-           halt
+1. Add an entry to `CURATED_SAMPLES` in `scripts/build-site.js`:
+   ```javascript
+   { file: 'demos/myProgram.a', label: 'demos/myProgram.a', title: 'My program description' }
    ```
-   ````
-2. Run `npm run build:site`. The output HTML contains pre-coloured `<span>` elements.
+2. Run `npm run build:site`. The landing page (`docs/site/index.html`) now contains pre-coloured `<span>` elements for your sample, with all configured themes.
 
 **Why it doesn't work elsewhere:** Shiki runs at build time in Node.js. A plain HTML page opened in a browser has no Shiki; neither does a GitHub repository's Markdown renderer (GitHub has no LCC grammar upstream — see below).
 
@@ -95,15 +92,15 @@ See `docs/guides/reveal-md-lcc-slides.md` for the full reveal-md workflow.
 
 ---
 
-## Option 3 — Playground page (`/playground/`)
+## Option 3 — Playground page (`/showcase/`)
 
 **What:** A hosted textarea on the GitHub Pages site where a user types or pastes LCC assembly, clicks Run, and sees the output. No code embedding — this is a standalone interactive tool, not an embeddable component.
 
-**Where it works:** GitHub Pages (`/playground/`) and locally over `file://` from the built site.
+**Where it works:** GitHub Pages (`/showcase/`) and locally over `file://` from the built site.
 
 **When to prefer it:** Teaching sessions where students want to try programs without installing anything; quick one-off testing during slide demos.
 
-**Minimal how-to:** Navigate to `https://<org>.github.io/lccjs/playground/` (or open `docs/site/playground/index.html` locally). Type assembly, click Run.
+**Minimal how-to:** Navigate to `https://<org>.github.io/lccjs/showcase/` (or open `docs/site/showcase/index.html` locally after running `npm run build:browser && npm run build:site`). Type assembly, click Run.
 
 **Stdin:** Pre-supply input in the stdin textarea before clicking Run. Interactive mid-run prompts are not yet supported (#702).
 

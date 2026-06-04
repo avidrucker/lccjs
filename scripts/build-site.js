@@ -610,7 +610,7 @@ ${playgroundThemeOptions}
     content: playgroundContent,
     footer: '',
     script: '',
-    extraCss: playgroundCss,
+    extraCss: '',
   }).replace('</body>', playgroundScript + '\n</body>');
 
   const playgroundFile = path.join(playgroundDir, 'index.html');
