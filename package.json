@@ -17,6 +17,7 @@
     "velocity:export": "node scripts/velocity-export.js",
     "velocity:migrate": "node scripts/velocity-migrate.js",
     "lccrun": "bash scripts/lccrun.sh",
+    "build": "npm run build:browser && npm run build:site",
     "build:site": "node scripts/build-site.js",
     "build:browser": "webpack --config webpack.browser.config.js"
   },

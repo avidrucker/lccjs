@@ -359,6 +359,19 @@ ${listItems}
   // Copy grammar to site root so the playground page can fetch it at ../lcc.tmLanguage.json.
   fs.copyFileSync(GRAMMAR_PATH, path.join(OUT_DIR, 'lcc.tmLanguage.json'));
 
+  // Copy the browser bundle into docs/site/dist/ so that showcase/index.html's
+  // <script src="../dist/lcc.bundle.js"> resolves correctly on file://, local HTTP,
+  // and GitHub Pages (where docs/site/ is the pages root).
+  const BUNDLE_SRC  = path.join(ROOT, 'dist', 'lcc.bundle.js');
+  const BUNDLE_DEST = path.join(OUT_DIR, 'dist', 'lcc.bundle.js');
+  if (fs.existsSync(BUNDLE_SRC)) {
+    fs.mkdirSync(path.dirname(BUNDLE_DEST), { recursive: true });
+    fs.copyFileSync(BUNDLE_SRC, BUNDLE_DEST);
+    console.log(`build:site — bundle:  ${path.relative(ROOT, BUNDLE_DEST)}`);
+  } else {
+    console.warn('build:site — WARNING: dist/lcc.bundle.js not found; run `npm run build:browser` first');
+  }
+
   const playgroundThemeOptions = THEMES.map(({ id, label }) =>
     `      <option value="${id}"${id === DEFAULT_THEME ? ' selected' : ''}>${label}</option>`
   ).join('\n');

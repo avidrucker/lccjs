@@ -161,7 +161,7 @@ is to be ready when asked (#377).</p>
 </ol>
 <p><strong>Then:</strong></p>
 <ol start="3">
-<li>Read the ticket body via <code>gh issue view &lt;N&gt;</code>.</li>
+<li>Read the ticket body and all comments via <code>gh issue view &lt;N&gt; --comments</code>.</li>
 <li>Read referenced docs / source files needed for context.</li>
 <li>(Optional) <code>TaskCreate</code> if the puzzle has 3+ distinct sub-steps worth tracking.</li>
 <li>Pick the smallest concrete first step and start.</li>
@@ -227,7 +227,7 @@ is to be ready when asked (#377).</p>
 <td>Today-I-Learned entries (exempt from strict <code>ROLE:</code> format — use <code>TIL YYYY-MM-DD AGENT — description</code>; see #640)</td>
 </tr>
 </tbody></table>
-<p>Non-standard prefixes seen in the wild and their canonical mappings: <code>AUDIT:</code> → <code>REVIEW</code>, <code>DECISION:</code> → <code>ARCHITECT</code>, <code>Q:</code> → <code>SPIKE</code>, <code>HUMAN REVIEW:</code> → <code>REVIEW</code>, <code>Tracker:</code> → <code>PM</code>.</p>
+<p>Non-standard prefixes seen in the wild and their canonical mappings: <code>AUDIT:</code> → <code>REVIEW</code>, <code>DECISION:</code> → <code>ARCHITECT</code>, <code>Q:</code> → <code>SPIKE</code>, <code>HUMAN REVIEW:</code> → <code>REVIEW</code>, <code>Tracker:</code> → <code>PM</code>. Full scannable reference: <a href="./issue-title-convention.md"><code>docs/issue-title-convention.md</code></a> (#657).</p>
 </li>
 <li><p><strong>Severity label calibration — apply one <code>severity:*</code> label when filing any issue.</strong> The three labels are <code>severity:high</code>, <code>severity:medium</code>, and <code>severity:low</code>. Use this decision tree: (#643)</p>
 <ol>
@@ -311,6 +311,7 @@ Do NOT <code>git add</code> a file I just edited unless I&#39;ve confirmed the e
 </ul>
 <p>When drafting an email template or message for review in an issue, replace every real address with a bracketed placeholder before posting. Cite this section if declining to include a real address in public-facing content.</p>
 <p>Triggered by #507 (personal email in a review comment); rule documented in #537.</p>
+<p><strong>GitHub handle validation:</strong> Before mentioning a GitHub handle in an issue or comment, verify it resolves with <code>gh api /users/&lt;handle&gt;</code> — a 404 means the handle doesn&#39;t exist and the @-mention will silently not send a notification. Known valid collaborator handles: <code>@ItBeCharlie</code> (Charlie), <code>@profavc</code> (Prof. Dos Reis). Rule documented in #635.</p>
 <hr>
 <h2>While paused</h2>
 <p>A pause happens in two shapes:</p>
@@ -469,7 +470,7 @@ it. Lowercase <code>at_todo</code> is the one safe spelling.</li>
 <li><strong>Worktree</strong> — a separate working directory + branch for parallel-agent work. Lives at <code>.claude/worktrees/&lt;fruit&gt;-issue-&lt;N&gt;/</code> on branch <code>&lt;fruit&gt;/issue-&lt;N&gt;-&lt;slug&gt;</code>, claimed via <code>npm run claim</code>. The fruit (apple, banana, …) is the <strong>agent identity</strong> for the session. See <code>docs/design-agent-worktree-identity.md</code>.</li>
 <li><strong>Trunk-based</strong> — agents push directly to <code>main</code> (with <code>git push origin HEAD:main</code> from a feature branch). No PRs by default.</li>
 <li><strong>velocity row</strong> — a single record logged into <code>~/.lccjs/velocity.db</code> (exported to <code>docs/puzzle-velocity.csv</code>) for one ticket: role, agent identity, H/C estimates, start/finish timestamps, and actuals. Written via <code>npm run velocity:log</code>.</li>
-<li><strong>pre-flight</strong> — the discipline of capturing <code>started_iso</code> (<code>date &#39;+%Y-%m-%dT%H:%M:%S%z&#39;</code>) and running <code>gh issue view &lt;N&gt;</code> <em>before</em> any work begins. Skipping it forces reconstructed timestamps, which is an honesty tax.</li>
+<li><strong>pre-flight</strong> — the discipline of capturing <code>started_iso</code> (<code>date &#39;+%Y-%m-%dT%H:%M:%S%z&#39;</code>) and running <code>gh issue view &lt;N&gt; --comments</code> <em>before</em> any work begins. Skipping it forces reconstructed timestamps, which is an honesty tax. The <code>--comments</code> flag is essential: research findings, corrections, and scope clarifications are posted as issue comments — omitting it leaves that context invisible (#652).</li>
 <li><strong><code>at_todo</code> trap</strong> — the anti-pattern where a doc, CSV field, or comment discussing the marker concept accidentally contains the live <code>@todo</code> substring, tripping the case-sensitive <code>pdd</code> scanner. Use the lowercase <code>at_todo</code> spelling (see above) in non-scanned files to discuss it safely.</li>
 <li><strong>phantom marker</strong> — a <code>@todo</code> or <code>@inprogress</code> marker whose backing GitHub issue is already closed. Shows as <code>STALE</code> in <code>npm run puzzle:status</code>. Must be deleted from source; leaving it inflates the open-puzzle count and misleads other agents.</li>
 <li><strong>fruit identity</strong> — the per-session agent name (APPLE, BANANA, CHERRY, …) used as the worktree branch prefix and the <code>agent</code> column in the velocity log. Assigned by the human orchestrator via <code>--as &lt;fruit&gt;</code> on <code>npm run claim</code>; never auto-named (#386).</li>

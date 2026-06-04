@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-03-grape — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-06-03 (GRAPE)</h1>
+<p>Date: 2026-06-03
+Context: Session covering #659 (day-six prose corrections), #662 (execution verification),
+#667 (day-seven notebook creation).</p>
+<hr>
+<h2>1. Velocity notebooks are point-in-time snapshots — re-executing them against a grown DB silently corrupts the analysis</h2>
+<p><code>stats/day-six-analysis.ipynb</code> loads all rows from <code>~/.lccjs/velocity.db</code> with no date filter:</p>
+<pre><code class="language-python">df = pd.read_sql(&quot;SELECT * FROM velocity ORDER BY id&quot;, con)
+</code></pre>
+<p>When originally run on 06-02, this returned ~400 rows. Re-executing it on 06-03 returned 531
+rows — pulling in a full day of new work and adding a seventh day-bucket the day-six prose had
+no knowledge of. All the §7 takeaways (row counts, medians, per-day table) became stale again
+the moment the kernel ran.</p>
+<p><strong>What made this hard to catch:</strong> the notebook executed cleanly with no errors or warnings. The
+only signal was that the summary printed &quot;Total rows: 531 (day-5 was 339)&quot; instead of the
+expected 400.</p>
+<p><strong>The fix for new notebooks:</strong> add a date ceiling in the SQL at creation time:</p>
+<pre><code class="language-python">df = pd.read_sql(
+    &quot;SELECT * FROM velocity &quot;
+    &quot;WHERE finished_iso IS NULL OR substr(finished_iso,1,10) &lt;= &#39;2026-06-03&#39; &quot;
+    &quot;ORDER BY id&quot;,
+    con
+)
+</code></pre>
+<p>The ceiling makes re-execution idempotent — the notebook always analyses the same window
+regardless of when it is next run. Without it, the &quot;day-N analysis&quot; label is a lie as soon as
+day N+1 starts.</p>
+<hr>
+<h2>2. <code>hst_day</code> is a derived column — it does not exist in the DB</h2>
+<p>The notebook computes <code>hst_day</code> in-memory after loading:</p>
+<pre><code class="language-python">df[&quot;hst_day&quot;] = df[&quot;finished&quot;].dt.tz_convert(&quot;Etc/GMT+10&quot;).dt.date.astype(str)
+</code></pre>
+<p>Attempting to filter on it in the SQL query:</p>
+<pre><code class="language-sql">WHERE hst_day &lt;= &#39;2026-06-03&#39;   -- OperationalError: no such column: hst_day
+</code></pre>
+<p>The correct approach is to filter on the raw <code>finished_iso</code> text column using <code>substr</code>:</p>
+<pre><code class="language-sql">WHERE finished_iso IS NULL OR substr(finished_iso,1,10) &lt;= &#39;2026-06-03&#39;
+</code></pre>
+<p>The <code>IS NULL</code> guard keeps rows that lack a finish timestamp (date-ambiguous but still
+valid calibration rows) from being dropped by the ceiling.</p>
+<hr>
+<h2>3. &quot;Day six&quot; and &quot;06-03&quot; are not the same thing — check the clock before naming a notebook</h2>
+<p>The day-six notebook was named for the day it was first run (06-02 in HST). When GRAPE
+re-ran it on 06-03, the natural instinct was &quot;this must be wrong — I&#39;m on day six.&quot; But
+today <em>was</em> 06-03. The re-execution was not a mistake; it was producing the correct
+day-seven analysis. The error was discarding it.</p>
+<p><strong>Lesson:</strong> before concluding that a notebook execution is wrong, check <code>date</code> in HST.
+If the DB has grown past the notebook&#39;s coverage window, the notebook is not broken —
+it&#39;s stale. The right response is to create the next notebook, not to revert.</p>
+<hr>
+<h2>4. Agent name casing in the DB is load-bearing</h2>
+<p>The velocity DB has no uniqueness constraint on the <code>agent</code> column value. Four rows were
+logged with <code>agent = &#39;fig&#39;</code> (lowercase) instead of <code>&#39;FIG&#39;</code>. Because the per-agent analysis
+groups by the raw string, &quot;fig&quot; and &quot;FIG&quot; appear as separate agents in the output:</p>
+<pre><code>FIG    41    2.50×
+fig     4    4.38×   ← casing anomaly; should be FIG
+</code></pre>
+<p>This inflates the agent count and produces a spurious &quot;fig&quot; entry in the heatmap. Filed
+as #669 for a DB correction (requires explicit human go-ahead per Rule 7).</p>
+<p><strong>Lesson:</strong> log the <code>agent</code> field carefully — it is never normalised after write.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Ticket</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>#659</td>
+<td>Corrected 16 stale numbers in <code>day-six-analysis.ipynb</code> §7 takeaways</td>
+</tr>
+<tr>
+<td>#662</td>
+<td>Verified execution; discovered missing date ceiling; filed #664</td>
+</tr>
+<tr>
+<td>#667</td>
+<td>Created <code>stats/day-seven-analysis.ipynb</code> with date ceiling + full §7 takeaways</td>
+</tr>
+<tr>
+<td>#664</td>
+<td>(open) Add date ceiling to day-six notebook</td>
+</tr>
+<tr>
+<td>#669</td>
+<td>(open) Correct &quot;fig&quot; → &quot;FIG&quot; casing in DB (Rule 7 gate)</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>oracle-ci-spike — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Oracle CI Spike — M2 (#690)</h1>
+<p><strong>Parent:</strong> #427 (Tier 2 tracker) · <strong>Date:</strong> 2026-06-04 · <strong>Agent:</strong> ELDERBERRY</p>
+<h2>Finding</h2>
+<p>The oracle parity problem is <strong>already 85% solved.</strong> The existing golden-file cache
+in <code>tests/goldens/</code> is tracked in git, and the oracle binary is only invoked during
+initial golden generation (when <code>GOLDEN_AUTO_UPDATE=1</code>). The actual comparison step
+runs LCC.js output against committed files — no binary needed.</p>
+<p>Running the oracle suite without <code>LCC_ORACLE</code> set confirms this:</p>
+<pre><code>Tests: 18 skipped, 106 passed, 124 total
+</code></pre>
+<p>No container, no mock, and no redistribution of a closed-source binary is required
+for CI. The 18 skipped tests are the only gap.</p>
+<h2>Two oracle test patterns</h2>
+<p>The codebase has two distinct patterns:</p>
+<h3>Pattern A — Golden-cache (CI-compatible)</h3>
+<p>Used by 5 test files: <code>assembler.oracle</code>, <code>interpreter.oracle</code>, <code>lcc.oracle</code>,
+<code>linker.oracle</code>, <code>lcc.oracle.source-retention</code>.</p>
+<pre><code>Step 1: Check committed golden source (.a) matches current demo → skip if changed
+Step 2: Check committed golden output (.e/.lst) exists → skip if missing; oracle only
+        invoked here when GOLDEN_AUTO_UPDATE=1
+Step 3: Run LCC.js; compare to committed golden → NO oracle call
+</code></pre>
+<p><strong>Result: 106 tests pass in CI without LCC_ORACLE.</strong></p>
+<h3>Pattern B — Direct oracle (not CI-compatible)</h3>
+<p>Used by 4 test files:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Skips</th>
+<th>Subject</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>assembler.branch-mnemonics.oracle.e2e.spec.js</code></td>
+<td>11</td>
+<td>branch mnemonic parity</td>
+</tr>
+<tr>
+<td><code>assembler.org.oracle.e2e.spec.js</code></td>
+<td>2</td>
+<td><code>.org</code>/<code>.orig</code> directives</td>
+</tr>
+<tr>
+<td><code>interpreter.e-path-hex-only.oracle.e2e.spec.js</code></td>
+<td>3</td>
+<td><code>.e</code>-path LST hex parity</td>
+</tr>
+<tr>
+<td><code>interpreter.bp.oracle.e2e.spec.js</code></td>
+<td>1</td>
+<td>bp step-trace §22 parity</td>
+</tr>
+</tbody></table>
+<pre><code class="language-javascript">const itOracle = assertOracleConfigured() ? test : test.skip;
+itOracle(&#39;...&#39;, () =&gt; { /* calls oracle binary live */ });
+</code></pre>
+<p><strong>Result: all 18 of these tests skip when LCC_ORACLE is unset.</strong></p>
+<h2>Approaches evaluated</h2>
+<h3>Option A: Migrate Pattern B → Pattern A (Recommended)</h3>
+<p>Convert the 4 direct-oracle files to the golden-cache pattern:</p>
+<ol>
+<li>Run each file once locally with <code>LCC_ORACLE</code> set to generate golden output.</li>
+<li>Commit the golden files into <code>tests/goldens/</code>.</li>
+<li>Refactor each test to use the golden-cache read path (Steps 1–3 above).</li>
+</ol>
+<p><strong>Effort:</strong> ~30–45m DEV per the existing golden-cache template.
+<strong>CI portability:</strong> 100% — all 124 tests run without the binary.
+<strong>Maintenance:</strong> golden files are refreshed the same way as the existing cache
+(run with <code>GOLDEN_AUTO_UPDATE=1</code> when oracle behavior legitimately changes).
+<strong>Drift risk:</strong> same as the current 106 tests — intentional divergences are in
+<code>docs/parity_deviations.md</code> and the comparison is byte-for-byte.
+<strong>Binary redistribution:</strong> none required.</p>
+<h3>Option B: Containerize the oracle binary</h3>
+<p>Bundle the <code>cuh63/lcc</code> Linux binary in a Docker image or GitHub Actions runner.</p>
+<p><strong>Effort:</strong> ~120–180m SPIKE+DevOps.
+<strong>CI portability:</strong> only on <code>ubuntu-latest</code> runners (binary is Linux x86-64).
+<strong>Maintenance:</strong> image must be rebuilt per <code>cuh</code> release and updated in CI config.
+<strong>Drift risk:</strong> live oracle calls catch regressions immediately; but parity
+deviations in <code>docs/parity_deviations.md</code> require suppression in CI to avoid
+false failures.
+<strong>Binary redistribution:</strong> requires author permission (closed-source binary,
+unverified redistribution rights). BLOCKER.</p>
+<h3>Option C: Leave as-is, add a CI job note</h3>
+<p>Keep the 18 skips, document the CI limitation in a comment.</p>
+<p><strong>Effort:</strong> 0.
+<strong>CI portability:</strong> unchanged.
+<strong>Maintenance:</strong> none.
+<strong>Drift risk:</strong> the 18 test paths remain unguarded in CI.</p>
+<h2>Recommendation</h2>
+<p><strong>Option A.</strong> Migrate the 4 Pattern B files to the golden-cache pattern.</p>
+<p>Rationale:</p>
+<ul>
+<li>Option B has a redistribution blocker and high ongoing maintenance.</li>
+<li>Option C permanently sacrifices 18/124 tests in CI (15% of the oracle suite).</li>
+<li>Option A follows the existing golden-cache precedent — no new infrastructure,
+no redistribution, no CI-config changes, and it closes the 15% gap completely.</li>
+</ul>
+<h2>Follow-on ticket</h2>
+<p>File a DEV ticket: &quot;Migrate 4 direct-oracle test files to golden-cache pattern
+(assembler.branch-mnemonics, assembler.org, interpreter.e-path-hex-only,
+interpreter.bp) — eliminates 18 CI skips.&quot; Estimate: ~45m DEV. Blocked by: oracle
+binary access to generate the initial golden files (one-time, on a local machine).</p>
+<h2>What this spike does NOT cover</h2>
+<ul>
+<li>GitHub Actions CI workflow file (no <code>run-tests</code> workflow exists yet — a separate
+ticket is needed to add one if CI integration is desired).</li>
+<li>LCC+ oracle parity (no <code>.ap</code>/<code>.ep</code> oracle suite exists yet).</li>
+<li>Running the oracle on non-Linux platforms in CI.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

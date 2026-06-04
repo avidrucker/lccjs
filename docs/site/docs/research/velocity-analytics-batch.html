@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>velocity-analytics-batch — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Velocity Analytics Batch — Q4, Q17, Q18, Q28, Q29</h1>
+<p><strong>Ticket:</strong> #701 · <strong>Parent:</strong> #427 · <strong>Date:</strong> 2026-06-04 · <strong>Agent:</strong> GRAPE<br><strong>Dataset:</strong> 579 rows total, 494 with <code>actual_min</code>, 8 agents, from <code>~/.lccjs/velocity.db</code></p>
+<hr>
+<h2>Q4 — Wall-clock per puzzle size class</h2>
+<p><strong>Question:</strong> What is the actual wall-clock overhead per H-size class (H≤15m vs. 15–60m)?</p>
+<table>
+<thead>
+<tr>
+<th>H class</th>
+<th>n</th>
+<th>mean actual_min</th>
+<th>median</th>
+<th>std</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>≤15m</td>
+<td>101</td>
+<td>3.17m</td>
+<td>2.0m</td>
+<td>3.90</td>
+</tr>
+<tr>
+<td>16–60m</td>
+<td>370</td>
+<td>6.93m</td>
+<td>4.0m</td>
+<td>7.36</td>
+</tr>
+<tr>
+<td>&gt;60m</td>
+<td>7</td>
+<td>7.14m</td>
+<td>7.0m</td>
+<td>3.53</td>
+</tr>
+</tbody></table>
+<p><strong>Finding:</strong> AI wall-clock is roughly 2× higher for H 16–60m puzzles than ≤15m ones (3.2m vs. 6.9m mean), but medians are closer (2m vs. 4m), with the mean inflated by outliers. The H cap structurally over-estimates AI cost at all tiers — the longest puzzles in the 16–60m bucket still finish in under 10m median. The &gt;60m class is too sparse (n=7) to interpret.</p>
+<hr>
+<h2>Q17 — H-estimate tightness vs. delta_c_min variance</h2>
+<p><strong>Question:</strong> Do agents working tighter H estimates (H≤15m) have lower <code>delta_c_min</code> variance than H=60m agents?</p>
+<table>
+<thead>
+<tr>
+<th>H class</th>
+<th>n</th>
+<th>delta_c_min std</th>
+<th>mean delta_c</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>≤15m</td>
+<td>89</td>
+<td>4.22</td>
+<td>4.28</td>
+</tr>
+<tr>
+<td>16–60m</td>
+<td>340</td>
+<td>8.30</td>
+<td>11.13</td>
+</tr>
+<tr>
+<td>&gt;60m</td>
+<td>7</td>
+<td>19.73</td>
+<td>42.14</td>
+</tr>
+</tbody></table>
+<p>Mann-Whitney test (≤15m vs. 16–60m): U=6042, <strong>p&lt;0.001</strong></p>
+<p><strong>Finding:</strong> Yes — tighter H puzzles have significantly lower C-estimate variance. The ≤15m bucket shows std=4.2 vs. std=8.3 for 16–60m (2× difference), and the difference is highly significant. This suggests that smaller puzzles are more predictable for the AI, not just shorter. The mean delta_c growing with H class also indicates systematic under-C-estimation on larger tasks.</p>
+<hr>
+<h2>Q18 — Predicting H-estimate overshoot from row features</h2>
+<p><strong>Question:</strong> Can role/h_min/agent/model predict whether a puzzle will exceed its H estimate?</p>
+<p><strong>Base rate:</strong> Only 5/478 puzzles with actuals exceeded their H estimate (1.0%). WRITER leads at 2.5%, DEV at 1.3%; all other roles have 0% overshoots.</p>
+<p>Point-biserial r(h_min, exceeded_h) = −0.056, p=0.224 (not significant).</p>
+<p><strong>Finding:</strong> The dataset is essentially unclassifiable for this question — the base rate is too low (1%) for any predictor to beat majority-class guessing. AI agents almost never exceed the H estimate; the H cap is so conservative relative to actual AI speed that overshoot is a rare event. This makes Q18 unanswerable with the current corpus: there is not enough positive-class data. The more interesting version of this question is predicting C overshoot (actual &gt; c_min), which has a higher base rate.</p>
+<hr>
+<h2>Q28 — Per-agent learning curves (C accuracy over time)</h2>
+<p><strong>Question:</strong> Is there evidence of per-agent learning curves — improving C accuracy over successive sessions?</p>
+<p>Spearman correlation between row order (time) and |delta_c_min| per agent:</p>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>n</th>
+<th>Spearman r</th>
+<th>p</th>
+<th>Trend</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>APPLE</td>
+<td>80</td>
+<td>−0.183</td>
+<td>0.104</td>
+<td>flat</td>
+</tr>
+<tr>
+<td>CHERRY</td>
+<td>75</td>
+<td>+0.067</td>
+<td>0.568</td>
+<td>flat</td>
+</tr>
+<tr>
+<td>ELDERBERRY</td>
+<td>71</td>
+<td>+0.245</td>
+<td>0.040</td>
+<td>degrading</td>
+</tr>
+<tr>
+<td>BANANA</td>
+<td>65</td>
+<td>−0.014</td>
+<td>0.913</td>
+<td>flat</td>
+</tr>
+<tr>
+<td>DRAGONFRUIT</td>
+<td>51</td>
+<td>−0.293</td>
+<td>0.037</td>
+<td>improving</td>
+</tr>
+<tr>
+<td>FIG</td>
+<td>37</td>
+<td>−0.261</td>
+<td>0.119</td>
+<td>flat</td>
+</tr>
+<tr>
+<td>GRAPE</td>
+<td>10</td>
+<td>−0.256</td>
+<td>0.475</td>
+<td>too few</td>
+</tr>
+</tbody></table>
+<p><strong>Finding:</strong> Only DRAGONFRUIT shows a statistically significant improvement trend (r=−0.29, p=0.04); ELDERBERRY shows a significant degradation trend (r=+0.25, p=0.04). All others are flat. These are weak effects and the significance threshold is not corrected for multiple comparisons (7 agents tested). Overall the data does not strongly support the &quot;agents get better at estimation over time&quot; hypothesis — most agents appear stationary in their C calibration. The ELDERBERRY degradation warrants inspection: it may reflect assignment of progressively harder/longer puzzles over time rather than true calibration drift.</p>
+<hr>
+<h2>Q29 — Statistical power to detect a 10% reduction in actual_min</h2>
+<p><strong>Question:</strong> What is the statistical power of the dataset to detect a 10% reduction in actual_min from a protocol change?</p>
+<p>Dataset: n=478 rows with actuals; mean actual_min=6.14m; std=6.90m.</p>
+<p>To detect a 10% reduction (Δ=0.61m) with 80% power (α=0.05, two-sided t-test):</p>
+<p><strong>n needed per group = 1,982</strong></p>
+<p>Current corpus split two ways: ~239 per group.</p>
+<p><strong>Finding:</strong> The dataset is substantially underpowered for detecting a 10% change in mean actual_min. The high coefficient of variation (std/mean ≈ 1.12) makes the signal hard to see against the noise — AI task durations vary widely across puzzle types, roles, and agents. To run a properly powered A/B experiment on a protocol change, the corpus would need roughly 4× growth (to ~4,000 rows with actuals). A 20% effect size would be detectable at ~500 per group (~1,000 rows total), which is achievable within ~2–3 months at current velocity. Alternatively, restricting the analysis to a single role (e.g., DEV-only rows, n=155) or single agent reduces variance but also reduces power.</p>
+<hr>
+<h2>Summary table</h2>
+<table>
+<thead>
+<tr>
+<th>Q</th>
+<th>Finding</th>
+<th>Actionable?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Q4</td>
+<td>AI wall-clock: 3.2m median (≤15m H) vs. 4.0m (16–60m H) — H cap is 5–15× AI actual</td>
+<td>Yes: calibrate C estimates downward</td>
+</tr>
+<tr>
+<td>Q17</td>
+<td>≤15m puzzles have 2× lower C-variance than 16–60m (p&lt;0.001) — smaller = more predictable</td>
+<td>Yes: decompose more aggressively</td>
+</tr>
+<tr>
+<td>Q18</td>
+<td>H-overshoot base rate is 1% — unclassifiable; consider C-overshoot instead</td>
+<td>File follow-on for C-overshoot analysis</td>
+</tr>
+<tr>
+<td>Q28</td>
+<td>No consistent learning curves; DRAGONFRUIT improving (p=0.04), ELDERBERRY degrading (p=0.04)</td>
+<td>Inspect ELDERBERRY puzzle-type distribution</td>
+</tr>
+<tr>
+<td>Q29</td>
+<td>Dataset needs 4× growth to detect 10% effect; 20% effect detectable at ~1,000 rows</td>
+<td>Resume power analysis at 1,000 actuals</td>
+</tr>
+</tbody></table>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

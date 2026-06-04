@@ -195,9 +195,16 @@ encoding &amp; per-mnemonic encoders · <strong>(e)</strong> operand &amp; immed
 <p><strong>Source:</strong> <code>src/core/assembler.js:319-356, 360, 399</code>
 <strong>See also:</strong> [parseBinFile], [parseHexFile], [.bst / .lst report]</p>
 <h4><code>.bst</code> / <code>.lst</code> report</h4>
-<p>Sibling report files generated for object-module assembly. Both contain the same header + source-code column + program statistics; the difference is the encoding of the machine code column. <code>.lst</code> prints each word as 4 hex digits; <code>.bst</code> prints each word as 16 binary digits split into 4-bit nibbles (e.g. <code>1111 0000 0000 0001</code>). Both come out of the same <code>generateBSTLSTContent</code> generator — the <code>isBST</code> boolean toggles the encoding.</p>
+<p>Sibling report files built by the shared <code>generateBSTLSTContent</code> generator (<code>src/utils/genStats.js</code>), called from three entrypoints: the assembler standalone CLI (only when producing a <code>.o</code> object module), the interpreter standalone CLI (when <code>generateStats</code> is true), and <code>lcc.js</code> after a combined assemble-then-run.</p>
+<p>Content varies by entrypoint:</p>
+<ul>
+<li><strong>Assembler-only path</strong> — includes a source-code column but <strong>no</strong> output section or program statistics (instructions executed, program size, max stack size, load point). Statistics require an interpreter instance.</li>
+<li><strong>Interpreter-only path</strong> — includes a memory-dump code section (<code>Loc   Code</code>, no source text, because the interpreter has no access to the original assembly source) <strong>plus</strong> the output block and program statistics.</li>
+<li><strong><code>lcc.js</code> combined path</strong> — merges both: source-annotated code section (from <code>assembler.listing</code>) together with runtime output and statistics. This is the path encountered in normal <code>.a</code>→<code>.e</code> workflows.</li>
+</ul>
+<p>The only difference between <code>.lst</code> and <code>.bst</code> is the machine-code column encoding: <code>.lst</code> uses 4 hex digits per word; <code>.bst</code> uses 16 binary digits in 4-bit groups (e.g. <code>0001 1111 0000 0001</code>). Both are generated in one pass — <code>generateBSTLSTContent</code> is called twice with <code>isBST</code> as the sole toggle.</p>
 <p><strong>Source:</strong> <code>src/core/assembler.js:582-589</code>, <code>src/utils/genStats.js:65-67</code>
-<strong>See also:</strong> [listing], [.e / .o file format], <a href="interpreter.md#main-cli-orchestration">interpreter buildReportArtifacts</a></p>
+<strong>See also:</strong> [listing], [.e / .o file format], <a href="interpreter.md#main-cli-orchestration">interpreter <code>main</code> CLI orchestration</a></p>
 <h4><code>.e</code> / <code>.o</code> file format</h4>
 <p>The on-disk shape of an LCC-assembled module. The assembler is the producer; the linker and interpreter are consumers. Every file starts with a single intro-byte signature, an optional second intro for extension hooks, a sorted series of typed header entries, a <code>&#39;C&#39;</code> code-section marker, and the code itself as little-endian 16-bit words.</p>
 <pre><code>&#39;o&#39;                              ← intro signature
