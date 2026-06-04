@@ -521,3 +521,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 534,637,Closing comment after npm run close is skipped consistently by agents,DEV,,,,,,,,,,APPLE,,lccjs
 535,,PM: file #659 DATA final day pass on day-six-analysis,PM,5,3,1,,,2026-06-03T18:23:10-1000,2026-06-03T18:23:45-1000,,,CHERRY,sonnet-4.6,lccjs
 536,654,WRITER: harden Closes #N must be in HEAD commit into RULES.md,WRITER,15,5,3,12,2,2026-06-03T18:31:38-1000,2026-06-03T18:34:24-1000,,added RULES.md rule 15: Closes #N commit must include CSV; separate CSV commit breaks close gate; recovery via git reset --soft HEAD~1,FIG,sonnet-4.6,lccjs
+537,627,decision: adopt pre-close 3-question finding audit in claude_workflow.md,ARC,45,20,18,27,2,2026-06-03T18:18:00-10:00,2026-06-03T18:36:04-10:00,,"approved with 2 edits: waiting-on-external→humans-only label; inserted as step 4 (research closes → step 5); claude_workflow.md only, not puzzle-velocity.md",DRAGONFRUIT,sonnet-4.6,lccjs

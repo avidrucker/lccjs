@@ -220,7 +220,13 @@ A pause happens in two shapes:
    Three failure modes to watch for: bug found mid-implementation (FM-1),
    discovery time absorbed without logging (FM-2), multi-fix bundled under one
    number (FM-3). See `docs/research/601-scope-discipline.md`.
-4. **Research closes — file follow-up tickets for proposals.** If this is a research or spike ticket whose deliverable proposes concrete changes (new rules, doc updates, code modifications), file a follow-up DEV (or SPIKE) ticket for each distinct proposal before running the close sequence. A research close that ends with "here are N proposed changes" but no child issue is half-finished: the findings exist but have no path to implementation. Filing is not optional — a wrong ticket can be closed immediately. Cross-ref: scope-discipline failure mode taxonomy in [`docs/research/601-scope-discipline.md`](./research/601-scope-discipline.md), #615. (#621)
+4. **Pre-close finding audit (mandatory, all ticket types):** Before running `npm run close N`, answer:
+   1. Did you notice any bug, regression, or process failure not in this ticket's scope? → File a ticket now.
+   2. Does this close change anything that contradicts an open ticket, doc, or TIL entry? → Cross-reference or file a ticket.
+   3. Is there a follow-up question or decision that needs routing to a human? → File a ticket with the `humans-only` label.
+
+   Green-light only when all three are "no" or "filed #N for it." (Addresses C-1, C-2, C-3, E-2 from [`docs/research/orchestration-failure-modes.md`](./research/orchestration-failure-modes.md), #627. Skill enforcement layer: M7 / #644.)
+5. **Research closes — file follow-up tickets for proposals.** If this is a research or spike ticket whose deliverable proposes concrete changes (new rules, doc updates, code modifications), file a follow-up DEV (or SPIKE) ticket for each distinct proposal before running the close sequence. A research close that ends with "here are N proposed changes" but no child issue is half-finished: the findings exist but have no path to implementation. Filing is not optional — a wrong ticket can be closed immediately. Cross-ref: scope-discipline failure mode taxonomy in [`docs/research/601-scope-discipline.md`](./research/601-scope-discipline.md), #615. (#621)
 
 **The close sequence** (full protocol in [`puzzle-velocity.md`](./puzzle-velocity.md)):
 
