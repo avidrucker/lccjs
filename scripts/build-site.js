@@ -202,14 +202,14 @@ function demoTitle(filePath) {
 }
 
 // Wrap content in a full HTML doc (dark body class for landing, light for docs).
-function makePage({ title, bodyClass = 'dark', nav, themeToolbar = '', content, footer, script = '' }) {
+function makePage({ title, bodyClass = 'dark', nav, themeToolbar = '', content, footer, script = '', extraCss = '' }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${title}</title>
-  <style>${CSS}</style>
+  <style>${CSS}${extraCss}</style>
 </head>
 <body class="${bodyClass}">
 ${nav}
@@ -387,20 +387,49 @@ ${listItems}
   const starterCodeJson = JSON.stringify(starterCode);
 
   const playgroundScript = `
+<script src="../dist/lcc.bundle.js"></script>
 <script type="module">
 const CUSTOM_THEMES  = ${customThemesJson};
 const BUILTIN_THEMES = ${builtinThemeIds};
 const DARK           = new Set(${darkIdsJson});
 
-const sel      = document.getElementById('theme-select');
-const textarea = document.getElementById('playground-input');
-const output   = document.getElementById('playground-output');
-const status   = document.getElementById('playground-status');
+const sel        = document.getElementById('theme-select');
+const textarea   = document.getElementById('playground-input');
+const stdinInput = document.getElementById('stdin-input');
+const output     = document.getElementById('playground-output');
+const runStatus  = document.getElementById('playground-status');
+const shikiStatus = document.getElementById('shiki-status');
+const runBtn     = document.getElementById('run-btn');
+const execOut    = document.getElementById('exec-output');
 
 function applyBodyClass(themeId) {
   document.body.className = (DARK.has(themeId) ? 'dark' : 'light') +
     (themeId.startsWith('retro-console') ? ' retro' : '');
 }
+
+runBtn.addEventListener('click', () => {
+  runStatus.textContent = '';
+  execOut.classList.remove('lcc-error');
+  const api = window.lcc;
+  if (!api || typeof api.assemble !== 'function') {
+    execOut.textContent = '(lcc.bundle.js not loaded — execution unavailable)';
+    return;
+  }
+  const src = textarea.value;
+  const stdinLines = stdinInput.value.trim() ? stdinInput.value.split('\\n') : [];
+  const asmResult = api.assemble(src);
+  if (!asmResult.ok) {
+    execOut.classList.add('lcc-error');
+    execOut.textContent = '$ lcc program.a\\nAssembly error:\\n' + asmResult.errors;
+    return;
+  }
+  const runResult = api.run(asmResult.binary, { stdin: stdinLines });
+  execOut.textContent = '$ lcc program.a\\n' + (runResult.stdout || '(no output)');
+  if (runResult.exitCode !== 0) {
+    runStatus.textContent = 'exited with code ' + runResult.exitCode;
+    execOut.classList.add('lcc-error');
+  }
+});
 
 (async () => {
   textarea.value = ${starterCodeJson};
@@ -414,9 +443,9 @@ function applyBodyClass(themeId) {
     ]);
     const grammar = await grammarRes.json();
     hl = await createHighlighter({ langs: [grammar], themes: [...CUSTOM_THEMES, ...BUILTIN_THEMES] });
-    status.textContent = '';
+    if (shikiStatus) shikiStatus.textContent = '';
   } catch (err) {
-    status.textContent = 'Highlighting unavailable: ' + err.message;
+    if (shikiStatus) shikiStatus.textContent = 'Highlighting unavailable: ' + err.message;
     return;
   }
 
@@ -426,7 +455,7 @@ function applyBodyClass(themeId) {
     try {
       output.innerHTML = hl.codeToHtml(textarea.value, { lang: 'lcc', theme });
     } catch (err) {
-      status.textContent = 'Highlight error: ' + err.message;
+      if (shikiStatus) shikiStatus.textContent = 'Highlight error: ' + err.message;
     }
   }
 
@@ -454,30 +483,49 @@ function applyBodyClass(themeId) {
 
   const playgroundContent = `
   <h1>Playground</h1>
-  <p class="subtitle">Type LCC assembly below — syntax highlighting updates live.</p>
+  <p class="subtitle">Assemble and run LCC assembly in the browser — syntax highlighting updates live.</p>
   <div class="theme-toolbar">
     <label for="theme-select">Theme:</label>
     <select id="theme-select">
 ${playgroundThemeOptions}
     </select>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+  <div class="run-bar">
+    <button id="run-btn">Run</button>
+    <span id="playground-status" style="color:#f85149;font-size:.8rem;"></span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
     <div>
-      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem;">Input</p>
-      <textarea id="playground-input" spellcheck="false" style="width:100%;height:420px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
+      <p class="panel-label">LCC Assembly</p>
+      <textarea id="playground-input" spellcheck="false" style="width:100%;height:280px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
+      <p class="panel-label" style="margin-top:.75rem;">stdin lines <span style="font-style:italic;">(one per line — programs exhausting these will fail)</span></p>
+      <textarea id="stdin-input" spellcheck="false" style="width:100%;height:80px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
     </div>
     <div>
-      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem;">Highlighted output</p>
-      <div id="playground-output" style="min-height:420px;border-radius:6px;overflow:auto;font-size:.85rem;"></div>
+      <p class="panel-label">Output</p>
+      <pre id="exec-output">(click Run to execute)</pre>
     </div>
   </div>
-  <p id="playground-status" style="color:#f85149;font-size:.8rem;margin-top:.5rem;"></p>
+  <section style="margin-top:2rem;">
+    <h2>Syntax preview</h2>
+    <p class="panel-label">Highlights as you type</p>
+    <div id="playground-output" style="min-height:200px;border-radius:6px;overflow:auto;font-size:.85rem;"></div>
+    <p id="shiki-status" style="color:#f85149;font-size:.8rem;margin-top:.5rem;"></p>
+  </section>
   <footer style="margin-top:3.5rem;font-size:.8rem;color:var(--muted);border-top:1px solid var(--border);padding-top:1rem;">
     <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
   </footer>`;
 
   const playgroundDir = path.join(OUT_DIR, 'showcase');
   fs.mkdirSync(playgroundDir, { recursive: true });
+
+  const playgroundCss = `
+#run-btn { background:var(--fg);color:var(--bg);border:none;border-radius:4px;padding:.4rem 1.1rem;font-size:.9rem;cursor:pointer;font-weight:600; }
+#run-btn:hover { opacity:.85; }
+.run-bar { display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem; }
+#exec-output { min-height:300px;border-radius:6px;padding:1.1rem 1.25rem;overflow:auto;font-size:.85rem;line-height:1.6;font-family:var(--mono-font);background:#0a0a0a;color:#4af626;white-space:pre-wrap;word-break:break-word;margin:0; }
+#exec-output.lcc-error { color:#ff5555; }
+.panel-label { font-size:.8rem;color:var(--muted);margin-bottom:.4rem; }`;
 
   const playgroundHtml = makePage({
     title: 'Playground — LCC Assembly',
@@ -486,6 +534,7 @@ ${playgroundThemeOptions}
     content: playgroundContent,
     footer: '',
     script: '',
+    extraCss: playgroundCss,
   }).replace('</body>', playgroundScript + '\n</body>');
 
   const playgroundFile = path.join(playgroundDir, 'index.html');

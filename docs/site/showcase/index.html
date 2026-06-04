@@ -68,13 +68,13 @@ code { font-family:var(--mono-font); }
 .back-link { margin-bottom:1.5rem; font-size:.85rem; }
 .back-link a { color:#58a6ff; text-decoration:none; }
 .back-link a:hover { text-decoration:underline; }
+
 #run-btn { background:var(--fg);color:var(--bg);border:none;border-radius:4px;padding:.4rem 1.1rem;font-size:.9rem;cursor:pointer;font-weight:600; }
 #run-btn:hover { opacity:.85; }
 .run-bar { display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem; }
 #exec-output { min-height:300px;border-radius:6px;padding:1.1rem 1.25rem;overflow:auto;font-size:.85rem;line-height:1.6;font-family:var(--mono-font);background:#0a0a0a;color:#4af626;white-space:pre-wrap;word-break:break-word;margin:0; }
 #exec-output.lcc-error { color:#ff5555; }
-.panel-label { font-size:.8rem;color:var(--muted);margin-bottom:.4rem; }
-</style>
+.panel-label { font-size:.8rem;color:var(--muted);margin-bottom:.4rem; }</style>
 </head>
 <body class="dark">
 <nav><a href="../">Home</a>
@@ -187,9 +187,9 @@ runBtn.addEventListener('click', () => {
     ]);
     const grammar = await grammarRes.json();
     hl = await createHighlighter({ langs: [grammar], themes: [...CUSTOM_THEMES, ...BUILTIN_THEMES] });
-    shikiStatus.textContent = '';
+    if (shikiStatus) shikiStatus.textContent = '';
   } catch (err) {
-    shikiStatus.textContent = 'Highlighting unavailable: ' + err.message;
+    if (shikiStatus) shikiStatus.textContent = 'Highlighting unavailable: ' + err.message;
     return;
   }
 
@@ -199,7 +199,7 @@ runBtn.addEventListener('click', () => {
     try {
       output.innerHTML = hl.codeToHtml(textarea.value, { lang: 'lcc', theme });
     } catch (err) {
-      shikiStatus.textContent = 'Highlight error: ' + err.message;
+      if (shikiStatus) shikiStatus.textContent = 'Highlight error: ' + err.message;
     }
   }
 
