@@ -104,3 +104,71 @@ src="./lcc.bundle.js">` on `file://`.
 
 Marp CLI remains the recommended alternative if reveal-md's slide authoring
 experience proves cumbersome, but it is not required for `file://` compatibility.
+
+---
+
+## Full validation test (with #595 injector)
+
+Tested after #595 landed. Command:
+
+```bash
+reveal-md slides.md --static ./static-out --scripts lcc-injector.js
+```
+
+### What the static export does with `--scripts`
+
+The injector is copied to `static-out/_assets/lcc-injector.js` and referenced
+in the HTML as:
+
+```html
+<script src="./_assets/lcc-injector.js"></script>
+```
+
+This appears **before** `Reveal.initialize(options)` and the `Reveal.addEventListener('ready', …)` blocks.
+
+### Finding: injector timing incompatible with reveal.js Markdown pipeline
+
+The injector listens for `DOMContentLoaded` and queries `code.language-lcc`
+at that moment. In a reveal-md context, `DOMContentLoaded` fires **before**
+`Reveal.initialize()` is called. The Markdown plugin converts the
+`<textarea data-template>` content into actual slide DOM during
+`Reveal.initialize()` — after `DOMContentLoaded`. As a result, when the
+injector's handler fires, zero `code.language-lcc` elements exist in the DOM.
+
+Execution order in the static HTML:
+
+1. `<script src="./_assets/lcc-injector.js">` loads — registers `DOMContentLoaded` handler
+2. `DOMContentLoaded` fires → injector queries `code.language-lcc` → **0 results**
+3. `Reveal.initialize(options)` runs → Markdown plugin converts `<textarea>` → slides rendered
+4. `Reveal.addEventListener('ready', …)` fires → slides now have `<code>` elements, but injector already ran
+
+### Checklist outcome
+
+- [x] **Platform check**: `reveal-md --static` opens on `file://` — no CORS, no XHR
+- [x] **Bundle load check**: injector copied to `_assets/`, loaded via `<script src>`, 65 KB bundle present
+- [ ] **Injector fires on code blocks**: BLOCKED — `DOMContentLoaded` precedes Reveal Markdown processing
+- [ ] **Multi-browser check**: not reached
+
+### Fix required
+
+The injector needs a reveal.js-aware mode. Minimal fix:
+
+```js
+if (window.Reveal) {
+  Reveal.addEventListener('ready', () =>
+    document.querySelectorAll('code.language-lcc').forEach(processBlock));
+} else {
+  document.addEventListener('DOMContentLoaded', () =>
+    document.querySelectorAll('code.language-lcc').forEach(processBlock));
+}
+```
+
+This keeps plain-HTML behavior and adds reveal.js compatibility. Filed as a
+follow-up DEV ticket (see below).
+
+### Verdict
+
+reveal-md `--static` is confirmed compatible with `file://` at the platform level.
+The injector itself needs one code change (Reveal.ready hook) before LCC code
+blocks execute inside slides. The Marp path is not required; reveal-md can work
+once the injector is fixed.
