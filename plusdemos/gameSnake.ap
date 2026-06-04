@@ -23,7 +23,7 @@
 
         .lccplus
         .start  startup
-; @todo #585:20m/DEV direct-access + dead frame-setup cleanups (3 items)
+; @inprogress #585:20m/DEV direct-access + dead frame-setup cleanups (3 items)
 
 ;----------------------------------------------------------------
 ; startup: clears screen, hides cursor, calls main
@@ -224,8 +224,6 @@ scoreMsg:       .string "Score: "
 ;---------------------------------------------------------
 placeFruitRandom:
         push  lr
-        push  fp
-        mov   fp, sp
 
         ; random row in [0..9]
         mov   r0, 0
@@ -239,8 +237,6 @@ placeFruitRandom:
         rand  r0, r1
         st    r0, fruitCol
 
-        mov   sp, fp
-        pop   fp
         pop   lr
         ret
 
@@ -583,8 +579,6 @@ moveSnake:
 ;================================================================
 printScore:
     push lr
-    push fp
-    mov fp, sp
 
     ; 1) print "Score: "
     ld  r0, @scoreMsgPtr
@@ -594,8 +588,6 @@ printScore:
     dout r0
     nl
 
-    mov sp, fp
-    pop fp
     pop lr
     ret
 
@@ -654,8 +646,6 @@ wrapCoord:
           ldr r0, r1, 0
           add r2, r2, r0
           rem r2, r0
-          ld  r1, @boardSizePtr
-          ldr r0, r1, 0
           add r3, r3, r0
           rem r3, r0
 
