@@ -246,6 +246,36 @@ describe('LCC Unit Tests', () => {
       expect(mainSpy).toHaveBeenCalledWith(['demo.a']);
       mainSpy.mockRestore();
     });
+
+    test('forwards trace (-t) to ILCC', () => {
+      const lcc = new LCC();
+      lcc.inputFileName = 'demo.a';
+      lcc.options.trace = true;
+      jest.spyOn(ILCC.prototype, 'main').mockImplementation(() => {});
+      lcc.runInteractiveMode();
+      expect(lcc.ilcc.options.trace).toBe(true);
+      ILCC.prototype.main.mockRestore();
+    });
+
+    test('forwards hexOutput (-x) to ILCC', () => {
+      const lcc = new LCC();
+      lcc.inputFileName = 'demo.a';
+      lcc.options.hexOutput = true;
+      jest.spyOn(ILCC.prototype, 'main').mockImplementation(() => {});
+      lcc.runInteractiveMode();
+      expect(lcc.ilcc.options.hexOutput).toBe(true);
+      ILCC.prototype.main.mockRestore();
+    });
+
+    test('forwards fullLineDisplay (-f) to ILCC', () => {
+      const lcc = new LCC();
+      lcc.inputFileName = 'demo.a';
+      lcc.options.fullLineDisplay = true;
+      jest.spyOn(ILCC.prototype, 'main').mockImplementation(() => {});
+      lcc.runInteractiveMode();
+      expect(lcc.ilcc.options.fullLineDisplay).toBe(true);
+      ILCC.prototype.main.mockRestore();
+    });
   });
 
   describe('main() — -i routes to runInteractiveMode()', () => {

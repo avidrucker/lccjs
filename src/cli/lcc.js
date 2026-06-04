@@ -102,7 +102,10 @@ class LCC {
 
   /**
    * Delegate to ILCC for interactive stepping-debugger mode (-i flag).
-   * Forwards -e (efficient), -c (colorblind), -d (debug), -l<hex>, -o flags.
+   * Forwards -e (efficient), -c (colorblind), -d (debug), -l<hex>, -o,
+   * -t (trace), -x (hexOutput), -f (fullLineDisplay) flags.
+   * Does NOT forward -m/-r: those are post-run batch dumps emitted by
+   * executeBuffer(); interactive mode bypasses that path entirely.
    * ilcc.js stays as a thin standalone wrapper; this method is the canonical
    * path reached via `lcc -i`.
    */
@@ -110,9 +113,12 @@ class LCC {
     const ilcc = new ILCC();
 
     // Forward relevant options
-    ilcc.options.efficientMode  = !!this.options.efficientMode;
-    ilcc.options.colorblindMode = !!this.options.colorblindMode;
-    ilcc.options.debug          = !!this.options.debug;
+    ilcc.options.efficientMode   = !!this.options.efficientMode;
+    ilcc.options.colorblindMode  = !!this.options.colorblindMode;
+    ilcc.options.debug           = !!this.options.debug;
+    ilcc.options.trace           = !!this.options.trace;
+    ilcc.options.hexOutput       = !!this.options.hexOutput;
+    ilcc.options.fullLineDisplay = !!this.options.fullLineDisplay;
     if (this.options.loadPoint !== undefined) {
       ilcc.options.loadPoint = this.options.loadPoint;
     }
@@ -200,6 +206,8 @@ class LCC {
     console.log('   -i:   interactive stepping debugger mode (.a and .e files only)');
     console.log('   -e:   efficient mode (with -i: forward-only stepping, lower memory)');
     console.log('   -c:   colorblind mode (with -i: alternate ANSI palette)');
+    console.log('   Note: -t, -x, -f are forwarded to interactive mode; -m and -r are not');
+    console.log('         (-m/-r are post-run batch dumps; interactive mode has no batch path)');
     console.log('   -v / --verbose: verbose output (assembler, interpreter, and linker)');
     console.log('What lcc.js does depends on the extension in the input file name:');
     console.log('   .hex: execute and output .lst, .bst files');
