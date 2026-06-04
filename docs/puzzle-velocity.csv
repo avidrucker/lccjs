@@ -542,3 +542,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 555,651,write /write-til-doc skill,WRITER,45,20,4,41,16,2026-06-03T20:58:38-1000,2026-06-03T21:02:39-1000,,SKILL.md + REFERENCE.md; covers draft->issue->claim->write->README->velocity->close pipeline,FIG,sonnet-4.6,lccjs
 556,665,DEV: post-close orphaned-worktree check — deferred teardown has no cross-session verification,DEV,20,25,,,,,,,,APPLE,,lccjs
 557,664,DATA: day-six notebook date ceiling,DATA,30,20,11,19,9,2026-06-03T20:58:04-1000,2026-06-03T21:09:23-1000,,added hst_day<=2026-06-02 filter; updated §7 prose for fenced-run numbers (316 cal-usable); re-executed clean,DRAGONFRUIT,sonnet-4.6,lccjs
+558,653,WRITER: add README index row for TIL 2026-06-03 CHERRY s4 (missed in #647),WRITER,,,,,,,,,,fig,sonnet-4.6,lccjs
