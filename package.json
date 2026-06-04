@@ -7,6 +7,7 @@
     "test": "jest --runInBand tests/new",
     "test:all": "jest --runInBand",
     "test:oracle": "jest --runInBand --testPathPattern oracle.e2e",
+    "test:parity": "jest --runInBand --testPathPattern textbook-demos.parity",
     "test:browser": "jest --runInBand tests/browser",
     "puzzle:status": "node scripts/puzzle-status.js",
     "puzzles": "bash scripts/run-pdd.sh",
