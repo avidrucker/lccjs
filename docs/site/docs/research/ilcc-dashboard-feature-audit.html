@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ilcc-dashboard-feature-audit — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>ILCC Dashboard Feature Audit (#700)</h1>
+<p><strong>Date:</strong> 2026-06-04 · <strong>Agent:</strong> ELDERBERRY<br><strong>Reference:</strong> <a href="https://hydra.newpaltz.edu/students/odonnela6/ilcc/dashboard">https://hydra.newpaltz.edu/students/odonnela6/ilcc/dashboard</a></p>
+<h2>Note on ILCC dashboard data</h2>
+<p>The ILCC dashboard is a JavaScript SPA; automated fetch returns only the shell
+(<code>&quot;client&quot;</code>). The feature list below is compiled from the issue reporter&#39;s direct
+observations. A human should verify and extend this list on next visit to the URL.</p>
+<hr>
+<h2>ILCC Dashboard — features inventory</h2>
+<h3>Implemented</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Feature</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><strong>Code editor</strong></td>
+<td>Full-screen or paned text input area for writing LCC assembly</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>File naming</strong></td>
+<td>Can assign a name to the current file</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Tabs</strong></td>
+<td>Tab-based navigation, likely for multiple open files</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Terminal / output window</strong></td>
+<td>Displays program stdout after execution</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Run / execute</strong></td>
+<td>Assembles and runs the code (implied by output window)</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Code auto-format / prettify</strong></td>
+<td>Formats / re-indents source code</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Share as link (&quot;codepen&quot;-style)</strong></td>
+<td>Encodes code in a URL for sharing</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Download as <code>.a</code> file</strong></td>
+<td>Exports the current source as a <code>.a</code> assembly file</td>
+</tr>
+</tbody></table>
+<h3>Not yet implemented (confirmed absent)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Feature</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><strong>Syntax highlighting</strong> — editor displays plain text, no token colouring</td>
+</tr>
+</tbody></table>
+<h3>Unknown (requires human verification)</h3>
+<ul>
+<li>Line numbers in the editor</li>
+<li>Interactive stdin (typing input while program runs vs. pre-supplied)</li>
+<li>Assembly error display (inline or in the terminal)</li>
+<li>Multiple independent file buffers vs. named single buffer</li>
+<li>Dark / light theme toggle</li>
+<li>Keyboard shortcuts (Run, Format, etc.)</li>
+<li>Save to browser localStorage / IndexedDB</li>
+<li>LCC+ (<code>.ap</code>) support</li>
+<li>Linker / multi-file support</li>
+</ul>
+<hr>
+<h2>lccjs web offerings — current state</h2>
+<p>lccjs has three distinct browser-facing components at different maturity levels.</p>
+<h3>A. Showcase page (<code>docs/showcase/index.html</code>)</h3>
+<p>A static demo page served under <code>docs/</code> and included in the GitHub Pages site.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>State</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Code editor (textarea)</td>
+<td>✅</td>
+<td>Playground section: editable <code>&lt;textarea&gt;</code></td>
+</tr>
+<tr>
+<td>Syntax highlighting</td>
+<td>✅</td>
+<td>Shiki v1 + custom LCC TextMate grammar (<code>docs/lcc.tmLanguage.json</code>); live 150ms debounce</td>
+</tr>
+<tr>
+<td>Side-by-side highlight preview</td>
+<td>✅</td>
+<td>Editor on left, highlighted read-only view on right</td>
+</tr>
+<tr>
+<td>Tab → 4 spaces</td>
+<td>✅</td>
+<td><code>keydown</code> Tab override in playground</td>
+</tr>
+<tr>
+<td>Static code samples</td>
+<td>✅</td>
+<td>demoO.a, demoF.a, rock-paper-scissors.ap rendered highlighted</td>
+</tr>
+<tr>
+<td>LCC+ (<code>.ap</code>) sample</td>
+<td>✅</td>
+<td>rock-paper-scissors.ap displayed</td>
+</tr>
+<tr>
+<td>Run / execute</td>
+<td>❌</td>
+<td>No button; editor is highlight-only</td>
+</tr>
+<tr>
+<td>Terminal output panel</td>
+<td>❌</td>
+<td>No execution, no output</td>
+</tr>
+<tr>
+<td>Interactive / pre-supplied stdin</td>
+<td>❌</td>
+<td>Not applicable (no execution)</td>
+</tr>
+<tr>
+<td>File naming</td>
+<td>❌</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabs</td>
+<td>❌</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Share as link</td>
+<td>❌</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Download as <code>.a</code></td>
+<td>❌</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Auto-format / prettify</td>
+<td>❌</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Line numbers</td>
+<td>❌ (editor) / ✅ (preview)</td>
+<td>Shiki adds line numbers to the highlight preview; the raw textarea has none</td>
+</tr>
+<tr>
+<td>Assembly error display</td>
+<td>❌</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<h3>B. lcc-injector (<code>dist/lcc-injector.js</code>)</h3>
+<p>An embeddable script that finds <code>&lt;code class=&quot;language-lcc&quot;&gt;</code> blocks on any HTML
+page and auto-assembles + runs them, appending an output <code>&lt;pre&gt;</code> below each one.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>State</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Auto-execute on page load</td>
+<td>✅</td>
+<td>Finds all <code>.language-lcc</code> blocks</td>
+</tr>
+<tr>
+<td>Terminal output panel</td>
+<td>✅</td>
+<td><code>&lt;pre class=&quot;lcc-output&quot;&gt;</code> appended per block; terminal aesthetic (dark bg / green text)</td>
+</tr>
+<tr>
+<td>Assembly error display</td>
+<td>✅</td>
+<td>Error box shown when assembly fails</td>
+</tr>
+<tr>
+<td>Pre-supplied stdin</td>
+<td>✅</td>
+<td><code>data-stdin</code> attribute; newline-separated</td>
+</tr>
+<tr>
+<td>Interactive stdin</td>
+<td>❌</td>
+<td>No runtime prompt; must pre-supply all input</td>
+</tr>
+<tr>
+<td>Reveal.md slide integration</td>
+<td>✅</td>
+<td><code>--scripts dist/lcc-injector.js</code> flag</td>
+</tr>
+<tr>
+<td>Static export (file://)</td>
+<td>✅</td>
+<td>Works without a dev server</td>
+</tr>
+<tr>
+<td>Standalone playground page</td>
+<td>❌</td>
+<td>Requires embedding; not a self-contained app</td>
+</tr>
+<tr>
+<td>Code editor</td>
+<td>❌</td>
+<td>Code blocks are read-only on page load</td>
+</tr>
+<tr>
+<td>Syntax highlighting</td>
+<td>❌</td>
+<td>Does not apply Shiki to injected blocks</td>
+</tr>
+<tr>
+<td>File naming</td>
+<td>❌</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Share as link</td>
+<td>❌</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Download as <code>.a</code></td>
+<td>❌</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<h3>C. Browser bundle API (<code>dist/lcc.bundle.js</code>)</h3>
+<p>Exposes <code>lcc.Assembler</code> and <code>lcc.Interpreter</code> as browser globals. Intended for
+building custom tools, not direct use.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>State</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>assembleSource(src)</code></td>
+<td>✅</td>
+<td>Returns binary buffer</td>
+</tr>
+<tr>
+<td><code>executeBuffer(buf, {write})</code></td>
+<td>✅</td>
+<td>Runs with a custom write callback</td>
+</tr>
+<tr>
+<td>Standalone UI</td>
+<td>❌</td>
+<td>API only — no built-in interface</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Gap table — ILCC dashboard vs lccjs</h2>
+<p><code>✅</code> = present · <code>❌</code> = absent · <code>~</code> = partial · <code>?</code> = unverified</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th align="center">ILCC dashboard</th>
+<th align="center">lccjs (best surface)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Code editor (writable)</td>
+<td align="center">✅</td>
+<td align="center">✅ showcase textarea</td>
+</tr>
+<tr>
+<td>Syntax highlighting</td>
+<td align="center">❌</td>
+<td align="center">✅ showcase (Shiki)</td>
+</tr>
+<tr>
+<td>Run / assemble / execute</td>
+<td align="center">✅</td>
+<td align="center">~ injector (read-only blocks only)</td>
+</tr>
+<tr>
+<td>Terminal output panel</td>
+<td align="center">✅</td>
+<td align="center">✅ injector</td>
+</tr>
+<tr>
+<td>Interactive stdin</td>
+<td align="center">?</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Pre-supplied stdin</td>
+<td align="center">?</td>
+<td align="center">✅ injector (<code>data-stdin</code>)</td>
+</tr>
+<tr>
+<td>Assembly error display</td>
+<td align="center">?</td>
+<td align="center">✅ injector</td>
+</tr>
+<tr>
+<td>File naming</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Tabs / multi-file</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Share as link</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Download as <code>.a</code></td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Auto-format / prettify</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Line numbers (editor)</td>
+<td align="center">?</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>LCC+ (<code>.ap</code>) support</td>
+<td align="center">?</td>
+<td align="center">✅ showcase sample</td>
+</tr>
+<tr>
+<td>Standalone playground page</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Embeddable in slides</td>
+<td align="center">?</td>
+<td align="center">✅ injector + reveal-md</td>
+</tr>
+<tr>
+<td>Browser API for custom tools</td>
+<td align="center">?</td>
+<td align="center">✅ <code>lcc.bundle.js</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Key finding</h2>
+<p>lccjs and the ILCC dashboard have <strong>complementary</strong> strengths that do not yet overlap
+into a single surface:</p>
+<ul>
+<li><strong>lccjs has syntax highlighting; ILCC does not.</strong></li>
+<li><strong>ILCC has a run-in-browser playground; lccjs does not</strong> (the showcase editor doesn&#39;t execute; the injector executes but doesn&#39;t have an editable input area).</li>
+</ul>
+<p>The most impactful single addition to lccjs&#39;s web offering would be a <strong>standalone
+playground page</strong> that combines the showcase&#39;s syntax-highlighted editor with the
+injector&#39;s execution engine — a writable textarea, a Run button, a terminal output
+panel, and pre-supplied stdin support. That closes the largest gap vs. the ILCC
+dashboard in one ticket.</p>
+<hr>
+<h2>What this audit does not cover</h2>
+<ul>
+<li>ILCC dashboard features that require login or session state (unknown)</li>
+<li>ILCC dashboard&#39;s backend / server-side execution vs. lccjs&#39;s client-side WASM/JS approach</li>
+<li>Performance comparison</li>
+<li>Accessibility (ARIA, keyboard-nav completeness)</li>
+<li>Mobile / responsive behaviour</li>
+<li>LCC+ support status in the ILCC dashboard</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>
