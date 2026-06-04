@@ -191,7 +191,18 @@ A pause happens in two shapes:
    date '+%Y-%m-%dT%H:%M:%S%:z'
    ```
 2. Final verification — does the change actually do what it should?
-3. **Research closes — file follow-up tickets for proposals.** If this is a research or spike ticket whose deliverable proposes concrete changes (new rules, doc updates, code modifications), file a follow-up DEV (or SPIKE) ticket for each distinct proposal before running the close sequence. A research close that ends with "here are N proposed changes" but no child issue is half-finished: the findings exist but have no path to implementation. Filing is not optional — a wrong ticket can be closed immediately. Cross-ref: scope-discipline failure mode taxonomy in [`docs/research/601-scope-discipline.md`](./research/601-scope-discipline.md), #615. (#621)
+3. **Pre-close scope audit (mandatory):** Run `git diff origin/main` and verify every
+   changed file and function falls within this ticket's "Should have." If any change
+   is out of scope:
+   1. File a ticket for it immediately.
+   2. Revert or stash the out-of-scope change.
+   3. Close this ticket with only the in-scope work.
+   4. Pick up the newly filed ticket separately.
+
+   Three failure modes to watch for: bug found mid-implementation (FM-1),
+   discovery time absorbed without logging (FM-2), multi-fix bundled under one
+   number (FM-3). See `docs/research/601-scope-discipline.md`.
+4. **Research closes — file follow-up tickets for proposals.** If this is a research or spike ticket whose deliverable proposes concrete changes (new rules, doc updates, code modifications), file a follow-up DEV (or SPIKE) ticket for each distinct proposal before running the close sequence. A research close that ends with "here are N proposed changes" but no child issue is half-finished: the findings exist but have no path to implementation. Filing is not optional — a wrong ticket can be closed immediately. Cross-ref: scope-discipline failure mode taxonomy in [`docs/research/601-scope-discipline.md`](./research/601-scope-discipline.md), #615. (#621)
 
 **The close sequence** (full protocol in [`puzzle-velocity.md`](./puzzle-velocity.md)):
 

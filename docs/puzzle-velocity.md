@@ -117,6 +117,20 @@ umbrella over rows that already exist?*
 A scope-spike row is not double-logging — it records the scoping; the children
 record their implementation separately.
 
+### FM-2 discovery bleed — `notes` field convention
+
+When a ticket requires a short triage pass before implementation (FM-2: checking
+whether a prior fix already landed, identifying the right caller, confirming the
+issue is still present), and that pass is under ~5 minutes, do **not** file a
+separate research ticket. Instead, capture it in the velocity row's `notes` field:
+
+> `"~5 min triage confirming #N already landed before starting; not counted in implementation actual"`
+
+This keeps the discovery visible in the data without inflating `actual_min` for
+the implementation and without creating a ticket for trivial triage. Triage that
+takes more than ~5 minutes warrants its own ticket and velocity row. See
+`docs/research/601-scope-discipline.md` for the full FM-2 analysis.
+
 `docs/puzzle-velocity.csv` is now a **generated read-only export** — `velocity-log.js`
 writes to SQLite and auto-exports the full CSV after every INSERT. Format details
 (LF endings, quote-doubling) are handled by the export script; manual editing is
