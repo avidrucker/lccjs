@@ -262,6 +262,18 @@ class LCC {
           case '--verbose':
             this.options.verbose = true;
             break;
+          case '--max-steps': {
+            i++;
+            if (i >= args.length) {
+              cliErrorExit('Missing value after --max-steps', 1);
+            }
+            const n = parseInt(args[i], 10);
+            if (isNaN(n)) {
+              cliErrorExit(`Invalid --max-steps value: ${args[i]}`, 1);
+            }
+            this.options.maxSteps = n;
+            break;
+          }
           default:
             if (arg.startsWith('-l')) {
               // Load point
@@ -338,6 +350,11 @@ class LCC {
 
     // Wire -t flag: enable per-step trace output and attach sourceMap when available
     interpreter.traceMode = !!this.options.trace;
+
+    // Wire --max-steps N flag
+    if (this.options.maxSteps !== undefined) {
+      interpreter.maxSteps = this.options.maxSteps;
+    }
     if (this.assembler && this.assembler.sourceMap) {
       interpreter.sourceMap = this.assembler.sourceMap;
     }

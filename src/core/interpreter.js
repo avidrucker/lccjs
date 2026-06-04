@@ -160,11 +160,6 @@ class Interpreter {
     this.headerLines = [];
 
     /**
-     * Limit the number of instructions to prevent infinite loops
-     */
-    this.instructionsCap = 500000;
-
-    /**
      * Debug mode flag
      */
     this.debugMode = false;
@@ -180,7 +175,7 @@ class Interpreter {
     this.allowRuntimeDebugging = false;
 
     /**
-     * When true, the instructionsCap check is skipped entirely.
+     * When true, the unified step-cap check in run() is skipped entirely.
      * Useful for long-running .ap programs where the cap would produce a
      * spurious "Possible infinite loop" error.
      */
@@ -420,6 +415,16 @@ class Interpreter {
           if (isNaN(this.loadPoint)) {
             cliErrorExit(`Invalid load point value: ${loadPointStr}`, 1);
           }
+        } else if (arg === '--max-steps') {
+          i++;
+          if (i >= args.length) {
+            cliErrorExit('Error: --max-steps requires a value', 1);
+          }
+          const n = parseInt(args[i], 10);
+          if (isNaN(n)) {
+            cliErrorExit(`Invalid --max-steps value: ${args[i]}`, 1);
+          }
+          this.maxSteps = n;
         } else {
           cliErrorExit(`Bad command line switch: ${arg}`, 1); // `Unknown option: ${arg}`
         }
@@ -477,6 +482,7 @@ class Interpreter {
         inputFileName: this.inputFileName,
         loadPoint: this.loadPoint,
         allowDebugOnInfiniteLoop: true,
+        maxSteps: this.maxSteps,
       });
       if (this.generateStats) {
         console.log(); // Ensure cursor moves to the next line
@@ -632,15 +638,31 @@ class Interpreter {
   }
 
   run() {
-    this.spInitial = this.r[6]; // Assuming r6 is the stack pointer
+    this.spInitial = this.r[6];
 
-    const limit = this.maxSteps || 0;
+    const DEFAULT_CAP = 500000;
+    let limit;
+    if (this.disableInfiniteLoopDetection) {
+      limit = 0;
+    } else if (this.maxSteps === Infinity || this.maxSteps === -1) {
+      limit = 0;
+    } else if (this.maxSteps > 0) {
+      limit = this.maxSteps;
+    } else {
+      limit = DEFAULT_CAP;
+    }
+
     let steps = 0;
     while (this.running) {
-      if (limit > 0 && ++steps > limit) {
+      if (!this.debugMode && limit > 0 && ++steps > limit) {
         this.maxStepsReached = true;
-        this.running = false;
-        break;
+        if (this.canEnterInteractiveDebugger()) {
+          console.error("Possible infinite loop");
+          this.debugMode = true;
+        } else {
+          this.running = false;
+          break;
+        }
       }
       this.step();
     }
@@ -805,27 +827,6 @@ class Interpreter {
     }
 
     this.instructionsExecuted++;
-
-    // Check if the instruction limit has been reached
-    // Note: This is a safety feature to prevent infinite loops
-    // 2nd Note: This matches exactly the # of instructions 
-    // permitted to run by from the lcc before entering the debugger
-    if (!this.disableInfiniteLoopDetection &&
-        this.instructionsExecuted >= this.instructionsCap && !this.debugMode) {
-
-      // instead of exiting the program, this condition instead
-      // initiates the execution of the symbolic debugger
-      // detect if the program is running in the terminal
-      if (this.canEnterInteractiveDebugger()) {
-        // If running in the terminal, we can trigger debug mode
-        console.error("Possible infinite loop");
-        this.debugMode = true;
-      } else {
-        // else, terminate the program
-        this.running = false;
-        this.raiseRuntimeError(new InterpreterRuntimeError('Possible infinite loop'));
-      }
-    }
 
     // Track max stack size
     let sp = this.r[6];

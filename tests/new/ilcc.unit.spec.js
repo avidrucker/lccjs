@@ -197,7 +197,7 @@ describe('ILCC Unit Tests', () => {
       IInterpreter.prototype.runInteractive.mockRestore();
     });
 
-    test('-i<N> flag: sets instructionsCap on interpreter', () => {
+    test('-i<N> flag: sets maxSteps on interpreter', () => {
       const ilcc = new ILCC();
       ilcc.options.instructionCap = 1000;
       ilcc.outputFileName = 'demo.e';
@@ -206,7 +206,7 @@ describe('ILCC Unit Tests', () => {
       jest.spyOn(IInterpreter.prototype, 'runInteractive').mockImplementation(() => {});
 
       ilcc.runInteractiveFile();
-      expect(ilcc.interpreter.instructionsCap).toBe(1000);
+      expect(ilcc.interpreter.maxSteps).toBe(1000);
 
       IInterpreter.prototype.loadExecutableFile.mockRestore();
       IInterpreter.prototype.runInteractive.mockRestore();

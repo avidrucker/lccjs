@@ -76,30 +76,15 @@ describe('Interpreter Unit Tests', () => {
     expect(interpreter.debugMode).toBe(false);
   });
 
-  test('executeBuffer() should throw a typed runtime error for a possible infinite loop without entering debug mode', () => {
+  test('executeBuffer() should set maxStepsReached and stop without throwing when the step cap is hit', () => {
     const executable = Buffer.from([0x6f, 0x43, 0xff, 0x0f, 0x00, 0xf0]);
     const interpreter = new Interpreter();
-    interpreter.instructionsCap = 3;
-    const isTTYDescriptor = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY');
-
-    Object.defineProperty(process.stdin, 'isTTY', {
-      configurable: true,
-      value: true,
+    const result = interpreter.executeBuffer(executable, {
+      inputFileName: 'infiniteLoop.e',
+      maxSteps: 3,
     });
-
-    try {
-      expect(() => {
-        interpreter.executeBuffer(executable, { inputFileName: 'infiniteLoop.e' });
-      }).toThrow('Possible infinite loop');
-
-      expect(interpreter.debugMode).toBe(false);
-    } finally {
-      if (isTTYDescriptor) {
-        Object.defineProperty(process.stdin, 'isTTY', isTTYDescriptor);
-      } else {
-        delete process.stdin.isTTY;
-      }
-    }
+    expect(result.maxStepsReached).toBe(true);
+    expect(interpreter.debugMode).toBe(false);
   });
 
   test('buildReportArtifacts() should return .lst and .bst report text without writing files', () => {

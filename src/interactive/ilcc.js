@@ -89,7 +89,7 @@ class ILCC {
     interpreter.debugMode      = !!this.options.debug;
     interpreter.traceMode      = !!this.options.trace;
     if (this.options.instructionCap !== undefined) {
-      interpreter.instructionsCap = this.options.instructionCap;
+      interpreter.maxSteps = this.options.instructionCap;
     }
 
     if (this.inputBuffer) {
