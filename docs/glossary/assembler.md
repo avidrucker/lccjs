@@ -177,10 +177,18 @@ The assembler recognizes a small fixed set of extensions, each with distinct beh
 
 #### `.bst` / `.lst` report
 
-Sibling report files generated for object-module assembly. Both contain the same header + source-code column + program statistics; the difference is the encoding of the machine code column. `.lst` prints each word as 4 hex digits; `.bst` prints each word as 16 binary digits split into 4-bit nibbles (e.g. `1111 0000 0000 0001`). Both come out of the same `generateBSTLSTContent` generator — the `isBST` boolean toggles the encoding.
+Sibling report files built by the shared `generateBSTLSTContent` generator (`src/utils/genStats.js`), called from three entrypoints: the assembler standalone CLI (only when producing a `.o` object module), the interpreter standalone CLI (when `generateStats` is true), and `lcc.js` after a combined assemble-then-run.
+
+Content varies by entrypoint:
+
+- **Assembler-only path** — includes a source-code column but **no** output section or program statistics (instructions executed, program size, max stack size, load point). Statistics require an interpreter instance.
+- **Interpreter-only path** — includes a memory-dump code section (`Loc   Code`, no source text, because the interpreter has no access to the original assembly source) **plus** the output block and program statistics.
+- **`lcc.js` combined path** — merges both: source-annotated code section (from `assembler.listing`) together with runtime output and statistics. This is the path encountered in normal `.a`→`.e` workflows.
+
+The only difference between `.lst` and `.bst` is the machine-code column encoding: `.lst` uses 4 hex digits per word; `.bst` uses 16 binary digits in 4-bit groups (e.g. `0001 1111 0000 0001`). Both are generated in one pass — `generateBSTLSTContent` is called twice with `isBST` as the sole toggle.
 
 **Source:** `src/core/assembler.js:582-589`, `src/utils/genStats.js:65-67`
-**See also:** [listing], [.e / .o file format], [interpreter buildReportArtifacts](interpreter.md#main-cli-orchestration)
+**See also:** [listing], [.e / .o file format], [interpreter `main` CLI orchestration](interpreter.md#main-cli-orchestration)
 
 #### `.e` / `.o` file format
 
