@@ -15,7 +15,7 @@ const nameHandler = require('../utils/name.js');
 const { h4 } = require('./debug/format');
 const { diffRegisters } = require('./debug/stateDelta');
 
-const newline = process.platform === 'win32' ? '\r\n' : '\n';
+const newline = (typeof process !== 'undefined' && process.platform === 'win32') ? '\r\n' : '\n';
 
 const MAX_MEMORY = 65536; // 2^16
 
@@ -101,7 +101,7 @@ class Interpreter {
      * Browser consumers pass {write: m => (domBuffer += m)} to capture output
      * without monkey-patching process.stdout.
      */
-    this._write = options.write ?? (m => process.stdout.write(m));
+    this._write = options.write ?? (m => (typeof process !== 'undefined' && process.stdout) ? process.stdout.write(m) : undefined);
 
     /**
      * Input buffer for SIN (if needed)

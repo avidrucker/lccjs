@@ -13,15 +13,24 @@
 'use strict';
 
 const path = require('path');
+const webpack = require('webpack');
 
 const sharedFallback = {
   // fs call-sites are dead code on the in-memory API path — safe to stub.
   fs: false,
   // path-browserify polyfills path.extname / path.resolve used at module load.
   path: require.resolve('path-browserify'),
+  // Buffer is used by the assembler and interpreter; browsers need the polyfill.
+  buffer: require.resolve('buffer/'),
 };
 
+// Inject Buffer as a global for all modules that use it without require().
+const sharedPlugins = [
+  new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'] }),
+];
+
 module.exports = [
+
   // ── lcc-injector.js ────────────────────────────────────────────────────────
   // Self-contained: bundles the browser API + DOM injection side-effect.
   // No library export — IIFE that runs on load.
@@ -36,6 +45,7 @@ module.exports = [
       globalObject: 'typeof self !== "undefined" ? self : this',
     },
     resolve: { fallback: sharedFallback },
+    plugins: sharedPlugins,
   },
 
   // ── lcc.bundle.js ──────────────────────────────────────────────────────────
@@ -51,5 +61,6 @@ module.exports = [
       globalObject: 'typeof self !== "undefined" ? self : this',
     },
     resolve: { fallback: sharedFallback },
+    plugins: sharedPlugins,
   },
 ];

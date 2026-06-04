@@ -164,6 +164,7 @@ is to be ready when asked (#377).</p>
 <ol start="3">
 <li>Read the ticket body and all comments via <code>gh issue view &lt;N&gt; --comments</code>.</li>
 <li>Read referenced docs / source files needed for context.</li>
+<li><strong>Verify the repro before writing any code.</strong> Run the exact commands or steps from the issue&#39;s &quot;Have&quot; section and confirm the bug or gap is still present. If the described state is already absent — the fix landed in a sibling branch, the feature already exists, or the condition no longer triggers — <strong>stop and investigate</strong> before proceeding; do not assume the issue is live without checking. Only proceed to implementation once a hands-on repro confirms the &quot;have&quot; state. If the issue is already resolved, the closing commit is a <code>chore:</code> or <code>docs:</code> noting the discovery (the close sequence and velocity log still apply).</li>
 <li>(Optional) <code>TaskCreate</code> if the puzzle has 3+ distinct sub-steps worth tracking.</li>
 <li>Pick the smallest concrete first step and start.</li>
 </ol>

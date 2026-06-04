@@ -15,7 +15,7 @@
 
 const fs = require('fs');
 const { fatalExit } = require('./cliExit');
-const newline = process.platform === 'win32' ? '\r\n' : '\n';
+const newline = (typeof process !== 'undefined' && process.platform === 'win32') ? '\r\n' : '\n';
 const prompt = `Enter familyname, firstname middleinitial (if any)${newline}`;
 
 function readLineFromStdin() {
