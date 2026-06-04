@@ -47,7 +47,7 @@ module.exports = [
     output: {
       filename: 'lcc.bundle.js',
       path: path.resolve(__dirname, 'dist'),
-      library: { name: 'lcc', type: 'umd', export: 'default' },
+      library: { name: 'lcc', type: 'umd' },
       globalObject: 'typeof self !== "undefined" ? self : this',
     },
     resolve: { fallback: sharedFallback },
