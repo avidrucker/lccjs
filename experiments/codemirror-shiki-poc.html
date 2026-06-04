@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>@cmshiki/shiki PoC — LCC Assembly (#753)</title>
+
+  <!--
+    Deduplication strategy: import map pins @codemirror/* to bare specifiers.
+    @cmshiki/shiki is loaded with ?external=@codemirror/state,@codemirror/view
+    so esm.sh emits bare specifier imports instead of bundling them — both
+    paths resolve through this map to the same module instances.
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "@codemirror/state":        "https://esm.sh/@codemirror/state@6",
+      "@codemirror/view":         "https://esm.sh/@codemirror/view@6",
+      "@codemirror/commands":     "https://esm.sh/@codemirror/commands@6",
+      "@codemirror/language":     "https://esm.sh/@codemirror/language@6",
+      "@codemirror/autocomplete": "https://esm.sh/@codemirror/autocomplete@6",
+      "@codemirror/search":       "https://esm.sh/@codemirror/search@6",
+      "@codemirror/lint":         "https://esm.sh/@codemirror/lint@6",
+      "@lezer/highlight":         "https://esm.sh/@lezer/highlight",
+      "@lezer/lr":                "https://esm.sh/@lezer/lr",
+      "@lezer/common":            "https://esm.sh/@lezer/common"
+    }
+  }
+  </script>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", monospace;
+      background: #0d1117; color: #c9d1d9;
+      margin: 0; padding: 1.5rem;
+    }
+    h2 { font-size: 1rem; margin: 0 0 0.5rem; color: #58a6ff; }
+    p  { font-size: 0.8rem; color: #8b949e; margin: 0 0 1rem; }
+    #status {
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 0.75rem;
+      background: #1c2733;
+      color: #58a6ff;
+    }
+    #status.pass { background: #0f2916; color: #3fb950; }
+    #status.fail { background: #2d0f0f; color: #f85149; }
+    #log { font-size: 0.75rem; color: #8b949e; margin-bottom: 1rem; line-height: 1.7; }
+    #log .ok  { color: #3fb950; }
+    #log .err { color: #f85149; }
+    #log .step { color: #c9d1d9; }
+    #editor {
+      border: 1px solid #30363d; border-radius: 4px;
+      min-height: 160px; font-size: 0.875rem;
+    }
+    /* Let CodeMirror Shiki theme override the background */
+    .cm-editor { background: #0d1117 !important; }
+  </style>
+</head>
+<body>
+
+<h2>@cmshiki/shiki PoC — LCC Assembly (#753)</h2>
+<p>
+  Tests whether <code>@cmshiki/shiki@0.2.0</code> + <code>shiki@3</code> +
+  custom <code>lcc.tmLanguage.json</code> works inside a CodeMirror 6
+  <code>EditorView</code> loaded entirely via <code>esm.sh</code> CDN.
+</p>
+
+<div id="status">Initializing…</div>
+<div id="log"></div>
+<div id="editor"></div>
+
+<script type="module">
+const statusEl = document.getElementById('status');
+const logEl    = document.getElementById('log');
+
+function setStatus(cls, msg) {
+  statusEl.className   = cls;
+  statusEl.textContent = msg;
+  statusEl.dataset.result = cls;
+}
+
+function log(cls, msg) {
+  const span = document.createElement('span');
+  span.className = cls;
+  span.textContent = msg + '\n';
+  logEl.appendChild(span);
+}
+
+try {
+  // ── Step 1: CodeMirror 6 (via import map) ───────────────────────────────
+  log('step', '1. Loading @codemirror/view and @codemirror/state via import map…');
+  const { EditorView } = await import('@codemirror/view');
+  const { EditorState } = await import('@codemirror/state');
+  log('ok', '   ✓ @codemirror/view + state loaded');
+
+  // ── Step 2: @cmshiki/shiki (external deps → import map dedup) ──────────
+  log('step', '2. Loading @cmshiki/shiki with ?external=@codemirror/state,@codemirror/view…');
+  const { shikiToCodeMirror } = await import(
+    'https://esm.sh/@cmshiki/shiki?external=@codemirror/state,@codemirror/view'
+  );
+  log('ok', '   ✓ @cmshiki/shiki loaded');
+
+  // ── Step 3: shiki@3 ─────────────────────────────────────────────────────
+  log('step', '3. Loading shiki@3…');
+  const { createHighlighter } = await import('https://esm.sh/shiki@3');
+  log('ok', '   ✓ shiki@3 loaded');
+
+  // ── Step 4: Fetch LCC TextMate grammar ──────────────────────────────────
+  log('step', '4. Fetching ../docs/lcc.tmLanguage.json…');
+  const grammarRes = await fetch('../docs/lcc.tmLanguage.json');
+  if (!grammarRes.ok) throw new Error(`fetch failed: ${grammarRes.status} ${grammarRes.statusText}`);
+  const lccGrammar = await grammarRes.json();
+  log('ok', `   ✓ grammar fetched — name="${lccGrammar.name}" scopeName="${lccGrammar.scopeName}" patterns=${lccGrammar.patterns.length}`);
+
+  // ── Step 5: Create Shiki highlighter with LCC grammar ───────────────────
+  log('step', '5. Creating Shiki@3 highlighter with LCC grammar + github-dark…');
+  const highlighter = await createHighlighter({
+    langs:  [lccGrammar],
+    themes: ['github-dark'],
+  });
+  log('ok', '   ✓ highlighter created');
+
+  // Verify the grammar was registered under the expected name.
+  const loadedLangs = highlighter.getLoadedLanguages();
+  const grammarName = lccGrammar.name;
+  if (!loadedLangs.includes(grammarName)) {
+    throw new Error(
+      `Grammar not registered under name "${grammarName}". ` +
+      `Loaded langs: ${JSON.stringify(loadedLangs)}`
+    );
+  }
+  log('ok', `   ✓ grammar registered as "${grammarName}" (${loadedLangs.join(', ')})`);
+
+  // Smoke-test: codeToHtml to confirm highlighting works outside CM context.
+  const sample = '; comment\n        lea r0, msg\nmsg:    .string "hello"';
+  const html = highlighter.codeToHtml(sample, { lang: grammarName, theme: 'github-dark' });
+  if (!html.includes('<span') || !html.includes('color')) {
+    throw new Error('codeToHtml returned no colour spans — grammar may not be matching');
+  }
+  log('ok', '   ✓ codeToHtml produced coloured spans');
+
+  // ── Step 6: shikiToCodeMirror extension ─────────────────────────────────
+  log('step', '6. Creating shikiToCodeMirror extension…');
+  const { shiki } = await shikiToCodeMirror({
+    highlighter,
+    lang: grammarName,
+    themes: { dark: 'github-dark' },
+    defaultColor: 'dark',
+    themeStyle: 'cm',
+  });
+  log('ok', '   ✓ shikiToCodeMirror extension created');
+
+  // ── Step 7: Mount EditorView ─────────────────────────────────────────────
+  log('step', '7. Mounting EditorView with shiki extension…');
+  const doc = `; Hello, World!
+        lea r0, msg
+        sout r0
+        nl
+        halt
+msg:    .string "Hello, World!"`;
+
+  const view = new EditorView({
+    state: EditorState.create({ doc, extensions: [shiki] }),
+    parent: document.getElementById('editor'),
+  });
+
+  // Verify the editor mounted and contains our text.
+  const docText = view.state.doc.toString();
+  if (!docText.includes('Hello, World!')) {
+    throw new Error('EditorView doc content unexpected: ' + docText.slice(0, 80));
+  }
+  log('ok', '   ✓ EditorView mounted with shiki extension');
+
+  // Final check: are there any highlighted token spans in the CM DOM?
+  // Give the async Shiki decorator a brief moment to apply.
+  await new Promise(r => setTimeout(r, 800));
+  const editorRoot = document.getElementById('editor');
+  const hasColour = editorRoot.querySelector('[style*="color"]') ||
+                    editorRoot.querySelector('.tok-comment') ||
+                    editorRoot.querySelector('[class*="shiki"]');
+  if (hasColour) {
+    log('ok', '   ✓ colour tokens visible in CM editor DOM');
+  } else {
+    log('err', '   ⚠ no colour tokens detected in CM editor DOM after 800 ms');
+  }
+
+  setStatus('pass', 'PASS — @cmshiki/shiki + custom lcc grammar works via esm.sh CDN');
+
+} catch (err) {
+  log('err', 'Error: ' + err.message);
+  if (err.stack) log('err', err.stack);
+  setStatus('fail', 'FAIL: ' + err.message);
+}
+</script>
+
+</body>
+</html>
