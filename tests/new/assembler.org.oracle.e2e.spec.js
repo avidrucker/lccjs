@@ -13,11 +13,16 @@
 //   D5. Failure artifact: oracle leaves a 1-byte blank .e on all .org errors; lccjs writes
 //       nothing. Covered by the existing OG BUG §10 pattern (no new entry needed).
 
+// Migrated from direct-oracle to golden-cache (#692): oracle output was captured
+// once and committed; CI runs against the golden without needing the binary.
+
 const path = require('path');
-const { assertOracleConfigured } = require('../helpers/env');
+const { cfg, assertOracleConfigured } = require('../helpers/env');
 const { runOracleOnDemo } = require('../helpers/runOracle');
 const { assembleWithJS } = require('../helpers/assembleJS');
+const { ensureDir, readBytes, writeBytes } = require('../helpers/fileHelpers');
 
+const GOLDEN_DIR = path.resolve(__dirname, '../goldens/org');
 const FIXTURE_DIR = path.resolve(__dirname, '../../experiments');
 
 const ORG_FORWARD_GAP = path.join(FIXTURE_DIR, 'org_forward_gap.a');
@@ -34,8 +39,6 @@ function origVariantPath() {
   return p;
 }
 
-const itOracle = assertOracleConfigured() ? test : test.skip;
-
 describe('#500 — .org / .orig parity', () => {
   beforeAll(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -50,16 +53,29 @@ describe('#500 — .org / .orig parity', () => {
     process.stderr.write.mockRestore();
   });
 
+  ensureDir(GOLDEN_DIR);
+
   // D1: .org forward-gap padding — lccjs and oracle produce byte-identical output.
   test('D1: .org forward-gap — lccjs assembles successfully', () => {
     expect(() => assembleWithJS(ORG_FORWARD_GAP)).not.toThrow();
   });
 
-  itOracle('D1: .org forward-gap — lccjs .e is byte-identical to oracle', () => {
-    const js = Buffer.from(assembleWithJS(ORG_FORWARD_GAP).bytes);
-    const oracle = Buffer.from(runOracleOnDemo(ORG_FORWARD_GAP, [], { tolerateNonZeroExit: false }).bytes);
-    expect(js.equals(oracle)).toBe(true);
-  });
+  {
+    const goldenFile = path.join(GOLDEN_DIR, 'org_forward_gap.e');
+    const haveGolden = fs.existsSync(goldenFile);
+    if (!haveGolden && cfg.goldenAutoUpdate && assertOracleConfigured()) {
+      const { bytes } = runOracleOnDemo(ORG_FORWARD_GAP, [], { tolerateNonZeroExit: false });
+      writeBytes(goldenFile, bytes);
+    }
+    if (fs.existsSync(goldenFile)) {
+      test('D1: .org forward-gap — lccjs .e is byte-identical to oracle golden', () => {
+        const js = Buffer.from(assembleWithJS(ORG_FORWARD_GAP).bytes);
+        expect(js.equals(readBytes(goldenFile))).toBe(true);
+      });
+    } else {
+      test.skip('D1: .org forward-gap — lccjs .e is byte-identical to oracle golden (skipped: missing golden)', () => {});
+    }
+  }
 
   // D2: .orig synonym — lccjs accepts .orig and produces the same encoding as .org.
   test('D2: .orig assembles identically to .org in lccjs', () => {
@@ -68,10 +84,22 @@ describe('#500 — .org / .orig parity', () => {
     expect(origBytes.equals(orgBytes)).toBe(true);
   });
 
-  itOracle('D2: .orig — lccjs .e is byte-identical to oracle .orig output', () => {
-    const origPath = origVariantPath();
-    const js = Buffer.from(assembleWithJS(origPath).bytes);
-    const oracle = Buffer.from(runOracleOnDemo(origPath, [], { tolerateNonZeroExit: false }).bytes);
-    expect(js.equals(oracle)).toBe(true);
-  });
+  {
+    const goldenFile = path.join(GOLDEN_DIR, 'orig_forward_gap.e');
+    const haveGolden = fs.existsSync(goldenFile);
+    if (!haveGolden && cfg.goldenAutoUpdate && assertOracleConfigured()) {
+      const origPath = origVariantPath();
+      const { bytes } = runOracleOnDemo(origPath, [], { tolerateNonZeroExit: false });
+      writeBytes(goldenFile, bytes);
+    }
+    if (fs.existsSync(goldenFile)) {
+      test('D2: .orig — lccjs .e is byte-identical to oracle golden', () => {
+        const origPath = origVariantPath();
+        const js = Buffer.from(assembleWithJS(origPath).bytes);
+        expect(js.equals(readBytes(goldenFile))).toBe(true);
+      });
+    } else {
+      test.skip('D2: .orig — lccjs .e is byte-identical to oracle golden (skipped: missing golden)', () => {});
+    }
+  }
 });

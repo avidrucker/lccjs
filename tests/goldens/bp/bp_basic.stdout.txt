@@ -1,0 +1,13 @@
+Starting assembly pass 1
+Starting assembly pass 2
+Starting interpretation of bp_basic1.e
+lst file = bp_basic1.lst
+bst file = bp_basic1.bst
+====================================================== Output
+software breakpoint
+dout>>>  2:         dout r0
+7
+nl>>>  3:         nl
+
+halt>>>  4:         halt
+

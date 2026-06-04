@@ -8,12 +8,20 @@
 //
 // These tests assert LCC.js's correct behavior and, where the oracle is configured,
 // demonstrate the deviation by showing the oracle DOES produce step-trace output.
+//
+// Migrated from direct-oracle to golden-cache (#692): the oracle's stdout (proving
+// step-trace output exists) was captured once and committed as a golden; the
+// deviation proof now reads the golden without needing the binary.
 
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { assertOracleConfigured } = require('../helpers/env');
+const { spawnSync } = require('child_process');
+const { cfg, assertOracleConfigured } = require('../helpers/env');
 const { runOracleOnDemo } = require('../helpers/runOracle');
+const { ensureDir, readText, writeText } = require('../helpers/fileHelpers');
+
+const GOLDEN_DIR = path.resolve(__dirname, '../goldens/bp');
 const { assembleWithJS } = require('../helpers/assembleJS');
 const {
   createTempWorkspace,
@@ -55,8 +63,6 @@ function runJSInterpreter(eBytes, label) {
   });
   return { output: interp.output, debugMode: interp.debugMode };
 }
-
-const itOracle = assertOracleConfigured() ? test : test.skip;
 
 describe('#515 — bp non-interactive: LCC.js clean output (parity_deviations.md §22)', () => {
   beforeAll(() => {
@@ -112,22 +118,12 @@ describe('#515 — bp non-interactive: LCC.js clean output (parity_deviations.md
     expect(debugMode).toBe(false);
   });
 
-  // ── Oracle deviation proof (requires LCC_ORACLE) ─────────────────────────────
+  // ── Oracle deviation proof (golden-cache — no live oracle needed) ────────────
 
-  itOracle('Oracle: bp_basic stdout DOES contain step-trace markers (>>> — §22 deviation)', () => {
-    // tolerateNonZeroExit because the oracle exits 0 here, but runOracleOnDemo
-    // only checks for .e — if oracle does not produce .e we want a clear error.
-    const result = runOracleOnDemo(BP_BASIC, [], { tolerateNonZeroExit: true });
-    // Oracle stdout is returned as the listing content; access via raw spawn.
-    // runOracleOnDemo assembles AND runs; oracle stdout is in the spawnSync result.
-    // We verify the deviation via the oracle's .lst (the listing captures the
-    // step-trace output) — or we can re-run via spawnSync to capture stdout directly.
-    //
-    // Since runOracleOnDemo returns bytes/.lst/.bst but not raw stdout, we run
-    // a direct spawnSync here for the stdout assertion only.
-    const { spawnSync } = require('child_process');
-    const { cfg } = require('../helpers/env');
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-515-oracle-'));
+  ensureDir(GOLDEN_DIR);
+  const bpGoldenFile = path.join(GOLDEN_DIR, 'bp_basic.stdout.txt');
+  if (!fs.existsSync(bpGoldenFile) && cfg.goldenAutoUpdate && assertOracleConfigured()) {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-515-oracle-gen-'));
     fs.copyFileSync(BP_BASIC, path.join(tmp, 'bp_basic1.a'));
     fs.writeFileSync(path.join(tmp, 'name.nnn'), 'TestUser\n');
     const res = spawnSync(cfg.lccPath, ['bp_basic1.a'], {
@@ -136,6 +132,15 @@ describe('#515 — bp non-interactive: LCC.js clean output (parity_deviations.md
       timeout: 15000,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    expect(res.stdout).toContain('>>>');
-  });
+    writeText(bpGoldenFile, res.stdout || '');
+  }
+
+  if (fs.existsSync(bpGoldenFile)) {
+    test('Oracle golden: bp_basic stdout DOES contain step-trace markers (>>> — §22 deviation)', () => {
+      const golden = readText(bpGoldenFile);
+      expect(golden).toContain('>>>');
+    });
+  } else {
+    test.skip('Oracle golden: bp_basic stdout DOES contain step-trace markers (skipped: missing golden)', () => {});
+  }
 });

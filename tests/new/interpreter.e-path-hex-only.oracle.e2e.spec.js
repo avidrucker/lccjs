@@ -22,12 +22,16 @@
 //      whitespace-lenient (banner/date and column padding normalized away;
 //      padding deltas are parity deviation 12, BY DESIGN).
 //
-// Requires the LCC oracle (`LCC_ORACLE` in `.env`); skips cleanly without it.
+// Migrated from direct-oracle to golden-cache (#692): oracle code-region text was
+// captured once and committed; CI runs against the golden without needing the binary.
 
 const fs = require('fs');
 const path = require('path');
 const { cfg, assertOracleConfigured } = require('../helpers/env');
 const { runOracleInterpreterOnExecutable } = require('../helpers/runOracle');
+const { ensureDir, readText, writeText } = require('../helpers/fileHelpers');
+
+const GOLDEN_DIR = path.resolve(__dirname, '../goldens/e-path');
 const { assembleWithJS } = require('../helpers/assembleJS');
 const {
   createTempWorkspace,
@@ -113,8 +117,6 @@ function assembleToE(aPath, tag) {
   return ePath;
 }
 
-const itOracle = assertOracleConfigured() ? test : test.skip;
-
 describe('#156 — .e-path LST is hex-only and matches the oracle', () => {
   beforeAll(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -130,6 +132,8 @@ describe('#156 — .e-path LST is hex-only and matches the oracle', () => {
     process.stdout.write.mockRestore();
     process.stderr.write.mockRestore();
   });
+
+  ensureDir(GOLDEN_DIR);
 
   for (const base of DEMOS) {
     const aPath = path.join(DEMOS_DIR, `${base}.a`);
@@ -170,15 +174,26 @@ describe('#156 — .e-path LST is hex-only and matches the oracle', () => {
       }
     });
 
-    // (3) ORACLE PARITY — code-region hex words match the oracle (whitespace-lenient).
-    itOracle(`${base}: .e-path LST code words match the oracle`, () => {
-      const ePath = assembleToE(aPath, `${base}-oracle`);
-      const jsRows = codeRegion(runJSInterpreter(ePath, `${base}-oracle`));
-      const { lstText } = runOracleInterpreterOnExecutable(ePath, []);
-      const oracleRows = codeRegion(lstText);
-
-      expect(jsRows.length).toBeGreaterThan(0);
-      expect(jsRows).toEqual(oracleRows);
-    });
+    // (3) ORACLE PARITY — code-region hex words match the oracle golden (whitespace-lenient).
+    {
+      const goldenFile = path.join(GOLDEN_DIR, `${base}.coderegion.txt`);
+      const haveGolden = fs.existsSync(goldenFile);
+      if (!haveGolden && cfg.goldenAutoUpdate && assertOracleConfigured()) {
+        const ePath = assembleToE(aPath, `${base}-oracle-gen`);
+        const { lstText } = runOracleInterpreterOnExecutable(ePath, []);
+        writeText(goldenFile, codeRegion(lstText).join('\n'));
+      }
+      if (fs.existsSync(goldenFile)) {
+        test(`${base}: .e-path LST code words match oracle golden`, () => {
+          const ePath = assembleToE(aPath, `${base}-oracle`);
+          const jsRows = codeRegion(runJSInterpreter(ePath, `${base}-oracle`));
+          const goldenRows = readText(goldenFile).split('\n').filter(l => l.length > 0);
+          expect(jsRows.length).toBeGreaterThan(0);
+          expect(jsRows).toEqual(goldenRows);
+        });
+      } else {
+        test.skip(`${base}: .e-path LST code words match oracle golden (skipped: missing golden)`, () => {});
+      }
+    }
   }
 });

@@ -16,14 +16,18 @@
 // dispatch, so it errored while its alias `brc` assembled. (2)/(3) for `brb` are
 // red until #187's one-line dispatch fix lands.
 //
-// Requires the LCC oracle (`LCC_ORACLE`); the parity legs skip cleanly without it.
+// Migrated from direct-oracle to golden-cache (#692): oracle output was captured
+// once and committed; CI runs against the golden without needing the binary.
 
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { assertOracleConfigured } = require('../helpers/env');
+const { cfg, assertOracleConfigured } = require('../helpers/env');
 const { runOracleOnDemo } = require('../helpers/runOracle');
 const { assembleWithJS } = require('../helpers/assembleJS');
+const { ensureDir, readBytes, writeBytes } = require('../helpers/fileHelpers');
+
+const GOLDEN_DIR = path.resolve(__dirname, '../goldens/branch-mnemonics');
 
 const BRANCH = [
   'brz', 'bre', 'brnz', 'brne', 'brn', 'brp',
@@ -49,7 +53,6 @@ function writeProg(mn) {
 }
 
 const jsBytes = mn => Buffer.from(assembleWithJS(writeProg(mn)).bytes);
-const itOracle = assertOracleConfigured() ? test : test.skip;
 
 describe('#190 — all branch mnemonics assemble with OG-LCC parity', () => {
   beforeAll(() => {
@@ -65,6 +68,8 @@ describe('#190 — all branch mnemonics assemble with OG-LCC parity', () => {
     process.stderr.write.mockRestore();
   });
 
+  ensureDir(GOLDEN_DIR);
+
   // (1) lccjs assembles every branch mnemonic (no "Invalid operation").
   for (const mn of BRANCH) {
     test(`${mn}: lccjs assembles it`, () => {
@@ -72,12 +77,25 @@ describe('#190 — all branch mnemonics assemble with OG-LCC parity', () => {
     });
   }
 
-  // (2) lccjs encoding is byte-identical to the oracle.
+  // (2) lccjs encoding is byte-identical to the oracle golden.
   for (const mn of BRANCH) {
-    itOracle(`${mn}: lccjs .e matches the oracle byte-for-byte`, () => {
+    const goldenFile = path.join(GOLDEN_DIR, `${mn}.e`);
+    const haveGolden = fs.existsSync(goldenFile);
+
+    if (!haveGolden) {
+      if (cfg.goldenAutoUpdate && assertOracleConfigured()) {
+        const { bytes } = runOracleOnDemo(writeProg(mn));
+        writeBytes(goldenFile, bytes);
+      } else {
+        test.skip(`${mn}: lccjs .e matches oracle golden (skipped: missing golden)`, () => {});
+        continue;
+      }
+    }
+
+    test(`${mn}: lccjs .e matches oracle golden`, () => {
       const js = jsBytes(mn);
-      const oracle = Buffer.from(runOracleOnDemo(writeProg(mn)).bytes);
-      expect(js.equals(oracle)).toBe(true);
+      const golden = readBytes(goldenFile);
+      expect(js.equals(golden)).toBe(true);
     });
   }
 
