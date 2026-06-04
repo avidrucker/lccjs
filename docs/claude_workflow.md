@@ -130,7 +130,7 @@ If any file your ticket will touch is untracked or modified on main, commit or s
   | `REVIEW` | Code or PR review tasks |
   | `TIL` | Today-I-Learned entries (exempt from strict `ROLE:` format — use `TIL YYYY-MM-DD AGENT — description`; see #640) |
 
-  Non-standard prefixes seen in the wild and their canonical mappings: `AUDIT:` → `REVIEW`, `DECISION:` → `ARCHITECT`, `Q:` → `SPIKE`, `HUMAN REVIEW:` → `REVIEW`, `Tracker:` → `PM`.
+  Non-standard prefixes seen in the wild and their canonical mappings: `AUDIT:` → `REVIEW`, `DECISION:` → `ARCHITECT`, `Q:` → `SPIKE`, `HUMAN REVIEW:` → `REVIEW`, `Tracker:` → `PM`. Full scannable reference: [`docs/issue-title-convention.md`](./issue-title-convention.md) (#657).
 
 - **Severity label calibration — apply one `severity:*` label when filing any issue.** The three labels are `severity:high`, `severity:medium`, and `severity:low`. Use this decision tree: (#643)
 
