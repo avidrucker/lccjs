@@ -23,7 +23,6 @@
 
         .lccplus
         .start  startup
-; @inprogress #584:40m/DEV dead-code + comment hygiene (7 items — see #202 findings doc)
 ; @todo #585:20m/DEV direct-access + dead frame-setup cleanups (3 items)
 
 ;----------------------------------------------------------------
