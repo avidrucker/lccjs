@@ -79,6 +79,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-06-04 CHERRY](./today-i-learned-2026-06-04-cherry.md) | 2026-06-04 | CHERRY | Check the module before assuming a gap — `--json` already shipped in puzzle-status.js; doc review is a verification pass not a reading pass; issue citations in docs go stale silently — prefer tracker refs over implementation issue refs. |
 | [TIL 2026-06-04 GRAPE](./today-i-learned-2026-06-04-grape.md) | 2026-06-04 | GRAPE | Check git log before filing tracker child issues; webpack UMD + CJS `export:default` gives `undefined`; build-site.js generates the playground — edit the generator, not the output; two step caps can silently coexist; parallel-agent rebase conflicts in options objects usually mean keep both sides. |
 | [TIL 2026-06-04 CHERRY s2](./today-i-learned-2026-06-04-cherry-2.md) | 2026-06-04 | CHERRY | `.e` `oC`-preamble/LE-encoding makes `.e` bytes ≠ `.hex` word values (#747/#756/#758); assembler silently drops instructions after the first on a shared line (#712/#759); `spawnSync` not `inputBuffer` for C/lccjs stdout parity (#712/#760); `test.failing` over `test.skip` for confirmed bugs (#712/#761). |
+| [TIL 2026-06-04 GRAPE s2](./today-i-learned-2026-06-04-grape-2.md) | 2026-06-04 | GRAPE | Read full issue body before claiming — prose blockers are invisible to puzzle:status; PostToolBatch hook flags batched Bash calls even when read-only; untracked build artifacts on main don't carry into worktrees. |
 
 ## Recurring threads (informal — #207 will formalize)
 
