@@ -215,8 +215,8 @@ The ~450 count included all internal <code>this.*</code> usages inside <code>int
 <td><code>lcc.js</code> (write)</td>
 </tr>
 <tr>
-<td><code>instructionsCap</code></td>
-<td>none (internal)</td>
+<td><code>maxSteps</code></td>
+<td><code>lcc.js</code> (write via <code>--max-steps</code>); <code>interpreterplus.js</code> bypasses via <code>disableInfiniteLoopDetection</code></td>
 </tr>
 <tr>
 <td><code>hasJumped</code></td>
@@ -337,7 +337,7 @@ inventory suggests 5 groups:</p>
 </tr>
 <tr>
 <td><code>diag</code></td>
-<td><code>traceMode, debugMode, debugBreakpoint, disableInfiniteLoopDetection, allowRuntimeDebugging, instructionsCap, hasJumped</code></td>
+<td><code>traceMode, debugMode, debugBreakpoint, disableInfiniteLoopDetection, allowRuntimeDebugging, maxSteps, hasJumped</code></td>
 <td><code>lcc.js</code> (5 fields)</td>
 <td>1 test read (<code>debugMode</code>)</td>
 </tr>

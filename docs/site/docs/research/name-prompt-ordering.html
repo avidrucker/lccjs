@@ -99,7 +99,7 @@ straightforward and targeted to <code>lcc.js</code>.</p>
        └─ executeFile()
             interpreter.allowRuntimeDebugging = true
             interpreter.run()
-              → hits instructionsCap
+              → hits maxSteps cap
               → canEnterInteractiveDebugger() → true (TTY + flag)
               → sets debugMode = true, drops into interactive debugger
               → user types q → run() returns NORMALLY (no throw)
@@ -116,7 +116,7 @@ session. This is the bug.</p>
 <h3>Path 2 — non-TTY (no interactive debugger, no name prompt at all)</h3>
 <pre><code>executeFile()
   interpreter.run()
-    → hits instructionsCap
+    → hits maxSteps cap
     → canEnterInteractiveDebugger() → false (not TTY)
     → raiseRuntimeError(&#39;Possible infinite loop&#39;)   ← throws
   catch(error):

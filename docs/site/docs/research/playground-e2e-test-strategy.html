@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>playground-e2e-test-strategy — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/guides/">Guides</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Playground E2E test strategy — spike findings (#711)</h1>
+<p><strong>Date:</strong> 2026-06-04<br><strong>Agent:</strong> GRAPE<br><strong>Parent:</strong> #705 (Run button broken)<br><strong>Tracker:</strong> #677</p>
+<hr>
+<h2>Summary</h2>
+<p><strong>Recommendation: Playwright + local HTTP server.</strong></p>
+<p>Playwright is the only option that exercises the full stack (DOM, Web Worker, bundle load) reliably in CI, and its <code>webServer</code> config handles server spin-up automatically. File <code>tests/browser/playground.e2e.spec.js</code> is the minimal working implementation; it is gated on bundle existence so <code>npm test</code> keeps passing without a build.</p>
+<hr>
+<h2>Q1 — What tool is the right fit?</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>CI-friendly</th>
+<th>Workers work?</th>
+<th><code>file://</code> support</th>
+<th>Setup cost</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Playwright</strong></td>
+<td>✅ headless Chromium bundled</td>
+<td>✅ via HTTP</td>
+<td>⚠️ see below</td>
+<td>Low (1 dep)</td>
+<td><strong>Chosen</strong></td>
+</tr>
+<tr>
+<td>Puppeteer</td>
+<td>✅ headless Chrome bundled</td>
+<td>✅ via HTTP</td>
+<td>⚠️ same caveat</td>
+<td>Low (1 dep)</td>
+<td>Skip — Playwright is strictly better</td>
+</tr>
+<tr>
+<td>jsdom/vm harness</td>
+<td>✅ pure Node</td>
+<td>✗ no Worker support</td>
+<td>N/A</td>
+<td>Medium</td>
+<td>Skip — can&#39;t exercise the real code path</td>
+</tr>
+<tr>
+<td>Manual checklist</td>
+<td>✗</td>
+<td>✅</td>
+<td>✅</td>
+<td>None</td>
+<td>Use only as fallback</td>
+</tr>
+</tbody></table>
+<h3>Critical: <code>file://</code> + Web Worker restriction</h3>
+<p>The playground loads the bundle via a Web Worker:</p>
+<pre><code>docs/site/showcase/index.html
+  → new Worker(&#39;./lcc-worker.js&#39;)           (same dir)
+    → importScripts(&#39;../dist/lcc.bundle.js&#39;) (cross-dir)
+</code></pre>
+<p>Chrome 96+ restricts <code>importScripts()</code> across directory boundaries for <code>file://</code> Workers.
+The #591 spike confirmed <code>file://</code> works for a <code>&lt;script&gt;</code> tag, but the Worker path was not
+tested there. An HTTP server avoids the restriction entirely and matches the production
+deployment (GitHub Pages).</p>
+<p><strong>Verdict: use an HTTP server, not <code>file://</code>.</strong> Playwright&#39;s <code>webServer</code> config makes this
+a one-liner (<code>python3 -m http.server 5556 --directory docs/site</code>).</p>
+<hr>
+<h2>Q2 — Minimum viable test cases</h2>
+<h3>Test 1 — Happy path (Hello World)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Navigate to <code>/showcase/</code></td>
+<td>Page loads; starter Hello World program is pre-filled in <code>#playground-input</code></td>
+</tr>
+<tr>
+<td>Click <code>#run-btn</code></td>
+<td><code>#exec-output</code> changes to &quot;Running…&quot; then to program output</td>
+</tr>
+<tr>
+<td>Output assertion</td>
+<td><code>#exec-output</code> text contains <code>Hello, World!</code></td>
+</tr>
+<tr>
+<td>Class assertion</td>
+<td><code>#exec-output</code> does <strong>not</strong> have class <code>lcc-error</code></td>
+</tr>
+</tbody></table>
+<h3>Test 2 — Assembly error path</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Set <code>#playground-input</code> to <code>notanopcode r0, r1\nhalt</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Click <code>#run-btn</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Class assertion</td>
+<td><code>#exec-output</code> has class <code>lcc-error</code></td>
+</tr>
+<tr>
+<td>Output assertion</td>
+<td>text begins with <code>Assembly error:</code></td>
+</tr>
+</tbody></table>
+<h3>Test 3 — stdin pass-through</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Set <code>#playground-input</code> to <code>din r0\ndout r0\nnl\nhalt</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Set <code>#stdin-input</code> to <code>42</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Click <code>#run-btn</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Output assertion</td>
+<td><code>#exec-output</code> text contains <code>42</code></td>
+</tr>
+<tr>
+<td>Class assertion</td>
+<td><code>#exec-output</code> does <strong>not</strong> have class <code>lcc-error</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Q3 — Recommendation and rationale</h2>
+<p><strong>Use Playwright.</strong> Three reasons:</p>
+<ol>
+<li><strong>Workers run reliably.</strong> An HTTP server sidesteps the <code>file://</code> Worker restriction.</li>
+<li><strong>CI-friendly by default.</strong> <code>npx playwright install chromium</code> pulls a pinned headless build; no system Chrome needed.</li>
+<li><strong>The fixture already exercises the real bug.</strong> #705 is &quot;Run button is broken.&quot; A Playwright test that clicks the button and asserts output is the minimal reproducible proof-of-fix.</li>
+</ol>
+<p><strong>Bundle-existence gate</strong> mirrors the oracle gate pattern already in use:</p>
+<pre><code class="language-js">test.skip(!bundleExists, &#39;lcc.bundle.js not built — run npm run build first&#39;);
+</code></pre>
+<p>This keeps <code>npm test</code> green without a build, while <code>npm run test:browser</code> fails clearly.</p>
+<hr>
+<h2>Setup (one-time, performed by the DEV who closes #705 or a follow-on ticket)</h2>
+<pre><code class="language-bash"># Install Playwright and download headless Chromium
+npm install --save-dev @playwright/test
+npx playwright install chromium
+</code></pre>
+<p><code>playwright.config.js</code> and the test file are already committed (this spike).
+Add to <code>package.json</code> scripts:</p>
+<pre><code class="language-json">&quot;test:browser&quot;: &quot;playwright test tests/browser/&quot;
+</code></pre>
+<p>Once Playwright is installed, run:</p>
+<pre><code class="language-bash">npm run build          # build:browser + build:site
+npm run test:browser   # runs tests/browser/playground.e2e.spec.js
+</code></pre>
+<hr>
+<h2>Files committed by this spike</h2>
+<ul>
+<li><code>docs/research/playground-e2e-test-strategy.md</code> — this document</li>
+<li><code>tests/browser/playground.e2e.spec.js</code> — minimal Playwright spec (3 test cases)</li>
+<li><code>playwright.config.js</code> — webServer config; routes to <code>docs/site/</code> on port 5556</li>
+</ul>
+<p><code>@playwright/test</code> is <strong>not</strong> yet a devDependency — the install step is left for the DEV ticket that closes #705.</p>
+<hr>
+<h2>References</h2>
+<ul>
+<li>#591 — browser-bundle feasibility spike (confirmed UMD + <code>file://</code> for <code>&lt;script&gt;</code> tags)</li>
+<li>#705 — Run button broken (the bug this test strategy targets)</li>
+<li>#706 / #706b — bundle path fix (prerequisite)</li>
+<li><code>docs/research/browser-bundle-feasibility.md</code> — full #591 findings</li>
+<li><code>src/browser/api.js</code> — <code>window.lcc.assemble</code> + <code>window.lcc.run</code> entry points</li>
+<li><code>src/browser/lcc-worker.js</code> — worker wrapper for the playground run path</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

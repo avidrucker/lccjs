@@ -107,7 +107,7 @@ code { font-family:var(--mono-font); }
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
     <div>
       <p class="panel-label">LCC Assembly</p>
-      <textarea id="playground-input" spellcheck="false" style="width:100%;height:280px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
+      <div id="editor" style="width:100%;height:280px;border:1px solid var(--muted);border-radius:6px;overflow:hidden;"></div>
       <p class="panel-label" style="margin-top:.75rem;">stdin lines <span style="font-style:italic;">(one per line — programs exhausting these will fail)</span></p>
       <textarea id="stdin-input" spellcheck="false" style="width:100%;height:80px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
     </div>
@@ -139,13 +139,40 @@ code { font-family:var(--mono-font); }
 </style>
 <script src="../dist/lcc.bundle.js"></script>
 <script type="module">
+import { EditorView, basicSetup, keymap, indentWithTab } from 'https://esm.sh/codemirror@6';
+
 const CUSTOM_THEMES  = [{"name":"retro-console-dark","settings":[{"settings":{"background":"#233501","foreground":"#d0cf9d"}},{"scope":["comment"],"settings":{"foreground":"#446710"}},{"scope":["keyword","keyword.other","keyword.control"],"settings":{"foreground":"#8d9a4a"}},{"scope":["storage.type.directive"],"settings":{"foreground":"#c8a35d"}},{"scope":["entity.name.label","string","constant.numeric"],"settings":{"foreground":"#d0cf9d"}}]},{"name":"retro-console-light","settings":[{"settings":{"background":"#d0cf9d","foreground":"#233501"}},{"scope":["comment"],"settings":{"foreground":"#446710","fontStyle":"italic"}},{"scope":["keyword","keyword.other","keyword.control"],"settings":{"foreground":"#446710","fontStyle":"bold"}},{"scope":["storage.type.directive"],"settings":{"foreground":"#7d4a00"}},{"scope":["entity.name.label","string","constant.numeric"],"settings":{"foreground":"#233501"}}]},{"$schema":"vscode://schemas/color-theme","type":"dark","colors":{"activityBar.background":"#313633","activityBarBadge.background":"#7f9f7f","activityBarBadge.foreground":"#313633","badge.foreground":"#313633","breadcrumb.focusForeground":"#9e8f68","breadcrumbPicker.background":"#3f3f3f","button.background":"#87ae86","button.foreground":"#373737","editor.background":"#3f3f3f","editor.foreground":"#dedede","editor.lineHighlightBackground":"#303030","editor.selectionBackground":"#8383839c","editorBracketHighlight.foreground1":"#cc9393","editorBracketHighlight.foreground2":"#8cd0d3","editorBracketHighlight.foreground3":"#f0dfaf","editorCursor.foreground":"#8cd0d3","editorError.foreground":"#cc9393","editorGutter.addedBackground":"#87ae86","editorGutter.deletedBackground":"#cc9393","editorGutter.modifiedBackground":"#e7c4a1","editorInfo.foreground":"#8cd0d388","editorLineNumber.activeForeground":"#9e8f68","editorLineNumber.foreground":"#90907e","editorSuggestWidget.background":"#3f3f3f","editorSuggestWidget.focusHighlightForeground":"#87ae86","editorSuggestWidget.foreground":"#dedede","editorSuggestWidget.highlightForeground":"#8cd0d3","editorSuggestWidget.selectedBackground":"#242424","editorSuggestWidget.selectedForeground":"#dedede","editorSuggestWidget.selectedIconForeground":"#87ae86","editorSuggestWidgetStatus.foreground":"#dedede","editorWarning.foreground":"#e7c4a1","editorWhitespace.foreground":"#a5a5a552","focusBorder":"#8cd0d344","gitDecoration.addedResourceForeground":"#87ae86","gitDecoration.conflictingResourceForeground":"#CC9393","gitDecoration.deletedResourceForeground":"#CC9393","gitDecoration.ignoredResourceForeground":"#7f9f7f","gitDecoration.modifiedResourceForeground":"#e7c4a1","gitDecoration.submoduleResourceForeground":"#e7c4a1","gitDecoration.untrackedResourceForeground":"#87ae86","list.highlightForeground":"#87ae86","quickInput.background":"#3f3f3f","quickInput.foreground":"#dedede","quickInputList.focusBackground":"#555555","quickInputList.focusForeground":"#dedede","quickInputList.focusIconForeground":"#3f3f3f","selection.background":"#8383839c","sideBar.background":"#3a3a3a","statusBar.background":"#2e3330","statusBar.foreground":"#87ae86","statusBar.noFolderBackground":"#2e3330","tab.activeForeground":"#dcdccc","tab.inactiveBackground":"#353535","terminal.ansiBlue":"#8cd0d3","terminal.ansiBrightBlue":"#8cd0d3","terminal.ansiBrightCyan":"#8cd0d3","terminal.ansiBrightGreen":"#7f9f7f","terminal.ansiBrightMagenta":"#dca3a3","terminal.ansiBrightRed":"#ecbcbc","terminal.ansiBrightYellow":"#f0dfaf","terminal.ansiCyan":"#8cd0d3","terminal.ansiGreen":"#7f9f7f","terminal.ansiMagenta":"#dca3a3","terminal.ansiRed":"#ecbcbc","terminal.ansiYellow":"#f0dfaf","terminal.foreground":"#dcdccc","terminal.selectionBackground":"#686868aa","textLink.activeForeground":"#82a282","textLink.foreground":"#8cd0d3"},"tokenColors":[{"settings":{"foreground":"#dedede","background":"#3f3f3f"}},{"name":"Comment","scope":"comment, punctuation.definition.comment","settings":{"foreground":"#7f9f7f"}},{"name":"Constant","scope":"constant.language, support.constant, constant.other.color, entity.name.type.variant.ocaml, source.rust variable.language.rust, support.type.rust, source.elixir constant.other.symbol.elixir, source.elixir constant.other.symbol.elixir punctuation.definition.constant.elixir, source.elixir variable.language.elixir, source.elixir constant.other.keywords.elixir, source.ruby constant.other.symbol, source.ruby punctuation.definition.constant","settings":{"fontStyle":"bold","foreground":"#dca3a3"}},{"name":"String","scope":"string, punctuation.definition.string.begin, punctuation.definition.string.end","settings":{"foreground":"#cc9393"}},{"name":"Character","scope":"constant.character, source.scss keyword.operator.ampersand, source.css keyword.operator.ampersand","settings":{"fontStyle":"bold","foreground":"#dca3a3"}},{"name":"Number","scope":"constant.numeric, storage.type.numeric, source.scss keyword.other.unit, source.css keyword.other.unit","settings":{"foreground":"#8cd0d3"}},{"name":"Boolean","scope":"constant.language.boolean","settings":{"foreground":"#dca3a3"}},{"name":"Float","scope":"meta.number.float.decimal constant.numeric, punctuation.separator.decimal, markup.underline.link","settings":{"foreground":"#c0bed1"}},{"name":"Identifier","scope":"source.scss variable.declaration, source.scss punctuation.definition.variable, source.css variable.declaration, source.css punctuation.definition.variable, support.class.js, keyword.operator.word.new.js, variable.other.php, variable.parameter.php, variable.language.php, meta.function.type-declaration.haskell entity.name.function.haskell, source.haskell meta.name.haskell, entity.name.type.fsharp, punctuation.definition.variable.ruby, variable.other.readwrite.instance.ruby","settings":{"foreground":"#efdcbc"}},{"name":"Function","scope":"keyword.declaration.function, source.scss support.function, source.css support.function, entity.name.function.c, entity.name.function.preprocessor.c, entity.name.function.c++, entity.name.function.preprocessor.c++, entity.name.function.python, variable.function.python support.function.builtin.python, entity.name.class.python, variable.annotation.python, meta.class.js entity.name.function.constructor.js,support.function.classobj.php, storage.type.function.php, meta.function-call.php support.function, entity.name.function.cs, source.rust meta.function.rust entity.name.function.rust, support.function.rust, entity.name.function.clojure, entity.name.function.elm, source.elixir meta.function.public.elixir entity.name.function.public.elixir, source.java entity.name.function.java, source.sql support.function, source.ruby entity.name.function, meta.definition.method.ts entity.name.function.ts, meta.definition.method.js entity.name.function.js","settings":{"foreground":"#efef8f"}},{"name":"Conditional","scope":"keyword.control.conditional","settings":{"fontStyle":"bold","foreground":"#f0dfaf"}},{"name":"Repeat","scope":"keyword.control.loop, source.scss keyword.control.flow.sass","settings":{"fontStyle":"bold","foreground":"#ffd7a7"}},{"name":"Label","scope":"keyword.control.conditional.case, keyword.control.conditional.default, source.json meta.mapping.key.json string.quoted.double.json, source.json meta.mapping.key.json string.quoted.double.json punctuation.definition.string.begin.json, source.json meta.mapping.key.json string.quoted.double.json punctuation.definition.string.end.json","settings":{"foreground":"#dfcfaf"}},{"name":"Operator","scope":"punctuation.definition, punctuation.section, punctuation.separator, punctuation.terminator - punctuation.definition.numeric.base - keyword.operator","settings":{"foreground":"#f0efd0"}},{"name":"Keyword","scope":"keyword, constant.other.keyword.clojure - keyword.operator - keyword.operator.word - keyword.control.flow.return.js - keyword.operator.logical","settings":{"fontStyle":"bold","foreground":"#f0dfaf"}},{"name":"Statement","scope":"entity.name.tag, punctuation.definition.list_item, source.shell.bash support.function, keyword.control.flow.return.js, keyword.declaration.function.python, keyword.control.flow.assert.python, keyword.operator.new.cs - keyword.control.import, keyword.control.default, keyword.control.export, keyword.control.from, keyword.control.as, source.sql keyword.other, source.sql keyword.operator.assignment","settings":{"fontStyle":"bold","foreground":"#e3ceab"}},{"name":"Exception","scope":"keyword.control.exception.try, keyword.control.exception.catch, text.html.basic entity.name.tag.script, source.cs keyword.control.trycatch","settings":{"fontStyle":"bold","foreground":"#c3bf9f"}},{"name":"PreProc","scope":"source.scss entity.other.pseudo-class, source.shell.bash punctuation.definition.variable, source.shell.bash variable.other.readwrite, source.scss meta.function-call.sass variable.function.sass keyword.control.at-rule.sass, entity.other.pseudo-class.css, entity.other.pseudo-element.css, keyword.control.directive.css punctuation.definition.keyword.css, keyword.control.directive.css, comment.block.documentation.phpdoc.php keyword.other.phpdoc.php, source.haskell meta.preprocessor.c, source.haskell punctuation.definition.preprocessor.c, source.haskell meta.preprocessor.haskell","settings":{"foreground":"#ffcfaf"}},{"name":"Include","scope":"keyword.control.import.include, keyword.control.at-rule.import.scss, keyword.control.at-rule.import.scss punctuation.definition.keyword.scss, source.scss meta.function-call.sass variable.function.sass punctuation.definition.keyword.sass, keyword.control.import.js, keyword.control.default.js, keyword.control.export.js, keyword.control.from.js, keyword.control.as.js, keyword.control.import.python, keyword.control.import.from.python, keyword.other.use.php, meta.module-reference.ocaml, support.other.module.ocaml, entity.name.type.module.ocaml, keyword.control.import.haskell, namespace.open.fsharp keyword.fsharp, source.fsharp keyword.control.directive.fsharp, source.cs keyword.control.import.cs, source.go keyword.other.import.go, source.rust meta.path.rust, meta.declaration.module.elm keyword.other.elm, meta.import.elm keyword.other.elm, source.elm meta.import.elm keyword.import.elm, source.java meta.package-declaration.java keyword.other.package.java, source.java meta.import.java keyword.control.import.java","settings":{"fontStyle":"bold","foreground":"#dfaf8f"}},{"name":"Define","scope":"keyword.control.import.define, meta.preprocessor.macro.c entity.name.constant.preprocessor.c, meta.preprocessor.macro.c++ entity.name.constant.preprocessor.c++, storage.modifier.def.clojure, meta.module.elixir keyword.control.module.elixir, source.ruby keyword.declaration.class, source.ruby keyword.declaration.function, source.ruby keyword.control.block.end","settings":{"foreground":"#ffcfaf"}},{"name":"Macro","scope":"support.macro.rust, source.ruby keyword.other.special-method","settings":{"fontStyle":"bold","foreground":"#ffcfaf"}},{"name":"PreCondit","scope":"keyword.control.import.c, meta.preprocessor.c, keyword.control.import.c++, meta.preprocessor.c++","settings":{"fontStyle":"bold","foreground":"#dfaf8f"}},{"name":"Type","scope":"entity.name.type, support.type, entity.other.attribute-name, storage.type, support.class.builtin, source.scss entity.other, constant.other.haskell, source.haskell meta.import.haskell support.other.module.haskell, source.haskell meta.declaration.module.haskell entity.name.namespace.haskell, abstract.definition.fsharp entity.name.type.fsharp, source.elixir entity.name.type, source.java support.class.java, entity.name.class.ruby, entity.other.inherited-class.ruby, support.class.ruby","settings":{"fontStyle":"bold","foreground":"#dfdfbf"}},{"name":"StorageClass","scope":"storage.modifier, support.type.property-name, abstract.definition.fsharp keyword.fsharp, keyword.declaration, storage.type.js, storage.type.ts","settings":{"fontStyle":"bold","foreground":"#c3bf9f"}},{"name":"Structure","scope":"keyword.declaration.enum, keyword.declaration.struct, keyword.declaration.union, variable.language.this.js, keyword.declaration.type.haskell","settings":{"fontStyle":"bold","foreground":"#efefaf"}},{"name":"Special","scope":"constant.character.escape, punctuation.section.interpolation, source.scss keyword.other.important, source.css keyword.other.important, source.scss support.type, source.css support.type, text.html.basic punctuation.definition.entity.html, text.html.basic constant.character.entity.named, text.html.basic punctuation.terminator.entity.html, entity.other.custom-property.css, variable.function.clojure","settings":{"foreground":"#cfbfaf"}},{"name":"SpecialComment","scope":"variable.annotation","settings":{"fontStyle":"bold","foreground":"#82a282"}},{"name":"Delimiter","scope":"markup.heading punctuation.definition.heading, punctuation.definition.raw.begin, punctuation.definition.raw.end, punctuation.section.embedded.begin.php, punctuation.section.embedded.end.php","settings":{"foreground":"#8f8f8f"}},{"name":"Title","scope":"entity.name.section.markdown","settings":{"fontStyle":"bold","foreground":"#efefef"}},{"name":"Overrides","scope":"keyword.operator.logical","settings":{"fontStyle":"bold","foreground":"#dedede"}},{"name":"* in import * as","scope":"constant.language.import-export-all.js","settings":{"foreground":"#dedede"}},{"name":"Invalid","scope":"invalid","settings":{"foreground":"#ffffff"}},{"name":"Invalid deprecated","scope":"invalid.deprecated","settings":{"foreground":"#ffffff"}},{"name":"markup bold","scope":"markup.bold","settings":{"fontStyle":"bold"}},{"name":"markup italic","scope":"markup.italic","settings":{"fontStyle":"italic"}},{"name":"markup underline","scope":"meta.link.inline.description.markdown","settings":{"fontStyle":"underline"}},{"name":"markup bold/italic","scope":"markup.italic markup.bold | markup.bold markup.italic","settings":{"fontStyle":"bold italic"}},{"name":"markup bold/underline","scope":"markup.underline markup.bold | markup.bold markup.underline","settings":{"fontStyle":"bold underline"}},{"name":"markup italic/underline","scope":"markup.underline markup.italic | markup.italic markup.underline","settings":{"fontStyle":"italic underline"}},{"name":"markup bold/italic/underline","scope":"markup.bold markup.italic markup.underline | markup.bold markup.underline markup.italic | markup.italic markup.bold markup.underline | markup.italic markup.underline markup.bold | markup.underline markup.bold markup.italic | markup.underline markup.italic markup.bold","settings":{"fontStyle":"bold italic underline"}},{"name":"diff.header","scope":"meta.diff, meta.diff.header","settings":{"foreground":"#e3ceab"}},{"name":"diff.deleted","scope":"markup.deleted","settings":{"foreground":"#cfbfaf"}},{"name":"diff.inserted","scope":"markup.inserted","settings":{"fontStyle":"bold","foreground":"#efdcbc"}},{"name":"diff.changed","scope":"markup.changed","settings":{"foreground":"#ffcfaf"}},{"scope":"message.error","settings":{"foreground":"#cc9393"}}],"name":"zenburn"}];
 const BUILTIN_THEMES = ["github-dark","github-light","monokai","one-dark-pro","dracula","nord","tokyo-night","solarized-light"];
 const DARK           = new Set(["github-dark","monokai","one-dark-pro","dracula","nord","tokyo-night","zenburn","retro-console-dark"]);
 
 const sel        = document.getElementById('theme-select');
-const textarea   = document.getElementById('playground-input');
 const stdinInput = document.getElementById('stdin-input');
+
+let debounce;
+let renderFn = null;
+
+const editor = new EditorView({
+  doc: "; helloWorld.a: print Hello, World! and halt\n        lea r0, msg\n        sout r0\n        nl\n        halt\nmsg:    .string \"Hello, World!\"",
+  extensions: [
+    basicSetup,
+    keymap.of([indentWithTab]),
+    EditorView.updateListener.of(function(update) {
+      if (update.docChanged && renderFn) {
+        clearTimeout(debounce);
+        debounce = setTimeout(renderFn, 150);
+      }
+    }),
+    EditorView.theme({
+      '&': { height: '100%', fontSize: '.85rem' },
+      '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--mono-font)' },
+      '.cm-content': { background: 'var(--border)', color: 'var(--fg)', caretColor: 'var(--fg)' },
+      '.cm-gutters': { background: 'var(--border)', borderRight: '1px solid var(--muted)', color: 'var(--muted)' },
+      '.cm-activeLineGutter': { background: 'rgba(128,128,128,0.1)' },
+      '&.cm-focused': { outline: 'none' },
+    }),
+  ],
+  parent: document.getElementById('editor'),
+});
 const output     = document.getElementById('playground-output');
 const runStatus  = document.getElementById('playground-status');
 const shikiStatus = document.getElementById('shiki-status');
@@ -194,7 +221,7 @@ runBtn.addEventListener('click', () => {
       execOut.textContent = '(lcc.bundle.js not loaded — execution unavailable)';
       return;
     }
-    const src = textarea.value;
+    const src = editor.state.doc.toString();
     const stdinLines = stdinInput.value.trim() ? stdinInput.value.split('\n') : [];
     const asmResult = api.assemble(src);
     if (!asmResult.ok) {
@@ -243,11 +270,10 @@ runBtn.addEventListener('click', () => {
   };
 
   const stdinLines = stdinInput.value.trim() ? stdinInput.value.split('\n') : [];
-  worker.postMessage({ type: 'run', src: textarea.value, stdinLines, maxSteps: 50000 });
+  worker.postMessage({ type: 'run', src: editor.state.doc.toString(), stdinLines, maxSteps: 50000 });
 });
 
 (async () => {
-  textarea.value = "; helloWorld.a: print Hello, World! and halt\n        lea r0, msg\n        sout r0\n        nl\n        halt\nmsg:    .string \"Hello, World!\"";
   applyBodyClass(sel.value);
 
   let hl;
@@ -268,29 +294,14 @@ runBtn.addEventListener('click', () => {
     const theme = sel.value;
     applyBodyClass(theme);
     try {
-      output.innerHTML = hl.codeToHtml(textarea.value, { lang: 'lcc', theme });
+      output.innerHTML = hl.codeToHtml(editor.state.doc.toString(), { lang: 'lcc', theme });
     } catch (err) {
       shikiStatus.textContent = 'Highlight error: ' + err.message;
     }
   }
 
+  renderFn = render;
   sel.addEventListener('change', render);
-
-  let debounce;
-  textarea.addEventListener('input', () => {
-    clearTimeout(debounce);
-    debounce = setTimeout(render, 150);
-  });
-
-  textarea.addEventListener('keydown', (e) => {
-    if (e.key !== 'Tab') return;
-    e.preventDefault();
-    const s = textarea.selectionStart, en = textarea.selectionEnd;
-    textarea.value = textarea.value.slice(0, s) + '    ' + textarea.value.slice(en);
-    textarea.selectionStart = textarea.selectionEnd = s + 4;
-    clearTimeout(debounce);
-    debounce = setTimeout(render, 150);
-  });
 
   render();
 })();

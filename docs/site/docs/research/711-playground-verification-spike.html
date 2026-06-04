@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>711-playground-verification-spike — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/guides/">Guides</a>
+  <a href="../../docs/research/" class="active">Research</a>
+  <a href="../../docs/learnings/">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Research index</a></div>
+  <div class="prose">
+<h1>Playground verification spike — tool selection and test strategy (#711)</h1>
+<p><strong>Date:</strong> 2026-06-04 · <strong>Agent:</strong> DRAGONFRUIT<br><strong>Parent:</strong> #705 · <strong>Tracker:</strong> #677</p>
+<hr>
+<h2>Summary</h2>
+<p>This spike confirms end-to-end that the playground page works after build, chooses Playwright as the verification tool, and commits three working browser tests to <code>tests/browser/</code>.</p>
+<hr>
+<h2>Tool assessment</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th align="center">CI-friendly</th>
+<th align="center"><code>file://</code> support</th>
+<th align="center">Setup cost</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Playwright</strong></td>
+<td align="center">✓ (headless Chromium)</td>
+<td align="center">✓ (confirmed)</td>
+<td align="center">Low — <code>npx playwright install chromium</code></td>
+<td><strong>Chosen</strong></td>
+</tr>
+<tr>
+<td>Puppeteer</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">Medium — separate binary management</td>
+<td>Not chosen</td>
+</tr>
+<tr>
+<td>jsdom/vm harness</td>
+<td align="center">✓</td>
+<td align="center">n/a</td>
+<td align="center">Low</td>
+<td>Cannot simulate <code>&lt;script type=&quot;module&quot;&gt;</code> or browser globals</td>
+</tr>
+<tr>
+<td>Manual checklist</td>
+<td align="center">✗</td>
+<td align="center">n/a</td>
+<td align="center">None</td>
+<td>No CI coverage</td>
+</tr>
+</tbody></table>
+<p><strong>Why Playwright:</strong> The playground uses <code>&lt;script type=&quot;module&quot;&gt;</code> and dynamically loads <code>lcc.bundle.js</code> — jsdom cannot simulate this. Playwright 1.x is already available globally (<code>npx playwright</code>), supports <code>file://</code> URLs with headless Chromium, and the fallback execution path (window.lcc synchronous API, triggered when Workers are unavailable on <code>file://</code>) exercises the full assemble → run → output pipeline. The <code>file://</code> approach requires no HTTP server, matching the injector test fixture pattern already in the repo.</p>
+<hr>
+<h2>Bugs discovered during verification</h2>
+<p>Two bugs blocked the playground from working — both fixed as part of this spike:</p>
+<h3>Bug 1 — <code>process.platform</code> at module level crashes bundle load</h3>
+<p><code>src/core/interpreter.js:18</code> and <code>src/utils/name.js:18</code> both had:</p>
+<pre><code class="language-javascript">const newline = process.platform === &#39;win32&#39; ? &#39;\r\n&#39; : &#39;\n&#39;;
+</code></pre>
+<p>These module-level statements run when the bundle is first parsed. In the browser, <code>process</code> is not defined, so the entire bundle script throws immediately — <code>window.lcc</code> is never set and every Run click shows <code>&quot;(lcc.bundle.js not loaded — execution unavailable)&quot;</code>.</p>
+<p><strong>Fix:</strong> Guarded with <code>typeof process !== &#39;undefined&#39;</code> in both files. Also fixed the <code>_write</code> default in <code>interpreter.js</code> similarly.</p>
+<h3>Bug 2 — <code>Buffer</code> not available in browser bundle</h3>
+<p>The assembler and interpreter use <code>Buffer.alloc()</code> / <code>Buffer.from()</code> as global references without <code>require(&#39;buffer&#39;)</code>. Webpack 5 does not polyfill Node built-ins automatically.</p>
+<p><strong>Fix:</strong> Added <code>buffer: require.resolve(&#39;buffer/&#39;)</code> to <code>resolve.fallback</code> and a <code>ProvidePlugin({ Buffer: [&#39;buffer&#39;, &#39;Buffer&#39;] })</code> to <code>webpack.browser.config.js</code>.</p>
+<hr>
+<h2>Minimum viable test cases</h2>
+<p>All three implemented in <code>tests/browser/playground.browser.spec.js</code>:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Case</th>
+<th>Assertion</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T1</td>
+<td>Happy path — Hello World</td>
+<td><code>exec-output</code> contains <code>&quot;Hello, World!&quot;</code></td>
+</tr>
+<tr>
+<td>T2</td>
+<td>Assembly error — bad mnemonic</td>
+<td><code>exec-output.classList</code> has <code>lcc-error</code>; text matches <code>/assembly error/i</code></td>
+</tr>
+<tr>
+<td>T3</td>
+<td>stdin pass-through — <code>din</code>/<code>dout</code></td>
+<td><code>exec-output</code> contains the pre-supplied value <code>&quot;42&quot;</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Running the tests</h2>
+<pre><code class="language-bash">npm run build:browser    # builds dist/lcc.bundle.js
+npm run build:site       # copies bundle to docs/site/dist/ + generates playground HTML
+npx playwright install chromium   # one-time if not already cached
+NODE_PATH=&lt;playwright-location&gt; npm run test:browser
+</code></pre>
+<p>The suite auto-skips if <code>docs/site/dist/lcc.bundle.js</code> does not exist, mirroring the oracle test gate pattern.</p>
+<hr>
+<h2>Recommendation</h2>
+<p>Add <code>playwright</code> to <code>devDependencies</code> (done) and run <code>npm run test:browser</code> as a CI step gated on <code>docs/site/dist/lcc.bundle.js</code> existing. The <code>test:browser</code> script uses <code>jest --runInBand tests/browser</code> — consistent with the rest of the test suite. Playwright 1.x is stable and headless Chromium download is ~120 MB, acceptable for a dev-only install.</p>
+<p>The <code>test:all</code> script does not include <code>tests/browser</code> by default (it matches <code>tests/new</code> only). Add <code>tests/browser</code> to <code>test:all</code>&#39;s pattern if CI should run it automatically after every <code>build:browser</code>.</p>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

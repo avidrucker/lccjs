@@ -413,13 +413,40 @@ ${listItems}
 </style>
 <script src="../dist/lcc.bundle.js"></script>
 <script type="module">
+import { EditorView, basicSetup, keymap, indentWithTab } from 'https://esm.sh/codemirror@6';
+
 const CUSTOM_THEMES  = ${customThemesJson};
 const BUILTIN_THEMES = ${builtinThemeIds};
 const DARK           = new Set(${darkIdsJson});
 
 const sel        = document.getElementById('theme-select');
-const textarea   = document.getElementById('playground-input');
 const stdinInput = document.getElementById('stdin-input');
+
+let debounce;
+let renderFn = null;
+
+const editor = new EditorView({
+  doc: ${starterCodeJson},
+  extensions: [
+    basicSetup,
+    keymap.of([indentWithTab]),
+    EditorView.updateListener.of(function(update) {
+      if (update.docChanged && renderFn) {
+        clearTimeout(debounce);
+        debounce = setTimeout(renderFn, 150);
+      }
+    }),
+    EditorView.theme({
+      '&': { height: '100%', fontSize: '.85rem' },
+      '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--mono-font)' },
+      '.cm-content': { background: 'var(--border)', color: 'var(--fg)', caretColor: 'var(--fg)' },
+      '.cm-gutters': { background: 'var(--border)', borderRight: '1px solid var(--muted)', color: 'var(--muted)' },
+      '.cm-activeLineGutter': { background: 'rgba(128,128,128,0.1)' },
+      '&.cm-focused': { outline: 'none' },
+    }),
+  ],
+  parent: document.getElementById('editor'),
+});
 const output     = document.getElementById('playground-output');
 const runStatus  = document.getElementById('playground-status');
 const shikiStatus = document.getElementById('shiki-status');
@@ -468,7 +495,7 @@ runBtn.addEventListener('click', () => {
       execOut.textContent = '(lcc.bundle.js not loaded — execution unavailable)';
       return;
     }
-    const src = textarea.value;
+    const src = editor.state.doc.toString();
     const stdinLines = stdinInput.value.trim() ? stdinInput.value.split('\\n') : [];
     const asmResult = api.assemble(src);
     if (!asmResult.ok) {
@@ -517,11 +544,10 @@ runBtn.addEventListener('click', () => {
   };
 
   const stdinLines = stdinInput.value.trim() ? stdinInput.value.split('\\n') : [];
-  worker.postMessage({ type: 'run', src: textarea.value, stdinLines, maxSteps: 50000 });
+  worker.postMessage({ type: 'run', src: editor.state.doc.toString(), stdinLines, maxSteps: 50000 });
 });
 
 (async () => {
-  textarea.value = ${starterCodeJson};
   applyBodyClass(sel.value);
 
   let hl;
@@ -542,29 +568,14 @@ runBtn.addEventListener('click', () => {
     const theme = sel.value;
     applyBodyClass(theme);
     try {
-      output.innerHTML = hl.codeToHtml(textarea.value, { lang: 'lcc', theme });
+      output.innerHTML = hl.codeToHtml(editor.state.doc.toString(), { lang: 'lcc', theme });
     } catch (err) {
       shikiStatus.textContent = 'Highlight error: ' + err.message;
     }
   }
 
+  renderFn = render;
   sel.addEventListener('change', render);
-
-  let debounce;
-  textarea.addEventListener('input', () => {
-    clearTimeout(debounce);
-    debounce = setTimeout(render, 150);
-  });
-
-  textarea.addEventListener('keydown', (e) => {
-    if (e.key !== 'Tab') return;
-    e.preventDefault();
-    const s = textarea.selectionStart, en = textarea.selectionEnd;
-    textarea.value = textarea.value.slice(0, s) + '    ' + textarea.value.slice(en);
-    textarea.selectionStart = textarea.selectionEnd = s + 4;
-    clearTimeout(debounce);
-    debounce = setTimeout(render, 150);
-  });
 
   render();
 })();
@@ -587,7 +598,7 @@ ${playgroundThemeOptions}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
     <div>
       <p class="panel-label">LCC Assembly</p>
-      <textarea id="playground-input" spellcheck="false" style="width:100%;height:280px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
+      <div id="editor" style="width:100%;height:280px;border:1px solid var(--muted);border-radius:6px;overflow:hidden;"></div>
       <p class="panel-label" style="margin-top:.75rem;">stdin lines <span style="font-style:italic;">(one per line — programs exhausting these will fail)</span></p>
       <textarea id="stdin-input" spellcheck="false" style="width:100%;height:80px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
     </div>

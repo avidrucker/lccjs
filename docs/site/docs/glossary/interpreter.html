@@ -133,7 +133,7 @@ interactive debugger, and the <code>.lst</code> / <code>.bst</code> reporting pa
 <ul>
 <li><code>debugMode</code> — interactive debugger is active (entered via <code>-d</code>, <code>BP</code> trap, infinite-loop guard, or breakpoint hit)</li>
 <li><code>traceMode</code> — emit per-instruction trace to stdout (no interactive prompt); set by <code>-t</code></li>
-<li><code>instructionsCap</code> (= 500000) — soft cap for the infinite-loop guard</li>
+<li><code>maxSteps</code> (default 500000; pass <code>-1</code> or <code>Infinity</code> for unlimited) — step cap for the infinite-loop guard; set via <code>--max-steps N</code> on the CLI</li>
 <li><code>disableInfiniteLoopDetection</code> — bypass the cap entirely; useful for long-running <code>.ap</code> programs where the cap fires spuriously</li>
 <li><code>allowRuntimeDebugging</code> — set per <code>executeBuffer</code> call to gate whether cap-hit can enter the debugger</li>
 <li><code>debugBreakpoint</code> — address set by debug <code>b &lt;addr&gt;</code>; cleared on first hit (single-shot)</li>
