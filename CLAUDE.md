@@ -17,6 +17,9 @@ node ./src/core/interpreter.js <file.e>      # interpret only
 node ./src/core/linker.js m1.o m2.o          # link only
 node ./src/plus/lccplus.js <file.ap>         # LCC+ pipeline (see "Two toolchains" below)
 
+# Browser bundle
+npm run build:browser                        # webpack → dist/lcc.bundle.js + dist/lcc-injector.js
+
 # Tests
 npm test                                      # primary suite (tests/new, --runInBand)
 npm run test:all                              # full suite incl. slow tests
