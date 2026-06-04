@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { buildReportArtifacts } = require('../utils/reportArtifacts');
-const { InvalidExecutableFormatError, InterpreterRuntimeError } = require('../utils/errors');
+const { InvalidExecutableFormatError, InterpreterRuntimeError, InputPauseSignal } = require('../utils/errors');
 const {
   constructSiblingFileName,
   readBinaryInput,
@@ -107,6 +107,12 @@ class Interpreter {
      * Input buffer for SIN (if needed)
      */
     this.inputBuffer = '';
+
+    /**
+     * When true, readLineFromStdin/readCharFromStdin throw InputPauseSignal
+     * instead of blocking on fs.readSync when inputBuffer is exhausted.
+     */
+    this._pauseOnInput = false;
 
     /**
      * Options from lcc.js
@@ -279,12 +285,15 @@ class Interpreter {
       buildReports = false,
       userName,
       now,
+      pauseOnInput = false,
     } = options;
 
     this.inputFileName = inputFileName;
     this.loadPoint = loadPoint;
     this.inputBuffer = inputBuffer;
     this.options = runtimeOptions;
+    this._pauseOnInput = pauseOnInput;
+    this._resumeArgs = { buildReports, userName, now };
 
     this.resetExecutionState();
     this.allowRuntimeDebugging = allowDebugOnInfiniteLoop;
@@ -302,26 +311,33 @@ class Interpreter {
 
     // Run the interpreter
     try {
-      this.run();
-      // Post-run displays (oracle parity: -m and -r flags)
-      if (runtimeOptions.memDisplay) {
-        this.writeOutput('\n---------------------------------------------- Memory display\n');
-        for (let addr = this.loadPoint; addr <= this.memMax; addr++) {
-          const word = this.mem[addr];
-          this.writeOutput(`${addr.toString(16).padStart(4, '0')}: ${word.toString(16).padStart(4, '0')}\n`);
+      try {
+        this.run();
+        // Post-run displays (oracle parity: -m and -r flags)
+        if (runtimeOptions.memDisplay) {
+          this.writeOutput('\n---------------------------------------------- Memory display\n');
+          for (let addr = this.loadPoint; addr <= this.memMax; addr++) {
+            const word = this.mem[addr];
+            this.writeOutput(`${addr.toString(16).padStart(4, '0')}: ${word.toString(16).padStart(4, '0')}\n`);
+          }
+          this.writeOutput('--------------------------------------- End of memory display\n');
         }
-        this.writeOutput('--------------------------------------- End of memory display\n');
+        if (runtimeOptions.regDisplay) {
+          const nzcv = `${this.n}${this.z}${this.c}${this.v}`;
+          this.writeOutput('\n-------------------------------------------- Register display\n');
+          this.writeOutput(`pc = ${h4(this.pc)}  ir = ${h4(this.ir)}  NZCV = ${nzcv}\n`);
+          this.writeOutput(`r0 = ${h4(this.r[0])}  r1 = ${h4(this.r[1])}  r2 = ${h4(this.r[2])}  r3 = ${h4(this.r[3])}  \n`);
+          this.writeOutput(`r4 = ${h4(this.r[4])}  fp = ${h4(this.r[5])}  sp = ${h4(this.r[6])}  lr = ${h4(this.r[7])}  \n`);
+          this.writeOutput('------------------------------------- End of register display\n');
+        }
+      } finally {
+        this.allowRuntimeDebugging = false;
       }
-      if (runtimeOptions.regDisplay) {
-        const nzcv = `${this.n}${this.z}${this.c}${this.v}`;
-        this.writeOutput('\n-------------------------------------------- Register display\n');
-        this.writeOutput(`pc = ${h4(this.pc)}  ir = ${h4(this.ir)}  NZCV = ${nzcv}\n`);
-        this.writeOutput(`r0 = ${h4(this.r[0])}  r1 = ${h4(this.r[1])}  r2 = ${h4(this.r[2])}  r3 = ${h4(this.r[3])}  \n`);
-        this.writeOutput(`r4 = ${h4(this.r[4])}  fp = ${h4(this.r[5])}  sp = ${h4(this.r[6])}  lr = ${h4(this.r[7])}  \n`);
-        this.writeOutput('------------------------------------- End of register display\n');
+    } catch (e) {
+      if (e instanceof InputPauseSignal) {
+        return { status: 'waiting-for-input', trapType: e.trapType };
       }
-    } finally {
-      this.allowRuntimeDebugging = false;
+      throw e;
     }
 
     return this.createExecutionResult({
@@ -330,6 +346,29 @@ class Interpreter {
       inputFileName: this.inputFileName,
       now,
     });
+  }
+
+  // Resume execution after a pauseOnInput suspension.
+  // Appends moreInput to inputBuffer and continues the run loop from
+  // the current PC (the TRAP instruction that caused the pause).
+  resume(moreInput = '') {
+    if (moreInput) {
+      this.inputBuffer = (this.inputBuffer || '') + moreInput;
+    }
+    const { buildReports, userName, now } = this._resumeArgs || {};
+    try {
+      try {
+        this.run();
+      } finally {
+        this.allowRuntimeDebugging = false;
+      }
+    } catch (e) {
+      if (e instanceof InputPauseSignal) {
+        return { status: 'waiting-for-input', trapType: e.trapType };
+      }
+      throw e;
+    }
+    return this.createExecutionResult({ buildReports, userName, now });
   }
 
   // Build the listing/statistics file contents without writing them to disk.
@@ -1314,6 +1353,11 @@ class Interpreter {
       ///// this.writeOutput(inputLine + '\n');
       this.writeOutput(inputLine);
       return { inputLine, isSimulated: true };
+    } else if (this._pauseOnInput) {
+      // Back up PC so the TRAP instruction re-executes after resume().
+      this.pc--;
+      const trapType = { 7: 'din', 8: 'hin', 10: 'sin' }[this.trapvec] ?? 'din';
+      throw new InputPauseSignal(trapType);
     } else {
       // Original code for reading from stdin
       let input = '';
@@ -1369,6 +1413,9 @@ class Interpreter {
       // Echo the simulated input back to output and stdout
       this.writeOutput(ainChar + newline);
       return { char: ainChar, isSimulated: true };
+    } else if (this._pauseOnInput) {
+      this.pc--;
+      throw new InputPauseSignal('ain');
     } else {
       // Read one character from stdin
       let ainBuffer = Buffer.alloc(1);

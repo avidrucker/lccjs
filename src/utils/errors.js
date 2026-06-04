@@ -22,10 +22,19 @@ class AssemblerError extends LccError {}
 
 class LinkerError extends LccError {}
 
+// Not an error — a non-local exit used to suspend execution when
+// inputBuffer is exhausted and pauseOnInput is enabled.
+class InputPauseSignal {
+  constructor(trapType) {
+    this.trapType = trapType;
+  }
+}
+
 module.exports = {
   LccError,
   AssemblerError,
   LinkerError,
   InvalidExecutableFormatError,
   InterpreterRuntimeError,
+  InputPauseSignal,
 };
