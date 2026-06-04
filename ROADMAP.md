@@ -72,6 +72,8 @@ LCC.js is a JavaScript implementation of the LCC toolchain (assembler, linker, i
 - **Tiny Roguelike** — turn-based grid movement and random dungeon generation in LCC+
 - **Terminal graphics utilities** — minimal sprite/tile rendering helpers for richer game demos
 - **CI cross-platform testing** — automated test runs on Linux, macOS, and Windows
+- **Potato token testing** (#589) — on-demand fuzzer that replaces each source token in `benchmark_isa.a` with `"potato"` one at a time and records the assembler's response; surfaces unhandled edge-cases and surprising error messages (inspired by S. Miller)
+- **Potato input testing** (#590) — on-demand fuzzer that replaces each stdin prompt to `benchmark_isa.e` with `"potato"` (in reverse order) and diffs LCC.js vs oracle output; surfaces runtime input-rejection parity gaps
 
 ---
 
