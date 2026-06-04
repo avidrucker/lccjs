@@ -76,10 +76,7 @@ const DEMOS = [
   { num: '013', slug: 'local-variables-dynamic',      chapter: 'ch05-variable-storage-classes' },
   { num: '014', slug: 'local-variables-static',       chapter: 'ch05-variable-storage-classes' },
   { num: '015', slug: 'while-loop',                   chapter: 'ch06-control-flow-and-recursion' },
-  {
-    num: '016', slug: 'tail-recursion',               chapter: 'ch06-control-flow-and-recursion',
-    skip: 'Assembly intentionally includes "s" (stack display) debug trap — output differs by design',
-  },
+  { num: '016', slug: 'tail-recursion',               chapter: 'ch06-control-flow-and-recursion' },
   { num: '017', slug: 'recursion-non-tail',           chapter: 'ch06-control-flow-and-recursion' },
   { num: '018', slug: 'pointer-to-global',            chapter: 'ch07-pointers' },
   {

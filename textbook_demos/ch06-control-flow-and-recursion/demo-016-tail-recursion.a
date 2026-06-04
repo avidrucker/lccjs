@@ -6,10 +6,7 @@
 ;   In tail recursion, no work happens AFTER the recursive call.
 ;   Each stack frame is still fully allocated (bl + prologue/epilogue), but
 ;   the call depth equals the initial argument value.
-;
-;   The 's' debug trap instruction displays the current call stack — use it
-;   with 'node ./src/core/lcc.js demos/ch06.../demo-016.a' to watch depth grow.
-;
+
 ; C equivalent:
 ;   void countdown(int x) {
 ;       if (x != 0) { printf("%d\n", x); countdown(x - 1); }
@@ -26,8 +23,6 @@ countdown:
           push lr
           push fp
           mov  fp, sp
-
-          s                  ; DEBUG: display call stack (remove for production)
 
           ldr  r0, fp, 2    ; r0 = x
           cmp  r0, 0
