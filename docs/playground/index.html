@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LCC Assembly — Playground</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --border:    #30363d;
+      --text:      #c9d1d9;
+      --muted:     #8b949e;
+      --accent:    #58a6ff;
+      --error:     #f85149;
+      --radius:    8px;
+      --font-code: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+      --font-ui:   -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      /* Terminal colours (#687) */
+      --term-bg:   #0a0a0a;
+      --term-fg:   #4af626;
+      --term-err:  #ff5555;
+    }
+
+    html { background: var(--bg); color: var(--text); font-family: var(--font-ui); }
+    body { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* ── Header ───────────────────────────────────────────── */
+    header {
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.75rem;
+    }
+    header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.3rem; }
+    header p  { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+    header a, footer a { color: var(--accent); text-decoration: none; }
+    header a:hover, footer a:hover { text-decoration: underline; }
+
+    /* ── Run bar ──────────────────────────────────────────── */
+    .run-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+      flex-wrap: wrap;
+    }
+    #run-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      padding: 0.4rem 1.1rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font-ui);
+    }
+    #run-btn:hover { opacity: 0.88; }
+    #run-btn:disabled { opacity: 0.45; cursor: default; }
+    .stdin-label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    #stdin-input {
+      flex: 1;
+      min-width: 120px;
+      max-width: 320px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.6rem;
+      font-family: var(--font-code);
+      font-size: 0.82rem;
+    }
+    #stdin-input::placeholder { color: var(--muted); }
+    #run-status {
+      font-size: 0.8rem;
+      color: var(--error);
+      flex: 1;
+    }
+
+    /* ── Two-column editor / preview ─────────────────────── */
+    .editor-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 720px) {
+      .editor-row { grid-template-columns: 1fr; }
+    }
+
+    .panel-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    /* Editor textarea */
+    #editor {
+      width: 100%;
+      height: 300px;
+      font-family: var(--font-code);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem;
+      resize: vertical;
+      outline: none;
+      tab-size: 4;
+      -moz-tab-size: 4;
+    }
+    #editor:focus { border-color: var(--accent); }
+
+    /* Shiki preview */
+    .hl-wrap {
+      height: 300px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+    .hl-wrap pre {
+      margin: 0 !important;
+      padding: 1.1rem 1.25rem !important;
+      background: var(--surface) !important;
+      font-family: var(--font-code) !important;
+      min-height: 100%;
+    }
+    .hl-wrap code { font-family: var(--font-code); }
+    #hl-status {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      min-height: 1.1em;
+    }
+    #hl-status.err { color: var(--error); }
+
+    /* ── Terminal output ─────────────────────────────────── */
+    #exec-output {
+      width: 100%;
+      min-height: 160px;
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      background: var(--term-bg);
+      color: var(--term-fg);
+      font-family: var(--font-code);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow: auto;
+    }
+    #exec-output.lcc-error { color: var(--term-err); }
+    #exec-output.idle      { color: var(--muted); font-style: italic; }
+
+    /* ── Footer ──────────────────────────────────────────── */
+    footer {
+      margin-top: 2.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+  </style>
+
+  <!-- Execution engine — must be built first: npm run build:browser -->
+  <script src="../../dist/lcc.bundle.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>LCC Assembly Playground</h1>
+  <p>
+    Write LCC assembly, click <strong>Run</strong>, and see the output.
+    Syntax highlighting via <a href="https://shiki.style" target="_blank" rel="noopener">Shiki</a>.
+    Execution via <a href="https://github.com/avidrucker/lccjs" target="_blank" rel="noopener">lccjs</a>
+    (<code>dist/lcc.bundle.js</code> — run <code>npm run build:browser</code> once).
+  </p>
+</header>
+
+<main>
+
+  <!-- Run bar -->
+  <div class="run-bar">
+    <button id="run-btn">▶ Run</button>
+    <span class="stdin-label">
+      stdin
+      <input id="stdin-input" type="text" placeholder="one line per entry — separate with ↵" />
+    </span>
+    <span id="run-status"></span>
+  </div>
+
+  <!-- Editor + highlight preview -->
+  <div class="editor-row">
+    <div>
+      <p class="panel-label">LCC Assembly</p>
+      <textarea id="editor" spellcheck="false" autocomplete="off"
+        autocorrect="off" autocapitalize="off"
+        aria-label="LCC assembly editor"></textarea>
+    </div>
+    <div>
+      <p class="panel-label">Syntax preview</p>
+      <div class="hl-wrap" id="hl-wrap"><pre></pre></div>
+      <div id="hl-status">Loading Shiki…</div>
+    </div>
+  </div>
+
+  <!-- Terminal output -->
+  <p class="panel-label">Output</p>
+  <pre id="exec-output" class="idle">(click Run to execute)</pre>
+
+</main>
+
+<footer>
+  <a href="../showcase/index.html">Showcase</a> ·
+  Grammar: <code>docs/lcc.tmLanguage.json</code> ·
+  <a href="https://github.com/avidrucker/lccjs" target="_blank" rel="noopener">avidrucker/lccjs</a>
+</footer>
+
+<script type="module">
+
+// ── Starter code ─────────────────────────────────────────────────────────────
+
+const STARTER = `\
+; Hello, World!
+        lea r0, msg
+        sout r0
+        nl
+        halt
+msg:    .string "Hello, World!"`;
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+
+const editor    = document.getElementById('editor');
+const hlWrap    = document.getElementById('hl-wrap');
+const hlStatus  = document.getElementById('hl-status');
+const stdinEl   = document.getElementById('stdin-input');
+const runBtn    = document.getElementById('run-btn');
+const runStatus = document.getElementById('run-status');
+const execOut   = document.getElementById('exec-output');
+
+// ── Execution ─────────────────────────────────────────────────────────────────
+
+function getApi() {
+  return (typeof window !== 'undefined' && window.lcc) ? window.lcc : null;
+}
+
+function run() {
+  const api = getApi();
+  if (!api) {
+    execOut.className = 'lcc-error';
+    execOut.textContent = 'lcc.bundle.js not loaded.\nRun: npm run build:browser';
+    return;
+  }
+
+  const src        = editor.value;
+  const stdinLines = stdinEl.value.trim()
+    ? stdinEl.value.split(/\r?\n/)
+    : [];
+
+  runStatus.textContent = '';
+  execOut.classList.remove('lcc-error', 'idle');
+  execOut.textContent   = 'Running…';
+  runBtn.disabled       = true;
+
+  // Yield to the event loop so the "Running…" update renders before the
+  // (potentially slow) synchronous assemble+run.
+  setTimeout(() => {
+    try {
+      const asmResult = api.assemble(src);
+      if (!asmResult.ok) {
+        execOut.className   = 'lcc-error';
+        execOut.textContent = 'Assembly error:\n' + asmResult.errors;
+        runBtn.disabled     = false;
+        return;
+      }
+
+      const runResult = api.run(asmResult.binary, {
+        stdin:    stdinLines,
+        maxSteps: 50000,
+      });
+
+      execOut.textContent = runResult.stdout || '(no output)';
+      execOut.className   = '';
+
+      if (runResult.maxStepsReached) {
+        runStatus.textContent = 'Program did not halt — possible infinite loop';
+        execOut.className     = 'lcc-error';
+      } else if (runResult.exitCode !== 0) {
+        runStatus.textContent = `exited with code ${runResult.exitCode}`;
+      }
+    } catch (err) {
+      execOut.className   = 'lcc-error';
+      execOut.textContent = 'Runtime error:\n' + err.message;
+    } finally {
+      runBtn.disabled = false;
+    }
+  }, 0);
+}
+
+runBtn.addEventListener('click', run);
+
+// Also run on Ctrl/Cmd+Enter in the editor.
+editor.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    run();
+  }
+  // Tab → 4 spaces
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = editor.selectionStart, en = editor.selectionEnd;
+    editor.value = editor.value.slice(0, s) + '    ' + editor.value.slice(en);
+    editor.selectionStart = editor.selectionEnd = s + 4;
+    scheduleHighlight();
+  }
+});
+
+// ── Syntax highlighting ───────────────────────────────────────────────────────
+
+let hl = null;
+
+function renderHighlight() {
+  if (!hl) { hlWrap.querySelector('pre').textContent = editor.value; return; }
+  try {
+    hlWrap.innerHTML = hl.codeToHtml(editor.value, { lang: 'lcc', theme: 'github-dark' });
+  } catch (err) {
+    hlStatus.textContent = 'Highlight error: ' + err.message;
+    hlStatus.className   = 'err';
+  }
+}
+
+let debounce;
+function scheduleHighlight() {
+  clearTimeout(debounce);
+  debounce = setTimeout(renderHighlight, 150);
+}
+
+editor.addEventListener('input', scheduleHighlight);
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+editor.value = STARTER;
+
+(async () => {
+  // Load Shiki and grammar concurrently.
+  let createHighlighter, grammar;
+  try {
+    const [shikiMod, grammarRes] = await Promise.all([
+      import('https://esm.sh/shiki@1'),
+      fetch('../lcc.tmLanguage.json'),
+    ]);
+    createHighlighter = shikiMod.createHighlighter;
+    grammar           = await grammarRes.json();
+  } catch (err) {
+    hlStatus.textContent = 'Highlighting unavailable: ' + err.message;
+    hlStatus.className   = 'err';
+    // Still show plain text in the preview.
+    hlWrap.querySelector('pre').textContent = editor.value;
+    return;
+  }
+
+  try {
+    hl = await createHighlighter({ langs: [grammar], themes: ['github-dark'] });
+  } catch (err) {
+    hlStatus.textContent = 'Shiki init failed: ' + err.message;
+    hlStatus.className   = 'err';
+    return;
+  }
+
+  hlStatus.textContent = '';
+  renderHighlight();
+})();
+
+</script>
+
+</body>
+</html>
