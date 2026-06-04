@@ -30,6 +30,7 @@ LCC.js is a JavaScript implementation of the LCC toolchain (assembler, linker, i
 
 - **Custom TextMate grammar** (`docs/lcc.tmLanguage.json`) — LCC assembly language definition used for syntax highlighting in the site and playground
 - **Syntax-highlighted demo site** (`docs/site/index.html`) — curated samples and the full `demoA`–`demoZ` alphabet suite, displayed with Shiki-powered syntax highlighting
+- **GitHub Pages CI** — `.github/workflows/pages.yml` builds the docs site (`npm run build:site`) and deploys it to GitHub Pages automatically on every push to `main`
 
 ### Playground code viewer
 
