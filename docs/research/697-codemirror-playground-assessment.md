@@ -57,3 +57,7 @@ Estimated DEV cost: **45–60m** (one micro-puzzle). The main risk is the import
 - Exact import map URLs to use (needs a quick test at implement time)
 - Whether to support light/dark theme switching within the CodeMirror editor (vs the current body-class approach)
 - Error annotation (red squiggles at assembly error sites) — a follow-on feature, not part of the initial integration
+
+## Follow-on
+
+Implementation tracked in #748 (DEV, H: 60m).
