@@ -557,3 +557,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 570,673,validate reveal-md static export on file://,DEV,30,20,4,26,16,2026-06-03T21:56:47-1000,2026-06-03T22:00:49-1000,,"platform confirmed: static export inlines content in textarea, zero fetch() calls, no CORS on file://; checklist committed; open pending #595",GRAPE,sonnet-4.6,lccjs
 571,595,DEV: Klipse-style injector — auto-run language-lcc blocks in browser,DEV,45,35,35,10,0,2026-06-03T21:55:33-1000,2026-06-03T22:30:00-1000,,lcc-injector.js + webpack config + test fixture + dist bundles; pre-existing test failures only,DRAGONFRUIT,sonnet-4.6,lccjs
 572,680,rewrite ROADMAP.md — feature directions and current state,WRITER,,,,,,,,,,BANANA,sonnet-4.6,lccjs
+573,678,"DEV (H5): disassembler.js nesting flatten — guard-clause refactor, oracle-diff verified",DEV,,,,,,,,,,fig,sonnet-4.6,lccjs
