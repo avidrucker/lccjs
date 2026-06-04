@@ -98,8 +98,9 @@ If any file your ticket will touch is untracked or modified on main, commit or s
 
 3. Read the ticket body and all comments via `gh issue view <N> --comments`.
 4. Read referenced docs / source files needed for context.
-5. (Optional) `TaskCreate` if the puzzle has 3+ distinct sub-steps worth tracking.
-6. Pick the smallest concrete first step and start.
+5. **Verify the repro before writing any code.** Run the exact commands or steps from the issue's "Have" section and confirm the bug or gap is still present. If the described state is already absent — the fix landed in a sibling branch, the feature already exists, or the condition no longer triggers — **stop and investigate** before proceeding; do not assume the issue is live without checking. Only proceed to implementation once a hands-on repro confirms the "have" state. If the issue is already resolved, the closing commit is a `chore:` or `docs:` noting the discovery (the close sequence and velocity log still apply).
+6. (Optional) `TaskCreate` if the puzzle has 3+ distinct sub-steps worth tracking.
+7. Pick the smallest concrete first step and start.
 
 **What I do *not* do at start:**
 
