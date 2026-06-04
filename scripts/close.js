@@ -343,13 +343,28 @@ function headSha() {
   return s ? s.trim() : null;
 }
 
-// Does HEAD's commit message reference `Closes #<issue>` (the agent committed
-// the close)? Accepts the GitHub close keywords. The whole point of the tool is
-// to land an EXISTING close commit, so refuse if there isn't one.
-function headClosesIssue(issue) {
-  const body = sh(`git log -1 --format=%B`, true) || '';
+// Returns true if the commit log text contains a closing keyword for the given
+// issue. Accepts the GitHub close keywords (close/closes/closed, fix/fixes/fixed,
+// resolve/resolves/resolved). Pure: takes a string and an issue number, returns
+// a boolean. The string may be the body of a single commit or several concatenated.
+function bodyClosesIssue(text, issue) {
   const re = new RegExp(`\\b(clos(e|es|ed)|fix(e|es|ed)?|resolv(e|es|ed))\\s+#${issue}\\b`, 'i');
-  return re.test(body);
+  return re.test(String(text || ''));
+}
+
+// Scans the unpushed commit range (origin/main..HEAD) for a commit that references
+// `Closes #<issue>`. Returns the SHA of the first matching commit, or null if none.
+// Searching the full unpushed set rather than just HEAD lets agents follow the
+// standard velocity protocol (fix commit → separate velocity CSV commit) without
+// close.js falsely rejecting the close because the velocity commit is now HEAD.
+function findClosingCommitSha(issue) {
+  const out = sh('git log origin/main..HEAD --format=%H', true) || '';
+  const shas = out.trim().split('\n').map((s) => s.trim()).filter(Boolean);
+  for (const sha of shas) {
+    const body = sh(`git show -s --format=%B ${sha}`, true) || '';
+    if (bodyClosesIssue(body, issue)) return sha;
+  }
+  return null;
 }
 
 function treeIsClean() {
@@ -383,16 +398,19 @@ function checkVelocityTicketMatch(issue) {
 }
 
 // Guard 2 I/O wrapper (#311): fetch the issue title via gh and verify that the
-// commit subject shares ≥1 keyword with it. Catches gross mismatches (a TIL
-// commit accidentally closing a data-migration ticket). Degrades gracefully when
-// gh is unavailable — prints a warning and skips rather than blocking the close.
-function checkKeywordMatch(issue) {
+// closing commit's subject shares ≥1 keyword with it. Catches gross mismatches
+// (a TIL commit accidentally closing a data-migration ticket). Degrades gracefully
+// when gh is unavailable — prints a warning and skips rather than blocking.
+// closingCommitSha is the SHA returned by findClosingCommitSha(); when not
+// supplied it falls back to HEAD (pre-#619 behaviour, single-commit workflow).
+function checkKeywordMatch(issue, closingCommitSha) {
   const title = sh(`gh issue view ${issue} --json title -q .title`, true);
   if (!title || !title.trim()) {
     log('warn: could not fetch issue title (gh unavailable?) — skipping keyword check.');
     return;
   }
-  const subject = sh('git log -1 --format=%s', true) || '';
+  const sha = closingCommitSha || 'HEAD';
+  const subject = sh(`git show -s --format=%s ${sha}`, true) || '';
   if (!keywordsOverlap(extractKeywords(title.trim()), extractKeywords(subject.trim()))) {
     die(`keyword check: no word from issue #${issue} title\n` +
         `         ("${title.trim()}")\n` +
@@ -578,15 +596,22 @@ function main() {
     }
   }
 
-  if (!headClosesIssue(issue)) {
-    die(`HEAD commit does not reference "Closes #${issue}". Commit the close ` +
-        '(marker deletion + CSV row + `Closes #N`) FIRST, then run close. ' +
+  // Scan the full unpushed set (origin/main..HEAD) for a Closes #N reference so
+  // that agents who follow the standard two-commit velocity protocol (fix commit →
+  // separate velocity CSV commit) are not falsely blocked by the velocity commit
+  // sitting at HEAD with no close keyword. (#619)
+  const closingCommitSha = findClosingCommitSha(issue);
+  if (!closingCommitSha) {
+    die(`No unpushed commit references "Closes #${issue}". Commit the close ` +
+        '(marker deletion + `Closes #N`) FIRST, then run close. ' +
         'This tool lands an existing close commit; it does not author one.');
   }
   // Guard 1 (#310): the velocity row in HEAD must record the issue being closed.
   if (!opts.skipTicketMatch) checkVelocityTicketMatch(issue);
-  // Guard 2 (#311): commit subject must share ≥1 keyword with the issue title.
-  if (!opts.skipKeywordCheck) checkKeywordMatch(issue);
+  // Guard 2 (#311): the closing commit's subject must share ≥1 keyword with the
+  // issue title. Using the closing commit SHA (not HEAD) so that a trailing
+  // velocity CSV commit does not shadow the real close subject. (#619)
+  if (!opts.skipKeywordCheck) checkKeywordMatch(issue, closingCommitSha);
   // Check A (#359): a velocity row for this ticket must exist in the DB.
   if (!opts.skipVelocityCheck) checkVelocityRowExists(issue);
   // Check B (#359): the puzzle marker must have been deleted before closing.
@@ -693,5 +718,6 @@ module.exports = {
   computeVelocityMismatch,
   extractKeywords, keywordsOverlap,
   velocityRowExists, markerStillPresent,
+  bodyClosesIssue,
   logCommentPrompt,
 };

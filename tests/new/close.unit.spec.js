@@ -8,6 +8,7 @@ const {
   computeVelocityMismatch,
   extractKeywords, keywordsOverlap,
   velocityRowExists, markerStillPresent,
+  bodyClosesIssue,
 } = require('../../scripts/close');
 
 describe('close.js classifyPushError()', () => {
@@ -687,5 +688,52 @@ describe('close.js velocity CSV conflict-resolution source guard (#503)', () => 
     // velocity-export.js path is on one line; --force is on the next shCapture line.
     expect(block).toMatch(/velocity-export/);
     expect(block).toMatch(/shCapture\(`node[^`]*--force`\)/);
+  });
+});
+
+// bodyClosesIssue() (#619): multi-commit close detection. The standard velocity
+// protocol produces two commits before push — fix commit (Closes #N) then a
+// separate velocity CSV commit — so close.js must scan the full unpushed set,
+// not just HEAD, to find the closing keyword.
+describe('close.js bodyClosesIssue() — multi-commit close detection (#619)', () => {
+  test('single commit body with Closes #N → true', () => {
+    expect(bodyClosesIssue('fix: fix the close bug\n\nCloses #619\n', '619')).toBe(true);
+  });
+
+  // Canonical #619 repro: velocity commit is HEAD, fix commit is one below.
+  // Concatenated bodies from git log origin/main..HEAD contain the close keyword.
+  test('#619 repro: velocity commit body then fix commit body concatenated → true', () => {
+    const bodies = [
+      'data(velocity): log #619 DEV close-scan fix\n\n',
+      'fix: close.js — scan unpushed set for Closes #N, not just HEAD\n\nCloses #619\n',
+    ].join('\n');
+    expect(bodyClosesIssue(bodies, '619')).toBe(true);
+  });
+
+  test('only velocity commit body, no Closes #N → false', () => {
+    expect(bodyClosesIssue('data(velocity): log #619 DEV close-scan fix', '619')).toBe(false);
+  });
+
+  test('GitHub close keyword variants are accepted', () => {
+    expect(bodyClosesIssue('CLOSES #619', '619')).toBe(true);
+    expect(bodyClosesIssue('Fixed #619', '619')).toBe(true);
+    expect(bodyClosesIssue('Resolves #619', '619')).toBe(true);
+    expect(bodyClosesIssue('close #619', '619')).toBe(true);
+    expect(bodyClosesIssue('resolve #619', '619')).toBe(true);
+  });
+
+  test('wrong issue number → false', () => {
+    expect(bodyClosesIssue('Closes #620', '619')).toBe(false);
+  });
+
+  test('issue number appearing mid-word does not match (word boundary)', () => {
+    // #6190 must not satisfy a search for #619
+    expect(bodyClosesIssue('Closes #6190', '619')).toBe(false);
+  });
+
+  test('empty / null / undefined → false', () => {
+    expect(bodyClosesIssue('', '619')).toBe(false);
+    expect(bodyClosesIssue(null, '619')).toBe(false);
+    expect(bodyClosesIssue(undefined, '619')).toBe(false);
   });
 });
