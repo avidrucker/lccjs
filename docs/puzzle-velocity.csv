@@ -551,3 +551,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 564,613,reveal-md vs FOSS slide alternatives research,RESEARCH,45,25,7,38,18,2026-06-03T21:25:18-1000,2026-06-03T21:31:49-1000,,Marp and Quarto pass file:// constraint; reveal-md and Slidev fail; follow-up DEV #673 filed,GRAPE,sonnet-4.6,lccjs
 565,609,correct assembler.md + interpreter.md — three-caller .bst/.lst framing,WRITER,,,,,,,,,,BANANA,sonnet-4.6,lccjs
 566,426,Tracker: Tier 1 — research-program implementation (H2/H3/N1/H6/M1/Q10),PM,,,,,,,,,,fig,sonnet-4.6,lccjs
+567,608,research: confirm canonical bst/lst framing — one generator three callers,RESEARCH,20,15,2,18,13,2026-06-03T21:55:21-1000,2026-06-03T21:57:33-1000,,"source verified, recommendations posted; buildReportArtifacts is the public seam (not generateBSTLSTContent); Path 3 leads; BANANA unblocked",CHERRY,sonnet-4.6,lccjs
