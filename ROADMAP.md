@@ -67,6 +67,7 @@ LCC.js is a JavaScript implementation of the LCC toolchain (assembler, linker, i
 ## Planned
 
 - **LCC+ multi-module linker** — `src/plus/linkerplus.js` does not yet exist; multi-module `.ap` programs cannot be linked; this is the main missing piece of the LCC+ toolchain
+- **Tetris** — falling-piece puzzle game in LCC+; requires real-time input, gravity timing, line-clear detection, and a grid renderer
 - **Hangman** — non-blocking input and screen-clearing demo using LCC+ instructions
 - **Tiny Roguelike** — turn-based grid movement and random dungeon generation in LCC+
 - **Terminal graphics utilities** — minimal sprite/tile rendering helpers for richer game demos
