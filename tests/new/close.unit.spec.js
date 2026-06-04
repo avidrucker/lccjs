@@ -378,6 +378,18 @@ describe('close.js extractKeywords() — Guard 2 tokenizer', () => {
     expect(KEYWORD_STOP_SET.has('research')).toBe(true);
     expect(KEYWORD_STOP_SET.has('data')).toBe(true);
   });
+
+  // FC-2 (#649): short technical acronyms that matter to this project bypass the
+  // 4-char floor via an explicit allowlist, so titles like "fix CLI arg" are
+  // checkable rather than tokenizing to [] and triggering a false-block.
+  test('FC-2: short technical acronym "cli" is retained by project allowlist (#649)', () => {
+    expect(extractKeywords('fix CLI arg')).toContain('cli');
+  });
+
+  test('FC-2: "api" and "lcc" are retained by project allowlist (#649)', () => {
+    expect(extractKeywords('update LCC api docs')).toContain('lcc');
+    expect(extractKeywords('update LCC api docs')).toContain('api');
+  });
 });
 
 describe('close.js keywordsOverlap() — Guard 2 decision', () => {
@@ -481,6 +493,15 @@ describe('close.js keywordsOverlap() — Guard 2 decision', () => {
     const titleWords = extractKeywords('RESEARCH: collate failure modes from session notes');
     const subjectWords = extractKeywords('research: enumerate observed breakdowns in puzzle logs');
     expect(keywordsOverlap(titleWords, subjectWords)).toBe(false);
+  });
+
+  // FC-2 (#649): Guard 2 passes for a title whose only discriminating word is a
+  // short technical acronym — "cli" survives extractKeywords via the allowlist and
+  // then overlaps with the commit subject that also references cli.
+  test('FC-2: "fix CLI arg" title overlaps a commit that references CLI (#649)', () => {
+    const titleKws = extractKeywords('fix CLI arg');
+    const subjectKws = extractKeywords('fix: Guard 2 false-block on cli short-keyword titles');
+    expect(keywordsOverlap(titleKws, subjectKws)).toBe(true);
   });
 });
 

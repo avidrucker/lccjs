@@ -282,15 +282,21 @@ const KEYWORD_STOP_SET = new Set([
   'writer', 'research', 'architect', 'spike', 'data',
 ]);
 
+// Guard 2 FC-2 (#649): short technical acronyms/tokens that are meaningful in
+// this project but fall below the 4-char length floor. These bypass the length
+// filter so titles like "fix CLI arg" or "lcc api bug" are checkable rather than
+// tokenizing to [] and triggering a false-block.
+const SHORT_TECH_WORDS = new Set(['cli', 'api', 'lcc', 'tdd', 'e2e']);
+
 // Guard 2 (#311): tokenize text into discriminating keywords for overlap checks.
-// Splits on non-word chars, lowercases, keeps words ≥4 chars that are neither
-// pure numbers nor in the stop-set. Pure: takes a string + optional stop-set
-// (defaults to KEYWORD_STOP_SET), returns a string array.
+// Splits on non-word chars, lowercases, keeps words ≥4 chars (or in SHORT_TECH_WORDS)
+// that are neither pure numbers nor in the stop-set. Pure: takes a string + optional
+// stop-set (defaults to KEYWORD_STOP_SET), returns a string array.
 function extractKeywords(text, stopSet = KEYWORD_STOP_SET) {
   return String(text || '')
     .toLowerCase()
     .split(/\W+/)
-    .filter((w) => w.length >= 4 && !/^\d+$/.test(w) && !stopSet.has(w));
+    .filter((w) => (w.length >= 4 || SHORT_TECH_WORDS.has(w)) && !/^\d+$/.test(w) && !stopSet.has(w));
 }
 
 // Guard 2 (#311): returns true if ≥1 word from titleWords appears in subjectWords.
@@ -412,6 +418,14 @@ function checkKeywordMatch(issue, closingCommitSha) {
   const sha = closingCommitSha || 'HEAD';
   const subject = sh(`git show -s --format=%s ${sha}`, true) || '';
   const titleKws = extractKeywords(title.trim());
+
+  // FC-2 (#649): title has no extractable keywords — no signal to check against.
+  // Skip rather than die() to avoid false-blocks on short-only-keyword titles
+  // that aren't covered by SHORT_TECH_WORDS (e.g. "add arg doc").
+  if (titleKws.length === 0) {
+    log('warn: issue title has no extractable keywords — skipping Guard 2 keyword check.');
+    return;
+  }
 
   // Fast path: closing commit subject overlaps directly.
   if (keywordsOverlap(titleKws, extractKeywords(subject.trim()))) return;
@@ -726,7 +740,7 @@ function main() {
 if (require.main === module) main();
 
 module.exports = {
-  DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET,
+  DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET, SHORT_TECH_WORDS,
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
   isVelocityCsvOnlyConflict,
   extractTicketFromCsvDiff, extractRowsFromCsvDiff, velocityTicketMismatch,
