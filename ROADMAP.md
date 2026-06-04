@@ -1,142 +1,79 @@
-# 📍 ROADMAP.md
+# LCC.js — Development Roadmap
 
-**LCC.js + LCC+js** — **Development Roadmap**
-
-This document outlines our **planned improvements, refactors, and example programs** to grow LCC.js and LCC+js into a more educational, maintainable, and contributor-friendly platform.
+LCC.js is a JavaScript implementation of the LCC toolchain (assembler, linker, interpreter) for the 16-bit Low-Cost Computer ISA, plus an extended dialect (LCC+) for interactive programs. This document tracks what has been built, what is actively in progress, and where the project is heading.
 
 ---
 
-## 🎯 **1. Refactoring & Maintenance**
+## What's already done
 
-**Goal**: Make the codebase cleaner, faster, and easier to contribute to.
+### Core toolchain
 
-### ✅ Short-Term Priorities
+- **Assembler** — two-pass assembler for the base LCC ISA (`.a` source → `.e` executable or `.o` object module), with full support for all standard pseudo-instructions, directives, and error reporting
+- **Linker** — multi-module linker combining `.o` files into a single `.e` executable, with global/extern symbol resolution and relocation
+- **Interpreter** — cycle-accurate interpreter for the 16-bit ISA with trap handlers, register and memory state, and runtime error reporting
+- **LCC+ toolchain** — subclasses of the core assembler/interpreter adding extended pseudo-instructions (`clear`, `sleep`, `nbain`, `cursor`, `rand`/`srand`, `millis`, `resetc`) for interactive terminal programs; `.ap` source → `.ep` executable
+- **`lcc.js` orchestrator** — unified CLI that assembles and runs a `.a` file in one command, or runs a `.e` directly, or links `.o` files; single entry point for the whole pipeline
 
-* **Refactor Large Switch Statements**
+### Testing framework
 
-  * Convert huge `switch` blocks in:
+- **Jest suite** — `tests/new/` with unit, integration, and e2e test categories (`npm test`)
+- **Oracle-parity differential testing** — `*.oracle.e2e.spec.js` suites run both LCC.js and the original `cuh63/lcc` binary and diff output; auto-skips when the oracle binary is absent
+- **Golden-cache system** — expected outputs are frozen; drift is caught on re-run; update only when oracle output legitimately changes (`GOLDEN_AUTO_UPDATE=1`)
+- **Documented parity deviations** — intentional divergences from OG LCC are listed in `docs/parity_deviations.md` so "fixes" don't accidentally revert deliberate choices
 
-    * `interpreter.js`
-    * `assembler.js`
-    * `interpreterplus.js`
-  * Use **object hash tables** (object maps) to improve readability and performance.
+### Interactive debugger
 
-* **Profile & Optimize Performance**
+- **`-d` / `-i` stepping debugger** — interactive step-through with breakpoints, register/memory inspection, run-to-completion, stack display; commands: Enter (step), `g` (run), `q` (quit), `r` (registers), `m` (memory), `b` (breakpoint), `i` (next instruction), `h` (help), `s` (stack)
+- **`bp` software breakpoint trap** — pure in-memory throw; CLI non-TTY continues with message; CLI TTY enters the debugger
 
-  * Benchmark interpreter and assembler with large `.a` and `.ep` files.
-  * Investigate:
+### Syntax-highlighted demos
 
-    * Reducing memory allocations during execution.
-    * Replacing synchronous I/O with streams where feasible.
+- **Custom TextMate grammar** (`docs/lcc.tmLanguage.json`) — LCC assembly language definition used for syntax highlighting in the site and playground
+- **Syntax-highlighted demo site** (`docs/site/index.html`) — curated samples and the full `demoA`–`demoZ` alphabet suite, displayed with Shiki-powered syntax highlighting
 
----
+### Playground code viewer
 
-## 🛠️ **2. Testing Enhancements**
+- **Playground** (`docs/showcase/index.html`) — live syntax highlighting as you type LCC assembly in the browser; uses the custom TextMate grammar; displays highlighted output alongside the editor
 
-**Goal**: Make test coverage more complete and more maintainable.
+### Code highlighting in slides
 
-### ✅ Next Steps
+- **Syntax-highlighted code in slide decks** — LCC assembly code blocks rendered with the custom grammar inside presentation slides; research into reveal-md, Marp, and Quarto as compatible platforms completed (`docs/research/613-*`, `docs/research/673-*`)
 
-* ✅ **Create `compareFiles.js` Utility** — shipped at `tests/helpers/compareFiles.js`
+### Extensive demo and game library
 
-  * Centralize hex, `.lst`, and `.bst` comparisons.
-* ✅ **Introduce Unit Tests** — shipped in `tests/new/` (unit, integration, oracle/e2e, research categories)
+- **26 base ISA demos** (`demos/demoA.a`–`demoZ.a`) — smallest-first progression covering registers, I/O, strings, control flow, recursion, and the stack
+- **LCC+ interactive games** (`plusdemos/`) — Snake, Flappy Bird, Tic-Tac-Toe, Rock-Paper-Scissors (all playable today)
+- **LCC+ building-block demos** — character cycling, typewriter output, non-blocking key polling, deterministic/nondeterministic RNG, 1D/2D player movement
 
-  * Add first-pass unit tests for:
+### Extensive curriculum
 
-    * `assembler.js`
-    * `interpreter.js`
-    * `linker.js`
-    * `lcc.js`
-* **Write Smoke Tests**
-
-  * Verify that all binaries are runnable before any other tests.
-* ✅ **Implement a Single Test Runner Script** — shipped as `npm test` (Jest, `--runInBand`)
-
-  * Automate running all suites and reporting results in one pass.
-
----
-
-## ✨ **3. New Example Programs**
-
-**Goal**: Show the power of LCC.js with fun, illustrative demos.
-
-These games and demos will live in the `demos/` folder.
-
-### 🎮 Planned Examples
-
-* 🪨✂️📄 **Rock-Paper-Scissors**
-
-  * Simple input/output demo.
-* ✏️ **Hangman**
-
-  * Non-blocking input and screen-clearing using LCC+ instructions.
-* 🐦 **Flappy Bird Clone**
-
-  * Terminal-based side-scroller using `sleep`, `rand`, and cursor control.
-* ⚔️ **Tiny Roguelike**
-
-  * Turn-based grid movement and random dungeon generation.
-
-Each example will include:
-
-* A commented `.ap` or `.a` source file.
-* `.lst` and `.bst` outputs.
-* A step-by-step walkthrough in `/docs`.
+- **Step-by-step tutorial** (`docs/tutorial_01_intro.md`) — intro to registers, I/O, directives, control structures, and the stack
+- **cuh63 exercise index** (`docs/cuh63/`) — annotated exercise files organized by textbook chapter (ch3–ch19), mapped to Prof. Dos Reis's LCC textbook
+- **ISA reference** (`docs/lcc-isa.md`, `docs/lccplus-isa.md`) — complete instruction tables for both toolchains
+- **Pitfalls catalog** (`docs/pitfalls.md`) — common first-timer mistakes documented with explanations and fixes
+- **Learner-path guide** (`docs/who_lccjs_is_for.md`) — entry points for students, educators, hobbyists, and contributors
 
 ---
 
-## ✍️ **4. Documentation Improvements**
+## In progress
 
-**Goal**: Make onboarding faster and clearer.
-
-* **Split README into Beginner and Contributor Versions**
-* **Add architecture diagrams to `/docs`**
-* **Publish a “First 5 Minutes” Quickstart**
-* **Document all instructions (standard + extended) with examples**
+- **Playground code editor and runner** *(WIP)* — extend the playground from a code viewer into a full edit-assemble-run loop so learners can write and execute LCC assembly directly in the browser without installing anything locally; browser-embed arc (#591, #593, #595)
+- **Code running in slides** *(WIP)* — live assembly execution embedded in educational slide decks; platform selection between reveal-md, Marp, and Quarto in progress; static-file validation work in `docs/research/673-*`
+- **Linker boundary cleanup** — `linker.js` mid-transition toward the pure-seam / CLI-wrapper boundary established in assembler and interpreter
+- **Deeper module decomposition** — continued decomposition of `assembler.js` and `interpreter.js` toward smaller, independently testable units
 
 ---
 
-## ⚙️ **5. Future Enhancements**
+## Planned
 
-These are longer-term goals:
-
-* **Symbolic Debugger** *(partially shipped)*
-
-  * Interactive stepping, breakpoints, memory inspection.
-  * Phases 1+2 shipped: `g`/`q`/`r`/`m`/`b`/`i`/`h`/`s` commands, `bp` trap. Numeric step-count (phase 3) and full oracle parity still in progress.
-* **Terminal Graphics Utilities**
-
-  * Minimal sprite/tile rendering for richer demos.
-* **Web Playground**
-
-  * Browser-based interpreter and editor.
+- **LCC+ multi-module linker** — `src/plus/linkerplus.js` does not yet exist; multi-module `.ap` programs cannot be linked; this is the main missing piece of the LCC+ toolchain
+- **Hangman** — non-blocking input and screen-clearing demo using LCC+ instructions
+- **Tiny Roguelike** — turn-based grid movement and random dungeon generation in LCC+
+- **Terminal graphics utilities** — minimal sprite/tile rendering helpers for richer game demos
+- **CI cross-platform testing** — automated test runs on Linux, macOS, and Windows
 
 ---
 
-## 🔄 **Versioning & Releases**
+## Contributing
 
-**Version 1.0 Milestone:**
-
-* All major refactors complete.
-* All example programs published.
-* Tests pass in CI on Linux, macOS, and Windows.
-
----
-
-## 🏷️ **Labels**
-
-When opening or triaging issues, please use these labels:
-
-* `good first issue`
-* `help wanted`
-* `needs discussion`
-* `performance`
-* `example program`
-
----
-
-## 🙌 **Contributing**
-
-If you’d like to help with any of these items, **open an issue** or **start a draft pull request** to get feedback early!
-
+Browse the [issue tracker](https://github.com/avidrucker/lccjs/issues) for open work. The project uses Puzzle-Driven Development: `npm run puzzle:status` lists available bite-sized tasks. Good entry points: expanding linker test coverage, writing new demos, and improving documentation.
