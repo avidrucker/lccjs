@@ -227,6 +227,7 @@ A pause happens in two shapes:
 
    Green-light only when all three are "no" or "filed #N for it." (Addresses C-1, C-2, C-3, E-2 from [`docs/research/orchestration-failure-modes.md`](./research/orchestration-failure-modes.md), #627. Skill enforcement layer: M7 / #644.)
 5. **Research closes — file follow-up tickets for proposals.** If this is a research or spike ticket whose deliverable proposes concrete changes (new rules, doc updates, code modifications), file a follow-up DEV (or SPIKE) ticket for each distinct proposal before running the close sequence. A research close that ends with "here are N proposed changes" but no child issue is half-finished: the findings exist but have no path to implementation. Filing is not optional — a wrong ticket can be closed immediately. Cross-ref: scope-discipline failure mode taxonomy in [`docs/research/601-scope-discipline.md`](./research/601-scope-discipline.md), #615. (#621)
+6. **Run `/next-best-action`** — the pre-close finding checklist. Answers five questions (bug/regression, process recurrence, doc contradiction, closing loop, deferred decision/external routing). Takes 2–3 minutes; catches the findings most likely to evaporate at close time. Skip only for pure velocity-log-only or sub-minute clarification turns. (#644)
 
 **The close sequence** (full protocol in [`puzzle-velocity.md`](./puzzle-velocity.md)):
 
