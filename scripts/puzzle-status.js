@@ -122,6 +122,11 @@ function getOwnerRepo() {
 // 3. Issue state from gh — fetches only the specific issue numbers that appear
 //    as markers, via a single GraphQL batch query. ~800 ms vs ~5.4 s for the
 //    old `gh issue list --limit 1000` approach (#817).
+//
+// Returns:
+//   Map          — success; issue numbers → {state, title, blocked}
+//   null         — gh not installed / not authed / no remote
+//   {gqlErrors}  — gh ran but the query was rejected; caller should surface the errors
 function findIssueStates(issueNumbers) {
   if (!issueNumbers || !issueNumbers.length) return new Map();
 
@@ -136,12 +141,28 @@ function findIssueStates(issueNumbers) {
     .join(' ');
   const query = `{ repo: repository(owner:"${owner}", name:"${repo}") { ${fields} } }`;
 
-  const out = sh(`gh api graphql -f query='${query}'`, true);
-  if (!out) return null; // gh missing / not authed / no remote
+  // Use execSync directly (not sh()) so we can inspect stdout on failure.
+  // gh api graphql exits 1 and writes the GraphQL error JSON to stdout when the
+  // query is rejected — swallowing that error (as sh(…,true) does) causes the
+  // misleading "gh unavailable" message (#830).
+  let out;
+  try {
+    out = execSync(`gh api graphql -f query='${query}'`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  } catch (e) {
+    // e.stdout contains the GraphQL response JSON even on non-zero exit.
+    const gqlErrors = _parseGqlErrors(e.stdout);
+    if (gqlErrors) return { gqlErrors }; // query syntax/validation error, not a gh auth problem
+    return null; // gh not installed / not authed
+  }
+  if (!out) return null;
 
   const map = new Map();
   try {
     const data = JSON.parse(out);
+    // GraphQL can also return errors with HTTP 200 (exit 0) — detect those too.
+    if (data && Array.isArray(data.errors) && data.errors.length && !(data.data && data.data.repo)) {
+      return { gqlErrors: data.errors };
+    }
     const repoData = data && data.data && data.data.repo;
     if (!repoData) return null;
     for (const val of Object.values(repoData)) {
@@ -153,6 +174,15 @@ function findIssueStates(issueNumbers) {
     return null;
   }
   return map;
+}
+
+function _parseGqlErrors(stdout) {
+  if (!stdout) return null;
+  try {
+    const parsed = JSON.parse(stdout.trim());
+    if (Array.isArray(parsed.errors) && parsed.errors.length) return parsed.errors;
+  } catch { /* not JSON — gh missing or auth error */ }
+  return null;
 }
 
 // 4. Cluster manifest (derived-cluster availability, #222/#237). Optional file:
@@ -258,19 +288,29 @@ const ICON = {
 function main() {
   const markers = findMarkers();
   const { byIssue } = findWorktrees();
-  const issues = findIssueStates(markers.map((m) => m.issue));
+  const issuesResult = findIssueStates(markers.map((m) => m.issue));
+
+  // Normalize the discriminated return: Map → use as-is; {gqlErrors} → null for classify()
+  // but surface the real error instead of the misleading "gh unavailable" message.
+  const issues = issuesResult instanceof Map ? issuesResult : null;
+  const gqlErrors = (issuesResult && !(issuesResult instanceof Map) && issuesResult.gqlErrors) || null;
+
   const clusters = loadClusters();
   const inProgress = new Set(byIssue.keys()); // issues with a live worktree = in progress
 
   const rows = markers.map((m) => ({ ...m, ...classify(m, byIssue, issues, clusters, inProgress) }));
 
   if (AS_JSON) {
-    process.stdout.write(JSON.stringify({ ghAvailable: !!issues, rows }, null, 2) + '\n');
+    process.stdout.write(JSON.stringify({ ghAvailable: !!issues, gqlErrors: gqlErrors || undefined, rows }, null, 2) + '\n');
     if (STRICT && rows.some((r) => r.stale)) process.exit(1);
     return;
   }
 
-  if (!issues) {
+  if (gqlErrors) {
+    const msgs = gqlErrors.map((e) => e.message).join('; ');
+    console.log(`[puzzle-status] GraphQL query error — ${msgs}`);
+    console.log('[puzzle-status] Hint: every connection field needs first: or last: (e.g. labels(first:10))\n');
+  } else if (!issues) {
     console.log('[puzzle-status] gh unavailable — issue state shown as UNKNOWN; staleness limited to worktree checks.\n');
   }
 
@@ -295,4 +335,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { findMarkers, findWorktrees, findIssueStates, classify, loadClusters, clusterLockers };
+module.exports = { findMarkers, findWorktrees, findIssueStates, classify, loadClusters, clusterLockers, _parseGqlErrors };

@@ -153,6 +153,22 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## GitHub GraphQL queries
+
+**Always include `first:` or `last:` on every connection field in a GraphQL query**
+
+- **Do:** `labels(first:10) { nodes { name } }`, `issues(first:100) { nodes { number } }`
+- **Don't:** `labels { nodes { name } }` — omitting the pagination argument.
+- **Why:** GitHub rejects connection fields without a pagination bound, returning exit code 1 with `"You must provide a first or last value…"` The `sh(…, allowFail=true)` wrapper catches the non-zero exit and returns `null`, which surfaces as `[puzzle-status] gh unavailable` — completely hiding the real cause. (#830)
+
+**After a `gh api graphql` call returns null, check stderr/stdout before assuming gh is offline**
+
+- **Do:** When debugging a "gh unavailable" report, run the raw `gh api graphql` command manually and inspect both stdout (the JSON response body) and stderr (the human-readable error).
+- **Don't:** immediately assume gh auth is broken — a silent null from `sh()` can equally mean the query itself is malformed.
+- **Why:** `gh api graphql` writes a full JSON error body to stdout on validation failures, but the `sh()` helper only returns `null` on non-zero exit, discarding that context.
+
+---
+
 ## Grammar / parser patterns
 
 **Before adding a negative lookahead to prevent a false match, check whether the competing rule already excludes the overlap**

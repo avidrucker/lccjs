@@ -714,3 +714,7 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 727,823,RESEARCH: analyze human-decision queue growth — why so many tickets accumulate as unactionable,RESEARCH,30,15,4,26,11,2026-06-05T09:56:24,2026-06-05T10:00:20,,"#714 tracker pass (no row — pure tracker, no distinct deliverable). #823: 20/47=43% human-gated; 6 M-series batch as primary driver; wrote 823-human-decision-queue-growth.md with 6 policy proposals",APPLE,sonnet-4.6,lccjs
 728,824,RESEARCH: define ticket-dependency sequencing protocol,RESEARCH,30,20,2,28,18,2026-06-05T09:58:48-1000,2026-06-05T10:00:40-1000,,TIL in docs/learnings/today-i-learned-2026-06-05-dragonfruit.md: Sequenced after body annotation + sequenced label + fruit-agent-orchestrate Step 2 detection,DRAGONFRUIT,sonnet-4.6,lccjs
 729,825,RESEARCH: PM/research ratio analysis,RESEARCH,30,15,2,28,13,2026-06-05T10:00:20-1000,2026-06-05T10:02:18-1000,,,FIG,sonnet-4.6,lccjs
+730,,,DEV,,,,,-3,,,,,TEST,,lccjs
+731,,,DEV,,,,,-3,,,,,TEST,,lccjs
+732,,,DEV,,,,,-3,,,,,TEST,,lccjs
+733,830,gh api graphql connection fields silently return null,DEV,30,12,6,24,6,2026-06-05T09:59:14-1000,2026-06-05T10:05:07-1000,,added _parseGqlErrors helper; findIssueStates returns {gqlErrors} sentinel; main shows correct message; 6 unit tests; do-this-not-that.md entry,BANANA,sonnet-4.6,lccjs
