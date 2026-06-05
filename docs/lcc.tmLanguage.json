@@ -32,7 +32,7 @@
     },
     "label_def": {
       "name": "entity.name.label.lcc",
-      "match": "^\\s*(?:[@A-Za-z_][A-Za-z0-9_@]*):"
+      "match": "^\\s*(?:[$@A-Za-z_][$@A-Za-z0-9_]*):"
     },
     "string": {
       "name": "string.quoted.double.lcc",

@@ -86,6 +86,12 @@ const TEST_LINES = {
   coreScope:      'add r0, r1',
   ioScope:        'aout r0',
   debugAfterLabel:'startup:   s',
+
+  // #850 — label edge-case variants
+  dollarLabelDef:    '$cheese:',
+  underscoreLabelDef:'_cheese:',
+  numStartNotLabel:  '5cheese: halt',
+  periodNotLabel:    '.cheese: mov r0, 5',
 };
 
 // ── harness ──────────────────────────────────────────────────────────────────
@@ -157,6 +163,23 @@ describe('label definitions', () => {
 
   test('local @-prefixed label definition', () => {
     expect(scopeOf('localLabelDef', '@loopTop:')).toBe('entity.name.label.lcc');
+  });
+
+  // #850 edge cases
+  test('$-prefixed label definition', () => {
+    expect(scopeOf('dollarLabelDef', '$cheese:')).toBe('entity.name.label.lcc');
+  });
+
+  test('_-prefixed label definition', () => {
+    expect(scopeOf('underscoreLabelDef', '_cheese:')).toBe('entity.name.label.lcc');
+  });
+
+  test('number-starting token is NOT highlighted as a label', () => {
+    expect(scopeOf('numStartNotLabel', '5cheese:')).not.toBe('entity.name.label.lcc');
+  });
+
+  test('period-starting token is NOT highlighted as a label', () => {
+    expect(scopeOf('periodNotLabel', '.cheese:')).not.toBe('entity.name.label.lcc');
   });
 });
 
