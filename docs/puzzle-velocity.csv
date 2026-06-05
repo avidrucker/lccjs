@@ -747,3 +747,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 760,838,TRACKER GitHub repo viz — advance after #837 SPIKE,PM,20,10,1,19,9,2026-06-05T11:28:33-1000,2026-06-05T11:29:36-1000,,Filed #858 DEV (Tier 1 report script) and #859 SPIKE (Tier 2 Observable); updated tracker body; skipped ARC — SPIKE findings sufficient,DRAGONFRUIT,sonnet-4.6,lccjs
 761,,,DEV,,,,,-3,,,,,TEST,,lccjs
 762,850,Label definition edge-case behavior — oracle parity suite,DEV,60,20,14,46,6,2026-06-05T11:16:51-1000,2026-06-05T11:31:08-1000,,8 fixture files; isValidLabelDefinition utility; 14 unit tests; 18 oracle parity tests; grammar $-prefix fix; grammar edge-case tests,CHERRY,sonnet-4.6,lccjs
+763,843,"expand artifact quality rubric — feature tickets, design docs, status updates",WRITER,20,5,1,19,4,2026-06-05T11:32:29-1000,2026-06-05T11:33:27-1000,,added 3 type-specific tables (5 rows each); updated identified-gaps stub to strikethrough,CHERRY,sonnet-4.6,lccjs

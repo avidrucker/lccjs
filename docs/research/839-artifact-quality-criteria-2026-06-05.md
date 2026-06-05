@@ -51,6 +51,42 @@ A rubric for reviewing any artifact — docs, tickets, issues, bug reports, desi
 
 ---
 
+## Feature ticket criteria
+
+| Tag | Explanation | AI assess? |
+|---|---|---|
+| **Linked epic** | References a parent epic, tracker, or related issue number | ✅ Yes |
+| **Priority stated** | Explicit priority level or urgency signal is present (e.g. label, severity tag) | ✅ Yes |
+| **Acceptance criteria present** | A "Done when" or equivalent section states observable completion conditions | ✅ Yes |
+| **User / role identified** | States who benefits and in what context (user story or equivalent framing) | ⚠️ Partial |
+| **Out-of-scope explicit** | Explicitly states what is NOT included to prevent scope creep | ⚠️ Partial |
+
+---
+
+## Design doc / proposal criteria
+
+| Tag | Explanation | AI assess? |
+|---|---|---|
+| **Alternatives considered** | At least two approaches are named and characterized before recommending one | ⚠️ Partial |
+| **Decision needed** | Clearly states what must be decided, and by whom | ✅ Yes |
+| **Deadline stated** | Specifies when the decision is needed; flags if deadline is unknown | ✅ Yes |
+| **Trade-offs stated** | Pros, cons, or constraints are listed per option — not just a winner | ⚠️ Partial |
+| **Author's recommendation** | The author's preferred option is stated explicitly with brief rationale | ✅ Yes |
+
+---
+
+## Status update criteria
+
+| Tag | Explanation | AI assess? |
+|---|---|---|
+| **Period covered** | Clearly states the time window the update covers (sprint, week, date range) | ✅ Yes |
+| **Decisions made** | Lists decisions finalized during the period, not just activity | ✅ Yes |
+| **Decisions still needed** | Explicitly lists open questions that require a future decision | ✅ Yes |
+| **Blockers stated** | Current blockers are identified with owners where known | ⚠️ Partial |
+| **Next steps** | States what happens next and when — not just what happened | ✅ Yes |
+
+---
+
 ## Identified gaps (future rubric work)
 
 ### Missing core criterion
@@ -64,13 +100,15 @@ A rubric for reviewing any artifact — docs, tickets, issues, bug reports, desi
 
 ### Missing artifact-type sections
 
-Bug reports are the only type-specific section developed so far. Candidates:
+~~Bug reports are the only type-specific section developed so far. Candidates:~~
 
-- **Feature tickets** — linked epic, priority stated, acceptance criteria present
-- **Design docs / proposals** — alternatives considered, decision needed, deadline stated
-- **Status updates** — period covered, decisions made vs. decisions still needed
+~~- **Feature tickets** — linked epic, priority stated, acceptance criteria present~~
+~~- **Design docs / proposals** — alternatives considered, decision needed, deadline stated~~
+~~- **Status updates** — period covered, decisions made vs. decisions still needed~~
 
-See #840 for expanding the rubric to cover these types.
+~~See #840 for expanding the rubric to cover these types.~~
+
+All three type-specific sections added in #843.
 
 ---
 
