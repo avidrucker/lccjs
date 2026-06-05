@@ -578,7 +578,7 @@ let currentWorker = null;
 
 function setRunning(active) {
   runBtn.style.display  = active ? 'none' : '';
-  stopBtn.style.display = active ? '' : 'none';
+  stopBtn.style.display = active ? 'inline-block' : 'none';
 }
 
 function finishRun() {
