@@ -19,7 +19,7 @@ Exported read-only copy: **`docs/puzzle-velocity.csv`** — committed to git, au
 | `c_min` | REAL | YES | Claude wall-clock prediction set *before* starting work (for calibration) |
 | `actual_min` | REAL | YES | Elapsed work time in minutes (`finished − started`). **Valid only when the work performed matches the ticket's stated scope** — if out-of-scope work was absorbed (FM-1/FM-2/FM-3 per `docs/research/601-scope-discipline.md`), annotate the row as invalid in `notes` rather than leaving a misleading value (do not delete the row). NULL when the span includes multi-hour idle gaps (multi-turn sessions) — see notes. |
 | `delta_h_min` | REAL | YES | `h_min − actual_min` (positive = under human budget) |
-| `delta_c_min` | REAL | YES | `c_min − actual_min` (positive = Claude over-estimated) |
+| `delta_c_min` | REAL | YES | `c_min − actual_min`. Positive = Claude over-estimated (finished early). Negative = Claude under-estimated (ran over). |
 | `started_iso` | TEXT | YES | ISO 8601 timestamp captured *before* `gh issue view` (wall-clock start) |
 | `finished_iso` | TEXT | YES | ISO 8601 timestamp captured *before* the closing commit |
 | `closed_commit` | TEXT | YES | Always NULL at close time — rebase rewrites the SHA. Derive on demand: `git log --grep "Closes #N" -1 --format=%h` |
