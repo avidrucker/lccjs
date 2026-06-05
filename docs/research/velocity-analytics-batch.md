@@ -185,3 +185,60 @@ At the current logging rate (~32 rows/month with both `c_min` and `actual_min`),
 3. **Continue tracking, don't run a formal experiment** — with the current n the overshoot rate can be monitored as a quarterly metric; a meaningful shift (e.g., from 4.6% to <2%) would be apparent descriptively before it is significant at α=0.05.
 
 **Summary:** The C-overshoot experiment requires corpus growth that makes a powered study impractical for the full-corpus case. Focus future power-analysis checkpoints on single-agent cohorts with elevated base rates (DRAGONFRUIT, CHERRY).
+
+---
+
+## Q29r — Corrected re-run (ticket #769, 2026-06-04)
+
+**The rate assumption in the original Q29r was ~78× too low.** The ~32 rows/month figure was a misread; the actual confirmed organic logging rate is 40–65 all3 rows/day (verified from May 28, May 31, June 4 — days with sequential ticket ranges and no bulk backfill). This section supersedes the feasibility conclusion above.
+
+### Updated corpus state
+
+| Metric | Original Q29r | Updated (2026-06-04) |
+|--------|--------------|----------------------|
+| all3 rows | 477 | 528 |
+| C-overshoot count | 22 | 26 |
+| C-overshoot rate | 4.61% | 4.92% |
+| Organic-only all3 | — | 227 |
+| Organic C-overshoot rate | — | 6.61% (15/227) |
+
+The organic-only rate (6.61%) is notably higher than the full-corpus rate (4.92%), consistent with backfill rows' `c_min` being anchored retroactively to `actual_min` — deflating apparent overshoot in bulk-logged sessions.
+
+### Q29r-A — Full corpus (4.92% base rate)
+
+Two-proportion z-test (α=0.05, two-sided, 80% power), detecting a halving 4.92% → 2.46%:
+
+- Cohen's h = 0.1324
+- **n per group = 896; n total = 1,792**
+- Gap from current n=528: **1,264 rows → ~31.6 days at 40/day**
+- Gap from organic n=227: 1,565 rows → ~39.1 days at 40/day
+
+### Q29r-B — Organic-only sensitivity (6.61% base rate)
+
+If analysis is restricted to organic-logged rows (excludes backfill, uses 6.61% base rate), the threshold is lower:
+
+- Cohen's h = 0.1544
+- **n per group = 659; n total = 1,318**
+- Gap from total corpus: 790 rows → **~19.8 days at 40/day**
+- Gap from organic corpus: 1,091 rows → ~27.3 days at 40/day
+
+### Q29r-C/D — Per-agent (DRAGONFRUIT, CHERRY)
+
+| Agent | n | rate | n_per_group | gap | rate/active-day | active days to threshold |
+|-------|---|------|-------------|-----|-----------------|--------------------------|
+| DRAGONFRUIT | 67 | 9.0% | 478 | 411 | 9.6 | ~43 days (~1.4 months) |
+| CHERRY | 86 | 8.1% | 529 | 443 | 12.3 | ~36 days (~1.2 months) |
+
+The original "~1 year per agent" estimate used the same broken rate. With actual per-agent rates of ~10–12 rows/active-day, both agents reach their per-group threshold in **~5–6 weeks of active work**.
+
+### Updated feasibility conclusion and recommendation for #719
+
+| Scenario | n needed | days to threshold | verdict |
+|----------|----------|------------------|---------|
+| Full corpus (total) | 1,792 | ~32 days | **feasible in ~5 weeks** |
+| Full corpus (organic-only) | 1,318 | ~20–27 days | **feasible in ~3–4 weeks** |
+| DRAGONFRUIT per-agent | 478/group | ~43 active days | feasible in ~6 weeks |
+| CHERRY per-agent | 529/group | ~36 active days | feasible in ~5 weeks |
+| ~~Original: 47 months~~ | ~~1,969~~ | ~~~1,410 days~~ | **superseded** |
+
+**Recommendation for #719:** Do **not** retire the full-corpus C-overshoot experiment. The "not feasible" conclusion is reversed — the powered threshold is reachable in approximately 5 weeks at the confirmed organic rate. #719 should be repurposed or closed with a note documenting this correction, not used to record a retirement decision.
