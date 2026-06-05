@@ -1,0 +1,27 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Fri Jun  5 12:21:13 2026
+Drucker Avi
+
+Header
+o
+C
+
+Loc   Code           Source Code
+           ; label_prefix_probe.a — #862
+           ; Tests @-prefix and $-prefix label recognition in assem
+           ; Expected: all labels at column 0 in source; assembler 
+0000  d000         mov r0, 0
+0001  1021 @loop:  add r0, r0, 1
+0002  8023         cmp r0, 3
+0003  05fd         brn @loop
+0004  f002 $done:  dout r0
+0005  f001         nl
+0006  f000         halt
+====================================================== Output
+3
+
+========================================== Program statistics
+Input file name       =      label_prefix_probe.a
+Instructions executed =    d (hex)    13 (dec)
+Program size          =    7 (hex)     7 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)

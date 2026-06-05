@@ -1,0 +1,10 @@
+; label_prefix_probe.a — #862
+; Tests @-prefix and $-prefix label recognition in assembler and formatter.
+; Expected: all labels at column 0 in source; assembler accepts all forms.
+        mov r0, 0
+@loop:  add r0, r0, 1
+        cmp r0, 3
+        brn @loop
+$done:  dout r0
+        nl
+        halt
