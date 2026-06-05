@@ -390,8 +390,8 @@ function main() {
   if (identity.source === 'auto') {
     die(
       'no agent identity set.\n' +
-      '  Pass --as <fruit>  (e.g. --as apple)\n' +
-      '  or export CLAUDE_AGENT_NAME=apple before running.\n' +
+      '  Corrected command:  npm run claim -- ' + issue + ' --as <fruit>\n' +
+      '  or export CLAUDE_AGENT_NAME=<fruit> before running.\n' +
       '  Auto-naming is disabled — agent names must be assigned by the human orchestrator (#386).'
     );
   }
