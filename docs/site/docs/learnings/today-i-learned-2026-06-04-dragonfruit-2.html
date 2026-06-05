@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-04-dragonfruit-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/guides/">Guides</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>Today I Learned — 2026-06-04 (DRAGONFRUIT, session 2)</h1>
+<p>Date: 2026-06-04
+Agent: DRAGONFRUIT
+Context: Playground interactive stdin (#729), rate-assumption audit (#766),
+Q29r corrected re-run (#769), #717 closed as won&#39;t-do, follow-up tickets
+#762, #778, #779 filed.</p>
+<hr>
+<h2>1. SQLite <code>date()</code> silently returns NULL for ISO 8601 timestamps with timezone offsets</h2>
+<p>While querying the velocity DB to analyse C-overshoot row distributions by
+day, <code>GROUP BY date(finished_iso)</code> produced a mysterious bucket of 309 rows
+with a blank date label. Every row had a non-NULL <code>finished_iso</code> — the problem
+was the format.</p>
+<pre><code class="language-sql">-- Silently returns NULL for 2026-06-01T12:50:42-1000
+SELECT date(&#39;2026-06-01T12:50:42-1000&#39;);  -- → NULL
+</code></pre>
+<p>SQLite&#39;s <code>date()</code> function only understands UTC timestamps (with <code>Z</code> or no
+offset). The <code>-HHMM</code> timezone suffix it cannot parse — it returns NULL instead
+of an error. <code>GROUP BY</code> then lumps all 309 affected rows into a single NULL
+group, making them invisible in day-by-day analysis and overstating the
+&quot;no-date&quot; bucket by 309.</p>
+<p><strong>Fix:</strong> <code>substr(finished_iso, 1, 10)</code> always returns the date string directly
+without trying to interpret the timezone:</p>
+<pre><code class="language-sql">GROUP BY substr(finished_iso, 1, 10)
+</code></pre>
+<p><strong>Lesson:</strong> When a SQLite date function produces unexpected NULLs on data that
+looks valid, check whether the timestamp includes a timezone offset. Use
+<code>substr</code> to extract the date portion instead.</p>
+<hr>
+<h2>2. A Web Worker&#39;s module-level variable is a reliable closure store for interactive pause/resume</h2>
+<p>The <code>pauseOnInput</code> playground wiring (#729) needed a way for the Worker to
+hold a <code>resume()</code> closure between two separate <code>onmessage</code> calls — the first
+to start execution, the second to provide user input. Workers can&#39;t pass
+functions over <code>postMessage</code>, so the closure had to live inside the Worker.</p>
+<p>The key insight: a Worker&#39;s module scope persists for the entire lifetime of
+the Worker instance. A module-level <code>let resumeFn = null</code> survives between
+messages:</p>
+<pre><code class="language-js">let resumeFn = null;             // lives as long as the Worker does
+
+self.onmessage = function(e) {
+  if (e.data.type === &#39;run&#39;) {
+    resumeFn = null;             // reset for fresh execution
+    const result = api.run(binary, { pauseOnInput: true });
+    if (result.status === &#39;waiting-for-input&#39;) {
+      resumeFn = result.resume;  // stash the closure
+      self.postMessage({ status: &#39;waiting-for-input&#39;, ... });
+    }
+  } else if (e.data.type === &#39;resume&#39;) {
+    const fn = resumeFn;
+    resumeFn = null;             // clear before calling (re-entrancy safety)
+    handleResult(fn(e.data.input));
+  }
+};
+</code></pre>
+<p>The Worker stays alive (not terminated) while the interactive prompt is
+showing. Only <code>halted</code>, <code>max-steps-reached</code>, and error statuses trigger
+<code>worker.terminate()</code>. The Stop button terminates the Worker mid-pause, which
+also destroys <code>resumeFn</code> cleanly.</p>
+<p><strong>Lesson:</strong> For stateful Worker protocols, module-level variables are a simple
+and reliable closure store. You don&#39;t need to serialize interpreter state or
+restart from scratch — the Worker&#39;s own JavaScript heap holds it.</p>
+<hr>
+<h2>3. <code>partialOutput</code> must be added to <code>waiting-for-input</code> results or the UI has no context to show</h2>
+<p>The first draft of the <code>pauseOnInput</code> playground wiring showed the prompt
+widget but left the output panel empty while the program was paused. The
+<code>api.run()</code> <code>waiting-for-input</code> result only contained <code>status</code>, <code>trapType</code>,
+and <code>resume</code> — no <code>stdout</code>. Without the output produced before the pause, a
+user prompting for <code>din</code> input has no idea what the program has printed.</p>
+<p>The fix was adding <code>partialOutput: interp.output</code> to both <code>waiting-for-input</code>
+returns in <code>src/browser/api.js</code>. The <code>interp</code> object accumulates all output
+from the start of execution, so <code>interp.output</code> at pause time is exactly the
+partial output to show.</p>
+<p>The issue description said &quot;do not change&quot; the API contract, which I read as
+&quot;don&#39;t break existing callers&quot; — adding an optional field is additive and
+backward-compatible.</p>
+<p><strong>Lesson:</strong> Whenever an async or pauseable operation returns a sentinel,
+include the accumulated partial result in that sentinel. Callers with no
+context for what to show the user will always need it.</p>
+<hr>
+<h2>4. A single unit error can invert a study&#39;s feasibility conclusion by 78×</h2>
+<p>The Q29r analysis in #706 concluded the full-corpus C-overshoot experiment
+would take ~47 months. The rate used was &quot;~32 rows/month.&quot; When cross-checking
+the velocity DB (#766), the actual confirmed organic logging rate was
+40–65 all3 rows <strong>per day</strong> — roughly 78× higher than the figure used.</p>
+<p>The root cause: the rate was read from a plot or summary at the wrong scale.
+32 rows/month ≈ 1 row/day; 40 rows/day ≈ 1,200/month. A unit confusion
+between &quot;per month&quot; and &quot;per day&quot; flipped &quot;not feasible in our lifetimes&quot; to
+&quot;feasible in five weeks.&quot;</p>
+<p>This is the same class of error as the NASA Mars Climate Orbiter (imperial
+vs metric units) — a dimensionally-typed value treated as dimensionless.</p>
+<p><strong>Lesson:</strong> For any rate-based feasibility calculation, always state the unit
+explicitly <em>and</em> sanity-check by computing what the rate implies at two
+timescales (e.g., per day and per year). A number that &quot;feels right&quot; per month
+may be absurd per day — and vice versa.</p>
+<hr>
+<h2>5. A PM decision ticket can be superseded before it&#39;s worked — close it as won&#39;t-do with a pointer</h2>
+<p><code>#717</code> was a valid PM ticket when filed: &quot;decide whether to add per-agent
+C-overshoot tracker for DRAGONFRUIT and CHERRY.&quot; Its decision criteria
+depended on the Q29r feasibility timeline. Once #769 corrected that timeline,
+the decision collapsed — if the full-corpus experiment is feasible in ~5 weeks,
+&quot;should we bother with a per-agent tracker as an alternative?&quot; answers itself.</p>
+<p>The instinct was to pick up #717 and write the PM decision document. The
+right call was to close it as won&#39;t-do with a comment explaining:</p>
+<ol>
+<li>What made it valid when filed.</li>
+<li>What changed (corrected rate from #769).</li>
+<li>Where the substance went (#769&#39;s output absorbs the decision).</li>
+</ol>
+<p>Closing with context is not the same as abandoning the work — it prevents
+future agents from picking up a ticket whose premise is gone and doing work
+that produces a stale conclusion.</p>
+<p><strong>Lesson:</strong> Before picking up any PM or decision ticket, verify that the
+factual premises it was built on are still current. If a child ticket has
+already resolved the underlying question, close the PM ticket as won&#39;t-do
+with an explanation rather than doing the decision work on stale data.</p>
+<hr>
+<h2>6. Organic vs backfill rows have different c_min validity — pooling them distorts calibration metrics</h2>
+<p>The Q29r re-run (#769) revealed a meaningful split in the C-overshoot rate:
+organic days (c_min set before starting work) show <strong>6.61%</strong>, while the
+pooled corpus shows <strong>4.92%</strong>. The difference is backfill rows, where
+<code>c_min</code> was logged retroactively — anchored to the known <code>actual_min</code>.</p>
+<p>This means:</p>
+<ul>
+<li>The pooled rate understates true C-overshoot for calibration purposes.</li>
+<li>A powered experiment using the pooled rate (4.92%) targets the wrong
+threshold — it needs n=1,792 when the organic-only threshold is n=1,318.</li>
+<li>Any calibration trend analysis that mixes organic and backfill rows is
+measuring a blend of &quot;genuine prediction accuracy&quot; and &quot;retroactive
+self-assessment accuracy.&quot;</li>
+</ul>
+<p><strong>Lesson:</strong> For calibration metrics, always segment rows by whether the
+estimate was set before or after the outcome was known. Pooling forward-looking
+and retroactive estimates produces a metric that measures neither well. Tag
+backfill sessions at logging time if possible, or derive them from
+<code>finished_iso</code> distribution patterns.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/729">#729</a></td>
+<td><code>pauseOnInput</code> playground widget — stateful Worker resume, <code>showPrompt</code>/<code>hidePrompt</code>, <code>partialOutput</code> in <code>api.js</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/762">#762</a></td>
+<td>Filed — validate pauseOnInput UX in browser (8-scenario checklist)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/766">#766</a></td>
+<td>TRACKER: 5 Q29r rate-assumption questions answered inline via sqlite3; filed #769</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/769">#769</a></td>
+<td>DATA: corrected Q29r — 47 months → ~32 days; appended to <code>velocity-analytics-batch.md</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/717">#717</a></td>
+<td>Closed as won&#39;t-do — superseded by #769</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/778">#778</a></td>
+<td>Filed — #719 body contains inverted feasibility conclusion</td>
+</tr>
+<tr>
+<td><a href="https://github.com/avidrucker/lccjs/issues/779">#779</a></td>
+<td>Filed — organic vs backfill c_min conflation, organic-only sensitivity unwritten</td>
+</tr>
+</tbody></table>
+<h2>Open threads</h2>
+<ul>
+<li><a href="https://github.com/avidrucker/lccjs/issues/778">#778</a> — correct #719&#39;s body (redline the 47-month figure)</li>
+<li><a href="https://github.com/avidrucker/lccjs/issues/779">#779</a> — write organic-only sensitivity analysis for C-overshoot</li>
+<li><a href="https://github.com/avidrucker/lccjs/issues/719">#719</a> — repurpose once #778 closes: document corrected feasibility finding</li>
+<li><a href="https://github.com/avidrucker/lccjs/issues/762">#762</a> — manual browser validation of pauseOnInput UX</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

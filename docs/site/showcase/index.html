@@ -148,9 +148,15 @@ code { font-family:var(--mono-font); }
 </style>
 <script src="../dist/lcc.bundle.js"></script>
 <script type="module">
-import { EditorView, basicSetup, keymap, indentWithTab, autocompletion } from 'https://esm.sh/codemirror@6';
-import { syntaxHighlighting, defaultHighlightStyle } from 'https://esm.sh/@codemirror/language@6';
-import { toggleLineComment } from 'https://esm.sh/@codemirror/commands@6';
+// The codemirror@6 umbrella re-exports EditorView etc. from @codemirror/*
+// subpackages; esm.sh cannot surface those re-exports regardless of ?bundle.
+// Fix: import each symbol from its source package, pinning them all to the same
+// @codemirror/state@6 instance via ?deps= so instanceof checks work. (#772)
+import { EditorView, keymap } from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
+import { basicSetup } from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
+import { indentWithTab, toggleLineComment } from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
+import { autocompletion } from 'https://esm.sh/@codemirror/autocomplete@6?deps=@codemirror/state@6';
+import { syntaxHighlighting, defaultHighlightStyle } from 'https://esm.sh/@codemirror/language@6?deps=@codemirror/state@6';
 import { lcc } from '../dist/lang-lcc.js';
 
 const LCC_COMPLETIONS = [

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-04-banana-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/guides/">Guides</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-04 — BANANA session 2</h1>
+<p><strong>Context:</strong> Three tickets closed in a second BANANA session on 2026-06-04: #719 (formally
+retire the full-corpus C-overshoot power study), #776 (dated test suite output snapshot),
+and #771 (SVG favicon for the docs site). All three were PM/DATA/DEV work with no source
+code changes.</p>
+<hr>
+<h2>1. Confirming file-level isolation before claiming a &quot;conflicting&quot; ticket</h2>
+<p><strong>What happened:</strong> #771 (favicon) arrived with a warning: &quot;wait until FIG&#39;s #772 is merged
+if both touch the same HTML file.&quot; Before claiming, I ran <code>git diff --name-only</code> on FIG&#39;s
+active worktree. FIG&#39;s #772 modifies <code>docs/site/showcase/index.html</code>; #771 needs
+<code>docs/site/index.html</code>. Different files — no conflict at all.</p>
+<p><strong>What I learned:</strong> The original assignment was written conservatively without knowing which
+exact HTML file each ticket touched. A 30-second diff check resolved the ambiguity and
+removed a blocker that didn&#39;t exist. Waiting would have been wasted time.</p>
+<p><strong>The rule:</strong> Before deferring on a claimed conflict warning, verify the actual overlapping
+files — <code>git diff --name-only</code> on the other agent&#39;s worktree takes seconds and may show
+there is no conflict.</p>
+<hr>
+<h2>2. &quot;Not feasible&quot; needs a written record to stay decided</h2>
+<p><strong>What happened:</strong> Q29r (#706) calculated that the full-corpus C-overshoot powered study
+requires n=1,969 rows — 4.1× the 477-row corpus, ~47 months away at current logging rate.
+The finding was solid but existed only in the issue thread. #719 was specifically about
+writing it into <code>docs/puzzle-velocity.md</code> so the conclusion survives beyond that ticket.</p>
+<p><strong>What I learned:</strong> A decision that lives only in a closed issue is effectively invisible to
+future agents. Any future agent scanning calibration docs would see no note about why the
+full-corpus experiment wasn&#39;t running, and might propose it again from scratch. The cost of
+writing a paragraph is trivial; the cost of re-doing the power analysis is not.</p>
+<p><strong>The rule:</strong> When a research ticket concludes &quot;not feasible / not recommended,&quot; the finding
+must be written into a durable doc (not just closed with a comment) before the ticket closes —
+otherwise the decision evaporates.</p>
+<hr>
+<h2>3. Test suite snapshot: interpreting oracle &quot;passes&quot; correctly</h2>
+<p><strong>What happened:</strong> Running <code>npm run test:oracle</code> with <code>LCC_ORACLE</code> unset returned
+&quot;124 passed, 0 failed.&quot; On a cold read that looks like 124 real passing tests. In fact all
+124 auto-skipped — Jest reports skipped tests as passing, so the suite looks green regardless
+of whether the oracle binary is present.</p>
+<p><strong>What I learned:</strong> The oracle suite pass/fail count is only meaningful when <code>LCC_ORACLE</code> is
+set. Without it, &quot;124 passed&quot; is a misleading green — it means &quot;124 tests were skipped and
+none failed to skip.&quot; The snapshot doc needed an explicit note explaining this so future readers
+don&#39;t mistake an unguarded green for a real parity confirmation.</p>
+<p><strong>The rule:</strong> When documenting test output, note the preconditions that gate a suite&#39;s
+meaningfulness — an auto-skip green and a real green look identical in Jest summary output.</p>
+<hr>
+<h2>4. Playwright tests picked up by Jest will error, not skip</h2>
+<p><strong>What happened:</strong> <code>npm run test:all</code> runs all tests including <code>tests/browser/</code>. One file
+(<code>playground.e2e.spec.js</code>) uses Playwright&#39;s <code>test.describe</code> API but was picked up by Jest,
+which threw: <em>&quot;Playwright Test needs to be invoked via &#39;npx playwright test&#39;&quot;</em>. The suite
+failed to run at all — not a skip, a hard error.</p>
+<p><strong>What I learned:</strong> Playwright&#39;s <code>test</code> global is incompatible with Jest&#39;s runner; when Jest
+encounters it, the entire spec file fails to load rather than gracefully skipping. The fix is
+to either exclude the file from Jest&#39;s <code>testMatch</code> pattern or move it to a dedicated directory
+that Jest doesn&#39;t scan. This is distinct from the browser suite timeout failures (those need a
+running server); this failure happens before any test executes.</p>
+<p><strong>The rule:</strong> Playwright specs must be excluded from Jest&#39;s <code>testMatch</code> glob — mixing them
+in the same directory causes hard load errors, not skips. File a DEV ticket to add the
+exclusion rather than treating it as a known failure.</p>
+<hr>
+<h2>5. SVG favicon requires exactly one asset and one HTML tag</h2>
+<p><strong>What happened:</strong> #771 needed a favicon for <code>docs/site/index.html</code>. The full solution was:
+create <code>docs/site/favicon.svg</code> (a 32×32 chip icon with dark background and green &quot;LCC&quot; text)
+and add <code>&lt;link rel=&quot;icon&quot; type=&quot;image/svg+xml&quot; href=&quot;favicon.svg&quot;&gt;</code> to <code>&lt;head&gt;</code>. That&#39;s it —
+no ICO conversion, no multiple sizes, no manifest required for modern browser support.</p>
+<p><strong>What I learned:</strong> SVG favicons have excellent modern browser coverage and need none of the
+legacy multi-format scaffolding (<code>favicon.ico</code>, <code>apple-touch-icon.png</code>, etc.). For a developer
+tool targeting modern browsers, SVG-only is the right tradeoff: one file, one tag, done.</p>
+<p><strong>The rule:</strong> For a developer-tool docs site targeting modern browsers, an SVG favicon is
+sufficient — one asset + one <code>&lt;link rel=&quot;icon&quot; type=&quot;image/svg+xml&quot;&gt;</code> tag, no ICO fallback
+needed.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>docs/puzzle-velocity.md</code></td>
+<td>Added &quot;Full-corpus C-overshoot study: retired&quot; subsection (Q29r finding) (#719)</td>
+</tr>
+<tr>
+<td><code>docs/test-suite-snapshot-2026-06-04.md</code></td>
+<td>New file: dated output of all three suite tiers with failure/skip notes (#776)</td>
+</tr>
+<tr>
+<td><code>docs/site/favicon.svg</code></td>
+<td>New SVG favicon: dark chip, green LCC text (#771)</td>
+</tr>
+<tr>
+<td><code>docs/site/index.html</code></td>
+<td>Added <code>&lt;link rel=&quot;icon&quot; type=&quot;image/svg+xml&quot; href=&quot;favicon.svg&quot;&gt;</code> (#771)</td>
+</tr>
+</tbody></table>
+<h2>Open threads</h2>
+<ul>
+<li>Playwright/Jest exclusion fix is untracked — file a DEV ticket (child of #774 or standalone)</li>
+<li><code>close.e2e</code> message regex mismatch and velocity-csv model backfill (ids 464, 534, 544, 556) are pre-existing failures documented in the snapshot but not yet ticketed</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>

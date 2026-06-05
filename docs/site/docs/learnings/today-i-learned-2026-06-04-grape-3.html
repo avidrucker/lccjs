@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-04-grape-3 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/guides/">Guides</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-04 — GRAPE 3</h1>
+<p><strong>Context:</strong> Continuation of GRAPE&#39;s second session. Closed three issues (#765,
+#427, #770), performed a tracker audit (#751), and ran /fruit-agent-orchestrate
+twice. All work was PM/CHORE/RESEARCH — no code changes.</p>
+<hr>
+<h2>1. Two closes in a row that needed no new work</h2>
+<p><strong>What happened:</strong> Both #765 (allow <code>gh issue comment</code> in project settings) and
+#427 (Tier 2 tracker) turned out to be already complete when I arrived. #765
+had been fixed by #637 on 2026-06-03; #427 had all three children closed before
+my session started. In both cases I committed a velocity row or an empty commit
+with <code>Closes #N</code> and used <code>--skip-velocity-check</code> / <code>--skip-keyword-check</code> flags
+to get through the close script.</p>
+<p><strong>What I learned:</strong> &quot;Already done&quot; is a valid close outcome. The close script&#39;s
+keyword guard fires when the commit subject doesn&#39;t echo the issue title — the
+correct bypass is <code>--skip-keyword-check</code>, not <code>--no-verify</code>. Similarly,
+<code>--skip-velocity-check</code> exists for tracker closes where children already own
+all the logged work. Both flags are intentional escape hatches, not signs of
+process failure.</p>
+<p><strong>The rule:</strong> When arriving at a ticket and finding it already resolved, close
+it cleanly with an explanatory commit and closing comment rather than leaving
+it open. Use the script&#39;s bypass flags for their intended purposes and document
+why in the closing comment.</p>
+<hr>
+<h2>2. Tracker audits: the close gate includes human-required children</h2>
+<p><strong>What happened:</strong> Auditing #751 (CodeMirror follow-on tracker) showed four of
+five children closed (#753, #754, #755, #768) — but #752 (HUMAN DECISION)
+remained open. The tracker body says &quot;stays open until all four children close.&quot;
+Since #752 is <code>human-decision-required</code>, it cannot be closed by an agent. The
+tracker therefore could not close.</p>
+<p><strong>What I learned:</strong> A tracker&#39;s close gate doesn&#39;t distinguish between
+agent-closeable and human-required children. Even one open human-required child
+blocks the whole tracker. The right response is a status comment — not an
+attempt to close the tracker prematurely — so the human knows exactly what&#39;s
+blocking and what&#39;s already done.</p>
+<p><strong>The rule:</strong> Before claiming a tracker for closure, check every child&#39;s state
+AND its <code>human-decision-required</code> / <code>humans-only</code> label. If any human-required
+child is open, post a status comment and leave the tracker open; don&#39;t claim a
+worktree.</p>
+<hr>
+<h2>3. Agent-scoped memory is an invisible failure mode</h2>
+<p><strong>What happened:</strong> #770 asked me to audit <code>.claude/memory/</code> for files scoped
+to a named agent. The grep found exactly one: <code>elderberry_c_min_priors.md</code>.
+The content — per-role c_min priors — was useful to any agent, but the filename
+and slug meant it only surfaced in ELDERBERRY sessions. Any other agent doing
+RESEARCH or SPIKE work would anchor to the wrong prior or none at all.</p>
+<p><strong>What I learned:</strong> Memory files are keyed by filename in <code>MEMORY.md</code>. If the
+filename encodes a fruit identity, the memory is effectively invisible to six
+of seven agents. The calibration data was correct; only its scope was wrong.
+The fix was a rename and slug update — the body was left mostly intact (the
+fruit name is allowed as a data-provenance note, not as a scope marker).</p>
+<p><strong>The rule:</strong> Memory file names and <code>name:</code> slugs must describe the concept or
+role, never the agent. Fruit names may appear in the body as provenance only.
+New memories should be reviewed against this rule before writing to <code>MEMORY.md</code>.</p>
+<hr>
+<h2>4. /fruit-agent-orchestrate: cluster separation prevents merge conflicts</h2>
+<p><strong>What happened:</strong> Running /fruit-agent-orchestrate twice in this session, the
+most important constraint was avoiding two agents in the same code cluster
+simultaneously. The playground/build cluster (#772 FIG), testing cluster
+(BANANA + CHERRY on different files), data cluster (DRAGONFRUIT), process
+cluster (GRAPE), and docs-site cluster (APPLE after #762) were each given to
+one agent.</p>
+<p><strong>What I learned:</strong> The skill&#39;s &quot;avoid assigning two agents to the same code
+cluster&quot; heuristic requires file-level reasoning, not just worktree isolation.
+Even though worktrees prevent git conflicts at commit time, two agents editing
+the same file in separate worktrees create a rebase conflict that must be
+resolved manually. Upstream assignment is cheaper than downstream resolution.</p>
+<p><strong>The rule:</strong> When orchestrating agents, identify the primary file or directory
+each ticket touches and treat that as its cluster. Assign at most one agent per
+cluster per round.</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>#765</td>
+<td>Closed (already fixed by #637; no code change needed)</td>
+</tr>
+<tr>
+<td>#427</td>
+<td>Closed (all Tier 2 children resolved before session)</td>
+</tr>
+<tr>
+<td>#770</td>
+<td><code>elderberry_c_min_priors.md</code> → <code>c_min_priors_by_role.md</code>; MEMORY.md updated</td>
+</tr>
+<tr>
+<td>#751</td>
+<td>Status comment posted; tracker left open pending #752 human decision</td>
+</tr>
+<tr>
+<td>#777</td>
+<td>Filed: inline <code>.a</code> strings in tests should be fixture files (252 occurrences, 11 files)</td>
+</tr>
+</tbody></table>
+<h2>Open threads</h2>
+<ul>
+<li>FIG has a stale worktree for the now-closed #772 that needs teardown:
+<code>git worktree remove .claude/worktrees/fig-issue-772 --force &amp;&amp; git branch -D fig/issue-772-fix-github-pages-showcase-broken</code></li>
+<li>#751 will close once the human rules on #752.</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>
