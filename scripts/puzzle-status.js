@@ -111,15 +111,43 @@ function findWorktrees() {
   return { worktrees, byIssue };
 }
 
-// 3. Issue state from gh, batched into one call. Optional.
-function findIssueStates() {
-  const out = sh('gh issue list --state all --json number,state,title,labels --limit 1000', true);
+// Parse "owner/repo" from the origin remote URL (handles HTTPS and SSH forms).
+function getOwnerRepo() {
+  const url = sh('git remote get-url origin', true);
+  if (!url) return null;
+  const m = url.trim().match(/github\.com[:/]([^/]+)\/([^/]+?)(?:\.git)?\s*$/);
+  return m ? { owner: m[1], repo: m[2] } : null;
+}
+
+// 3. Issue state from gh — fetches only the specific issue numbers that appear
+//    as markers, via a single GraphQL batch query. ~800 ms vs ~5.4 s for the
+//    old `gh issue list --limit 1000` approach (#817).
+function findIssueStates(issueNumbers) {
+  if (!issueNumbers || !issueNumbers.length) return new Map();
+
+  const ownerRepo = getOwnerRepo();
+  if (!ownerRepo) return null;
+  const { owner, repo } = ownerRepo;
+
+  // Deduplicate — multiple markers can reference the same issue.
+  const nums = [...new Set(issueNumbers)];
+  const fields = nums
+    .map((n) => `i${n}: issue(number:${n}) { number state title labels(first:10) { nodes { name } } }`)
+    .join(' ');
+  const query = `{ repo: repository(owner:"${owner}", name:"${repo}") { ${fields} } }`;
+
+  const out = sh(`gh api graphql -f query='${query}'`, true);
   if (!out) return null; // gh missing / not authed / no remote
+
   const map = new Map();
   try {
-    for (const i of JSON.parse(out)) {
-      const labels = (i.labels || []).map((l) => l.name);
-      map.set(i.number, { state: i.state, title: i.title, blocked: labels.includes('blocked') });
+    const data = JSON.parse(out);
+    const repoData = data && data.data && data.data.repo;
+    if (!repoData) return null;
+    for (const val of Object.values(repoData)) {
+      if (!val || typeof val !== 'object') continue;
+      const labels = ((val.labels && val.labels.nodes) || []).map((l) => l.name);
+      map.set(val.number, { state: val.state, title: val.title, blocked: labels.includes('blocked') });
     }
   } catch {
     return null;
@@ -230,7 +258,7 @@ const ICON = {
 function main() {
   const markers = findMarkers();
   const { byIssue } = findWorktrees();
-  const issues = findIssueStates();
+  const issues = findIssueStates(markers.map((m) => m.issue));
   const clusters = loadClusters();
   const inProgress = new Set(byIssue.keys()); // issues with a live worktree = in progress
 
