@@ -11,6 +11,11 @@ const ROOT       = path.join(__dirname, '..');
 const GRAMMAR_PATH = path.join(ROOT, 'docs', 'lcc.tmLanguage.json');
 const OUT_DIR    = path.join(ROOT, 'docs', 'site');
 
+// Browser-side CDN import for the playground/showcase. Must stay aligned with the @cmshiki/shiki
+// peer dep (shiki@^3). Separate from the npm "shiki" dep below, which is a Node.js-only build
+// tool used for static site code block rendering and can diverge from this version.
+const SHIKI_CDN_URL = 'https://esm.sh/shiki@3';
+
 const retroDarkTheme = {
   name: 'retro-console-dark',
   settings: [
@@ -600,7 +605,7 @@ runBtn.addEventListener('click', () => {
   let hl;
   try {
     const [{ createHighlighter }, grammarRes] = await Promise.all([
-      import('https://esm.sh/shiki@1'),
+      import('${SHIKI_CDN_URL}'),
       fetch('../lcc.tmLanguage.json'),
     ]);
     const grammar = await grammarRes.json();

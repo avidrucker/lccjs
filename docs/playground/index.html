@@ -398,7 +398,7 @@ editor.value = STARTER;
   let createHighlighter, grammar;
   try {
     const [shikiMod, grammarRes] = await Promise.all([
-      import('https://esm.sh/shiki@1'),
+      import('https://esm.sh/shiki@3'),
       fetch('../lcc.tmLanguage.json'),
     ]);
     createHighlighter = shikiMod.createHighlighter;

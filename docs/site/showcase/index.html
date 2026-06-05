@@ -333,7 +333,7 @@ runBtn.addEventListener('click', () => {
   let hl;
   try {
     const [{ createHighlighter }, grammarRes] = await Promise.all([
-      import('https://esm.sh/shiki@1'),
+      import('https://esm.sh/shiki@3'),
       fetch('../lcc.tmLanguage.json'),
     ]);
     const grammar = await grammarRes.json();
