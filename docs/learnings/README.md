@@ -103,6 +103,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-06-05 ELDERBERRY](./today-i-learned-2026-06-05-elderberry.md) | 2026-06-05 | ELDERBERRY | PostToolBatch hook fires on any ≥2 batched Bash calls (including read-only gh issue view); re-issue serially — hook does not distinguish reads from writes. |
 | [TIL 2026-06-05 FIG session 2](./today-i-learned-2026-06-05-fig-2.md) | 2026-06-05 | FIG | Guided-human-decision pattern: context brief → options table → recommendation → ruling → execute; claim.js vs orchestrator label-set asymmetry is load-bearing; land trivially-resolvable side-deps now not later; new label creation requires an immediate candidate sweep. |
 | [TIL 2026-06-05 CHERRY](./today-i-learned-2026-06-05-cherry.md) | 2026-06-05 | CHERRY | Oracle edge-case verification before assuming errors; grammar/assembler/formatter char-class drift only surfaces with cross-module tests; TDD utility extraction clarifies interface; oracle error cases get their own test shape (no golden, just throws). |
+| [TIL 2026-06-05 APPLE](./today-i-learned-2026-06-05-apple.md) | 2026-06-05 | APPLE | `slice(0)` is a no-op — conditional slice needed for buffer fix; inline assembly test strings need indentation; GitHub issue body text carries ratification state that labels miss. |
 
 ## Recurring threads (informal — #207 will formalize)
 
