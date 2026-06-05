@@ -157,19 +157,19 @@ describe('claim.js identity resolution', () => {
     });
 
     test('unknown name via --as with --custom → warn (proceed)', () => {
-      const result = checkIdentityName({ name: 'dragonfruit', source: 'as' }, { custom: true });
+      const result = checkIdentityName({ name: 'custard', source: 'as' }, { custom: true });
       expect(result).toHaveProperty('warn');
       expect(result.error).toBeUndefined();
     });
 
     test('unknown name via env → warn regardless of --custom (env is not --as)', () => {
-      const result = checkIdentityName({ name: 'dragonfruit', source: 'env' }, { custom: false });
+      const result = checkIdentityName({ name: 'custard', source: 'env' }, { custom: false });
       expect(result).toHaveProperty('warn');
       expect(result.error).toBeUndefined();
     });
 
     test('unknown name via branch-inference → warn (already existed from prior claim)', () => {
-      const result = checkIdentityName({ name: 'dragonfruit', source: 'branch' }, { custom: false });
+      const result = checkIdentityName({ name: 'custard', source: 'branch' }, { custom: false });
       expect(result).toHaveProperty('warn');
       expect(result.error).toBeUndefined();
     });

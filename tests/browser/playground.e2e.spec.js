@@ -32,6 +32,9 @@ const BAD_MNEMONIC = 'notanopcode r0, r1\nhalt';
 
 const DIN_DOUT = 'din r0\ndout r0\nnl\nhalt';
 
+const DIN_STDIN_VALUE = '42';               // arbitrary stdin for din tests
+const DIN_PROMPT_OUTPUT = 'Enter: 42\n42\n'; // prompt + din echo + dout + nl
+
 // Program with a prompt (no trailing newline) before din — verifies displayWithSeparator
 // shows pre-pause and post-resume output without injecting a spurious newline.
 const DIN_PROMPT = [
@@ -93,13 +96,13 @@ test.describe('Playground E2E', () => {
 
     await page.evaluate((src) => { window.__lccSetSource(src); }, DIN_DOUT);
 
-    await page.fill('#stdin-input', '42');
+    await page.fill('#stdin-input', DIN_STDIN_VALUE);
 
     await page.click('#run-btn');
     await waitForOutput(page);
 
     const text = await page.locator('#exec-output').textContent();
-    expect(text).toContain('42');
+    expect(text).toContain(DIN_STDIN_VALUE);
 
     const cls = await page.locator('#exec-output').getAttribute('class');
     expect(cls ?? '').not.toContain('lcc-error');
@@ -109,15 +112,14 @@ test.describe('Playground E2E', () => {
     await page.goto('/showcase/');
 
     await page.evaluate((src) => { window.__lccSetSource(src); }, DIN_PROMPT);
-    await page.fill('#stdin-input', '42');
+    await page.fill('#stdin-input', DIN_STDIN_VALUE);
 
     await page.click('#run-btn');
     await waitForOutput(page);
 
     const text = await page.locator('#exec-output').textContent();
-    // "Enter: " (no trailing newline) followed immediately by din echo "42\n",
-    // then dout outputs "42" and nl adds "\n" — no spurious newline injected.
-    expect(text).toBe('Enter: 42\n42\n');
+    // "Enter: " (no trailing newline) followed immediately by din echo + dout + nl
+    expect(text).toBe(DIN_PROMPT_OUTPUT);
 
     const cls = await page.locator('#exec-output').getAttribute('class');
     expect(cls ?? '').not.toContain('lcc-error');
