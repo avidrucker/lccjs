@@ -1,0 +1,3 @@
+  .extern externalVar
+  ld r0, externalVar
+  halt

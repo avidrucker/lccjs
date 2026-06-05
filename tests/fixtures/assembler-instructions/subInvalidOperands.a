@@ -1,0 +1,3 @@
+    sub r0, label, r1
+    halt
+  label: .word 10

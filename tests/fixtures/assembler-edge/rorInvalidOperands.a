@@ -1,0 +1,4 @@
+    ror r3, label
+    halt
+  label:
+    .word 5

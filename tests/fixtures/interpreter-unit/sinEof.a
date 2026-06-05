@@ -1,0 +1,4 @@
+  lea r0, buffer
+  sin r0
+  halt
+  buffer: .zero 8

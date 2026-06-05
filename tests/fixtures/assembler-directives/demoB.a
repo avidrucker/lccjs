@@ -1,0 +1,7 @@
+      ld r0, x
+      add r0, r0, 2
+      dout r0
+      halt
+ask:  .string "What's your first name? "
+buffer1: .zero 10
+x: .word 5

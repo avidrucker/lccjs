@@ -1,0 +1,2 @@
+  mul r3, 5
+  halt

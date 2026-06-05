@@ -1,0 +1,5 @@
+  lea r0, buffer
+  sin r0
+  sout r0
+  halt
+  buffer: .zero 8

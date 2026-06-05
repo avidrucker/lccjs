@@ -8,6 +8,8 @@ const Assembler = require('../../src/core/assembler');
 const { setupAssemblerIntegrationHarness } = require('../helpers/assemblerIntegrationHarness');
 
 jest.mock('fs');
+const path = require('path');
+const realFs = jest.requireActual('fs');
 
 describe('Assembler Format Integration', () => {
   let assembler;
@@ -24,10 +26,7 @@ describe('Assembler Format Integration', () => {
   // -------------------------------------------------------------------------
   test('5a. should assemble a correctly written .bin file (each line 16 bits)', () => {
     const binFilePath = 'binaryExample.bin';
-    const source = `
-      0001000000000010 ; this is a 16-bit binary line
-      0011100000000101 ; another 16-bit binary line
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-formats/binaryExample.bin'), 'utf8');
     virtualFs[binFilePath] = source;
 
     expect(() => {
@@ -41,9 +40,7 @@ describe('Assembler Format Integration', () => {
 
   test('5b. should throw if .bin file line is not 16 bits', () => {
     const binFilePath = 'badBinary.bin';
-    const source = `
-      0101001001 ; only 10 bits
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-formats/badBinary.bin'), 'utf8');
     virtualFs[binFilePath] = source;
 
     expect(() => {
@@ -53,9 +50,7 @@ describe('Assembler Format Integration', () => {
 
   test('5c. should throw if .bin file has non-binary characters', () => {
     const binFilePath = 'badBinary2.bin';
-    const source = `
-      0101001001001XYZ
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-formats/badBinary2.bin'), 'utf8');
     virtualFs[binFilePath] = source;
 
     expect(() => {
@@ -68,10 +63,7 @@ describe('Assembler Format Integration', () => {
   // -------------------------------------------------------------------------
   test('6a. should assemble a .hex file (each line exactly 4 hex digits)', () => {
     const hexFilePath = 'hexExample.hex';
-    const source = `
-      1A2F ; 16-bit value in hex
-      FFFF
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-formats/hexExample.hex'), 'utf8');
     virtualFs[hexFilePath] = source;
 
     expect(() => {
@@ -85,9 +77,7 @@ describe('Assembler Format Integration', () => {
 
   test('6b. should throw if .hex file line is not 4 hex digits', () => {
     const hexFilePath = 'badHex.hex';
-    const source = `
-      1A2 ; only 3 hex digits
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-formats/badHex.hex'), 'utf8');
     virtualFs[hexFilePath] = source;
 
     expect(() => {
@@ -97,9 +87,7 @@ describe('Assembler Format Integration', () => {
 
   test('6c. should throw if .hex file has invalid hex characters', () => {
     const hexFilePath = 'badHex2.hex';
-    const source = `
-      X123
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-formats/badHex2.hex'), 'utf8');
     virtualFs[hexFilePath] = source;
 
     expect(() => {

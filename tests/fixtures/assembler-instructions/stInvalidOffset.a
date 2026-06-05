@@ -1,0 +1,4 @@
+    st r2, data + offset
+    halt
+  data:
+    .word 20

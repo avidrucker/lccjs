@@ -1,0 +1,3 @@
+      lea r3, buffer + 300
+      halt
+buffer: .word 10

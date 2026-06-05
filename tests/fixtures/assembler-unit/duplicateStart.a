@@ -1,0 +1,4 @@
+  .start alpha
+  .start beta
+  alpha: halt
+  beta: halt

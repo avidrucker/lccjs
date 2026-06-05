@@ -8,6 +8,8 @@ const Assembler = require('../../src/core/assembler');
 const { setupAssemblerIntegrationHarness } = require('../helpers/assemblerIntegrationHarness');
 
 jest.mock('fs');
+const path = require('path');
+const realFs = jest.requireActual('fs');
 
 describe('Assembler Edge Integration', () => {
   let assembler;
@@ -21,12 +23,7 @@ describe('Assembler Edge Integration', () => {
 
   test('122. should throw error for add instruction with label instead of register', () => {
     const aFilePath = 'addLabelInsteadRegister.a';
-    const source = `
-      add r0, r1, label
-      halt
-    label:
-      .word 10
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/addLabelInsteadRegister.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -36,10 +33,7 @@ describe('Assembler Edge Integration', () => {
 
   test('126. should throw error for mvi instruction with string instead of literal', () => {
     const aFilePath = 'mviStringInsteadLiteral.a';
-    const source = `
-      mvi r1, "Hello"
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/mviStringInsteadLiteral.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -49,10 +43,7 @@ describe('Assembler Edge Integration', () => {
 
   test('127. should assemble add instruction with valid negative immediate', () => {
     const aFilePath = 'addNegativeImmediate.a';
-    const source = `
-      add r0, r1, -5
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/addNegativeImmediate.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -64,10 +55,7 @@ describe('Assembler Edge Integration', () => {
 
   test('128. should throw error for add instruction with immediate below negative bound', () => {
     const aFilePath = 'addImmediateBelowBound.a';
-    const source = `
-      add r0, r1, -20
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/addImmediateBelowBound.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -77,10 +65,7 @@ describe('Assembler Edge Integration', () => {
 
   test('131. should assemble pop instruction with valid destination register', () => {
     const aFilePath = 'popValid.a';
-    const source = `
-      pop r1
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/popValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -92,10 +77,7 @@ describe('Assembler Edge Integration', () => {
 
   test('132. should throw error for pop instruction with invalid register', () => {
     const aFilePath = 'popInvalidRegister.a';
-    const source = `
-      pop r8
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/popInvalidRegister.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -105,10 +87,7 @@ describe('Assembler Edge Integration', () => {
 
   test('133. should throw error for pop instruction missing operand', () => {
     const aFilePath = 'popMissingOperand.a';
-    const source = `
-      pop
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/popMissingOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -118,10 +97,7 @@ describe('Assembler Edge Integration', () => {
 
   test('134. should assemble pop instruction with extra operands without throwing error', () => {
     const aFilePath = 'popExtraOperands.a';
-    const source = `
-      pop r1, extra
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/popExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -133,10 +109,7 @@ describe('Assembler Edge Integration', () => {
 
   test('135. should assemble push instruction with valid source register', () => {
     const aFilePath = 'pushValid.a';
-    const source = `
-      push r2
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/pushValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -148,10 +121,7 @@ describe('Assembler Edge Integration', () => {
 
   test('136. should throw error for push instruction with invalid register', () => {
     const aFilePath = 'pushInvalidRegister.a';
-    const source = `
-      push r8
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/pushInvalidRegister.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -161,10 +131,7 @@ describe('Assembler Edge Integration', () => {
 
   test('137. should throw error for push instruction missing operand', () => {
     const aFilePath = 'pushMissingOperand.a';
-    const source = `
-      push
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/pushMissingOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -174,10 +141,7 @@ describe('Assembler Edge Integration', () => {
 
   test('138. should assemble push instruction with extra operands without throwing error', () => {
     const aFilePath = 'pushExtraOperands.a';
-    const source = `
-      push r2, extra
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/pushExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -189,10 +153,7 @@ describe('Assembler Edge Integration', () => {
 
   test('140. should throw no error for srl instruction with shift count that goes out of range', () => {
     const aFilePath = 'srlInvalidShiftCount.a';
-    const source = `
-      srl r1, 16
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/srlInvalidShiftCount.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -202,10 +163,7 @@ describe('Assembler Edge Integration', () => {
 
   test('141. should throw error for invalid shift type in srl instruction', () => {
     const aFilePath = 'srlInvalidShiftType.a';
-    const source = `
-      srl r1, invalidShiftType
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/srlInvalidShiftType.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -215,10 +173,7 @@ describe('Assembler Edge Integration', () => {
 
   test('142. should assemble sll instruction with valid shift count', () => {
     const aFilePath = 'sllValid.a';
-    const source = `
-      sll r1, 5
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/sllValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -230,10 +185,7 @@ describe('Assembler Edge Integration', () => {
 
   test('143. should assemble sll instruction with missing shift count', () => {
     const aFilePath = 'sllMissingShiftCount.a';
-    const source = `
-      sll r1
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/sllMissingShiftCount.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -245,10 +197,7 @@ describe('Assembler Edge Integration', () => {
 
   test('144. should throw no error for sll instruction with shift count out of range', () => {
     const aFilePath = 'sllShiftCountOutOfRange.a';
-    const source = `
-      sll r1, 20
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/sllShiftCountOutOfRange.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -258,10 +207,7 @@ describe('Assembler Edge Integration', () => {
 
   test('145. should assemble rol instruction with valid operands', () => {
     const aFilePath = 'rolValid.a';
-    const source = `
-      rol r2, 3
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/rolValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -273,10 +219,7 @@ describe('Assembler Edge Integration', () => {
 
   test('146. should throw no error for rol instruction with out of range shift count', () => {
     const aFilePath = 'rolInvalidShiftCount.a';
-    const source = `
-      rol r2, 16
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/rolInvalidShiftCount.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -286,10 +229,7 @@ describe('Assembler Edge Integration', () => {
 
   test('147. should assemble ror instruction with valid operands', () => {
     const aFilePath = 'rorValid.a';
-    const source = `
-      ror r3, 2
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/rorValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -301,12 +241,7 @@ describe('Assembler Edge Integration', () => {
 
   test('148. should throw error for ror instruction with invalid operand types', () => {
     const aFilePath = 'rorInvalidOperands.a';
-    const source = `
-      ror r3, label
-      halt
-    label:
-      .word 5
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/rorInvalidOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -316,10 +251,7 @@ describe('Assembler Edge Integration', () => {
 
   test('149. should assemble ror instruction with missing shift count', () => {
     const aFilePath = 'rorMissingShiftCount.a';
-    const source = `
-      ror r3
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/rorMissingShiftCount.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -331,10 +263,7 @@ describe('Assembler Edge Integration', () => {
 
   test('150. should throw error for rol instruction with invalid operand format', () => {
     const aFilePath = 'rolInvalidOperandFormat.a';
-    const source = `
-      rol r2, cheese
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/rolInvalidOperandFormat.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -344,12 +273,7 @@ describe('Assembler Edge Integration', () => {
 
   test('151. should assemble bl instruction with valid label', () => {
     const aFilePath = 'blValid.a';
-    const source = `
-      bl function
-      halt
-    function:
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/blValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -362,12 +286,7 @@ describe('Assembler Edge Integration', () => {
 
   test('153. should assemble bl instruction with extra operands without throwing error', () => {
     const aFilePath = 'blExtraOperands.a';
-    const source = `
-      bl function, extra
-      halt
-    function:
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/blExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -379,10 +298,7 @@ describe('Assembler Edge Integration', () => {
 
   test('154. should throw error for bl instruction with invalid operand type', () => {
     const aFilePath = 'blInvalidOperand.a';
-    const source = `
-      bl 100
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/blInvalidOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -392,10 +308,7 @@ describe('Assembler Edge Integration', () => {
 
   test('155. should assemble ldr instruction with valid operands', () => {
     const aFilePath = 'ldrValid.a';
-    const source = `
-      ldr r1, r2, 4
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/ldrValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -407,10 +320,7 @@ describe('Assembler Edge Integration', () => {
 
   test('156. should throw error for ldr instruction with invalid base register', () => {
     const aFilePath = 'ldrInvalidBaseRegister.a';
-    const source = `
-      ldr r1, r8, 4
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/ldrInvalidBaseRegister.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -420,10 +330,7 @@ describe('Assembler Edge Integration', () => {
 
   test('157. should throw error for ldr instruction with invalid offset', () => {
     const aFilePath = 'ldrInvalidOffset.a';
-    const source = `
-      ldr r1, r2, 100
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/ldrInvalidOffset.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -433,10 +340,7 @@ describe('Assembler Edge Integration', () => {
 
   test('158. should throw error for ldr instruction missing operands', () => {
     const aFilePath = 'ldrMissingOperands.a';
-    const source = `
-      ldr r1
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/ldrMissingOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -446,10 +350,7 @@ describe('Assembler Edge Integration', () => {
 
   test('159. should assemble ldr instruction with extra operands without throwing error', () => {
     const aFilePath = 'ldrExtraOperands.a';
-    const source = `
-      ldr r1, r2, 4, extra
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/ldrExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -461,12 +362,7 @@ describe('Assembler Edge Integration', () => {
 
   test('160. should throw error for ldr instruction with label', () => {
     const aFilePath = 'ldrLabel.a';
-    const source = `
-      ldr r1, r2, label
-      halt
-    label:
-      .word 10
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/ldrLabel.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -476,10 +372,7 @@ describe('Assembler Edge Integration', () => {
 
   test('162. should assemble mvr instruction with valid registers', () => {
     const aFilePath = 'mvrValid.a';
-    const source = `
-      mvr r1, r2
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/mvrValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -491,10 +384,7 @@ describe('Assembler Edge Integration', () => {
 
   test('163. should throw error for mvr instruction with invalid operand type', () => {
     const aFilePath = 'mvrInvalidOperand.a';
-    const source = `
-      mvr r1, 100
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/mvrInvalidOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -504,10 +394,7 @@ describe('Assembler Edge Integration', () => {
 
   test('164. should throw error for mvr instruction missing operands', () => {
     const aFilePath = 'mvrMissingOperands.a';
-    const source = `
-      mvr r1
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/mvrMissingOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -517,10 +404,7 @@ describe('Assembler Edge Integration', () => {
 
   test('165. should assemble mvr instruction with extra operands without throwing error', () => {
     const aFilePath = 'mvrExtraOperands.a';
-    const source = `
-      mvr r1, r2, extra
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/mvrExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -532,10 +416,7 @@ describe('Assembler Edge Integration', () => {
 
   test('166. should assemble sext instruction with valid operands', () => {
     const aFilePath = 'sextValid.a';
-    const source = `
-      sext r3, r1
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/sextValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -547,10 +428,7 @@ describe('Assembler Edge Integration', () => {
 
   test('167. should throw error for sext instruction with invalid operand type', () => {
     const aFilePath = 'sextInvalidOperand.a';
-    const source = `
-      sext r3, 10
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/sextInvalidOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -560,10 +438,7 @@ describe('Assembler Edge Integration', () => {
 
   test('168. should throw error for sext instruction missing operands', () => {
     const aFilePath = 'sextMissingOperands.a';
-    const source = `
-      sext r3
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/sextMissingOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -573,10 +448,7 @@ describe('Assembler Edge Integration', () => {
 
   test('169. should assemble sext instruction with extra operands without throwing error', () => {
     const aFilePath = 'sextExtraOperands.a';
-    const source = `
-      sext r3, r1, extra
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/sextExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -588,9 +460,7 @@ describe('Assembler Edge Integration', () => {
 
   test('170. should assemble halt instruction with extra operands without throwing error', () => {
     const aFilePath = 'haltExtraOperands.a';
-    const source = `
-      halt extra
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/haltExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -602,10 +472,7 @@ describe('Assembler Edge Integration', () => {
 
   test('171. should throw error for dout trap instruction with invalid register', () => {
     const aFilePath = 'doutInvalidRegister.a';
-    const source = `
-      dout r8
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/doutInvalidRegister.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -615,10 +482,7 @@ describe('Assembler Edge Integration', () => {
 
   test('172. should assemble dout trap instruction with missing operand (defaults to r0)', () => {
     const aFilePath = 'doutMissingOperand.a';
-    const source = `
-      dout
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/doutMissingOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -630,12 +494,7 @@ describe('Assembler Edge Integration', () => {
 
   test('173. should throw error for dout trap instruction with label instead of register', () => {
     const aFilePath = 'doutLabelInsteadRegister.a';
-    const source = `
-      dout label
-      halt
-    label:
-      .word 10
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/doutLabelInsteadRegister.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -645,14 +504,7 @@ describe('Assembler Edge Integration', () => {
 
   test('176. should assemble jmp instruction with offset', () => {
     const aFilePath = 'jmpLabelOffsetNoSpace.a';
-    const source = `
-      jmp r0, 5
-      dout r0
-      dout r0
-      dout r0
-      dout r0
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/jmpLabelOffsetNoSpace.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -664,10 +516,7 @@ describe('Assembler Edge Integration', () => {
 
   test('177. should assemble jmp instruction with no offset', () => {
     const aFilePath = 'jmpLabelOffsetWithSpace.a';
-    const source = `
-      jmp r0
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/jmpLabelOffsetWithSpace.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -679,12 +528,7 @@ describe('Assembler Edge Integration', () => {
 
   test('178. should throw error for jmp instruction with label', () => {
     const aFilePath = 'jmpInvalidOffset.a';
-    const source = `
-      jmp loop
-      halt
-    loop:
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/jmpInvalidOffset.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -694,10 +538,7 @@ describe('Assembler Edge Integration', () => {
 
   test('179. should throw error for jmp instruction with offset out of bounds', () => {
     const aFilePath = 'jmpOffsetOutOfBounds.a';
-    const source = `
-      jmp r0, 300
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/jmpOffsetOutOfBounds.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -707,12 +548,7 @@ describe('Assembler Edge Integration', () => {
 
   test('180. should assemble br instruction with valid label', () => {
     const aFilePath = 'brValid.a';
-    const source = `
-      br loop
-      halt
-    loop:
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/brValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -724,10 +560,7 @@ describe('Assembler Edge Integration', () => {
 
   test('183. should assemble ret instruction with extra operands without throwing error', () => {
     const aFilePath = 'retExtraOperands.a';
-    const source = `
-      ret 10 50
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/retExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -739,10 +572,7 @@ describe('Assembler Edge Integration', () => {
 
   test('184. should throw error for ret instruction with invalid operand type', () => {
     const aFilePath = 'retInvalidOperand.a';
-    const source = `
-      ret r1
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/retInvalidOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -752,10 +582,7 @@ describe('Assembler Edge Integration', () => {
 
   test('186. should assemble xor instruction with valid registers', () => {
     const aFilePath = 'xorValid.a';
-    const source = `
-      xor r1, r2, r3
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/xorValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -767,10 +594,7 @@ describe('Assembler Edge Integration', () => {
 
   test('187. should throw error for xor instruction with non-register immediate value', () => {
     const aFilePath = 'xorImmediateOutOfBounds.a';
-    const source = `
-      xor r1, 20
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/xorImmediateOutOfBounds.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -780,12 +604,7 @@ describe('Assembler Edge Integration', () => {
 
   test('188. should throw error for xor instruction with invalid operand types', () => {
     const aFilePath = 'xorInvalidOperands.a';
-    const source = `
-      xor r1, label
-      halt
-    label:
-      .word 10
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/xorInvalidOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -795,10 +614,7 @@ describe('Assembler Edge Integration', () => {
 
   test('189. should assemble xor instruction with extra operands without throwing error', () => {
     const aFilePath = 'xorExtraOperands.a';
-    const source = `
-      xor r1, r2, r3, extra
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/xorExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -810,10 +626,7 @@ describe('Assembler Edge Integration', () => {
 
   test('191. should assemble not instruction with valid operands', () => {
     const aFilePath = 'notValid.a';
-    const source = `
-      not r1, r2
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/notValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -825,10 +638,7 @@ describe('Assembler Edge Integration', () => {
 
   test('192. should throw error for not instruction with invalid operand type', () => {
     const aFilePath = 'notInvalidOperand.a';
-    const source = `
-      not r1, 5
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/notInvalidOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -838,10 +648,7 @@ describe('Assembler Edge Integration', () => {
 
   test('193. should throw error for not instruction missing operand', () => {
     const aFilePath = 'notMissingOperand.a';
-    const source = `
-      not r1
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/notMissingOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -851,10 +658,7 @@ describe('Assembler Edge Integration', () => {
 
   test('194. should assemble not instruction with extra operands without throwing error', () => {
     const aFilePath = 'notExtraOperands.a';
-    const source = `
-      not r1, r2, extra
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/notExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -866,10 +670,7 @@ describe('Assembler Edge Integration', () => {
 
   test('196. should assemble add instruction with maximum positive immediate', () => {
     const aFilePath = 'addMaxPositiveImmediate.a';
-    const source = `
-      add r0, r1, 15
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/addMaxPositiveImmediate.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -881,10 +682,7 @@ describe('Assembler Edge Integration', () => {
 
   test('197. should assemble add instruction with maximum negative immediate', () => {
     const aFilePath = 'addMaxNegativeImmediate.a';
-    const source = `
-      add r0, r1, -16
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/addMaxNegativeImmediate.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -896,10 +694,7 @@ describe('Assembler Edge Integration', () => {
 
   test('198. should throw error for add instruction with immediate below negative bound', () => {
     const aFilePath = 'addImmediateBelowBound.a';
-    const source = `
-      add r0, r1, -17
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/addImmediateBelowBound-2.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -909,10 +704,7 @@ describe('Assembler Edge Integration', () => {
 
   test('199. should throw error for add instruction with immediate above positive bound', () => {
     const aFilePath = 'addImmediateAboveBound.a';
-    const source = `
-      add r0, r1, 16
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/addImmediateAboveBound.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -922,10 +714,7 @@ describe('Assembler Edge Integration', () => {
 
   test('200. should throw error for add instruction with invalid hexadecimal immediate', () => {
     const aFilePath = 'addInvalidHexImmediate.a';
-    const source = `
-      add r0, r1, 0xG
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/addInvalidHexImmediate.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -935,10 +724,7 @@ describe('Assembler Edge Integration', () => {
 
   test('201. should throw error for blr instruction with non-numeric 2nd argument', () => {
     const aFilePath = 'blrNonNumericSecondArg.a';
-    const source = `
-      blr r1, cheese
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/blrNonNumericSecondArg.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -948,10 +734,7 @@ describe('Assembler Edge Integration', () => {
 
   test('202. should throw error for blr instruction with non-register 1st argument', () => {
     const aFilePath = 'blrNonRegisterFirstArg.a';
-    const source = `
-      blr cheese
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/blrNonRegisterFirstArg.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -961,10 +744,7 @@ describe('Assembler Edge Integration', () => {
 
   test('204. should throw no error for ldr instruction implicit operand', () => {
     const aFilePath = 'ldrImplicitOperand.a';
-    const source = `
-      ldr r1, r2
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/ldrImplicitOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -974,12 +754,7 @@ describe('Assembler Edge Integration', () => {
 
   test('205. should throw error for ldr instruction with label and offset', () => {
     const aFilePath = 'ldrLabelOffset.a';
-    const source = `
-      ldr r1, r2, label + 5
-      halt
-    label:
-      .word 10
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/ldrLabelOffset.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -989,10 +764,7 @@ describe('Assembler Edge Integration', () => {
 
   test('206. should throw error for sext instruction missing operands', () => {
     const aFilePath = 'sextMissingOperands.a';
-    const source = `
-      sext
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/sextMissingOperands-2.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -1002,10 +774,7 @@ describe('Assembler Edge Integration', () => {
 
   test('207. should throw error for mvr instruction missing operands', () => {
     const aFilePath = 'mvrMissingOperands.a';
-    const source = `
-      mvr
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/mvrMissingOperands-2.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -1015,11 +784,7 @@ describe('Assembler Edge Integration', () => {
 
   test('210. should throw error for offset with missing number', () => {
     const aFilePath = 'offsetMissingNumber.a';
-    const source = `
-    lea r0, x +
-    halt
-x: .word 10
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/offsetMissingNumber.a'), 'utf8');
 
     virtualFs[aFilePath] = source;
     expect(() => {
@@ -1029,10 +794,7 @@ x: .word 10
 
   test('211. should throw error for lea with no arguments', () => {
     const aFilePath = 'leaNoArgs.a';
-    const source = `
-    lea
-    halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-edge/leaNoArgs.a'), 'utf8');
 
     virtualFs[aFilePath] = source;
     expect(() => {

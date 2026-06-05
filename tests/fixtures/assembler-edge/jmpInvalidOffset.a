@@ -1,0 +1,4 @@
+    jmp loop
+    halt
+  loop:
+    halt

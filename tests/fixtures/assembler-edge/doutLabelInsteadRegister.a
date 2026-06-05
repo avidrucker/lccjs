@@ -1,0 +1,4 @@
+    dout label
+    halt
+  label:
+    .word 10

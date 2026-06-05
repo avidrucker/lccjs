@@ -1,0 +1,3 @@
+  mydata: .word 100
+  ld r0, mydata + 2
+  halt

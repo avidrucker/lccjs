@@ -1,0 +1,4 @@
+    br loop
+    halt
+  loop:
+    halt

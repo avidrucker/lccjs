@@ -1,0 +1,4 @@
+    brz loop+1
+    halt
+  loop:
+    halt

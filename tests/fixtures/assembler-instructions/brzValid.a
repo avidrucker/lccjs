@@ -1,0 +1,4 @@
+    brz end
+    halt
+  end:
+    halt

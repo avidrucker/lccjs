@@ -1,0 +1,3 @@
+  mov r0, notAValidCharOrNumber
+  halt
+  notAValidCharOrNumber: .string "hello"

@@ -1,0 +1,3 @@
+data: .word 10
+      ld r0, data+1
+      halt

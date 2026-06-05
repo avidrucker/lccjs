@@ -1,0 +1,4 @@
+      .global foo
+      mov r0, 123
+      halt
+foo:  .word 456

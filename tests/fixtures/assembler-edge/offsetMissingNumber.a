@@ -1,0 +1,3 @@
+    lea r0, x +
+    halt
+x: .word 10

@@ -1,0 +1,2 @@
+  mvi r1, 123, extra
+  halt

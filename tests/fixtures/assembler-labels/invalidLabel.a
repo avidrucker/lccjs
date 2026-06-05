@@ -1,0 +1,3 @@
+    mov r0, 5
+    halt
+  5invalidLabel: .word 10

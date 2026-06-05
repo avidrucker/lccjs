@@ -1,0 +1,4 @@
+    ret label
+    halt
+  label:
+    .word 10

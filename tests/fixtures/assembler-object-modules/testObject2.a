@@ -1,0 +1,3 @@
+  .extern bar
+  ld r0, bar
+  halt

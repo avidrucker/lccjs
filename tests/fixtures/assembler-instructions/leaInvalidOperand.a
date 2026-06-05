@@ -1,0 +1,2 @@
+  lea r3, "cheese"
+  halt

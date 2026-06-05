@@ -1,0 +1,6 @@
+  jmp r0, 5
+  dout r0
+  dout r0
+  dout r0
+  dout r0
+  halt

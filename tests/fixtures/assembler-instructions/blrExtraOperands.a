@@ -1,0 +1,2 @@
+  blr r4, 5, extra
+  halt

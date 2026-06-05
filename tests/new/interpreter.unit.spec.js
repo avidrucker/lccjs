@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const Assembler = require('../../src/core/assembler');
 const Interpreter = require('../../src/core/interpreter');
 const { InvalidExecutableFormatError, InterpreterRuntimeError } = require('../../src/utils/errors');
@@ -150,13 +152,7 @@ describe('Interpreter Unit Tests', () => {
   });
 
   test('executeBuffer() should support simulated SIN input through inputBuffer in the pure API', () => {
-    const source = `
-      lea r0, buffer
-      sin r0
-      sout r0
-      halt
-      buffer: .zero 8
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/interpreter-unit/sinProgram.a'), 'utf8');
 
     const assembler = new Assembler();
     const assembly = assembler.assembleSource(source, { inputFileName: 'sinProgram.a' });
@@ -174,10 +170,7 @@ describe('Interpreter Unit Tests', () => {
   });
 
   test('executeBuffer() din throws InterpreterRuntimeError on EOF instead of spinning', () => {
-    const source = `
-      din r0
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/interpreter-unit/dinEof.a'), 'utf8');
     const assembler = new Assembler();
     const assembly = assembler.assembleSource(source, { inputFileName: 'dinEof.a' });
     const interpreter = new Interpreter();
@@ -192,10 +185,7 @@ describe('Interpreter Unit Tests', () => {
   });
 
   test('executeBuffer() hin throws InterpreterRuntimeError on EOF instead of spinning', () => {
-    const source = `
-      hin r0
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/interpreter-unit/hinEof.a'), 'utf8');
     const assembler = new Assembler();
     const assembly = assembler.assembleSource(source, { inputFileName: 'hinEof.a' });
     const interpreter = new Interpreter();
@@ -210,10 +200,7 @@ describe('Interpreter Unit Tests', () => {
   });
 
   test('executeBuffer() ain throws InterpreterRuntimeError on EOF instead of spinning', () => {
-    const source = `
-      ain r0
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/interpreter-unit/ainEof.a'), 'utf8');
     const assembler = new Assembler();
     const assembly = assembler.assembleSource(source, { inputFileName: 'ainEof.a' });
     const interpreter = new Interpreter();
@@ -232,12 +219,7 @@ describe('Interpreter Unit Tests', () => {
     // when stdin signals EOF, SIN throws InterpreterRuntimeError — consistent
     // with din/hin/ain. Storing an empty string silently would mask a likely
     // bug (the caller forgot to supply input).
-    const source = `
-      lea r0, buffer
-      sin r0
-      halt
-      buffer: .zero 8
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/interpreter-unit/sinEof.a'), 'utf8');
     const assembler = new Assembler();
     const assembly = assembler.assembleSource(source, { inputFileName: 'sinEof.a' });
     const interpreter = new Interpreter();
@@ -291,40 +273,7 @@ describe('Interpreter Unit Tests', () => {
   });
 
   test('executeBuffer() should match oracle demoU sext behavior for representative field values', () => {
-    const source = `
-      mov r0, 0xFF
-      mov r1, 3
-      sext r0, r1
-      hout r0
-      nl
-
-      mov r0, 0x11
-      mov r1, 5
-      sext r0, r1
-      hout r0
-      nl
-
-      ld r0, x
-      mov r1, 15
-      sext r0, r1
-      hout r0
-      nl
-
-      ld r0, x
-      mov r1, 11
-      sext r0, r1
-      hout r0
-      nl
-
-      ld r0, x
-      mov r1, 8
-      sext r0, r1
-      hout r0
-      nl
-      halt
-
-      x: .word 0x1234
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/interpreter-unit/demoUSext.a'), 'utf8');
 
     const assembler = new Assembler();
     const { outputBytes } = assembler.assembleSource(source, { inputFileName: 'demoUSext.a' });
@@ -336,32 +285,7 @@ describe('Interpreter Unit Tests', () => {
   });
 
   test('executeBuffer() should match oracle sext behavior for the experiment sweep cases', () => {
-    const source = `
-      mov r0, 0x34
-      mov r1, 3
-      sext r0, r1
-      hout r0
-      nl
-
-      mov r0, 0x34
-      mov r1, 7
-      sext r0, r1
-      hout r0
-      nl
-
-      mov r0, 0x34
-      mov r1, 11
-      sext r0, r1
-      hout r0
-      nl
-
-      mov r0, 0x34
-      mov r1, 15
-      sext r0, r1
-      hout r0
-      nl
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/interpreter-unit/sextSweep.a'), 'utf8');
 
     const assembler = new Assembler();
     const { outputBytes } = assembler.assembleSource(source, { inputFileName: 'sextSweep.a' });

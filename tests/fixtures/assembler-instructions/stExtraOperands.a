@@ -1,0 +1,4 @@
+    st r2, data, extra
+    halt
+  data:
+    .word 20

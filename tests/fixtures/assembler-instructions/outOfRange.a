@@ -1,0 +1,4 @@
+  mov r0, 5
+  ; sub immediate takes a 5-bit imm, i.e. -16..15
+  sub r0, r0, 100 ; out of range
+  halt

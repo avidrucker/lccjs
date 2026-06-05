@@ -1,0 +1,2 @@
+      halt
+data: .word missingLabel

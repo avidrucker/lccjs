@@ -1,0 +1,2 @@
+  push r2, extra
+  halt

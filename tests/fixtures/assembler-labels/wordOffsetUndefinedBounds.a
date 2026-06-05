@@ -1,0 +1,3 @@
+      halt
+data1: .word data2 + 65536
+data2: .word 10

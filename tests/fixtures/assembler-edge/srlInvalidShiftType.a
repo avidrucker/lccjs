@@ -1,0 +1,2 @@
+  srl r1, invalidShiftType
+  halt

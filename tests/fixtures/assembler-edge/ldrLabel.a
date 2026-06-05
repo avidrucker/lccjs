@@ -1,0 +1,4 @@
+    ldr r1, r2, label
+    halt
+  label:
+    .word 10

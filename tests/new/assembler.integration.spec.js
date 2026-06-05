@@ -16,6 +16,7 @@ const { setupAssemblerIntegrationHarness } = require('../helpers/assemblerIntegr
 
 // Mock filesystem so we don't actually read/write real files:
 jest.mock('fs');
+const realFs = jest.requireActual('fs');
 
 describe('Assembler', () => {
   let assembler;
@@ -37,10 +38,7 @@ describe('Assembler', () => {
   // -------------------------------------------------------------------------
   test('123. should throw error for undefined mnemonic', () => {
     const aFilePath = 'undefinedMnemonic.a';
-    const source = `
-      nop
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-integration/undefinedMnemonic.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -79,10 +77,7 @@ describe('Assembler', () => {
   // -------------------------------------------------------------------------
   test('125. should throw error for instruction with unsupported operand format', () => {
     const aFilePath = 'unsupportedOperandFormat.a';
-    const source = `
-      ld r1, [cheese]
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-integration/unsupportedOperandFormat.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     // Assuming indirect addressing ([r2]) is not supported
@@ -96,10 +91,7 @@ describe('Assembler', () => {
   // -------------------------------------------------------------------------
   test('174. should throw error for directive without leading dot', () => {
     const aFilePath = 'directiveNoDot.a';
-    const source = `
-      word 10
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-integration/directiveNoDot.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -112,11 +104,7 @@ describe('Assembler', () => {
   // -------------------------------------------------------------------------
   test('195. should throw no error for br instruction with label that might seem like a reserved keyword', () => {
     const aFilePath = 'jmpReservedLabel.a';
-    const source = `
-      br halt
-      halt:
-        halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-integration/jmpReservedLabel.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     // The take-away here is that there are no reserved keywords in the LCC assembly language
@@ -144,7 +132,7 @@ describe('Assembler', () => {
 
     test('sourceMap.allLines contains all source lines', () => {
       const aFilePath = 'sourceMapLines.a';
-      const source = `  mvi r0, 5\n  halt\n`;
+      const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-integration/sourceMapLines.a'), 'utf8');
       virtualFs[aFilePath] = source;
       assembler.main([aFilePath]);
       // allLines is this.sourceLines.slice() — includes the trailing empty entry from split('\n')

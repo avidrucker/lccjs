@@ -1,0 +1,3 @@
+    add r0, r1, myLabel
+    halt
+  myLabel: .word 5

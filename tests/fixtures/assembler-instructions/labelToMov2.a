@@ -1,0 +1,3 @@
+    mov myLabel, 5
+    halt
+  myLabel: .word 10

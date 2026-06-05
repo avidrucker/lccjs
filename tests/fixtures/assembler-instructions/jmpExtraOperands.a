@@ -1,0 +1,2 @@
+  jmp r3, 5, extra
+  halt

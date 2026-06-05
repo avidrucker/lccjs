@@ -9,6 +9,7 @@ const Assembler = require('../../src/core/assembler');
 const { setupAssemblerIntegrationHarness } = require('../helpers/assemblerIntegrationHarness');
 
 jest.mock('fs');
+const realFs = jest.requireActual('fs');
 
 describe('Assembler Object Module Integration', () => {
   let assembler;
@@ -25,12 +26,7 @@ describe('Assembler Object Module Integration', () => {
   // -------------------------------------------------------------------------
   test('10. should produce .o file when .global is used', () => {
     const aFilePath = 'testObject.a';
-    const source = `
-      .global foo
-      mov r0, 123
-      halt
-foo:  .word 456
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/testObject.a'), 'utf8');
     virtualFs[aFilePath] = source;
     virtualFs['name.nnn'] = 'Cheese\n';
 
@@ -44,12 +40,7 @@ foo:  .word 456
 
   test('10b. should write .o, .lst, and .bst files when .global is used', () => {
     const aFilePath = 'testObjectArtifacts.a';
-    const source = `
-      .global foo
-      mov r0, 123
-      halt
-foo:  .word 456
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/testObject.a'), 'utf8');
     virtualFs[aFilePath] = source;
     virtualFs['name.nnn'] = 'Cheese\n';
 
@@ -67,11 +58,7 @@ foo:  .word 456
   // -------------------------------------------------------------------------
   test('17. should produce .o file when .extern is used', () => {
     const aFilePath = 'testObject2.a';
-    const source = `
-      .extern bar
-      ld r0, bar
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/testObject2.a'), 'utf8');
     virtualFs[aFilePath] = source;
     virtualFs['name.nnn'] = 'Cheese\n';
 
@@ -88,11 +75,7 @@ foo:  .word 456
   // -------------------------------------------------------------------------
   test('111. should assemble .global directive with valid variable', () => {
     const aFilePath = 'globalValid.a';
-    const source = `
-      .global var1
-      halt
-var1: .word 10
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/globalValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
     virtualFs['name.nnn'] = 'Cheese\n';
 
@@ -109,10 +92,7 @@ var1: .word 10
   // -------------------------------------------------------------------------
   test('112. should throw error for .global directive with invalid variable name', () => {
     const aFilePath = 'globalInvalid.a';
-    const source = `
-      .global 1var
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/globalInvalid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -125,10 +105,7 @@ var1: .word 10
   // -------------------------------------------------------------------------
   test('113. should throw error for .global directive missing operand', () => {
     const aFilePath = 'globalMissingOperand.a';
-    const source = `
-      .global
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/globalMissingOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -141,11 +118,7 @@ var1: .word 10
   // -------------------------------------------------------------------------
   test('114. should assemble .extern directive with valid variable', () => {
     const aFilePath = 'externValid.a';
-    const source = `
-      .extern externalVar
-      ld r0, externalVar
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/externValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
     virtualFs['name.nnn'] = 'Cheese\n';
 
@@ -162,10 +135,7 @@ var1: .word 10
   // -------------------------------------------------------------------------
   test('115. should throw error for .extern directive with invalid variable name', () => {
     const aFilePath = 'externInvalid.a';
-    const source = `
-      .extern $var!
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/externInvalid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -178,10 +148,7 @@ var1: .word 10
   // -------------------------------------------------------------------------
   test('116. should throw error for .extern directive missing operand', () => {
     const aFilePath = 'externMissingOperand.a';
-    const source = `
-      .extern
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/externMissingOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -194,12 +161,7 @@ var1: .word 10
   // -------------------------------------------------------------------------
   test('175. should throw not error for multiple .extern declarations of the same label', () => {
     const aFilePath = 'multipleExterns.a';
-    const source = `
-      .extern bar
-      .extern bar
-      ld r0, bar
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/multipleExterns.a'), 'utf8');
     virtualFs[aFilePath] = source;
     virtualFs['name.nnn'] = 'Cheese\n';
 
@@ -216,12 +178,7 @@ var1: .word 10
   // -------------------------------------------------------------------------
   test('269. should write no .o/.lst/.bst when the author name cannot be resolved', () => {
     const aFilePath = 'atomicNameFail.a';
-    const source = `
-      .global foo
-      mov r0, 123
-      halt
-foo:  .word 456
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/testObject.a'), 'utf8');
     virtualFs[aFilePath] = source;
     // No name.nnn present → createNameFile prompts and reads stdin.
 

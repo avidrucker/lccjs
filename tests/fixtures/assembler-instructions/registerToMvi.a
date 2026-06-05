@@ -1,0 +1,2 @@
+  mvi r0, r1
+  halt

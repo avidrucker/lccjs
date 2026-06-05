@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const Assembler = require('../../src/core/assembler');
 const { AssemblerError } = require('../../src/utils/errors');
 
@@ -23,13 +25,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('assembleSource() should assemble a simple .a program entirely in memory', () => {
-    const source = `
-      ; demoA.a: simple test
-      mov r0, 5
-      dout r0
-      nl
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/demoA.a'), 'utf8');
 
     const assembler = new Assembler();
     const result = assembler.assembleSource(source, { inputFileName: 'demoA.a' });
@@ -48,12 +44,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('toOutputBuffer() should return a serialized executable buffer entirely in memory', () => {
-    const source = `
-      mov r0, 5
-      dout r0
-      nl
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/demoA-2.a'), 'utf8');
 
     const assembler = new Assembler();
     assembler.assembleSource(source, { inputFileName: 'demoA.a' });
@@ -69,12 +60,7 @@ describe('Assembler Unit Tests', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2024-01-01T00:00:00Z'));
 
-    const source = `
-      mov r0, 5
-      dout r0
-      nl
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/demoA-2.a'), 'utf8');
 
     const assembler = new Assembler();
     assembler.assembleSource(source, { inputFileName: 'demoA.a' });
@@ -90,12 +76,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('assembleSource() should optionally return in-memory .lst and .bst reports in its result shape', () => {
-    const source = `
-      mov r0, 5
-      dout r0
-      nl
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/demoA-2.a'), 'utf8');
 
     const assembler = new Assembler();
     const result = assembler.assembleSource(source, {
@@ -112,10 +93,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('assembleSource() should require userName when buildReports is true', () => {
-    const source = `
-      mov r0, 5
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/demoA-3.a'), 'utf8');
 
     const assembler = new Assembler();
 
@@ -128,10 +106,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('assembleSource() should reject non-.a source filenames even when given valid assembly text', () => {
-    const source = `
-      mov r0, 5
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/demoA-3.a'), 'utf8');
 
     const assembler = new Assembler();
 
@@ -141,10 +116,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('assembleSource() should reject .ap files with the assemblerPlus guidance message', () => {
-    const source = `
-      mov r0, 5
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/demoA-3.a'), 'utf8');
 
     const assembler = new Assembler();
 
@@ -154,10 +126,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('assembleSource() should throw a typed assembler error for an undefined label', () => {
-    const source = `
-      br missingLabel
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/undefinedLabel.a'), 'utf8');
 
     const assembler = new Assembler();
 
@@ -167,12 +136,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('assembleSource() should treat duplicate .start directives by preserving the last declared start label', () => {
-    const source = `
-      .start alpha
-      .start beta
-      alpha: halt
-      beta: halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/duplicateStart.a'), 'utf8');
 
     const assembler = new Assembler();
     const result = assembler.assembleSource(source, { inputFileName: 'duplicateStart.a' });
@@ -190,11 +154,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('assembleSource() should allow the same label to appear in both .global and .extern declarations', () => {
-    const source = `
-      .global shared
-      .extern shared
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/sharedLabel.a'), 'utf8');
 
     const assembler = new Assembler();
     const result = assembler.assembleSource(source, { inputFileName: 'sharedLabel.a' });
@@ -205,10 +165,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('assembleSource() should support escaped backslash and escaped quote in .string directives', () => {
-    const source = `
-      msg: .string "a\\\\\\\"b"
-      halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/escapedString.a'), 'utf8');
 
     const assembler = new Assembler();
 
@@ -223,9 +180,7 @@ describe('Assembler Unit Tests', () => {
   });
 
   test('assembleSource() should reject multiple labels on the same line under the current LCC.js contract', () => {
-    const source = `
-      first: second: halt
-    `;
+    const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/multipleLabels.a'), 'utf8');
 
     const assembler = new Assembler();
 

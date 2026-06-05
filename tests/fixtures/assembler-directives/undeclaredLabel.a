@@ -1,0 +1,3 @@
+l
+      halt
+x: .word y

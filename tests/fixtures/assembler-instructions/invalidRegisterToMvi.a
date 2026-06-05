@@ -1,0 +1,2 @@
+  mvi r8, 5
+  halt

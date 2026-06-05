@@ -1,0 +1,2 @@
+  blr r1, cheese
+  halt

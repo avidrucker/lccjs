@@ -1,0 +1,4 @@
+    br loop + 1500
+    halt
+  loop:
+    halt

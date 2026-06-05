@@ -1,0 +1,2 @@
+  sll r1, 5
+  halt

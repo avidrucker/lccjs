@@ -1,0 +1,4 @@
+    xor r1, label
+    halt
+  label:
+    .word 10

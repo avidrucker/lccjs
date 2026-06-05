@@ -8,6 +8,8 @@ const Assembler = require('../../src/core/assembler');
 const { setupAssemblerIntegrationHarness } = require('../helpers/assemblerIntegrationHarness');
 
 jest.mock('fs');
+const path = require('path');
+const realFs = jest.requireActual('fs');
 
 describe('Assembler Directive Integration', () => {
   let assembler;
@@ -21,15 +23,7 @@ describe('Assembler Directive Integration', () => {
 
   test('7. should handle directives such as .word, .string, .zero without errors', () => {
     const aFilePath = 'demoB.a';
-    const source = `
-      ld r0, x
-      add r0, r0, 2
-      dout r0
-      halt
-ask:  .string "What's your first name? "
-buffer1: .zero 10
-x: .word 5
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/demoB.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -42,10 +36,7 @@ x: .word 5
 
   test('27. should throw an error when referencing a label that is not declared', () => {
     const aFilePath = 'undeclaredLabel.a';
-    const source = `l
-      halt
-x: .word y
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/undeclaredLabel.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -55,10 +46,7 @@ x: .word y
 
   test('28. should not throw an error when passing multiple arguments to a .word directive', () => {
     const aFilePath = 'multipleArgsToWord.a';
-    const source = `
-    halt
-x: .word 5, 10
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/multipleArgsToWord.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -68,10 +56,7 @@ x: .word 5, 10
 
   test('95. should assemble .string directive with valid string', () => {
     const aFilePath = 'stringValid.a';
-    const source = `
-      .string "Hello, World!"
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/stringValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -83,10 +68,7 @@ x: .word 5, 10
 
   test('96. should throw error for .string directive with missing closing quote', () => {
     const aFilePath = 'stringMissingQuote.a';
-    const source = `
-    halt
-    .string "Hello, World!
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/stringMissingQuote.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -96,10 +78,7 @@ x: .word 5, 10
 
   test('97. should throw error for .string directive with invalid escape sequence', () => {
     const aFilePath = 'stringInvalidEscape.a';
-    const source = `
-    halt
-    .string "Hello World!\\"
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/stringInvalidEscape.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -109,10 +88,7 @@ x: .word 5, 10
 
   test('98. should assemble .string directive with extra operands without throwing error', () => {
     const aFilePath = 'stringExtraOperands.a';
-    const source = `
-      .string "Hello, World!", extra
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/stringExtraOperands.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -124,10 +100,7 @@ x: .word 5, 10
 
   test('99. should assemble .word directive with valid number', () => {
     const aFilePath = 'wordValid.a';
-    const source = `
-      .word 100
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/wordValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -139,10 +112,7 @@ x: .word 5, 10
 
   test('100. should throw error for .word directive with invalid number format', () => {
     const aFilePath = 'wordInvalidNumber.a';
-    const source = `
-      .word 0xGHI
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/wordInvalidNumber.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -152,10 +122,7 @@ x: .word 5, 10
 
   test('101. should throw error for .word directive missing operand', () => {
     const aFilePath = 'wordMissingOperand.a';
-    const source = `
-      .word
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/wordMissingOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -165,10 +132,7 @@ x: .word 5, 10
 
   test('104. should assemble .zero directive with valid size', () => {
     const aFilePath = 'zeroValid.a';
-    const source = `
-      .zero 10
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/zeroValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -180,10 +144,7 @@ x: .word 5, 10
 
   test('105. should throw error for .zero directive with non-numeric size', () => {
     const aFilePath = 'zeroNonNumeric.a';
-    const source = `
-      .zero ten
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/zeroNonNumeric.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -193,10 +154,7 @@ x: .word 5, 10
 
   test('106. should throw error for .zero directive missing operand', () => {
     const aFilePath = 'zeroMissingOperand.a';
-    const source = `
-      .zero
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/zeroMissingOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -206,10 +164,7 @@ x: .word 5, 10
 
   test('107. should throw error for .zero directive with negative size', () => {
     const aFilePath = 'zeroNegativeSize.a';
-    const source = `
-      .zero -5
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/zeroNegativeSize.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -219,12 +174,7 @@ x: .word 5, 10
 
   test('117. should assemble .org directive with valid address by padding the gap with zero words', () => {
     const aFilePath = 'orgValid.a';
-    const source = `
-      .word 1
-      .org 4
-      mov r0, 5
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/orgValid.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -243,11 +193,7 @@ x: .word 5, 10
 
   test('118. should throw error for .org directive with non-numeric address', () => {
     const aFilePath = 'orgNonNumeric.a';
-    const source = `
-      .org address
-      mov r0, 5
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/orgNonNumeric.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -257,11 +203,7 @@ x: .word 5, 10
 
   test('119. should throw error for .org directive missing operand', () => {
     const aFilePath = 'orgMissingOperand.a';
-    const source = `
-      .org
-      mov r0, 5
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/orgMissingOperand.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -271,11 +213,7 @@ x: .word 5, 10
 
   test('120. should throw error for .org directive with address out of bounds', () => {
     const aFilePath = 'orgOutOfBounds.a';
-    const source = `
-      .org 70000
-      mov r0, 5
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/orgOutOfBounds.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -285,10 +223,7 @@ x: .word 5, 10
 
   test('121. should throw error for undefined directive', () => {
     const aFilePath = 'undefinedDirective.a';
-    const source = `
-      .undefinedDirective
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/undefinedDirective.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -298,10 +233,7 @@ x: .word 5, 10
 
   test('130. should throw error for .string directive with multi-character literal', () => {
     const aFilePath = 'stringMultiChar.a';
-    const source = `
-      .string 'ab'
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/stringMultiChar.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -311,10 +243,7 @@ x: .word 5, 10
 
   test('203. should throw error for .string directive with no arguments', () => {
     const aFilePath = 'stringNoArgs.a';
-    const source = `
-      .string
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/stringNoArgs.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -324,10 +253,7 @@ x: .word 5, 10
 
   test('209. should assemble .string directive with escaped newline char', () => {
     const aFilePath = 'stringEscapedNewline.a';
-    const source = `
-      halt
-x: .string "Hello,\\nworld!"
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/stringEscapedNewline.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -339,10 +265,7 @@ x: .string "Hello,\\nworld!"
 
   test('212. should throw error for .word with operator but no operand', () => {
     const aFilePath = 'wordOperatorNoOperand.a';
-    const source = `
-    halt
-x: .word +
-`;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/wordOperatorNoOperand.a'), 'utf8');
 
     virtualFs[aFilePath] = source;
     expect(() => {
@@ -352,10 +275,7 @@ x: .word +
 
   test('213. should throw error for .zero with invalid argument', () => {
     const aFilePath = 'zeroInvalidArg.a';
-    const source = `
-    halt
-x: .zero +
-`;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/zeroInvalidArg.a'), 'utf8');
 
     virtualFs[aFilePath] = source;
     expect(() => {
@@ -365,12 +285,7 @@ x: .zero +
 
   test('214. should allow repeated forward .org directives within address bounds', () => {
     const aFilePath = 'orgOutOfBounds.a';
-    const source = `
-      .org 30000
-      .org 40000
-      mov r0, 5
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-directives/orgOutOfBounds-2.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {

@@ -1,0 +1,2 @@
+  mul r3, r1, extra
+  halt

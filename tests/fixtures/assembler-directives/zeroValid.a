@@ -1,0 +1,2 @@
+  .zero 10
+  halt

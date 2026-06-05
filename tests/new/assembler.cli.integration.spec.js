@@ -8,6 +8,8 @@ const Assembler = require('../../src/core/assembler');
 const { setupAssemblerIntegrationHarness } = require('../helpers/assemblerIntegrationHarness');
 
 jest.mock('fs');
+const path = require('path');
+const realFs = jest.requireActual('fs');
 
 describe('Assembler CLI Integration', () => {
   let assembler;
@@ -42,13 +44,7 @@ describe('Assembler CLI Integration', () => {
 
   test('4. should assemble demoA.a with no errors', () => {
     const aFilePath = 'demoA.a';
-    const source = `
-      ; demoA.a: simple test
-      mov r0, 5
-      dout r0
-      nl
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-cli/demoA.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -61,13 +57,7 @@ describe('Assembler CLI Integration', () => {
 
   test('12. should assemble demoN.a (division by zero) successfully (no assembler error)', () => {
     const aFilePath = 'demoN.a';
-    const source = `
-      mov r0, 3
-      mov r1, 0
-      div r0, r1
-      dout r0
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-cli/demoN.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -79,21 +69,7 @@ describe('Assembler CLI Integration', () => {
 
   test('14. should assemble a short multi-line example with labels and instructions', () => {
     const aFilePath = 'multiLine.a';
-    const source = `
-      .start main
-
-main:
-      mov r0, 10
-loop:
-      cmp r0, 0
-      bre end
-      dout r0
-      nl
-      sub r0, r0, 1
-      br loop
-end:
-      halt
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-cli/multiLine.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
@@ -133,10 +109,7 @@ end:
 
   test('161. should attempt to assemble a file with only comments without errors', () => {
     const aFilePath = 'onlyComments.a';
-    const source = `
-      ; This is a comment
-      ; Another comment line
-    `;
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-cli/onlyComments.a'), 'utf8');
     virtualFs[aFilePath] = source;
 
     expect(() => {
