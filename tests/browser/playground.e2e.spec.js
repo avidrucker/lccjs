@@ -32,6 +32,18 @@ const BAD_MNEMONIC = 'notanopcode r0, r1\nhalt';
 
 const DIN_DOUT = 'din r0\ndout r0\nnl\nhalt';
 
+// Program with a prompt (no trailing newline) before din — verifies displayWithSeparator
+// shows pre-pause and post-resume output without injecting a spurious newline.
+const DIN_PROMPT = [
+  '        lea  r0, prompt',
+  '        sout r0',
+  '        din  r1',
+  '        dout r1',
+  '        nl',
+  '        halt',
+  'prompt: .string "Enter: "',
+].join('\n');
+
 // Wait for the output element to leave "Running…" / initial state
 async function waitForOutput(page) {
   await page.waitForFunction(() => {
@@ -48,10 +60,8 @@ test.describe('Playground E2E', () => {
   test('happy path: Hello World runs and prints output', async ({ page }) => {
     await page.goto('/showcase/');
 
-    // Replace editor content with the Hello World program
-    await page.evaluate((src) => {
-      document.getElementById('playground-input').value = src;
-    }, HELLO_WORLD);
+    // Replace editor content via the CM6 test hook exposed on window
+    await page.evaluate((src) => { window.__lccSetSource(src); }, HELLO_WORLD);
 
     await page.click('#run-btn');
     await waitForOutput(page);
@@ -66,9 +76,7 @@ test.describe('Playground E2E', () => {
   test('assembly error: bad mnemonic shows error class and text', async ({ page }) => {
     await page.goto('/showcase/');
 
-    await page.evaluate((src) => {
-      document.getElementById('playground-input').value = src;
-    }, BAD_MNEMONIC);
+    await page.evaluate((src) => { window.__lccSetSource(src); }, BAD_MNEMONIC);
 
     await page.click('#run-btn');
     await waitForOutput(page);
@@ -83,9 +91,7 @@ test.describe('Playground E2E', () => {
   test('stdin pass-through: din/dout echoes input value', async ({ page }) => {
     await page.goto('/showcase/');
 
-    await page.evaluate((src) => {
-      document.getElementById('playground-input').value = src;
-    }, DIN_DOUT);
+    await page.evaluate((src) => { window.__lccSetSource(src); }, DIN_DOUT);
 
     await page.fill('#stdin-input', '42');
 
@@ -94,6 +100,24 @@ test.describe('Playground E2E', () => {
 
     const text = await page.locator('#exec-output').textContent();
     expect(text).toContain('42');
+
+    const cls = await page.locator('#exec-output').getAttribute('class');
+    expect(cls ?? '').not.toContain('lcc-error');
+  });
+
+  test('displayWithSeparator: prompt before din stays inline with echo', async ({ page }) => {
+    await page.goto('/showcase/');
+
+    await page.evaluate((src) => { window.__lccSetSource(src); }, DIN_PROMPT);
+    await page.fill('#stdin-input', '42');
+
+    await page.click('#run-btn');
+    await waitForOutput(page);
+
+    const text = await page.locator('#exec-output').textContent();
+    // "Enter: " (no trailing newline) followed immediately by din echo "42\n",
+    // then dout outputs "42" and nl adds "\n" — no spurious newline injected.
+    expect(text).toBe('Enter: 42\n42\n');
 
     const cls = await page.locator('#exec-output').getAttribute('class');
     expect(cls ?? '').not.toContain('lcc-error');
