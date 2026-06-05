@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "allow": ["Bash(gh issue comment *)"]
+    "allow": ["Bash(gh issue comment *)", "Bash(npm run puzzle:status)"]
   },
   "hooks": {
     "PostToolBatch": [
