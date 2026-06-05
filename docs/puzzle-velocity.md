@@ -302,3 +302,33 @@ This keeps the corruption visible in the data rather than silent, and lets a fut
 DATA pass identify and exclude invalid rows from calibration analysis. See
 `docs/research/601-scope-discipline.md` for the full FM taxonomy and
 `docs/velocity-schema.md` for the field-level validity rule.
+
+### ELDERBERRY: confirmed drift, corrected priors (n=78, 2026-06-04)
+
+**Finding (Q28r, #706):** ELDERBERRY's |delta_c_min| has a significant upward trend
+over its history independent of puzzle difficulty. Partial correlation of |delta_c|
+vs row order, controlling for h_min: r=+0.270, p=0.014. Mean h_min actually fell
+(34m early → 27m late), ruling out the "harder puzzles" explanation. The drift is
+genuine calibration degradation, not a task-mix artifact.
+
+**Root cause:** c_min was anchored as a fraction of h_min (roughly h/3) rather than
+to AI wall-clock actuals. As h_min varied, c_min drifted with it, inflating |delta_c|
+even when actual_min remained stable.
+
+**Corrected per-role priors** (derived from 78 ELDERBERRY rows with actual_min):
+
+| Role | n | Median actual | Mean actual | Old c_min range | New c_min prior |
+|------|---|--------------|-------------|-----------------|-----------------|
+| WRITER | 29 | 1m | 3.0m | 5–15m | 3m |
+| PM | 6 | 1m | 1.7m | 3–25m | 2m |
+| DATA | 9 | 3m | 6.2m | 8–25m | 5m |
+| DEV | 14 | 3m | 4.0m | 5–40m | 5m |
+| ARC | 4 | 4m | 3.8m | 10–40m | 5m |
+| RESEARCH | 16 | 5m | 8.8m | 5–30m | 7m |
+| SPIKE | 3 | 6m | 7.3m | 20–30m | 8m |
+| CHORE | 1 | 3m | 3.0m | 8m | 4m |
+
+**New calibration rule for ELDERBERRY:** anchor c_min to the role's median actual,
+not to H. Add a small buffer (1–3m) for variance; do not scale with H. The first
+post-recalibration row is #718 (PM, c_min=3m — slightly above the new 2m prior to
+reflect the data-analysis component of this particular ticket).
