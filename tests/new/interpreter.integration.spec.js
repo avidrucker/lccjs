@@ -26,6 +26,10 @@ const Interpreter = require('../../src/core/interpreter');
 
 jest.mock('fs');
 
+// din r1; mov r0,1; dout r1; halt — reused in tests 14, 23a, 23c
+// Encoding: oC header + [din r1 = 0xF207] + [mov r0,1 = 0xD001] + [dout r1 = 0xF202] + [halt = 0xF000]
+const DIN_R1_DOUT_R1_BYTES = [0x6F, 0x43, 0x07, 0xF2, 0x01, 0xD0, 0x02, 0xF2, 0x00, 0xF0];
+
 describe('Interpreter Integration Tests', () => {
   let interpreter;
 
@@ -356,23 +360,15 @@ describe('Interpreter Integration Tests', () => {
   // -----------------------------------------------------------------------------
   test('14. should handle DIN by providing input via inputBuffer', () => {
     const eFilePath = 'inputProgram.e';
-    // 6F43 07F2 01D0 02F2 00F0
-    const test14Bytes = [0x6F, 0x43, 0x07, 0xF2, 0x01, 0xD0, 0x02, 0xF2, 0x00, 0xF0];
-    virtualFs[eFilePath] = Buffer.from(test14Bytes);
-    //  07F2 => din r1
-    //  01D0 => mov r0, 1
-    //  02F2 => dout r1
-    //  00F0 => halt
+    virtualFs[eFilePath] = Buffer.from(DIN_R1_DOUT_R1_BYTES);
 
-    // Provide an input line in interpreter's inputBuffer
+    // din r1 echoes the input line, then dout r1 prints the value without newline
     interpreter.inputBuffer = '42\n';
 
     expect(() => {
       interpreter.main([eFilePath]);
     }).not.toThrow();
 
-    // We expect output "42\n42" because the program stores the input 
-    // in the output and then prints it again to the output 
     expect(interpreter.output).toBe('42\n42');
   });
 
@@ -534,8 +530,7 @@ describe('Interpreter Integration Tests', () => {
 
   test('23a. CRLF input: single \\r\\n line reads correctly', () => {
     const eFilePath = 'crlf1.e';
-    // din r1; dout r1; halt — same bytes as test 14
-    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x07, 0xF2, 0x01, 0xD0, 0x02, 0xF2, 0x00, 0xF0]);
+    virtualFs[eFilePath] = Buffer.from(DIN_R1_DOUT_R1_BYTES);
     interpreter.inputBuffer = '42\r\n';   // Windows-style line ending
 
     expect(() => { interpreter.main([eFilePath]); }).not.toThrow();
@@ -560,8 +555,7 @@ describe('Interpreter Integration Tests', () => {
 
   test('23c. Mixed LF and CRLF in inputBuffer reads correctly', () => {
     const eFilePath = 'crlf3.e';
-    // din r1; dout r1; halt
-    virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x07, 0xF2, 0x01, 0xD0, 0x02, 0xF2, 0x00, 0xF0]);
+    virtualFs[eFilePath] = Buffer.from(DIN_R1_DOUT_R1_BYTES);
     interpreter.inputBuffer = '7\n';   // plain LF — should still work
 
     expect(() => { interpreter.main([eFilePath]); }).not.toThrow();

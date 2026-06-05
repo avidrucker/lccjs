@@ -718,3 +718,6 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 731,,,DEV,,,,,-3,,,,,TEST,,lccjs
 732,,,DEV,,,,,-3,,,,,TEST,,lccjs
 733,830,gh api graphql connection fields silently return null,DEV,30,12,6,24,6,2026-06-05T09:59:14-1000,2026-06-05T10:05:07-1000,,added _parseGqlErrors helper; findIssueStates returns {gqlErrors} sentinel; main shows correct message; 6 unit tests; do-this-not-that.md entry,BANANA,sonnet-4.6,lccjs
+734,,,DEV,,,,,-3,,,,,TEST,,lccjs
+735,,,DEV,,,,,-3,,,,,TEST,,lccjs
+736,822,refactor: audit tests for hard-coded magic strings/values — replace with named constants,DEV,45,30,11,34,19,2026-06-05T09:55:54-1000,2026-06-05T10:06:58-1000,,"extracted named constants in browser.api.unit.spec.js, interpreter.pauseOnInput.unit.spec.js, interpreter.integration.spec.js, playground.e2e.spec.js; also fixed claim.unit.spec.js dragonfruit→custard after #821 merged dragonfruit into FRUITS",ELDERBERRY,sonnet-4.6,lccjs

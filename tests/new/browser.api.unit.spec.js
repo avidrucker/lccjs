@@ -64,12 +64,32 @@ describe('browser API', () => {
       nl
       halt
     `;
+    // Expected values for PRE_POST_SRC tests
+    const PRE_POST_INITIAL_OUTPUT = '0';        // dout of mvi r0,0 before din
+    const PRE_POST_RESUME_INPUT   = '77';       // arbitrary resume value
+    const PRE_POST_FULL_OUTPUT    = '077\n77\n'; // initial '0' + din echo + dout + nl
+    const PRE_POST_PAUSE_LEN      = 1;          // PRE_POST_INITIAL_OUTPUT.length
+
+    // Source whose pre-din output ends with \n — tests the newline-before-pause path
+    const NEWLINE_PRE_SRC = `
+      mvi r0, 42
+      dout r0
+      nl
+      din  r0
+      dout r0
+      nl
+      halt
+    `;
+    const NEWLINE_PRE_OUTPUT   = '42\n'; // dout+nl before din
+    const NEWLINE_PAUSE_LEN    = 3;      // NEWLINE_PRE_OUTPUT.length
+    const NEWLINE_RESUME_INPUT = '7';    // arbitrary resume value
+    const NEWLINE_FULL_OUTPUT  = '42\n7\n7\n'; // pre + din echo + dout + nl
 
     test('returns waiting-for-input with partialOutput when program pauses at din', () => {
       const { binary } = assemble(PRE_POST_SRC);
       const result = run(binary, { pauseOnInput: true });
       expect(result.status).toBe('waiting-for-input');
-      expect(result.partialOutput).toBe('0');
+      expect(result.partialOutput).toBe(PRE_POST_INITIAL_OUTPUT);
       expect(typeof result.resume).toBe('function');
     });
 
@@ -78,50 +98,38 @@ describe('browser API', () => {
       const paused = run(binary, { pauseOnInput: true });
       expect(paused.status).toBe('waiting-for-input');
 
-      const done = paused.resume('77');
+      const done = paused.resume(PRE_POST_RESUME_INPUT);
       expect(done.status).toBe('done');
-      // din echoes "77\n", then dout outputs "77", then nl → full: "0" + "77\n77\n"
-      expect(done.stdout).toBe('077\n77\n');
-      // preResumeOutputLength marks where pre-pause output ("0") ends in the full string
-      expect(done.preResumeOutputLength).toBe(1); // '0' has length 1
+      expect(done.stdout).toBe(PRE_POST_FULL_OUTPUT);
+      expect(done.preResumeOutputLength).toBe(PRE_POST_PAUSE_LEN);
     });
 
     test('displayWithSeparator logic: full output is returned as-is (no newline injected)', () => {
       const { binary } = assemble(PRE_POST_SRC);
       const paused = run(binary, { pauseOnInput: true });
-      const done = paused.resume('77');
+      const done = paused.resume(PRE_POST_RESUME_INPUT);
 
       const { stdout, preResumeOutputLength: preLen } = done;
       const pre  = stdout.slice(0, preLen);
       const post = stdout.slice(preLen);
       const display = pre + post; // no injection — matches real terminal output
 
-      // '0' (no \n) followed immediately by din echo "77\n" then dout "77\n"
-      expect(display).toBe('077\n77\n');
+      expect(display).toBe(PRE_POST_FULL_OUTPUT);
     });
 
     test('output already ending with newline before din is also returned unchanged', () => {
-      const { binary } = assemble(`
-        mvi r0, 42
-        dout r0
-        nl
-        din  r0
-        dout r0
-        nl
-        halt
-      `);
+      const { binary } = assemble(NEWLINE_PRE_SRC);
       const paused = run(binary, { pauseOnInput: true });
       expect(paused.status).toBe('waiting-for-input');
-      expect(paused.partialOutput).toBe('42\n');
+      expect(paused.partialOutput).toBe(NEWLINE_PRE_OUTPUT);
 
-      const done = paused.resume('7');
+      const done = paused.resume(NEWLINE_RESUME_INPUT);
       expect(done.status).toBe('done');
-      expect(done.preResumeOutputLength).toBe(3); // '42\n'
+      expect(done.preResumeOutputLength).toBe(NEWLINE_PAUSE_LEN);
       const pre  = done.stdout.slice(0, done.preResumeOutputLength);
       const post = done.stdout.slice(done.preResumeOutputLength);
       const display = pre + post; // no injection
-      // '42\n' + '7\n7\n' = '42\n7\n7\n'
-      expect(display).toBe('42\n7\n7\n');
+      expect(display).toBe(NEWLINE_FULL_OUTPUT);
     });
   });
 
@@ -136,28 +144,30 @@ describe('browser API', () => {
       halt
 prompt: .string "Enter: "
     `;
+    const BATCH_DIN_INPUT    = '42';              // arbitrary din value for PROMPT_SRC tests
+    const PROMPT_FULL_OUTPUT = 'Enter: 42\n42\n'; // prompt + din echo + dout + nl
+    const PROMPT_LEN         = 7;                 // 'Enter: '.length (preResumeOutputLength)
+
+    const NO_INPUT_OUTPUT = '99\n'; // dout+nl of static mvi r0,99 — no din trap
 
     test('returns preResumeOutputLength capturing the first input boundary', () => {
       const { binary } = assemble(PROMPT_SRC);
-      const result = run(binary, { stdin: ['42'], pauseOnInput: true });
+      const result = run(binary, { stdin: [BATCH_DIN_INPUT], pauseOnInput: true });
 
       expect(result.status).toBeUndefined();
       expect(result.exitCode).toBe(0);
-      // "Enter: " (7) + din echo "42\n" + dout "42" + nl "\n"
-      expect(result.stdout).toBe('Enter: 42\n42\n');
-      // preResumeOutputLength marks end of "Enter: " (7 chars)
-      expect(result.preResumeOutputLength).toBe(7);
+      expect(result.stdout).toBe(PROMPT_FULL_OUTPUT);
+      expect(result.preResumeOutputLength).toBe(PROMPT_LEN);
     });
 
     test('displayWithSeparator applied to batch result: prompt and din echo appear on same line', () => {
       const { binary } = assemble(PROMPT_SRC);
-      const result = run(binary, { stdin: ['42'], pauseOnInput: true });
+      const result = run(binary, { stdin: [BATCH_DIN_INPUT], pauseOnInput: true });
 
       const pre  = result.stdout.slice(0, result.preResumeOutputLength);
       const post = result.stdout.slice(result.preResumeOutputLength);
       const display = pre + post; // no injection — prompt stays inline with echo
-      // "Enter: " + "42\n" + "42\n" — matches real terminal layout
-      expect(display).toBe('Enter: 42\n42\n');
+      expect(display).toBe(PROMPT_FULL_OUTPUT);
     });
 
     test('program with no input trap: no preResumeOutputLength on result', () => {
@@ -167,10 +177,10 @@ prompt: .string "Enter: "
         nl
         halt
       `);
-      const result = run(binary, { stdin: ['42'], pauseOnInput: true });
+      const result = run(binary, { stdin: [BATCH_DIN_INPUT], pauseOnInput: true });
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toBe('99\n');
+      expect(result.stdout).toBe(NO_INPUT_OUTPUT);
       // No input trap → preResumeOutputLength is absent (undefined)
       expect(result.preResumeOutputLength).toBeUndefined();
     });

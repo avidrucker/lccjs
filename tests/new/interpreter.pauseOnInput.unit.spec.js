@@ -10,6 +10,25 @@ function asm(src) {
   return a.assembleSource(src, { inputFileName: 'test.a' }).outputBytes;
 }
 
+// Named constants for test inputs/outputs — prevents magic literals in expect() calls
+const DIN_BASIC_INPUT  = '42\n';
+const DIN_BASIC_OUTPUT = '42\n42\n'; // DIN echoes input, then DOUT+NL prints value
+
+const RESUME_SINGLE_INPUT  = '7\n';
+const RESUME_SINGLE_OUTPUT = '7\n7\n'; // DIN echoes, then DOUT+NL
+
+// Partial-output-before-pause test: mvi r0, 99 → dout r0 → nl → pause at din
+const PARTIAL_PRE_VALUE    = 99;
+const PARTIAL_PRE_OUTPUT   = '99\n'; // dout+nl before din
+const PARTIAL_RESUME_INPUT = '5\n';
+const PARTIAL_FULL_OUTPUT  = '99\n5\n5\n'; // pre + din echo + dout + nl
+
+// Multi-input (add) test: din a; din b; add r0,r0,r1; dout r0; nl
+const MULTI_INPUT_A   = 10;
+const MULTI_INPUT_B   = 20;
+const MULTI_INPUT_BUF = '10\n20\n';   // both inputs pre-supplied
+const MULTI_OUTPUT    = '10\n20\n30\n'; // echo a + echo b + dout of sum
+
 describe('pauseOnInput option', () => {
   beforeAll(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -37,10 +56,9 @@ describe('pauseOnInput option', () => {
     const interp = new Interpreter();
     const result = interp.executeBuffer(binary, {
       inputFileName: 'test.e',
-      inputBuffer: '42\n',
+      inputBuffer: DIN_BASIC_INPUT,
     });
-    // DIN echoes simulated input ('42\n'), then dout outputs '42' and nl adds '\n'
-    expect(result.output).toBe('42\n42\n');
+    expect(result.output).toBe(DIN_BASIC_OUTPUT);
   });
 
   // ── pauseOnInput: true — initial pause ───────────────────────────────────
@@ -116,9 +134,8 @@ describe('pauseOnInput option', () => {
     const interp = new Interpreter();
     interp.executeBuffer(binary, { inputFileName: 'test.e', inputBuffer: '', pauseOnInput: true });
 
-    const result = interp.resume('7\n');
-    // DIN echoes '7\n', dout outputs '7', nl adds '\n'
-    expect(result.output).toBe('7\n7\n');
+    const result = interp.resume(RESUME_SINGLE_INPUT);
+    expect(result.output).toBe(RESUME_SINGLE_OUTPUT);
     expect(result.pc).toBeGreaterThan(0);
   });
 
@@ -152,7 +169,7 @@ describe('pauseOnInput option', () => {
 
   test('partial output before pause is preserved in interp.output', () => {
     const binary = asm(`
-      mvi r0, 99
+      mvi r0, ${PARTIAL_PRE_VALUE}
       dout r0
       nl
       din r1
@@ -164,12 +181,10 @@ describe('pauseOnInput option', () => {
     const pause = interp.executeBuffer(binary, { inputFileName: 'test.e', inputBuffer: '', pauseOnInput: true });
 
     expect(pause.status).toBe('waiting-for-input');
-    // The dout/nl before din should have already produced output
-    expect(interp.output).toBe('99\n');
+    expect(interp.output).toBe(PARTIAL_PRE_OUTPUT);
 
-    const result = interp.resume('5\n');
-    // DIN echoes '5\n', dout outputs '5', nl adds '\n' → appended to existing '99\n'
-    expect(result.output).toBe('99\n5\n5\n');
+    const result = interp.resume(PARTIAL_RESUME_INPUT);
+    expect(result.output).toBe(PARTIAL_FULL_OUTPUT);
   });
 
   // ── pauseOnInput: true with pre-supplied buffer drains normally ───────────
@@ -186,11 +201,11 @@ describe('pauseOnInput option', () => {
     const interp = new Interpreter();
     const result = interp.executeBuffer(binary, {
       inputFileName: 'test.e',
-      inputBuffer: '10\n20\n',
+      inputBuffer: MULTI_INPUT_BUF, // ${MULTI_INPUT_A}\n${MULTI_INPUT_B}\n
       pauseOnInput: true,
     });
     // Both inputs pre-supplied — no pause, runs to completion
-    expect(result.output).toBe('10\n20\n30\n');
+    expect(result.output).toBe(MULTI_OUTPUT);
     expect(result.status).toBeUndefined();
   });
 
