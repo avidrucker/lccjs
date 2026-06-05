@@ -121,23 +121,34 @@
     @media (max-width: 680px) {
       .playground { grid-template-columns: 1fr; }
     }
-    #playground-input {
-      width: 100%;
-      min-height: 320px;
-      font-family: var(--font-code);
-      font-size: 0.875rem;
-      line-height: 1.6;
-      background: var(--surface);
-      color: var(--text);
+
+    /* ── CodeMirror editor ───────────────────────────────────── */
+    #cm-editor {
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.25rem 1.5rem;
-      resize: vertical;
-      outline: none;
-      tab-size: 4;
-      -moz-tab-size: 4;
+      overflow: hidden;
     }
-    #playground-input:focus { border-color: var(--accent); }
+    .cm-editor {
+      background: var(--surface) !important;
+      min-height: 320px;
+      font-family: var(--font-code) !important;
+      font-size: 0.875rem !important;
+    }
+    .cm-editor.cm-focused { outline: none !important; }
+    .cm-focused .cm-selectionBackground,
+    .cm-selectionBackground { background: #264f78 !important; }
+    .cm-scroller { overflow: auto; font-family: inherit !important; }
+    .cm-content { padding: 1rem 0.25rem !important; caret-color: var(--text); }
+    .cm-line { color: var(--text); }
+    .cm-gutters {
+      background: var(--surface) !important;
+      border-right: 1px solid var(--border) !important;
+      color: var(--muted) !important;
+    }
+    .cm-activeLineGutter { background: #1f2937 !important; }
+    .cm-activeLine { background: #1f2937 !important; }
+    .cm-cursor { border-left-color: var(--text) !important; }
+
     #playground-output { min-height: 320px; }
   </style>
 </head>
@@ -181,9 +192,7 @@
     <h2>Try it</h2>
     <p class="desc">Write LCC assembly on the left — syntax highlighting updates as you type.</p>
     <div class="playground">
-      <textarea id="playground-input"
-        spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
-        aria-label="LCC assembly editor"></textarea>
+      <div id="cm-editor" role="textbox" aria-label="LCC assembly editor"></div>
       <div class="code-wrap" id="playground-output"><pre class="plain"></pre></div>
     </div>
     <div class="status" id="status-playground">Initialising Shiki…</div>
@@ -194,10 +203,20 @@
 <footer>
   Grammar: <code>docs/lcc.tmLanguage.json</code> ·
   Theme: <a href="https://github.com/shikijs/shiki" target="_blank" rel="noopener">github-dark</a> ·
-  Powered by <a href="https://shiki.style" target="_blank" rel="noopener">Shiki v1</a> · No build step.
+  Powered by <a href="https://shiki.style" target="_blank" rel="noopener">Shiki v1</a> ·
+  Editor: <a href="https://codemirror.net" target="_blank" rel="noopener">CodeMirror 6</a>.
 </footer>
 
 <script type="module">
+
+// The codemirror@6 umbrella re-exports EditorView etc. from @codemirror/*
+// subpackages; esm.sh cannot surface those re-exports regardless of ?bundle.
+// Fix: import each symbol from its source package, pinning them all to the same
+// @codemirror/state@6 instance via ?deps= so instanceof checks work. (#772)
+import { EditorView, keymap, lineNumbers } from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
+import { EditorState }         from 'https://esm.sh/@codemirror/state@6';
+import { basicSetup }          from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
+import { indentWithTab }       from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
 
 // ── Playground starter code ─────────────────────────────────────────────────
 
@@ -348,14 +367,47 @@ async function loadGrammar() {
   );
 }
 
+// ── Playground render ────────────────────────────────────────────────────────
+
+const playOutput = document.getElementById('playground-output');
+let hl = null;
+let debounceTimer;
+
+function renderPlayground() {
+  if (!hl) return;
+  try {
+    const html = hl.codeToHtml(view.state.doc.toString(), { lang: 'lcc', theme: 'github-dark' });
+    playOutput.innerHTML = html;
+    setStatus('status-playground', '');
+  } catch (err) {
+    setStatus('status-playground', `Highlight error: ${err.message}`, true);
+  }
+}
+
+// ── CodeMirror setup ─────────────────────────────────────────────────────────
+
+const view = new EditorView({
+  state: EditorState.create({
+    doc: STARTER_CODE,
+    extensions: [
+      basicSetup,
+      lineNumbers(),
+      keymap.of([indentWithTab]),
+      EditorView.updateListener.of((update) => {
+        if (!update.docChanged) return;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(renderPlayground, 150);
+      }),
+    ],
+  }),
+  parent: document.getElementById('cm-editor'),
+});
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
   // Render plain code immediately — page is useful before Shiki loads.
   for (const { wrapId, code } of SAMPLES) setPlain(wrapId, code);
-
-  // Populate playground textarea immediately so it's readable before Shiki loads.
-  document.getElementById('playground-input').value = STARTER_CODE;
 
   // Load Shiki + grammar in parallel.
   let createHighlighter, grammar;
@@ -371,7 +423,6 @@ async function main() {
     return;
   }
 
-  let hl;
   try {
     hl = await createHighlighter({ langs: [grammar], themes: ['github-dark'] });
   } catch (err) {
@@ -390,39 +441,8 @@ async function main() {
     }
   }
 
-  // ── Playground (live highlight) ────────────────────────────
-  const playInput  = document.getElementById('playground-input');
-  const playOutput = document.getElementById('playground-output');
-
-  function renderPlayground() {
-    try {
-      const html = hl.codeToHtml(playInput.value, { lang: 'lcc', theme: 'github-dark' });
-      playOutput.innerHTML = html;
-      setStatus('status-playground', '');
-    } catch (err) {
-      setStatus('status-playground', `Highlight error: ${err.message}`, true);
-    }
-  }
-
-  let debounceTimer;
-  playInput.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(renderPlayground, 150);
-  });
-
-  playInput.addEventListener('keydown', (e) => {
-    if (e.key !== 'Tab') return;
-    e.preventDefault();
-    const start = playInput.selectionStart;
-    const end   = playInput.selectionEnd;
-    playInput.value = playInput.value.slice(0, start) + '    ' + playInput.value.slice(end);
-    playInput.selectionStart = playInput.selectionEnd = start + 4;
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(renderPlayground, 150);
-  });
-
+  // Initial playground render now that Shiki is ready.
   renderPlayground();
-  setStatus('status-playground', '');
 }
 
 main();
