@@ -24,8 +24,15 @@ const TEST_LINES = {
   dotStart:                 '.start main',
   dotLccplus:               '.lccplus',
   dotOrg:                   '.org 0x100',
+  dotOrig:                  '.orig 0x100',
+  dotFill:                  '.fill 1',
+  dotStringz:               '.stringz "hi"',
+  dotAsciz:                 '.asciz "hi"',
+  dotSpace:                 '.space 4',
+  dotBlkw:                  '.blkw 4',
   dotExtern:                '.extern foo',
   dotGlobl:                 '.globl bar',
+  dotGlobal:                '.global baz',
 
   // label definitions
   globalLabelDef:           'myLabel:',
@@ -57,6 +64,7 @@ const TEST_LINES = {
   bre: 'bre target', brne: 'brne target', brn: 'brn target', brp: 'brp target',
   brlt: 'brlt target', brgt: 'brgt target', bl: 'bl target', blr: 'blr r0',
   ret:  'ret',    jmp:  'jmp target',
+  brc: 'brc target', brb: 'brb target', jsr: 'jsr target', jsrr: 'jsrr r0', call: 'call target',
 
   // core mnemonics
   add: 'add r0, r1', sub: 'sub r0, r1', mul: 'mul r0, r1', div: 'div r0, r1',
@@ -64,6 +72,9 @@ const TEST_LINES = {
   not: 'not r0',     mov: 'mov r0, 0',  ld:  'ld r0, label', ldr: 'ldr r0, r1, 0',
   st:  'st r0, label', str: 'str r0, r1, 0', lea: 'lea r0, label',
   cmp: 'cmp r0, r1', push: 'push r0',   pop: 'pop r0',     halt: 'halt',
+  sll: 'sll r0, r1', srl: 'srl r0, r1', sra: 'sra r0, r1',
+  rol: 'rol r0, r1', ror: 'ror r0, r1',
+  mvi: 'mvi r0, 1',  mvr: 'mvr r0, r1', cea: 'cea r0, label', sext: 'sext r0',
 
   // LCC+ extension mnemonics
   clear: 'clear r0', sleep: 'sleep r0', nbain: 'nbain r0', rand: 'rand r0',
@@ -135,8 +146,15 @@ describe('directives', () => {
     ['.start',   'dotStart'],
     ['.lccplus', 'dotLccplus'],
     ['.org',     'dotOrg'],
+    ['.orig',    'dotOrig'],
+    ['.fill',    'dotFill'],
+    ['.stringz', 'dotStringz'],
+    ['.asciz',   'dotAsciz'],
+    ['.space',   'dotSpace'],
+    ['.blkw',    'dotBlkw'],
     ['.extern',  'dotExtern'],
     ['.globl',   'dotGlobl'],
+    ['.global',  'dotGlobal'],
   ])('%s is a directive', (mnemonic, key) => {
     expect(scopeOf(key, mnemonic)).toBe(DIRECTIVE_SCOPE);
   });
@@ -244,7 +262,7 @@ describe('I/O mnemonics', () => {
 describe('branch mnemonics', () => {
   const BR_SCOPE = 'keyword.control.branch.lcc';
 
-  test.each(['br','bral','brz','brnz','bre','brne','brn','brp','brlt','brgt','bl','blr','ret','jmp'])('%s', (m) => {
+  test.each(['br','bral','brz','brnz','bre','brne','brn','brp','brlt','brgt','bl','blr','ret','jmp','brc','brb','jsr','jsrr','call'])('%s', (m) => {
     expect(scopeOf(m, m)).toBe(BR_SCOPE);
   });
 });
@@ -254,7 +272,7 @@ describe('branch mnemonics', () => {
 describe('core mnemonics', () => {
   const CORE_SCOPE = 'keyword.mnemonic.lcc';
 
-  test.each(['add','sub','mul','div','rem','and','or','xor','not','mov','ld','ldr','st','str','lea','cmp','push','pop','halt'])('%s', (m) => {
+  test.each(['add','sub','mul','div','rem','and','or','xor','not','mov','ld','ldr','st','str','lea','cmp','push','pop','halt','sll','srl','sra','rol','ror','mvi','mvr','cea','sext'])('%s', (m) => {
     expect(scopeOf(m, m)).toBe(CORE_SCOPE);
   });
 });
