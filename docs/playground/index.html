@@ -45,7 +45,7 @@
       margin-bottom: 0.5rem;
       flex-wrap: wrap;
     }
-    #run-btn, #format-btn, #download-btn {
+    #run-btn, #format-btn, #download-btn, #share-btn {
       border: none;
       border-radius: 6px;
       padding: 0.4rem 1.1rem;
@@ -61,6 +61,8 @@
     #format-btn:hover { border-color: var(--accent); color: var(--accent); }
     #download-btn { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
     #download-btn:hover { border-color: var(--accent); color: var(--accent); }
+    #share-btn { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    #share-btn:hover { border-color: var(--accent); color: var(--accent); }
     .filename-label, .stdin-label {
       display: flex;
       align-items: center;
@@ -251,6 +253,7 @@
     <button id="run-btn">▶ Run</button>
     <button id="format-btn" title="Normalise indentation (labels at col 0, instructions indented 8 spaces)">⌥ Format</button>
     <button id="download-btn" title="Download current file as .a">Download</button>
+    <button id="share-btn" title="Copy shareable link to clipboard">Share</button>
     <label class="filename-label">
       file
       <input id="filename-input" type="text" value="untitled-1.a"
@@ -413,6 +416,23 @@ function isValidFilename(name) {
   return name.length > 0 && /\.a$/i.test(name) && !/[/\\:\0]/.test(name);
 }
 
+// ── URL share helpers ─────────────────────────────────────────────────────────
+
+function encodeForUrl(src) {
+  return btoa(encodeURIComponent(src));
+}
+
+function decodeFromUrl(encoded) {
+  try { return decodeURIComponent(atob(encoded)); } catch { return null; }
+}
+
+function syncUrlToEditor() {
+  const src = view.state.doc.toString();
+  const url = new URL(window.location.href);
+  url.searchParams.set('code', encodeForUrl(src));
+  history.replaceState(null, '', url.toString());
+}
+
 // ── CodeMirror setup ──────────────────────────────────────────────────────────
 
 const baseExtensions = [
@@ -423,18 +443,23 @@ const baseExtensions = [
     '&': { height: '300px' },
     '.cm-scroller': { overflow: 'auto' },
   }),
+  EditorView.updateListener.of((update) => {
+    if (update.docChanged) syncUrlToEditor();
+  }),
 ];
 
 function makeState(doc) {
   return EditorState.create({ doc: doc ?? '', extensions: baseExtensions });
 }
 
-const view = new EditorView({ state: makeState(STARTER), parent: cmEditorEl });
+const _urlCode = new URLSearchParams(window.location.search).get('code');
+const _initialDoc = _urlCode ? (decodeFromUrl(_urlCode) ?? STARTER) : STARTER;
+const view = new EditorView({ state: makeState(_initialDoc), parent: cmEditorEl });
 
 // ── Tab model ─────────────────────────────────────────────────────────────────
 
 // Each entry: { name: string, state: EditorState, initialDoc: string }
-let tabs      = [{ name: 'untitled-1.a', state: view.state, initialDoc: STARTER }];
+let tabs      = [{ name: 'untitled-1.a', state: view.state, initialDoc: _initialDoc }];
 let activeIdx = 0;
 let tabCounter = 1;
 
@@ -623,6 +648,23 @@ document.getElementById('download-btn').addEventListener('click', () => {
   a.download = name;
   a.click();
   URL.revokeObjectURL(url);
+});
+
+// ── Share ─────────────────────────────────────────────────────────────────────
+
+document.getElementById('share-btn').addEventListener('click', () => {
+  syncUrlToEditor();
+  const shareUrl = window.location.href;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      runStatus.textContent = 'Link copied to clipboard';
+      setTimeout(() => { runStatus.textContent = ''; }, 2500);
+    }).catch(() => {
+      prompt('Copy this link:', shareUrl);
+    });
+  } else {
+    prompt('Copy this link:', shareUrl);
+  }
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
