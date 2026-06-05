@@ -25,9 +25,9 @@
  *     error:       string|null
  *   }> }
  *
- * Detection (conservative, start):
+ * Detection:
  *   1. ≥2 state-changing Bash calls in one batch
- *      (git / gh / npm run claim|close — every #307/#304/#310 instance)
+ *      (git write ops / gh write ops / npm run claim|close / rm)
  *   2. A Write or Edit + a sibling Read of the same file_path
  *      (written path consumed before the write is even committed to disk)
  *
@@ -35,9 +35,18 @@
  *   - Single-tool turns
  *   - Read-only batches (all Read / non-mutating Bash)
  *   - Exactly 1 state-changing Bash with other read-only calls
+ *   - Parallel read-only gh calls (gh issue list/view, gh pr list/view) — safe to batch (#846)
+ *   - Parallel read-only git calls (git status, git log, git diff, git worktree list) — safe to batch (#846)
+ *
+ * NOTE (#846): the original regex matched ALL `git ` and `gh ` prefixes, which incorrectly
+ * blocked safe parallel research calls like `gh issue list` + `git worktree list`.
+ * The regex now enumerates only genuinely state-mutating subcommands.
  */
 
-const STATE_CHANGING_RE = /^\s*(git |gh |npm run claim|npm run close|rm )/;
+// Write-path git subcommands (mutate local state or remote).
+// Read-only git commands (status, log, diff, show, rev-parse, fetch, worktree list, branch -r, etc.)
+// are intentionally excluded so parallel status/log calls don't trigger this guard.
+const STATE_CHANGING_RE = /^\s*(git (commit|push|rebase|reset|merge|add |branch -[dD]|worktree (remove|prune)|checkout|cherry-pick|stash (pop|drop|apply))|gh (issue|pr|release|gist) (create|edit|close|comment|reopen|merge|review|delete)|npm run claim|npm run close|rm )/;
 
 function isStateChangingBash(call) {
   if (call.tool_name !== 'Bash') return false;
