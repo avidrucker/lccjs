@@ -51,15 +51,16 @@ function run(binary, opts = {}) {
 }
 
 function makeResume(interp) {
+  const preResumeOutputLength = interp.output.length;
   return function resume(moreInput = '') {
     try {
       const result = interp.resume(moreInput.endsWith('\n') ? moreInput : moreInput + '\n');
       if (result && result.status === 'waiting-for-input') {
         return { status: 'waiting-for-input', trapType: result.trapType, partialOutput: interp.output, resume: makeResume(interp) };
       }
-      return { status: 'done', stdout: interp.output, exitCode: 0 };
+      return { status: 'done', stdout: interp.output, preResumeOutputLength, exitCode: 0 };
     } catch (err) {
-      return { status: 'done', stdout: interp.output, exitCode: 1 };
+      return { status: 'done', stdout: interp.output, preResumeOutputLength, exitCode: 1 };
     }
   };
 }

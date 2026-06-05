@@ -36,7 +36,7 @@ function handleResult(result) {
     self.postMessage({ status: 'max-steps-reached', output: result.stdout });
   } else {
     resumeFn = null;
-    self.postMessage({ status: 'halted', output: (result && result.stdout) || '' });
+    self.postMessage({ status: 'halted', output: (result && result.stdout) || '', preResumeLen: (result && result.preResumeOutputLength) || 0 });
   }
 }
 

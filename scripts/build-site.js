@@ -587,6 +587,15 @@ function finishRun() {
   hidePrompt();
 }
 
+function displayWithSeparator(fullOutput, preResumeLen) {
+  if (!preResumeLen || !fullOutput || fullOutput.length <= preResumeLen) {
+    return fullOutput || '(no output)';
+  }
+  const pre = fullOutput.slice(0, preResumeLen);
+  const post = fullOutput.slice(preResumeLen);
+  return (pre.endsWith('\\n') ? pre : pre + '\\n') + post;
+}
+
 stopBtn.addEventListener('click', () => {
   if (currentWorker) {
     currentWorker.terminate();
@@ -625,7 +634,7 @@ runBtn.addEventListener('click', () => {
         execOut.textContent = result.partialOutput || '';
         showPrompt(result.trapType, (input) => handleFallback(result.resume(input)));
       } else {
-        execOut.textContent = result.stdout || '(no output)';
+        execOut.textContent = displayWithSeparator(result.stdout, result.preResumeOutputLength);
         if (result.maxStepsReached) {
           runStatus.textContent = 'Program did not halt — possible infinite loop';
           execOut.classList.add('lcc-error');
@@ -644,7 +653,7 @@ runBtn.addEventListener('click', () => {
     const { status, output: out, message, partialOutput, trapType } = e.data;
     execOut.classList.remove('lcc-error');
     if (status === 'halted') {
-      execOut.textContent = out || '(no output)';
+      execOut.textContent = displayWithSeparator(out, e.data.preResumeLen);
       worker.terminate();
       finishRun();
     } else if (status === 'waiting-for-input') {

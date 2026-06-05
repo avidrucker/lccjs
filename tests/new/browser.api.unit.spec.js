@@ -54,4 +54,75 @@ describe('browser API', () => {
       expect(result.exitCode).toBe(1);
     });
   });
+
+  describe('run() with pauseOnInput', () => {
+    const PRE_POST_SRC = `
+      mvi r0, 0
+      dout r0
+      din  r0
+      dout r0
+      nl
+      halt
+    `;
+
+    test('returns waiting-for-input with partialOutput when program pauses at din', () => {
+      const { binary } = assemble(PRE_POST_SRC);
+      const result = run(binary, { pauseOnInput: true });
+      expect(result.status).toBe('waiting-for-input');
+      expect(result.partialOutput).toBe('0');
+      expect(typeof result.resume).toBe('function');
+    });
+
+    test('resume() returns done with preResumeOutputLength equal to pre-pause output length', () => {
+      const { binary } = assemble(PRE_POST_SRC);
+      const paused = run(binary, { pauseOnInput: true });
+      expect(paused.status).toBe('waiting-for-input');
+
+      const done = paused.resume('77');
+      expect(done.status).toBe('done');
+      // din echoes "77\n", then dout outputs "77", then nl → full: "0" + "77\n77\n"
+      expect(done.stdout).toBe('077\n77\n');
+      // preResumeOutputLength marks where pre-pause output ("0") ends in the full string
+      expect(done.preResumeOutputLength).toBe(1); // '0' has length 1
+    });
+
+    test('displayWithSeparator logic: injecting separator at preResumeOutputLength produces separated display', () => {
+      const { binary } = assemble(PRE_POST_SRC);
+      const paused = run(binary, { pauseOnInput: true });
+      const done = paused.resume('77');
+
+      const { stdout, preResumeOutputLength: preLen } = done;
+      const pre  = stdout.slice(0, preLen);
+      const post = stdout.slice(preLen);
+      const display = (pre.endsWith('\n') ? pre : pre + '\n') + post;
+
+      // '0' does not end with \n → separator injected before "77\n77\n"
+      expect(display).toBe('0\n77\n77\n');
+    });
+
+    test('no separator injected when pre-pause output already ends with newline', () => {
+      const { binary } = assemble(`
+        mvi r0, 42
+        dout r0
+        nl
+        din  r0
+        dout r0
+        nl
+        halt
+      `);
+      const paused = run(binary, { pauseOnInput: true });
+      expect(paused.status).toBe('waiting-for-input');
+      expect(paused.partialOutput).toBe('42\n');
+
+      const done = paused.resume('7');
+      expect(done.status).toBe('done');
+      // preLen = 3 ('42\n'), pre ends with \n → no extra separator needed
+      expect(done.preResumeOutputLength).toBe(3);
+      const pre  = done.stdout.slice(0, done.preResumeOutputLength);
+      const post = done.stdout.slice(done.preResumeOutputLength);
+      const display = (pre.endsWith('\n') ? pre : pre + '\n') + post;
+      // pre already ends with \n so display = '42\n' + '7\n7\n' = '42\n7\n7\n'
+      expect(display).toBe('42\n7\n7\n');
+    });
+  });
 });
