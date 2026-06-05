@@ -167,13 +167,11 @@ Current tests cover: `.word`, `.zero`, `.string`, `.start`, `.lccplus`, `.org`, 
 \b(?:r[0-7]|fp|sp|lr)\b
 ```
 
-**GAP: `ra` alias missing.** `ra` is a valid alias for `r7` in LCC assembly. The assembler accepts it (assembler resolves register names including aliases). vscode-lcc also omits `ra`. Neither grammar highlights it as a register.
-
-This gap is pre-existing and noted in `docs/research/lezer-grammar-lcc-assembly.md` §4 ("open gaps").
+**No gap.** The assembler's `isRegister` (line 1953) accepts exactly `r0-r7`, `fp` (→r5), `sp` (→r6), `lr` (→r7) — the same set as the grammar. There is no `ra` alias in LCC; `docs/research/lezer-grammar-lcc-assembly.md` §4 asserts one, but it is incorrect.
 
 ### 5b. Lezer grammar
 
-Same set as tmLanguage: `r0-r7, fp, sp, lr`. `ra` omitted (same gap as above).
+Same set: `r0-r7, fp, sp, lr`. **No gap.**
 
 ---
 
@@ -222,12 +220,13 @@ vscode-lcc is a core-LCC-only extension; the LCC+ gaps there are intentional, no
 | G3 | 9 core mnemonics untested in grammar suite | **Medium** | `tests/new/grammar.unit.spec.js` | Add to `test.each` list in `core mnemonics` describe block |
 | G4 | 5 branch mnemonics untested | **Medium** | `tests/new/grammar.unit.spec.js` | Add to `test.each` list in `branch mnemonics` describe block |
 | G5 | 7 directives untested | **Medium** | `tests/new/grammar.unit.spec.js` | Add to `test.each` list in `directives` describe block |
-| G6 | `ra` register alias missing from both grammars | **Low** | `lcc.grammar`, `lcc.tmLanguage.json` | One-line addition to each register list |
-| G7 | Bare `x`-prefix hex (`xF`) tokenises as Identifier | **Low** | `lcc.grammar`, `lcc.tmLanguage.json` | Add `"x" $[0-9A-Fa-f]+` to `Number` token; add `\bx[0-9A-Fa-f]+\b` to tmLanguage number group |
+| G6 | Bare `x`-prefix hex (`xF`) tokenises as Identifier | **Low** | `lcc.grammar`, `lcc.tmLanguage.json` | Add `"x" $[0-9A-Fa-f]+` to `Number` token; add `\bx[0-9A-Fa-f]+\b` to tmLanguage number group |
 
 Gaps G3–G5 are test-coverage gaps only — the grammars already define the tokens correctly; there are just no red-green tests guarding them against regression.
 
 Gaps G1 and G2 are real code bugs: `$`-prefixed labels are valid per the assembler and vscode-lcc but are not highlighted correctly by lccjs's grammars.
+
+> **Correction note:** An earlier draft listed a G6 for a missing `ra` register alias. `ra` does not exist in LCC — the assembler only accepts `fp`, `sp`, `lr` as named aliases. The `lezer-grammar-lcc-assembly.md` §4 "open gaps" entry claiming `ra` is also incorrect.
 
 ---
 
@@ -239,7 +238,7 @@ Gaps G1 and G2 are real code bugs: `$`-prefixed labels are valid per the assembl
 | Fix `$` in `label_ref` pattern + add test | DEV | `lcc.tmLanguage.json` + grammar test | H=10, C=5 |
 | Expand grammar test coverage — missing mnemonics + directives | TEST | `grammar.unit.spec.js` | H=20, C=10 |
 
-The `ra` register and bare-`x` hex issues are low-priority cosmetic fixes; they can be folded into any upcoming grammar-touch PR rather than receiving dedicated issues.
+The bare-`x` hex issue (G6) is a low-priority cosmetic fix; it can be folded into any upcoming grammar-touch PR rather than receiving a dedicated issue.
 
 ---
 
