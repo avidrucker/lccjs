@@ -9,6 +9,11 @@ const Interpreter = require('../core/interpreter.js');
 
 // Shared exit logic (isTestMode throw-vs-exit); wrapped below to add stdin cleanup.
 const { fatalExit: exitProcess } = require('../utils/cliExit');
+const { TRAP_HALT, TRAP_BP } = require('../core/constants');
+const {
+  TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
+  TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC, EOP_RAND,
+} = require('./constants');
 
 // Number of interpreter steps executed per setImmediate tick in runAsync().
 // Tuned for reasonable UI responsiveness in .ap games; adjust if lag is observed.
@@ -278,33 +283,33 @@ class InterpreterPlus extends Interpreter {
     switch (this.trapvec) {
       // Keep parent's existing trap handling
       // but we add back the ones we removed from parent:
-      case 0: // HALT
+      case TRAP_HALT: // HALT
         this.running = false;
         // turn off raw mode for non-blocking input
         resetProcessStdin();
         break;
-      case 14: // bp breakpoint
+      case TRAP_BP: // bp breakpoint
         this.executeLccPlusBreakpoint();
         break;
-      case 0xF9: // clear
+      case TRAP_CLEAR: // clear
         this.executeClear();
         break;
-      case 0xFA: // sleep
+      case TRAP_SLEEP: // sleep
         this.executeSleep();
         break;
-      case 0xFB: // nbain
+      case TRAP_NBAIN: // nbain
         this.executeNonBlockingAsciiInput();
         break;
-      case 0xFC: // cursor
+      case TRAP_CURSOR: // cursor
         this.executeToggleCursor();
         break;
-      case 0xFD: // srand
+      case TRAP_SRAND: // srand
         this.executeSrand();
         break;
-      case 0xFE: // millis
+      case TRAP_MILLIS: // millis
         this.executeMillis();
         break;
-      case 0xFF: // resetc
+      case TRAP_RESETC: // resetc
         this.executeResetCursor();
         break;
       default:
@@ -326,13 +331,13 @@ class InterpreterPlus extends Interpreter {
     });
   }
 
-  executeCase10() {    
-    switch(this.eopcode) {
-      case 14: // rand
+  executeCase10() {
+    switch (this.eopcode) {
+      case EOP_RAND: // rand
         this.executeRand();
         break;
       default:
-        // If it's not 14, call parent's method
+        // If it's not EOP_RAND, call parent's method
         super.executeCase10();
     }
   }

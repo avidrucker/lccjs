@@ -19,28 +19,16 @@ const {
 } = require('../utils/fileArtifacts');
 const { AssemblerError } = require('../utils/errors');
 const nameHandler = require('../utils/name.js');
-
-// ---------------------------------------------------------------------------
-// ISA base opcode constants (#17 — magic-number sweep, assembler.js only)
-// Each constant is the top 4-bit opcode nibble shifted into the high word.
-// The remaining 12 bits are filled in by each assemble* method.
-// ---------------------------------------------------------------------------
-const OP_BR   = 0x0000; // opcode  0 — BR (branch)
-const OP_ADD  = 0x1000; // opcode  1 — ADD
-const OP_LD   = 0x2000; // opcode  2 — LD
-const OP_ST   = 0x3000; // opcode  3 — ST
-const OP_BL   = 0x4000; // opcode  4 — BL / BLR (branch-and-link)
-const OP_AND  = 0x5000; // opcode  5 — AND
-const OP_LDR  = 0x6000; // opcode  6 — LDR
-const OP_STR  = 0x7000; // opcode  7 — STR
-const OP_CMP  = 0x8000; // opcode  8 — CMP
-const OP_NOT  = 0x9000; // opcode  9 — NOT
-const OP_EXT  = 0xA000; // opcode 10 — extended group (SRL/SRA/SLL/ROL/ROR/PUSH/POP/MUL/DIV/REM/OR/XOR/MVR/SEXT)
-const OP_SUB  = 0xB000; // opcode 11 — SUB
-const OP_JMP  = 0xC000; // opcode 12 — JMP / RET
-const OP_MVI  = 0xD000; // opcode 13 — MVI
-const OP_LEA  = 0xE000; // opcode 14 — LEA
-const OP_TRAP = 0xF000; // opcode 15 — TRAP (HALT, NL, DOUT, …)
+const {
+  OPCODE_BR: OP_BR, OPCODE_ADD: OP_ADD, OPCODE_LD: OP_LD, OPCODE_ST: OP_ST,
+  OPCODE_BL: OP_BL, OPCODE_AND: OP_AND, OPCODE_LDR: OP_LDR, OPCODE_STR: OP_STR,
+  OPCODE_CMP: OP_CMP, OPCODE_NOT: OP_NOT, OPCODE_EXT: OP_EXT, OPCODE_SUB: OP_SUB,
+  OPCODE_JMP: OP_JMP, OPCODE_MVI: OP_MVI, OPCODE_LEA: OP_LEA, OPCODE_TRAP: OP_TRAP,
+  TRAP_NL, TRAP_DOUT, TRAP_UDOUT, TRAP_HOUT, TRAP_AOUT, TRAP_SOUT,
+  TRAP_DIN, TRAP_HIN, TRAP_AIN, TRAP_SIN, TRAP_M, TRAP_R, TRAP_S, TRAP_BP,
+  EOP_PUSH, EOP_POP, EOP_SRL, EOP_SRA, EOP_SLL, EOP_ROL, EOP_ROR,
+  EOP_MUL, EOP_DIV, EOP_REM, EOP_OR, EOP_XOR, EOP_MVR, EOP_SEXT,
+} = require('./constants');
 
 const { fatalExit, cliErrorExit, cliWrappedErrorExit } = require('../utils/cliExit');
 
@@ -247,22 +235,22 @@ class Assembler {
       'jmp':   { encoder: (ops) => this.assembleJMP(ops),  operandShape: 'baser[, offset6]' },
       'ret':   { encoder: (ops) => this.assembleRET(ops),  operandShape: '[offset6]' },
       // No-operand traps (constant machine word)
-      'halt':  { encoder: (_ops) => OP_TRAP,  operandShape: '(none)' },
-      'nl':    { encoder: (_ops) => 0xF001,   operandShape: '(none)' },
+      'halt':  { encoder: (_ops) => OP_TRAP,             operandShape: '(none)' },
+      'nl':    { encoder: (_ops) => OP_TRAP | TRAP_NL,   operandShape: '(none)' },
       // Register-bearing traps
-      'dout':  { encoder: (ops) => this.assembleTrap(ops, 0x0002), operandShape: '[sr]' },
-      'udout': { encoder: (ops) => this.assembleTrap(ops, 0x0003), operandShape: '[sr]' },
-      'hout':  { encoder: (ops) => this.assembleTrap(ops, 0x0004), operandShape: '[sr]' },
-      'aout':  { encoder: (ops) => this.assembleTrap(ops, 0x0005), operandShape: '[sr]' },
-      'sout':  { encoder: (ops) => this.assembleTrap(ops, 0x0006), operandShape: '[sr]' },
-      'din':   { encoder: (ops) => this.assembleTrap(ops, 0x0007), operandShape: '[sr]' },
-      'hin':   { encoder: (ops) => this.assembleTrap(ops, 0x0008), operandShape: '[sr]' },
-      'ain':   { encoder: (ops) => this.assembleTrap(ops, 0x0009), operandShape: '[sr]' },
-      'sin':   { encoder: (ops) => this.assembleTrap(ops, 0x000A), operandShape: '[sr]' },
-      'm':     { encoder: (ops) => this.assembleTrap(ops, 0x000B), operandShape: '[sr]' },
-      'r':     { encoder: (ops) => this.assembleTrap(ops, 0x000C), operandShape: '[sr]' },
-      's':     { encoder: (ops) => this.assembleTrap(ops, 0x000D), operandShape: '[sr]' },
-      'bp':    { encoder: (ops) => this.assembleTrap(ops, 0x000E), operandShape: '(none)' },
+      'dout':  { encoder: (ops) => this.assembleTrap(ops, TRAP_DOUT),  operandShape: '[sr]' },
+      'udout': { encoder: (ops) => this.assembleTrap(ops, TRAP_UDOUT), operandShape: '[sr]' },
+      'hout':  { encoder: (ops) => this.assembleTrap(ops, TRAP_HOUT),  operandShape: '[sr]' },
+      'aout':  { encoder: (ops) => this.assembleTrap(ops, TRAP_AOUT),  operandShape: '[sr]' },
+      'sout':  { encoder: (ops) => this.assembleTrap(ops, TRAP_SOUT),  operandShape: '[sr]' },
+      'din':   { encoder: (ops) => this.assembleTrap(ops, TRAP_DIN),   operandShape: '[sr]' },
+      'hin':   { encoder: (ops) => this.assembleTrap(ops, TRAP_HIN),   operandShape: '[sr]' },
+      'ain':   { encoder: (ops) => this.assembleTrap(ops, TRAP_AIN),   operandShape: '[sr]' },
+      'sin':   { encoder: (ops) => this.assembleTrap(ops, TRAP_SIN),   operandShape: '[sr]' },
+      'm':     { encoder: (ops) => this.assembleTrap(ops, TRAP_M),     operandShape: '[sr]' },
+      'r':     { encoder: (ops) => this.assembleTrap(ops, TRAP_R),     operandShape: '[sr]' },
+      's':     { encoder: (ops) => this.assembleTrap(ops, TRAP_S),     operandShape: '[sr]' },
+      'bp':    { encoder: (ops) => this.assembleTrap(ops, TRAP_BP),    operandShape: '(none)' },
     };
   }
 
@@ -1455,7 +1443,7 @@ class Assembler {
     if (sr === null) {
       this.failAssembly('Missing register', 1);
     };
-    let macword = OP_EXT | (sr << 9);
+    let macword = OP_EXT | (sr << 9) | EOP_PUSH;
     return macword;
   }
 
@@ -1464,7 +1452,7 @@ class Assembler {
     if (dr === null) {
       this.failAssembly('Missing register', 1);
     };
-    let macword = (OP_EXT | (dr << 9)) | 0x0001;
+    let macword = OP_EXT | (dr << 9) | EOP_POP;
     return macword;
   }
 
@@ -1474,7 +1462,7 @@ class Assembler {
     if (dr === null || sr1 === null) {
       this.failAssembly('Missing register', 1);
     };
-    let macword = 0xa008 | (dr << 9) | (sr1 << 6);
+    let macword = OP_EXT | EOP_DIV | (dr << 9) | (sr1 << 6);
     return macword;
   }
 
@@ -1486,7 +1474,7 @@ class Assembler {
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
-    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | 0x0005;
+    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | EOP_ROL;
     return macword;
   }
 
@@ -1496,7 +1484,7 @@ class Assembler {
     if (dr === null || sr1 === null) {
       this.failAssembly('Missing register', 1);
     };
-    let macword = OP_EXT | (dr << 9) | (sr1 << 6) | 0x0007;
+    let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_MUL;
     return macword;
   }
 
@@ -1506,7 +1494,7 @@ class Assembler {
     if (dr === null || sr1 === null) {
       this.failAssembly('Missing register', 1);
     }
-    let macword = OP_EXT | (dr << 9) | (sr1 << 6) | 0x0009;
+    let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_REM;
     return macword;
   }
 
@@ -1516,7 +1504,7 @@ class Assembler {
     if (dr === null || sr1 === null) {
       this.failAssembly('Missing register', 1);
     }
-    let macword = OP_EXT | (dr << 9) | (sr1 << 6) | 0x000A;
+    let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_OR;
     return macword;
   }
 
@@ -1526,7 +1514,7 @@ class Assembler {
     if (dr === null || sr1 === null) {
       this.failAssembly('Missing register', 1);
     }
-    let macword = OP_EXT | (dr << 9) | (sr1 << 6) | 0x000B;
+    let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_XOR;
     return macword;
   }
 
@@ -1536,7 +1524,7 @@ class Assembler {
     if (dr === null || sr1 === null) {
       this.failAssembly('Missing register', 1);
     };
-    let macword = OP_EXT | (dr << 9) | (sr1 << 6) | 0x000D;
+    let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_SEXT;
     return macword;
   }
 
@@ -1548,7 +1536,7 @@ class Assembler {
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
-    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | 0x0006;
+    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | EOP_ROR;
     return macword;
   }
 
@@ -1560,7 +1548,7 @@ class Assembler {
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
-    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | 0x0002;
+    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | EOP_SRL;
     return macword;
   }
 
@@ -1572,7 +1560,7 @@ class Assembler {
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
-    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | 0x0003;
+    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | EOP_SRA;
     return macword;
   }
 
@@ -1584,7 +1572,7 @@ class Assembler {
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
     if (ct === null) ct = 1;
-    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | 0x0004;
+    let macword = OP_EXT | (sr << 9) | ((ct & 0xF) << 5) | EOP_SLL;
     return macword;
   }
 
@@ -1852,7 +1840,7 @@ class Assembler {
         // Translate to 'mvr dr, sr'
         let sr = this.getRegister(operands[1]);
         // mvr: opcode 0xA000, eopcode 12
-        let macword = OP_EXT | (dr << 9) | (sr << 6) | 0x000C;
+        let macword = OP_EXT | (dr << 9) | (sr << 6) | EOP_MVR;
         return macword;
       } else {
         // Translate to 'mvi dr, imm9' — same range (-256..255) and machine code as mvi.
@@ -1882,7 +1870,7 @@ class Assembler {
         this.failAssembly('Missing register', 1);
       };
       // Ensure eopcode 12 is set
-      let macword = OP_EXT | (dr << 9) | (sr1 << 6) | 0x000C;
+      let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_MVR;
       return macword;
     } else {
       this.error(`Invalid mnemonic: ${mnemonic}`);

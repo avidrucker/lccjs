@@ -4,7 +4,8 @@
  * @file interpreterplus.extension-traps.unit.spec.js
  *
  * Unit tests for the five LCC+ extension trap handlers that have no dedicated
- * coverage: sleep (0xFA), nbain (0xFB), cursor (0xFC), millis (0xFE), resetc (0xFF).
+ * coverage: sleep (TRAP_SLEEP), nbain (TRAP_NBAIN), cursor (TRAP_CURSOR),
+ * millis (TRAP_MILLIS), resetc (TRAP_RESETC).
  *
  * Test strategy: instantiate InterpreterPlus, set dr/sr and r[] directly (the
  * same approach used in interpreterplus.unit.spec.js for rand/srand), then call
@@ -13,6 +14,7 @@
  */
 
 const InterpreterPlus = require('../../src/plus/interpreterplus');
+const { TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR, TRAP_MILLIS, TRAP_RESETC } = require('../../src/plus/constants');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -51,7 +53,7 @@ function withFakeTTY(fn) {
 // sleep (trap 16)
 // ---------------------------------------------------------------------------
 
-describe('InterpreterPlus — executeSleep (trap 0xFA)', () => {
+describe(`InterpreterPlus — executeSleep (TRAP_SLEEP = 0x${TRAP_SLEEP.toString(16).toUpperCase()})`, () => {
   afterEach(() => jest.useRealTimers());
 
   test('immediately sets running=false and calls startNonBlockingLoop after the delay', () => {
@@ -129,7 +131,7 @@ describe('InterpreterPlus — executeSleep (trap 0xFA)', () => {
 // nbain — non-blocking ASCII input (trap 17)
 // ---------------------------------------------------------------------------
 
-describe('InterpreterPlus — executeNonBlockingAsciiInput / nbain (trap 0xFB)', () => {
+describe(`InterpreterPlus — executeNonBlockingAsciiInput / nbain (TRAP_NBAIN = 0x${TRAP_NBAIN.toString(16).toUpperCase()})`, () => {
   test('empty keyQueue stores 0 in the dr register', () => {
     const ip = makeIp();
     ip.dr = 2;
@@ -195,7 +197,7 @@ describe('InterpreterPlus — executeNonBlockingAsciiInput / nbain (trap 0xFB)',
 // cursor — toggle terminal cursor visibility (trap 18)
 // ---------------------------------------------------------------------------
 
-describe('InterpreterPlus — executeToggleCursor / cursor (trap 0xFC)', () => {
+describe(`InterpreterPlus — executeToggleCursor / cursor (TRAP_CURSOR = 0x${TRAP_CURSOR.toString(16).toUpperCase()})`, () => {
   let writeSpy;
   beforeEach(() => {
     writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
@@ -248,7 +250,7 @@ describe('InterpreterPlus — executeToggleCursor / cursor (trap 0xFC)', () => {
 // millis (trap 20)
 // ---------------------------------------------------------------------------
 
-describe('InterpreterPlus — executeMillis (trap 0xFE)', () => {
+describe(`InterpreterPlus — executeMillis (TRAP_MILLIS = 0x${TRAP_MILLIS.toString(16).toUpperCase()})`, () => {
   test('stores a value in [0, 999] in the dr register', () => {
     const ip = makeIp();
     ip.dr = 4;
@@ -302,7 +304,7 @@ describe('InterpreterPlus — executeMillis (trap 0xFE)', () => {
 // resetc — reset cursor to home position (trap 21)
 // ---------------------------------------------------------------------------
 
-describe('InterpreterPlus — executeResetCursor / resetc (trap 0xFF)', () => {
+describe(`InterpreterPlus — executeResetCursor / resetc (TRAP_RESETC = 0x${TRAP_RESETC.toString(16).toUpperCase()})`, () => {
   let writeSpy;
   beforeEach(() => {
     writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});

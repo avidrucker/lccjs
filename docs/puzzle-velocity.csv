@@ -693,3 +693,6 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 706,805,displayWithSeparator injects newline breaking prompt layout,DEV,30,15,3,27,12,2026-06-05T06:41:51-1000,2026-06-05T06:45:18-1000,,removed newline injection entirely; displayWithSeparator now returns fullOutput as-is; updated 2 tests from #801 that encoded old injection behavior,BANANA,sonnet-4.6,lccjs
 707,,,DEV,,,,,-3,,,,,TEST,,lccjs
 708,806,fix defunct playground-input refs; add displayWithSeparator e2e test,DEV,45,20,25,20,-5,2026-06-05T06:53:43-1000,2026-06-05T07:18:43-1000,,window.__lccSetSource already wired; 3 replacements + 1 new test; no source changes needed,APPLE,sonnet-4.6,lccjs
+709,,,DEV,,,,,-3,,,,,TEST,,lccjs
+710,,,DEV,,,,,-3,,,,,TEST,,lccjs
+711,794,refactor: extract all ISA numeric constants into shared constants module(s),DEV,60,45,11,49,34,2026-06-05T06:53:44-1000,2026-06-05T07:04:31-1000,,created src/core/constants.js + src/plus/constants.js; updated assembler.js interpreter.js assemblerplus.js interpreterplus.js and extension-traps test; 0 new test failures,DRAGONFRUIT,sonnet-4.6,lccjs

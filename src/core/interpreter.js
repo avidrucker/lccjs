@@ -14,6 +14,10 @@ const {
 const nameHandler = require('../utils/name.js');
 const { h4 } = require('./debug/format');
 const { diffRegisters } = require('./debug/stateDelta');
+const {
+  EOP_PUSH, EOP_POP, EOP_SRL, EOP_SRA, EOP_SLL, EOP_ROL, EOP_ROR,
+  EOP_MUL, EOP_DIV, EOP_REM, EOP_OR, EOP_XOR, EOP_MVR, EOP_SEXT,
+} = require('./constants');
 
 const newline = (typeof process !== 'undefined' && process.platform === 'win32') ? '\r\n' : '\n';
 
@@ -1134,13 +1138,13 @@ class Interpreter {
     const ct = (this.ir >> 5) & 0xF;
 
     switch (this.eopcode) {
-      case 0: // PUSH // mem[--sp] = sr 
+      case EOP_PUSH: // PUSH // mem[--sp] = sr
         // decrement stack pointer and store value
         this.r[6] = (this.r[6] - 1) & 0xFFFF;
         // save source register to memory at address pointed at by stack pointer
         this.mem[this.r[6]] = this.r[this.sr];
         break;
-      case 1: // POP // dr = mem[sp++];
+      case EOP_POP: // POP // dr = mem[sp++];
         // load value from memory at address pointed at by stack pointer to destination
         this.r[this.dr] = this.mem[this.r[6]];
         // increment stack pointer (to deallocate stack memory)
@@ -1170,62 +1174,62 @@ class Interpreter {
       // This is safe because this.r[this.sr] is a Uint16Array element (0–65535),
       // so bit 31 is always 0 → c=0, which is the correct carry for a zero-shift.
       // The value-shift operations (>>>0, >>0, <<0) are all no-ops. No guard needed.
-      case 2: // SRL
+      case EOP_SRL: // SRL
         this.c = (this.r[this.sr] >> (ct - 1)) & 1; // Store the last bit shifted out
         this.r[this.sr] = (this.r[this.sr] >>> ct); // Unsigned right shift (injects 0's from the left)
         this.setNZ(this.r[this.sr]); // Update flags
         break;
-      case 3: // SRA
+      case EOP_SRA: // SRA
         this.c = (this.r[this.sr] >> (ct - 1)) & 1; // Store the last bit shifted out
         const signBit = (this.r[this.sr] & 0x8000) ? 0xFFFF << (16 - ct) : 0; // Extend sign bit
         this.r[this.sr] = (this.r[this.sr] >> ct) | signBit; // Shift right with sign extension
         this.setNZ(this.r[this.sr]); // Update flags
         break;
-      case 4: // SLL
+      case EOP_SLL: // SLL
         this.c = (this.r[this.sr] >> (16 - ct)) & 1; // Store the last bit shifted out
         this.r[this.sr] = (this.r[this.sr] << ct) & 0xFFFF; // Logical shift left (mask to 16 bits)
         this.setNZ(this.r[this.sr]); // Update flags
         break;
-      case 5: // ROL
+      case EOP_ROL: // ROL
         this.c = (this.r[this.sr] >> (16 - ct)) & 1;
         this.r[this.sr] = (this.r[this.sr] << ct) | (this.r[this.sr] >> (16 - ct));
         this.setNZ(this.r[this.sr]);
         break;
-      case 6: // ROR
+      case EOP_ROR: // ROR
         this.c = (this.r[this.sr] >> (ct - 1)) & 1;
         this.r[this.sr] = (this.r[this.sr] >> ct) | (this.r[this.sr] << (16 - ct));
         this.setNZ(this.r[this.sr]);
         break;
-      case 7: // MUL
+      case EOP_MUL: // MUL
         this.r[this.dr] = (this.r[this.dr] * this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
-      case 8: // DIV
+      case EOP_DIV: // DIV
         if (this.r[this.sr1] === 0) {
           this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception'));
         }
         this.r[this.dr] = (this.r[this.dr] / this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
-      case 9: // REM
+      case EOP_REM: // REM
         if (this.r[this.sr1] === 0) {
           this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception'));
         }
         this.r[this.dr] = (this.r[this.dr] % this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
-      case 10: // OR
+      case EOP_OR: // OR
         this.r[this.dr] = this.r[this.dr] | this.r[this.sr1];
         this.setNZ(this.r[this.dr]);
         break;
-      case 11: // XOR
+      case EOP_XOR: // XOR
         this.r[this.dr] = this.r[this.dr] ^ this.r[this.sr1];
         this.setNZ(this.r[this.dr]);
         break;
-      case 12: // MVR
+      case EOP_MVR: // MVR
         this.r[this.dr] = this.r[this.sr1];
         break;
-      case 13: // SEXT
+      case EOP_SEXT: // SEXT
         this.r[this.dr] = this.executeSEXT(this.r[this.dr], this.r[this.sr1]);
         this.setNZ(this.r[this.dr]);
         break;
