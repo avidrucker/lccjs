@@ -70,6 +70,7 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 - **Do:** `gh issue view N --json state,title` as the very first action after receiving an issue number — before capturing timestamps, running `npm run puzzle:status`, or checking worktrees.
 - **Don't:** begin the claim flow (start timestamp, puzzle:status, worktree list) and discover the issue is closed only when you finally read the issue body.
 - **Why:** A closed issue discovered after the start-timestamp was captured means wasted wall-clock in your velocity row. The check costs one command and catches this before anything is committed.
+- **Corollary (multi-agent sessions):** In a session with active concurrent agents, re-run `gh issue view N --json state` immediately before `npm run claim` — the check→claim window must be zero or near-zero intermediate steps. Another agent can close the issue in the seconds between your initial check and the claim attempt. (#833)
 
 **Check a ticket's `Blocked by:` field and parent tracker before picking up or recommending work**
 
