@@ -474,9 +474,19 @@ function checkVelocityRowExists(issue) {
   }
   try {
     if (!velocityRowExists(db, Number(issue))) {
-      die(`no velocity row found for ticket #${issue} in ${dbPath}.\n` +
-          '  Log it via `npm run velocity:log` and amend the commit, then re-run.\n' +
-          '  Pass --skip-velocity-check to bypass (PM/triage closes without a log).');
+      const skeleton =
+        `{"ticket":${issue},"title":"<short title>","role":"DEV","agent":"<fruit>",` +
+        `"h_min":<H>,"c_min":<C>,"actual_min":<A>,` +
+        `"delta_h_min":<delta_h>,"delta_c_min":<delta_c>,` +
+        `"started_iso":"<ISO>","finished_iso":"<ISO>","notes":"","model":"sonnet-4.6"}`;
+      die(
+        `no velocity row found for ticket #${issue} in ${dbPath}.\n\n` +
+        `  Log it first:\n` +
+        `    npm run velocity:log -- '${skeleton}'\n\n` +
+        `  Then re-run:\n` +
+        `    npm run close ${issue}\n\n` +
+        '  Pass --skip-velocity-check to bypass (PM/triage closes without a log).'
+      );
     }
   } finally {
     db.close();

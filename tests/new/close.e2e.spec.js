@@ -333,6 +333,10 @@ describe('close.js e2e — Check A: velocity row required (#359)', () => {
       const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 99991 --no-verify-issue --skip-marker-check`);
       expect(ok).toBe(false);
       expect(out).toMatch(/no velocity row found/i);
+      // #804: error must include a pre-filled skeleton with the ticket number
+      expect(out).toMatch(/npm run velocity:log/);
+      expect(out).toMatch(/"ticket":99991/);
+      expect(out).toMatch(/npm run close 99991/);
     } finally {
       rmrf(tmpDir);
     }
