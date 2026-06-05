@@ -352,6 +352,15 @@ function findLiveWorktreeForIssue(entries, issueNum) {
   return entries.find((w) => w.issue === issueNum) || null;
 }
 
+// Pure decision seam for the live-worktree guard (#629, #796). Returns true when
+// the guard should block (die), false when it should warn-and-continue or skip.
+// --force or --dry-run both bypass the hard block, mirroring shouldBlockClaim().
+// Exported for unit testing without git I/O.
+function shouldBlockWorktreeGuard(existingWt, opts) {
+  if (!existingWt) return false;
+  return !opts.force && !opts.dryRun;
+}
+
 // Side-effect: scan live worktrees for orphans — issue branches whose issue is
 // CLOSED, meaning the deferred teardown from a prior npm run close failed (#541,
 // #551). Prints a recovery hint for each stale entry; never blocks the claim.
@@ -446,7 +455,7 @@ function main() {
     const detail =
       `issue #${issue} is already live in worktree "${existingWt.branch}" (agent: ${existingWt.fruit || 'unknown'}).\n` +
       `  cd into the existing worktree, or pass --force to claim anyway.`;
-    if (!opts.force && !opts.dryRun) die(detail);
+    if (shouldBlockWorktreeGuard(existingWt, opts)) die(detail);
     console.error(`[claim] ⚠ live worktree detected: ${detail}`);
   }
 
@@ -570,5 +579,5 @@ module.exports = {
   parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
   checkIdentityName, readIssue, shouldBlockClaim,
   sentinelBranch, isSentinelStaleByAge,
-  applyMarkerFlip, buildBannerLines, findLiveWorktreeForIssue,
+  applyMarkerFlip, buildBannerLines, findLiveWorktreeForIssue, shouldBlockWorktreeGuard,
 };

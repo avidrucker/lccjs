@@ -1,6 +1,6 @@
 'use strict';
 
-const { shouldBlockClaim, parseArgs, findLiveWorktreeForIssue } = require('../../scripts/claim');
+const { shouldBlockClaim, parseArgs, findLiveWorktreeForIssue, shouldBlockWorktreeGuard } = require('../../scripts/claim');
 
 // #227: claim.js must refuse to stake a worktree for an already-CLOSED issue, but
 // ONLY on a *definitive* CLOSED state. A missing/unknown issue or an unavailable
@@ -68,5 +68,43 @@ describe('claim.js findLiveWorktreeForIssue() -- #629 live-worktree guard', () =
       { branch: 'cherry/issue-99-c', fruit: 'cherry', issue: 99 },
     ];
     expect(findLiveWorktreeForIssue(entries, 42)).toEqual(entries[1]);
+  });
+});
+
+// #796: the live-worktree guard interacts with --dry-run. When a live worktree
+// exists for the target issue and --dry-run is active, the guard must warn but
+// NOT die — so the WOULD CLAIM banner is still emitted. --force has the same
+// bypass effect. These exercise the extracted pure seam shouldBlockWorktreeGuard().
+describe('claim.js shouldBlockWorktreeGuard() -- #796 dry-run + live-worktree guard', () => {
+  const liveEntry = { branch: 'apple/issue-42-foo', fruit: 'apple', issue: 42 };
+
+  test('--dry-run with existing worktree: guard does not block', () => {
+    expect(shouldBlockWorktreeGuard(liveEntry, { dryRun: true, force: false })).toBe(false);
+  });
+
+  test('--force with existing worktree: guard does not block', () => {
+    expect(shouldBlockWorktreeGuard(liveEntry, { dryRun: false, force: true })).toBe(false);
+  });
+
+  test('neither flag set with existing worktree: guard blocks', () => {
+    expect(shouldBlockWorktreeGuard(liveEntry, { dryRun: false, force: false })).toBe(true);
+  });
+
+  test('null existingWt: guard never blocks regardless of flags', () => {
+    expect(shouldBlockWorktreeGuard(null, { dryRun: false, force: false })).toBe(false);
+  });
+
+  test('both --dry-run and --force set: guard does not block', () => {
+    expect(shouldBlockWorktreeGuard(liveEntry, { dryRun: true, force: true })).toBe(false);
+  });
+});
+
+describe('claim.js parseArgs() -- #796 --dry-run flag', () => {
+  test('--dry-run sets opts.dryRun true', () => {
+    expect(parseArgs(['123', '--dry-run']).dryRun).toBe(true);
+  });
+
+  test('opts.dryRun defaults to false', () => {
+    expect(parseArgs(['123']).dryRun).toBe(false);
   });
 });
