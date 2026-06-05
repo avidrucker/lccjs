@@ -242,3 +242,50 @@ The original "~1 year per agent" estimate used the same broken rate. With actual
 | ~~Original: 47 months~~ | ~~1,969~~ | ~~~1,410 days~~ | **superseded** |
 
 **Recommendation for #719:** Do **not** retire the full-corpus C-overshoot experiment. The "not feasible" conclusion is reversed — the powered threshold is reachable in approximately 5 weeks at the confirmed organic rate. #719 should be repurposed or closed with a note documenting this correction, not used to record a retirement decision.
+
+---
+
+## Q29r — Organic vs. backfill sensitivity (ticket #779, 2026-06-04)
+
+**Agent:** DRAGONFRUIT · **Dataset:** 540 all3 rows as of 2026-06-04
+
+### 1. Rates side by side
+
+| Population | n | overshoots | rate |
+|------------|---|------------|------|
+| Full corpus (pooled) | 540 | 30 | **5.56%** |
+| Organic-only | 239 | 19 | **7.95%** |
+| Backfill-only | 301 | 11 | **3.65%** |
+
+**Organic dates** (sequential ticket ranges, no bulk sessions): 2026-05-28, 2026-05-29, 2026-05-30, 2026-05-31, 2026-06-04.  
+**Backfill dates** (large-batch sessions with retroactive `c_min` entry): 2026-06-01 (117 all3 rows), 2026-06-02 (40), 2026-06-03 (143).
+
+### 2. Why organic-only is the correct base rate for a prospective experiment
+
+Backfill `c_min` values are set retroactively — after `actual_min` is already known — in bulk logging sessions. This means the `c_min` field in backfill rows can be consciously or unconsciously anchored to the actual, artificially suppressing apparent overshoot. The backfill overshoot rate (3.65%) is roughly half the organic rate (7.95%), consistent with this anchoring effect.
+
+A prospective experiment asks: "if an agent sets `c_min` before starting work, how often will `actual_min` exceed it?" Only rows where `c_min` was recorded before the task began — organic rows — are valid samples from that distribution. Pooling in backfill rows biases the base rate downward, causing the experiment to be designed around a rate that will not be observed in genuine forward-looking conditions.
+
+**The organic-only rate (7.95%) is the appropriate base rate for any prospective power calculation. The pooled rate (5.56%) is a lower-bound sensitivity only.**
+
+### 3. Updated power targets
+
+Two-proportion z-test (α=0.05, two-sided, 80% power), detecting a halving of the overshoot rate:
+
+| Scenario | p₁ | p₂ | Cohen's h | n/group | n total | Days at 40/day |
+|----------|-----|-----|-----------|---------|---------|----------------|
+| **Primary: organic-only** | 7.95% | 3.97% | 0.1702 | 271 | **542** | ~7.6 days from organic n=239 |
+| Lower bound: full corpus | 5.56% | 2.78% | 0.1410 | 395 | **790** | ~6.3 days from total n=540 |
+
+The organic-only target (542 total) is ~31% smaller than the pooled target (790). This is the "~35% fewer rows needed" effect referenced in issue #779.
+
+**Current gap:** The organic corpus (n=239) needs 303 more organic rows to reach the per-group threshold of 271. At the confirmed rate of 40 organic all3 rows/active-day, that is approximately 7–8 active working days.
+
+### 4. Data collection implication
+
+Rows logged at session close (not in bulk backfill sessions) are the only valid population for a prospective C-overshoot study. Specifically:
+
+- **Valid:** `c_min` recorded before work begins (agent estimates how long before starting).
+- **Invalid:** `c_min` recorded in batch at end of day/week, after `actual_min` is known.
+
+Future quarterly power-analysis checkpoints should use the organic-only count and rate, not the full-corpus pooled figures. If the logging discipline holds — no more bulk backfill sessions — the entire corpus will eventually be organic, and the distinction will collapse naturally.
