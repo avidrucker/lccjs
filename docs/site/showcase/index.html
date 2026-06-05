@@ -264,6 +264,11 @@ const editor = new EditorView({
   ],
   parent: document.getElementById('editor'),
 });
+// Test hook: Playwright e2e suite uses this to set editor content without
+// depending on CM6 internals or a defunct #playground-input element.
+window.__lccSetSource = function(src) {
+  editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: src } });
+};
 const output            = document.getElementById('playground-output');
 const runStatus         = document.getElementById('playground-status');
 const shikiStatus       = document.getElementById('shiki-status');
