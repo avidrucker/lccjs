@@ -31,9 +31,9 @@ function formatLccSource(src) {
     // full-line comment (first non-whitespace char is ;)
     if (trimmed.startsWith(';')) { out.push(trimmed); continue; }
 
-    // label: starts with a word-char sequence followed by a colon
-    // Matches "main:", "data_word:", "sub_add:", etc.
-    const labelM = trimmed.match(/^([A-Za-z_]\w*)\s*:(.*)/s);
+    // label: starts with an optional @ or $ sigil, then word chars, followed by a colon
+    // Aligns with vscode-lcc tmLanguage: ^[a-zA-Z_$@][a-zA-Z0-9_$@]*
+    const labelM = trimmed.match(/^([@$A-Za-z_][@$\w]*)\s*:(.*)/s);
     if (labelM) {
       out.push(labelM[1] + ':');          // label on its own line at col 0
       const body = labelM[2].trim();

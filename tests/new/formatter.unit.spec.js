@@ -54,6 +54,28 @@ describe('formatLccSource', () => {
     expect(formatLccSource('main :')).toBe('main:');
   });
 
+  test('@-prefix label placed at column 0', () => {
+    expect(formatLccSource('        @loop:')).toBe('@loop:');
+  });
+
+  test('$-prefix label placed at column 0', () => {
+    expect(formatLccSource('        $local:')).toBe('$local:');
+  });
+
+  test('@-prefix label+body split onto two lines', () => {
+    expect(formatLccSource('@loop: br @loop')).toBe('@loop:\n        br @loop');
+  });
+
+  test('$-prefix label+body split onto two lines', () => {
+    expect(formatLccSource('$local: .word 0')).toBe('$local:\n        .word 0');
+  });
+
+  test('@-prefix label not misclassified as instruction', () => {
+    // Without fix: '@loop: br @loop' → '        @loop: br @loop' (wrong, 8-space indent)
+    // With fix:    '@loop: br @loop' → '@loop:\n        br @loop'  (col 0)
+    expect(formatLccSource('@loop: br @loop')).not.toBe('        @loop: br @loop');
+  });
+
   // ── comments ─────────────────────────────────────────────────────────────────
 
   test('full-line comment normalised to column 0', () => {
