@@ -757,3 +757,6 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 770,,,DEV,,,,,-3,,,,,TEST,,lccjs
 771,,,DEV,,,,,-3,,,,,TEST,,lccjs
 772,871,"TIL 2026-06-05 CHERRY — oracle edge-case verification, grammar char-class drift, TDD utility extraction",WRITER,15,10,13,2,-3,2026-06-05T11:50:23-1000,2026-06-05T12:03:01-1000,,4 lessons; also filed #870 (RULES.md cross-module validation parity),CHERRY,sonnet-4.6,lccjs
+773,550,"HUMAN REVIEW #532 audit — three red flags, six decisions",PM,60,25,24,36,1,2026-06-05T11:40:27-1000,2026-06-05T12:04:17-1000,,#355 A confirmed; #520 A+C confirmed B overridden+Charlie pinged; #513 deferred→#867+#868; #298 closed; #402 revived→#869; #388 ruled 1a+C+After→#872+#873,DRAGONFRUIT,sonnet-4.6,lccjs
+774,,,DEV,,,,,-3,,,,,TEST,,lccjs
+775,857,fix din/hin trailing newline parity,DEV,60,30,17,43,13,2026-06-05T11:49:20-1000,2026-06-05T12:06:45-1000,,conditional slice fix for simulated path + TTY unget via inputBuffer prepend; 4 regression tests; §25 removed from parity_deviations,APPLE,sonnet-4.6,lccjs
