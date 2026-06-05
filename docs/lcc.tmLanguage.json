@@ -96,7 +96,7 @@
     },
     "label_ref": {
       "name": "entity.name.label.lcc",
-      "match": "(?<![A-Za-z0-9_@])[@A-Za-z_][A-Za-z0-9_@]*(?:[+-][0-9]+)?\\b"
+      "match": "(?<![A-Za-z0-9_@$])[$@A-Za-z_][$@A-Za-z0-9_]*(?:[+-][0-9]+)?\\b"
     }
   }
 }

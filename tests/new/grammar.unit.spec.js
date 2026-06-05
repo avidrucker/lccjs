@@ -89,6 +89,7 @@ const TEST_LINES = {
   // label references
   labelRefBranch:   'bl main',
   labelRefOperand:  'ld r0, myVar',
+  dollarLabelRef:   'br $loopEnd',
 
   // bug #596 regression lines
   atLabelLong:    'br @loopGame',
@@ -309,6 +310,10 @@ describe('label references', () => {
 
   test('bare label ref as operand', () => {
     expect(scopeOf('labelRefOperand', 'myVar')).toBe('entity.name.label.lcc');
+  });
+
+  test('$-prefixed label ref as branch target (#875)', () => {
+    expect(scopeOf('dollarLabelRef', '$loopEnd')).toBe('entity.name.label.lcc');
   });
 });
 
