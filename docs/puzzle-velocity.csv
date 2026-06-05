@@ -771,3 +771,7 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 784,870,RULES.md: add rule — duplicated validation regexes must be cross-tested,DEV,20,5,1,19,4,2026-06-05T12:52:31-10:00,2026-06-05T12:53:20-10:00,,"Rebase branch onto main, add rule 21 (cross-module validation parity) with See also and known gap note for #798.",CHERRY,sonnet-4.6,lccjs
 785,875,fix: $ missing from tmLanguage label_ref pattern,DEV,10,8,1,9,7,2026-06-05T12:54:10-10:00,2026-06-05T12:55:32-10:00,,"Add $ to lookbehind, leading, and body char classes in label_ref regex. Add dollarLabelRef fixture and test. 120 tests pass.",CHERRY,sonnet-4.6,lccjs
 786,887,WRITER: update docs/skills.md with retrospective findings,WRITER,45,20,5,40,15,2026-06-05T12:50:47-1000,2026-06-05T12:55:35-1000,,"Added Notes-from-practice to all 18 skills; Skills-adopted-organically, Untried/worth-trying, and Whats-next sections. Filed #888 (fruit-orchestrate label filter).",GRAPE,sonnet-4.6,lccjs
+787,,,DEV,,,,,-3,,,,,TEST,,lccjs
+788,,,DEV,,,,,-3,,,,,TEST,,lccjs
+789,886,RESEARCH: audit skill usage across lccjs project history,RESEARCH,60,25,3,57,22,2026-06-05T12:52:58-1000,2026-06-05T12:55:49-1000,,"Multi-source mining: skills.md, 100+ TILs, synthesis docs, pivot issues, velocity DB, global skills registry. Fast because heavy parallel reads.",DRAGONFRUIT,sonnet-4.6,lccjs
+790,,,DEV,,,,,-3,,,,,TEST,,lccjs
