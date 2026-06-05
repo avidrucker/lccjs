@@ -83,8 +83,8 @@ operand {
 
   Identifier { identStart identCont* }
 
-  identStart { @asciiLetter | "_" | "@" }
-  identCont  { @asciiLetter | @digit | "_" | "@" }
+  identStart { @asciiLetter | "_" | "@" | "$" }
+  identCont  { @asciiLetter | @digit | "_" | "@" | "$" }
 
   ","
 

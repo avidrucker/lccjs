@@ -27,6 +27,7 @@
     "report": "node scripts/report.js"
   },
   "devDependencies": {
+    "@lezer/lr": "^1.4.10",
     "better-sqlite3": "^12.10.0",
     "dotenv": "^17.2.3",
     "jest": "^29.7.0",
