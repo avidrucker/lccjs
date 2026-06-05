@@ -100,6 +100,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-06-04 GRAPE s3](./today-i-learned-2026-06-04-grape-3.md) | 2026-06-04 | GRAPE | No-op closes use --skip-keyword-check/--skip-velocity-check correctly; tracker audit gate includes human-required children; agent-scoped memory is invisible to other agents; /fruit-agent-orchestrate cluster separation prevents merge conflicts. |
 | [TIL 2026-06-04 CHERRY s3](./today-i-learned-2026-06-04-cherry-3.md) | 2026-06-04 | CHERRY | Regex backslashes in JS template literals must be doubled; esm.sh codemirror@6 doesn't expose barrel re-exports as named exports (#772); CM6 dom.cmView hook for Playwright test interaction; page.on('pageerror') vs console events for CDN SyntaxError detection; run new tests against broken state to calibrate. |
 | [TIL 2026-06-05 FIG](./today-i-learned-2026-06-05-fig.md) | 2026-06-05 | FIG | Parallel-agent write-safety rules by repo path cluster: skills/ subdirs always safe; src/utils/ single-owner; scripts/ serialise within a file; velocity CSV and learnings README require rebase-before-push. |
+| [TIL 2026-06-05 ELDERBERRY](./today-i-learned-2026-06-05-elderberry.md) | 2026-06-05 | ELDERBERRY | PostToolBatch hook fires on any ≥2 batched Bash calls (including read-only gh issue view); re-issue serially — hook does not distinguish reads from writes. |
 
 ## Recurring threads (informal — #207 will formalize)
 
