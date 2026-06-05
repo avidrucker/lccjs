@@ -63,6 +63,16 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Issue commenting
+
+**Comment only when required or explicitly permitted — never for progress or intermediate findings**
+
+- **Do:** post a closing comment (required at every close), a blocking-discovery note (required when you find the issue is blocked by something not in the body), or a brief research finding that directly answers an open question in the issue body (permitted).
+- **Don't:** post progress updates ("I'm working on this", "halfway done"), intermediate findings that don't change status or scope, or anything whose content belongs in the commit message.
+- **Why:** issue threads pollute fast. In orchestrated sessions, multiple agents independently deciding to comment on the same event produces agent-chatter that drowns signal. Prohibition is the only reliable defense. Full policy and solo/orchestrator authorization rules: [`docs/issue-commenting-policy.md`](./issue-commenting-policy.md). (#848)
+
+---
+
 ## Worktree discipline
 
 **Verify the target issue is open before starting the claim flow**
