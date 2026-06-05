@@ -109,6 +109,28 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Parallel agent assignment
+
+**Treat `src/utils/` as a single-owner cluster — never assign two concurrent tickets that both write to it**
+
+- **Do:** Before assigning tickets to parallel agents, check whether both scopes touch `src/utils/`. If so, serialise them.
+- **Don't:** let two agents work concurrently on any file under `src/utils/` (errors.js, formatters.js, hex-display helpers, etc.).
+- **Why:** `src/utils/` is imported across core, plus, and cli — any concurrent edit produces a line-level conflict on rebase even when the worktrees are otherwise independent. All other `src/` files (assembler, interpreter, linker, plus subclasses, ilcc) are safe for concurrent assignment when the tickets target different files. (#826)
+
+**Within a single script file, serialise — close the fix ticket before assigning the companion test ticket**
+
+- **Do:** When a fix and its companion test ticket both target the same script file (e.g. `scripts/claim.js`), close the fix first, then assign the test.
+- **Don't:** assign fix and test to concurrent agents when both write to the same file.
+- **Why:** Two concurrent edits to the same file produce line-level conflicts on rebase regardless of content. The test may also rely on behaviour the fix changes — concurrent work makes the test stale on merge. `scripts/claim.js` is the highest-churn script; fix+test pairs recur. (#826)
+
+**Run the three-question write-safety check before claiming any ticket**
+
+- **Do:** Ask: (1) What files will I write to? (2) Is any live worktree (`git worktree list`) writing to the same file? (3) Is this a hot file — `docs/puzzle-velocity.csv`, `docs/learnings/README.md`, `src/utils/`, or a script file with a concurrent companion ticket — that active agents write to regardless of their own ticket scope?
+- **Don't:** assume a ticket is conflict-free because it touches a different feature area from current in-flight work.
+- **Why:** If question 2 or 3 fires, serialise or assign both tickets to the same agent sequentially. Two unrelated tickets can still conflict on hot shared files. `.claude/skills/<skillA>/` and `.claude/skills/<skillB>/` are always safe to assign concurrently — no shared files exist between skill directories. (#826)
+
+---
+
 ## Non-interactive rebase
 
 **Use `GIT_EDITOR=true git rebase --continue` and issue it as a separate command**
