@@ -129,3 +129,7 @@ Code-area scopes (assembler, interpreter, linker, plus, jest, cli, debug, etc.) 
 | `pre-push` | PDD puzzle scan; no conflict markers; no push mid-rebase | `git push --no-verify` |
 
 Both hooks are in `scripts/git-hooks/` and stay current as the branch evolves (symlink, not a copy).
+
+## Gotchas
+
+Non-obvious foot-guns that are not obvious from the code: **[`docs/project-gotchas.md`](./docs/project-gotchas.md)**. For ISA-level assembly surprises see [`docs/pitfalls.md`](./docs/pitfalls.md); for workflow/tooling preferences see [`docs/do-this-not-that.md`](./docs/do-this-not-that.md).
