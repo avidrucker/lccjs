@@ -95,6 +95,18 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 - **Don't:** manually push to main or skip the close script.
 - **Why:** `npm run close` runs the teardown gate, removes the worktree, and deletes the branch. Bypassing it leaves stale worktrees and branches, and can push mid-rebase.
 
+**Use `git -C <path>` to inspect a worktree; never use a bare `cd` to enter one mid-session**
+
+- **Do:** `git -C /path/to/worktree log --oneline -3`
+- **Don't:** `cd /path/to/worktree && git log …` (then forget to return)
+- **Why:** a bare `cd` changes the persistent shell cwd for the entire conversation. All subsequent `git`, `npm run claim`, and `git pull` commands run from the wrong directory. `git pull` silently reports "Already up to date" on the feature branch instead of on main — false confirmation. (#819)
+
+**Treat a stale-worktree warning from `npm run claim` as an action item, not a notice**
+
+- **Do:** when `npm run claim` prints `⚠ stale worktree: "<branch>" references CLOSED issue #N`, immediately run the two cleanup commands printed in the warning before proceeding with the claim.
+- **Don't:** acknowledge the warning and continue without cleaning up.
+- **Why:** the orphaned worktree and branch persist indefinitely — each subsequent `npm run claim` prints the same warning; it is not self-healing. Running the cleanup commands takes seconds and removes the noise for all future agents. (#819)
+
 ---
 
 ## Non-interactive rebase
@@ -133,11 +145,11 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 - **Don't:** skip the row for "no-code" work.
 - **Why:** "no worktree needed" ≠ "no logging". Skipping PM/RESEARCH rows gaps the calibration data and makes throughput stats misleading.
 
-**Set C before reading the issue; use canonical model short-form and fixed role codes**
+**Capture the start timestamp and set C before reading the issue; use canonical model short-form and fixed role codes**
 
-- **Do:** set `c_min` as your honest forward-looking estimate before opening the issue. Use `sonnet-4.6` (not `claude-sonnet-4-6`). Use `COMBO` for refactor+test, not a compound string.
-- **Don't:** set `c_min` retroactively, use the full model ID, or invent role codes.
-- **Why:** the CSV test enforces canonical values; non-canonical strings fail validation and the row is rejected.
+- **Do:** run `date '+%Y-%m-%dT%H:%M:%S%z'` the moment a task is assigned — before the issue number is known, before reading the body. Then set `c_min` as your honest forward-looking estimate. Use `sonnet-4.6` (not `claude-sonnet-4-6`). Use `COMBO` for refactor+test, not a compound string.
+- **Don't:** set `c_min` or capture `started_iso` retroactively, use the full model ID, or invent role codes.
+- **Why:** retroactive timestamps produce approximate rows that gap calibration data. The CSV test enforces canonical values; non-canonical strings fail validation and the row is rejected. (#819)
 
 ---
 
