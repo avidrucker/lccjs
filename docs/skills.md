@@ -33,6 +33,13 @@ Triage all open issues and produce copy-pasteable plain-paragraph work assignmen
 
 **Invoke when:** the user types the exact text `/fruit-agent-orchestrate`. Never trigger from description alone.
 
+### `guide-human-decision`
+Walk the human through a decision ticket — fetch context (including pre-existing options analyses in issue comments), reformat into a scannable brief with per-question recommendations, receive the ruling, then execute: post rulings on affected tickets, land trivial side-deps immediately (label creation + issue sweep), file implementation tickets, close the coordination parent once fully resolved.
+
+**Invoke when:** a ticket is labeled `humans-only` or `human-decision-required`, when the user says "let's address together" or "walk me through" a decision issue, or when any ticket requires human sign-off before implementation can proceed.
+
+**lccjs note:** `decision` tickets are appropriate for this skill when a human *directs* an agent at them. The orchestrator (`fruit-agent-orchestrate`) correctly skips `decision` tickets from auto-assignment — these are intentionally asymmetric behaviors.
+
 ### `next-best-action`
 Pre-close checklist that catches findings that should be filed as tickets before the close commit.
 
