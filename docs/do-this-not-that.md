@@ -46,6 +46,23 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+**Use past-tense headings in closing comments so readers can tell what was done vs. what is proposed**
+
+- **Do:** use headings that are unambiguously retrospective — e.g. **"What was found:"**, **"What was done:"**, **"What changed:"**, **"How it was solved:"**, **"Tests added:"**.
+- **Don't:** use tense-neutral labels — e.g. `Fix:`, `Root cause:`, `Approach:` — on their own, these read equally well as a to-do list or a retrospective.
+- **Why:** a skimming reader cannot tell from `Fix: run in two stages…` whether the fix is already shipped or is a next-action prescription. Past-tense headings eliminate that ambiguity at a glance. (#812)
+
+| Ambiguous | Unambiguous |
+|---|---|
+| `Fix:` | `What was done:` / `Fixed:` |
+| `Root cause:` | `What was found:` |
+| `Approach:` | `How it was solved:` |
+| `Changes:` | `What changed:` |
+| `Tests added:` | (already clear — keep as-is) |
+| `Notes:` | (already clear — keep as-is) |
+
+---
+
 ## Worktree discipline
 
 **Verify the target issue is open before starting the claim flow**
