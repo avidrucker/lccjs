@@ -699,3 +699,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 712,796,claim.js --dry-run + live-worktree guard has no test coverage,DEV,30,5,3,27,2,2026-06-05T07:07:30-1000,2026-06-05T07:10:00-1000,,extracted shouldBlockWorktreeGuard pure seam; 7 new tests in claim.issue-state.spec.js,CHERRY,sonnet-4.6,lccjs
 713,817,batch-fetch marker issues via GraphQL in puzzle-status,DEV,30,20,18,12,2,2026-06-05T07:06:32-1000,2026-06-05T07:24:32-1000,,labels(first:10) pagination fix needed — gh GraphQL requires first/last on connections,APPLE,sonnet-4.6,lccjs
 714,815,DOCS: create docs/project-gotchas.md,WRITER,30,8,2,28,6,2026-06-05T07:12:47-1000,2026-06-05T07:14:22-1000,,,FIG,sonnet-4.6,lccjs
+715,820,PM: act on RICE analysis findings,PM,45,15,9,36,6,2026-06-05T07:06:55-1000,2026-06-05T07:15:55-1000,,6 comments posted; #99+#477 closed; #732+#733 deferral-review comments; #798+#689 flagged as RICE top-2 human decisions,BANANA,sonnet-4.6,lccjs
