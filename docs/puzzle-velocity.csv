@@ -686,3 +686,8 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 699,816,write WWW doc orchestrator session 2026-06-05,WRITER,15,10,10,5,0,2026-06-05T00:20:00+0000,2026-06-05T00:30:00+0000,,timestamps approximate; inter-turn gap included,GRAPE,sonnet-4.6,lccjs
 700,800,"docs/www/ README — purpose, format, naming, follow-ups",WRITER,20,5,1,19,4,2026-06-05T06:39:12-1000,2026-06-05T06:39:48-1000,,README covers all 5 spec points; relations table added for orientation,GRAPE,sonnet-4.6,lccjs
 701,811,RESEARCH: RICE scoring pass on open issues — rank by priority for data-analysis,RESEARCH,60,45,5,55,40,2026-06-05T06:37:41-1000,2026-06-05T06:42:39-1000,,"scored 41 issues; produced stats/rice-scores.csv + stats/rice-notes.md; key finding: human-decision items dominate top RICE, best agent targets are #806+#805",DRAGONFRUIT,sonnet-4.6,lccjs
+702,,,DEV,,,,,-3,,,,,TEST,,lccjs
+703,,,DEV,,,,,-3,,,,,TEST,,lccjs
+704,808,SPIKE: measure fruit-agent-orchestrate wall-clock per step,SPIKE,60,20,5,55,15,2026-06-05T06:38:36-1000,2026-06-05T06:43:12-1000,,"bottleneck: puzzle-status gh issue list --state all --limit 1000 takes 5.4s (810 issues, 300KB) to resolve 11 marker numbers. GraphQL batch = 762ms. Child issues: #817 (GraphQL batch), #818 (parallel Step 1)",FIG,sonnet-4.6,lccjs
+705,,,DEV,,,,,-3,,,,,TEST,,lccjs
+706,805,displayWithSeparator injects newline breaking prompt layout,DEV,30,15,3,27,12,2026-06-05T06:41:51-1000,2026-06-05T06:45:18-1000,,removed newline injection entirely; displayWithSeparator now returns fullOutput as-is; updated 2 tests from #801 that encoded old injection behavior,BANANA,sonnet-4.6,lccjs

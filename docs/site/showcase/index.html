@@ -320,13 +320,8 @@ function finishRun() {
   hidePrompt();
 }
 
-function displayWithSeparator(fullOutput, preResumeLen) {
-  if (!preResumeLen || !fullOutput || fullOutput.length <= preResumeLen) {
-    return fullOutput || '(no output)';
-  }
-  const pre = fullOutput.slice(0, preResumeLen);
-  const post = fullOutput.slice(preResumeLen);
-  return (pre.endsWith('\n') ? pre : pre + '\n') + post;
+function displayWithSeparator(fullOutput) {
+  return fullOutput || '(no output)';
 }
 
 stopBtn.addEventListener('click', () => {

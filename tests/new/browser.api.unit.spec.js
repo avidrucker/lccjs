@@ -86,7 +86,7 @@ describe('browser API', () => {
       expect(done.preResumeOutputLength).toBe(1); // '0' has length 1
     });
 
-    test('displayWithSeparator logic: injecting separator at preResumeOutputLength produces separated display', () => {
+    test('displayWithSeparator logic: full output is returned as-is (no newline injected)', () => {
       const { binary } = assemble(PRE_POST_SRC);
       const paused = run(binary, { pauseOnInput: true });
       const done = paused.resume('77');
@@ -94,13 +94,13 @@ describe('browser API', () => {
       const { stdout, preResumeOutputLength: preLen } = done;
       const pre  = stdout.slice(0, preLen);
       const post = stdout.slice(preLen);
-      const display = (pre.endsWith('\n') ? pre : pre + '\n') + post;
+      const display = pre + post; // no injection — matches real terminal output
 
-      // '0' does not end with \n → separator injected before "77\n77\n"
-      expect(display).toBe('0\n77\n77\n');
+      // '0' (no \n) followed immediately by din echo "77\n" then dout "77\n"
+      expect(display).toBe('077\n77\n');
     });
 
-    test('no separator injected when pre-pause output already ends with newline', () => {
+    test('output already ending with newline before din is also returned unchanged', () => {
       const { binary } = assemble(`
         mvi r0, 42
         dout r0
@@ -116,12 +116,11 @@ describe('browser API', () => {
 
       const done = paused.resume('7');
       expect(done.status).toBe('done');
-      // preLen = 3 ('42\n'), pre ends with \n → no extra separator needed
-      expect(done.preResumeOutputLength).toBe(3);
+      expect(done.preResumeOutputLength).toBe(3); // '42\n'
       const pre  = done.stdout.slice(0, done.preResumeOutputLength);
       const post = done.stdout.slice(done.preResumeOutputLength);
-      const display = (pre.endsWith('\n') ? pre : pre + '\n') + post;
-      // pre already ends with \n so display = '42\n' + '7\n7\n' = '42\n7\n7\n'
+      const display = pre + post; // no injection
+      // '42\n' + '7\n7\n' = '42\n7\n7\n'
       expect(display).toBe('42\n7\n7\n');
     });
   });
@@ -150,15 +149,15 @@ prompt: .string "Enter: "
       expect(result.preResumeOutputLength).toBe(7);
     });
 
-    test('displayWithSeparator applied to batch result injects separator before din echo', () => {
+    test('displayWithSeparator applied to batch result: prompt and din echo appear on same line', () => {
       const { binary } = assemble(PROMPT_SRC);
       const result = run(binary, { stdin: ['42'], pauseOnInput: true });
 
       const pre  = result.stdout.slice(0, result.preResumeOutputLength);
       const post = result.stdout.slice(result.preResumeOutputLength);
-      const display = (pre.endsWith('\n') ? pre : pre + '\n') + post;
-      // "Enter: " does not end with \n → separator injected before din echo
-      expect(display).toBe('Enter: \n42\n42\n');
+      const display = pre + post; // no injection — prompt stays inline with echo
+      // "Enter: " + "42\n" + "42\n" — matches real terminal layout
+      expect(display).toBe('Enter: 42\n42\n');
     });
 
     test('program with no input trap: no preResumeOutputLength on result', () => {
