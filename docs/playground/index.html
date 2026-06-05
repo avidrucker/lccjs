@@ -46,9 +46,7 @@
       margin-bottom: 0.85rem;
       flex-wrap: wrap;
     }
-    #run-btn {
-      background: var(--accent);
-      color: #000;
+    #run-btn, #format-btn {
       border: none;
       border-radius: 6px;
       padding: 0.4rem 1.1rem;
@@ -57,8 +55,11 @@
       cursor: pointer;
       font-family: var(--font-ui);
     }
-    #run-btn:hover { opacity: 0.88; }
+    #run-btn { background: var(--accent); color: #000; }
+    #run-btn:hover    { opacity: 0.88; }
     #run-btn:disabled { opacity: 0.45; cursor: default; }
+    #format-btn { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    #format-btn:hover { border-color: var(--accent); color: var(--accent); }
     .filename-label, .stdin-label {
       display: flex;
       align-items: center;
@@ -210,6 +211,7 @@
   <!-- Run bar -->
   <div class="run-bar">
     <button id="run-btn">▶ Run</button>
+    <button id="format-btn" title="Normalise indentation (labels at col 0, instructions indented 8 spaces)">⌥ Format</button>
     <label class="filename-label">
       file
       <input id="filename-input" type="text" value="program.a"
@@ -269,6 +271,7 @@ const hlWrap      = document.getElementById('hl-wrap');
 const hlStatus    = document.getElementById('hl-status');
 const stdinEl     = document.getElementById('stdin-input');
 const runBtn      = document.getElementById('run-btn');
+const formatBtn   = document.getElementById('format-btn');
 const runStatus   = document.getElementById('run-status');
 const execOut     = document.getElementById('exec-output');
 const filenameEl  = document.getElementById('filename-input');
@@ -350,6 +353,19 @@ function run() {
 }
 
 runBtn.addEventListener('click', run);
+
+// ── Format ────────────────────────────────────────────────────────────────────
+
+formatBtn.addEventListener('click', () => {
+  const api = getApi();
+  if (!api || typeof api.formatLccSource !== 'function') {
+    runStatus.textContent = 'Formatter unavailable — rebuild lcc.bundle.js (npm run build:browser)';
+    return;
+  }
+  editor.value = api.formatLccSource(editor.value);
+  runStatus.textContent = '';
+  scheduleHighlight();
+});
 
 // Also run on Ctrl/Cmd+Enter in the editor.
 editor.addEventListener('keydown', (e) => {

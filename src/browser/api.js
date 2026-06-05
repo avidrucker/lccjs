@@ -2,6 +2,7 @@
 
 const Assembler  = require('../core/assembler');
 const Interpreter = require('../core/interpreter');
+const { formatLccSource } = require('../utils/formatter');
 
 /**
  * Assemble LCC source code in memory.
@@ -63,4 +64,4 @@ function makeResume(interp) {
   };
 }
 
-module.exports = { assemble, run };
+module.exports = { assemble, run, formatLccSource };
