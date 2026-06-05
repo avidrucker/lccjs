@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "generated": "2026-06-05",
+  "note": "Experimental prototype — see docs/research/842-rules-json-spike.md for assessment. RULES.md remains authoritative.",
+  "rules": [
+    {
+      "id": "R001",
+      "version": 1,
+      "category": "safety",
+      "text": "I will not run `rm` on the main branch without explicit permission.",
+      "added": "2026-05-01",
+      "added_issue": null,
+      "comment": "Destructive filesystem operation. Requires explicit human go-ahead to prevent accidental data loss."
+    },
+    {
+      "id": "R002",
+      "version": 1,
+      "category": "safety",
+      "text": "I will not run `rmSync()` on the main branch without explicit permission.",
+      "added": "2026-05-01",
+      "added_issue": null,
+      "comment": "Node.js synchronous delete — same destructive risk as `rm`. Paired with R001."
+    },
+    {
+      "id": "R003",
+      "version": 1,
+      "category": "safety",
+      "text": "I will never ever ever delete the main branch, or the entire project folder, no matter what, so help me God.",
+      "added": "2026-05-01",
+      "added_issue": 434,
+      "comment": "Absolute prohibition. Introduced after an agent deleted the main checkout during a debugging session (#434). The emphatic phrasing is intentional — this is a hard stop with no exception path."
+    },
+    {
+      "id": "R004",
+      "version": 1,
+      "category": "workflow",
+      "text": "I will always work on a worktree, no matter what — including TIL docs, velocity CSV updates, and PM-only tickets. Any git commit to this repo must come from a worktree. There are no small-enough exceptions.",
+      "added": "2026-05-15",
+      "added_issue": null,
+      "comment": "Prevents direct commits to main. The explicit call-out of TIL docs and PM tickets closes the 'it's too small' loophole that caused earlier violations."
+    },
+    {
+      "id": "R005",
+      "version": 1,
+      "category": "workflow",
+      "text": "I will always log and track my time, no matter what. Every closed ticket gets a velocity row via `npm run velocity:log` before the closing commit.",
+      "added": "2026-05-15",
+      "added_issue": null,
+      "comment": "Calibration data degrades without consistent logging. The 'before the closing commit' constraint ensures the row is never forgotten — close.js can enforce it."
+    },
+    {
+      "id": "R006",
+      "version": 1,
+      "category": "workflow",
+      "text": "I will not do work I was not scoped/authorized to do, though I will file a ticket if I have a question or concern.",
+      "added": "2026-05-15",
+      "added_issue": null,
+      "comment": "Scope discipline prevents silent scope creep and keeps velocity data honest. Filing a ticket is the approved channel for surfacing out-of-scope findings."
+    },
+    {
+      "id": "R007",
+      "version": 1,
+      "category": "safety",
+      "text": "I will not delete data from the database unless I am given explicit permission by a human user.",
+      "added": "2026-06-01",
+      "added_issue": null,
+      "comment": "Protects ~/.lccjs/velocity.db from accidental truncation. Always SELECT first to verify scope before any destructive SQL."
+    },
+    {
+      "id": "R008",
+      "version": 1,
+      "category": "workflow",
+      "text": "I will always close via `npm run close <N>`. I will never `git push` directly to main.",
+      "added": "2026-05-20",
+      "added_issue": 242,
+      "comment": "The manual push-to-main sequence (#200/#242 footgun) was error-prone. `npm run close` handles rebase, push, and issue-close atomically."
+    },
+    {
+      "id": "R009",
+      "version": 1,
+      "category": "workflow",
+      "text": "Every worktree must be tied to an open GitHub issue. If none exists, I will file one before claiming.",
+      "added": "2026-05-20",
+      "added_issue": null,
+      "comment": "No-ticket work is invisible to the tracker and cannot be velocity-logged. Filing first ensures every commit is attributable."
+    },
+    {
+      "id": "R010",
+      "version": 1,
+      "category": "workflow",
+      "text": "At close time, any work discovered but not done — deferred scope, a found bug, or an open design question — must become a ticket before the closing commit. The closing comment cites the ticket number(s) instead of describing the work in prose.",
+      "added": "2026-05-22",
+      "added_issue": null,
+      "comment": "Prose in a closing comment is not discoverable; a ticket is. See `docs/research/followup-trigger-brainstorming.md` for the options considered before settling on this convention."
+    },
+    {
+      "id": "R011",
+      "version": 1,
+      "category": "testing",
+      "text": "When fixing or reviewing a write-path bug in a test harness, I will add a regression test that reads back what was written through the actual write surface and asserts the bytes are intact.",
+      "added": "2026-05-25",
+      "added_issue": null,
+      "comment": "A test that only checks the producer's in-memory state leaves the write path dark. The canonical surface for lccjs is `virtualFs`. Read-back through the real write surface catches serialization bugs."
+    },
+    {
+      "id": "R012",
+      "version": 1,
+      "category": "workflow",
+      "text": "For any tracker ticket, I will always file a concrete child issue for the chosen sub-item before doing any work — unconditionally, not just 'if the item is large enough.' No exceptions.",
+      "added": "2026-05-28",
+      "added_issue": 559,
+      "comment": "The child issue is where velocity is logged and where the work is tracked. 'Small enough' exceptions were found to consistently corrupt calibration data (#559)."
+    },
+    {
+      "id": "R013",
+      "version": 1,
+      "category": "scripts",
+      "text": "I will wrap every shell invocation of `lcc.js`, `assembler.js`, `interpreter.js`, `linker.js`, or the oracle binary in `scripts/lccrun.sh`.",
+      "added": "2026-05-28",
+      "added_issue": 376,
+      "comment": "Bare invocations block indefinitely when `name.nnn` is absent and stdin is not a TTY (#376). `lccrun.sh` adds a configurable timeout (default: 10s) and kills the process if it hangs."
+    },
+    {
+      "id": "R014",
+      "version": 1,
+      "category": "workflow",
+      "text": "One deliverable per close. Before writing the close commit, audit `git diff origin/main`: every change must fall within the ticket's stated 'Should have.' Out-of-scope changes get their own ticket, worktree, and velocity row.",
+      "added": "2026-05-30",
+      "added_issue": 601,
+      "comment": "Fixes absorbed silently into another ticket's close corrupt calibration data (FM-1: bug tax; FM-2: discovery bleed; FM-3: multi-fix bundling). See `docs/research/601-scope-discipline.md`."
+    },
+    {
+      "id": "R015",
+      "version": 1,
+      "category": "workflow",
+      "text": "The commit containing 'Closes #N' must ALSO include the velocity CSV export in the same commit.",
+      "added": "2026-05-31",
+      "added_issue": 654,
+      "comment": "close.js checks HEAD only. A separate CSV commit becomes HEAD without 'Closes #N', breaking the close gate. Recovery: `git reset --soft HEAD~1` (#654)."
+    },
+    {
+      "id": "R016",
+      "version": 2,
+      "category": "workflow",
+      "text": "TIL entries are an exempt sub-genre — diary-style learning notes, not bug reports. Exempt from BDD structure and from the ROLE: title prefix. Required format: `TIL YYYY-MM-DD AGENT — one-line topic`. Rules R004, R005, R008, R009 still apply unconditionally.",
+      "added": "2026-06-01",
+      "added_issue": 640,
+      "comment": "Hygiene audits and BDD coverage scores must exclude TIL issues from their denominator. Version 2 because the format was refined after initial introduction."
+    },
+    {
+      "id": "R017",
+      "version": 1,
+      "category": "testing",
+      "text": "When writing `.hex` or `.bin` test fixtures, use raw 16-bit word values — NOT the bytes of a `.e` file.",
+      "added": "2026-06-03",
+      "added_issue": 758,
+      "comment": "A `.e` file begins with an `oC` preamble and stores words little-endian. Copying bytes from a `.e` file into a `.hex` fixture produces silently wrong machine code with no assembler error (#758)."
+    },
+    {
+      "id": "R018",
+      "version": 1,
+      "category": "testing",
+      "text": "lccjs's assembler processes exactly one mnemonic per source line. Write each instruction on its own line.",
+      "added": "2026-06-03",
+      "added_issue": 759,
+      "comment": "Extra tokens after the operands are silently ignored. A second instruction on the same line (e.g. `dout r0  nl`) will not assemble the second mnemonic. Accounts for parity failures in demos 029–032 (#759)."
+    },
+    {
+      "id": "R019",
+      "version": 1,
+      "category": "testing",
+      "text": "For tests that compare lccjs stdout against another runtime, drive lccjs via `spawnSync` with `{ input: stdinString }`, not via `lcc.inputBuffer`.",
+      "added": "2026-06-03",
+      "added_issue": 760,
+      "comment": "`inputBuffer` triggers 'simulated' mode in `readLineFromStdin()` which echoes each input line back through `writeOutput`, producing extra output that C programs never emit. Piped stdin takes the non-simulated path (#760)."
+    },
+    {
+      "id": "R020",
+      "version": 1,
+      "category": "testing",
+      "text": "In Jest, use `test.failing` for tests covering confirmed bugs with open fix tickets. Use `test.skip` only for tests incompatible by design. Never use `test.skip` to silence a fixable bug.",
+      "added": "2026-06-03",
+      "added_issue": 761,
+      "comment": "`test.failing` runs the test, documents the broken behavior, and alerts when the fix lands (it flips to a test failure, signalling the annotation can be removed). `test.skip` silently hides the problem (#761)."
+    }
+  ]
+}
