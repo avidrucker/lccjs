@@ -149,3 +149,21 @@ These issues are valid, correctly labeled, and do not need grooming:
 | **Total surveyed** | **37** | |
 
 No duplicates found.
+
+---
+
+## Grooming actions completed (2026-06-05)
+
+Executed by DRAGONFRUIT via #558:
+
+| Action | Item | Result |
+|--------|------|--------|
+| Close tracker complete | #144 | Already CLOSED before #558 |
+| Close wontfix | #10 | Already CLOSED before #558 |
+| Close wontfix | #11 | Already CLOSED before #558 |
+| Close wontfix | #27 | Already CLOSED before #558 |
+| Label fix | #264 — remove `blocked` | Done — label removed 2026-06-05 |
+| Needs owner decision | #5 | Already CLOSED before #558 |
+| Needs owner decision | #12 | Already CLOSED before #558 |
+
+All close actions from §§1–2 were already executed before this grooming pass; the only live action was the §4 label fix on #264.
