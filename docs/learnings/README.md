@@ -98,6 +98,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL synthesis 2026-06-04](./til-synthesis-2026-06-04.md) | 2026-06-04 | BANANA | #764 harvest: 3 tier-1 process defects (RESEARCH→fix-ticket chain, close-sequence edges, verify-before-implementing); 4 proposed follow-on puzzles N-1..N-4; 61 new files scanned (30 in depth). |
 | [TIL 2026-06-04 BANANA session 2](./today-i-learned-2026-06-04-banana-2.md) | 2026-06-04 | BANANA | Verify file-level conflicts before deferring; write "not feasible" findings into durable docs; oracle auto-skip ≠ real green in Jest; Playwright specs error (not skip) when picked up by Jest; SVG favicon needs one file + one tag. |
 | [TIL 2026-06-04 GRAPE s3](./today-i-learned-2026-06-04-grape-3.md) | 2026-06-04 | GRAPE | No-op closes use --skip-keyword-check/--skip-velocity-check correctly; tracker audit gate includes human-required children; agent-scoped memory is invisible to other agents; /fruit-agent-orchestrate cluster separation prevents merge conflicts. |
+| [TIL 2026-06-04 CHERRY s3](./today-i-learned-2026-06-04-cherry-3.md) | 2026-06-04 | CHERRY | Regex backslashes in JS template literals must be doubled; esm.sh codemirror@6 doesn't expose barrel re-exports as named exports (#772); CM6 dom.cmView hook for Playwright test interaction; page.on('pageerror') vs console events for CDN SyntaxError detection; run new tests against broken state to calibrate. |
 
 ## Recurring threads (informal — #207 will formalize)
 
