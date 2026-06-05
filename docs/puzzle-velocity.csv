@@ -754,3 +754,6 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 767,858,DEV: implement npm run report — velocity + human-gate queue markdown report,DEV,60,30,19,41,11,2026-06-05T11:39:11-1000,2026-06-05T11:58:52-1000,,,FIG,sonnet-4.6,lccjs
 768,848,ARCHITECT: define when agents may/must/must-not comment on or open issues,ARC,45,20,3,42,17,2026-06-05T11:55:57-1000,2026-06-05T11:59:12-1000,,Pure docs policy — required/permitted/prohibited + solo/orchestrator split + settings.json rationale,GRAPE,sonnet-4.6,lccjs
 769,854,syntax highlighting coverage gaps — lccjs vs vscode-lcc,RESEARCH,60,20,6,54,14,2026-06-05T11:55:47-1000,2026-06-05T12:02:07-1000,,"7 gaps catalogued across Lezer grammar, tmLanguage, and test suite; 2 code bugs, 21 missing tests",BANANA,sonnet-4.6,lccjs
+770,,,DEV,,,,,-3,,,,,TEST,,lccjs
+771,,,DEV,,,,,-3,,,,,TEST,,lccjs
+772,871,"TIL 2026-06-05 CHERRY — oracle edge-case verification, grammar char-class drift, TDD utility extraction",WRITER,15,10,13,2,-3,2026-06-05T11:50:23-1000,2026-06-05T12:03:01-1000,,4 lessons; also filed #870 (RULES.md cross-module validation parity),CHERRY,sonnet-4.6,lccjs
