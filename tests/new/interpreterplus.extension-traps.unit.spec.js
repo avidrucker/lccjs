@@ -4,7 +4,7 @@
  * @file interpreterplus.extension-traps.unit.spec.js
  *
  * Unit tests for the five LCC+ extension trap handlers that have no dedicated
- * coverage: sleep (16), nbain (17), cursor (18), millis (20), resetc (21).
+ * coverage: sleep (0xFA), nbain (0xFB), cursor (0xFC), millis (0xFE), resetc (0xFF).
  *
  * Test strategy: instantiate InterpreterPlus, set dr/sr and r[] directly (the
  * same approach used in interpreterplus.unit.spec.js for rand/srand), then call
@@ -51,7 +51,7 @@ function withFakeTTY(fn) {
 // sleep (trap 16)
 // ---------------------------------------------------------------------------
 
-describe('InterpreterPlus — executeSleep (trap 16)', () => {
+describe('InterpreterPlus — executeSleep (trap 0xFA)', () => {
   afterEach(() => jest.useRealTimers());
 
   test('immediately sets running=false and calls startNonBlockingLoop after the delay', () => {
@@ -129,7 +129,7 @@ describe('InterpreterPlus — executeSleep (trap 16)', () => {
 // nbain — non-blocking ASCII input (trap 17)
 // ---------------------------------------------------------------------------
 
-describe('InterpreterPlus — executeNonBlockingAsciiInput / nbain (trap 17)', () => {
+describe('InterpreterPlus — executeNonBlockingAsciiInput / nbain (trap 0xFB)', () => {
   test('empty keyQueue stores 0 in the dr register', () => {
     const ip = makeIp();
     ip.dr = 2;
@@ -195,7 +195,7 @@ describe('InterpreterPlus — executeNonBlockingAsciiInput / nbain (trap 17)', (
 // cursor — toggle terminal cursor visibility (trap 18)
 // ---------------------------------------------------------------------------
 
-describe('InterpreterPlus — executeToggleCursor / cursor (trap 18)', () => {
+describe('InterpreterPlus — executeToggleCursor / cursor (trap 0xFC)', () => {
   let writeSpy;
   beforeEach(() => {
     writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
@@ -248,7 +248,7 @@ describe('InterpreterPlus — executeToggleCursor / cursor (trap 18)', () => {
 // millis (trap 20)
 // ---------------------------------------------------------------------------
 
-describe('InterpreterPlus — executeMillis (trap 20)', () => {
+describe('InterpreterPlus — executeMillis (trap 0xFE)', () => {
   test('stores a value in [0, 999] in the dr register', () => {
     const ip = makeIp();
     ip.dr = 4;
@@ -302,7 +302,7 @@ describe('InterpreterPlus — executeMillis (trap 20)', () => {
 // resetc — reset cursor to home position (trap 21)
 // ---------------------------------------------------------------------------
 
-describe('InterpreterPlus — executeResetCursor / resetc (trap 21)', () => {
+describe('InterpreterPlus — executeResetCursor / resetc (trap 0xFF)', () => {
   let writeSpy;
   beforeEach(() => {
     writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});

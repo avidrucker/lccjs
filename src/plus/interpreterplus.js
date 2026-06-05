@@ -271,7 +271,9 @@ class InterpreterPlus extends Interpreter {
     this.pc = (this.loadPoint + startAddress) & 0xFFFF;
   }
 
-  // Next we must override executeTRAP to handle the 'clear' and 'sleep' trap vectors
+  // Next we must override executeTRAP to handle the LCC+ extension traps.
+  // LCC+ trap vectors occupy the HIGH end of the 8-bit space (0xF9–0xFF) so
+  // they cannot alias future core traps that grow upward from 0x0F.
   executeTRAP() {
     switch (this.trapvec) {
       // Keep parent's existing trap handling
@@ -284,29 +286,29 @@ class InterpreterPlus extends Interpreter {
       case 14: // bp breakpoint
         this.executeLccPlusBreakpoint();
         break;
-      case 15: // clear
+      case 0xF9: // clear
         this.executeClear();
         break;
-      case 16: // sleep
+      case 0xFA: // sleep
         this.executeSleep();
         break;
-      case 17: // nbain
+      case 0xFB: // nbain
         this.executeNonBlockingAsciiInput();
-        break
-      case 18: // cursor
+        break;
+      case 0xFC: // cursor
         this.executeToggleCursor();
         break;
-      case 19: // srand
+      case 0xFD: // srand
         this.executeSrand();
         break;
-      case 20: // millis
+      case 0xFE: // millis
         this.executeMillis();
         break;
-      case 21: // resetc
+      case 0xFF: // resetc
         this.executeResetCursor();
         break;
       default:
-        // If it's not 15 or 16, call parent's method
+        // If it's not a known LCC+ trap, call parent's method
         super.executeTRAP();
     }
   }

@@ -6,14 +6,15 @@ const Assembler = require('../core/assembler.js');
 
 const { fatalExit } = require('../utils/cliExit');
 
-// LCC+ extension trap vector addresses
-const TRAP_CLEAR  = 0x000F;
-const TRAP_SLEEP  = 0x0010;
-const TRAP_NBAIN  = 0x0011;
-const TRAP_CURSOR = 0x0012;
-const TRAP_SRAND  = 0x0013;
-const TRAP_MILLIS = 0x0014;
-const TRAP_RESETC = 0x0015;
+// LCC+ extension trap vector addresses — occupy the HIGH end of the 8-bit trap
+// space (0xFF down) so core traps can grow upward from 0x0F without collision.
+const TRAP_CLEAR  = 0x00F9;
+const TRAP_SLEEP  = 0x00FA;
+const TRAP_NBAIN  = 0x00FB;
+const TRAP_CURSOR = 0x00FC;
+const TRAP_SRAND  = 0x00FD;
+const TRAP_MILLIS = 0x00FE;
+const TRAP_RESETC = 0x00FF;
 
 class AssemblerPlus extends Assembler {
   constructor() {
