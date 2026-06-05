@@ -96,6 +96,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-06-04 BANANA](./today-i-learned-2026-06-04-banana.md) | 2026-06-04 | BANANA | Golden-cache pattern: commit oracle output once, run tests anywhere — oracle suite 18 skips → 124/124 pass (#692); build generators must own all features — never hand-edit generated output; bundle paths: repo root ≠ GitHub Pages root, add explicit copy step (#709/#710). |
 | [TIL 2026-06-04 DRAGONFRUIT](./today-i-learned-2026-06-04-dragonfruit.md) | 2026-06-04 | DRAGONFRUIT | "Already done" is a valid close — verify before implementing (#675); back up PC by 1 before throwing pause signal for resumable synchronous execution (#702); use a signal class, not an Error, for non-error control flow; build path and runtime path can silently diverge — open the browser before closing (#705/#709/#710). |
 | [TIL synthesis 2026-06-04](./til-synthesis-2026-06-04.md) | 2026-06-04 | BANANA | #764 harvest: 3 tier-1 process defects (RESEARCH→fix-ticket chain, close-sequence edges, verify-before-implementing); 4 proposed follow-on puzzles N-1..N-4; 61 new files scanned (30 in depth). |
+| [TIL 2026-06-04 BANANA session 2](./today-i-learned-2026-06-04-banana-2.md) | 2026-06-04 | BANANA | Verify file-level conflicts before deferring; write "not feasible" findings into durable docs; oracle auto-skip ≠ real green in Jest; Playwright specs error (not skip) when picked up by Jest; SVG favicon needs one file + one tag. |
 
 ## Recurring threads (informal — #207 will formalize)
 
