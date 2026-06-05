@@ -1,6 +1,6 @@
 'use strict';
 
-const { shouldBlockClaim, parseArgs } = require('../../scripts/claim');
+const { shouldBlockClaim, parseArgs, findLiveWorktreeForIssue } = require('../../scripts/claim');
 
 // #227: claim.js must refuse to stake a worktree for an already-CLOSED issue, but
 // ONLY on a *definitive* CLOSED state. A missing/unknown issue or an unavailable
@@ -37,5 +37,36 @@ describe('claim.js parseArgs() -- #227 --force flag', () => {
 
   test('opts.force defaults to false', () => {
     expect(parseArgs(['239']).force).toBe(false);
+  });
+});
+
+describe('claim.js findLiveWorktreeForIssue() -- #629 live-worktree guard', () => {
+  test('returns null for empty entries', () => {
+    expect(findLiveWorktreeForIssue([], 42)).toBeNull();
+  });
+
+  test('returns null when issue not present', () => {
+    const entries = [{ branch: 'apple/issue-99-foo', fruit: 'apple', issue: 99 }];
+    expect(findLiveWorktreeForIssue(entries, 42)).toBeNull();
+  });
+
+  test('returns the entry when issue matches', () => {
+    const entry = { branch: 'apple/issue-42-foo', fruit: 'apple', issue: 42 };
+    expect(findLiveWorktreeForIssue([entry], 42)).toBe(entry);
+  });
+
+  test('returns first match when multiple entries share the issue number', () => {
+    const e1 = { branch: 'apple/issue-42-a', fruit: 'apple', issue: 42 };
+    const e2 = { branch: 'banana/issue-42-b', fruit: 'banana', issue: 42 };
+    expect(findLiveWorktreeForIssue([e1, e2], 42)).toBe(e1);
+  });
+
+  test('non-matching entries do not interfere', () => {
+    const entries = [
+      { branch: 'apple/issue-1-a', fruit: 'apple', issue: 1 },
+      { branch: 'banana/issue-42-b', fruit: 'banana', issue: 42 },
+      { branch: 'cherry/issue-99-c', fruit: 'cherry', issue: 99 },
+    ];
+    expect(findLiveWorktreeForIssue(entries, 42)).toEqual(entries[1]);
   });
 });

@@ -345,6 +345,13 @@ function checkIdentityName(identity, opts) {
   return { warn: `"${identity.name}" is not in the known fruit list — using it anyway.` };
 }
 
+// Pure: given a worktreesWithIssue() result and a target issue number, returns the
+// first live-worktree entry whose issue matches, or null. Used by the live-worktree
+// guard in main() to block double-claims. Exported for unit testing. (#629)
+function findLiveWorktreeForIssue(entries, issueNum) {
+  return entries.find((w) => w.issue === issueNum) || null;
+}
+
 // Side-effect: scan live worktrees for orphans — issue branches whose issue is
 // CLOSED, meaning the deferred teardown from a prior npm run close failed (#541,
 // #551). Prints a recovery hint for each stale entry; never blocks the claim.
@@ -430,6 +437,19 @@ function main() {
   }
 
   warnOrphanedWorktrees();
+
+  // Live-worktree guard (#629): die if another agent already has this issue checked
+  // out as a worktree, unless --force (mirrors CLOSED guard). --dry-run shows the
+  // warning but does not die so the full dry-run plan is still displayed.
+  const existingWt = findLiveWorktreeForIssue(worktreesWithIssue(listWorktreeBranches()), Number(issue));
+  if (existingWt) {
+    const detail =
+      `issue #${issue} is already live in worktree "${existingWt.branch}" (agent: ${existingWt.fruit || 'unknown'}).\n` +
+      `  cd into the existing worktree, or pass --force to claim anyway.`;
+    if (!opts.force && !opts.dryRun) die(detail);
+    console.error(`[claim] ⚠ live worktree detected: ${detail}`);
+  }
+
   const root = mainRoot();
   const mkBranch = (fruit) => `${fruit}/issue-${issue}${slug ? '-' + slug : ''}`;
   const mkPath = (fruit) => path.join(root, '.claude', 'worktrees', `${fruit}-issue-${issue}`);
@@ -550,5 +570,5 @@ module.exports = {
   parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
   checkIdentityName, readIssue, shouldBlockClaim,
   sentinelBranch, isSentinelStaleByAge,
-  applyMarkerFlip, buildBannerLines,
+  applyMarkerFlip, buildBannerLines, findLiveWorktreeForIssue,
 };
