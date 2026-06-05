@@ -45,7 +45,7 @@
       margin-bottom: 0.5rem;
       flex-wrap: wrap;
     }
-    #run-btn, #format-btn {
+    #run-btn, #format-btn, #download-btn {
       border: none;
       border-radius: 6px;
       padding: 0.4rem 1.1rem;
@@ -59,6 +59,8 @@
     #run-btn:disabled { opacity: 0.45; cursor: default; }
     #format-btn { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
     #format-btn:hover { border-color: var(--accent); color: var(--accent); }
+    #download-btn { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    #download-btn:hover { border-color: var(--accent); color: var(--accent); }
     .filename-label, .stdin-label {
       display: flex;
       align-items: center;
@@ -248,6 +250,7 @@
   <div class="run-bar">
     <button id="run-btn">▶ Run</button>
     <button id="format-btn" title="Normalise indentation (labels at col 0, instructions indented 8 spaces)">⌥ Format</button>
+    <button id="download-btn" title="Download current file as .a">Download</button>
     <label class="filename-label">
       file
       <input id="filename-input" type="text" value="untitled-1.a"
@@ -606,6 +609,20 @@ formatBtn.addEventListener('click', () => {
     changes: { from: 0, to: view.state.doc.length, insert: formatted },
   });
   runStatus.textContent = '';
+});
+
+// ── Download ──────────────────────────────────────────────────────────────────
+
+document.getElementById('download-btn').addEventListener('click', () => {
+  const content = view.state.doc.toString();
+  const name = isValidFilename(filenameEl.value) ? filenameEl.value : 'program.a';
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
