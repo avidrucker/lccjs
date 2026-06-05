@@ -24,7 +24,7 @@
  *
  * Usage:
  *   node scripts/claim.js <issue> [slug] --as apple        # reuse a known identity
- *   node scripts/claim.js <issue> --as dragonfruit --custom # non-list name, explicit opt-in
+ *   node scripts/claim.js <issue> --as custard --custom     # non-list name, explicit opt-in
  *   CLAUDE_AGENT_NAME=apple node scripts/claim.js <issue>  # human-directed default
  *   node scripts/claim.js <issue> --base origin/main
  *   node scripts/claim.js <issue> --dry-run                # show the plan, stake nothing
@@ -44,7 +44,7 @@ const path = require('path');
 
 // Lowest-index-first. Common, unambiguous, easy to say aloud over a call.
 const FRUITS = [
-  'apple', 'banana', 'cherry', 'date', 'elderberry', 'fig', 'grape',
+  'apple', 'banana', 'cherry', 'date', 'dragonfruit', 'elderberry', 'fig', 'grape',
   'honeydew', 'kiwi', 'lemon', 'mango', 'nectarine', 'olive', 'peach',
   'quince', 'raspberry', 'strawberry', 'tangerine', 'ugli', 'vanilla',
   'watermelon', 'ximenia', 'yuzu', 'zucchini',
@@ -334,7 +334,7 @@ function shouldBlockClaim(info, force) {
 // Returns { error } when --as supplied an unknown name without --custom (die path).
 // Returns { warn } when an unknown name is tolerated (env/branch source, or --custom).
 function checkIdentityName(identity, opts) {
-  if (!identity.name || FRUITS.includes(identity.name)) return null;
+  if (!identity.name || FRUITS.includes(identity.name.toLowerCase())) return null;
   if (identity.source === 'as' && !opts.custom) {
     return {
       error: `"${identity.name}" is not a recognised agent name.\n` +
