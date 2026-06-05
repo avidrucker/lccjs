@@ -182,6 +182,16 @@
     .cm-activeLine { background: #1f2937 !important; }
     .cm-cursor { border-left-color: var(--text) !important; }
 
+    /* ── LCC syntax tokens ────────────────────────────────── */
+    .lcc-comment   { color: #6e7681; font-style: italic; }
+    .lcc-keyword   { color: #ff7b72; font-weight: 600; }
+    .lcc-register  { color: #ffa657; }
+    .lcc-directive { color: #d2a8ff; }
+    .lcc-string    { color: #a5d6ff; }
+    .lcc-number    { color: #79c0ff; }
+    .lcc-label     { color: #e3b341; }
+    .lcc-varname   { color: var(--text); }
+
     /* ── Terminal output ─────────────────────────────────── */
     .panel-label {
       font-size: 0.78rem;
@@ -270,10 +280,108 @@
 
 <script type="module">
 
-import { EditorView, keymap }        from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
-import { EditorState }               from 'https://esm.sh/@codemirror/state@6';
-import { basicSetup }                from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
-import { indentWithTab }             from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
+import { EditorView, keymap, ViewPlugin, Decoration } from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
+import { EditorState, RangeSetBuilder }               from 'https://esm.sh/@codemirror/state@6';
+import { basicSetup }                                  from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
+import { indentWithTab }                               from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
+
+// ── LCC assembly syntax highlighting (ViewPlugin + Decoration) ────────────────
+
+const _LCC_MNEMONICS = new Set([
+  'br','bral','brz','bre','brnz','brne','brn','brp','brlt','brgt','brc','brb',
+  'mov','mvi','mvr',
+  'add','sub','cmp','and','not','or','xor','sext','mul','div','rem',
+  'srl','sra','sll','rol','ror',
+  'push','pop',
+  'ld','st','ldr','str','lea','cea',
+  'call','jsr','bl','jsrr','blr','jmp','ret',
+  'halt','nl',
+  'dout','udout','hout','aout','sout','din','hin','ain','sin',
+  'm','r','s','bp',
+  // LCC+
+  'clear','sleep','nbain','cursor','srand','rand','millis','resetc',
+]);
+
+const _LCC_REGISTERS = new Set(['r0','r1','r2','r3','r4','r5','r6','r7','fp','sp','lr']);
+
+function _tokenizeLccLine(text) {
+  const tokens = [];
+  let i = 0;
+  const n = text.length;
+  while (i < n) {
+    if (/\s/.test(text[i])) { i++; continue; }
+
+    if (text[i] === ';') {
+      tokens.push({ start: i, end: n, cls: 'lcc-comment' });
+      break;
+    }
+
+    if (text[i] === '"') {
+      let j = i + 1;
+      while (j < n) { if (text[j] === '\\') { j += 2; } else if (text[j] === '"') { j++; break; } else j++; }
+      tokens.push({ start: i, end: j, cls: 'lcc-string' });
+      i = j; continue;
+    }
+
+    let m;
+    if ((m = text.slice(i).match(/^'(?:\\.|[^\\])'/))) {
+      tokens.push({ start: i, end: i + m[0].length, cls: 'lcc-string' });
+      i += m[0].length; continue;
+    }
+    if ((m = text.slice(i).match(/^\.\w+/))) {
+      tokens.push({ start: i, end: i + m[0].length, cls: 'lcc-directive' });
+      i += m[0].length; continue;
+    }
+    if ((m = text.slice(i).match(/^0[xX][0-9a-fA-F]+/))) {
+      tokens.push({ start: i, end: i + m[0].length, cls: 'lcc-number' });
+      i += m[0].length; continue;
+    }
+    if ((m = text.slice(i).match(/^-?\d+/))) {
+      tokens.push({ start: i, end: i + m[0].length, cls: 'lcc-number' });
+      i += m[0].length; continue;
+    }
+    if ((m = text.slice(i).match(/^[a-zA-Z_$][a-zA-Z0-9_$]*/))) {
+      const word = m[0].toLowerCase();
+      const end  = i + m[0].length;
+      const isLabelDef = /^\s*:/.test(text.slice(end));
+      let cls;
+      if (isLabelDef)                  cls = 'lcc-label';
+      else if (_LCC_REGISTERS.has(word)) cls = 'lcc-register';
+      else if (_LCC_MNEMONICS.has(word)) cls = 'lcc-keyword';
+      else                               cls = 'lcc-varname';
+      tokens.push({ start: i, end, cls });
+      i = end; continue;
+    }
+    i++;
+  }
+  return tokens;
+}
+
+function _buildLccDecorations(view) {
+  const builder = new RangeSetBuilder();
+  for (const { from, to } of view.visibleRanges) {
+    let pos = from;
+    while (pos <= to) {
+      const line = view.state.doc.lineAt(pos);
+      for (const tok of _tokenizeLccLine(line.text)) {
+        builder.add(line.from + tok.start, line.from + tok.end,
+          Decoration.mark({ class: tok.cls }));
+      }
+      pos = line.to + 1;
+    }
+  }
+  return builder.finish();
+}
+
+const lccHighlighter = ViewPlugin.fromClass(
+  class {
+    constructor(view) { this.decorations = _buildLccDecorations(view); }
+    update(u) {
+      if (u.docChanged || u.viewportChanged) this.decorations = _buildLccDecorations(u.view);
+    }
+  },
+  { decorations: v => v.decorations },
+);
 
 // ── Starter code ─────────────────────────────────────────────────────────────
 
@@ -306,6 +414,7 @@ function isValidFilename(name) {
 
 const baseExtensions = [
   basicSetup,
+  lccHighlighter,
   keymap.of([indentWithTab]),
   EditorView.theme({
     '&': { height: '300px' },
