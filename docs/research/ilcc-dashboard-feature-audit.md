@@ -50,6 +50,10 @@ observations. A human should verify and extend this list on next visit to the UR
 
 lccjs has three distinct browser-facing components at different maturity levels.
 
+**Updated 2026-06-04 (ELDERBERRY, #714 checklist pass):** Sections A–C reflect the original #700 audit state. Section D and the gap table below have been updated to reflect features shipped since then (#715, #734, #735, #736).
+
+---
+
 ### A. Showcase page (`docs/showcase/index.html`)
 
 A static demo page served under `docs/` and included in the GitHub Pages site.
@@ -105,47 +109,62 @@ building custom tools, not direct use.
 | `executeBuffer(buf, {write})` | ✅ | Runs with a custom write callback |
 | Standalone UI | ❌ | API only — no built-in interface |
 
+### D. Playground page (`docs/playground/index.html`) — added via #715, #734, #735, #736
+
+A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`) for editing.
+
+| Feature | State | Notes |
+|---------|-------|-------|
+| Code editor (CM6 EditorView) | ✅ | `basicSetup` + ViewPlugin syntax highlighting |
+| Syntax highlighting | ✅ | Custom ViewPlugin tokenizer (mnemonics, registers, labels, directives, strings, comments) |
+| Run / assemble / execute | ✅ | `▶ Run` button via `lcc.bundle.js` API |
+| Terminal output panel | ✅ | Dark bg / green text; shows stdout |
+| Assembly error display | ✅ | "Assembly error:\n" + errors shown in output panel |
+| Pre-supplied stdin | ✅ | `stdin-input` text field; newline-separated |
+| Interactive stdin | ❌ | Pre-supply only; no runtime prompt |
+| File naming | ✅ | Filename input; validated as safe `.a` name |
+| Tabs / multi-file | ✅ | Tab bar with `+` (new) and `×` (close); each tab has independent CM6 state |
+| Auto-format / prettify | ✅ | `⌥ Format` button calls `api.formatLccSource()` |
+| Line numbers | ✅ | Provided by CM6 `basicSetup` |
+| Share as link | ❌ | Not yet (tracked in #732, deferred) |
+| Download as `.a` | ❌ | Not yet (tracked in #733, deferred) |
+| LCC+ (`.ap`) support | ~ | LCC+ mnemonics highlighted; no LCC+ execution path in UI |
+| Dark / light theme | ❌ | Dark theme only; no toggle |
+| Save to localStorage | ❌ | No persistence across reloads |
+
 ---
 
-## Gap table — ILCC dashboard vs lccjs
+## Gap table — ILCC dashboard vs lccjs (updated 2026-06-04)
 
-`✅` = present · `❌` = absent · `~` = partial · `?` = unverified
+`✅` = present · `❌` = absent · `~` = partial · `?` = unverified (ILCC, needs human)
 
 | Feature | ILCC dashboard | lccjs (best surface) |
 |---------|:--------------:|:--------------------:|
-| Code editor (writable) | ✅ | ✅ showcase textarea |
-| Syntax highlighting | ❌ | ✅ showcase (Shiki) |
-| Run / assemble / execute | ✅ | ~ injector (read-only blocks only) |
-| Terminal output panel | ✅ | ✅ injector |
+| Code editor (writable) | ✅ | ✅ playground (CM6) |
+| Syntax highlighting | ❌ | ✅ playground (ViewPlugin) + showcase (Shiki) |
+| Run / assemble / execute | ✅ | ✅ playground |
+| Terminal output panel | ✅ | ✅ playground + injector |
 | Interactive stdin | ? | ❌ |
-| Pre-supplied stdin | ? | ✅ injector (`data-stdin`) |
-| Assembly error display | ? | ✅ injector |
-| File naming | ✅ | ❌ |
-| Tabs / multi-file | ✅ | ❌ |
-| Share as link | ✅ | ❌ |
-| Download as `.a` | ✅ | ❌ |
-| Auto-format / prettify | ✅ | ❌ |
-| Line numbers (editor) | ? | ❌ |
-| LCC+ (`.ap`) support | ? | ✅ showcase sample |
-| Standalone playground page | ✅ | ❌ |
+| Pre-supplied stdin | ? | ✅ playground + injector |
+| Assembly error display | ? | ✅ playground + injector |
+| File naming | ✅ | ✅ playground |
+| Tabs / multi-file | ✅ | ✅ playground |
+| Share as link | ✅ | ❌ (#732, deferred) |
+| Download as `.a` | ✅ | ❌ (#733, deferred) |
+| Auto-format / prettify | ✅ | ✅ playground |
+| Line numbers (editor) | ? | ✅ playground (CM6 basicSetup) |
+| LCC+ (`.ap`) support | ? | ~ playground highlights; no LCC+ run path |
+| Standalone playground page | ✅ | ✅ playground |
 | Embeddable in slides | ? | ✅ injector + reveal-md |
 | Browser API for custom tools | ? | ✅ `lcc.bundle.js` |
 
 ---
 
-## Key finding
+## Key finding (updated 2026-06-04)
 
-lccjs and the ILCC dashboard have **complementary** strengths that do not yet overlap
-into a single surface:
+~~lccjs and the ILCC dashboard have **complementary** strengths that do not yet overlap into a single surface~~
 
-- **lccjs has syntax highlighting; ILCC does not.**
-- **ILCC has a run-in-browser playground; lccjs does not** (the showcase editor doesn't execute; the injector executes but doesn't have an editable input area).
-
-The most impactful single addition to lccjs's web offering would be a **standalone
-playground page** that combines the showcase's syntax-highlighted editor with the
-injector's execution engine — a writable textarea, a Run button, a terminal output
-panel, and pre-supplied stdin support. That closes the largest gap vs. the ILCC
-dashboard in one ticket.
+The primary gap (no run-in-browser playground) has been closed by #715. lccjs now has a standalone playground that exceeds the ILCC dashboard on syntax highlighting and matches it on editor, run, output, file naming, tabs, and auto-format. The two remaining feature gaps are share-as-link (#732) and download-as-.a (#733), both deferred. Interactive stdin and LCC+ execution in the playground are also absent.
 
 ---
 
