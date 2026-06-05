@@ -213,10 +213,15 @@
 // subpackages; esm.sh cannot surface those re-exports regardless of ?bundle.
 // Fix: import each symbol from its source package, pinning them all to the same
 // @codemirror/state@6 instance via ?deps= so instanceof checks work. (#772)
-import { EditorView, keymap, lineNumbers } from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
-import { EditorState }         from 'https://esm.sh/@codemirror/state@6';
-import { basicSetup }          from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
-import { indentWithTab }       from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
+import { EditorView, keymap, lineNumbers }          from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
+import { EditorState }                              from 'https://esm.sh/@codemirror/state@6';
+import { basicSetup }                               from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
+import { indentWithTab }                            from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
+// basicSetup@0.20 uses @codemirror/language@^0.20 (different Facet + lezer/common@0.16).
+// Import language@6 explicitly so its syntaxHighlighting reads the same language Facet
+// that lcc-lang.js registers, and shares the same @lezer/highlight@1.2.3 module. (#882)
+import { syntaxHighlighting, defaultHighlightStyle } from 'https://esm.sh/@codemirror/language@6?deps=@codemirror/state@6,@lezer/highlight@1';
+import { lcc }                                      from './lcc-lang.js';
 
 // ── Playground starter code ─────────────────────────────────────────────────
 
@@ -393,6 +398,8 @@ const view = new EditorView({
       basicSetup,
       lineNumbers(),
       keymap.of([indentWithTab]),
+      lcc(),
+      syntaxHighlighting(defaultHighlightStyle),
       EditorView.updateListener.of((update) => {
         if (!update.docChanged) return;
         clearTimeout(debounceTimer);
