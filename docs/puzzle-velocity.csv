@@ -779,3 +779,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 792,,,DEV,,,,,-3,,,,,TEST,,lccjs
 793,,,DEV,,,,,-3,,,,,TEST,,lccjs
 794,883,add did-you-mean suggestions to verbose assembler errors,DEV,45,20,11,34,9,2026-06-05T12:50:31-1000,2026-06-05T13:01:01-1000,,"Levenshtein helper in src/utils/suggest.js; 3 call sites: unknown mnemonic, unknown directive, undefined label (pass 2 only); 18 unit tests",ELDERBERRY,sonnet-4.6,lccjs
+795,879,rename linker internal tables to domain vocabulary (DDD gap 2),DEV,30,15,10,20,5,2026-06-05T12:50:41-10:00,2026-06-05T13:00:42-10:00,,"issue Have-section was stale (pre-#414 names); applied second rename pass: mcaIndex→moduleCurrentAddress, globalSymbols→globalSymbolTable, externalRefs11/9→externalReferenceTable11/9, virtualAddressRefs→virtualAddressTable, localRefs→addressAdjustmentTable; linkerStepsPrinter excluded per #414 precedent",FIG,sonnet-4.6,lccjs

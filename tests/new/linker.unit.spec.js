@@ -40,13 +40,13 @@ describe('Linker Unit Tests', () => {
   // reused link() runs) is caught.
   describe('per-link state is single-sourced in resetState() (#254)', () => {
     const FRESH = {
-      machineCode: [], mcaIndex: 0, globalSymbols: {}, externalRefs11: [], externalRefs9: [], virtualAddressRefs: [],
-      localRefs: [], start: null, gotStart: false, objectModules: [],
+      machineCode: [], moduleCurrentAddress: 0, globalSymbolTable: {}, externalReferenceTable11: [], externalReferenceTable9: [], virtualAddressTable: [],
+      addressAdjustmentTable: [], start: null, gotStart: false, objectModules: [],
       inputFiles: [], outputFileName: null,
     };
     const snapshot = (l) => ({
-      machineCode: l.machineCode, mcaIndex: l.mcaIndex, globalSymbols: l.globalSymbols, externalRefs11: l.externalRefs11,
-      externalRefs9: l.externalRefs9, virtualAddressRefs: l.virtualAddressRefs, localRefs: l.localRefs, start: l.start,
+      machineCode: l.machineCode, moduleCurrentAddress: l.moduleCurrentAddress, globalSymbolTable: l.globalSymbolTable, externalReferenceTable11: l.externalReferenceTable11,
+      externalReferenceTable9: l.externalReferenceTable9, virtualAddressTable: l.virtualAddressTable, addressAdjustmentTable: l.addressAdjustmentTable, start: l.start,
       gotStart: l.gotStart, objectModules: l.objectModules,
       inputFiles: l.inputFiles, outputFileName: l.outputFileName,
     });
@@ -58,9 +58,9 @@ describe('Linker Unit Tests', () => {
     test('resetState() clears accumulated state back to the fresh field set (no leak)', () => {
       const linker = new Linker();
       // dirty every field as a prior link() run would
-      linker.machineCode = [1, 2, 3]; linker.mcaIndex = 3; linker.globalSymbols = { main: 7 };
-      linker.externalRefs11.push({}); linker.externalRefs9.push({}); linker.virtualAddressRefs.push({});
-      linker.localRefs.push({}); linker.start = 99; linker.gotStart = true;
+      linker.machineCode = [1, 2, 3]; linker.moduleCurrentAddress = 3; linker.globalSymbolTable = { main: 7 };
+      linker.externalReferenceTable11.push({}); linker.externalReferenceTable9.push({}); linker.virtualAddressTable.push({});
+      linker.addressAdjustmentTable.push({}); linker.start = 99; linker.gotStart = true;
       linker.objectModules.push({}); linker.inputFiles.push('m.o');
       linker.outputFileName = 'out.e';
 
@@ -106,7 +106,7 @@ describe('Linker Unit Tests', () => {
 
   test('processModule() should throw LinkerError on duplicate global symbols', () => {
     const linker = new Linker();
-    linker.globalSymbols.main = 3;
+    linker.globalSymbolTable.main = 3;
 
     expect(() => {
       linker.processModule({
@@ -116,7 +116,7 @@ describe('Linker Unit Tests', () => {
     }).toThrow(LinkerError);
 
     expect(() => {
-      linker.globalSymbols.main = 3;
+      linker.globalSymbolTable.main = 3;
       linker.processModule({
         headers: [{ type: 'G', address: 0, label: 'main' }],
         code: [],
@@ -129,7 +129,7 @@ describe('Linker Unit Tests', () => {
   test('adjustExternalReferences() should throw LinkerError on undefined external symbols', () => {
     const linker = new Linker();
     linker.machineCode = [0];
-    linker.externalRefs11 = [{ address: 0, label: 'missing' }];
+    linker.externalReferenceTable11 = [{ address: 0, label: 'missing' }];
 
     expect(() => {
       linker.adjustExternalReferences();
@@ -137,7 +137,7 @@ describe('Linker Unit Tests', () => {
 
     expect(() => {
       linker.machineCode = [0];
-      linker.externalRefs11 = [{ address: 0, label: 'missing' }];
+      linker.externalReferenceTable11 = [{ address: 0, label: 'missing' }];
       linker.adjustExternalReferences();
     }).toThrow(LinkerError);
 
@@ -145,16 +145,16 @@ describe('Linker Unit Tests', () => {
   });
 
   // #171 spike: the relocation MATH (not just the undefined-symbol throw) was
-  // entirely unasserted. These hand-build globalSymbols/externalRefs11/externalRefs9/virtualAddressRefs + machineCode so
+  // entirely unasserted. These hand-build globalSymbolTable/externalReferenceTable11/externalReferenceTable9/virtualAddressTable + machineCode so
   // each calculation is verified in isolation, including the easily-missed fact
   // that the formula folds the pre-existing operand word into the offset.
   describe('adjustExternalReferences() relocation math (#181)', () => {
-    test('ETable 11-bit: encodes (Gaddr - addr - 1) into low 11 bits, preserving the opcode bits', () => {
+    test('externalReferenceTable11 (11-bit): encodes (Gaddr - addr - 1) into low 11 bits, preserving the opcode bits', () => {
       const linker = new Linker();
       linker.machineCode = [];
       linker.machineCode[100] = 0xe000; // opcode bits set, pcoffset11 field = 0
-      linker.globalSymbols = { foo: 200 };
-      linker.externalRefs11 = [{ address: 100, label: 'foo' }];
+      linker.globalSymbolTable = { foo: 200 };
+      linker.externalReferenceTable11 = [{ address: 100, label: 'foo' }];
 
       linker.adjustExternalReferences();
 
@@ -163,12 +163,12 @@ describe('Linker Unit Tests', () => {
       expect(linker.machineCode[100] & 0xf800).toBe(0xe000);
     });
 
-    test('ETable 11-bit: the pre-existing operand word is ADDED into the offset', () => {
+    test('externalReferenceTable11 (11-bit): the pre-existing operand word is ADDED into the offset', () => {
       const linker = new Linker();
       linker.machineCode = [];
       linker.machineCode[100] = 0xe005; // low field already holds 5
-      linker.globalSymbols = { foo: 200 };
-      linker.externalRefs11 = [{ address: 100, label: 'foo' }];
+      linker.globalSymbolTable = { foo: 200 };
+      linker.externalReferenceTable11 = [{ address: 100, label: 'foo' }];
 
       linker.adjustExternalReferences();
 
@@ -176,11 +176,11 @@ describe('Linker Unit Tests', () => {
       expect(linker.machineCode[100]).toBe(0xe068);
     });
 
-    test('ETable 11-bit: result masks to 11 bits (wraparound)', () => {
+    test('externalReferenceTable11 (11-bit): result masks to 11 bits (wraparound)', () => {
       const linker = new Linker();
       linker.machineCode = [0];
-      linker.globalSymbols = { far: 5000 };
-      linker.externalRefs11 = [{ address: 0, label: 'far' }];
+      linker.globalSymbolTable = { far: 5000 };
+      linker.externalReferenceTable11 = [{ address: 0, label: 'far' }];
 
       linker.adjustExternalReferences();
 
@@ -188,12 +188,12 @@ describe('Linker Unit Tests', () => {
       expect(linker.machineCode[0]).toBe(903);
     });
 
-    test('eTable 9-bit: encodes into low 9 bits, preserving the high 7 bits', () => {
+    test('externalReferenceTable9 (9-bit): encodes into low 9 bits, preserving the high 7 bits', () => {
       const linker = new Linker();
       linker.machineCode = [];
       linker.machineCode[20] = 0x0e00; // high 7 bits set, pcoffset9 field = 0
-      linker.globalSymbols = { bar: 50 };
-      linker.externalRefs9 = [{ address: 20, label: 'bar' }];
+      linker.globalSymbolTable = { bar: 50 };
+      linker.externalReferenceTable9 = [{ address: 20, label: 'bar' }];
 
       linker.adjustExternalReferences();
 
@@ -202,11 +202,11 @@ describe('Linker Unit Tests', () => {
       expect(linker.machineCode[20] & 0xfe00).toBe(0x0e00);
     });
 
-    test('eTable 9-bit: result masks to 9 bits (wraparound)', () => {
+    test('externalReferenceTable9 (9-bit): result masks to 9 bits (wraparound)', () => {
       const linker = new Linker();
       linker.machineCode = [0];
-      linker.globalSymbols = { baz: 600 };
-      linker.externalRefs9 = [{ address: 0, label: 'baz' }];
+      linker.globalSymbolTable = { baz: 600 };
+      linker.externalReferenceTable9 = [{ address: 0, label: 'baz' }];
 
       linker.adjustExternalReferences();
 
@@ -214,12 +214,12 @@ describe('Linker Unit Tests', () => {
       expect(linker.machineCode[0]).toBe(87);
     });
 
-    test('VTable full-address: adds Gaddr to the whole word (no mask)', () => {
+    test('virtualAddressTable (full-address): adds Gaddr to the whole word (no mask)', () => {
       const linker = new Linker();
       linker.machineCode = [];
       linker.machineCode[5] = 16;
-      linker.globalSymbols = { qux: 1234 };
-      linker.virtualAddressRefs = [{ address: 5, label: 'qux' }];
+      linker.globalSymbolTable = { qux: 1234 };
+      linker.virtualAddressTable = [{ address: 5, label: 'qux' }];
 
       linker.adjustExternalReferences();
 
@@ -229,10 +229,10 @@ describe('Linker Unit Tests', () => {
     test('all three tables in one pass update independently without interference', () => {
       const linker = new Linker();
       linker.machineCode = [0x0000, 0x0000, 0x0005];
-      linker.globalSymbols = { a: 300, b: 60, c: 1000 };
-      linker.externalRefs11 = [{ address: 0, label: 'a' }];
-      linker.externalRefs9 = [{ address: 1, label: 'b' }];
-      linker.virtualAddressRefs = [{ address: 2, label: 'c' }];
+      linker.globalSymbolTable = { a: 300, b: 60, c: 1000 };
+      linker.externalReferenceTable11 = [{ address: 0, label: 'a' }];
+      linker.externalReferenceTable9 = [{ address: 1, label: 'b' }];
+      linker.virtualAddressTable = [{ address: 2, label: 'c' }];
 
       linker.adjustExternalReferences();
 
@@ -244,12 +244,12 @@ describe('Linker Unit Tests', () => {
   // #171 spike: adjustLocalReferences() (A-table relocation) was never called by
   // a unit test. It relocates a module-local reference to its global position by
   // adding the module's start offset: machineCode[addr] += moduleStart.
-  describe('adjustLocalReferences() ATable relocation (#182)', () => {
+  describe('adjustLocalReferences() addressAdjustmentTable relocation (#182)', () => {
     test('adds moduleStart to the referenced word in place', () => {
       const linker = new Linker();
       linker.machineCode = [];
       linker.machineCode[10] = 5; // module-local address 5
-      linker.localRefs = [{ address: 10, moduleStart: 100 }];
+      linker.addressAdjustmentTable = [{ address: 10, moduleStart: 100 }];
 
       linker.adjustLocalReferences();
 
@@ -260,7 +260,7 @@ describe('Linker Unit Tests', () => {
       // Three modules concatenated at offsets 0 / 10 / 30.
       const linker = new Linker();
       linker.machineCode = [2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 1];
-      linker.localRefs = [
+      linker.addressAdjustmentTable = [
         { address: 0, moduleStart: 0 },
         { address: 5, moduleStart: 10 },
         { address: 12, moduleStart: 30 },
@@ -278,7 +278,7 @@ describe('Linker Unit Tests', () => {
       const linker = new Linker();
       linker.machineCode = [];
       linker.machineCode[3] = 7;
-      linker.localRefs = [{ address: 3, moduleStart: 0 }];
+      linker.addressAdjustmentTable = [{ address: 3, moduleStart: 0 }];
 
       linker.adjustLocalReferences();
 
@@ -288,7 +288,7 @@ describe('Linker Unit Tests', () => {
     test('empty ATable is a no-op', () => {
       const linker = new Linker();
       linker.machineCode = [11, 22, 33];
-      linker.localRefs = [];
+      linker.addressAdjustmentTable = [];
 
       linker.adjustLocalReferences();
 
@@ -296,10 +296,10 @@ describe('Linker Unit Tests', () => {
     });
   });
 
-  // #171 spike: multi-module mcaIndex/globalSymbols threading was only checked
+  // #171 spike: multi-module moduleCurrentAddress/globalSymbolTable threading was only checked
   // indirectly via the 3-demo oracle e2e (which detects but can't localize a
   // wrong relocation). processModule() appends each module's code at the running
-  // mcaIndex and records every symbol/reference at (local address + mcaIndex),
+  // moduleCurrentAddress and records every symbol/reference at (local address + moduleCurrentAddress),
   // so addresses reflect the concatenation order.
   describe('multi-module address threading via processModule() (#183)', () => {
     const mod = (headers, size, fillFirst) => {
@@ -315,8 +315,8 @@ describe('Linker Unit Tests', () => {
       linker.processModule(mod([{ type: 'G', address: 3, label: 'baz' }], 15));
 
       // foo: 0+0 | bar: 5+10 | baz: 3+(10+20)
-      expect(linker.globalSymbols).toEqual({ foo: 0, bar: 15, baz: 33 });
-      expect(linker.mcaIndex).toBe(45);
+      expect(linker.globalSymbolTable).toEqual({ foo: 0, bar: 15, baz: 33 });
+      expect(linker.moduleCurrentAddress).toBe(45);
       expect(linker.machineCode).toHaveLength(45);
     });
 
@@ -347,9 +347,9 @@ describe('Linker Unit Tests', () => {
         mod([{ type: 'E', address: 3, label: 'x' }, { type: 'A', address: 7 }], 5),
       );
 
-      expect(linker.externalRefs11).toEqual([{ address: 13, label: 'x' }]); // 3 + 10
+      expect(linker.externalReferenceTable11).toEqual([{ address: 13, label: 'x' }]); // 3 + 10
       // A entries also record the module start for the later local relocation
-      expect(linker.localRefs).toEqual([{ address: 17, moduleStart: 10 }]); // 7 + 10
+      expect(linker.addressAdjustmentTable).toEqual([{ address: 17, moduleStart: 10 }]); // 7 + 10
     });
   });
 
@@ -412,9 +412,9 @@ describe('Linker Unit Tests', () => {
       linker.outputFileName = 'out.e';
       linker.gotStart = true;
       linker.start = 2;
-      linker.globalSymbols = { main: 0 };           // 'main' = 6d 61 69 6e
-      linker.virtualAddressRefs = [{ address: 7, label: 'v' }]; // written as an 'A' entry (address only)
-      linker.localRefs = [{ address: 9, moduleStart: 0 }];
+      linker.globalSymbolTable = { main: 0 };           // 'main' = 6d 61 69 6e
+      linker.virtualAddressTable = [{ address: 7, label: 'v' }]; // written as an 'A' entry (address only)
+      linker.addressAdjustmentTable = [{ address: 9, moduleStart: 0 }];
       linker.machineCode = [0x1234, 0x5678];
 
       linker.createExecutable();
@@ -435,9 +435,9 @@ describe('Linker Unit Tests', () => {
       const linker = new Linker();
       linker.outputFileName = 'out.e';
       linker.gotStart = false;              // no start → no 'S' entry
-      linker.globalSymbols = {};
-      linker.virtualAddressRefs = [{ address: 0x11, label: 'v' }];
-      linker.localRefs = [{ address: 0x22, moduleStart: 0 }];
+      linker.globalSymbolTable = {};
+      linker.virtualAddressTable = [{ address: 0x11, label: 'v' }];
+      linker.addressAdjustmentTable = [{ address: 0x22, moduleStart: 0 }];
       linker.machineCode = [];
 
       linker.createExecutable();

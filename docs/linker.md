@@ -79,15 +79,16 @@ Open architectural questions:
 
 The linker currently manages:
 
-- `mca`
-- `GTable`
-- `ETable`
-- `eTable`
-- `VTable`
-- `ATable`
-- `start`
-- `gotStart`
-- `objectModules`
+- `machineCode` — assembled machine code words
+- `moduleCurrentAddress` — allocation pointer into `machineCode` (current module base address)
+- `globalSymbolTable` — global symbol definitions (label → address)
+- `externalReferenceTable11` — external references with 11-bit PC-relative addresses
+- `externalReferenceTable9` — external references with 9-bit PC-relative addresses
+- `virtualAddressTable` — external references with full 16-bit addresses
+- `addressAdjustmentTable` — module-local references needing base-address relocation
+- `start` — program entry-point address
+- `gotStart` — whether an entry point has been seen
+- `objectModules` — parsed object modules pending processing
 
 These structures are still maintained directly inside the class rather than in extracted helper modules.
 

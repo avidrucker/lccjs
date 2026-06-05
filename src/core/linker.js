@@ -23,12 +23,12 @@ class Linker {
   // This is the single definition of the per-link field set.
   resetState() {
     this.machineCode = [];
-    this.mcaIndex = 0;
-    this.globalSymbols = {};
-    this.externalRefs11 = [];
-    this.externalRefs9 = [];
-    this.virtualAddressRefs = [];
-    this.localRefs = [];
+    this.moduleCurrentAddress = 0;
+    this.globalSymbolTable = {};
+    this.externalReferenceTable11 = [];
+    this.externalReferenceTable9 = [];
+    this.virtualAddressTable = [];
+    this.addressAdjustmentTable = [];
     this.start = null;
     this.gotStart = false;
     this.objectModules = [];     // List of object modules to process
@@ -195,37 +195,37 @@ class Linker {
           if (this.gotStart) {
             this.error('Multiple entry points');
           }
-          this.start = header.address + this.mcaIndex;
+          this.start = header.address + this.moduleCurrentAddress;
           this.gotStart = true;
           break;
         case 'G':
-          if (this.globalSymbols.hasOwnProperty(header.label)) {
+          if (this.globalSymbolTable.hasOwnProperty(header.label)) {
             this.error(`More than one global declaration for ${header.label}`);
           }
-          this.globalSymbols[header.label] = header.address + this.mcaIndex;
+          this.globalSymbolTable[header.label] = header.address + this.moduleCurrentAddress;
           break;
         case 'E':
-          this.externalRefs11.push({
-            address: header.address + this.mcaIndex,
+          this.externalReferenceTable11.push({
+            address: header.address + this.moduleCurrentAddress,
             label: header.label,
           });
           break;
         case 'e':
-          this.externalRefs9.push({
-            address: header.address + this.mcaIndex,
+          this.externalReferenceTable9.push({
+            address: header.address + this.moduleCurrentAddress,
             label: header.label,
           });
           break;
         case 'V':
-          this.virtualAddressRefs.push({
-            address: header.address + this.mcaIndex,
+          this.virtualAddressTable.push({
+            address: header.address + this.moduleCurrentAddress,
             label: header.label,
           });
           break;
         case 'A':
-          this.localRefs.push({
-            address: header.address + this.mcaIndex,
-            moduleStart: this.mcaIndex,
+          this.addressAdjustmentTable.push({
+            address: header.address + this.moduleCurrentAddress,
+            moduleStart: this.moduleCurrentAddress,
           });
           break;
         default:
@@ -235,43 +235,43 @@ class Linker {
 
     // Append code to machineCode
     for (let word of code) {
-      this.machineCode[this.mcaIndex++] = word;
+      this.machineCode[this.moduleCurrentAddress++] = word;
     }
   }
 
   adjustExternalReferences() {
-    // Adjust externalRefs11 (11-bit addresses)
-    for (let ref of this.externalRefs11) {
-      if (!this.globalSymbols.hasOwnProperty(ref.label)) {
+    // Adjust externalReferenceTable11 (11-bit addresses)
+    for (let ref of this.externalReferenceTable11) {
+      if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
         this.error(`${ref.label} is an undefined external reference`);
       }
-      let Gaddr = this.globalSymbols[ref.label];
+      let Gaddr = this.globalSymbolTable[ref.label];
       let offset = ((this.machineCode[ref.address] + Gaddr - ref.address - 1) & 0x7ff);
       this.machineCode[ref.address] = (this.machineCode[ref.address] & 0xf800) | offset;
     }
 
-    // Adjust externalRefs9 (9-bit addresses)
-    for (let ref of this.externalRefs9) {
-      if (!this.globalSymbols.hasOwnProperty(ref.label)) {
+    // Adjust externalReferenceTable9 (9-bit addresses)
+    for (let ref of this.externalReferenceTable9) {
+      if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
         this.error(`${ref.label} is an undefined external reference`);
       }
-      let Gaddr = this.globalSymbols[ref.label];
+      let Gaddr = this.globalSymbolTable[ref.label];
       let offset = ((this.machineCode[ref.address] + Gaddr - ref.address - 1) & 0x1ff);
       this.machineCode[ref.address] = (this.machineCode[ref.address] & 0xfe00) | offset;
     }
 
-    // Adjust virtualAddressRefs (full addresses)
-    for (let ref of this.virtualAddressRefs) {
-      if (!this.globalSymbols.hasOwnProperty(ref.label)) {
+    // Adjust virtualAddressTable (full addresses)
+    for (let ref of this.virtualAddressTable) {
+      if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
         this.error(`${ref.label} is an undefined external reference`);
       }
-      let Gaddr = this.globalSymbols[ref.label];
+      let Gaddr = this.globalSymbolTable[ref.label];
       this.machineCode[ref.address] += Gaddr;
     }
   }
 
   adjustLocalReferences() {
-    for (let ref of this.localRefs) {
+    for (let ref of this.addressAdjustmentTable) {
       this.machineCode[ref.address] += ref.moduleStart;
     }
   }
@@ -295,8 +295,8 @@ class Linker {
     }
 
     // Write 'G' entries
-    for (let label in this.globalSymbols) {
-      const address = this.globalSymbols[label];
+    for (let label in this.globalSymbolTable) {
+      const address = this.globalSymbolTable[label];
       const buffer = Buffer.alloc(3 + label.length + 1);
       buffer.write('G', 0, 'ascii');
       buffer.writeUInt16LE(address, 1);
@@ -305,8 +305,8 @@ class Linker {
       fs.writeSync(outFile, buffer);
     }
 
-    // Write 'A' entries for VTable entries
-    for (let ref of this.virtualAddressRefs) {
+    // Write 'A' entries for virtualAddressTable entries
+    for (let ref of this.virtualAddressTable) {
       const buffer = Buffer.alloc(3);
       buffer.write('A', 0, 'ascii');
       buffer.writeUInt16LE(ref.address, 1);
@@ -314,7 +314,7 @@ class Linker {
     }
 
     // Write 'A' entries
-    for (let ref of this.localRefs) {
+    for (let ref of this.addressAdjustmentTable) {
       const buffer = Buffer.alloc(3);
       buffer.write('A', 0, 'ascii');
       buffer.writeUInt16LE(ref.address, 1);
