@@ -37,6 +37,30 @@ function assemble(src) {
  */
 function run(binary, opts = {}) {
   const { stdin = [], pauseOnInput = false, maxSteps = 0 } = opts;
+
+  // When pauseOnInput is true AND pre-supplied stdin is provided, run in two
+  // stages so preResumeOutputLength is captured at the first input boundary,
+  // making displayWithSeparator behave consistently with the interactive path.
+  if (pauseOnInput && stdin.length > 0) {
+    const interp = new Interpreter();
+    try {
+      const first = interp.executeBuffer(binary, { inputFileName: 'input.e', inputBuffer: '', pauseOnInput: true, maxSteps });
+      if (first && first.status === 'waiting-for-input') {
+        const preResumeOutputLength = interp.output.length;
+        const second = interp.resume(stdin.join('\n') + '\n');
+        if (second && second.status === 'waiting-for-input') {
+          // Batch stdin exhausted before all input traps — surface for interactive continuation
+          return { status: 'waiting-for-input', trapType: second.trapType, partialOutput: interp.output, resume: makeResume(interp) };
+        }
+        return { stdout: interp.output, preResumeOutputLength, exitCode: second && second.maxStepsReached ? 2 : 0, maxStepsReached: !!(second && second.maxStepsReached) };
+      }
+      // Program completed before reaching any input trap
+      return { stdout: first.output, exitCode: first.maxStepsReached ? 2 : 0, maxStepsReached: !!first.maxStepsReached };
+    } catch (err) {
+      return { stdout: interp.output, exitCode: 1, maxStepsReached: false };
+    }
+  }
+
   const inputBuffer = stdin.join('\n') + (stdin.length ? '\n' : '');
   const interp = new Interpreter();
   try {

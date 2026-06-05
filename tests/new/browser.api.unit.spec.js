@@ -125,4 +125,55 @@ describe('browser API', () => {
       expect(display).toBe('42\n7\n7\n');
     });
   });
+
+  describe('run() with pre-supplied stdin and pauseOnInput (batch mode)', () => {
+    // Mirrors the repro in issue #801: prompt without trailing newline, then din
+    const PROMPT_SRC = `
+      lea  r0, prompt
+      sout r0
+      din  r1
+      dout r1
+      nl
+      halt
+prompt: .string "Enter: "
+    `;
+
+    test('returns preResumeOutputLength capturing the first input boundary', () => {
+      const { binary } = assemble(PROMPT_SRC);
+      const result = run(binary, { stdin: ['42'], pauseOnInput: true });
+
+      expect(result.status).toBeUndefined();
+      expect(result.exitCode).toBe(0);
+      // "Enter: " (7) + din echo "42\n" + dout "42" + nl "\n"
+      expect(result.stdout).toBe('Enter: 42\n42\n');
+      // preResumeOutputLength marks end of "Enter: " (7 chars)
+      expect(result.preResumeOutputLength).toBe(7);
+    });
+
+    test('displayWithSeparator applied to batch result injects separator before din echo', () => {
+      const { binary } = assemble(PROMPT_SRC);
+      const result = run(binary, { stdin: ['42'], pauseOnInput: true });
+
+      const pre  = result.stdout.slice(0, result.preResumeOutputLength);
+      const post = result.stdout.slice(result.preResumeOutputLength);
+      const display = (pre.endsWith('\n') ? pre : pre + '\n') + post;
+      // "Enter: " does not end with \n → separator injected before din echo
+      expect(display).toBe('Enter: \n42\n42\n');
+    });
+
+    test('program with no input trap: no preResumeOutputLength on result', () => {
+      const { binary } = assemble(`
+        mvi r0, 99
+        dout r0
+        nl
+        halt
+      `);
+      const result = run(binary, { stdin: ['42'], pauseOnInput: true });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toBe('99\n');
+      // No input trap → preResumeOutputLength is absent (undefined)
+      expect(result.preResumeOutputLength).toBeUndefined();
+    });
+  });
 });
