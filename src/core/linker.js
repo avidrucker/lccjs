@@ -23,11 +23,17 @@ class Linker {
   // This is the single definition of the per-link field set.
   resetState() {
     this.machineCode = [];
+    // previously: mcaIndex
     this.moduleCurrentAddress = 0;
+    // previously: globalSymbols
     this.globalSymbolTable = {};
+    // previously: externalRefs11
     this.externalReferenceTable11 = [];
+    // previously: externalRefs9
     this.externalReferenceTable9 = [];
+    // previously: virtualAddressRefs
     this.virtualAddressTable = [];
+    // previously: localRefs
     this.addressAdjustmentTable = [];
     this.start = null;
     this.gotStart = false;
