@@ -1,0 +1,93 @@
+// Lezer grammar for LCC assembly (lccjs)
+// Ported from docs/lcc.tmLanguage.json (14 patterns).
+// Highlights: comments, directives, label definitions, registers,
+// mnemonic groups (IO/branch/core/plus), numbers, strings, pc-ref, label refs.
+// Enables: toggleLineComment (";"), syntaxHighlighting(defaultHighlightStyle).
+//
+// Debug mnemonics (m, r, s, bp) are omitted — their single-letter form
+// collides with label refs and requires context the tokenizer cannot resolve.
+
+@top Program { statement* }
+
+// Skip horizontal whitespace only; newlines are explicit statement separators.
+@skip { spaces }
+
+statement {
+  Comment newline |
+  LabelDef instr? Comment? newline |
+  instr Comment? newline |
+  newline
+}
+
+instr {
+  @specialize[@name=Directive]<DotWord,
+    ".start" | ".org"  | ".orig"   | ".word" | ".fill" | ".stringz" | ".string" |
+    ".asciz" | ".zero" | ".space"  | ".blkw" | ".lccplus" | ".extern" |
+    ".globl" | ".global" | ".end"> operand* |
+  DotWord operand* |
+  @specialize[@name=MnemonicIO]<Identifier,
+    "dout" | "udout" | "hout" | "aout" | "sout" | "nl" |
+    "din"  | "hin"   | "ain"  | "sin"> operand* |
+  @specialize[@name=MnemonicBranch]<Identifier,
+    "br"  | "bral" | "brz"  | "brnz" | "bre"  | "brne" |
+    "brn" | "brp"  | "brlt" | "brgt" | "brc"  | "brb"  |
+    "jmp" | "jsr"  | "jsrr" | "bl"   | "blr"  | "call" | "ret"> operand* |
+  @specialize[@name=MnemonicCore]<Identifier,
+    "add"  | "sub"  | "mul"  | "div"  | "rem"  | "and"  | "or"   | "xor"  |
+    "not"  | "sll"  | "srl"  | "sra"  | "rol"  | "ror"  | "mov"  | "mvi"  |
+    "mvr"  | "ld"   | "ldr"  | "st"   | "str"  | "lea"  | "cea"  | "cmp"  |
+    "sext" | "push" | "pop"  | "halt"> operand* |
+  @specialize[@name=MnemonicPlus]<Identifier,
+    "clear" | "sleep" | "nbain" | "rand" | "srand" | "millis" | "resetc" | "cursor"> operand* |
+  Identifier operand*
+}
+
+operand {
+  "," |
+  @specialize[@name=Register]<Identifier,
+    "r0" | "r1" | "r2" | "r3" | "r4" | "r5" | "r6" | "r7" |
+    "fp"  | "sp" | "lr"> |
+  Number |
+  StringLiteral |
+  CharLiteral |
+  PcRef |
+  Identifier
+}
+
+// ── Tokens ───────────────────────────────────────────────────────────────────
+
+@tokens {
+  spaces { (" " | "\t")+ }
+
+  newline { "\r"? "\n" }
+
+  Comment { ";" ![\n]* }
+
+  // LabelDef longer than Identifier (includes ":") so maximal munch wins.
+  LabelDef { identStart identCont* ":" }
+
+  // Dot-prefixed word: matched before Identifier because "." isn't in identStart.
+  DotWord { "." identStart identCont* }
+
+  StringLiteral { '"' (!["\\\n] | "\\" _)* '"' }
+  CharLiteral   { "'" (!['\\\n] | "\\" _)* "'" }
+
+  // Numeric literals: 0x hex, 0b binary, plain decimal (optional minus).
+  Number {
+    "0x" $[0-9A-Fa-f]+ |
+    "0b" $[01]+         |
+    "-"? @digit+
+  }
+
+  PcRef { "*" }
+
+  Identifier { identStart identCont* }
+
+  identStart { @asciiLetter | "_" | "@" }
+  identCont  { @asciiLetter | @digit | "_" | "@" }
+
+  ","
+
+  // Comment wins over anything that also starts with a non-ident char.
+  @precedence { Comment, StringLiteral, CharLiteral, DotWord, Number, LabelDef, PcRef, Identifier }
+}

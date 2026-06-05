@@ -421,6 +421,9 @@ ${listItems}
 <script src="../dist/lcc.bundle.js"></script>
 <script type="module">
 import { EditorView, basicSetup, keymap, indentWithTab, autocompletion } from 'https://esm.sh/codemirror@6';
+import { syntaxHighlighting, defaultHighlightStyle } from 'https://esm.sh/@codemirror/language@6';
+import { toggleLineComment } from 'https://esm.sh/@codemirror/commands@6';
+import { lcc } from '../dist/lang-lcc.js';
 
 const LCC_COMPLETIONS = [
   { label: 'r0', type: 'variable', detail: 'general-purpose' },
@@ -506,7 +509,9 @@ const editor = new EditorView({
   doc: ${starterCodeJson},
   extensions: [
     basicSetup,
-    keymap.of([indentWithTab]),
+    lcc(),
+    syntaxHighlighting(defaultHighlightStyle),
+    keymap.of([indentWithTab, { key: 'Mod-/', run: toggleLineComment }]),
     autocompletion({ override: [lccCompletionSource] }),
     EditorView.updateListener.of(function(update) {
       if (update.docChanged && renderFn) {

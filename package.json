@@ -8,7 +8,7 @@
     "test:all": "jest --runInBand",
     "test:oracle": "jest --runInBand --testPathPattern oracle.e2e",
     "test:parity": "jest --runInBand --testPathPattern textbook-demos.parity",
-    "test:browser": "jest --runInBand tests/browser",
+    "test:browser": "playwright test tests/browser/",
     "puzzle:status": "node scripts/puzzle-status.js",
     "puzzles": "bash scripts/run-pdd.sh",
     "claim": "bash scripts/claim.sh",
@@ -20,11 +20,14 @@
     "velocity:migrate": "node scripts/velocity-migrate.js",
     "lccrun": "bash scripts/lccrun.sh",
     "build": "npm run build:browser && npm run build:site",
+    "build:lang-lcc": "npx @lezer/generator src/lang-lcc/lcc.grammar -o src/lang-lcc/lcc.js",
     "build:site": "node scripts/build-site.js",
-    "build:browser": "webpack --config webpack.browser.config.js",
-    "test:browser": "playwright test tests/browser/"
+    "build:browser": "webpack --config webpack.browser.config.js"
   },
   "devDependencies": {
+    "@codemirror/language": "^6.12.3",
+    "@lezer/highlight": "^1.2.3",
+    "@lezer/lr": "^1.4.10",
     "better-sqlite3": "^12.10.0",
     "dotenv": "^17.2.3",
     "jest": "^29.7.0",
