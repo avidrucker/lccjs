@@ -1,0 +1,36 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Fri Jun  5 11:24:02 2026
+Drucker Avi
+
+Header
+o
+C
+
+Loc   Code           Source Code
+           ; Three-letter input with consume-newline workaround —
+           ; Each letter read is preceded by an ain that discards t
+0000  f009         ain r0          ; r0 = 'a'
+0001  f609         ain r3          ; consume \n after 'a'
+0002  f209         ain r1          ; r1 = 'b'
+0003  f609         ain r3          ; consume \n after 'b'
+0004  f409         ain r2          ; r2 = 'c'
+0005  f005         aout r0
+0006  f205         aout r1
+0007  f405         aout r2
+0008  f001         nl
+0009  f000         halt
+====================================================== Output
+a
+
+
+b
+
+
+c
+abc
+
+========================================== Program statistics
+Input file name       =      three-letters-double-ain.a
+Instructions executed =    a (hex)    10 (dec)
+Program size          =    a (hex)    10 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)

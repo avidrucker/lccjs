@@ -1,0 +1,31 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Fri Jun  5 11:23:42 2026
+Drucker Avi
+
+Header
+o
+C
+
+Loc   Code           Source Code
+           ; Three-letter input experiment — #855
+           ; Reads three characters with ain and prints them concat
+           ; Expected output with input "a\nb\nc\n": abc
+0000  f009         ain r0
+0001  f209         ain r1
+0002  f409         ain r2
+0003  f005         aout r0
+0004  f205         aout r1
+0005  f405         aout r2
+0006  f001         nl
+0007  f000         halt
+====================================================== Output
+a
+b
+c
+abc
+
+========================================== Program statistics
+Input file name       =      three-letters.a
+Instructions executed =    8 (hex)     8 (dec)
+Program size          =    8 (hex)     8 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)
