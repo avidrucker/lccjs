@@ -201,23 +201,16 @@ before anything else.
 - **Symptom:** In a program that calls `din` then `ain`, the `ain` reads ASCII 10
   (`\n`) instead of the next intended character. The operator/character is effectively
   "skipped" and the program proceeds with a newline value.
-- **Why:** OG LCC's `din` leaves the terminating `\n` in stdin after reading the
-  decimal number. A bare `ain` immediately following will read that leftover `\n`.
-- **Fix (for OG LCC):** Use a double-`ain` pattern — the first call discards the
-  newline, the second reads the intended character:
+- **Why:** `din` leaves the terminating `\n` in stdin after reading the decimal number.
+  A bare `ain` immediately following will read that leftover `\n`.
+- **Fix:** Use a double-`ain` pattern — the first call discards the newline, the second
+  reads the intended character:
   ```asm
   din r0         ; Read number — leaves \n in stdin
   ain r1         ; discard leftover \n
   ain r1         ; now read the intended character
   ```
-- **LCC.js divergence (parity deviation §25):** lccjs's `din` *does* consume the
-  trailing `\n`, so the double-`ain` workaround **breaks** under lccjs — the first
-  `ain` reads the intended character, the second `ain` reads the next `\n`. Under
-  lccjs, a single `ain` is correct. This is a known LCC.js BUG; a fix is tracked at
-  [parity_deviations.md §25](./parity_deviations.md).
-- **Cross-tool portability:** If your program must run correctly on both OG LCC and
-  lccjs today, there is no single `ain`-count that works for both. Prefer the double-`ain`
-  form for OG LCC compatibility until the lccjs bug is fixed.
+  This pattern works correctly in both OG LCC and lccjs (#857 fixed the lccjs parity bug).
 
 ---
 

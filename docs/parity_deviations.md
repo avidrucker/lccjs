@@ -357,44 +357,6 @@ line 1735.
 
 ---
 
-## LCC.js BUG — LCC.js deviates from OG LCC (fix pending)
-
-### 25. `din` consumes the trailing `\n`; OG LCC leaves it in stdin (#852)
-
-After `din` reads a decimal integer, OG LCC leaves the terminating `\n` in stdin.
-lccjs's `readLineFromStdin()` slices past the `\n` (both in the simulated-input buffer
-path and the real TTY path), consuming it. Any subsequent `ain` therefore reads the
-*next* character instead of the leftover `\n`.
-
-The double-`ain` workaround in `docs/simpleCalc.a` — written to match OG LCC —
-is **broken** under lccjs:
-
-| | Input | Double-ain program | Single-ain program |
-|---|---|---|---|
-| OG LCC | `5\n+\n3\n` | **Result: 8** ✓ | Invalid operation ✗ |
-| lccjs | `5\n+\n3\n` | **Invalid operation** ✗ | **Result: 8** ✓ |
-
-The same deviation applies to `hin` (which also calls `readLineFromStdin()`).
-
-**Why LCC.js BUG:** OG LCC's behaviour is the defined ISA convention.
-The double-`ain` pattern is the documented workaround (see pitfall §3.4); lccjs must
-leave the `\n` in the buffer to honour it.
-
-**Fix direction (not yet applied):**
-- Simulated-input path (`inputBuffer`): change `slice(newlineIndex + 1)` → `slice(newlineIndex)`.
-- Real TTY path: stop reading before the `\n` (peek-then-stop rather than read-and-discard).
-  The `din` retry loop (`if (dinInput.trim() === '') { continue; }`) naturally handles
-  the resulting empty-line reads, so no secondary changes are needed in the DIN trap handler.
-
-**Source:** `src/core/interpreter.js:1363` (`this.inputBuffer.slice(newlineIndex + 1)`)
-and `:1392` (real-TTY `\n` read-and-break).
-
-**Research doc:** `docs/research/ain-din-newline-parity-852.md`
-
-**GitHub issue:** [#852](https://github.com/avidrucker/lccjs/issues/852) (research deliverable)
-
----
-
 ## BY DESIGN — Intentional, documented divergences
 
 ### 7. Source line length limit: LCC.js enforces 300 chars (researched, #244)
@@ -857,3 +819,4 @@ _None pending._
 | 2026-06-03 | LCC.js BUG §25 added (#524) | BR-family with numeric token: oracle rejects all variants (`br 5`, `brz 5`, `brn 5`, `brp 5`, `brgt 5`) with `Undefined label` (exit 1); LCC.js silently assembles (exit 0). Root cause: `assembleBR` calls `evaluateOperand` without a label-validation gate, unlike `assembleBL` (§24). Classified LCC.js BUG — fix is to add `isValidLabel` guard in `assembleBR`. Evidence: `docs/research/br-numeric-operand-parity.md`. |
 | 2026-06-03 | §25 LCC.js BUG fixed (#538) | `assembleBR` now calls `isNumLiteral(operands[0])` before `evaluateOperand` — bare integer branch targets are rejected with `Bad label` (exit 1), matching oracle intent. Regression tests #95–#97 added to `tests/new/assembler.instructions.integration.spec.js`. §25 removed from "LCC.js BUG" section. |
 | 2026-06-05 | LCC.js BUG §25 re-added (#852) | `din` newline-consumption parity: lccjs consumes the trailing `\n` after reading a decimal; OG LCC leaves it in stdin. Double-`ain` workaround in `simpleCalc.a` broken under lccjs (works under OG LCC). Classified LCC.js BUG. Research doc: `docs/research/ain-din-newline-parity-852.md`. |
+| 2026-06-05 | §25 LCC.js BUG fixed (#857) | `readLineFromStdin()` simulated path now leaves `\n` in `inputBuffer` after reading a non-empty line (conditional `slice`); empty-line reads consume the `\n` to avoid infinite retry. TTY path prepends `\n` to `inputBuffer` instead of discarding it. `simpleCalc.a` double-`ain` program now produces `Result: 8` as expected. §25 removed from "LCC.js BUG" section. |

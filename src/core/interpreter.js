@@ -1360,7 +1360,9 @@ class Interpreter {
       let inputLine = '';
       if (newlineIndex !== -1) {
         inputLine = this.inputBuffer.slice(0, newlineIndex);
-        this.inputBuffer = this.inputBuffer.slice(newlineIndex + 1);
+        this.inputBuffer = newlineIndex > 0
+          ? this.inputBuffer.slice(newlineIndex)
+          : this.inputBuffer.slice(newlineIndex + 1);
       } else {
         inputLine = this.inputBuffer;
         this.inputBuffer = '';
@@ -1388,8 +1390,9 @@ class Interpreter {
           }
           let char = buffer.toString('utf8');
           
-          // If it's a UNIX newline, we're done.
+          // If it's a UNIX newline, put it back for ain to read (OG LCC parity).
           if (char === '\n') {
+            this.inputBuffer = '\n' + (this.inputBuffer || '');
             break;
           }
 

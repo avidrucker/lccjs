@@ -842,4 +842,65 @@ describe('Interpreter Unit Tests', () => {
       expect(call).not.toContain('line');
     });
   });
+
+  // OG LCC parity: din leaves trailing \n in inputBuffer (#857)
+  describe('din/hin trailing-newline parity (#857)', () => {
+    test('ain after din reads the \\n that din left in the buffer', () => {
+      const assembler = new Assembler();
+      const source = '  din r0\n  ain r1\n  halt';
+      const assembly = assembler.assembleSource(source, { inputFileName: 'test857.a' });
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(assembly.outputBytes, {
+        inputFileName: 'test857.e',
+        inputBuffer: '5\n+',
+      });
+      expect(result.registers[0]).toBe(5);
+      expect(result.registers[1]).toBe(10);
+    });
+
+    test('ain after din does NOT consume the operator character', () => {
+      const assembler = new Assembler();
+      const source = '  din r0\n  ain r1\n  ain r2\n  halt';
+      const assembly = assembler.assembleSource(source, { inputFileName: 'test857b.a' });
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(assembly.outputBytes, {
+        inputFileName: 'test857b.e',
+        inputBuffer: '5\n+\n',
+      });
+      expect(result.registers[0]).toBe(5);
+      expect(result.registers[1]).toBe(10);
+      expect(result.registers[2]).toBe(43);
+    });
+
+    test('din after din-ain-ain sequence reads the next number correctly', () => {
+      const assembler = new Assembler();
+      const source = '  din r0\n  ain r1\n  din r2\n  halt';
+      const assembly = assembler.assembleSource(source, { inputFileName: 'test857c.a' });
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(assembly.outputBytes, {
+        inputFileName: 'test857c.e',
+        inputBuffer: '5\n3\n',
+      });
+      expect(result.registers[0]).toBe(5);
+      expect(result.registers[1]).toBe(10);
+      expect(result.registers[2]).toBe(3);
+    });
+
+    test('simpleCalc double-ain pattern produces correct result', () => {
+      const assembler = new Assembler();
+      const fs2 = require('fs');
+      const path2 = require('path');
+      const source = fs2.readFileSync(
+        path2.join(__dirname, '../../docs/simpleCalc.a'),
+        'utf8'
+      );
+      const assembly = assembler.assembleSource(source, { inputFileName: 'simpleCalc.a' });
+      const interpreter = new Interpreter();
+      const result = interpreter.executeBuffer(assembly.outputBytes, {
+        inputFileName: 'simpleCalc.e',
+        inputBuffer: '5\n+\n3\n',
+      });
+      expect(result.output).toContain('Result: 8');
+    });
+  });
 });
