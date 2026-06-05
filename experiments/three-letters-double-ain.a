@@ -1,0 +1,12 @@
+; Three-letter input with consume-newline workaround — #855
+; Each letter read is preceded by an ain that discards the previous \n.
+        ain r0          ; r0 = 'a'
+        ain r3          ; consume \n after 'a'
+        ain r1          ; r1 = 'b'
+        ain r3          ; consume \n after 'b'
+        ain r2          ; r2 = 'c'
+        aout r0
+        aout r1
+        aout r2
+        nl
+        halt

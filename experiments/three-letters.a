@@ -1,0 +1,11 @@
+; Three-letter input experiment — #855
+; Reads three characters with ain and prints them concatenated.
+; Expected output with input "a\nb\nc\n": abc
+        ain r0
+        ain r1
+        ain r2
+        aout r0
+        aout r1
+        aout r2
+        nl
+        halt
