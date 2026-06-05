@@ -412,6 +412,102 @@ silently recur for the next.</p>
 <td>GRAPE</td>
 <td>Read full issue body before claiming — prose blockers are invisible to puzzle:status; PostToolBatch hook flags batched Bash calls even when read-only; untracked build artifacts on main don&#39;t carry into worktrees.</td>
 </tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-01-apple.md">TIL 2026-06-01 APPLE</a></td>
+<td>2026-06-01</td>
+<td>APPLE</td>
+<td><code>permissions.deny</code> blocks direct Bash strings only — not subprocess commands; EOF vs empty-line are semantically distinct (fix: <code>isEOF: true</code> state, #452); test validation guards with spawnSync not live DB inserts; SELECT before DELETE — approval scope is action-specific (RULES.md Rule 7).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-01-banana.md">TIL 2026-06-01 BANANA</a></td>
+<td>2026-06-01</td>
+<td>BANANA</td>
+<td><code>setsid &quot;$@&quot; &amp;</code> drops stdin in non-interactive bash — gate on <code>[ -t 0 ]</code>; stale example in schema doc is more dangerous than no example (velocity-schema.md → #459); research findings need a follow-on DEV ticket before closing (#459); velocity-seed.js had silent positional off-by-one under column addition (fixed in #438).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-01-dragonfruit.md">TIL 2026-06-01 DRAGONFRUIT</a></td>
+<td>2026-06-01</td>
+<td>DRAGONFRUIT</td>
+<td><code>exec</code> replaces the process — fork+wait for cleanup after child exits; a shell wrapper can&#39;t fix its parent&#39;s CWD (#360); three mandatory close steps cluster-fail together (velocity row, marker, closing comment); <code>Number.isFinite(Infinity)</code> is <code>false</code>.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-02-apple.md">TIL 2026-06-02 APPLE</a></td>
+<td>2026-06-02</td>
+<td>APPLE</td>
+<td>Shiki accepts VS Code <code>tokenColors</code> format directly (no conversion); CSS custom properties cascade theme-wide font changes cleanly; close sequence splits when ticket includes a build step — run build before closing commit, add artifact to same commit (#492).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-02-banana.md">TIL 2026-06-02 BANANA</a></td>
+<td>2026-06-02</td>
+<td>BANANA</td>
+<td><code>git ls-files</code> beats <code>find</code> for project-internal enumeration; word-boundary mismatch is all the safety you need — check competing rule before adding lookahead.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-02-cherry.md">TIL 2026-06-02 CHERRY</a></td>
+<td>2026-06-02</td>
+<td>CHERRY</td>
+<td>Closing comment is not a backlog — deferred work in prose is invisible to agents and puzzle:status; before the closing commit, convert every &quot;out of scope&quot; sentence to a ticket (Rule 10, #490).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-02-dragonfruit.md">TIL 2026-06-02 DRAGONFRUIT</a></td>
+<td>2026-06-02</td>
+<td>DRAGONFRUIT</td>
+<td>OP_EXT executor (<code>ir &amp; 0x1F</code>, 5 bits) and disassembler (<code>hex &amp; 0x000F</code>, 4 bits) decode the same field at different widths — instructions at eopcode ≥16 execute correctly and disassemble wrong (#496).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-03-apple.md">TIL 2026-06-03 APPLE</a></td>
+<td>2026-06-03</td>
+<td>APPLE</td>
+<td>A confirmed bug with no fix ticket is unfinished work — RESEARCH close checklist: file the DEV ticket first; pick the gate that blocks exactly what you mean (isNumLiteral vs isValidLabel for br/bl); <code>npm run close</code> checks HEAD specifically — carry <code>Closes #N</code> forward across all commits.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-03-banana.md">TIL 2026-06-03 BANANA</a></td>
+<td>2026-06-03</td>
+<td>BANANA</td>
+<td><code>assembler.error()</code> has two output channels (console.error full context vs thrown short message) — verbose flag must live on the Assembler instance; &quot;if large enough&quot; is a trap qualifier on tracker tickets — always file a child issue unconditionally (RULES.md Rule 12, #559); deferred teardown stderr now visible (#551).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-03-dragonfruit.md">TIL 2026-06-03 DRAGONFRUIT</a></td>
+<td>2026-06-03</td>
+<td>DRAGONFRUIT</td>
+<td><code>assembleBR</code> silently accepts numeric operands — <code>evaluateOperand</code> tries <code>parseNumber</code> first; <code>assembleBL</code> has <code>isValidLabel</code> guard but <code>assembleBR</code> doesn&#39;t — grep <code>isValidLabel</code> calls to find coverage boundary (#524).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-03-elderberry.md">TIL 2026-06-03 ELDERBERRY</a></td>
+<td>2026-06-03</td>
+<td>ELDERBERRY</td>
+<td>A subprocess cannot fix its parent&#39;s CWD — defer worktree deletion to a detached subprocess that runs after npm exits (#541); <code>exec</code> approach failed because npm itself was the getwd() source.</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-03-fig.md">TIL 2026-06-03 FIG</a></td>
+<td>2026-06-03</td>
+<td>FIG</td>
+<td>Never put real email addresses in public GitHub issue comments — use placeholders; moving teardown out-of-band hides its failures — ask &quot;how will I know if it failed?&quot; before deferring (#542).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-03-grape.md">TIL 2026-06-03 GRAPE</a></td>
+<td>2026-06-03</td>
+<td>GRAPE</td>
+<td>Velocity notebooks need a SQL date ceiling to be idempotent on re-execution (#664); <code>hst_day</code> is a derived in-memory column — filter on raw <code>finished_iso</code> in SQL; agent casing in DB is load-bearing (never normalized, #669).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-04-banana.md">TIL 2026-06-04 BANANA</a></td>
+<td>2026-06-04</td>
+<td>BANANA</td>
+<td>Golden-cache pattern: commit oracle output once, run tests anywhere — oracle suite 18 skips → 124/124 pass (#692); build generators must own all features — never hand-edit generated output; bundle paths: repo root ≠ GitHub Pages root, add explicit copy step (#709/#710).</td>
+</tr>
+<tr>
+<td><a href="./today-i-learned-2026-06-04-dragonfruit.md">TIL 2026-06-04 DRAGONFRUIT</a></td>
+<td>2026-06-04</td>
+<td>DRAGONFRUIT</td>
+<td>&quot;Already done&quot; is a valid close — verify before implementing (#675); back up PC by 1 before throwing pause signal for resumable synchronous execution (#702); use a signal class, not an Error, for non-error control flow; build path and runtime path can silently diverge — open the browser before closing (#705/#709/#710).</td>
+</tr>
+<tr>
+<td><a href="./til-synthesis-2026-06-04.md">TIL synthesis 2026-06-04</a></td>
+<td>2026-06-04</td>
+<td>BANANA</td>
+<td>#764 harvest: 3 tier-1 process defects (RESEARCH→fix-ticket chain, close-sequence edges, verify-before-implementing); 4 proposed follow-on puzzles N-1..N-4; 61 new files scanned (30 in depth).</td>
+</tr>
 </tbody></table>
 <h2>Recurring threads (informal — #207 will formalize)</h2>
 <p>A few lessons already recur across multiple agents/sessions — exactly the signal
