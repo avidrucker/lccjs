@@ -775,3 +775,7 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 788,,,DEV,,,,,-3,,,,,TEST,,lccjs
 789,886,RESEARCH: audit skill usage across lccjs project history,RESEARCH,60,25,3,57,22,2026-06-05T12:52:58-1000,2026-06-05T12:55:49-1000,,"Multi-source mining: skills.md, 100+ TILs, synthesis docs, pivot issues, velocity DB, global skills registry. Fast because heavy parallel reads.",DRAGONFRUIT,sonnet-4.6,lccjs
 790,,,DEV,,,,,-3,,,,,TEST,,lccjs
+791,,,DEV,,,,,-3,,,,,TEST,,lccjs
+792,,,DEV,,,,,-3,,,,,TEST,,lccjs
+793,,,DEV,,,,,-3,,,,,TEST,,lccjs
+794,883,add did-you-mean suggestions to verbose assembler errors,DEV,45,20,11,34,9,2026-06-05T12:50:31-1000,2026-06-05T13:01:01-1000,,"Levenshtein helper in src/utils/suggest.js; 3 call sites: unknown mnemonic, unknown directive, undefined label (pass 2 only); 18 unit tests",ELDERBERRY,sonnet-4.6,lccjs

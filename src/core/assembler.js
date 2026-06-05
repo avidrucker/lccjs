@@ -31,6 +31,7 @@ const {
 } = require('./constants');
 
 const { fatalExit, cliErrorExit, cliWrappedErrorExit } = require('../utils/cliExit');
+const { suggestClosest } = require('../utils/suggest');
 
 /**
  * Set to false to match original LCC behavior of reporting only 
@@ -1073,6 +1074,14 @@ class Assembler {
     return result;
   }
 
+  _getValidDirectives() {
+    return [
+      '.start', '.org', '.orig', '.globl', '.global',
+      '.extern', '.blkw', '.space', '.zero',
+      '.fill', '.word', '.stringz', '.asciz', '.string',
+    ];
+  }
+
   handleDirective(mnemonic, operands) {
     mnemonic = mnemonic.toLowerCase();
     switch (mnemonic) {
@@ -1278,9 +1287,15 @@ class Assembler {
           this.locCtr += 1; // Increment locCtr for null terminator
         }
         break;
-      default:
-        this.failAssembly(`Invalid operation`, 1); // Invalid directive: ${mnemonic}
+      default: {
+        let msg = 'Invalid operation';
+        if (this.verboseModeOn) {
+          const suggestion = suggestClosest(mnemonic, this._getValidDirectives());
+          if (suggestion) msg += `. Did you mean '${suggestion}'?`;
+        }
+        this.failAssembly(msg, 1);
         break;
+      }
     }
   }
 
@@ -1292,7 +1307,12 @@ class Assembler {
 
     const desc = this._instructionTable[mnemonic.toLowerCase()];
     if (!desc) {
-      this.error("Invalid operation");
+      let msg = 'Invalid operation';
+      if (this.verboseModeOn) {
+        const suggestion = suggestClosest(mnemonic, Object.keys(this._instructionTable));
+        if (suggestion) msg += `. Did you mean '${suggestion}'?`;
+      }
+      this.error(msg);
       return;
     }
     const machineWord = desc.encoder(operands);
@@ -2095,7 +2115,12 @@ class Assembler {
         this.handleExternalReference(label, usageType);
         return 0 + offset;
       } else {
-        this.error(`Undefined label`); // this.error(`Undefined label: ${label}`);
+        let msg = 'Undefined label';
+        if (this.verboseModeOn && this.pass === 2) {
+          const suggestion = suggestClosest(label, Object.keys(this.symbolTable));
+          if (suggestion) msg += `. Did you mean '${suggestion}'?`;
+        }
+        this.error(msg);
         return null;
       }
   
