@@ -147,9 +147,14 @@ fix needed.
 
 ---
 
-### 10. Failed assembly (undefined label) still leaves a runnable blank `.e` in OG LCC; LCC.js leaves nothing
+### 10. Failed assembly still leaves partial artifacts (`.e`/`.lst`/`.bst`) in OG LCC; LCC.js leaves nothing
 
-Repro — `br` to a label that is never defined:
+**Scope (characterized in #263):** this is a **universal** OG LCC behavior, not
+specific to undefined labels. Every error type tested leaves partial artifacts on
+disk. Originally documented only for undefined-label `br`; the full scope was
+confirmed by systematic probing of nine distinct error cases.
+
+Repro — `br` to a label that is never defined (clearest single repro):
 
 ```asm
     br cheese
@@ -162,31 +167,48 @@ Repro — `br` to a label that is never defined:
 | exit code | `1` | `1` |
 | `.e` | written — 2 bytes, header-only/blank (`6f 43`) | **not written** |
 | `.lst` / `.bst` | written | not written |
-| executing the leftover `.e` | hangs — "Possible infinite loop"; zero-filled image decodes as `brz` offset 0 (self-jump) | n/a — no `.e` exists |
+| executing the leftover `.e` | hangs — "Possible infinite loop"; ~100 MB of `brz` trace before detector fires | n/a — no `.e` exists |
 
-**Cause (OG LCC):** the assembler reports the undefined-label error and exits
-`1`, but has already written a header-only `.e` (plus `.lst`/`.bst`) and leaves
-it on disk. The 2-byte `.e` holds only the file magic, no code; when executed,
-the zero words decode as a chain of `brz` (opcode `0`) with offset `0` — an
-infinite self-loop (OG LCC's own detector prints "Possible infinite loop").
+**Error types that trigger the same orphan `.e` (2-byte `6f 43`):**
 
-**LCC.js behavior:** an undefined label calls `failAssembly('Undefined label', 1)`
-in Pass 2 (`assembler.js:417`), which aborts **before** `writeOutputFile()`
-(`assembler.js:569`). No `.e`/`.lst`/`.bst` is produced, so there is no orphan
-artifact to accidentally run. Same `Undefined label` diagnostic, same exit `1`.
+| Error | Example source |
+|---|---|
+| Undefined label | `br missing_label` |
+| Out-of-range `imm5` | `add r0, r0, 100` |
+| No-comma negative operand | `add r0 r0 -1` |
+| Invalid directive | `.baddir` |
+| Bad register | `mov r9, 5` |
+| Missing operand | `add` (bare) |
+| Numeric label on `br` | `br 999` |
+
+**Edge case — duplicate label (pass-1 error):** fires before the second magic
+byte is written, leaving a **1-byte** `6f` orphan instead of the usual 2 bytes.
+
+**Cause (OG LCC):** artifact writes happen before or concurrent with error
+detection. Pass-2 errors write the full `6f 43` header before aborting; the
+pass-1 duplicate-label error aborts mid-write after the first byte. No cleanup
+of partial files is performed.
+
+**LCC.js behavior:** all `failAssembly(...)` paths (`assembler.js`) abort before
+`writeOutputFile()`. No `.e`/`.lst`/`.bst` is produced on any error path, so
+there is no orphan to accidentally run.
 
 **Premise correction:** the original #105 report said OG LCC's assembler "reports
-no error" and silently produces the blank `.e`. In fact OG LCC *does* report
-`Undefined label` and exit `1` — identical to LCC.js. The only divergence is the
-leftover blank `.e`/listings, and the infinite-loop hazard arises only if that
-orphan `.e` is subsequently executed.
+no error" and silently produces the blank `.e`. In fact OG LCC *does* report the
+error and exit `1` — identical to LCC.js. The only divergence is the leftover
+artifacts, and the infinite-loop hazard arises only if the orphan `.e` is
+subsequently executed.
 
-**Why OG BUG:** emitting a runnable executable for a *failed* assembly is a
-footgun — a build step that ignores the exit code and runs `prog.e` will hang.
-LCC.js's all-or-nothing output is the safer, correct behavior.
+**Why OG BUG:** emitting a partial executable after a *failed* assembly is a
+footgun — a build sequence that does not gate on exit code will run the orphan
+and trigger the "Possible infinite loop" trace. A re-assembly that fails also
+silently *overwrites* a previously-valid `.e` with the 2-byte orphan, replacing
+a working build with a broken one.
 
-**Source:** `src/core/assembler.js:417` (`failAssembly('Undefined label', 1)`),
-aborting before `src/core/assembler.js:569` (`writeOutputFile`).
+**Source (LCC.js):** `src/core/assembler.js` — `failAssembly(...)` aborts before
+`writeOutputFile()` on all error paths.
+
+**Report:** `docs/cuh63-blank-e-on-error-bug-report.md` (filed 2026-06-05, #264).
 
 **Repro:** `printf '    br cheese\n    halt\n' > undef.a`; `node src/core/lcc.js
 undef.a` (errors, no `.e`) vs oracle `lcc undef1.a` (errors but leaves a 2-byte

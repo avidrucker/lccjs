@@ -12,7 +12,7 @@ series). Each oracle finding's verdict is one of: a confirmed original-LCC bug, 
 intentional/acceptable deviation we simply document, or inconclusive — 100% parity
 is **not** a goal.
 
-Last updated: 2026-06-03 (#505 — tracker audit: OG BUGs #19 and #24 added; row #3 segfault claim corrected; coverage updated).
+Last updated: 2026-06-05 (#264 — row #4 scope expanded to all error types; report doc drafted).
 
 ## Status at a glance
 
@@ -21,7 +21,7 @@ Last updated: 2026-06-03 (#505 — tracker audit: OG BUGs #19 and #24 added; row
 | 1 | `ldr`/`str` no-comma neg `offset6` | negative offset silently encodes as **0** (silent miscompile) | **High** | Family report **send-ready** (see #7/#8) · pending human email (#506) |
 | 2 | `mov` immediate range (OB-008) | `mov` rejects negatives its own `mvi` accepts | Medium | Report **drafted**, not sent · gate now clear **→ Charlie** |
 | 3 | `jmp` with no/bad operand | leaves `.e`/`.lst`/`.bst` on error (artifacts-on-error, same pattern as #10); ~~segfaults~~ [claim corrected in #261] | Low* | No report (BY DESIGN) |
-| 4 | undefined-label `br` | leaves a runnable **blank `.e`** for a *failed* assemble | Low* | No report (footgun, premise-corrected) |
+| 4 | any failed assembly | leaves partial artifacts (`.e`/`.lst`/`.bst`) for **every** error type; universal footgun | Low* | Report **drafted**, not sent (`cuh63-blank-e-on-error-bug-report.md`, #264) |
 | 5 | long source line | no length check; line **silently split** into bogus source | Medium | Report **drafted**, not sent (#260) |
 | 6 | `sext` non-`2^k−1` selector | returns silent garbage; contract unspecified | Low–Med | **SENT** — awaiting reply (#159) |
 | 7 | no-comma neg `offset6` on `jmp`/`blr`/`jsrr` | same silent-→0 as #1, on more instructions | **High** | **Send-ready** — covered in family report · pending human email (#506) |
@@ -134,13 +134,18 @@ for a report — listed here so the decision is explicit, not an omission.
   LCC.js no-artifact behavior is beneficial. (`parity_deviations.md` §3, corrigendum
   #261.) Not slated for a report.
 
-### 4. Undefined-label `br` leaves a runnable blank `.e`
-- A `br` to an undefined label correctly errors and exits 1 (premise from the
-  original #105 report was corrected — OG *does* diagnose it), but OG also leaves a
-  2-byte header-only `.e` on disk; executing that orphan hangs (zero words decode
-  as a self-branch). LCC.js writes nothing on a failed assemble. (`parity_deviations.md`
-  OG BUG #10.) This same blank-`.e`-on-error behavior is what makes finding #8 leave
-  a stray `.e`. Footgun rather than a miscompile; not currently slated for a report.
+### 4. Any failed assembly leaves partial artifacts (`.e`/`.lst`/`.bst`) on disk
+- **Scope expanded (#263/#264):** originally documented only for undefined-label `br`
+  (OG BUG #10). Systematic probing of nine error types confirms this is universal:
+  every error (undefined label, out-of-range immediate, bad register, invalid
+  directive, missing operand, duplicate label, numeric label) leaves partial
+  artifacts before exit 1. Pass-2 errors write a 2-byte `6f 43` header-only `.e`;
+  the pass-1 duplicate-label case writes a 1-byte `6f` orphan. `.lst` and `.bst`
+  are always written. Executing the orphan triggers "Possible infinite loop" with
+  ~100 MB of output. A failed re-assembly also silently overwrites a valid `.e`
+  from a prior successful build.
+- **Report:** `docs/cuh63-blank-e-on-error-bug-report.md` — drafted, not yet sent.
+  (`parity_deviations.md` OG BUG #10.)
 
 ### 19. `ret` bare / `jmp r0` → oracle enters step-trace debug loop; floods stdout in non-TTY
 - `ret` (= `jmp r7`; r7=0 at startup) and `jmp r0` (r0=0) both assemble correctly
