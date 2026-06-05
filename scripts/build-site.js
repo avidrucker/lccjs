@@ -420,7 +420,77 @@ ${listItems}
 </style>
 <script src="../dist/lcc.bundle.js"></script>
 <script type="module">
-import { EditorView, basicSetup, keymap, indentWithTab } from 'https://esm.sh/codemirror@6';
+import { EditorView, basicSetup, keymap, indentWithTab, autocompletion } from 'https://esm.sh/codemirror@6';
+
+const LCC_COMPLETIONS = [
+  { label: 'r0', type: 'variable', detail: 'general-purpose' },
+  { label: 'r1', type: 'variable', detail: 'general-purpose' },
+  { label: 'r2', type: 'variable', detail: 'general-purpose' },
+  { label: 'r3', type: 'variable', detail: 'general-purpose' },
+  { label: 'r4', type: 'variable', detail: 'general-purpose' },
+  { label: 'r5', type: 'variable', detail: 'fp (frame pointer)' },
+  { label: 'r6', type: 'variable', detail: 'sp (stack pointer)' },
+  { label: 'r7', type: 'variable', detail: 'ra / lr (return address)' },
+  { label: 'fp', type: 'variable', detail: '= r5 (frame pointer)' },
+  { label: 'sp', type: 'variable', detail: '= r6 (stack pointer)' },
+  { label: 'ra', type: 'variable', detail: '= r7 (return address)' },
+  { label: 'lr', type: 'variable', detail: '= r7 (link register)' },
+  { label: 'add',  type: 'keyword', detail: 'rd, rs1, rs2' },
+  { label: 'sub',  type: 'keyword', detail: 'rd, rs1, rs2' },
+  { label: 'and',  type: 'keyword', detail: 'rd, rs1, rs2' },
+  { label: 'not',  type: 'keyword', detail: 'rd, rs' },
+  { label: 'ldr',  type: 'keyword', detail: 'rd, rs, offset' },
+  { label: 'str',  type: 'keyword', detail: 'rs, rd, offset' },
+  { label: 'mov',  type: 'keyword', detail: 'rd, rs  |  rd, imm' },
+  { label: 'mvi',  type: 'keyword', detail: 'rd, imm' },
+  { label: 'lea',  type: 'keyword', detail: 'rd, label' },
+  { label: 'br',   type: 'keyword', detail: 'label (unconditional)' },
+  { label: 'brz',  type: 'keyword', detail: 'label (if zero)' },
+  { label: 'brn',  type: 'keyword', detail: 'label (if negative)' },
+  { label: 'brp',  type: 'keyword', detail: 'label (if positive)' },
+  { label: 'brnz', type: 'keyword', detail: 'label (if negative or zero)' },
+  { label: 'brnp', type: 'keyword', detail: 'label (if nonzero)' },
+  { label: 'brzp', type: 'keyword', detail: 'label (if nonnegative)' },
+  { label: 'jmp',  type: 'keyword', detail: 'rs (jump register)' },
+  { label: 'bl',   type: 'keyword', detail: 'label (branch with link)' },
+  { label: 'halt', type: 'keyword', detail: 'stop execution' },
+  { label: 'dout', type: 'keyword', detail: 'rs (decimal output)' },
+  { label: 'din',  type: 'keyword', detail: 'rd (decimal input)' },
+  { label: 'hout', type: 'keyword', detail: 'rs (hex output)' },
+  { label: 'hin',  type: 'keyword', detail: 'rd (hex input)' },
+  { label: 'aout', type: 'keyword', detail: 'rs (ASCII char output)' },
+  { label: 'ain',  type: 'keyword', detail: 'rd (ASCII char input)' },
+  { label: 'sout', type: 'keyword', detail: 'rs (string output)' },
+  { label: 'sin',  type: 'keyword', detail: 'rd (string input)' },
+  { label: 'nl',   type: 'keyword', detail: 'output newline' },
+  { label: 'bp',   type: 'keyword', detail: 'software breakpoint' },
+];
+const LCC_DIRECTIVES = [
+  { label: '.word',    type: 'type', detail: 'value' },
+  { label: '.string',  type: 'type', detail: '"text"' },
+  { label: '.blkw',   type: 'type', detail: 'n (reserve n words)' },
+  { label: '.org',    type: 'type', detail: 'addr (set location counter)' },
+  { label: '.global', type: 'type', detail: 'label (export symbol)' },
+  { label: '.extern', type: 'type', detail: 'label (import symbol)' },
+  { label: '.lccplus', type: 'type', detail: 'enable LCC+ extensions' },
+  { label: '.end',    type: 'type', detail: 'end of source' },
+];
+function lccCompletionSource(context) {
+  const line = context.state.doc.lineAt(context.pos);
+  const prefix = line.text.slice(0, context.pos - line.from);
+  let inStr = false;
+  for (let i = 0; i < prefix.length; i++) {
+    const c = prefix[i];
+    if (inStr) { if (c === '"') inStr = false; }
+    else if (c === '"') { inStr = true; }
+    else if (c === ';') return null;
+  }
+  if (inStr) return null;
+  const word = context.matchBefore(/\\.\\w*|\\w+/);
+  if (!word || (word.from === word.to && !context.explicit)) return null;
+  const options = word.text.startsWith('.') ? LCC_DIRECTIVES : LCC_COMPLETIONS;
+  return { from: word.from, options };
+}
 
 const CUSTOM_THEMES  = ${customThemesJson};
 const BUILTIN_THEMES = ${builtinThemeIds};
@@ -437,6 +507,7 @@ const editor = new EditorView({
   extensions: [
     basicSetup,
     keymap.of([indentWithTab]),
+    autocompletion({ override: [lccCompletionSource] }),
     EditorView.updateListener.of(function(update) {
       if (update.docChanged && renderFn) {
         clearTimeout(debounce);
