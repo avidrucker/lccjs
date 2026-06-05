@@ -18,7 +18,6 @@
       --radius:    8px;
       --font-code: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
       --font-ui:   -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      /* Terminal colours (#687) */
       --term-bg:   #0a0a0a;
       --term-fg:   #4af626;
       --term-err:  #ff5555;
@@ -43,7 +42,7 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      margin-bottom: 0.85rem;
+      margin-bottom: 0.5rem;
       flex-wrap: wrap;
     }
     #run-btn, #format-btn {
@@ -99,17 +98,91 @@
       flex: 1;
     }
 
-    /* ── Two-column editor / preview ─────────────────────── */
-    .editor-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
+    /* ── Tab bar ──────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      padding: 0.4rem 0 0;
+    }
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      border-radius: 6px 6px 0 0;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.8rem;
+      font-family: var(--font-code);
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.1s;
+      position: relative;
+      bottom: -1px;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+      border-bottom-color: var(--surface);
+      z-index: 1;
+    }
+    .tab-close {
+      font-size: 0.9rem;
+      line-height: 1;
+      color: var(--muted);
+      border-radius: 3px;
+      padding: 0 1px;
+    }
+    .tab-close:hover { color: var(--error); }
+    .tab-new {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 1rem;
+      padding: 0.1rem 0.5rem 0.2rem;
+      cursor: pointer;
+      font-family: var(--font-ui);
+      align-self: center;
+      line-height: 1;
+    }
+    .tab-new:hover { color: var(--accent); border-color: var(--border); }
+
+    /* ── CodeMirror editor ───────────────────────────────── */
+    #cm-editor {
+      border: 1px solid var(--border);
+      border-radius: 0 var(--radius) var(--radius) var(--radius);
+      overflow: hidden;
       margin-bottom: 1rem;
     }
-    @media (max-width: 720px) {
-      .editor-row { grid-template-columns: 1fr; }
+    /* Override CM6 internals to match theme */
+    .cm-editor {
+      background: var(--surface) !important;
+      height: 300px;
+      font-family: var(--font-code) !important;
+      font-size: 0.875rem !important;
     }
+    .cm-editor.cm-focused { outline: none !important; }
+    .cm-focused .cm-selectionBackground,
+    .cm-selectionBackground { background: #264f78 !important; }
+    .cm-scroller { overflow: auto; font-family: inherit !important; }
+    .cm-content { padding: 1rem 0.25rem !important; caret-color: var(--text); }
+    .cm-line { color: var(--text); }
+    .cm-gutters {
+      background: var(--surface) !important;
+      border-right: 1px solid var(--border) !important;
+      color: var(--muted) !important;
+    }
+    .cm-activeLineGutter { background: #1f2937 !important; }
+    .cm-activeLine { background: #1f2937 !important; }
+    .cm-cursor { border-left-color: var(--text) !important; }
 
+    /* ── Terminal output ─────────────────────────────────── */
     .panel-label {
       font-size: 0.78rem;
       color: var(--muted);
@@ -117,53 +190,6 @@
       letter-spacing: 0.03em;
       text-transform: uppercase;
     }
-
-    /* Editor textarea */
-    #editor {
-      width: 100%;
-      height: 300px;
-      font-family: var(--font-code);
-      font-size: 0.875rem;
-      line-height: 1.6;
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.1rem 1.25rem;
-      resize: vertical;
-      outline: none;
-      tab-size: 4;
-      -moz-tab-size: 4;
-    }
-    #editor:focus { border-color: var(--accent); }
-
-    /* Shiki preview */
-    .hl-wrap {
-      height: 300px;
-      overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      font-size: 0.875rem;
-      line-height: 1.6;
-    }
-    .hl-wrap pre {
-      margin: 0 !important;
-      padding: 1.1rem 1.25rem !important;
-      background: var(--surface) !important;
-      font-family: var(--font-code) !important;
-      min-height: 100%;
-    }
-    .hl-wrap code { font-family: var(--font-code); }
-    #hl-status {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-top: 0.3rem;
-      min-height: 1.1em;
-    }
-    #hl-status.err { color: var(--error); }
-
-    /* ── Terminal output ─────────────────────────────────── */
     #exec-output {
       width: 100%;
       min-height: 160px;
@@ -200,7 +226,7 @@
   <h1>LCC Assembly Playground</h1>
   <p>
     Write LCC assembly, click <strong>Run</strong>, and see the output.
-    Syntax highlighting via <a href="https://shiki.style" target="_blank" rel="noopener">Shiki</a>.
+    Editor powered by <a href="https://codemirror.net" target="_blank" rel="noopener">CodeMirror 6</a>.
     Execution via <a href="https://github.com/avidrucker/lccjs" target="_blank" rel="noopener">lccjs</a>
     (<code>dist/lcc.bundle.js</code> — run <code>npm run build:browser</code> once).
   </p>
@@ -214,7 +240,7 @@
     <button id="format-btn" title="Normalise indentation (labels at col 0, instructions indented 8 spaces)">⌥ Format</button>
     <label class="filename-label">
       file
-      <input id="filename-input" type="text" value="program.a"
+      <input id="filename-input" type="text" value="untitled-1.a"
              spellcheck="false" autocomplete="off" autocorrect="off"
              aria-label="Assembly filename" />
     </label>
@@ -225,20 +251,11 @@
     <span id="run-status"></span>
   </div>
 
-  <!-- Editor + highlight preview -->
-  <div class="editor-row">
-    <div>
-      <p class="panel-label">LCC Assembly</p>
-      <textarea id="editor" spellcheck="false" autocomplete="off"
-        autocorrect="off" autocapitalize="off"
-        aria-label="LCC assembly editor"></textarea>
-    </div>
-    <div>
-      <p class="panel-label">Syntax preview</p>
-      <div class="hl-wrap" id="hl-wrap"><pre></pre></div>
-      <div id="hl-status">Loading Shiki…</div>
-    </div>
-  </div>
+  <!-- Tab bar -->
+  <div class="tab-bar" id="tab-bar"></div>
+
+  <!-- CodeMirror editor -->
+  <div id="cm-editor"></div>
 
   <!-- Terminal output -->
   <p class="panel-label">Output</p>
@@ -248,11 +265,15 @@
 
 <footer>
   <a href="../showcase/index.html">Showcase</a> ·
-  Grammar: <code>docs/lcc.tmLanguage.json</code> ·
   <a href="https://github.com/avidrucker/lccjs" target="_blank" rel="noopener">avidrucker/lccjs</a>
 </footer>
 
 <script type="module">
+
+import { EditorView, keymap }        from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
+import { EditorState }               from 'https://esm.sh/@codemirror/state@6';
+import { basicSetup }                from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
+import { indentWithTab }             from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
 
 // ── Starter code ─────────────────────────────────────────────────────────────
 
@@ -266,31 +287,134 @@ msg:    .string "Hello, World!"`;
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 
-const editor      = document.getElementById('editor');
-const hlWrap      = document.getElementById('hl-wrap');
-const hlStatus    = document.getElementById('hl-status');
-const stdinEl     = document.getElementById('stdin-input');
-const runBtn      = document.getElementById('run-btn');
-const formatBtn   = document.getElementById('format-btn');
-const runStatus   = document.getElementById('run-status');
-const execOut     = document.getElementById('exec-output');
-const filenameEl  = document.getElementById('filename-input');
+const tabBarEl   = document.getElementById('tab-bar');
+const cmEditorEl = document.getElementById('cm-editor');
+const stdinEl    = document.getElementById('stdin-input');
+const runBtn     = document.getElementById('run-btn');
+const formatBtn  = document.getElementById('format-btn');
+const runStatus  = document.getElementById('run-status');
+const execOut    = document.getElementById('exec-output');
+const filenameEl = document.getElementById('filename-input');
 
-// ── Filename ──────────────────────────────────────────────────────────────────
-
-// Returns the current filename value, or 'program.a' if it is empty/invalid.
-function getFilename() {
-  const v = filenameEl.value.trim();
-  return isValidFilename(v) ? v : 'program.a';
-}
+// ── Filename validation ───────────────────────────────────────────────────────
 
 function isValidFilename(name) {
-  // Must be non-empty, end in .a, and contain no path separators or null bytes.
   return name.length > 0 && /\.a$/i.test(name) && !/[/\\:\0]/.test(name);
 }
 
+// ── CodeMirror setup ──────────────────────────────────────────────────────────
+
+const baseExtensions = [
+  basicSetup,
+  keymap.of([indentWithTab]),
+  EditorView.theme({
+    '&': { height: '300px' },
+    '.cm-scroller': { overflow: 'auto' },
+  }),
+];
+
+function makeState(doc) {
+  return EditorState.create({ doc: doc ?? '', extensions: baseExtensions });
+}
+
+const view = new EditorView({ state: makeState(STARTER), parent: cmEditorEl });
+
+// ── Tab model ─────────────────────────────────────────────────────────────────
+
+// Each entry: { name: string, state: EditorState, initialDoc: string }
+let tabs      = [{ name: 'untitled-1.a', state: view.state, initialDoc: STARTER }];
+let activeIdx = 0;
+let tabCounter = 1;
+
+function escHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function renderTabs() {
+  tabBarEl.innerHTML = '';
+  tabs.forEach((tab, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (i === activeIdx ? ' active' : '');
+    btn.dataset.idx = i;
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = tab.name;
+    btn.appendChild(nameSpan);
+
+    if (tabs.length > 1) {
+      const closeSpan = document.createElement('span');
+      closeSpan.className = 'tab-close';
+      closeSpan.textContent = '×';
+      closeSpan.title = 'Close tab';
+      closeSpan.addEventListener('click', (e) => { e.stopPropagation(); closeTab(i); });
+      btn.appendChild(closeSpan);
+    }
+
+    btn.addEventListener('click', () => switchTab(i));
+    tabBarEl.appendChild(btn);
+  });
+
+  const newBtn = document.createElement('button');
+  newBtn.className = 'tab-new';
+  newBtn.textContent = '+';
+  newBtn.title = 'New tab';
+  newBtn.addEventListener('click', addTab);
+  tabBarEl.appendChild(newBtn);
+}
+
+function syncFilenameInput() {
+  filenameEl.value = tabs[activeIdx].name;
+  filenameEl.classList.toggle('invalid', !isValidFilename(tabs[activeIdx].name));
+}
+
+function switchTab(idx) {
+  if (idx === activeIdx) return;
+  tabs[activeIdx].state = view.state;          // snapshot current edits
+  activeIdx = idx;
+  view.setState(tabs[activeIdx].state);        // restore target buffer
+  renderTabs();
+  syncFilenameInput();
+  view.focus();
+}
+
+function addTab(doc) {
+  tabs[activeIdx].state = view.state;          // snapshot before switching
+  tabCounter += 1;
+  const name  = `untitled-${tabCounter}.a`;
+  const docStr = typeof doc === 'string' ? doc : '';
+  tabs.push({ name, state: makeState(docStr), initialDoc: docStr });
+  activeIdx = tabs.length - 1;
+  view.setState(tabs[activeIdx].state);
+  renderTabs();
+  syncFilenameInput();
+  view.focus();
+}
+
+function closeTab(idx) {
+  const tab     = idx === activeIdx ? { ...tabs[idx], state: view.state } : tabs[idx];
+  const content = tab.state.doc.toString();
+  if (content.trim() !== '' && content !== tab.initialDoc) {
+    if (!confirm(`Close "${tab.name}"? Unsaved changes will be lost.`)) return;
+  }
+  tabs.splice(idx, 1);
+  if (activeIdx >= tabs.length) activeIdx = tabs.length - 1;
+  if (idx <= activeIdx && idx !== 0) activeIdx = Math.max(0, activeIdx - 1);
+  view.setState(tabs[activeIdx].state);
+  renderTabs();
+  syncFilenameInput();
+  view.focus();
+}
+
+// ── Filename input → active tab name ─────────────────────────────────────────
+
 filenameEl.addEventListener('input', () => {
-  filenameEl.classList.toggle('invalid', !isValidFilename(filenameEl.value.trim()));
+  const v = filenameEl.value.trim();
+  const valid = isValidFilename(v);
+  filenameEl.classList.toggle('invalid', !valid);
+  if (valid) {
+    tabs[activeIdx].name = v;
+    renderTabs();
+  }
 });
 
 // ── Execution ─────────────────────────────────────────────────────────────────
@@ -302,12 +426,12 @@ function getApi() {
 function run() {
   const api = getApi();
   if (!api) {
-    execOut.className = 'lcc-error';
+    execOut.className   = 'lcc-error';
     execOut.textContent = 'lcc.bundle.js not loaded.\nRun: npm run build:browser';
     return;
   }
 
-  const src        = editor.value;
+  const src        = view.state.doc.toString();
   const stdinLines = stdinEl.value.trim()
     ? stdinEl.value.split(/\r?\n/)
     : [];
@@ -317,8 +441,6 @@ function run() {
   execOut.textContent   = 'Running…';
   runBtn.disabled       = true;
 
-  // Yield to the event loop so the "Running…" update renders before the
-  // (potentially slow) synchronous assemble+run.
   setTimeout(() => {
     try {
       const asmResult = api.assemble(src);
@@ -354,6 +476,14 @@ function run() {
 
 runBtn.addEventListener('click', run);
 
+// Ctrl/Cmd+Enter anywhere in the editor → run
+view.dom.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    run();
+  }
+});
+
 // ── Format ────────────────────────────────────────────────────────────────────
 
 formatBtn.addEventListener('click', () => {
@@ -362,82 +492,16 @@ formatBtn.addEventListener('click', () => {
     runStatus.textContent = 'Formatter unavailable — rebuild lcc.bundle.js (npm run build:browser)';
     return;
   }
-  editor.value = api.formatLccSource(editor.value);
+  const formatted = api.formatLccSource(view.state.doc.toString());
+  view.dispatch({
+    changes: { from: 0, to: view.state.doc.length, insert: formatted },
+  });
   runStatus.textContent = '';
-  scheduleHighlight();
 });
-
-// Also run on Ctrl/Cmd+Enter in the editor.
-editor.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    e.preventDefault();
-    run();
-  }
-  // Tab → 4 spaces
-  if (e.key === 'Tab') {
-    e.preventDefault();
-    const s = editor.selectionStart, en = editor.selectionEnd;
-    editor.value = editor.value.slice(0, s) + '    ' + editor.value.slice(en);
-    editor.selectionStart = editor.selectionEnd = s + 4;
-    scheduleHighlight();
-  }
-});
-
-// ── Syntax highlighting ───────────────────────────────────────────────────────
-
-let hl = null;
-
-function renderHighlight() {
-  if (!hl) { hlWrap.querySelector('pre').textContent = editor.value; return; }
-  try {
-    hlWrap.innerHTML = hl.codeToHtml(editor.value, { lang: 'lcc', theme: 'github-dark' });
-  } catch (err) {
-    hlStatus.textContent = 'Highlight error: ' + err.message;
-    hlStatus.className   = 'err';
-  }
-}
-
-let debounce;
-function scheduleHighlight() {
-  clearTimeout(debounce);
-  debounce = setTimeout(renderHighlight, 150);
-}
-
-editor.addEventListener('input', scheduleHighlight);
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
-editor.value = STARTER;
-
-(async () => {
-  // Load Shiki and grammar concurrently.
-  let createHighlighter, grammar;
-  try {
-    const [shikiMod, grammarRes] = await Promise.all([
-      import('https://esm.sh/shiki@3'),
-      fetch('../lcc.tmLanguage.json'),
-    ]);
-    createHighlighter = shikiMod.createHighlighter;
-    grammar           = await grammarRes.json();
-  } catch (err) {
-    hlStatus.textContent = 'Highlighting unavailable: ' + err.message;
-    hlStatus.className   = 'err';
-    // Still show plain text in the preview.
-    hlWrap.querySelector('pre').textContent = editor.value;
-    return;
-  }
-
-  try {
-    hl = await createHighlighter({ langs: [grammar], themes: ['github-dark'] });
-  } catch (err) {
-    hlStatus.textContent = 'Shiki init failed: ' + err.message;
-    hlStatus.className   = 'err';
-    return;
-  }
-
-  hlStatus.textContent = '';
-  renderHighlight();
-})();
+renderTabs();
 
 </script>
 
