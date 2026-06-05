@@ -751,3 +751,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 764,849,RESEARCH: discover and import remaining Claude-app research conversations relevant to lccjs,RESEARCH,60,20,9,51,11,2026-06-05T11:26:35-1000,2026-06-05T11:35:12-1000,,,ELDERBERRY,sonnet-4.6,lccjs
 765,798,"Ratify #773 rulings R2+R6 — walkthrough, file tickets, write skill",PM,3,3,3,0,0,2026-06-05T11:30:00-1000,2026-06-05T11:37:10-1000,,Walked user through R2/R6 decisions; filed #860 #861 #862 #863 #864; posted ratification comment; wrote guide-human-decision skill,GRAPE,sonnet-4.6,lccjs
 766,865,TIL 2026-06-05 FIG session 2 — guided human decision pattern,WRITER,15,10,4,11,6,2026-06-05T11:35:47-1000,2026-06-05T11:39:11-1000,,,FIG,sonnet-4.6,lccjs
+767,858,DEV: implement npm run report — velocity + human-gate queue markdown report,DEV,60,30,19,41,11,2026-06-05T11:39:11-1000,2026-06-05T11:58:52-1000,,,FIG,sonnet-4.6,lccjs
