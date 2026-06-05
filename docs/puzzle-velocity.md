@@ -332,3 +332,19 @@ even when actual_min remained stable.
 not to H. Add a small buffer (1–3m) for variance; do not scale with H. The first
 post-recalibration row is #718 (PM, c_min=3m — slightly above the new 2m prior to
 reflect the data-analysis component of this particular ticket).
+
+### Full-corpus C-overshoot study: retired (Q29r, #706, 2026-06-04)
+
+**Decision:** The full-corpus powered study of C-overshoot rate is **not feasible**
+at the current data growth rate and has been formally retired.
+
+**Finding (Q29r, #706):** Detecting a halving of the full-corpus C-overshoot rate
+(4.6% → 2.3%) at 80% power requires n=1,969 rows with both `c_min` and `actual_min`
+present. The corpus had 477 such rows at the time of analysis — 4.1× short of the
+required sample. At the observed logging rate of ~32 rows/month, reaching n=1,969
+would take ~47 months.
+
+**Conclusion:** Do not re-propose a full-corpus C-overshoot powered study until the
+corpus reaches n≥1,000 with both fields. For near-term overshoot analysis, use
+per-agent subsets (e.g., DRAGONFRUIT, CHERRY) where per-role sample sizes are more
+tractable. See sibling tickets under #706 for the per-agent analysis track.
