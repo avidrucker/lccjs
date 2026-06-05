@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>today-i-learned-2026-06-04-cherry-2 — LCC Docs</title>
+  <style>
+@font-face {
+  font-family:"UnifontMedium";
+  src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
+}
+:root { --mono-font:monospace; }
+body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  max-width:860px; margin:0 auto; padding:2.5rem 1.25rem;
+  line-height:1.5;
+}
+nav { display:flex; gap:1.25rem; margin-bottom:2rem; padding-bottom:.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+nav a { color:#58a6ff; text-decoration:none; font-size:.9rem; }
+nav a:hover { text-decoration:underline; }
+nav a.active { color:var(--fg); font-weight:600; pointer-events:none; }
+h1 { font-size:1.5rem; margin-bottom:.3rem; }
+h2 { font-size:1.2rem; margin:2rem 0 .75rem; }
+.subtitle { color:var(--muted); font-size:.9rem; margin-bottom:1.75rem; }
+.subtitle a, footer a, .file-list a { color:#58a6ff; text-decoration:none; }
+.subtitle a:hover, footer a:hover, .file-list a:hover { text-decoration:underline; }
+.theme-toolbar {
+  display:flex; align-items:center; gap:.6rem; margin-bottom:2.25rem;
+  padding:.6rem .9rem; background:var(--border); border-radius:6px;
+}
+.theme-toolbar label { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+.theme-toolbar select {
+  background:var(--bg); color:var(--fg); border:1px solid var(--muted);
+  border-radius:4px; padding:.25rem .5rem; font-size:.85rem; cursor:pointer;
+}
+section { margin:2rem 0; }
+.sample-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.5rem; }
+.filename { font-family:var(--mono-font); font-size:.9rem; color:var(--fg); }
+.description { font-size:.8rem; color:var(--muted); }
+pre.shiki { border-radius:6px; padding:1.1rem 1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.6; font-family:var(--mono-font); }
+footer { margin-top:3.5rem; font-size:.8rem; color:var(--muted); border-top:1px solid var(--border); padding-top:1rem; }
+code { font-family:var(--mono-font); }
+.file-list { list-style:none; margin:.5rem 0 1rem; }
+.file-list li { padding:.3rem 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+.prose { padding:0; }
+.prose h1,.prose h2,.prose h3,.prose h4 { margin:1.5rem 0 .5rem; line-height:1.3; }
+.prose h1 { font-size:1.4rem; }
+.prose h2 { font-size:1.15rem; }
+.prose h3 { font-size:1rem; }
+.prose p { margin:.75rem 0; }
+.prose ul,.prose ol { margin:.5rem 0 .5rem 1.5rem; }
+.prose li { margin:.2rem 0; }
+.prose pre { background:var(--border); border-radius:4px; padding:.75rem 1rem; overflow-x:auto; font-size:.82rem; margin:.75rem 0; }
+.prose code { background:var(--border); border-radius:3px; padding:.1em .3em; font-size:.88em; }
+.prose pre code { background:none; padding:0; }
+.prose blockquote { border-left:3px solid var(--muted); padding-left:1rem; color:var(--muted); margin:.75rem 0; }
+.prose table { border-collapse:collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+.prose th,.prose td { border:1px solid var(--border); padding:.4rem .6rem; text-align:left; }
+.prose th { background:var(--border); }
+.prose a { color:#58a6ff; text-decoration:none; }
+.prose a:hover { text-decoration:underline; }
+.back-link { margin-bottom:1.5rem; font-size:.85rem; }
+.back-link a { color:#58a6ff; text-decoration:none; }
+.back-link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body class="light">
+<nav><a href="../../">Home</a>
+  <a href="../../docs/guides/">Guides</a>
+  <a href="../../docs/research/">Research</a>
+  <a href="../../docs/learnings/" class="active">Learnings</a>
+  <a href="../../docs/glossary/">Glossary</a>
+  <a href="../../docs/parity/">Parity</a>
+  <a href="../../docs/workflow/">Workflow</a>
+  <a href="../../showcase/">Playground</a>
+</nav>
+  <div class="back-link"><a href="./">← Learnings index</a></div>
+  <div class="prose">
+<h1>TIL 2026-06-04 — CHERRY s2</h1>
+<p><strong>Context:</strong> Testing sprint: wrote the textbook-demo C/assembly parity suite (#712),
+removed a stale debug trap (#742), added <code>-nostats</code> regression coverage (#747), and
+added a filename input to the playground (#734). Along the way, hit three sharp
+non-obvious edges in the lccjs codebase.</p>
+<hr>
+<h2>1. <code>.e</code> file bytes ≠ <code>.hex</code>/<code>.bin</code> word values — the <code>oC</code> preamble</h2>
+<p><strong>What happened:</strong> While writing integration tests for <code>-nostats</code> on the <code>.hex</code> input
+path (#747), I assumed the bytes of a <code>.e</code> file could be used directly as hex word
+values. The first two bytes of <code>simple.e</code> are <code>6F 43</code> — which I initially read as
+machine-code word <code>0x6F43</code> (an LDR instruction). The test ran silently with wrong
+output.</p>
+<p><strong>What I learned:</strong> The <code>.e</code> file starts with an <code>oC</code> preamble: <code>0x6F</code> = ASCII <code>&#39;o&#39;</code>
+(the format marker), <code>0x43</code> = ASCII <code>&#39;C&#39;</code> (the code-start byte). Machine-code words
+follow in little-endian order <em>after</em> any header entries. A <code>.hex</code> file, by contrast,
+contains raw 16-bit word values — <code>D005</code> for <code>mvi r0, 5</code>, not <code>6F43</code>.</p>
+<pre><code>.e file for &quot;mvi r0,5; dout r0; nl; halt&quot;:
+  bytes: 6F 43 | 05 D0 | 02 F0 | 01 F0 | 00 F0
+         &#39;o&#39; &#39;C&#39;  D005 LE  F002 LE  ...
+
+.hex file for the same program:
+  D005
+  F002
+  F001
+  F000
+</code></pre>
+<p><strong>The rule:</strong> When building test fixtures for <code>.hex</code>/<code>.bin</code> paths, start from the raw
+word values (assembler&#39;s <code>outputBuffer</code>), not from the <code>.e</code> file&#39;s bytes. (#758 tracks
+codifying this in <code>RULES.md</code>; #756 tracks adding an explicit format-verification test.)</p>
+<hr>
+<h2>2. The assembler silently drops instructions after the first on a line</h2>
+<p><strong>What happened:</strong> Running the C/assembly parity suite (#712), several demos failed
+with missing newlines. <code>demo-032-multiplication-algorithms.a</code> has:</p>
+<pre><code>dout r0  nl       ; prints 1785
+</code></pre>
+<p>The C equivalent outputs <code>1785\n</code> (with newline), but the assembly outputs <code>1785</code>
+(no newline). Inspection: the assembler tokenises the whole line and puts <code>[&#39;r0&#39;, &#39;nl&#39;]</code>
+as operands to <code>dout</code>. <code>assembleTrap</code> only reads <code>operands[0]</code> (the register) and
+ignores the rest — so <code>nl</code> is silently discarded.</p>
+<p><strong>What I learned:</strong> LCC&#39;s original assembler supports multiple instructions on one
+line (e.g. <code>dout r0  nl</code>, <code>mov sp, fp  pop fp  pop lr  ret</code>). lccjs&#39;s assembler
+does not — it processes exactly one mnemonic per line and ignores everything after
+the operands. Six textbook demos are affected (029, 030, 031, 032, and two others).</p>
+<p><strong>The rule:</strong> In lccjs assembly source, each instruction must be on its own line.
+Multi-instruction lines compile without error but silently lose all instructions
+after the first. The parity suite exposes these as <code>test.failing</code> entries. (#759
+tracks codifying this in <code>RULES.md</code>.)</p>
+<hr>
+<h2>3. Use <code>spawnSync</code> (not <code>inputBuffer</code>) for C/assembly output-parity tests</h2>
+<p><strong>What happened:</strong> The issue spec said to use <code>lcc.interpreter.inputBuffer</code> for
+supplying stdin. For demo-002 (string I/O), the assembly output came back as
+<code>&quot;Enter string\nhello\nhello&quot;</code> — the input was echoed twice. The C side produced
+<code>&quot;Enter string\nhello&quot;</code>. They didn&#39;t match.</p>
+<p><strong>What I learned:</strong> When <code>inputBuffer</code> is set, <code>readLineFromStdin()</code> is in
+&quot;simulated&quot; mode and echoes each input line back through <code>writeOutput</code>. That echo
+is intentional (mirrors a real terminal), but it diverges from C&#39;s <code>fgets</code> which
+silently consumes stdin. Running lccjs via <code>spawnSync</code> with piped stdin takes the
+non-simulated path — input is consumed but not echoed — so both sides behave the
+same way.</p>
+<p><strong>The rule:</strong> For input-bearing parity tests comparing C and lccjs stdout, use
+<code>spawnSync</code> with <code>{ input: stdinString }</code> on both sides. <code>inputBuffer</code> is correct
+for unit tests that inspect <code>interpreter.output</code>, not for side-by-side stdout
+comparison. (#760 tracks codifying this in <code>RULES.md</code>.)</p>
+<hr>
+<h2>4. <code>test.failing</code> documents bugs better than <code>test.skip</code></h2>
+<p><strong>What happened:</strong> Six parity tests and one demo-016 test had known failures.
+Initial instinct was <code>test.skip</code>. But the issue had filed them as bugs to fix.</p>
+<p><strong>What I learned:</strong> Jest&#39;s <code>test.failing(name, fn)</code> is the right tool: the test
+<em>runs</em>, is expected to fail, and is reported as passing (confirming the bug is
+present). When the underlying bug is fixed, <code>test.failing</code> <em>itself</em> fails — alerting
+the developer to remove the annotation. <code>test.skip</code> hides the failure permanently
+and gives no signal when things improve.</p>
+<p><strong>The rule:</strong> Use <code>test.failing</code> for confirmed bugs with open fix tickets.
+Use <code>test.skip</code> only for tests that are fundamentally incompatible (e.g.
+demo-006&#39;s platform-specific <code>%p</code> pointer address, demo-034&#39;s linker dependency).
+(#761 tracks codifying this in <code>RULES.md</code>.)</p>
+<hr>
+<h2>What landed</h2>
+<table>
+<thead>
+<tr>
+<th>Ticket</th>
+<th>Artifact</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>#712</td>
+<td><code>tests/new/textbook-demos.parity.spec.js</code></td>
+<td>34-demo C/assembly parity suite; 25 pass, 6 <code>test.failing</code>, 3 <code>test.skip</code></td>
+</tr>
+<tr>
+<td>#742</td>
+<td><code>textbook_demos/…/demo-016-tail-recursion.a</code></td>
+<td>Removed stale <code>s</code> debug trap; parity suite gains one clean pass</td>
+</tr>
+<tr>
+<td>#747</td>
+<td><code>tests/new/lcc.integration.spec.js</code></td>
+<td>4 new <code>-nostats</code> tests covering <code>.a</code>/<code>.hex</code>/<code>.bin</code> paths + output-parity probe</td>
+</tr>
+<tr>
+<td>#734</td>
+<td><code>docs/playground/index.html</code></td>
+<td>Filename input field (<code>program.a</code> default, <code>.a</code> validation, <code>getFilename()</code> helper)</td>
+</tr>
+<tr>
+<td>#756</td>
+<td>GitHub issue</td>
+<td><code>.e</code> format verification ticket filed</td>
+</tr>
+</tbody></table>
+<h2>Open threads</h2>
+<ul>
+<li>#743 demo-006 pointer-address skip needs a redesigned C comparison</li>
+<li>#744 demo-034 needs a linker startup stub for argc/argv</li>
+<li>#745 <code>npm run test:parity</code> convenience script</li>
+<li>#756 <code>.e</code> format verification test (the <code>oC</code> preamble lesson)</li>
+<li>#758–#761 authority-path tickets for the four rules above</li>
+</ul>
+
+  </div>
+  <footer>
+    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
+  </footer>
+</body>
+</html>
