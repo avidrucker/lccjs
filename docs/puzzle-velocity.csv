@@ -735,3 +735,7 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 748,733,download current file as .a,DEV,20,25,,,,,,,Blob download API; uses filename-input value; two-commit split with #732 in same worktree,BANANA,sonnet-4.6,lccjs
 749,732,share-as-link — encode playground code in URL,DEV,45,30,,,,,,,btoa/encodeURIComponent in ?code= param; history.replaceState on edit; on-load decode; clipboard copy with prompt fallback; two-commit split with #733 in same worktree,BANANA,sonnet-4.6,lccjs
 750,847,Showcase textarea → CodeMirror 6 with line numbers,DEV,30,15,35,,,2026-06-05T10:41:46-1000,2026-06-05T11:16:58-1000,,Ran over c by ~20m. basicSetup@0.20 omits lineNumbers() — needed explicit import from @codemirror/view@6,GRAPE,sonnet-4.6,lccjs
+751,,,DEV,,,,,-3,,,,,TEST,,lccjs
+752,,,DEV,,,,,-3,,,,,TEST,,lccjs
+753,844,RESEARCH: close.js can't close a second issue from the same single-worktree session,RESEARCH,30,15,3,27,12,2026-06-05T11:16:25,2026-06-05T11:19:14,,Root cause: single push sends all unpushed commits; --keep + interleaved = Protocol A; close-last-first = Protocol B. No code changes needed. Updated claude_workflow.md + research doc.,APPLE,sonnet-4.6,lccjs
+754,856,"TIL 2026-06-05 ELDERBERRY — PostToolBatch hook blocks parallel Bash calls, including read-only ones",WRITER,15,10,6,9,4,2026-06-05T11:13:31-1000,2026-06-05T11:19:10-1000,,,ELDERBERRY,sonnet-4.6,lccjs

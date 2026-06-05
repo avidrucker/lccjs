@@ -268,6 +268,12 @@ git commit -m "... Closes #N"
 npm run close N
 ```
 
+**Multi-issue single-worktree close (#844):** When two issues must be closed from the same worktree (required when both modify the same file to avoid merge conflicts), there are two protocols depending on when the commits are made:
+
+- **Protocol A — interleaved** (commit before each close): Commit A → `npm run close A --keep` (lands commit A, keeps worktree alive) → Commit B → `npm run close B` (lands commit B, tears down). The `--keep` flag skips teardown; the worktree survives for the second commit.
+
+- **Protocol B — batch** (both commits already made): Run `npm run close B` (the *last*-committed issue) from inside the worktree. This pushes all commits, tears down, and GitHub auto-closes issue A via its `Closes #A` footer. Post the closing comment for A manually afterward: `gh issue comment A --body "Closed in <sha>."` — do **not** attempt a second `npm run close A` after teardown (the worktree is gone; it will fail the branch check).
+
 **Build-artifact tickets:** If the closing commit must include a generated file (e.g. from `npm run build:site`), run the build *before* step 1 (`velocity:log`) — so the artifact, the exported CSV, and the `Closes #N` marker all land in the same commit. If the artifact is rebuilt by CI on every push, prefer gitignoring it so no local artifact commit is needed at all. (`docs/site/` falls in this category: `pages.yml` already rebuilds it from source on every push to `main`, so it can safely be gitignored.) (#492)
 
 **Fallback** (when `npm run close` is unavailable — `&&`-gate is mandatory so cleanup can't race ahead of a failed push):
