@@ -48,6 +48,24 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ## Worktree discipline
 
+**Verify the target issue is open before starting the claim flow**
+
+- **Do:** `gh issue view N --json state,title` as the very first action after receiving an issue number — before capturing timestamps, running `npm run puzzle:status`, or checking worktrees.
+- **Don't:** begin the claim flow (start timestamp, puzzle:status, worktree list) and discover the issue is closed only when you finally read the issue body.
+- **Why:** A closed issue discovered after the start-timestamp was captured means wasted wall-clock in your velocity row. The check costs one command and catches this before anything is committed.
+
+**Check a ticket's `Blocked by:` field and parent tracker before picking up or recommending work**
+
+- **Do:** Before claiming or suggesting a ticket, read its issue body for `Blocked by:` entries and view the parent tracker for any open gate issues.
+- **Don't:** immediately start or recommend work on a ticket because its description looks actionable.
+- **Why:** An unresolved blocker gate (e.g., a human-decision issue in the parent tracker) means the ticket can't be closed even if the code is done. Surfacing this before the claim saves a wasted cycle.
+
+**Always pass `--as <fruit>` to `npm run claim`; never use a bare positional name**
+
+- **Do:** `npm run claim 799 -- --as grape`
+- **Don't:** `npm run claim 799 grape` or `npm run claim 799 GRAPE`
+- **Why:** The `--as` flag has been required since auto-naming was disabled in #386. Positional identity was removed; bare names produce an immediate error, costing a wasted round-trip.
+
 **Check `git status` on main before `npm run claim`**
 
 - **Do:** `git status` → if any file your ticket will touch is untracked or modified, commit or stash it first, then claim.
@@ -59,6 +77,18 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 - **Do:** commit `Closes #N`, then `npm run close <N>`.
 - **Don't:** manually push to main or skip the close script.
 - **Why:** `npm run close` runs the teardown gate, removes the worktree, and deletes the branch. Bypassing it leaves stale worktrees and branches, and can push mid-rebase.
+
+---
+
+## Non-interactive rebase
+
+**Use `GIT_EDITOR=true git rebase --continue` and issue it as a separate command**
+
+- **Do:**
+  1. `git add <file>` (verify exit 0)
+  2. `GIT_EDITOR=true git rebase --continue` (separate invocation)
+- **Don't:** `git rebase --continue --no-edit` (flag does not exist for rebase); don't chain as `git add <file> && git rebase --continue` without `GIT_EDITOR=true`.
+- **Why:** `--no-edit` is rejected by git immediately. Chaining with `&&` without `GIT_EDITOR=true` fires an interactive editor prompt mid-chain, leaving the rebase in a confused state. Two separate commands let you confirm the stage before continuing.
 
 ---
 
