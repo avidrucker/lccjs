@@ -233,6 +233,8 @@ Guided Cowork setup — install role-matched plugins, connect tools, try a skill
 
 **Invoke when:** configuring a new environment or onboarding a new agent identity to the project.
 
+**Status: low-signal / not actively used.** Zero invocations documented in any TIL or session log as of 2026-06-06 (#979 audit). The lccjs multi-agent workflow uses `npm run claim`, `npm run puzzle:status`, and worktree conventions for agent identity — `setup-cowork` is not part of the standard onboarding path. Keep the entry as a reference but do not invoke speculatively.
+
 ---
 
 ## Skills adopted organically (added late)
