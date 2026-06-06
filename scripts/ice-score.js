@@ -330,16 +330,63 @@ function easeFromEhrs(eHrs) {
   return 1;
 }
 
+// RFC-4180-aware parser: round-trips encodeField/encodeRow above. A bare
+// `line.split(',')` cannot — it splits quoted fields that contain commas (e.g.
+// a `"decision,humans-only"` labels cell in rice-scores.csv) mid-value and
+// shifts every later column. This state machine honors quoted fields, embedded
+// commas, doubled-quote escapes (`""`), and embedded newlines; `#`-prefixed
+// records and blank lines are skipped (preserving the previous behavior). (#964)
+function parseRecords(text) {
+  const records = [];
+  let record = [];
+  let field = '';
+  let inQuotes = false;
+  let atRecordStart = true;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }  // escaped quote
+        else inQuotes = false;                           // closing quote
+      } else {
+        field += c;
+      }
+      continue;
+    }
+
+    // Outside quotes:
+    if (atRecordStart && (c === '\n' || c === '\r')) continue;       // skip blank lines
+    if (atRecordStart && c === '#') {                               // skip comment line
+      while (i < text.length && text[i] !== '\n') i++;
+      continue;                                                     // still at record start
+    }
+    atRecordStart = false;
+
+    if (c === '"')      { inQuotes = true; }
+    else if (c === ',') { record.push(field); field = ''; }
+    else if (c === '\r') { /* tolerate CRLF */ }
+    else if (c === '\n') {
+      record.push(field); field = '';
+      records.push(record); record = [];
+      atRecordStart = true;
+    } else {
+      field += c;
+    }
+  }
+  // Flush a final record that did not end with a newline.
+  if (field !== '' || record.length) { record.push(field); records.push(record); }
+  return records;
+}
+
 function parseCsv(filePath) {
-  const lines = fs.readFileSync(filePath, 'utf8')
-    .split('\n')
-    .filter(l => l && !l.startsWith('#'));
-  if (!lines.length) return [];
-  const headers = lines[0].split(',').map(h => h.trim());
-  return lines.slice(1).map(line => {
-    const vals = line.split(',');
+  const records = parseRecords(fs.readFileSync(filePath, 'utf8'));
+  if (!records.length) return [];
+  const headers = records[0].map(h => h.trim());
+  return records.slice(1).map(cells => {
     const row = {};
-    headers.forEach((h, i) => { row[h] = (vals[i] || '').trim(); });
+    headers.forEach((h, i) => { row[h] = (cells[i] != null ? cells[i] : '').trim(); });
     return row;
   });
 }
