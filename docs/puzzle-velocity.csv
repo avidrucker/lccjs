@@ -786,3 +786,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 799,881,docs: record fp/sp/lr register aliases,WRITER,20,8,3,17,5,2026-06-05T16:12:28-1000,2026-06-05T16:15:12-1000,,skill edit global only (outside repo); lezer doc ra false claim retracted; TIL filed,CHERRY,sonnet-4.6,lccjs
 800,,,DEV,,,,,-3,,,,,TEST,,lccjs
 801,860,update benchmark_isa.a to include same-line label styles,DEV,20,5,5,15,0,2026-06-05T16:12:36-1000,2026-06-05T16:17:02-1000,,converted 4 branch-target labels in section 8 to same-line style; assembles cleanly; no regressions,BANANA,sonnet-4.6,lccjs
+802,901,errors table schema is undesigned,RESEARCH,45,15,1,44,14,2026-06-05T16:20:34-1000,2026-06-05T16:21:44-1000,,schema research deliverable; DDL + column rationale + normalization decisions,ELDERBERRY,sonnet-4.6,lccjs
