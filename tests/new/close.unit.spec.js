@@ -9,6 +9,7 @@ const {
   extractKeywords, keywordsOverlap,
   velocityRowExists, markerStillPresent,
   bodyClosesIssue,
+  findParentTrackers,
 } = require('../../scripts/close');
 
 describe('close.js classifyPushError()', () => {
@@ -803,5 +804,96 @@ describe('close.js bodyClosesIssue() — multi-commit close detection (#619)', (
     expect(bodyClosesIssue('', '619')).toBe(false);
     expect(bodyClosesIssue(null, '619')).toBe(false);
     expect(bodyClosesIssue(undefined, '619')).toBe(false);
+  });
+});
+
+// findParentTrackers() (#907): pure scan for open trackers with unchecked boxes
+// referencing a just-closed issue.
+describe('close.js findParentTrackers() — parent-tracker checklist scan (#907)', () => {
+  test('empty issue list → []', () => {
+    expect(findParentTrackers([], 42)).toEqual([]);
+  });
+
+  test('null/undefined list → []', () => {
+    expect(findParentTrackers(null, 42)).toEqual([]);
+    expect(findParentTrackers(undefined, 42)).toEqual([]);
+  });
+
+  test('tracker body has unchecked box referencing the issue → match returned', () => {
+    const issues = [{ number: 100, body: '- [ ] close #42\n- [x] #41' }];
+    expect(findParentTrackers(issues, 42)).toEqual([
+      { trackerNumber: 100, line: '- [ ] close #42' },
+    ]);
+  });
+
+  test('already-checked box [x] is ignored', () => {
+    const issues = [{ number: 100, body: '- [x] already done #42' }];
+    expect(findParentTrackers(issues, 42)).toEqual([]);
+  });
+
+  test('word boundary: #420 does not match issue 42', () => {
+    const issues = [{ number: 100, body: '- [ ] tracker item #420' }];
+    expect(findParentTrackers(issues, 42)).toEqual([]);
+  });
+
+  test('word boundary: #42 matches exactly within longer line text', () => {
+    const issues = [{ number: 100, body: '- [ ] see ticket #42 for details' }];
+    expect(findParentTrackers(issues, 42)).toEqual([
+      { trackerNumber: 100, line: '- [ ] see ticket #42 for details' },
+    ]);
+  });
+
+  test('no reference to the issue at all → []', () => {
+    const issues = [{ number: 200, body: '- [ ] unrelated item\n- [ ] another #99' }];
+    expect(findParentTrackers(issues, 42)).toEqual([]);
+  });
+
+  test('multiple trackers both referencing the issue → both returned', () => {
+    const issues = [
+      { number: 10, body: '- [ ] sub-task #42' },
+      { number: 20, body: '## Checklist\n- [ ] item #42\n- [ ] item #43' },
+    ];
+    const result = findParentTrackers(issues, 42);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({ trackerNumber: 10, line: '- [ ] sub-task #42' });
+    expect(result[1]).toEqual({ trackerNumber: 20, line: '- [ ] item #42' });
+  });
+
+  test('one tracker body with multiple unchecked boxes for the same issue → all returned', () => {
+    const issues = [
+      { number: 50, body: '- [ ] part A #42\n- [ ] part B #42' },
+    ];
+    const result = findParentTrackers(issues, 50);
+    // issue 50 is being searched, but no reference to #50 in the body
+    // (the lines reference #42, not the search target)
+    expect(result).toEqual([]);
+  });
+
+  test('body with unchecked box referencing issue number as a string argument', () => {
+    const issues = [{ number: 300, body: '- [ ] fix #907 now' }];
+    expect(findParentTrackers(issues, '907')).toEqual([
+      { trackerNumber: 300, line: '- [ ] fix #907 now' },
+    ]);
+  });
+
+  test('issue with null/undefined body does not throw', () => {
+    const issues = [
+      { number: 1, body: null },
+      { number: 2, body: undefined },
+      { number: 3, body: '- [ ] valid #42' },
+    ];
+    expect(findParentTrackers(issues, 42)).toEqual([
+      { trackerNumber: 3, line: '- [ ] valid #42' },
+    ]);
+  });
+
+  test('--update-trackers flag parsed correctly by parseArgs', () => {
+    const opts = parseArgs(['99', '--update-trackers']);
+    expect(opts.updateTrackers).toBe(true);
+  });
+
+  test('updateTrackers defaults to false when flag absent', () => {
+    const opts = parseArgs(['99']);
+    expect(opts.updateTrackers).toBe(false);
   });
 });

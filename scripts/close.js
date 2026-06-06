@@ -32,6 +32,7 @@
  *   node scripts/close.js <issue> --skip-ticket-match  # bypass Guard 1 velocity-row ticket check (#310)
  *   node scripts/close.js <issue> --skip-keyword-check # bypass Guard 2 issue-title keyword check (#311)
  *   node scripts/close.js <issue> --skip-scope-audit   # suppress diff-stat scope summary (#671)
+ *   node scripts/close.js <issue> --update-trackers   # auto-check parent tracker boxes (#907)
  *
  * See docs/research/close-sequence-hardening.md for the full design.
  */
@@ -114,7 +115,8 @@ function parseArgs(argv) {
   const opts = {
     issue: null, max: DEFAULT_MAX_RETRIES, dryRun: false,
     keep: false, verifyIssue: true, skipTicketMatch: false, skipKeywordCheck: false,
-    skipVelocityCheck: false, skipMarkerCheck: false, skipScopeAudit: false, branch: null,
+    skipVelocityCheck: false, skipMarkerCheck: false, skipScopeAudit: false,
+    updateTrackers: false, branch: null,
   };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
@@ -128,6 +130,7 @@ function parseArgs(argv) {
     else if (a === '--skip-velocity-check') opts.skipVelocityCheck = true;
     else if (a === '--skip-marker-check') opts.skipMarkerCheck = true;
     else if (a === '--skip-scope-audit') opts.skipScopeAudit = true;
+    else if (a === '--update-trackers') opts.updateTrackers = true;
     else if (a === '--branch') opts.branch = argv[++i];
     else if (a.startsWith('--')) die(`unknown flag: ${a}`);
     else positionals.push(a);
@@ -325,6 +328,23 @@ function markerStillPresent(issue, grepOutput) {
   return { found: matched.length > 0, lines: matched };
 }
 
+// (#907): scan a list of open issues for unchecked checklist boxes that reference
+// the given issue number. Pure: takes [{number, body}]+ issue number (int or
+// string), returns [{trackerNumber, line}] for every matching line found.
+function findParentTrackers(issues, issueNumber) {
+  const re = new RegExp(`- \\[ \\].*#${issueNumber}\\b`);
+  const matches = [];
+  for (const iss of (issues || [])) {
+    const body = String(iss.body || '');
+    for (const line of body.split('\n')) {
+      if (re.test(line)) {
+        matches.push({ trackerNumber: iss.number, line: line.trim() });
+      }
+    }
+  }
+  return matches;
+}
+
 // Classify a rebase's conflicted paths against the union-file set.
 //   'none'       — no conflicts.
 //   'union-only' — every conflicted path is a merge=union file. This should be
@@ -513,6 +533,54 @@ function checkMarkerDeleted(issue) {
   }
 }
 
+// (#907): after a successful close, scan open tracker issues for unchecked boxes
+// referencing the just-closed issue. Prints a hint for each match. With
+// --update-trackers auto-edits the tracker body via `gh issue edit --body-file -`.
+// Degrades gracefully when gh is unavailable or returns invalid JSON.
+function scanParentTrackers(issue, updateTrackers) {
+  const listOut = sh('gh issue list --state open --limit 100 --json number,body', true);
+  if (!listOut) {
+    log('warn: could not fetch open issues for parent-tracker scan — skipping.');
+    return;
+  }
+  let issues;
+  try {
+    issues = JSON.parse(listOut);
+  } catch (_) {
+    log('warn: could not parse open-issue list for parent-tracker scan — skipping.');
+    return;
+  }
+  const matches = findParentTrackers(issues, issue);
+  if (matches.length === 0) return;
+  for (const { trackerNumber, line } of matches) {
+    log(`Parent tracker #${trackerNumber} references #${issue} in an unchecked box.`);
+    if (!updateTrackers) {
+      log(`  ${line}`);
+      log(`  Consider: gh issue view ${trackerNumber} and update the checklist, or re-run with --update-trackers.`);
+      continue;
+    }
+    const full = issues.find((i) => i.number === trackerNumber);
+    if (!full) {
+      log(`  warn: could not retrieve body for #${trackerNumber} — skipping auto-update.`);
+      continue;
+    }
+    const re = new RegExp(`(- \\[ \\])(.*#${issue}\\b)`, 'g');
+    const newBody = String(full.body || '').replace(re, '- [x]$2');
+    if (newBody === String(full.body || '')) {
+      log(`  warn: body replacement had no effect for #${trackerNumber} — skipping.`);
+      continue;
+    }
+    try {
+      execSync(`gh issue edit ${trackerNumber} --body-file -`, {
+        input: newBody, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      log(`  Updated #${trackerNumber}: checked the box for #${issue}.`);
+    } catch (e) {
+      log(`  warn: failed to auto-update #${trackerNumber}: ${String(e.message || '').slice(0, 80)}`);
+    }
+  }
+}
+
 function rebaseOrMergeInProgress() {
   const rm = sh('git rev-parse --git-path rebase-merge', true);
   const ra = sh('git rev-parse --git-path rebase-apply', true);
@@ -608,7 +676,7 @@ function logCommentPrompt(issue, sha) {
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
-    die('usage: node scripts/close.js <issue-number> [--branch <name>] [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match] [--skip-keyword-check] [--skip-velocity-check] [--skip-marker-check] [--skip-scope-audit]');
+    die('usage: node scripts/close.js <issue-number> [--branch <name>] [--max N] [--dry-run] [--keep] [--no-verify-issue] [--skip-ticket-match] [--skip-keyword-check] [--skip-velocity-check] [--skip-marker-check] [--skip-scope-audit] [--update-trackers]');
   }
   const issue = opts.issue;
 
@@ -726,6 +794,10 @@ function main() {
     }
   }
 
+  // Parent-tracker hint (#907): print (or auto-check) unchecked boxes in any
+  // open tracker that references the just-closed issue.
+  scanParentTrackers(issue, opts.updateTrackers);
+
   if (opts.keep) {
     report({ issue, branch, wtPath, sha: landedSha, kept: true, dry: false });
     logCommentPrompt(issue, landedSha);
@@ -770,4 +842,5 @@ module.exports = {
   velocityRowExists, markerStillPresent,
   bodyClosesIssue,
   logCommentPrompt,
+  findParentTrackers,
 };

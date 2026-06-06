@@ -829,3 +829,6 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 842,913,test(assembler-formats): create missing .hex fixture files for tests 6a–6c,DEV,30,10,1,29,9,2026-06-05T20:39:29-1000,2026-06-05T20:40:29-1000,,,BANANA,sonnet-4.6,lccjs
 843,906,add verify-child-issue-states rule to do-this-not-that.md,WRITER,15,8,7,8,1,2026-06-05T20:34:00-1000,2026-06-05T20:41:29-1000,,2 files: do-this-not-that.md new rule + claude_workflow.md cross-ref callout in read-ticket step,FIG,sonnet-4.6,lccjs
 844,915,docs: create errors-lookup.md — error_type scenario table,WRITER,30,10,2,28,8,2026-06-05T20:40:40-1000,2026-06-05T20:43:06-1000,,"new docs/errors-lookup.md — decision tree, 12 codes w/ examples, STALE_READ proposed extension, disambiguation rules",GRAPE,sonnet-4.6,lccjs
+845,907,close.js — parent tracker scan on child close,DEV,30,20,25,5,5,2026-06-06T06:15:00Z,2026-06-06T06:43:30Z,,findParentTrackers pure fn + scanParentTrackers I/O wrapper + --update-trackers flag + 14 unit tests,DRAGONFRUIT,sonnet-4.6,lccjs
+846,,,DEV,,,,,-3,,,,,TEST,,lccjs
+847,,,DEV,,,,,-3,,,,,TEST,,lccjs
