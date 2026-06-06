@@ -24,7 +24,8 @@ function generateBSTLSTContent(options) {
     second: '2-digit',
     hour12: false,
   })}\n`;
-  content += `${userName}\n\n`;
+  const displayName = (userName && userName.trim()) ? userName.trim() : 'ANONYMOUS';
+  content += `${displayName}\n\n`;
 
   content += 'Header\n';
   content += 'o\n';

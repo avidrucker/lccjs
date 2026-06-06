@@ -70,4 +70,44 @@ describe('Report Artifacts Unit Tests', () => {
     expect(bstContent).toContain('Cheese');
     expect(bstContent).toContain('1101 0000 0000 0101');
   });
+
+  const minimalSrc = '  mov r0, 5\n  dout r0\n  nl\n  halt';
+
+  test('should use ANONYMOUS when userName is empty string', () => {
+    const assembler = new Assembler();
+    assembler.assembleSource(minimalSrc, { inputFileName: 'x.a' });
+    const { lstContent, bstContent } = buildReportArtifacts({
+      assembler,
+      userName: '',
+      inputFileName: 'x.a',
+      now: fixedNow,
+    });
+    expect(lstContent).toContain('ANONYMOUS');
+    expect(bstContent).toContain('ANONYMOUS');
+  });
+
+  test('should use ANONYMOUS when userName is whitespace-only', () => {
+    const assembler = new Assembler();
+    assembler.assembleSource(minimalSrc, { inputFileName: 'x.a' });
+    const { lstContent, bstContent } = buildReportArtifacts({
+      assembler,
+      userName: '   ',
+      inputFileName: 'x.a',
+      now: fixedNow,
+    });
+    expect(lstContent).toContain('ANONYMOUS');
+    expect(bstContent).toContain('ANONYMOUS');
+  });
+
+  test('should use ANONYMOUS when userName is null', () => {
+    const assembler = new Assembler();
+    assembler.assembleSource(minimalSrc, { inputFileName: 'x.a' });
+    const { lstContent } = buildReportArtifacts({
+      assembler,
+      userName: null,
+      inputFileName: 'x.a',
+      now: fixedNow,
+    });
+    expect(lstContent).toContain('ANONYMOUS');
+  });
 });
