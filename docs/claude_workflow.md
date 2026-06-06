@@ -330,6 +330,25 @@ One row per closed puzzle, written via `npm run velocity:log`. Full column refer
 
 ---
 
+## Error logging
+
+When a non-trivial error occurs during puzzle work, log it to `~/.lccjs/velocity.db` using `npm run error:log`. Full protocol: `~/.claude/skills/log-error/SKILL.md`. Schema reference: [`docs/errors-schema.md`](./errors-schema.md).
+
+**Log when:** a tool call fails with work impact, `npm run claim` fails, a git/gh/DB operation fails, or a hook blocks a commit.
+
+**Skip when:** the error is transient and immediately resolved with no work impact, or the same error was already logged this session.
+
+```bash
+occurred_iso=$(date '+%Y-%m-%dT%H:%M:%S%z')
+npm run error:log -- '{"occurred_iso":"<occurred_iso>","agent":"CHERRY","model":"sonnet-4.6","ticket":<N>,"error_type":"<TYPE>","message":"<raw message>","context":"<JSON>"}'
+```
+
+Valid `error_type` values: `TOOL_DENIED`, `HOOK_BLOCK`, `CLAIM_FAIL`, `BASH_FAIL`, `GIT_FAIL`, `GH_FAIL`, `DB_FAIL`, `FILE_FAIL`, `SKILL_FAIL`, `NETWORK_FAIL`, `VALIDATION_FAIL`, `OTHER`.
+
+Error logging is a **manual, deliberate step** — not a hook. Hooks can't tell transient noise from significant failures; agents can.
+
+---
+
 ## PDD scan coverage & the `at_todo` placeholder
 
 `npm run puzzles` runs the `pdd` gem over the repo to enforce that every real

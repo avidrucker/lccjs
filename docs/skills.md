@@ -23,6 +23,13 @@ Write idiomatic, correct LCC+ assembly (`.ap` files) — extended ISA with `.lcc
 **Notes from practice:**
 - Coverage is narrower than `lccjs-assembly` (fewer oracle parity fixtures for plus programs). Gaps in extended-ISA instruction combinations may not be caught until a new program exercises them.
 
+### `log-error`
+Record significant agent errors into the lccjs errors table (`~/.lccjs/velocity.db`) for retrospective analysis.
+
+**Invoke when:** a tool call fails with work impact, `npm run claim` fails, a git/gh/DB operation fails, or a hook blocks a commit. Log via `npm run error:log`. Full column reference: [`docs/errors-schema.md`](./errors-schema.md).
+
+**lccjs note:** error logging is a **manual, deliberate step** — not hook-triggered. Log once per significant error; skip transient retries that resolve immediately.
+
 ### `puzzle-velocity`
 Track wall-clock time per puzzle/ticket with dual H/C estimates and a velocity log so forecasts can be calibrated over time.
 
