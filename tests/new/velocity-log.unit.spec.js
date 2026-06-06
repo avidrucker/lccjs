@@ -6,7 +6,10 @@ const path = require('path');
 const SCRIPT = path.join(__dirname, '..', '..', 'scripts', 'velocity-log.js');
 
 function run(input, extraArgs = [], extraEnv = {}) {
-  return spawnSync(process.execPath, [SCRIPT, JSON.stringify(input), ...extraArgs], {
+  // Always pass --from-main: the worktree-guard rejects subprocess runs from the
+  // main checkout when worktrees are active, masking the validation assertions
+  // the tests are actually checking (#940).
+  return spawnSync(process.execPath, [SCRIPT, JSON.stringify(input), '--from-main', ...extraArgs], {
     encoding: 'utf8',
     env: { ...process.env, ...extraEnv },
   });
