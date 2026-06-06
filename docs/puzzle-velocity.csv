@@ -883,3 +883,5 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 896,,,DEV,,,,,-3,,,,,TEST,,lccjs
 897,,,DEV,,,,,-3,,,,,TEST,,lccjs
 898,942,puzzle-velocity-csv: 194 rows with id≥126 have empty model column,DATA,20,10,1.7,18.3,8.3,2026-06-06T11:08:12-1000,2026-06-06T11:09:53-1000,,Backfilled 4 real-agent rows (sonnet-4.6). 45 TEST-agent rows excluded from check (#940 tracks isolation fix). Closed #911 as superseded.,CHERRY,sonnet-4.6,lccjs
+899,714,ILCC dashboard unknowns — Playwright inspection closes #731 + #714,RESEARCH,15,12,11,4,1,2026-06-06T10:56:39-1000,2026-06-06T11:07:39-1000,,Playwright MCP browser session on live ILCC SPA; answered all 6 #731 unknowns + 2 bonus features; updated audit doc; closed #731 + #714,GRAPE,sonnet-4.6,lccjs
+900,949,use ANONYMOUS placeholder in .lst/.bst when name.nnn is empty,DEV,20,8,4,16,4,2026-06-06T11:06:15-1000,2026-06-06T11:10:47-1000,,one-line fix in genStats.js + 3 new unit tests; assembler requires leading whitespace on instructions (not obvious),ELDERBERRY,sonnet-4.6,lccjs

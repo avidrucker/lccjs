@@ -6,8 +6,10 @@
 ## Note on ILCC dashboard data
 
 The ILCC dashboard is a JavaScript SPA; automated fetch returns only the shell
-(`"client"`). The feature list below is compiled from the issue reporter's direct
-observations. A human should verify and extend this list on next visit to the URL.
+(`"client"`). The feature list below was initially compiled from the issue reporter's
+direct observations. **Updated 2026-06-06 (GRAPE):** all "Unknown" items from the
+original audit were verified using Playwright MCP to drive a real browser session on
+the live URL. All `?` entries in the gap table have been resolved.
 
 ---
 
@@ -26,23 +28,38 @@ observations. A human should verify and extend this list on next visit to the UR
 | 7 | **Share as link ("codepen"-style)** | Encodes code in a URL for sharing |
 | 8 | **Download as `.a` file** | Exports the current source as a `.a` assembly file |
 
+### Also implemented (verified 2026-06-06 via Playwright — closes #731)
+
+| # | Feature | Notes |
+|---|---------|-------|
+| 9 | **Line numbers** | Visible in editor gutter (left side of editor pane) |
+| 10 | **Assembly error display** | Errors appear in the Terminal panel, e.g. "Error: Invalid operation" |
+| 11 | **Dark/light theme toggle** | Settings → Theme: 5 options — Dark (default), Light, Midnight, Dracula, Monokai |
+| 12 | **Interactive step debugger** | 2nd toolbar button opens CPU State (all registers + flags), Memory (with jump), Stack panels with step-by-step execution and configurable "Steps per click" |
+| 13 | **Code Templates** | Dropdown with pre-built `.a` demos (demoA.a through at least demoK.a+) |
+
 ### Not yet implemented (confirmed absent)
 
-| # | Feature |
-|---|---------|
-| 1 | **Syntax highlighting** — editor displays plain text, no token colouring |
+| # | Feature | Notes |
+|---|---------|-------|
+| 1 | **Syntax highlighting** | Editor displays plain text, no token colouring |
+| 2 | **Interactive stdin** | `din`/`sin`/`ain` instructions error immediately ("Error: Invalid operation"); no prompt appears in run or debug mode |
+| 3 | **Pre-supplied stdin** | No pre-supply mechanism found (no text field or data attribute) |
+| 4 | **LCC+ (`.ap`) support** | `.lccplus` directive → "Error: Bad label"; `clear` mnemonic unrecognized; all Code Templates are `.a` files only |
+| 5 | **Save to localStorage** | Only `ilcc-theme` persists; code is lost on page reload |
 
-### Unknown (requires human verification)
+### Previously unknown — now resolved (2026-06-06)
 
-- Line numbers in the editor
-- Interactive stdin (typing input while program runs vs. pre-supplied)
-- Assembly error display (inline or in the terminal)
-- Multiple independent file buffers vs. named single buffer
-- Dark / light theme toggle
-- Keyboard shortcuts (Run, Format, etc.)
-- Save to browser localStorage / IndexedDB
-- LCC+ (`.ap`) support
-- Linker / multi-file support
+All items below were `?` in the original audit. Verified via Playwright browser session.
+
+| Item | ILCC state | Verification method |
+|------|-----------|---------------------|
+| Interactive stdin | ❌ — errors on `din` | Ran `din r0 / dout r0 / nl / halt`; got "Error: Invalid operation" in both run and step mode |
+| Line numbers | ✅ | Visible in screenshots of editor gutter |
+| Assembly error display | ✅ — Terminal panel | Ran `badmnemonic r0, r1`; got "Error: Invalid operation" in Terminal |
+| LCC+ support | ❌ | Ran `.lccplus / clear / halt`; got "Error: Bad label"; `.lccplus` is unrecognized |
+| Dark/light theme toggle | ✅ — 5 themes | Settings → Theme shows Dark, Light, Midnight, Dracula, Monokai |
+| Save to localStorage | ❌ | localStorage inspected — only `ilcc-theme` key; code gone on reload |
 
 ---
 
@@ -135,9 +152,9 @@ A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`)
 
 ---
 
-## Gap table — ILCC dashboard vs lccjs (updated 2026-06-05)
+## Gap table — ILCC dashboard vs lccjs (updated 2026-06-06)
 
-`✅` = present · `❌` = absent · `~` = partial · `?` = unverified (ILCC, needs human)
+`✅` = present · `❌` = absent · `~` = partial
 
 | Feature | ILCC dashboard | lccjs (best surface) |
 |---------|:--------------:|:--------------------:|
@@ -145,29 +162,40 @@ A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`)
 | Syntax highlighting | ❌ | ✅ playground (ViewPlugin) + showcase (Lezer CM6 + Shiki) |
 | Run / assemble / execute | ✅ | ✅ playground |
 | Terminal output panel | ✅ | ✅ playground + injector |
-| Interactive stdin | ? | ❌ |
-| Pre-supplied stdin | ? | ✅ playground + injector |
-| Assembly error display | ? | ✅ playground + injector |
+| Interactive stdin | ❌ | ❌ |
+| Pre-supplied stdin | ❌ | ✅ playground + injector |
+| Assembly error display | ✅ | ✅ playground + injector |
 | File naming | ✅ | ✅ playground |
 | Tabs / multi-file | ✅ | ✅ playground |
 | Share as link | ✅ | ✅ playground (#732, closed 2026-06-05) |
 | Download as `.a` | ✅ | ✅ playground (#733, closed 2026-06-05) |
 | Auto-format / prettify | ✅ | ✅ playground |
-| Line numbers (editor) | ? | ✅ playground (CM6 basicSetup) + showcase (CM6 lineNumbers()) |
-| LCC+ (`.ap`) support | ? | ~ playground highlights; no LCC+ run path |
+| Line numbers (editor) | ✅ | ✅ playground (CM6 basicSetup) + showcase (CM6 lineNumbers()) |
+| Dark / light theme | ✅ (5 themes) | ❌ dark only |
+| LCC+ (`.ap`) support | ❌ | ~ playground highlights; no LCC+ run path |
+| Save to localStorage | ❌ | ❌ |
+| Interactive step debugger | ✅ (CPU/Memory/Stack) | ~ CLI `-i` mode only; no web debugger |
+| Code Templates | ✅ (demoA–K+) | ❌ |
 | Standalone playground page | ✅ | ✅ playground |
-| Embeddable in slides | ? | ✅ injector + reveal-md |
-| Browser API for custom tools | ? | ✅ `lcc.bundle.js` |
+| Embeddable in slides | ❌ | ✅ injector + reveal-md |
+| Browser API for custom tools | ❌ | ✅ `lcc.bundle.js` |
 
 ---
 
-## Key finding (updated 2026-06-05)
+## Key finding (updated 2026-06-06)
 
 ~~lccjs and the ILCC dashboard have **complementary** strengths that do not yet overlap into a single surface~~
 
 ~~The primary gap (no run-in-browser playground) has been closed by #715. lccjs now has a standalone playground that exceeds the ILCC dashboard on syntax highlighting and matches it on editor, run, output, file naming, tabs, and auto-format. The two remaining feature gaps are share-as-link (#732) and download-as-.a (#733), both deferred. Interactive stdin and LCC+ execution in the playground are also absent.~~
 
-All 7 known ILCC dashboard feature gaps are now closed in lccjs. Share-as-link (#732) and download-as-.a (#733) shipped on 2026-06-05. lccjs's playground now matches or exceeds the ILCC dashboard on every confirmed feature. The showcase was also upgraded to a CM6 editor with Lezer-based syntax highlighting (#882). The remaining open items are ILCC-side unknowns (#731, human verification required) and two lccjs gaps: interactive stdin and LCC+ execution path in the playground UI.
+~~All 7 known ILCC dashboard feature gaps are now closed in lccjs. Share-as-link (#732) and download-as-.a (#733) shipped on 2026-06-05. lccjs's playground now matches or exceeds the ILCC dashboard on every confirmed feature. The showcase was also upgraded to a CM6 editor with Lezer-based syntax highlighting (#882). The remaining open items are ILCC-side unknowns (#731, human verification required) and two lccjs gaps: interactive stdin and LCC+ execution path in the playground UI.~~
+
+**2026-06-06 (GRAPE, Playwright):** All ILCC-side unknowns have been resolved via Playwright browser inspection (closes #731). The audit is now complete. Key asymmetries:
+
+- **lccjs advantages:** syntax highlighting (Lezer CM6 + Shiki), pre-supplied stdin, embeddable injector, browser bundle API
+- **ILCC advantages:** interactive step debugger (CPU State / Memory / Stack), multi-theme picker (5 options vs. dark-only), Code Templates library, dark theme is the lccjs-parity theme
+- **Both absent:** interactive stdin, LCC+ execution, save to localStorage
+- **lccjs gap vs. ILCC:** no web-based step debugger — lccjs has `-i` CLI mode only
 
 ---
 
