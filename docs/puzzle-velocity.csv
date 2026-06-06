@@ -907,3 +907,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 920,988,"TIL 2026-06-06 CHERRY — DB migration shims, CSV-seeded table pipelines, and test-environment guard bypasses",WRITER,15,10,1.8,13.2,8.2,2026-06-06T11:35:32-1000,2026-06-06T11:37:23-1000,,,CHERRY,sonnet-4.6,lccjs
 921,991,"TIL 2026-06-06 GRAPE — worktree script staleness, Playwright for SPAs, code ≠ runtime",WRITER,15,8,2,13,6,2026-06-06T11:37:40-1000,2026-06-06T11:39:27-1000,,"4 lessons: stale worktree DB path, Playwright resolves human-required SPAs, source ≠ runtime, package.json ≠ installed",GRAPE,sonnet-4.6,lccjs
 922,992,"TIL 2026-06-06 ELDERBERRY — query canonical DB, propagate corrections, file adjacent",WRITER,15,3,1.6,13.4,1.4,2026-06-06T11:38:49-1000,2026-06-06T11:40:27-1000,,,ELDERBERRY,opus-4.8,lccjs
+923,993,TIL 2026-06-06 BANANA,WRITER,15,5,1,14,4,2026-06-06T11:42:23-1000,2026-06-06T11:43:08-1000,,,BANANA,sonnet-4.6,lccjs
