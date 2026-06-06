@@ -109,6 +109,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-06-05 CHERRY s3](./today-i-learned-2026-06-05-cherry-3.md) | 2026-06-05 | CHERRY | Document the negative fact for closed sets or it gets re-invented; DDD refactors shift test ownership — tests must track the invariant not its location; error logging should be manual not hook-triggered. |
 | [TIL 2026-06-05 DRAGONFRUIT session 3](./today-i-learned-2026-06-05-dragonfruit-3.md) | 2026-06-05 | DRAGONFRUIT | Observable Plot is standalone (no notebook runtime needed); `const` temporal dead zone in catch paths; `npm run close` is push-only — commit first; velocity CSV conflicts are always append-only and mechanically resolvable. |
 | [TIL 2026-06-05 GRAPE](./today-i-learned-2026-06-05-grape.md) | 2026-06-05 | GRAPE | Cross-CLI single-letter flag namespace; tracker items may be partially done — read before filing child; errors write-path is agent not hook; worktrees need npm install before tests are meaningful. |
+| [TIL 2026-06-05 APPLE session 2](./today-i-learned-2026-06-05-apple-2.md) | 2026-06-05 | APPLE | Tracker body checkboxes are frozen snapshots — always verify child states via `gh issue view`; `grep -c` exits 1 on zero matches breaking `&&` chains; skipped worktree claims lead to unverified published output; stale-read is a distinct failure mode from batching confabulation. |
 
 ## Recurring threads (informal — #207 will formalize)
 
