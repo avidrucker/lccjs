@@ -26,7 +26,7 @@ Write idiomatic, correct LCC+ assembly (`.ap` files) — extended ISA with `.lcc
 ### `log-error`
 Record significant agent errors into the lccjs errors table (`~/.lccjs/velocity.db`) for retrospective analysis.
 
-**Invoke when:** a tool call fails with work impact, `npm run claim` fails, a git/gh/DB operation fails, or a hook blocks a commit. Log via `npm run error:log`. Full column reference: [`docs/errors-schema.md`](./errors-schema.md).
+**Invoke when:** a tool call fails with work impact, `npm run claim` fails, a git/gh/DB operation fails, or a hook blocks a commit. Log via `npm run error:log`. Full column reference: [`docs/errors-schema.md`](./errors-schema.md). Current vocabulary: 15 `error_type` codes (added `GIT_STATE`, `GH_INFO`, `EDIT_PRECOND` in #936/#954).
 
 **lccjs note:** error logging is a **manual, deliberate step** — not hook-triggered. Log once per significant error; skip transient retries that resolve immediately.
 
