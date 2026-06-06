@@ -863,3 +863,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 876,962,REVIEW: code review of ice-score.js,REVIEW,30,15,7,23,8,2026-06-06T10:36:26-10:00,2026-06-06T10:43:02-10:00,,"4 findings filed as #963-#966 (1 med gh-offline partial-state, parseCsv quoting, test/export debt, --output docs); shell-escape + tier-preservation verified clean",APPLE,opus-4.8,lccjs
 877,961,feat: fruit-agent-orchestrate should factor in area:* labels to assign non-overlapping work lanes,WRITER,,,,,,,,,,FIG,sonnet-4.6,lccjs
 878,958,document OTHER error_type as fallback,WRITER,15,5,1,14,4,2026-06-06T10:50:39-1000,2026-06-06T10:51:04-1000,,,BANANA,sonnet-4.6,lccjs
+879,944,fix --update-trackers premature checkbox on multi-ref line,DEV,20,15,2,18,13,2026-06-06T10:50:33-10:00,2026-06-06T10:52:59-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs

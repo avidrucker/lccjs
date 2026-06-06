@@ -896,4 +896,46 @@ describe('close.js findParentTrackers() — parent-tracker checklist scan (#907)
     const opts = parseArgs(['99']);
     expect(opts.updateTrackers).toBe(false);
   });
+
+  // multi-ref guard (#944): a line with >1 issue refs must be detected so scanParentTrackers
+  // can skip auto-edit and fall back to hint-only output.
+  describe('multi-issue-ref detection on matched line (#944)', () => {
+    test('single-ref line: one issue number → not multi-ref', () => {
+      const line = '- [ ] close the batch #42';
+      const refs = (line.match(/#\d+/g) || []);
+      expect(refs.length).toBe(1);
+    });
+
+    test('multi-ref line: two issue numbers → detected as multi-ref', () => {
+      const line = '- [ ] batch — #42, #43';
+      const refs = (line.match(/#\d+/g) || []);
+      expect(refs.length).toBeGreaterThan(1);
+    });
+
+    test('multi-ref line: six issue numbers (real-world case from #944)', () => {
+      const line = '- [ ] B — batch 2 — #932, #931, #930, #928, #927, #926';
+      const refs = (line.match(/#\d+/g) || []);
+      expect(refs.length).toBe(6);
+    });
+
+    test('findParentTrackers returns a multi-ref line as-is so the caller can inspect it', () => {
+      const issues = [
+        { number: 938, body: '- [ ] B — batch 2 — #932, #931, #930\n- [ ] done #999' },
+      ];
+      const result = findParentTrackers(issues, 932);
+      expect(result).toHaveLength(1);
+      expect(result[0].line).toBe('- [ ] B — batch 2 — #932, #931, #930');
+      // Callers use line.match(/#\d+/g).length > 1 to skip auto-edit
+      expect((result[0].line.match(/#\d+/g) || []).length).toBeGreaterThan(1);
+    });
+
+    test('findParentTrackers returns single-ref line that can safely auto-edit', () => {
+      const issues = [
+        { number: 100, body: '- [ ] close this #42' },
+      ];
+      const result = findParentTrackers(issues, 42);
+      expect(result).toHaveLength(1);
+      expect((result[0].line.match(/#\d+/g) || []).length).toBe(1);
+    });
+  });
 });

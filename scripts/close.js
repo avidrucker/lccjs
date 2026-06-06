@@ -559,6 +559,13 @@ function scanParentTrackers(issue, updateTrackers) {
       log(`  Consider: gh issue view ${trackerNumber} and update the checklist, or re-run with --update-trackers.`);
       continue;
     }
+    const issueRefs = (line.match(/#\d+/g) || []);
+    if (issueRefs.length > 1) {
+      log(`  warn: matched line has ${issueRefs.length} issue refs — skipping auto-edit to avoid premature check.`);
+      log(`  ${line}`);
+      log(`  Consider: gh issue view ${trackerNumber} and update the checklist manually.`);
+      continue;
+    }
     const full = issues.find((i) => i.number === trackerNumber);
     if (!full) {
       log(`  warn: could not retrieve body for #${trackerNumber} — skipping auto-update.`);
