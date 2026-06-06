@@ -415,5 +415,44 @@ describe('Assembler Unit Tests', () => {
       expect(errCall[0]).toContain('found: num');
       expect(errCall[0]).toContain('expected: register');
     });
+
+    test('verbose Bad register error suggests closest register for distance-1 typo', () => {
+      const asm = new Assembler();
+      asm.verboseModeOn = true;
+      asm.lineNum = 1;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  mov r10, r1';
+      console.error.mockClear();
+      expect(() => asm.getRegister('r10')).toThrow();
+      const errCall = console.error.mock.calls.find(c => c[0] && c[0].includes('Bad register'));
+      expect(errCall).toBeDefined();
+      expect(errCall[0]).toContain("Did you mean 'r0'?");
+    });
+
+    test('non-verbose Bad register error does not include suggestion', () => {
+      const asm = new Assembler();
+      asm.verboseModeOn = false;
+      asm.lineNum = 1;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  mov r10, r1';
+      console.error.mockClear();
+      expect(() => asm.getRegister('r10')).toThrow();
+      const errCall = console.error.mock.calls.find(c => c[0] && c[0].includes('Bad register'));
+      expect(errCall).toBeDefined();
+      expect(errCall[0]).not.toContain('Did you mean');
+    });
+
+    test('verbose Bad register error gives no suggestion when typo is too distant', () => {
+      const asm = new Assembler();
+      asm.verboseModeOn = true;
+      asm.lineNum = 1;
+      asm.inputFileName = 'test.a';
+      asm.currentLine = '  mov rxyz, r1';
+      console.error.mockClear();
+      expect(() => asm.getRegister('rxyz')).toThrow();
+      const errCall = console.error.mock.calls.find(c => c[0] && c[0].includes('Bad register'));
+      expect(errCall).toBeDefined();
+      expect(errCall[0]).not.toContain('Did you mean');
+    });
   });
 });

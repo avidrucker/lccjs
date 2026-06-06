@@ -1905,8 +1905,13 @@ class Assembler {
     }
 
     if (!this.isRegister(regStr)) {
-      this.failAssembly('Bad register', 1,
-        { found: this.determineOperandType(regStr), expected: 'register' }); // this.error(`Invalid register: ${regStr}`);
+      let msg = 'Bad register';
+      if (this.verboseModeOn) {
+        const suggestion = suggestClosest(regStr, ['r0','r1','r2','r3','r4','r5','r6','r7','fp','sp','lr']);
+        if (suggestion) msg += `. Did you mean '${suggestion}'?`;
+      }
+      this.failAssembly(msg, 1,
+        { found: this.determineOperandType(regStr), expected: 'register' });
     }
     if (regStr === "fp") {
       regStr = "r5";
