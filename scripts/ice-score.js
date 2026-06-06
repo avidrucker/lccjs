@@ -24,6 +24,10 @@
  *   npm run ice:score -- --set-tier elevated --issue 956    # apply tier label + audit comment
  *   npm run ice:score -- --dry-run                          # show plan, no writes or gh mutations
  *   npm run ice:score -- --export-only                      # re-export CSV + markdown from existing DB
+ *   npm run ice:score -- --output path/to/table.md          # override the MARKDOWN path only
+ *
+ * Note: --output retargets the markdown table only. The CSV is always written to
+ * stats/ice-scores.csv (the canonical, DB-derived export) regardless of --output.
  */
 'use strict';
 
@@ -117,10 +121,7 @@ for (let i = 0; i < argv.length; i++) {
   if (!a.startsWith('--') && opts.scores == null) { opts.scores = a; continue; }
 }
 
-if (opts.output) {
-  // Allow overriding markdown output path
-  Object.assign(opts, { mdPath: opts.output });
-}
+// --output overrides the MARKDOWN path only; the CSV path stays fixed (CSV_PATH).
 const effectiveMdPath = opts.output || MD_PATH;
 
 // ── DB bootstrap ──────────────────────────────────────────────────────────────
@@ -456,13 +457,20 @@ async function promptIssue(rl, issue, existing) {
 
   const defYegor = existing?.yegor_priority ?? '';
   const yegorRaw = await ask(rl, `  yegor_priority [0-10, default "${defYegor}"]: `);
-  const yegor_priority = yegorRaw.trim() ? parseInt(yegorRaw, 10) : (defYegor || null);
+  // Guard against `|| null` collapsing a valid priority of 0 to "unset".
+  let yegor_priority;
+  if (yegorRaw.trim()) {
+    const n = parseInt(yegorRaw, 10);
+    yegor_priority = Number.isNaN(n) ? null : n;
+  } else {
+    yegor_priority = defYegor === '' ? null : defYegor;
+  }
 
   const defNotes = existing?.notes || '';
   const notesRaw = await ask(rl, `  notes [default "${defNotes}"]: `);
   const notes = notesRaw.trim() || defNotes;
 
-  return { I, C, E, actionable, type, yegor_priority: yegor_priority || null, notes };
+  return { I, C, E, actionable, type, yegor_priority, notes };
 }
 
 // ── Set-tier path ─────────────────────────────────────────────────────────────
