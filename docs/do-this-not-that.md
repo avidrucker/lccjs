@@ -90,8 +90,8 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 **Always pass `--as <fruit>` to `npm run claim`; never use a bare positional name**
 
-- **Do:** `npm run claim 799 -- --as grape`
-- **Don't:** `npm run claim 799 grape` or `npm run claim 799 GRAPE`
+- **Do:** `npm run claim -- 799 --as grape`
+- **Don't:** `npm run claim -- 799` (missing `--as`) or `npm run claim 799 grape` (positional name)
 - **Why:** The `--as` flag has been required since auto-naming was disabled in #386. Positional identity was removed; bare names produce an immediate error, costing a wasted round-trip.
 
 **Check `git status` on main before `npm run claim`**

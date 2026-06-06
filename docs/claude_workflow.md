@@ -76,13 +76,20 @@ is to be ready when asked (#377).
 
 ## At start (picking up a puzzle)
 
-**Pre-claim check (run this before `npm run claim`):**
+**Pre-claim checklist (run all three before `npm run claim`):**
 
 ```bash
-git status   # look for untracked or modified files in the main checkout
+gh issue view <N>   # 1. confirm the issue is still OPEN
+git status          # 2. confirm main is clean — untracked files don't carry into worktrees
 ```
 
-If any file your ticket will touch is untracked or modified on main, commit or stash it first — untracked files do not carry into the new worktree, so branching from a dirty main means the worktree starts from a stale committed state. (#469)
+3. Have your fruit identity ready — **always pass `--as <fruit>`**:
+   ```bash
+   npm run claim -- <N> --as <fruit>   # correct
+   # NOT: npm run claim -- <N>         # ← missing --as causes an immediate fatal error
+   ```
+
+If any file your ticket will touch is untracked or modified on main, commit or stash it first — branching from a dirty main means the worktree starts from a stale committed state. See [`docs/do-this-not-that.md`](./do-this-not-that.md) for the full `--as` rule. (#469, #386, #895)
 
 **Before reading the issue:**
 
@@ -169,7 +176,7 @@ If any file your ticket will touch is untracked or modified on main, commit or s
 
 **If I'm working in a `git worktree`** (because of parallel-agent activity):
 
-- **I claim under a self-assigned agent identity** — sync `main` first (`git pull --ff-only origin main`), then `npm run claim -- <issue>`. Identity precedence: `--as <fruit>` > `CLAUDE_AGENT_NAME` (export at launch) > `auto` (first-claim of a session, race-safe). Full contract: `docs/design-agent-worktree-identity.md`.
+- **I claim under a self-assigned agent identity** — sync `main` first (`git pull --ff-only origin main`), then `npm run claim -- <issue> --as <fruit>`. Identity precedence: `--as <fruit>` > `CLAUDE_AGENT_NAME` (export at launch) > `auto` (first-claim of a session, race-safe). Full contract: `docs/design-agent-worktree-identity.md`.
   - **`auto` is only safe for the first claim of a solo session.** When the human launches ≥2 agents in parallel (fan-out), identities must be pre-assigned before any agent claims: `npm run claim -- <N> --as apple` (or set `CLAUDE_AGENT_NAME=apple` at session launch). Bare `auto` in a multi-agent context risks handing the same fruit to two different sessions (#193).
 - The worktree lives at `.claude/worktrees/<fruit>-issue-<N>/` on branch `<fruit>/issue-<N>-<slug>`. **Worktree and claim names must use only `[A-Za-z0-9._-]`** — a `/` in the name becomes `+` on disk and can interfere with other tooling (see `docs/design-agent-worktree-identity.md` for the naming contract). (Legacy worktrees used `worktree-issue-<N>`; both still carry `issue-<N>`, so `puzzle:status` recognises either — it just can't attribute the legacy ones to an agent.)
 - I work in the worktree, not in the main checkout.
