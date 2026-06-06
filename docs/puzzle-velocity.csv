@@ -889,3 +889,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 902,,,DEV,,,,,-3,,,,,TEST,,lccjs
 903,955,investigate auto-mode TOOL_DENIED on skill-file edits,RESEARCH,20,30,6,14,24,2026-06-06T11:05:54-10:00,2026-06-06T11:11:26-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs
 904,910,test(velocity-log): remove stale negative-delta_c_min rejection test,DEV,20,5,0.9,19.1,4.1,2026-06-06T11:10:57-1000,2026-06-06T11:11:51-1000,,Replaced stale rejection test with acceptance test explaining why negative delta_c_min is valid calibration signal.,CHERRY,sonnet-4.6,lccjs
+905,940,velocity-log test suite: worktree-guard rejects subprocess runs,DEV,30,8,1.7,28.3,6.3,2026-06-06T11:12:39-1000,2026-06-06T11:14:23-1000,,One-line fix: add --from-main to run() helper in test file. All 26 velocity-log tests pass with active worktrees.,CHERRY,sonnet-4.6,lccjs
