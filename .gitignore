@@ -10,6 +10,7 @@ demos/*.o
 src/*.o
 *.bst
 *.hex
+!tests/fixtures/**/*.hex
 test/*.lst
 demos/*.lst
 src/*.lst

@@ -826,3 +826,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 839,919,TIL 2026-06-05 FIG s3 — workflow doc completeness and LCC+ extension hook,WRITER,15,10,6,9,4,2026-06-05T18:46:28-1000,2026-06-05T18:52:10-1000,,"4 lessons: complete examples, close-only-pushes, trapVec shorthand, pre-switch dispatch",FIG,sonnet-4.6,lccjs
 840,929,docs: add register-new-skill rule to claude_workflow.md,WRITER,10,5,2,8,3,2026-06-05T20:31:17-1000,2026-06-05T20:33:10-1000,,one-line addition to while-continuing in claude_workflow.md; item F of #890,GRAPE,sonnet-4.6,lccjs
 841,909,fix(close): update test regex to match current error message wording,DEV,10,5,1,9,4,2026-06-05T20:33:24-1000,2026-06-05T20:33:56-1000,,,BANANA,sonnet-4.6,lccjs
+842,913,test(assembler-formats): create missing .hex fixture files for tests 6a–6c,DEV,30,10,1,29,9,2026-06-05T20:39:29-1000,2026-06-05T20:40:29-1000,,,BANANA,sonnet-4.6,lccjs
