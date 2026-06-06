@@ -70,7 +70,7 @@ Walk the human through a decision ticket — fetch context (including pre-existi
 ### `next-best-action`
 Pre-close checklist that catches findings that should be filed as tickets before the close commit.
 
-**Invoke when:** before every `npm run close N` on any substantive puzzle, to ensure no follow-on issues are lost.
+**Invoke when:** before every `npm run close N` — no exceptions — to ensure no follow-on issues are lost at close time.
 
 **Notes from practice:**
 - The underlying checklist (C-1/C-2/C-3 failure modes from `docs/research/orchestration-failure-modes.md`) is sound and has been manually applied, but agents do not consistently invoke the skill itself before closing.
