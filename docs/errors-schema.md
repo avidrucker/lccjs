@@ -107,6 +107,8 @@ npm run error:log -- '{
 
 The `error:log` command validates `error_type` against the vocabulary and `model` against the canonical format (`<family>-<major>.<minor>`). Exit 0 on success, 1 on any validation or DB error.
 
+> **Tool-error payloads are loggable events.** Edit/Write/Read tool errors (e.g. "File has not been read yet", "Denied by auto mode classifier") are not Bash exits, but they are still errors — count them in any error audit and log them with the appropriate `error_type` (`EDIT_PRECOND`, `TOOL_DENIED`, or `FILE_FAIL`). The skip rule (transient, resolved in next step) still applies — but the recovery itself does not make the original error invisible.
+
 ---
 
 ## Context JSON shapes by `error_type`
