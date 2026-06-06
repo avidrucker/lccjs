@@ -83,7 +83,7 @@ The five mnemonic groups (`MnemonicIO`, `MnemonicBranch`, `MnemonicCore`, `Mnemo
 
 **Numeric literals cover three bases.** `0x`-prefixed hex, `0b`-prefixed binary, and plain decimal (with optional leading `-`). The LCC ISA uses `x`-prefixed hex *without* a leading `0` (e.g., `xF`), but the grammar handles `0x` form only. Programs that use bare `x1F` operands tokenise those as `Identifier`. This is a known limitation — see "Open gaps" below.
 
-**`ra` register alias missing.** The grammar includes `fp`, `sp`, and `lr` as `Register` aliases but omits `ra`. These two alias for `r7`; adding `ra` to the `@specialize<Register>` list is a one-line fix.
+**Register aliases `fp`, `sp`, `lr` are correctly included.** The grammar recognises all three assembler-level aliases (`fp`→r5, `sp`→r6, `lr`→r7). There is no `ra` alias in the LCC ISA — earlier drafts of this document falsely listed `ra` as a missing alias; that claim is retracted.
 
 ---
 
@@ -155,7 +155,6 @@ The `?external=` query string tells `esm.sh` to treat `@codemirror/language`, `@
 | Gap | Severity | Notes |
 |-----|----------|-------|
 | Playground (`docs/playground/index.html`) does not import `lang-lcc.js` | High | Integration is one `import` + three extension lines (see §6); tracked in #791 |
-| `ra` register alias missing from grammar | Low | One-line fix in `lcc.grammar`; rebuild needed |
 | Bare `x`-prefixed hex literals (`xF`, `x1F`) tokenise as `Identifier` | Low | LCC convention; fix by adding `"x" $[0-9A-Fa-f]+` to `Number` token rule |
 | Grammar does not cover LCC+ `.lccplus` directive operand shape | Cosmetic | Directive is recognised; operands fall through to generic `Identifier` |
 | Browser CDN test blocked in CI (esm.sh unreachable from headless Chromium) | Medium | Node.js parse test covers grammar correctness; CDN integration requires a live browser |
