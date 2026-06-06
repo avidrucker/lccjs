@@ -723,4 +723,22 @@ async function main() {
   db.close();
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+// Pure, side-effect-free helpers are exported for unit testing (#965). Importing
+// this module must NOT run the pipeline — main() is gated on direct invocation so
+// that `require('./ice-score.js')` only loads the functions (no DB open, no gh
+// calls, no file writes).
+module.exports = {
+  computeIce,
+  finalScore,
+  sortRows,
+  rankRows,
+  easeFromEhrs,
+  parseRecords,
+  parseCsv,
+  encodeField,
+  encodeRow,
+};
+
+if (require.main === module) {
+  main().catch(e => { console.error(e); process.exit(1); });
+}
