@@ -810,3 +810,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 823,,,DEV,,,,,-3,,,,,TEST,,lccjs
 824,,,DEV,,,,,-3,,,,,TEST,,lccjs
 825,897,docs: add commit-first callout to close sequence,WRITER,10,4,2,8,2,2026-06-05T17:04:36-1000,2026-06-05T17:06:05-1000,,callout block in claude_workflow.md + step-5 rewrite + cheatsheet comment in puzzle-lifecycle.md,DRAGONFRUIT,sonnet-4.6,lccjs
+826,899,errors.csv missing from stats/ — no CSV export,DEV,30,10,2,28,8,2026-06-05T17:04:57-1000,2026-06-05T17:06:21-1000,,errors-export.js + stats/errors.csv + package.json errors:export script,ELDERBERRY,sonnet-4.6,lccjs
