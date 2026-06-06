@@ -12,7 +12,9 @@ const { fatalExit: exitProcess } = require('../utils/cliExit');
 const { TRAP_HALT, TRAP_BP } = require('../core/constants');
 const {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
-  TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC, EOP_RAND,
+  TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC,
+  TRAP_BEEP, TRAP_DING,
+  EOP_RAND,
 } = require('./constants');
 
 // Number of interpreter steps executed per setImmediate tick in runAsync().
@@ -312,6 +314,12 @@ class InterpreterPlus extends Interpreter {
       case TRAP_RESETC: // resetc
         this.executeResetCursor();
         break;
+      case TRAP_BEEP: // beep
+        this.executeBeep();
+        break;
+      case TRAP_DING: // ding
+        this.executeDing();
+        break;
       default:
         // If it's not a known LCC+ trap, call parent's method
         super.executeTRAP();
@@ -422,6 +430,14 @@ class InterpreterPlus extends Interpreter {
   executeResetCursor() {
     if (!process.stdout.isTTY) return; // escape targets stdout — guard on stdout, not stdin
     process.stdout.write('\u001B[H'); // move cursor to home
+  }
+
+  executeBeep() {
+    process.stdout.write('\x07');
+  }
+
+  executeDing() {
+    process.stdout.write('\x07');
   }
 }
 

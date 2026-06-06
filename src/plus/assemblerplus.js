@@ -8,7 +8,9 @@ const { fatalExit } = require('../utils/cliExit');
 const { OPCODE_EXT: OP_EXT } = require('../core/constants');
 const {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
-  TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC, EOP_RAND,
+  TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC,
+  TRAP_BEEP, TRAP_DING,
+  EOP_RAND,
 } = require('./constants');
 
 class AssemblerPlus extends Assembler {
@@ -24,6 +26,8 @@ class AssemblerPlus extends Assembler {
     t['rand']   = { encoder: (ops) => this.assembleRAND(ops),              operandShape: 'dr, sr' };
     t['millis'] = { encoder: (ops) => this.assembleTrap(ops, TRAP_MILLIS), operandShape: '[sr]' };
     t['resetc'] = { encoder: (ops) => this.assembleTrap(ops, TRAP_RESETC), operandShape: '[sr]' };
+    t['beep']   = { encoder: (_ops) => this.assembleTrap([], TRAP_BEEP),  operandShape: '(none)' };
+    t['ding']   = { encoder: (_ops) => this.assembleTrap([], TRAP_DING),  operandShape: '(none)' };
   }
 
   main(args) {

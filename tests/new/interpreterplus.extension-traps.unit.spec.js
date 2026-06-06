@@ -14,7 +14,7 @@
  */
 
 const InterpreterPlus = require('../../src/plus/interpreterplus');
-const { TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR, TRAP_MILLIS, TRAP_RESETC } = require('../../src/plus/constants');
+const { TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR, TRAP_MILLIS, TRAP_RESETC, TRAP_BEEP, TRAP_DING } = require('../../src/plus/constants');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -326,5 +326,63 @@ describe(`InterpreterPlus — executeResetCursor / resetc (TRAP_RESETC = 0x${TRA
 
     expect(writeSpy).toHaveBeenCalledWith('[H');
     expect(writeSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// beep (TRAP_BEEP = 0xF8)
+// ---------------------------------------------------------------------------
+
+describe(`InterpreterPlus — executeBeep / beep (TRAP_BEEP = 0x${TRAP_BEEP.toString(16).toUpperCase()})`, () => {
+  let writeSpy;
+  beforeEach(() => {
+    writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+  });
+  afterEach(() => writeSpy.mockRestore());
+
+  test('writes ASCII BEL to stdout', () => {
+    const ip = makeIp();
+    ip.executeBeep();
+    expect(writeSpy).toHaveBeenCalledWith('\x07');
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('takes no register operand — does not read dr or sr', () => {
+    const ip = makeIp();
+    ip.r.fill(0xFFFF);
+    ip.dr = 3;
+    ip.sr = 5;
+    ip.executeBeep();
+    expect(ip.r[3]).toBe(0xFFFF);
+    expect(ip.r[5]).toBe(0xFFFF);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ding (TRAP_DING = 0xF7)
+// ---------------------------------------------------------------------------
+
+describe(`InterpreterPlus — executeDing / ding (TRAP_DING = 0x${TRAP_DING.toString(16).toUpperCase()})`, () => {
+  let writeSpy;
+  beforeEach(() => {
+    writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+  });
+  afterEach(() => writeSpy.mockRestore());
+
+  test('writes ASCII BEL to stdout', () => {
+    const ip = makeIp();
+    ip.executeDing();
+    expect(writeSpy).toHaveBeenCalledWith('\x07');
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('takes no register operand — does not read dr or sr', () => {
+    const ip = makeIp();
+    ip.r.fill(0xFFFF);
+    ip.dr = 2;
+    ip.sr = 4;
+    ip.executeDing();
+    expect(ip.r[2]).toBe(0xFFFF);
+    expect(ip.r[4]).toBe(0xFFFF);
   });
 });
