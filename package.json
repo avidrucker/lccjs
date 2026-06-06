@@ -27,7 +27,8 @@
     "build:browser": "webpack --config webpack.browser.config.js",
     "test:e2e": "playwright test --config playwright.e2e.config.js",
     "test:potato-tokens": "node scripts/potato-token-test.js",
-    "report": "node scripts/report.js"
+    "report": "node scripts/report.js",
+    "ice:score": "node scripts/ice-score.js"
   },
   "devDependencies": {
     "@lezer/lr": "^1.4.10",
