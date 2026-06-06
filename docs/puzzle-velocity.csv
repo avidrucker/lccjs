@@ -908,3 +908,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 921,991,"TIL 2026-06-06 GRAPE — worktree script staleness, Playwright for SPAs, code ≠ runtime",WRITER,15,8,2,13,6,2026-06-06T11:37:40-1000,2026-06-06T11:39:27-1000,,"4 lessons: stale worktree DB path, Playwright resolves human-required SPAs, source ≠ runtime, package.json ≠ installed",GRAPE,sonnet-4.6,lccjs
 922,992,"TIL 2026-06-06 ELDERBERRY — query canonical DB, propagate corrections, file adjacent",WRITER,15,3,1.6,13.4,1.4,2026-06-06T11:38:49-1000,2026-06-06T11:40:27-1000,,,ELDERBERRY,opus-4.8,lccjs
 923,993,TIL 2026-06-06 BANANA,WRITER,15,5,1,14,4,2026-06-06T11:42:23-1000,2026-06-06T11:43:08-1000,,,BANANA,sonnet-4.6,lccjs
+924,994,correct TIL 2026-06-06 DRAGONFRUIT .claire confabulation,WRITER,10,5,2,8,3,2026-06-06T11:43:00-10:00,2026-06-06T11:45:23-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs

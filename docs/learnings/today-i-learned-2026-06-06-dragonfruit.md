@@ -14,11 +14,15 @@ Lesson: **close in dependency order, and watch the real output**. A fix to a sha
 
 ---
 
-## `.claire/` was `.claude/`'s predecessor, and jest never knew
+## An orphan directory with one spec file fooled jest — and I almost fool myself explaining it
 
-The Jest config excluded `.claude/worktrees/` from test discovery (#247 fix), but a stale APPLE worktree lived in `.claire/worktrees/` — a legacy location from before the convention settled. Jest found it, tried to run its specs in the wrong `node_modules`, and surfaced a false `ERR_MODULE_NOT_FOUND` failure.
+The Jest config excluded `.claude/worktrees/` from test discovery (#247 fix), but a directory at `.claire/worktrees/apple-issue-874/tests/new/lezer-grammar.unit.spec.js` was still being picked up. Jest's `tests/new` pattern is a substring match, so any path containing that segment qualifies.
 
-The fix (#943) was a one-liner: add `<rootDir>/.claire/worktrees/` alongside the existing `.claude/` entry. The broader lesson: **exclusion patterns are point-in-time**. When a directory convention changes, grep for the old name in every config that references it.
+Post-fix investigation revealed: `.claire/` was **never a convention**. The claim script has always used `.claude/worktrees/` — there is zero git history of `.claire/` in any script or config. The directory is a plain orphan with no `.git` file, not registered in `git worktree list`, containing exactly one spec file. APPLE created it on 2026-06-05 via a manual `mkdir` or aborted worktree setup — it's not a "legacy location," it's a one-time accident.
+
+I initially wrote in this TIL that `.claire/` "was `.claude/`'s predecessor." That was a confabulation — I inferred a history that doesn't exist from a directory name that sounds plausible. Post-session research (prompted by the user questioning it) confirmed the reality.
+
+The fix (#943) was a one-liner: add `<rootDir>/.claire/worktrees/` alongside `.claude/`. The actual lesson: **exclusion patterns don't cover directories they've never seen**, and **an untracked directory with no `.git` file can still contain files that tools will pick up**. Check `git worktree list` before assuming an unfamiliar directory is a registered worktree.
 
 ---
 
