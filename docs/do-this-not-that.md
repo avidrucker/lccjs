@@ -88,6 +88,13 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 - **Don't:** immediately start or recommend work on a ticket because its description looks actionable.
 - **Why:** An unresolved blocker gate (e.g., a human-decision issue in the parent tracker) means the ticket can't be closed even if the code is done. Surfacing this before the claim saves a wasted cycle.
 
+**Don't trust unchecked boxes in a tracker body — verify each child's live state**
+
+- **Do:** Run `gh issue view N --json state -q .state` for each child referenced in the checklist before reporting or acting on its state.
+- **Don't:** Read a tracker's issue body, see `- [ ] #N`, and report the child as "open/deferred."
+- **Why:** Tracker bodies are frozen snapshots. GitHub does not auto-check boxes when children close. A `[ ]` that was accurate yesterday may be wrong today. One API call per child costs ~1 second; trusting a stale box costs an agent cycle and publishes wrong information. (#904, #906)
+- **Correction action:** If you discover a child is already closed after reporting it as open, post a correction comment on the tracker with the correct state immediately — do not leave the wrong information standing.
+
 **Always pass `--as <fruit>` to `npm run claim`; never use a bare positional name**
 
 - **Do:** `npm run claim -- 799 --as grape`
