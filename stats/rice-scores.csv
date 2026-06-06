@@ -1,42 +1,80 @@
 issue,title,type,R,I,C_pct,E_hrs,rice_score,rice_rank,yegor_priority,actionable,labels,notes
-798,HUMAN: ratify #773 rulings (R2 no-split R6 trailing newline),human-decision,3,2,80,0.25,19.20,1,9,N,"human-decision-required",unblocks implementation; cheap decision but must be human
+798,HUMAN: ratify #773 rulings (R2 no-split R6 trailing newline),human-decision,3,2,80,0.25,19.20,1,9,N,human-decision-required,unblocks implementation; cheap decision but must be human
 689,HUMAN: ruling on #625+#626 unblock M1+M2,human-decision,3,2,70,0.25,16.80,2,8,N,"decision,humans-only",unblocks orchestrate filter+claim label work
-507,PM: send long-line report to Prof Dos Reis (OG BUG #13),PM,3,1,80,0.25,9.60,3,7,N,"documentation,humans-only",external communication task; only human can send email
-806,BUG: browser/e2e tests reference defunct #playground-input,bug,3,2,80,0.75,6.40,4,7,Y,"severity:medium",real test coverage gap; playground changed but tests not updated
-805,BUG: displayWithSeparator injects newline breaking prompt-before-din,bug,3,2,80,0.75,6.40,5,7,Y,"severity:medium",visible layout bug affecting programs using din after separator
-518,ARC: validate ct=0 shift decision + #512 range-check lower bound,architecture,3,2,50,0.50,6.00,6,6,N,"decision,human-decision-required",human must ratify the ct=0 ruling before range-check work can proceed
-732,DEV: share-as-link — encode playground code in shareable URL,feature,4,2,60,1.00,4.80,7,4,Y,"severity:low,deferred",deferred but high reach+impact; RICE suggests worth reconsidering
-630,decision: detect and skip in-flight agents before assignment,decision,2,2,60,0.50,4.80,8,5,N,"severity:low,decision",must be decided before impl; once decided is agent-actionable
-550,HUMAN REVIEW: #532 audit red flags need owner action,human-review,2,2,60,0.50,4.80,9,6,N,"decision,review-decision",human must review three flagged items before child work proceeds
-677,TRACKER: browser playground on GitHub Pages,tracker,4,2,50,1.00,4.00,10,5,Y,"deferred",high reach flagship tracker; child issues individually actionable
-159,act on Prof Dos Reis reply re sext semantics,research,3,2,50,0.75,4.00,11,5,Y,"severity:low,research,blocked,decision",blocked on external reply but research portion is agent-doable
-733,DEV: download current file as .a from playground,feature,4,1,70,0.75,3.73,12,3,Y,"severity:low,deferred",deferred low-severity but fairly cheap and high reach (4) — high RICE underscores under-prioritization
-714,Tracker: lccjs web feature parity ILCC dashboard gap checklist,tracker,3,1,60,0.50,3.60,13,4,Y,"severity:low,research",tracker with real sub-items; agents can work child issues
-814,DOCS: lccjs-assembly skill col-0 indentation rule,docs,1,1,80,0.25,3.20,14,4,Y,,tiny high-confidence fix; low reach keeps score moderate
-255,Decomplect H4: group interpreter constructor state,refactor,3,2,50,1.00,3.00,15,4,Y,"enhancement,severity:low,blocked",blocked; meaningful refactor improving testability
-252,Decomplect H1b: lift trace+register-diff out of interpreter step(),refactor,3,2,50,1.00,3.00,16,4,Y,"enhancement,severity:low,blocked",blocked; improves observer seam
-590,Potato fuzzer — per-stdin-prompt fuzzer oracle parity,testing,3,2,50,1.00,3.00,17,5,Y,"testing,proposal,parity",high potential for finding input-handling bugs
-815,DOCS: create docs/project-gotchas.md for non-obvious dev traps,docs,2,1,70,0.50,2.80,18,4,Y,,high confidence quick docs win; helps all agents avoid repeat traps
-812,Closing comment summary headings ambiguous about tense,process,2,0.5,70,0.25,2.80,19,3,Y,,cheap process fix; reduces agent confusion on close
-632,decision: add waiting-on-external label and document,decision,2,0.5,70,0.25,2.80,20,3,N,"severity:low,decision",human decision; cheap once decided
-40,OB-008: cuh63 6.3 mov rejects negatives mvi accepts,parity,2,1,70,0.50,2.80,21,4,Y,"documentation,severity:medium,blocked,decision",parity tracking important for correctness guarantees
-633,decision: close.js auto-post closing comment skeleton,decision,2,1,60,0.50,2.40,22,3,N,"severity:low,decision",human decision; decent quality-of-life improvement for all agents
-795,TRACKER: resolve 6 WARN issues from #788 audit,PM-tracker,2,1,80,0.75,2.13,23,4,Y,,active tracker with clear sub-items; in progress
-794,refactor: extract ISA numeric constants into shared module,refactor,3,1,70,1.00,2.10,24,4,Y,"refactor,severity:low",worthwhile refactor but full-effort; Yegor and RICE align
-429,Tracker: Tier 4 interpreter decomplect,tracker,2,1,50,0.50,2.00,25,3,Y,"severity:low,research,blocked",umbrella tracker; child work is agent-actionable
-558,Tracker: human backlog-grooming actions from #273 triage,PM-tracker,2,1,50,0.50,2.00,26,3,Y,,housekeeping tracker; moderate priority both ways
-796,claim.js --dry-run + live-worktree guard has no test coverage,testing,2,1,70,0.75,1.87,27,4,Y,,test gap for tooling script; worth closing when agent has capacity
-587,Potato Token Testing suite benchmark,testing,3,1,60,1.00,1.80,28,4,Y,"testing,proposal",lower ROI than #590 per RICE; same effort more modest impact
-800,docs/www/ has no README explaining WWW docs,docs,1,0.5,80,0.25,1.60,29,2,Y,"documentation",quick docs win but very narrow reach (internal only)
-264,WRITER: blank-.e-on-failed-assembly report/writeup,docs,2,0.5,70,0.50,1.40,30,3,Y,"documentation,severity:low,blocked",blocked; useful once unblocked
-813,PM: post-triage priority snapshot 2026-06-05,PM,1,0.5,70,0.25,1.40,31,3,Y,,routine PM snapshot; quickly done
-741,orientation.md Mermaid diagrams lack review,docs,2,0.5,60,0.50,1.20,32,2,N,"documentation,human-required",needs human quality review; agent can draft but human must approve
-636,decision: adopt 10-entry TIL harvest cadence,decision,1,0.5,60,0.25,1.20,33,2,N,"severity:low,decision",low reach decision; human must approve
-450,No in-browser LCC highlighting on github.com,feature,4,0.5,50,1.00,1.00,34,3,Y,"enhancement,severity:low,proposal",high reach but modest impact + uncertain; full effort lowers score
-808,SPIKE: measure fruit-agent-orchestrate wall-clock per step,research,1,1,70,0.75,0.93,35,3,Y,,useful but narrow; internal process only
-816,docs: write WWW doc for 2026-06-05 session,docs,1,0.25,80,0.33,0.61,36,2,Y,,routine session doc; low priority both ways
-99,[Proposal] lcc -i: support .bin files in interactive mode,proposal,2,0.5,30,0.50,0.60,37,2,Y,"enhancement,severity:low,proposal",feature already implemented in ilcc.js; low C reflects that; should be closed
-430,Tracker: Tier 5 aspirational research,tracker,1,0.5,50,0.50,0.50,38,2,Y,"severity:low,research,blocked",very long-horizon; low priority both ways
-790,ding mnemonic for terminal bell absent from assembler,feature,1,0.25,30,1.00,0.08,39,1,Y,"blocked",easter egg; low R+I+C; blocked on opcode layout
-789,boop mnemonic absent from assembler,feature,1,0.25,30,1.00,0.08,40,1,Y,"blocked",easter egg; same as #790
-477,feat: add joke mnemonic etc (ETC.txt at runtime),feature,1,0.25,30,1.00,0.08,41,1,Y,"enhancement,severity:low,blocked",malformed (ETC.txt fabricated); very low priority
+951,bug(showcase): CM6 line numbers not visible on GitHub Pages,bug,4,2,80,0.50,12.80,3,8,Y,"bug,severity:high",CM6 line numbers absent on GH Pages; high public visibility; confirmed via screenshot
+507,PM: send long-line report to Prof Dos Reis (OG BUG #13),PM,3,1,80,0.25,9.60,4,7,N,"documentation,humans-only",external communication task; only human can send email
+805,BUG: displayWithSeparator injects newline breaking prompt-before-din,bug,3,2,80,0.75,6.40,5,7,Y,severity:medium,visible layout bug affecting programs using din after separator
+806,BUG: browser/e2e tests reference defunct #playground-input,bug,3,2,80,0.75,6.40,6,7,Y,severity:medium,real test coverage gap; playground changed but tests not updated
+518,ARC: validate ct=0 shift decision + #512 range-check lower bound,architecture,3,2,50,0.50,6.00,7,6,N,"decision,human-decision-required",human must ratify the ct=0 ruling before range-check work can proceed
+841,decision: how to leverage artifact-quality-criteria.md,decision,2,1,70,0.25,5.60,8,6,N,"severity:low,decision",cheap human decision; depends on #840; unblocks quality criteria adoption
+845,decision: RULES.json adoption path — choose Option A B or C,decision,2,1,70,0.25,5.60,9,5,N,"severity:low,decision",human ratification of RULES.json path; depends on #842 review
+867,HUMAN: send sra-shift-by-zero summary to Prof. Dos Reis,human-decision,2,1,70,0.25,5.60,10,6,N,"research,decision",human action required; child of #513; email to Prof. Dos Reis
+550,HUMAN REVIEW: #532 audit red flags need owner action,human-review,2,2,60,0.50,4.80,11,6,N,"decision,review-decision",human must review three flagged items before child work proceeds
+630,decision: detect and skip in-flight agents before assignment,decision,2,2,60,0.50,4.80,12,5,N,"severity:low,decision",must be decided before impl; once decided is agent-actionable
+732,DEV: share-as-link — encode playground code in shareable URL,feature,4,2,60,1.00,4.80,13,4,Y,"severity:low,deferred",deferred but high reach+impact; RICE suggests worth reconsidering
+159,act on Prof Dos Reis reply re sext semantics,research,3,2,50,0.75,4.00,14,5,Y,"severity:low,research,blocked,decision",blocked on external reply but research portion is agent-doable
+677,TRACKER: browser playground on GitHub Pages,tracker,4,2,50,1.00,4.00,15,5,Y,deferred,high reach flagship tracker; child issues individually actionable
+733,DEV: download current file as .a from playground,feature,4,1,70,0.75,3.73,16,3,Y,"severity:low,deferred",deferred low-severity but fairly cheap and high reach (4) — high RICE underscores under-prioritization
+714,Tracker: lccjs web feature parity ILCC dashboard gap checklist,tracker,3,1,60,0.50,3.60,17,4,Y,"severity:low,research",tracker with real sub-items; agents can work child issues
+864,feat: implement R2 — formatter keeps label+body inline,feature,2,1,90,0.50,3.60,18,6,Y,enhancement,R2 ratified in #798; straightforward implementation
+941,lezer-grammar test suite — @lezer/lr package missing — 8 tests crash,bug,1,1,90,0.25,3.60,19,7,Y,"bug,test",missing npm package; 8 tests crashing; clear quick fix
+814,DOCS: lccjs-assembly skill col-0 indentation rule,docs,1,1,80,0.25,3.20,20,4,Y,,tiny high-confidence fix; low reach keeps score moderate
+861,test: update formatter expected values to include trailing newline,test,2,1,80,0.50,3.20,21,6,Y,test,pre-req for R6 trial; child of #798
+863,feat: implement R6 — formatter always emits one trailing newline,feature,2,1,80,0.50,3.20,22,6,Y,enhancement,conditional on #861 trial passing; POSIX compliance
+252,Decomplect H1b: lift trace+register-diff out of interpreter step(),refactor,3,2,50,1.00,3.00,23,4,Y,"enhancement,severity:low,blocked",blocked; improves observer seam
+255,Decomplect H4: group interpreter constructor state,refactor,3,2,50,1.00,3.00,24,4,Y,"enhancement,severity:low,blocked",blocked; meaningful refactor improving testability
+590,Potato fuzzer — per-stdin-prompt fuzzer oracle parity,testing,3,2,50,1.00,3.00,25,5,Y,"testing,proposal,parity",high potential for finding input-handling bugs
+40,OB-008: cuh63 6.3 mov rejects negatives mvi accepts,parity,2,1,70,0.50,2.80,26,4,Y,"documentation,severity:medium,blocked,decision",parity tracking important for correctness guarantees
+632,decision: add waiting-on-external label and document,decision,2,0.5,70,0.25,2.80,27,3,N,"severity:low,decision",human decision; cheap once decided
+812,Closing comment summary headings ambiguous about tense,process,2,0.5,70,0.25,2.80,28,3,Y,,cheap process fix; reduces agent confusion on close
+815,DOCS: create docs/project-gotchas.md for non-obvious dev traps,docs,2,1,70,0.50,2.80,29,4,Y,,high confidence quick docs win; helps all agents avoid repeat traps
+829,decision: define orchestrator-session fruit identity convention for npm run claim,decision,2,0.5,70,0.25,2.80,30,4,N,"severity:low,decision",orchestrator identity convention; process question for multi-agent sessions
+633,decision: close.js auto-post closing comment skeleton,decision,2,1,60,0.50,2.40,31,3,N,"severity:low,decision",human decision; decent quality-of-life improvement for all agents
+868,HUMAN: get Charlie's perspective on sra r0 0 shift-by-zero,human-decision,2,0.5,60,0.25,2.40,32,4,N,"research,decision",human must contact Charlie; pre-step before #867; child of #513
+949,feat: use ANONYMOUS placeholder in .lst/.bst when name.nnn is empty,feature,3,0.5,80,0.50,2.40,33,5,Y,"enhancement,severity:low",ANONYMOUS placeholder when name.nnn absent; end-user visible output change
+795,TRACKER: resolve 6 WARN issues from #788 audit,PM-tracker,2,1,80,0.75,2.13,34,4,Y,,active tracker with clear sub-items; in progress
+794,refactor: extract ISA numeric constants into shared module,refactor,3,1,70,1.00,2.10,35,4,Y,"refactor,severity:low",worthwhile refactor but full-effort; Yegor and RICE align
+429,Tracker: Tier 4 interpreter decomplect,tracker,2,1,50,0.50,2.00,36,3,Y,"severity:low,research,blocked",umbrella tracker; child work is agent-actionable
+558,Tracker: human backlog-grooming actions from #273 triage,PM-tracker,2,1,50,0.50,2.00,37,3,Y,,housekeeping tracker; moderate priority both ways
+796,claim.js --dry-run + live-worktree guard has no test coverage,testing,2,1,70,0.75,1.87,38,4,Y,,test gap for tooling script; worth closing when agent has capacity
+934,RESEARCH: run .hex sample files against OG LCC oracle,research,2,1,70,0.75,1.87,39,5,Y,"severity:low,research",oracle parity research for .hex file input handling behavior
+587,Potato Token Testing suite benchmark,testing,3,1,60,1.00,1.80,40,4,Y,"testing,proposal",lower ROI than #590 per RICE; same effort more modest impact
+910,test(velocity-log): remove stale negative-delta_c_min rejection test,test,1,0.5,90,0.25,1.80,41,5,Y,bug,stale test removal; quick cleanup; improves test suite accuracy
+935,docs: audit and remove register alias references from docs/,docs,2,0.5,90,0.50,1.80,42,6,Y,"documentation,severity:low",confabulation source; agents misled by stale alias docs; high confidence
+800,docs/www/ has no README explaining WWW docs,docs,1,0.5,80,0.25,1.60,43,2,Y,documentation,quick docs win but very narrow reach (internal only)
+911,data(velocity-csv): reconcile model column — 158 rows with empty model,data,1,1,80,0.50,1.60,44,5,Y,bug,158 rows need model backfill; data quality fix
+927,until-grep polling loop exits early on intermediate conflict text,bug,1,1,80,0.50,1.60,45,6,Y,,Monitor command false-positive exit on conflict text; clear repro
+937,errors: File-must-be-read-first Edit failure not logged — missed in audit,docs,1,0.5,80,0.25,1.60,46,5,Y,"documentation,severity:low",specific missed event in 8-event audit; quick protocol doc fix
+939,WRITER: remove skip-when-immediately-retried exception from log-error protocol,docs,1,0.5,80,0.25,1.60,47,5,Y,documentation,removes exception from log-error protocol; always log all errors
+940,velocity-log test suite: worktree-guard rejects subprocess runs masking 9 tests,bug,1,1,80,0.50,1.60,48,6,Y,"bug,test",worktree-guard breaks subprocess runs; 9 validation tests hidden
+942,puzzle-velocity-csv: 194 rows with empty model column failing backfill test,bug,1,1,80,0.50,1.60,49,6,Y,"bug,data",194 rows empty model; backfill test failing; overlaps #911
+943,Jest glob matches test files inside active agent worktrees causing failures,bug,1,1,80,0.50,1.60,50,6,Y,"bug,test",jest testPathPattern includes worktrees; spurious multi-agent failures
+944,fix(close): --update-trackers prematurely checks box for multi-issue references,bug,1,1,80,0.50,1.60,51,6,Y,,--update-trackers checks wrong issue box when line references multiple issues
+264,WRITER: blank-.e-on-failed-assembly report/writeup,docs,2,0.5,70,0.50,1.40,52,3,Y,"documentation,severity:low,blocked",blocked; useful once unblocked
+813,PM: post-triage priority snapshot 2026-06-05,PM,1,0.5,70,0.25,1.40,53,3,Y,,routine PM snapshot; quickly done
+838,TRACKER: GitHub repo activity visualization for lccjs,tracker,2,1,70,1.00,1.40,54,4,Y,"severity:low,research",tracker for #837 spike; multiple sub-tasks in visualization work
+890,TRACKER: skill-inventory improvements from #886 audit (A through H),tracker,2,1,70,1.00,1.40,55,4,Y,,8 independent improvement items from #886 audit; each ≤60m
+936,errors: 4 agent events non-loggable should be — define loggability criteria,docs,1,1,70,0.50,1.40,56,5,Y,"documentation,severity:low",refine error-logging protocol; 4 events reclassified as loggable
+636,decision: adopt 10-entry TIL harvest cadence,decision,1,0.5,60,0.25,1.20,57,2,N,"severity:low,decision",low reach decision; human must approve
+741,orientation.md Mermaid diagrams lack review,docs,2,0.5,60,0.50,1.20,58,2,N,"documentation,human-required",needs human quality review; agent can draft but human must approve
+891,TRACKER: add did-you-mean suggestions to verbose error messages,tracker,3,0.5,70,1.00,1.05,59,5,Y,"enhancement,scope",depends on #883 (suggestClosest) landed; multiple error paths to wire up
+450,No in-browser LCC highlighting on github.com,feature,4,0.5,50,1.00,1.00,60,3,Y,"enhancement,severity:low,proposal",high reach but modest impact + uncertain; full effort lowers score
+873,ARC/DEV: breaking public-API regroup of interpreter state (1b — future),architecture,2,1,50,1.00,1.00,61,3,Y,"enhancement,severity:low,blocked",deliberately deferred; blocked on #872; future DDD alignment
+808,SPIKE: measure fruit-agent-orchestrate wall-clock per step,research,1,1,70,0.75,0.93,62,3,Y,,useful but narrow; internal process only
+872,DEV: interpreter state grouping — diag bucket internal-only,enhancement,2,0.5,70,0.75,0.93,63,4,Y,"enhancement,severity:low,blocked",blocked on #252; internal-only grouping; no public API change
+931,RESEARCH: audit deep-code-review-claude-2026-06-03.md — confirm and decide next steps,research,1,1,70,0.75,0.93,64,5,Y,,audit code review doc for actionable items; time-bounded research
+945,data(stats): keep rice-scores.csv current — score new issues retroactively,data,1,1,70,0.75,0.93,65,4,Y,severity:low,retroactive scoring sweep; this ticket closed by this commit
+946,feat(db): add rice table to ~/.lccjs/velocity.db,feature,1,1,60,0.75,0.80,66,4,Y,,adds rice table to DB; part of multi-table DB consolidation with #947
+926,Audit #900 error-logging deliverables for gaps and coherence,research,1,0.5,70,0.50,0.70,67,4,Y,documentation,audit error-logging deliverables from #900 for gaps and coherence
+928,RESEARCH: close.js README conflict — auto-resolve docs/learnings/README.md,research,1,0.5,70,0.50,0.70,68,4,Y,,research for consistent conflict-resolution in close.js script
+933,RESEARCH: parse improving-data-analysis-research.md for actionable follow-ups,research,1,0.5,70,0.50,0.70,69,4,Y,,extract action items from existing doc; quick scan task
+950,data(stats): add issue lifecycle summary section to day-nine-analysis.ipynb,data,1,0.5,70,0.50,0.70,70,3,Y,"documentation,severity:low",adds lifecycle analysis section to notebook; self-contained data task
+816,docs: write WWW doc for 2026-06-05 session,docs,1,0.25,80,0.33,0.61,71,2,Y,,routine session doc; low priority both ways
+99,[Proposal] lcc -i: support .bin files in interactive mode,proposal,2,0.5,30,0.50,0.60,72,2,Y,"enhancement,severity:low,proposal",feature already implemented in ilcc.js; low C reflects that; should be closed
+938,TRACKER: apply issue-review-skill to open issues — quality pass,tracker,1,1,60,1.00,0.60,73,4,Y,documentation,quality/accessibility/actionability pass on all open issues
+947,refactor(db): rename ~/.lccjs/velocity.db to lccjs.db,refactor,1,0.5,60,0.50,0.60,74,3,Y,,rename DB file; needs coordination with all consumers
+430,Tracker: Tier 5 aspirational research,tracker,1,0.5,50,0.50,0.50,75,2,Y,"severity:low,research,blocked",very long-horizon; low priority both ways
+948,RESEARCH: prioritization alternatives to RICE for solo/passion/AI-PM projects,research,1,0.5,50,0.75,0.33,76,3,Y,"severity:low,research",alternative prioritization frameworks; open-ended exploratory research
+477,feat: add joke mnemonic etc (ETC.txt at runtime),feature,1,0.25,30,1.00,0.08,77,1,Y,"enhancement,severity:low,blocked",malformed (ETC.txt fabricated); very low priority
+789,boop mnemonic absent from assembler,feature,1,0.25,30,1.00,0.08,78,1,Y,blocked,easter egg; same as #790
+790,ding mnemonic for terminal bell absent from assembler,feature,1,0.25,30,1.00,0.08,79,1,Y,blocked,easter egg; low R+I+C; blocked on opcode layout
