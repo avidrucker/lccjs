@@ -503,6 +503,18 @@ class IInterpreter extends Interpreter {
     }
   }
 
+  // _readCommand() — read one interactive command line, consuming the trailing '\n'
+  // that readLineFromStdin() deliberately leaves in inputBuffer for ain parity.
+  // Program I/O traps (din/hin) need that '\n' so ain can read it; the interactive
+  // prompt has no ain reads between commands, so we strip it here instead.
+  _readCommand() {
+    const result = this.readLineFromStdin();
+    if (this.inputBuffer && this.inputBuffer[0] === '\n') {
+      this.inputBuffer = this.inputBuffer.slice(1);
+    }
+    return result;
+  }
+
   // runInteractive(sourceMap) — main interactive prompt loop.
   //
   // Commands (entered at "Input: " prompt):
@@ -547,7 +559,7 @@ class IInterpreter extends Interpreter {
 
     while (true) {
       process.stdout.write('Input: ');
-      const { inputLine } = this.readLineFromStdin();
+      const { inputLine } = this._readCommand();
       const cmd = inputLine.trim();
 
       if (cmd === 'q') break;

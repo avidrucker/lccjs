@@ -835,3 +835,6 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 848,,,DEV,,,,,-3,,,,,TEST,,lccjs
 849,,,DEV,,,,,-3,,,,,TEST,,lccjs
 850,924,ISA closed-set docs — add boundary statements,WRITER,30,20,4,26,16,2026-06-05T20:41:36-1000,2026-06-05T20:45:24-1000,,Added registers section + 5 boundary notes to lcc-isa.md; 3 boundary notes to lccplus-isa.md. Skill edits blocked by auto-classifier (out of scope per task assignment).,ELDERBERRY,sonnet-4.6,lccjs
+851,908,fix currentIteration off-by-one after init,DEV,45,8,7,38,1,2026-06-05T20:39:38-1000,2026-06-05T20:46:50-1000,,root cause: readLineFromStdin keeps \n in inputBuffer for ain parity; spurious empty-cmd fires repeat-lastStep(1) before first real command; fixed with _readCommand() in IInterpreter,CHERRY,sonnet-4.6,lccjs
+852,,,DEV,,,,,-3,,,,,TEST,,lccjs
+853,,,DEV,,,,,-3,,,,,TEST,,lccjs
