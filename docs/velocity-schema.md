@@ -99,3 +99,36 @@ corruption is visible in the data rather than silent. See
 - `scripts/velocity-export.js` — export all rows to `docs/puzzle-velocity.csv`
 - `docs/puzzle-velocity.md` — protocol and close-sequence instructions
 - `docs/research/sqlite-schema-questions.md` — deferred schema design questions (#284)
+
+## Table: `rice`
+
+RICE scores for open issues. Populated via `npm run rice:seed` (seeds from `stats/rice-scores.csv`) or `npm run rice:log`.
+
+```sql
+CREATE TABLE rice (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  issue          INTEGER NOT NULL,
+  title          TEXT,
+  type           TEXT,
+  r              REAL,      -- Reach (1–4 scale)
+  i              REAL,      -- Impact (0.25/0.5/1/2/3 scale)
+  c_pct          REAL,      -- Confidence % (30–100)
+  e_hrs          REAL,      -- Effort in hours (H_min / 60)
+  rice_score     REAL,      -- r * i * (c_pct/100) / e_hrs
+  rice_rank      INTEGER,
+  yegor_priority INTEGER,
+  actionable     TEXT,      -- 'Y' | 'N'
+  labels         TEXT,
+  notes          TEXT,
+  scored_iso     TEXT,
+  scored_by      TEXT,
+  repo           TEXT DEFAULT 'lccjs'
+);
+```
+
+### Related files
+
+- `scripts/rice-seed.js` — create table + seed from `stats/rice-scores.csv` (idempotent, `--force` to re-seed)
+- `scripts/rice-log.js` — insert or replace a row (upserts on issue, auto-exports CSV)
+- `scripts/rice-export.js` — export all rows to `stats/rice-scores.csv`
+- `stats/rice-notes.md` — rubric, formula, and key findings from the original RICE scoring pass
