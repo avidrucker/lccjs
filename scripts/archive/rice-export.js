@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 /**
+ * RETIRED (#997) — RICE was superseded by ICE in #956. Use `npm run ice:score`
+ * (scripts/ice-score.js) instead. This file is kept here as a historical reference
+ * only; its npm script (`rice:export`) was removed from package.json.
+ *
  * rice-export.js — export ~/.lccjs/lccjs.db rice table → stats/rice-scores.csv.
  *
  * Writes an auto-generated comment header then all rice rows ordered by rice_rank.

@@ -1,4 +1,10 @@
 # RICE Scoring — lccjs open issues
+
+> **Historical — RICE was the scoring model before #956. ICE is current.**
+> RICE is no longer used for prioritization; see `npm run ice:score`,
+> `scripts/ice-score.js`, and `stats/ice-scores.md`. This file is preserved as a
+> record of the original RICE scoring pass.
+
 **Generated:** 2026-06-05 by DRAGONFRUIT (issue #811)
 **Issues scored:** 41 of ~57 open
 

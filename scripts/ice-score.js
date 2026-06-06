@@ -312,7 +312,10 @@ function detectSeverityHint(labels) {
   return { hint: '', def: 1 };
 }
 
-// ── RICE CSV seed ─────────────────────────────────────────────────────────────
+// ── RICE CSV seed (historical) ──────────────────────────────────────────────
+// RICE was retired in favor of ICE (#956, #997). This one-time migration path
+// reads the historical `stats/rice-scores.csv` so existing scores can be carried
+// into the live `ice` table; it is the only remaining RICE touchpoint.
 
 function easeFromEhrs(eHrs) {
   // Maps Yegor ≤60m effort bands to discrete Ease scale (10/7/5/3/1)

@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 /**
+ * RETIRED (#997) — RICE was superseded by ICE in #956. Use `npm run ice:score`
+ * (scripts/ice-score.js) instead. This file is kept here as a historical reference
+ * only; its npm script (`rice:seed`) was removed from package.json.
+ *
  * rice-seed.js — create the rice table in ~/.lccjs/lccjs.db and seed from
  * stats/rice-scores.csv.
  *
