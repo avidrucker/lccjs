@@ -530,5 +530,43 @@ describe('Linker Unit Tests', () => {
         expect.stringContaining('[linker]')
       );
     });
+
+    test('verbose mode suggests closest export for distance-1 undefined extern typo', () => {
+      const linker = new Linker();
+      linker.verboseModeOn = true;
+      linker.machineCode = [0];
+      linker.globalSymbolTable = { print: 5 };
+      linker.externalReferenceTable11 = [{ address: 0, label: 'prnt' }];
+      console.error.mockClear();
+      expect(() => linker.adjustExternalReferences()).toThrow(LinkerError);
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining("Did you mean 'print'?")
+      );
+    });
+
+    test('non-verbose mode does not append suggestion for undefined extern', () => {
+      const linker = new Linker();
+      linker.verboseModeOn = false;
+      linker.machineCode = [0];
+      linker.globalSymbolTable = { print: 5 };
+      linker.externalReferenceTable11 = [{ address: 0, label: 'prnt' }];
+      console.error.mockClear();
+      expect(() => linker.adjustExternalReferences()).toThrow(LinkerError);
+      expect(console.error).not.toHaveBeenCalledWith(
+        expect.stringContaining('Did you mean')
+      );
+    });
+
+    test('verbose mode gives no suggestion when undefined extern is too distant from any export', () => {
+      const linker = new Linker();
+      linker.verboseModeOn = true;
+      linker.machineCode = [0];
+      linker.globalSymbolTable = { print: 5 };
+      linker.externalReferenceTable11 = [{ address: 0, label: 'xyz_far_away' }];
+      console.error.mockClear();
+      expect(() => linker.adjustExternalReferences()).toThrow(LinkerError);
+      const errMsg = console.error.mock.calls[0][0];
+      expect(errMsg).not.toContain('Did you mean');
+    });
   });
 });

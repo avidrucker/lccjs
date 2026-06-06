@@ -6,6 +6,7 @@ const fs = require('fs');
 const { LinkerError } = require('../utils/errors');
 
 const { fatalExit, cliErrorExit } = require('../utils/cliExit');
+const { suggestClosest } = require('../utils/suggest');
 
 class Linker {
   constructor() {
@@ -245,11 +246,20 @@ class Linker {
     }
   }
 
+  _undefinedExternalRefMsg(label) {
+    let msg = `${label} is an undefined external reference`;
+    if (this.verboseModeOn) {
+      const suggestion = suggestClosest(label, Object.keys(this.globalSymbolTable));
+      if (suggestion) msg += `. Did you mean '${suggestion}'?`;
+    }
+    return msg;
+  }
+
   adjustExternalReferences() {
     // Adjust externalReferenceTable11 (11-bit addresses)
     for (let ref of this.externalReferenceTable11) {
       if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
-        this.error(`${ref.label} is an undefined external reference`);
+        this.error(this._undefinedExternalRefMsg(ref.label));
       }
       let Gaddr = this.globalSymbolTable[ref.label];
       let offset = ((this.machineCode[ref.address] + Gaddr - ref.address - 1) & 0x7ff);
@@ -259,7 +269,7 @@ class Linker {
     // Adjust externalReferenceTable9 (9-bit addresses)
     for (let ref of this.externalReferenceTable9) {
       if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
-        this.error(`${ref.label} is an undefined external reference`);
+        this.error(this._undefinedExternalRefMsg(ref.label));
       }
       let Gaddr = this.globalSymbolTable[ref.label];
       let offset = ((this.machineCode[ref.address] + Gaddr - ref.address - 1) & 0x1ff);
@@ -269,7 +279,7 @@ class Linker {
     // Adjust virtualAddressTable (full addresses)
     for (let ref of this.virtualAddressTable) {
       if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
-        this.error(`${ref.label} is an undefined external reference`);
+        this.error(this._undefinedExternalRefMsg(ref.label));
       }
       let Gaddr = this.globalSymbolTable[ref.label];
       this.machineCode[ref.address] += Gaddr;
