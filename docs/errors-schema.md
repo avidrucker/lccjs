@@ -197,7 +197,8 @@ sqlite3 ~/.lccjs/lccjs.db \
 ## Adding new `error_type` values
 
 1. Add the new code to `VALID_ERROR_TYPES` in `scripts/error-log.js`
-2. Add a row to the valid-values table in this file and in `log-error` skill (`~/.claude/skills/log-error/SKILL.md`)
+2. Add a row to the valid-values table in this file and in `log-error` skill (`~/.claude/skills/log-error/SKILL.md`).
+   **Auto-mode note:** auto-mode blocks edits to `~/.claude/skills/**` unless the puzzle description explicitly names the skill file. Either name it in the issue's "Should have" section, or rely on the project's `permissions.allow` entry in `.claude/settings.json` (#955).
 3. No schema migration needed — `error_type` is a plain TEXT column
 
 ---
