@@ -872,3 +872,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 885,,,DEV,,,,,-3,,,,,TEST,,lccjs
 886,947,refactor(db): rename velocity.db → lccjs.db,DEV,30,20,7.4,22.6,12.6,2026-06-06T10:51:26-1000,2026-06-06T10:58:52-1000,,"Added shared db-path.js with migration shim; updated 9 scripts, operational docs, stats. Shim fired on first load.",CHERRY,sonnet-4.6,lccjs
 887,943,Jest glob matches test files in .claire/worktrees — spurious failures,DEV,15,10,4,11,6,2026-06-06T10:55:53-10:00,2026-06-06T11:00:01-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs
+888,926,audit #900 error-logging deliverables for gaps and coherence,RESEARCH,30,8,3,27,5,2026-06-06T10:57:28-1000,2026-06-06T11:00:03-1000,,2 gaps found: stale type lists + skip-criteria contradiction in claude_workflow.md and memory file; filed #969 #970,BANANA,sonnet-4.6,lccjs
