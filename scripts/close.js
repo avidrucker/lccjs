@@ -395,6 +395,21 @@ function findClosingCommitSha(issue) {
   return null;
 }
 
+// Scans the most recent commits on origin/main for a commit that references
+// `Closes #<issue>`. Returns the SHA of the first matching commit, or null.
+// Used as a recovery path: if an agent pushed before running close, the commit
+// is on origin/main but not in the unpushed range, so findClosingCommitSha returns
+// null. Searching 100 commits is generous — the pushed commit should be recent.
+function findClosingCommitOnMain(issue) {
+  const out = sh('git log origin/main -100 --format=%H', true) || '';
+  const shas = out.trim().split('\n').map((s) => s.trim()).filter(Boolean);
+  for (const sha of shas) {
+    const body = sh(`git show -s --format=%B ${sha}`, true) || '';
+    if (bodyClosesIssue(body, issue)) return sha;
+  }
+  return null;
+}
+
 function treeIsClean() {
   const s = sh('git status --porcelain', true);
   return s !== null && s.trim() === '';
@@ -718,6 +733,38 @@ function main() {
   // sitting at HEAD with no close keyword. (#619)
   const closingCommitSha = findClosingCommitSha(issue);
   if (!closingCommitSha) {
+    // Recovery path: agent may have pushed before running close. The commit is
+    // already on origin/main — fetch to ensure the ref is current, then look.
+    sh('git fetch origin main', true);
+    const alreadyLandedSha = findClosingCommitOnMain(issue);
+    if (alreadyLandedSha) {
+      const state = sh(`gh issue view ${issue} --json state -q .state`, true);
+      if (state && state.trim().toUpperCase() !== 'OPEN') {
+        log(`commit ${alreadyLandedSha.slice(0, 12)} already on origin/main and #${issue} is ${state.trim()} — treating as clean close.`);
+        scanParentTrackers(issue, opts.updateTrackers);
+        if (opts.keep) {
+          report({ issue, branch, wtPath, sha: alreadyLandedSha, kept: true, dry: false });
+          logCommentPrompt(issue, alreadyLandedSha);
+          return;
+        }
+        process.chdir(root);
+        const pullResult = shCapture('git pull --ff-only origin main');
+        if (pullResult.ok) {
+          log('main checkout synced.');
+        } else {
+          log(`warn: ff pull of main skipped (${pullResult.out.trim().split('\n')[0].slice(0, 80)}). ` +
+              `Sync manually: git -C "${root}" pull --ff-only origin main`);
+        }
+        report({ issue, branch, wtPath, sha: alreadyLandedSha, kept: false, dry: false });
+        log(`Shell re-root: cd "${root}"`);
+        logCommentPrompt(issue, alreadyLandedSha);
+        spawn('bash', ['-c',
+          `git worktree remove "${wtPath}" && git branch -D ${branch} && git worktree prune` +
+          " || echo '[close] warning: deferred teardown may have failed — check: git worktree list' >&2"
+        ], { detached: true, stdio: ['ignore', 'inherit', 'inherit'], cwd: root }).unref();
+        return;
+      }
+    }
     die(`No unpushed commit references "Closes #${issue}". Commit the close ` +
         '(marker deletion + `Closes #N`) FIRST, then run close. ' +
         'This tool lands an existing close commit; it does not author one.');
@@ -847,7 +894,7 @@ module.exports = {
   computeVelocityMismatch,
   extractKeywords, keywordsOverlap,
   velocityRowExists, markerStillPresent,
-  bodyClosesIssue,
+  bodyClosesIssue, findClosingCommitOnMain,
   logCommentPrompt,
   findParentTrackers,
 };
