@@ -42,12 +42,12 @@ describe('formatLccSource', () => {
     expect(formatLccSource('main:')).toBe('main:\n');
   });
 
-  test('label+body split onto two lines', () => {
-    expect(formatLccSource('msg:    .string "hello"')).toBe('msg:\n        .string "hello"\n');
+  test('label+body kept inline, single space after colon', () => {
+    expect(formatLccSource('msg:    .string "hello"')).toBe('msg: .string "hello"\n');
   });
 
-  test('label+body with extra spaces between colon and body', () => {
-    expect(formatLccSource('data_word:      .word 5')).toBe('data_word:\n        .word 5\n');
+  test('label+body with extra spaces between colon and body normalised to one space', () => {
+    expect(formatLccSource('data_word:      .word 5')).toBe('data_word: .word 5\n');
   });
 
   test('label with space before colon normalised', () => {
@@ -62,17 +62,18 @@ describe('formatLccSource', () => {
     expect(formatLccSource('        $local:')).toBe('$local:\n');
   });
 
-  test('@-prefix label+body split onto two lines', () => {
-    expect(formatLccSource('@loop: br @loop')).toBe('@loop:\n        br @loop\n');
+  test('@-prefix label+body kept inline at column 0', () => {
+    expect(formatLccSource('@loop: br @loop')).toBe('@loop: br @loop\n');
   });
 
-  test('$-prefix label+body split onto two lines', () => {
-    expect(formatLccSource('$local: .word 0')).toBe('$local:\n        .word 0\n');
+  test('$-prefix label+body kept inline at column 0', () => {
+    expect(formatLccSource('$local: .word 0')).toBe('$local: .word 0\n');
   });
 
   test('@-prefix label not misclassified as instruction', () => {
-    // Without fix: '@loop: br @loop' → '        @loop: br @loop' (wrong, 8-space indent)
-    // With fix:    '@loop: br @loop' → '@loop:\n        br @loop'  (col 0)
+    // Without the sigil-aware regex: '@loop: br @loop' → '        @loop: br @loop'
+    // (wrong, indented as an instruction). With it (R2): '@loop: br @loop' stays
+    // inline at col 0.
     expect(formatLccSource('@loop: br @loop')).not.toBe('        @loop: br @loop');
   });
 
@@ -138,8 +139,7 @@ describe('formatLccSource', () => {
       '        sout r0',
       '        nl',
       '        halt',
-      'msg:',
-      '        .string "Hello, World!"',
+      'msg: .string "Hello, World!"',
     ].join('\n') + '\n';
 
     expect(formatLccSource(input)).toBe(expected);
@@ -154,8 +154,7 @@ describe('formatLccSource', () => {
       '        sout r0',
       '        nl',
       '        halt',
-      'msg:',
-      '        .string "Hello, World!"',
+      'msg: .string "Hello, World!"',
     ].join('\n') + '\n';
 
     expect(formatLccSource(src)).toBe(src);

@@ -7,8 +7,8 @@
  *   - Labels normalised to column 0.
  *   - Instructions / directives indented by INDENT spaces.
  *   - Full-line comments normalised to column 0.
- *   - Label + body on the same line is split: the label goes on its own line,
- *     the body on the next line at INDENT spaces.
+ *   - Label + body on the same line stays inline, normalised to a single space
+ *     after the colon (`label: body`); a label with no body stays `label:`.
  *   - Trailing whitespace stripped from every line.
  *   - Trailing blank lines stripped; non-empty output ends with exactly one
  *     trailing newline (POSIX text-file convention).
@@ -36,9 +36,10 @@ function formatLccSource(src) {
     // Aligns with vscode-lcc tmLanguage: ^[a-zA-Z_$@][a-zA-Z0-9_$@]*
     const labelM = trimmed.match(/^([@$A-Za-z_][@$\w]*)\s*:(.*)/s);
     if (labelM) {
-      out.push(labelM[1] + ':');          // label on its own line at col 0
       const body = labelM[2].trim();
-      if (body) out.push(INDENT + body);  // body (directive / instruction) indented
+      // label + body stay inline, single space after the colon (R2, #864);
+      // a label with no body on its line stays bare at col 0
+      out.push(body ? `${labelM[1]}: ${body}` : `${labelM[1]}:`);
       continue;
     }
 
