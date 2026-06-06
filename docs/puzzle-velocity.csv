@@ -881,3 +881,5 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 894,964,bug(ice-score): parseCsv cannot parse quoted comma fields,DEV,12,12,4,8,8,2026-06-06T11:03:59-10:00,2026-06-06T11:07:44-10:00,,"Replaced bare line.split(',') with RFC-4180 state machine (parseRecords). Verified #689 round-trips on real rice-scores.csv; unit regression test deferred to #965 (its stated scope; avoids module.exports conflict).",APPLE,opus-4.8,lccjs
 895,,,DEV,,,,,-3,,,,,TEST,,lccjs
 896,,,DEV,,,,,-3,,,,,TEST,,lccjs
+897,,,DEV,,,,,-3,,,,,TEST,,lccjs
+898,942,puzzle-velocity-csv: 194 rows with id≥126 have empty model column,DATA,20,10,1.7,18.3,8.3,2026-06-06T11:08:12-1000,2026-06-06T11:09:53-1000,,Backfilled 4 real-agent rows (sonnet-4.6). 45 TEST-agent rows excluded from check (#940 tracks isolation fix). Closed #911 as superseded.,CHERRY,sonnet-4.6,lccjs
