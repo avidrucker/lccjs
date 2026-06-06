@@ -112,6 +112,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-06-05 APPLE session 2](./today-i-learned-2026-06-05-apple-2.md) | 2026-06-05 | APPLE | Tracker body checkboxes are frozen snapshots — always verify child states via `gh issue view`; `grep -c` exits 1 on zero matches breaking `&&` chains; skipped worktree claims lead to unverified published output; stale-read is a distinct failure mode from batching confabulation. |
 | [TIL 2026-06-05 FIG s3](./today-i-learned-2026-06-05-fig-3.md) | 2026-06-05 | FIG | Incomplete command examples cause recurring errors; `npm run close` only pushes; external LCC+ encoders need a trapVec shorthand; extension dispatch before the switch. |
 | [TIL 2026-06-05 ELDERBERRY session 2](./today-i-learned-2026-06-05-elderberry-2.md) | 2026-06-05 | ELDERBERRY | Tracker closes from main use `gh` not `npm run close`; four-file LCC+ pseudo-instruction pattern; assembler-level mnemonic aliases share one TRAP vector; stale ISA doc trap vectors; velocity-export skeleton reuse for errors table. |
+| [TIL 2026-06-05 BANANA](./today-i-learned-2026-06-05-banana.md) | 2026-06-05 | BANANA | Read tool misidentifies .a files as binary; worktree remove must run from main; cluster test failures before filing tickets; devDependency ≠ installed package; human-gate is the throughput bottleneck. |
 
 ## Recurring threads (informal — #207 will formalize)
 
