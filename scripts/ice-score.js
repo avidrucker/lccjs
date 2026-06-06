@@ -442,14 +442,30 @@ async function setTier(db, issueNum, tier, opts, dryRun) {
     log(`[dry-run] would remove label priority:${oppositeTier} from #${issueNum} (if present)`);
     log(`[dry-run] would post comment:\n${comment}`);
   } else {
-    sh(`gh issue edit ${issueNum} --add-label "priority:${tier}"`, true);
+    // Both the label and the audit comment are mandatory (see "Audit trail required"
+    // in the rubric). If either gh write fails — gh offline, auth expired, or the
+    // priority:* label was never created — we must NOT record the tier in the DB and
+    // must NOT claim success: doing so leaves the DB asserting an escalation that has
+    // no label and no audit trail (#963). The opposite-tier *remove* stays
+    // best-effort — it legitimately no-ops when that label isn't on the issue.
+    const addOk = sh(`gh issue edit ${issueNum} --add-label "priority:${tier}"`, true);
     sh(`gh issue edit ${issueNum} --remove-label "priority:${oppositeTier}"`, true);
     const bodyEscaped = comment.replace(/'/g, "'\\''");
-    sh(`gh issue comment ${issueNum} --body '${bodyEscaped}'`, true);
+    const commentOk = sh(`gh issue comment ${issueNum} --body '${bodyEscaped}'`, true);
+
+    if (addOk == null || commentOk == null) {
+      const failed = [
+        addOk == null     ? `label priority:${tier}` : null,
+        commentOk == null ? 'audit comment'          : null,
+      ].filter(Boolean).join(' and ');
+      die(`gh write failed (${failed}) for #${issueNum} — tier NOT recorded. ` +
+          `An escalation requires both the label and the mandatory audit comment; ` +
+          `the DB was left unchanged. Re-run when gh is available.`);
+    }
     log(`Applied priority:${tier} to #${issueNum} with audit comment`);
   }
 
-  // Update DB
+  // Update DB (only reached in dry-run or after both gh writes succeeded)
   const existing = db.prepare('SELECT * FROM ice_scores WHERE issue = ?').get(issueNum);
   const now = new Date().toISOString();
   if (existing) {
