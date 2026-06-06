@@ -13,7 +13,7 @@ const { TRAP_HALT, TRAP_BP } = require('../core/constants');
 const {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
   TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC,
-  TRAP_BEEP, TRAP_DING, TRAP_BOOP,
+  TRAP_BEEP, TRAP_DING, TRAP_BOOP, TRAP_WHO,
   EOP_RAND,
 } = require('./constants');
 
@@ -323,6 +323,9 @@ class InterpreterPlus extends Interpreter {
       case TRAP_BOOP: // boop
         this.executeBoop();
         break;
+      case TRAP_WHO: // who / whodis
+        this.executeWho();
+        break;
       default:
         // If it's not a known LCC+ trap, call parent's method
         super.executeTRAP();
@@ -446,7 +449,17 @@ class InterpreterPlus extends Interpreter {
 
   executeBoop() {
     process.stdout.write('boop\n');
-  }}
+  }
+
+  executeWho() {
+    try {
+      const name = fs.readFileSync('name.nnn', 'utf8').trim();
+      process.stdout.write(name);
+    } catch (_) {
+      // name.nnn absent
+    }
+  }
+}
 
 // If run directly
 if (require.main === module) {

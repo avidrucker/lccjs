@@ -14,7 +14,7 @@
  */
 
 const InterpreterPlus = require('../../src/plus/interpreterplus');
-const { TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR, TRAP_MILLIS, TRAP_RESETC, TRAP_BEEP, TRAP_DING, TRAP_BOOP } = require('../../src/plus/constants');
+const { TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR, TRAP_MILLIS, TRAP_RESETC, TRAP_BEEP, TRAP_DING, TRAP_BOOP, TRAP_WHO } = require('../../src/plus/constants');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -413,5 +413,58 @@ describe(`InterpreterPlus — executeBoop / boop (TRAP_BOOP = 0x${TRAP_BOOP.toSt
     ip.executeBoop();
     expect(ip.r[1]).toBe(0xFFFF);
     expect(ip.r[6]).toBe(0xFFFF);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// who / whodis (TRAP_WHO = 0xF5)
+// ---------------------------------------------------------------------------
+
+describe(`InterpreterPlus — executeWho / who+whodis (TRAP_WHO = 0x${TRAP_WHO.toString(16).toUpperCase()})`, () => {
+  const fs = require('fs');
+  let writeSpy;
+  let readSpy;
+
+  beforeEach(() => {
+    writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    writeSpy.mockRestore();
+    if (readSpy) readSpy.mockRestore();
+  });
+
+  test('writes name.nnn contents to stdout with no trailing newline', () => {
+    readSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue('Doe, Jane M\n');
+    const ip = makeIp();
+    ip.executeWho();
+    expect(writeSpy).toHaveBeenCalledWith('Doe, Jane M');
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('trims leading/trailing whitespace from name.nnn', () => {
+    readSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue('  Smith, Bob  \r\n');
+    const ip = makeIp();
+    ip.executeWho();
+    expect(writeSpy).toHaveBeenCalledWith('Smith, Bob');
+  });
+
+  test('absent name.nnn: writes nothing (silent empty string)', () => {
+    readSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+    const ip = makeIp();
+    ip.executeWho();
+    expect(writeSpy).not.toHaveBeenCalled();
+  });
+
+  test('takes no register operand — does not read dr or sr', () => {
+    readSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue('Test, User\n');
+    const ip = makeIp();
+    ip.r.fill(0xFFFF);
+    ip.dr = 0;
+    ip.sr = 7;
+    ip.executeWho();
+    expect(ip.r[0]).toBe(0xFFFF);
+    expect(ip.r[7]).toBe(0xFFFF);
   });
 });

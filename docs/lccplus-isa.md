@@ -39,6 +39,8 @@ core traps can grow upward from `0x0E` without collision.
 | beep   | 0x00F8 | none | Emits ASCII BEL (`\x07`) to stdout |
 | ding   | 0x00F7 | none | Emits ASCII BEL (`\x07`) to stdout (alias of `beep`; may diverge in a future release) |
 | boop   | 0x00F6 | none | Writes the literal string `"boop\n"` to stdout |
+| who    | 0x00F5 | none | Reads `name.nnn` from cwd and writes contents to stdout (no trailing newline); silent empty string if absent |
+| whodis | 0x00F5 | none | Alias for `who`; identical encoding and behavior |
 
 **Note on `bp`:** Trap vector `0x000E` is supported as in LCC, but enhanced in LCC+ to
 allow "press any key to resume" functionality.
