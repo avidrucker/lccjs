@@ -18,7 +18,6 @@ const {
   writeReportFiles,
 } = require('../utils/fileArtifacts');
 const { AssemblerError } = require('../utils/errors');
-const nameHandler = require('../utils/name.js');
 const {
   OPCODE_BR: OP_BR, OPCODE_ADD: OP_ADD, OPCODE_LD: OP_LD, OPCODE_ST: OP_ST,
   OPCODE_BL: OP_BL, OPCODE_AND: OP_AND, OPCODE_LDR: OP_LDR, OPCODE_STR: OP_STR,
@@ -30,7 +29,7 @@ const {
   EOP_MUL, EOP_DIV, EOP_REM, EOP_OR, EOP_XOR, EOP_MVR, EOP_SEXT,
 } = require('./constants');
 
-const { fatalExit, cliErrorExit, cliWrappedErrorExit } = require('../utils/cliExit');
+const { fatalExit, cliErrorExit } = require('../utils/cliExit');
 const { suggestClosest } = require('../utils/suggest');
 
 /**
@@ -619,18 +618,6 @@ class Assembler {
       outputFileName: this.outputFileName,
       throwOnAssemblyError: false,
     });
-
-    // For object modules, resolve the author name BEFORE writing any output so a
-    // name-resolution failure (empty input / EOF on a non-TTY) aborts atomically,
-    // leaving nothing on disk — matching OG LCC's all-or-nothing behavior.
-    if (this.isObjectModule) {
-      // Get the userName using nameHandler so the generated reports match current behavior.
-      try {
-        this.userName = nameHandler.createNameFile(this.inputFileName);
-      } catch (error) {
-        cliWrappedErrorExit('Error handling name file:', error, 1);
-      }
-    }
 
     // Write the assembled output file after the in-memory assembly pass completes.
     this.writeOutputFile();

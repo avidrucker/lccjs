@@ -171,30 +171,29 @@ describe('Assembler Object Module Integration', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 269. Output atomicity: a name-resolution failure must abort BEFORE any
-  // .o is written, matching OG LCC's all-or-nothing behavior. Regression for
-  // the non-atomic-output bug where assembler.js wrote the .o, then resolved
-  // the author name, leaving a half-finished build on a non-zero exit. (#269)
+  // 269. Output atomicity: after DDD gap 7 (#880), assembler.main() no longer
+  // resolves userName from the filesystem — that responsibility moved to lcc.js,
+  // which pre-resolves it before calling assembler.main(). Atomic-abort when
+  // name.nnn is missing is now enforced at the lcc.js level (resolveUserName()
+  // throws → assembler.main() is never reached). assembler.main() uses the
+  // pre-set this.userName directly, producing reports with the supplied name.
   // -------------------------------------------------------------------------
-  test('269. should write no .o/.lst/.bst when the author name cannot be resolved', () => {
+  test('269. should write .o/.lst/.bst using a pre-set userName (name resolution moved to lcc.js)', () => {
     const aFilePath = 'atomicNameFail.a';
     const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-object-modules/testObject.a'), 'utf8');
     virtualFs[aFilePath] = source;
-    // No name.nnn present → createNameFile prompts and reads stdin.
 
-    // No name.nnn + non-TTY stdin (Jest default) → fatalExit throws before any output is written.
-    try {
-      expect(() => {
-        assembler.main([aFilePath]);
-      }).toThrow('name.nnn not found');
+    // Caller pre-sets userName — as lcc.js does before invoking assembler.main().
+    assembler.userName = 'TestAuthor';
 
-      expect(assembler.isObjectModule).toBe(true);
-      // The crux: the .o (and its reports) must never have been opened/written.
-      expect(virtualFs['atomicNameFail.o']).toBeUndefined();
-      expect(virtualFs['atomicNameFail.lst']).toBeUndefined();
-      expect(virtualFs['atomicNameFail.bst']).toBeUndefined();
-    } finally {
-      // nothing to restore
-    }
+    expect(() => {
+      assembler.main([aFilePath]);
+    }).not.toThrow();
+
+    expect(assembler.isObjectModule).toBe(true);
+    // Reports are written using the pre-set userName.
+    expect(virtualFs['atomicNameFail.o']).toBeDefined();
+    expect(virtualFs['atomicNameFail.lst']).toBeDefined();
+    expect(virtualFs['atomicNameFail.bst']).toBeDefined();
   });
 });

@@ -11,7 +11,6 @@ const {
   readBinaryInput,
   writeReportFiles,
 } = require('../utils/fileArtifacts');
-const nameHandler = require('../utils/name.js');
 const { h4 } = require('./debug/format');
 const { diffRegisters } = require('./debug/stateDelta');
 const {
@@ -45,7 +44,7 @@ const SEXT_PARITY_TABLE = [
   [0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0xfff8, 0xfff9, 0xfffa, 0xfffb, 0xfffc, 0xfffd, 0xfffe, 0xffff, 0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0xfff8, 0xfff9, 0xfffa, 0xfffb, 0xfffc, 0xfffd, 0xfffe, 0xffff],
 ];
 
-const { isTestMode, fatalExit, cliErrorExit, cliWrappedErrorExit } = require('../utils/cliExit');
+const { isTestMode, fatalExit, cliErrorExit } = require('../utils/cliExit');
 
 class Interpreter {
   // @todo #255:45m/DEV decomplect: group these ~50 flat fields into cohesive sub-objects (this.cpu = regs+flags+pc, this.io = buffers, this.diag = trace/debug/breakpoint) so machine-state, run-options, and diagnostics stop sharing one namespace. See #246 H4 + docs/research/codebase-quality-hotspots.md
@@ -501,18 +500,8 @@ class Interpreter {
 
     // Generate .lst and .bst files if required
     if (this.generateStats) {
-      // Get the userName using nameHandler only when the wrapper is actually
-      // about to write report artifacts that include it.
-      let userName;
-      try {
-        //// console.log(`inputFileName = ${this.inputFileName}`);
-        userName = nameHandler.createNameFile(this.inputFileName);
-        //// console.log("userName = " + userName);
-      } catch (error) {
-        cliWrappedErrorExit('Error handling name file:', error, 1);
-      }
-
-      const { lstContent, bstContent } = this.buildReportArtifacts(userName, this.inputFileName);
+      // userName is pre-resolved by the caller (e.g. lcc.js) and set via this.userName.
+      const { lstContent, bstContent } = this.buildReportArtifacts(this.userName, this.inputFileName);
 
       // Write the .lst and .bst files
       writeReportFiles(this.inputFileName, lstContent, bstContent);

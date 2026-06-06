@@ -335,6 +335,10 @@ class LCC {
     // Store the assembler instance
     this.assembler = assembler;
 
+    // Pre-set userName so assembler.main() can use it for object-module report
+    // artifacts without calling name.js itself (DDD gap 7, #880).
+    assembler.userName = this.userName;
+
     try {
       // Run the assembler's main function
       assembler.main([this.inputFileName]);

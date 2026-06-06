@@ -72,42 +72,24 @@ describe('Name Wrapper Integration Tests', () => {
     fs.readSync.mockReset();
   });
 
-  test('interpreter wrapper should create name.nnn when stats are enabled and the file is missing', () => {
+  test('interpreter wrapper uses pre-set userName when stats are enabled — does not access name.nnn', () => {
     const interpreter = new Interpreter();
     const eFilePath = 'promptForName.e';
 
     virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x00, 0xF0]);
     delete virtualFs['name.nnn'];
 
-    const readBuffer = Buffer.from('MilkyWay\n', 'utf8');
-    let readOffset = 0;
-    fs.readSync.mockImplementation((fd, buffer) => {
-      if (readOffset >= readBuffer.length) {
-        return 0;
-      }
-
-      buffer[0] = readBuffer[readOffset];
-      readOffset += 1;
-      return 1;
-    });
-
-    // Simulate a TTY so the name-prompt path is reached
-    const origIsTTY = process.stdin.isTTY;
-    process.stdin.isTTY = true;
-
     interpreter.generateStats = true;
+    interpreter.userName = 'MilkyWay';
 
-    try {
-      expect(() => {
-        interpreter.main([eFilePath]);
-      }).not.toThrow();
+    expect(() => {
+      interpreter.main([eFilePath]);
+    }).not.toThrow();
 
-      expect(virtualFs['name.nnn']).toBe('MilkyWay\n');
-      expect(virtualFs['promptForName.lst']).toBeDefined();
-      expect(virtualFs['promptForName.bst']).toBeDefined();
-    } finally {
-      process.stdin.isTTY = origIsTTY;
-    }
+    // name.nnn is not touched — userName comes from the pre-set property
+    expect(virtualFs['name.nnn']).toBeUndefined();
+    expect(virtualFs['promptForName.lst']).toBeDefined();
+    expect(virtualFs['promptForName.bst']).toBeDefined();
   });
 
   test('createNameFile exits non-zero with a diagnostic when name.nnn is absent and stdin is not a TTY', () => {
@@ -143,20 +125,20 @@ describe('Name Wrapper Integration Tests', () => {
     expect(virtualFs['noStats.bst']).toBeUndefined();
   });
 
-  test('interpreter wrapper should use cwd name.nnn even when the input file is in a nested directory', () => {
+  test('interpreter wrapper does not read name.nnn — userName must be pre-set by caller', () => {
     const interpreter = new Interpreter();
     const eFilePath = path.join('subdir', 'nested.e');
 
     virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x00, 0xF0]);
-    virtualFs['name.nnn'] = 'RootName\n';
-    virtualFs[path.join('subdir', 'name.nnn')] = 'NestedName\n';
     interpreter.generateStats = true;
+    interpreter.userName = 'RootName';
 
     expect(() => {
       interpreter.main([eFilePath]);
     }).not.toThrow();
 
-    expect(fs.readFileSync).toHaveBeenCalledWith('name.nnn', 'utf8');
+    // name.nnn is not read from any directory — resolution belongs in lcc.js (#880)
+    expect(fs.readFileSync).not.toHaveBeenCalledWith('name.nnn', 'utf8');
     expect(fs.readFileSync).not.toHaveBeenCalledWith(path.join('subdir', 'name.nnn'), 'utf8');
   });
 });
