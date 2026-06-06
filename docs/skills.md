@@ -131,6 +131,15 @@ All meaningful project communication lives in the issue tracker. Decisions don't
 **Notes from practice:**
 - Well-followed. The "file unilaterally, don't ask permission" rule (#511) is the highest-impact single rule derived from this skill's philosophy.
 
+### `improve-codebase-architecture`
+Surface architectural friction and propose "deepening opportunities" — refactors that turn shallow modules into deep ones. Uses a consistent vocabulary (Module, Interface, Implementation, Depth, Seam, Adapter, Leverage) applied to any codebase CONTEXT.md and ADR docs.
+
+**Invoke when:** a broad architectural review is needed across multiple modules at once, or when the work is cross-cutting enough that `yegor-architect` (which governs a single in-session design decision) is the wrong tool.
+
+**Prefer `yegor-architect` over this skill when:** you're making a scoped design ruling for one in-flight ticket. `yegor-architect` governs architect-mode vs courier-mode discipline for a single task. `improve-codebase-architecture` is a fleet-wide sweep that identifies the next round of deepening work — best used after a stable sprint to generate ARC backlog, not during active feature work.
+
+---
+
 ### `yegor-architect`
 Separate architect mode (design in writing) from courier mode (execute agreed design). Never mix the two in one session. When tempted to redesign mid-implementation, stop and drop a puzzle.
 
@@ -248,7 +257,7 @@ Skills available globally that have not been formally used in lccjs, with a one-
 | `decomplect` | **Yes (spike first)** | Vocabulary matches the #246 hotspot family; verify the skill's framing aligns with lccjs usage before adding to inventory |
 | `diagnose` | Maybe | Useful for complex failures; overlap with `superpowers:systematic-debugging` is unclear — read both before deciding |
 | `guardrails` | Maybe | Scope/safety discipline; partially covered by `yegor-microtasks` + `claude_workflow.md` already |
-| `improve-codebase-architecture` | Maybe | Relevant to DDD work but may be too general given the project already has `yegor-architect` + specific ARC tickets |
+| `improve-codebase-architecture` | **Promoted** — see active inventory entry | Added in #976; prefer over `yegor-architect` for fleet-wide sweeps |
 | `handoff-archive` | Skip for now | `handoff` is already underused; adding archive variant before the base skill is established adds complexity |
 | `clojure` / `fulcro` family | Skip | Not applicable — lccjs is a JavaScript project |
 
