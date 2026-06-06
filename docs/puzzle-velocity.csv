@@ -784,3 +784,5 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 797,889,add legacy-name comments to linker.js renamed fields,DEV,10,5,1,9,4,2026-06-05T13:05:35-10:00,2026-06-05T13:06:18-10:00,,6 one-line comments in resetState(); purely additive,FIG,sonnet-4.6,lccjs
 798,888,filter humans-only and decision tickets from fruit-agent-orchestrate,DEV,30,10,3,27,7,2026-06-05T16:11:33-1000,2026-06-05T16:14:09-1000,,skill-only change; ~/.claude/skills/ not tracked in repo; docs/skills.md update is the committed artifact,APPLE,sonnet-4.6,lccjs
 799,881,docs: record fp/sp/lr register aliases,WRITER,20,8,3,17,5,2026-06-05T16:12:28-1000,2026-06-05T16:15:12-1000,,skill edit global only (outside repo); lezer doc ra false claim retracted; TIL filed,CHERRY,sonnet-4.6,lccjs
+800,,,DEV,,,,,-3,,,,,TEST,,lccjs
+801,860,update benchmark_isa.a to include same-line label styles,DEV,20,5,5,15,0,2026-06-05T16:12:36-1000,2026-06-05T16:17:02-1000,,converted 4 branch-target labels in section 8 to same-line style; assembles cleanly; no regressions,BANANA,sonnet-4.6,lccjs

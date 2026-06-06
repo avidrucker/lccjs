@@ -183,8 +183,7 @@ jmp_land:
         cmp     r0, 0           ; z = 1
         brz     brz_ok
         mov     r0, 99          ; unreachable
-brz_ok:
-        bre     bre_ok          ; alias for brz — still taken (z still 1)
+brz_ok: bre     bre_ok          ; alias for brz — still taken (z still 1)
         mov     r0, 99          ; unreachable
 bre_ok:
 
@@ -193,8 +192,7 @@ bre_ok:
         cmp     r0, 0           ; n = 1
         brn     brn_ok
         mov     r0, 99
-brn_ok:
-        brlt    brlt_ok         ; alias for brn — still taken
+brn_ok: brlt    brlt_ok         ; alias for brn — still taken
         mov     r0, 99
 brlt_ok:
 
@@ -203,8 +201,7 @@ brlt_ok:
         cmp     r0, 0           ; n = 0, z = 0
         brp     brp_ok
         mov     r0, 99
-brp_ok:
-        brgt    brgt_ok         ; alias for brp
+brp_ok: brgt    brgt_ok         ; alias for brp
         mov     r0, 99
 brgt_ok:
 
@@ -237,8 +234,7 @@ brb_ok:
 ; br / bral — unconditional branch (always taken)
         br      br_ok
         mov     r0, 99          ; unreachable
-br_ok:
-        bral    bral_ok         ; alias for br
+br_ok:  bral    bral_ok         ; alias for br
         mov     r0, 99          ; unreachable
 bral_ok:
 
