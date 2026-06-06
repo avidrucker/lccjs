@@ -10,7 +10,8 @@
  *   - Label + body on the same line is split: the label goes on its own line,
  *     the body on the next line at INDENT spaces.
  *   - Trailing whitespace stripped from every line.
- *   - Trailing blank lines stripped.
+ *   - Trailing blank lines stripped; non-empty output ends with exactly one
+ *     trailing newline (POSIX text-file convention).
  *   - Inline comments (part of an instruction line) are preserved verbatim.
  *
  * @param {string} src
@@ -48,7 +49,8 @@ function formatLccSource(src) {
   // strip trailing blank lines
   while (out.length && out[out.length - 1] === '') out.pop();
 
-  return out.join('\n');
+  // non-empty output ends with exactly one trailing newline (R6, #863)
+  return out.length ? out.join('\n') + '\n' : '';
 }
 
 module.exports = { formatLccSource };
