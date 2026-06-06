@@ -18,6 +18,8 @@
     "velocity:log": "node scripts/velocity-log.js",
     "velocity:export": "node scripts/velocity-export.js",
     "velocity:migrate": "node scripts/velocity-migrate.js",
+    "error:seed": "node scripts/errors-seed.js",
+    "error:log": "node scripts/error-log.js",
     "lccrun": "bash scripts/lccrun.sh",
     "build": "npm run build:browser && npm run build:site",
     "build:site": "node scripts/build-site.js",
