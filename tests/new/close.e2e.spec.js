@@ -274,7 +274,7 @@ describe('close.js e2e — pre-flight rejections', () => {
       sh(wtPath, 'git commit --amend -m "fix: the thing (no closes keyword here)"');
       const { ok, out } = shCapture(wtPath, `node "${CLOSE_JS}" 9005 --dry-run`);
       expect(ok).toBe(false);
-      expect(out).toMatch(/does not reference/i);
+      expect(out).toMatch(/No unpushed commit references/i);
     } finally {
       rmrf(tmpDir);
     }
