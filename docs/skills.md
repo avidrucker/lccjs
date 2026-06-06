@@ -53,7 +53,7 @@ Triage all open issues and produce copy-pasteable plain-paragraph work assignmen
 
 **Notes from practice:**
 - Successfully orchestrated 7 concurrent agents on 2026-06-04 with no merge conflicts when cluster-separation rules were followed.
-- Known gap: does not filter out `humans-only` or `decision` labeled tickets before assignment. Agents occasionally receive a ticket that requires human sign-off, then stall or file unnecessary follow-ups (#610).
+- Filters out tickets labeled `humans-only`, `decision`, or `human-decision-required` before assignment (fixed #888). These appear in a separate `## 🧑 Requires human routing` section in the output so the human is aware; no agent is assigned. The `guide-human-decision` skill handles them when a human explicitly routes one.
 - STUB sections in the output are intentional — the orchestrator identifies gaps it cannot fill.
 
 ### `guide-human-decision`
@@ -243,7 +243,7 @@ Concrete improvement candidates, in rough priority order:
 
 1. **Wire `next-best-action` into the mandatory close sequence.** Currently documented but not enforced. A one-line addition to RULES.md or `claude_workflow.md`'s "At close" section would prevent findings from evaporating at close time. (#886 research may refine this recommendation.)
 
-2. **Fix `fruit-agent-orchestrate` to skip `humans-only` and `decision` tickets.** The orchestrator currently assigns these to agents who then stall or mis-route them. A label filter at assignment time would eliminate the failure mode documented in `docs/research/orchestration-failure-modes.md`.
+2. ~~**Fix `fruit-agent-orchestrate` to skip `humans-only` and `decision` tickets.**~~ Fixed in #888 — the skill now partitions these labels into a `## 🧑 Requires human routing` section and omits them from agent assignments.
 
 3. **Trial `io-layer-testing` and add it to this doc if useful.** The pure-API / CLI-wrapper seam is a first-class concern in lccjs; this skill likely has direct guidance to offer.
 
