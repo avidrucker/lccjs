@@ -1,0 +1,68 @@
+# lccjs Web Feature Parity — ILCC Dashboard
+
+**Last verified:** 2026-06-05 (FIG, code inspection)  
+**Detailed audit:** `docs/research/ilcc-dashboard-feature-audit.md` (#700)  
+**Tracker:** #714
+
+---
+
+## Summary
+
+All 7 known ILCC dashboard feature gaps are now closed in lccjs's playground. lccjs matches or exceeds the ILCC dashboard on every confirmed feature. Remaining open items are ILCC-side unknowns that require human verification (#731).
+
+---
+
+## Feature comparison — ILCC dashboard vs lccjs
+
+`✅` present · `❌` absent · `~` partial · `?` unverified (ILCC side — see #731)
+
+| Feature | ILCC dashboard | lccjs (best surface) |
+|---------|:-:|:-:|
+| Code editor (writable) | ✅ | ✅ playground (CM6 EditorView) |
+| Syntax highlighting | ❌ | ✅ playground (ViewPlugin) + showcase (Lezer CM6 + Shiki) |
+| Run / assemble / execute | ✅ | ✅ playground (▶ Run button) |
+| Terminal output panel | ✅ | ✅ playground + injector |
+| Assembly error display | ? | ✅ playground + injector |
+| Pre-supplied stdin | ? | ✅ playground (`stdin-input` field) + injector (`data-stdin`) |
+| Interactive stdin | ? | ❌ pre-supply only; no runtime prompt |
+| File naming | ✅ | ✅ playground (`filename-input`) |
+| Tabs / multi-file | ✅ | ✅ playground (tab bar, `+` new, `×` close) |
+| Auto-format / prettify | ✅ | ✅ playground (⌥ Format button) |
+| Line numbers (editor) | ? | ✅ playground (CM6 `basicSetup`) + showcase (CM6 `lineNumbers()`) |
+| Share as link | ✅ | ✅ playground (`#share-btn` — URL query-param encoding) |
+| Download as `.a` | ✅ | ✅ playground (`#download-btn`) |
+| Standalone playground page | ✅ | ✅ `docs/playground/index.html` |
+| LCC+ (`.ap`) support | ? | ~ mnemonics highlighted; no LCC+ execution path in UI |
+| Dark / light theme toggle | ? | ❌ dark theme only; no toggle |
+| Save to localStorage | ? | ❌ no persistence across reloads |
+| Embeddable in slides | ? | ✅ `dist/lcc-injector.js` + reveal-md |
+| Browser API for custom tools | ? | ✅ `dist/lcc.bundle.js` |
+
+---
+
+## Features unique to lccjs (not in ILCC dashboard)
+
+| Feature | Where |
+|---------|-------|
+| Syntax highlighting | Playground (ViewPlugin tokenizer) + showcase (Lezer CM6 + Shiki github-dark) |
+| Embeddable slide injector | `dist/lcc-injector.js` — auto-executes `<code class="language-lcc">` blocks |
+| Browser API | `dist/lcc.bundle.js` — `lcc.Assembler` + `lcc.Interpreter` as browser globals |
+| LCC+ (`.ap`) sample display | Showcase page static samples; mnemonics highlighted in playground |
+
+---
+
+## ILCC-side unknowns — pending #731
+
+The ILCC dashboard is a JavaScript SPA; automated fetch returns only the page shell. A human must visit the dashboard to verify:
+
+- [ ] Interactive stdin — does a runtime prompt appear when a program calls `din`/`sin`/`ain`?
+- [ ] Line numbers — does the code editor show line numbers?
+- [ ] Assembly error display — where/how are errors shown?
+- [ ] LCC+ (`.ap`) support — is there any LCC+ execution path?
+- [ ] Dark / light theme toggle — is there a theme switcher?
+- [ ] Save to localStorage — does code persist across page refreshes?
+- [ ] Keyboard shortcuts — are there shortcuts for Run, Format, etc.?
+- [ ] Anything else not in the audit doc
+
+**Dashboard URL:** https://hydra.newpaltz.edu/students/odonnela6/ilcc/dashboard  
+**Human verification issue:** #731
