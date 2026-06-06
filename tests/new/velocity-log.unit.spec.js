@@ -20,11 +20,12 @@ describe('velocity-log — negative delta validation (#440)', () => {
     expect(result.stderr).toMatch(/estimate - actual/);
   });
 
-  test('rejects negative delta_c_min with exit 1 and error message', () => {
-    const result = run({ role: 'DEV', agent: 'TEST', delta_c_min: -3 });
-    expect(result.status).toBe(1);
-    expect(result.stderr).toMatch(/delta_c_min must be >= 0/);
-    expect(result.stderr).toMatch(/estimate - actual/);
+  test('negative delta_c_min is accepted — overrun is valid calibration signal', () => {
+    // Protocol: negative delta_c_min means the agent ran over the C estimate.
+    // Discarding it destroys calibration signal, so it is allowed. (Contrast: delta_h_min
+    // is still rejected when negative — Yegor's H cap is a human discipline boundary.)
+    const result = run({ role: 'DEV', agent: 'TEST', delta_c_min: -3, ticket: 'bad' });
+    expect(result.stderr).not.toMatch(/delta_c_min must be/);
   });
 
   test('zero delta_h_min passes validation (fails later on invalid ticket)', () => {
