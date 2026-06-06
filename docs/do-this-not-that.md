@@ -26,6 +26,16 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Waiting for background tasks
+
+**Wait for the `<task-notification>` event; do NOT poll with `until grep`**
+
+- **Do:** start `npm run close N` (or any long command) with `run_in_background: true`, then wait — the harness fires a `<task-notification>` when the task finishes. Read the output file after the notification arrives.
+- **Don't:** write an `until grep -q "CLOSE OK\|conflict\|error\|failed" <file>; do sleep 3; done` polling loop to detect completion.
+- **Why:** `grep` exits on the _first_ match. If the output file already contains the word `conflict` from an earlier rebase-conflict message — still in progress — the loop exits immediately, `cat` runs on partial output, and the monitor command reports failure (exit code 1). The close itself may still be running. Observed live in #918 / #927 (ELDERBERRY 2026-06-05). No polling is needed: the harness notifies you when the task is done.
+
+---
+
 ## Issue filing
 
 **File sibling issues sequentially; verify each with `gh issue view N` before writing the marker**

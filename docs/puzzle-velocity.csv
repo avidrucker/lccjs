@@ -864,3 +864,7 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 877,961,feat: fruit-agent-orchestrate should factor in area:* labels to assign non-overlapping work lanes,WRITER,,,,,,,,,,FIG,sonnet-4.6,lccjs
 878,958,document OTHER error_type as fallback,WRITER,15,5,1,14,4,2026-06-06T10:50:39-1000,2026-06-06T10:51:04-1000,,,BANANA,sonnet-4.6,lccjs
 879,944,fix --update-trackers premature checkbox on multi-ref line,DEV,20,15,2,18,13,2026-06-06T10:50:33-10:00,2026-06-06T10:52:59-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs
+880,968,decision: scratch-file cleanup vs Bash rm/heredoc denials,PM,,,,,,2026-06-06T10:53:51-10:00,2026-06-06T10:53:51-10:00,,Filed decision ticket #968 with A-D options analysis from #962 TOOL_DENIED pattern (error id=29); human ratifies. No repo file change.,APPLE,opus-4.8,lccjs
+881,861,test: update formatter expected values to include trailing newline (pre-req for R6 trial),TEST,,,,,,,,,,FIG,sonnet-4.6,lccjs
+882,941,lezer-grammar: add @lezer/lr + @lezer/highlight to devDeps,DEV,15,5,3,12,2,2026-06-06T10:51:17-1000,2026-06-06T10:54:37-1000,,@lezer/lr was already in package.json+lock but not installed; added @lezer/highlight (used by index.js); npm install + 8 tests green,GRAPE,sonnet-4.6,lccjs
+883,927,until-grep polling loop exits early on conflict text,DEV,20,10,1,19,9,2026-06-06T10:53:54-10:00,2026-06-06T10:55:04-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs
