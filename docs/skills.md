@@ -172,6 +172,15 @@ Unit-test quality checklist: named anti-patterns (Liar, Inspector, Mockery, Happ
 **Notes from practice:**
 - Anti-pattern vocabulary (especially "Happy Path" and "Inspector") has been useful in review comments. Oracle parity tests are the main test surface and mostly avoid these patterns.
 
+### `io-layer-testing`
+Protocol-based IO-layer testing: stand-in implementations for fast development cycles, real-resource integration tests with availability guards, and pattern discipline for testing anything that touches an external system.
+
+**Invoke when:** writing tests for interpreter trap handlers (stdin, stdout, file traps), testing the pure-API / CLI-wrapper boundary, or adding integration tests for any external-resource call (DB, filesystem, subprocess).
+
+**lccjs note:** the "IO layer" in lccjs is the `src/utils/` boundary — pure seams like `executeBuffer()` own no I/O; CLI wrappers own all of it. This skill's protocol-abstraction pattern maps directly to writing tests that verify the seam: inject a fake transport, assert the pure function's behavior, then confirm the wrapper wires it correctly. Particularly relevant for trap-handler tests in `interpreter.integration.spec.js` and for any new trap that reads from stdin.
+
+---
+
 ### `yegor-spikes`
 Bounded ≤60m research/scope sessions to discover code sites, current state, open questions, and ROI before writing any `@todo` puzzle.
 
@@ -233,7 +242,6 @@ Skills available globally that have not been formally used in lccjs, with a one-
 
 | Skill | Try? | Rationale |
 |-------|------|-----------|
-| `io-layer-testing` | **Yes** | Directly relevant to lccjs's pure-API / CLI-wrapper seam — governs what belongs in each layer |
 | `superpowers:systematic-debugging` | **Yes** | Oracle parity debugging sessions are complex; a structured approach would reduce thrash |
 | `superpowers:test-driven-development` | **Yes** | Complements `yegor-unit-tests` for feature work; TDD discipline is already practiced but not skill-guided |
 | `deep-research` | **Yes** | Useful for RESEARCH-role tickets like #886; provides a structured multi-source sweep |
@@ -254,7 +262,7 @@ Concrete improvement candidates, in rough priority order:
 
 2. ~~**Fix `fruit-agent-orchestrate` to skip `humans-only` and `decision` tickets.**~~ Fixed in #888 — the skill now partitions these labels into a `## 🧑 Requires human routing` section and omits them from agent assignments.
 
-3. **Trial `io-layer-testing` and add it to this doc if useful.** The pure-API / CLI-wrapper seam is a first-class concern in lccjs; this skill likely has direct guidance to offer.
+3. ~~**Trial `io-layer-testing` and add it to this doc if useful.**~~ Added in #975 — see the `io-layer-testing` entry under Workflow / Yegor family.
 
 4. **Add `superpowers:systematic-debugging` to this inventory.** Oracle parity debugging is the hardest category of work in this project; structured debugging guidance would reduce multi-turn thrash.
 
