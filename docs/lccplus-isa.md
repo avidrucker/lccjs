@@ -20,6 +20,8 @@ LCC instruction set and the **LCC+** extension (see `src/plus/` and `plusdemos/`
 - Uses a pseudo-random number generator based on a seeded Linear Congruential Generator (LCG) + XOR shift.
 - Seed the RNG with `srand` (see trap instructions below).
 
+> **`rand` is the only new machine instruction added by LCC+.** No other new opcodes exist. All other mnemonics are inherited unchanged from base LCC.
+
 ---
 
 ## New Trap Instructions
@@ -45,6 +47,8 @@ core traps can grow upward from `0x0E` without collision.
 **Note on `bp`:** Trap vector `0x000E` is supported as in LCC, but enhanced in LCC+ to
 allow "press any key to resume" functionality.
 
+> **These are the complete set of LCC+ trap additions (12 mnemonics across 11 distinct vectors; `ding`/`whodis` are aliases).** The occupied range is `0xF5`–`0xFF`. There is no `fprintf`, `printf`, `sprintf`, `scanf`, `puts`, or any other C-library-style trap. Any trap mnemonic not listed above or in [lcc-isa.md](./lcc-isa.md) does not exist.
+
 ---
 
 ## New Assembler Directives
@@ -52,6 +56,8 @@ allow "press any key to resume" functionality.
 | Directive | Description |
 | --- | --- |
 | `.lccplus` | Marks the file as an LCC+ file. Required for LCC+ assembly. Triggers special output header format (`'p'`). |
+
+> **`.lccplus` is the only new assembler directive added by LCC+.** All base LCC directives (`.word`, `.string`, `.start`, `.global`, `.extern`, `.org`, etc.) remain valid in `.ap` files. There are no other LCC+-specific directives.
 
 ---
 

@@ -832,3 +832,6 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 845,907,close.js — parent tracker scan on child close,DEV,30,20,25,5,5,2026-06-06T06:15:00Z,2026-06-06T06:43:30Z,,findParentTrackers pure fn + scanParentTrackers I/O wrapper + --update-trackers flag + 14 unit tests,DRAGONFRUIT,sonnet-4.6,lccjs
 846,,,DEV,,,,,-3,,,,,TEST,,lccjs
 847,,,DEV,,,,,-3,,,,,TEST,,lccjs
+848,,,DEV,,,,,-3,,,,,TEST,,lccjs
+849,,,DEV,,,,,-3,,,,,TEST,,lccjs
+850,924,ISA closed-set docs — add boundary statements,WRITER,30,20,4,26,16,2026-06-05T20:41:36-1000,2026-06-05T20:45:24-1000,,Added registers section + 5 boundary notes to lcc-isa.md; 3 boundary notes to lccplus-isa.md. Skill edits blocked by auto-classifier (out of scope per task assignment).,ELDERBERRY,sonnet-4.6,lccjs

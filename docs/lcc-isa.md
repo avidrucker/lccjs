@@ -8,6 +8,25 @@ Reference for the LCC (Little Computer) instruction set from
 
 ---
 
+## Registers
+
+The LCC architecture has 8 general-purpose registers: `r0` through `r7`. The 3-bit register field in every instruction encoding admits exactly these 8 — there are no others.
+
+| Register | Alias | Conventional role |
+| --- | --- | --- |
+| `r0` | — | general-purpose / return value |
+| `r1` | — | general-purpose |
+| `r2` | — | general-purpose |
+| `r3` | — | general-purpose |
+| `r4` | — | general-purpose |
+| `r5` | `fp` | frame pointer (reserved by calling convention) |
+| `r6` | `sp` | stack pointer (reserved by calling convention) |
+| `r7` | `lr` | link register / return address (reserved by calling convention) |
+
+**These 3 aliases (`fp`, `sp`, `lr`) are the only register aliases recognised by the assembler.** There is no `ra`, `a0`, `a1`, `v0`, `t0`, `zero`, or any other MIPS/RISC-V-style alias. Source: `assembler.js` `isRegister()` accepts only `^(r[0-7]|fp|sp|lr)$`. See [#881](https://github.com/avidrucker/lccjs/issues/881) for the `ra` false-positive incident that triggered this note.
+
+---
+
 ## Standard Instructions
 
 | Mnemonic | Binary Format | Flags Set | Description |
@@ -67,6 +86,8 @@ Reference for the LCC (Little Computer) instruction set from
 > reference oracle reject them with `Invalid operation`; conditional control flow
 > is `br<cc>`. See [research/jmp-condition-suffix-mnemonics.md](./research/jmp-condition-suffix-mnemonics.md) (#151).
 
+> **This is the complete set of standard instructions.** No additional opcodes exist. If you reach for a mnemonic not listed above (e.g. `nop`, `inc`, `dec`, `abs`, `neg`, `swap`, `ldi`, `sti`), it does not exist and the assembler will reject it with `Invalid operation`.
+
 ---
 
 ## Trap Instructions
@@ -88,6 +109,8 @@ Reference for the LCC (Little Computer) instruction set from
 If `sr` or `dr` is omitted in a trap assembly language instruction, it defaults to `r0` (000).
 This applies to assembly programming only, not direct machine code.
 
+> **This is the complete set of I/O trap instructions (11 total).** There is no `puts`, `printf`, `print`, `write`, `read`, `getchar`, `putchar`, or any other C-library-style trap. Any mnemonic not in this table does not exist and will assemble with `Invalid operation`. LCC+ adds additional trap vectors in a separate, non-overlapping range — see [lccplus-isa.md](./lccplus-isa.md).
+
 ---
 
 ## Debugging Instructions
@@ -98,6 +121,8 @@ This applies to assembly programming only, not direct machine code.
 | r | 1111 000 0 00001100 | none | Display all registers |
 | s | 1111 000 0 00001101 | none | Display stack |
 | bp | 1111 000 0 00001110 | none | Software breakpoint (activates debugger) |
+
+> **This is the complete set of debugging instructions (4 total).** Trap vectors `0x0B`–`0x0E` are fully enumerated here. There are no other debug traps in base LCC. The next vector above `bp` (`0x0F`) belongs to LCC+ extensions.
 
 ---
 
@@ -115,6 +140,8 @@ The same suffixes can also be used on the `jmp` instruction.
 | brgt | 101 | n = v and z = 0 (greater than, signed) |
 | brc or brb | 110 | c = 1 (carry / below, i.e. less than unsigned) |
 | br or bral | 111 | always |
+
+> **These are the complete set of branch condition suffixes (8 code slots).** Suffixes not in this table (`ge`, `le`, `pos`, `neg`, `ult`, `ugt`, `ule`, `uge`, `brzp`, etc.) do not exist. Note: the header above about `jmp` suffixes is a textbook error — see the `jmp` note in Standard Instructions; condition-suffixed `jmp` forms are rejected by both lccjs and the oracle.
 
 ---
 
@@ -135,3 +162,5 @@ The same suffixes can also be used on the `jmp` instruction.
 | `.globl <var>` | Same as `.global` |
 | `.extern <var>` | Specify `<var>` is an external variable |
 | `.org <address>` | Reset location counter to a higher `<address>` |
+
+> **This is the complete set of assembler directives (13 forms across 8 distinct directives).** There is no `.text`, `.data`, `.bss`, `.section`, `.align`, `.include`, `.macro`, `.equ`, or `.set`. LCC+ adds exactly one directive (`.lccplus`) — see [lccplus-isa.md](./lccplus-isa.md).
