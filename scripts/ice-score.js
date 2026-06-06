@@ -33,19 +33,12 @@
 
 const { execSync }  = require('child_process');
 const fs            = require('fs');
-const os            = require('os');
 const path          = require('path');
 const readline      = require('readline');
 const Database      = require('better-sqlite3');
+const { DB_PATH }   = require('./db-path');   // shared resolver (LCCJS_DB / lccjs.db) (#984)
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
-
-const LCCJS_DIR = path.join(os.homedir(), '.lccjs');
-const DB_PATH   =
-  process.env.LCCJS_DB ||
-  (fs.existsSync(path.join(LCCJS_DIR, 'lccjs.db'))
-    ? path.join(LCCJS_DIR, 'lccjs.db')
-    : path.join(LCCJS_DIR, 'velocity.db'));
 
 const WORKTREE_ROOT = path.join(__dirname, '..');
 const CSV_PATH  = path.join(WORKTREE_ROOT, 'stats', 'ice-scores.csv');

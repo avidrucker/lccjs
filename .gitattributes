@@ -53,7 +53,7 @@
 # Rows are unique (ticket + timestamps), so union never drops or dups a row.
 # See docs/research/velocity-log-storage.md.
 # docs/puzzle-velocity.csv merge=union — REMOVED (#290): CSV is now auto-generated
-# by scripts/velocity-export.js (full-file export from ~/.lccjs/velocity.db).
+# by scripts/velocity-export.js (full-file export from ~/.lccjs/lccjs.db).
 # Two agents exporting the same DB snapshot produce an identical file; no conflict.
 
 # --- append-friendly cluster manifest (#233 prototype; design #222): same rationale ---

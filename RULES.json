@@ -64,7 +64,7 @@
       "text": "I will not delete data from the database unless I am given explicit permission by a human user.",
       "added": "2026-06-01",
       "added_issue": null,
-      "comment": "Protects ~/.lccjs/velocity.db from accidental truncation. Always SELECT first to verify scope before any destructive SQL."
+      "comment": "Protects ~/.lccjs/lccjs.db from accidental truncation. Always SELECT first to verify scope before any destructive SQL."
     },
     {
       "id": "R008",
