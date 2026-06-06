@@ -2,12 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-LCC.js is a JavaScript implementation of the LCC toolchain — assembler, linker, and interpreter for a 16-bit educational ISA. **No runtime dependencies**; Node ≥18 is all that's needed to run the tools. `npm install` only pulls dev deps (`jest`, `dotenv`).
+LCC.js is a JavaScript implementation of the LCC toolchain — assembler, linker, and interpreter for a 16-bit educational ISA. **No runtime dependencies**; Node ≥18 is all that's needed to run the tools. `npm install` only pulls dev deps (`jest`, `dotenv`, `@lezer/lr`, etc.).
 
 ## Commands
 
 ```bash
 # First-time setup (run once after cloning)
+npm install                                   # install dev deps (jest, dotenv, @lezer/lr, etc.)
 npm run setup                                 # install git hooks (pre-commit + commit-msg + pre-push)
 
 # Toolchain
