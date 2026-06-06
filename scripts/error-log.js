@@ -23,8 +23,8 @@ const DB_PATH = process.env.VELOCITY_DB || path.join(os.homedir(), '.lccjs', 've
 
 const VALID_ERROR_TYPES = new Set([
   'TOOL_DENIED', 'HOOK_BLOCK', 'CLAIM_FAIL', 'BASH_FAIL', 'GIT_FAIL',
-  'GH_FAIL', 'DB_FAIL', 'FILE_FAIL', 'SKILL_FAIL', 'NETWORK_FAIL',
-  'VALIDATION_FAIL', 'OTHER',
+  'GIT_STATE', 'GH_FAIL', 'GH_INFO', 'DB_FAIL', 'FILE_FAIL', 'EDIT_PRECOND',
+  'SKILL_FAIL', 'NETWORK_FAIL', 'VALIDATION_FAIL', 'OTHER',
 ]);
 
 const CANONICAL_MODEL = /^[a-z]+-\d+\.\d+$/;
