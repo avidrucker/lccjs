@@ -838,3 +838,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 851,908,fix currentIteration off-by-one after init,DEV,45,8,7,38,1,2026-06-05T20:39:38-1000,2026-06-05T20:46:50-1000,,root cause: readLineFromStdin keeps \n in inputBuffer for ain parity; spurious empty-cmd fires repeat-lastStep(1) before first real command; fixed with _readCommand() in IInterpreter,CHERRY,sonnet-4.6,lccjs
 852,,,DEV,,,,,-3,,,,,TEST,,lccjs
 853,,,DEV,,,,,-3,,,,,TEST,,lccjs
+854,914,fix(interpreter): sequential sin reads,DEV,30,20,25,5,-5,2026-06-05T20:26:00-1000,2026-06-05T20:51:14-1000,,Leading newline leftover from ain-parity mechanism caused second sequential sin to return empty string. Fix placed in executeSIN not readLineFromStdin — debug prompt also uses readLineFromStdin with intentional leading newline.,APPLE,sonnet-4.6,lccjs
