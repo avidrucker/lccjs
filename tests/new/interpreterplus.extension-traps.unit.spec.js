@@ -14,7 +14,7 @@
  */
 
 const InterpreterPlus = require('../../src/plus/interpreterplus');
-const { TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR, TRAP_MILLIS, TRAP_RESETC, TRAP_BEEP, TRAP_DING } = require('../../src/plus/constants');
+const { TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR, TRAP_MILLIS, TRAP_RESETC, TRAP_BEEP, TRAP_DING, TRAP_BOOP } = require('../../src/plus/constants');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -384,5 +384,34 @@ describe(`InterpreterPlus — executeDing / ding (TRAP_DING = 0x${TRAP_DING.toSt
     ip.executeDing();
     expect(ip.r[2]).toBe(0xFFFF);
     expect(ip.r[4]).toBe(0xFFFF);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// boop (TRAP_BOOP = 0xF6)
+// ---------------------------------------------------------------------------
+
+describe(`InterpreterPlus — executeBoop / boop (TRAP_BOOP = 0x${TRAP_BOOP.toString(16).toUpperCase()})`, () => {
+  let writeSpy;
+  beforeEach(() => {
+    writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+  });
+  afterEach(() => writeSpy.mockRestore());
+
+  test('writes "boop\\n" to stdout', () => {
+    const ip = makeIp();
+    ip.executeBoop();
+    expect(writeSpy).toHaveBeenCalledWith('boop\n');
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('takes no register operand — does not read dr or sr', () => {
+    const ip = makeIp();
+    ip.r.fill(0xFFFF);
+    ip.dr = 1;
+    ip.sr = 6;
+    ip.executeBoop();
+    expect(ip.r[1]).toBe(0xFFFF);
+    expect(ip.r[6]).toBe(0xFFFF);
   });
 });

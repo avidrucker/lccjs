@@ -13,7 +13,7 @@ const { TRAP_HALT, TRAP_BP } = require('../core/constants');
 const {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
   TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC,
-  TRAP_BEEP, TRAP_DING,
+  TRAP_BEEP, TRAP_DING, TRAP_BOOP,
   EOP_RAND,
 } = require('./constants');
 
@@ -320,6 +320,9 @@ class InterpreterPlus extends Interpreter {
       case TRAP_DING: // ding
         this.executeDing();
         break;
+      case TRAP_BOOP: // boop
+        this.executeBoop();
+        break;
       default:
         // If it's not a known LCC+ trap, call parent's method
         super.executeTRAP();
@@ -439,7 +442,11 @@ class InterpreterPlus extends Interpreter {
   executeDing() {
     process.stdout.write('\x07');
   }
-}
+
+
+  executeBoop() {
+    process.stdout.write('boop\n');
+  }}
 
 // If run directly
 if (require.main === module) {

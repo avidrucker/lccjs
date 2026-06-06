@@ -38,6 +38,7 @@ core traps can grow upward from `0x0E` without collision.
 | resetc | 0x00FF | none | Resets cursor position to top-left of screen |
 | beep   | 0x00F8 | none | Emits ASCII BEL (`\x07`) to stdout |
 | ding   | 0x00F7 | none | Emits ASCII BEL (`\x07`) to stdout (alias of `beep`; may diverge in a future release) |
+| boop   | 0x00F6 | none | Writes the literal string `"boop\n"` to stdout |
 
 **Note on `bp`:** Trap vector `0x000E` is supported as in LCC, but enhanced in LCC+ to
 allow "press any key to resume" functionality.

@@ -9,7 +9,7 @@ const { OPCODE_EXT: OP_EXT } = require('../core/constants');
 const {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
   TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC,
-  TRAP_BEEP, TRAP_DING,
+  TRAP_BEEP, TRAP_DING, TRAP_BOOP,
   EOP_RAND,
 } = require('./constants');
 
@@ -28,6 +28,7 @@ class AssemblerPlus extends Assembler {
     t['resetc'] = { encoder: (ops) => this.assembleTrap(ops, TRAP_RESETC), operandShape: '[sr]' };
     t['beep']   = { encoder: (_ops) => this.assembleTrap([], TRAP_BEEP),  operandShape: '(none)' };
     t['ding']   = { encoder: (_ops) => this.assembleTrap([], TRAP_DING),  operandShape: '(none)' };
+    t['boop']   = { encoder: (_ops) => this.assembleTrap([], TRAP_BOOP),  operandShape: '(none)' };
   }
 
   main(args) {
