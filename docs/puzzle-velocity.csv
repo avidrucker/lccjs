@@ -898,3 +898,5 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 911,976,add improve-codebase-architecture entry to docs/skills.md,WRITER,15,10,1,14,9,2026-06-06T11:18:54-10:00,2026-06-06T11:19:33-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs
 912,977,clarify handoff vs write-til-doc in skills.md,WRITER,10,5,1,9,4,2026-06-06T11:20:10-10:00,2026-06-06T11:20:34-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs
 913,979,annotate setup-cowork in skills.md — not actively used,WRITER,10,5,1,9,4,2026-06-06T11:21:13-10:00,2026-06-06T11:21:36-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs
+914,864,"feat: implement R2 — formatter keeps label+body inline, normalises to single space after colon",DEV,15,8,2,13,6,2026-06-06T11:21:50-1000,2026-06-06T11:24:02-1000,,"R2: formatter keeps label+body inline, single space after colon (label: body); bare label stays label:. formatter.js labelM branch + 6 test expectations updated split->inline; formatter.unit 26/26 green, oracle parity 142/142 green.",fig,opus-4.8,lccjs
+915,933,RESEARCH parse improving-data-analysis-research.md for follow-ups,RESEARCH,45,25,2,43,23,2026-06-06T11:22:20-10:00,2026-06-06T11:23:59-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs
