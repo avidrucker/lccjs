@@ -108,6 +108,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-06-05 DRAGONFRUIT session 2](./today-i-learned-2026-06-05-dragonfruit-2.md) | 2026-06-05 | DRAGONFRUIT | din/ain newline parity (lccjs consumes `\n`, OG LCC doesn't); state current behavior before options; deferred decisions need a summary doc + two tickets; don't route closed-ticket housekeeping through owner decisions; tracker advance earns its own velocity row. |
 | [TIL 2026-06-05 CHERRY s3](./today-i-learned-2026-06-05-cherry-3.md) | 2026-06-05 | CHERRY | Document the negative fact for closed sets or it gets re-invented; DDD refactors shift test ownership — tests must track the invariant not its location; error logging should be manual not hook-triggered. |
 | [TIL 2026-06-05 DRAGONFRUIT session 3](./today-i-learned-2026-06-05-dragonfruit-3.md) | 2026-06-05 | DRAGONFRUIT | Observable Plot is standalone (no notebook runtime needed); `const` temporal dead zone in catch paths; `npm run close` is push-only — commit first; velocity CSV conflicts are always append-only and mechanically resolvable. |
+| [TIL 2026-06-05 GRAPE](./today-i-learned-2026-06-05-grape.md) | 2026-06-05 | GRAPE | Cross-CLI single-letter flag namespace; tracker items may be partially done — read before filing child; errors write-path is agent not hook; worktrees need npm install before tests are meaningful. |
 
 ## Recurring threads (informal — #207 will formalize)
 
