@@ -121,6 +121,22 @@ describe('LCC Integration Tests', () => {
     expect(Buffer.isBuffer(virtualFs['demoA.bst'])).toBe(true);
   });
 
+  // DDD gap 7 (#880): invariant at its new home — lcc.js resolves name.nnn and
+  // passes userName to the report generator. Before #880, assembler.main() read
+  // name.nnn itself; now lcc.js owns that step. This test verifies the name flows
+  // all the way into the .lst content so that the moved invariant is not silently dropped.
+  test('lcc.main() resolves userName from name.nnn and includes it in the .lst report (#880)', () => {
+    const lcc = new LCC();
+    virtualFs['prog.a'] = '    mov r0, 5\n    dout r0\n    nl\n    halt\n';
+    virtualFs['name.nnn'] = 'Smith, Jane Q\n';
+
+    lcc.main(['prog.a']);
+
+    const lst = virtualFs['prog.lst'];
+    expect(Buffer.isBuffer(lst)).toBe(true);
+    expect(lst.toString('utf8')).toContain('Smith, Jane Q');
+  });
+
   test('should not require name.nnn when linking object files', () => {
     const lcc = new LCC();
 

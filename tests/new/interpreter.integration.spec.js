@@ -103,36 +103,30 @@ describe('Interpreter Integration Tests', () => {
       }
     });
 
-    const nameFilePath = 'name.nnn';
-    virtualFs[nameFilePath] = 'Cheese\n';
+    // name.nnn here is a pre-#880 artifact. After #880, interpreter.main() no
+    // longer reads name.nnn — lcc.js pre-resolves userName and passes it in.
+    // Tests that call interpreter.main() directly exercise the standalone path;
+    // they do not need name.nnn and do not test name resolution.
+    virtualFs['name.nnn'] = 'Cheese\n';
 
     interpreter = new Interpreter();
   });
 
-  test('1. Should read existing name.nnn file (Cheese) and run minimal .e file', () => {
-    // We'll call our .e file 'demoA.e' and the name file 'name.nnn'
-    // Provide minimal valid .e bytes: starts with 'o'(0x6F), then 'C'(0x43), then a 'halt' (0xF0,0x00)
+  // After #880, interpreter.main() does NOT read name.nnn — userName must be
+  // pre-set by the caller (lcc.js owns that step). name.nnn in beforeEach
+  // has no effect here. This tests the standalone interpreter.main() path:
+  // minimal .e file runs without error, name resolution is not exercised.
+  // See name.integration.spec.js for post-#880 wrapper coverage.
+  test('1. Should run a minimal .e file via interpreter.main() standalone', () => {
     const eFilePath = 'demoA.e';
-
-    // Put these in the virtual FS so "existsSync" sees them:
-    // 1) the .e file -> as a Buffer
     virtualFs[eFilePath] = Buffer.from([0x6F, 0x43, 0x00, 0xF0]);
-    // 2) the name.nnn -> as a string "Cheese\n", which is created in the beforeEach
 
-    // Now run the interpreter
     expect(() => {
       interpreter.main([eFilePath]);
     }).not.toThrow();
 
-    // The interpreter should have read the name file successfully
-    // (No prompt, because file existed.)
-    // And the program is just "halt", so no real output
     expect(interpreter.output).toBe('');
   });
-
-  // Moved to dedicated wrapper coverage:
-  // - tests/new/name.integration.spec.js verifies mocked wrapper behavior
-  // - tests/new/interpreter.e2e.spec.js verifies real CLI prompt/file creation behavior
 
   test('3. Should interpret a typical demoA.e with name.nnn existing', () => {
     const eFilePath = 'demoA.e';
@@ -326,8 +320,11 @@ describe('Interpreter Integration Tests', () => {
   });
 
   // -----------------------------------------------------------------------------
-  // 13. Test multiple .e files each with name.nnn 
-  //     We'll demonstrate running them separately in one test
+  // 13. Tests the standalone interpreter.main() path with generateStats=true.
+  // name.nnn in beforeEach is not consumed — interpreter.main() uses this.userName
+  // (pre-set by the caller, e.g. lcc.js). Pre-setting userName is lcc.js's
+  // responsibility (#880); the standalone path writes stats with whatever userName
+  // is set (null/undefined produces an empty-name report, which is acceptable here).
   // -----------------------------------------------------------------------------
   test('13. should handle multiple .e files', () => {
     const file1 = 'prog1.e';

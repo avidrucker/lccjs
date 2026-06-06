@@ -51,6 +51,9 @@ describe('.e file format: oC preamble and LE word encoding (#756)', () => {
     // Wrong: '6F43\n05D0\n...' (copying .e bytes) → word 0x6F43 has opcode 6 (LDR), silent wrong code.
     // Correct: 'D005\nF002\nF001\nF000\n' (raw instruction words)
     virtualFs['correct.hex'] = 'D005\nF002\nF001\nF000\n';
+    // name.nnn is a pre-#880 artifact — assembler.main() no longer reads it
+    // (name resolution moved to lcc.js). Non-object-module assembly (.hex here)
+    // does not write .lst/.bst from assembler.main(), so this line has no effect.
     virtualFs['name.nnn'] = 'Cheese\n';
 
     assembler.main(['correct.hex']);
