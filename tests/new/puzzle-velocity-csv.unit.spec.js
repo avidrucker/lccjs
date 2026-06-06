@@ -64,6 +64,8 @@ describe('docs/puzzle-velocity.md — column reference', () => {
 // Concern #314-2: every row logged on or after the model column was introduced
 // (#275, DB row 126) should have a non-empty model value.  Rows before that
 // are legitimately blank (pre-column era); we track the cutoff by id.
+// Rows with agent='TEST' are excluded: they are test-suite artifacts injected
+// by velocity-log tests into the shared DB (#940 tracks the isolation fix).
 describe('docs/puzzle-velocity.csv — model column backfill', () => {
   const csvPath = path.join(__dirname, '..', '..', 'docs', 'puzzle-velocity.csv');
   const raw = fs.readFileSync(csvPath, 'utf8');
@@ -72,15 +74,17 @@ describe('docs/puzzle-velocity.csv — model column backfill', () => {
   const header = parseCSVLine(lines[0]);
   const idIdx    = header.indexOf('id');
   const modelIdx = header.indexOf('model');
+  const agentIdx = header.indexOf('agent');
   const dataRows = lines.slice(1).filter(Boolean);
 
   // id 126 = first row that introduced the model column (ticket #275, DRAGONFRUIT).
   const MODEL_COLUMN_SINCE_ID = 126;
 
-  test('all rows with id >= 126 have a non-empty model value', () => {
+  test('all non-TEST rows with id >= 126 have a non-empty model value', () => {
     const missing = dataRows
       .map(line => parseCSVLine(line))
       .filter(fields => Number(fields[idIdx]) >= MODEL_COLUMN_SINCE_ID)
+      .filter(fields => fields[agentIdx] !== 'TEST')
       .filter(fields => !fields[modelIdx])
       .map(fields => ({ id: fields[idIdx], ticket: fields[1] }));
     expect(missing).toEqual([]);
