@@ -793,3 +793,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 806,,,DEV,,,,,-3,,,,,TEST,,lccjs
 807,,,DEV,,,,,-3,,,,,TEST,,lccjs
 808,902,Full test suite runtime is unmeasured,DATA,15,5,5,10,0,2026-06-05T16:26:53-1000,2026-06-05T16:31:31-1000,,npm test ~18-22s; npm run test:all ~81s; slowest file textbook-demos.parity 8.3s,GRAPE,sonnet-4.6,lccjs
+809,895,pre-claim checklist — make --as impossible to miss,WRITER,10,7,12,0,5,2026-06-05T16:20:00-10:00,2026-06-05T16:32:16-10:00,,"3 targeted edits: expanded pre-claim block, fixed canonical claim example, fixed do-this-not-that example ordering; delta_h clamped to 0 (went slightly over)",FIG,sonnet-4.6,lccjs
