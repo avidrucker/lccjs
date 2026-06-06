@@ -116,6 +116,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-06-06 FIG](./today-i-learned-2026-06-06-fig.md) | 2026-06-06 | FIG | Naming absent concepts backfires as confabulation; claim requires --as flag; gh comment multi-line quoting; error:log schema (occurred_iso + fixed enum); log errors immediately at occurrence. |
 | [TIL 2026-06-06 DRAGONFRUIT](./today-i-learned-2026-06-06-dragonfruit.md) | 2026-06-06 | DRAGONFRUIT | Own-fix verifies prior fix in production; .claire/ vs .claude/ jest exclusion gap; until-grep is wrong for background tasks; auto-mode Self-Modification block is per-task not per-path; tracker checkboxes are frozen snapshots; pre-stated triage criteria collapse judgment into lookup. |
 | [TIL 2026-06-06 CHERRY](./today-i-learned-2026-06-06-cherry.md) | 2026-06-06 | CHERRY | Shared DB path resolver + migration shim; CRLF strip for CSV seeds; TEST-agent rows are artifacts, not data; replace stale tests with protocol-documenting replacements; subprocess test helpers need the worktree-guard bypass flag. |
+| [TIL 2026-06-06 GRAPE](./today-i-learned-2026-06-06-grape.md) | 2026-06-06 | GRAPE | Worktree branch scripts can point to stale DB path; Playwright MCP resolves human-required SPA audits; source code reading ≠ runtime verification; package.json listing ≠ package installed. |
 
 ## Recurring threads (informal — #207 will formalize)
 
