@@ -1453,6 +1453,13 @@ class Interpreter {
   }
 
   executeSIN() {
+    // Skip a leading '\n' left by the previous line-read trap for ain parity.
+    // The debug prompt also uses readLineFromStdin and intentionally sends '\n'
+    // as an empty-Enter step command, so this skip must live here rather than
+    // in readLineFromStdin itself.
+    if (this.inputBuffer && this.inputBuffer.startsWith('\n')) {
+      this.inputBuffer = this.inputBuffer.slice(1);
+    }
     let address = this.r[this.sr];
     // Destructure isEOF so we can throw consistently with din/hin/ain.
     let { inputLine: input, isSimulated, isEOF } = this.readLineFromStdin();
