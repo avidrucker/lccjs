@@ -199,6 +199,7 @@ Guide an agent through writing, filing, and closing a TIL (Today I Learned) entr
 **Notes from practice:**
 - High adoption: 61+ TIL entries across all agents in the first 10 days of parallel operation.
 - `docs/learnings/README.md` index lag was a recurring gap — new TILs were written but not indexed (synthesis 2026-06-04 N-4). README hygiene is a known maintenance burden.
+- Human-approval gate removed in #921 (2026-06-05): Step 1 now proceeds directly from draft to file-issue → claim → commit without pausing. Corrections go in a follow-up, not a mid-close round-trip.
 
 ---
 
