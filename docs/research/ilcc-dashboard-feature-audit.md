@@ -50,20 +50,21 @@ observations. A human should verify and extend this list on next visit to the UR
 
 lccjs has three distinct browser-facing components at different maturity levels.
 
-**Updated 2026-06-04 (ELDERBERRY, #714 checklist pass):** Sections A–C reflect the original #700 audit state. Section D and the gap table below have been updated to reflect features shipped since then (#715, #734, #735, #736).
+**Updated 2026-06-05 (APPLE, #714 checklist pass):** Sections B–C reflect the original #700 audit state. Sections A and D and the gap table below have been updated to reflect features shipped since then (#715, #734, #735, #736, #732, #733, #882, showcase CM6 upgrade).
 
 ---
 
 ### A. Showcase page (`docs/showcase/index.html`)
 
-A static demo page served under `docs/` and included in the GitHub Pages site.
+A static demo page served under `docs/` and included in the GitHub Pages site. **Updated 2026-06-05:** the editable textarea was replaced with a CM6 `EditorView` using `basicSetup`, `lineNumbers()`, `indentWithTab`, and the Lezer-based `lcc()` LanguageSupport (#882). The Shiki read-only preview panel on the right is unchanged.
 
 | Feature | State | Notes |
 |---------|-------|-------|
-| Code editor (textarea) | ✅ | Playground section: editable `<textarea>` |
-| Syntax highlighting | ✅ | Shiki v1 + custom LCC TextMate grammar (`docs/lcc.tmLanguage.json`); live 150ms debounce |
-| Side-by-side highlight preview | ✅ | Editor on left, highlighted read-only view on right |
-| Tab → 4 spaces | ✅ | `keydown` Tab override in playground |
+| Code editor (CM6 EditorView) | ✅ | `basicSetup` + `lcc()` Lezer LanguageSupport; previously a raw `<textarea>` |
+| Syntax highlighting (editor) | ✅ | Lezer `lcc()` LanguageSupport (#882) in the CM6 editor pane |
+| Syntax highlighting (preview) | ✅ | Shiki v1 + custom LCC TextMate grammar; live 150ms debounce |
+| Side-by-side highlight preview | ✅ | CM6 editor on left, Shiki read-only view on right |
+| Tab → indent | ✅ | `indentWithTab` keymap via CM6 (previously `keydown` Tab override) |
 | Static code samples | ✅ | demoO.a, demoF.a, rock-paper-scissors.ap rendered highlighted |
 | LCC+ (`.ap`) sample | ✅ | rock-paper-scissors.ap displayed |
 | Run / execute | ❌ | No button; editor is highlight-only |
@@ -74,7 +75,7 @@ A static demo page served under `docs/` and included in the GitHub Pages site.
 | Share as link | ❌ | — |
 | Download as `.a` | ❌ | — |
 | Auto-format / prettify | ❌ | — |
-| Line numbers | ❌ (editor) / ✅ (preview) | Shiki adds line numbers to the highlight preview; the raw textarea has none |
+| Line numbers | ✅ (both) | `lineNumbers()` extension in CM6 editor; Shiki adds them to the preview |
 | Assembly error display | ❌ | — |
 
 ### B. lcc-injector (`dist/lcc-injector.js`)
@@ -109,9 +110,9 @@ building custom tools, not direct use.
 | `executeBuffer(buf, {write})` | ✅ | Runs with a custom write callback |
 | Standalone UI | ❌ | API only — no built-in interface |
 
-### D. Playground page (`docs/playground/index.html`) — added via #715, #734, #735, #736
+### D. Playground page (`docs/playground/index.html`) — added via #715, #734, #735, #736, #732, #733
 
-A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`) for editing.
+A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`) and custom ViewPlugin syntax highlighting.
 
 | Feature | State | Notes |
 |---------|-------|-------|
@@ -126,22 +127,22 @@ A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`)
 | Tabs / multi-file | ✅ | Tab bar with `+` (new) and `×` (close); each tab has independent CM6 state |
 | Auto-format / prettify | ✅ | `⌥ Format` button calls `api.formatLccSource()` |
 | Line numbers | ✅ | Provided by CM6 `basicSetup` |
-| Share as link | ❌ | Not yet (tracked in #732, deferred) |
-| Download as `.a` | ❌ | Not yet (tracked in #733, deferred) |
+| Share as link | ✅ | URL query-param encoding; `#share-btn` copies to clipboard (#732, closed 2026-06-05) |
+| Download as `.a` | ✅ | `#download-btn` exports editor content as a `.a` file (#733, closed 2026-06-05) |
 | LCC+ (`.ap`) support | ~ | LCC+ mnemonics highlighted; no LCC+ execution path in UI |
 | Dark / light theme | ❌ | Dark theme only; no toggle |
 | Save to localStorage | ❌ | No persistence across reloads |
 
 ---
 
-## Gap table — ILCC dashboard vs lccjs (updated 2026-06-04)
+## Gap table — ILCC dashboard vs lccjs (updated 2026-06-05)
 
 `✅` = present · `❌` = absent · `~` = partial · `?` = unverified (ILCC, needs human)
 
 | Feature | ILCC dashboard | lccjs (best surface) |
 |---------|:--------------:|:--------------------:|
 | Code editor (writable) | ✅ | ✅ playground (CM6) |
-| Syntax highlighting | ❌ | ✅ playground (ViewPlugin) + showcase (Shiki) |
+| Syntax highlighting | ❌ | ✅ playground (ViewPlugin) + showcase (Lezer CM6 + Shiki) |
 | Run / assemble / execute | ✅ | ✅ playground |
 | Terminal output panel | ✅ | ✅ playground + injector |
 | Interactive stdin | ? | ❌ |
@@ -149,10 +150,10 @@ A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`)
 | Assembly error display | ? | ✅ playground + injector |
 | File naming | ✅ | ✅ playground |
 | Tabs / multi-file | ✅ | ✅ playground |
-| Share as link | ✅ | ❌ (#732, deferred) |
-| Download as `.a` | ✅ | ❌ (#733, deferred) |
+| Share as link | ✅ | ✅ playground (#732, closed 2026-06-05) |
+| Download as `.a` | ✅ | ✅ playground (#733, closed 2026-06-05) |
 | Auto-format / prettify | ✅ | ✅ playground |
-| Line numbers (editor) | ? | ✅ playground (CM6 basicSetup) |
+| Line numbers (editor) | ? | ✅ playground (CM6 basicSetup) + showcase (CM6 lineNumbers()) |
 | LCC+ (`.ap`) support | ? | ~ playground highlights; no LCC+ run path |
 | Standalone playground page | ✅ | ✅ playground |
 | Embeddable in slides | ? | ✅ injector + reveal-md |
@@ -160,11 +161,13 @@ A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`)
 
 ---
 
-## Key finding (updated 2026-06-04)
+## Key finding (updated 2026-06-05)
 
 ~~lccjs and the ILCC dashboard have **complementary** strengths that do not yet overlap into a single surface~~
 
-The primary gap (no run-in-browser playground) has been closed by #715. lccjs now has a standalone playground that exceeds the ILCC dashboard on syntax highlighting and matches it on editor, run, output, file naming, tabs, and auto-format. The two remaining feature gaps are share-as-link (#732) and download-as-.a (#733), both deferred. Interactive stdin and LCC+ execution in the playground are also absent.
+~~The primary gap (no run-in-browser playground) has been closed by #715. lccjs now has a standalone playground that exceeds the ILCC dashboard on syntax highlighting and matches it on editor, run, output, file naming, tabs, and auto-format. The two remaining feature gaps are share-as-link (#732) and download-as-.a (#733), both deferred. Interactive stdin and LCC+ execution in the playground are also absent.~~
+
+All 7 known ILCC dashboard feature gaps are now closed in lccjs. Share-as-link (#732) and download-as-.a (#733) shipped on 2026-06-05. lccjs's playground now matches or exceeds the ILCC dashboard on every confirmed feature. The showcase was also upgraded to a CM6 editor with Lezer-based syntax highlighting (#882). The remaining open items are ILCC-side unknowns (#731, human verification required) and two lccjs gaps: interactive stdin and LCC+ execution path in the playground UI.
 
 ---
 
