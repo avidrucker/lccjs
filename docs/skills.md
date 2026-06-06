@@ -205,7 +205,9 @@ Bounded ≤60m research/scope sessions to discover code sites, current state, op
 ### `handoff`
 Compact the current conversation into a handoff document so a fresh agent can pick up where you left off.
 
-**Invoke when:** ending a session mid-task or handing off to another agent.
+**Invoke when:** ending a session **mid-task** — when a puzzle is still open and another agent (or a future session) must continue. The output is a dense context dump: current state, blockers, next step. Not a permanent record — it expires when the task is done.
+
+**Do NOT use for:** end-of-session retrospectives or documenting lessons. That is `write-til-doc`.
 
 **Notes from practice:**
 - Little evidence of invocation in TIL docs — agents tend to commit WIP and leave the issue in progress rather than writing a handoff. Potentially underused; may be most valuable in long debugging sessions where context is dense.
@@ -213,7 +215,9 @@ Compact the current conversation into a handoff document so a fresh agent can pi
 ### `write-til-doc`
 Guide an agent through writing, filing, and closing a TIL (Today I Learned) entry in `docs/learnings/`.
 
-**Invoke when:** the user says "write a TIL", "write up what you learned", "add to learnings", or requests a session retrospective. Requires a worktree, a velocity row, and a closing commit — not a casual note.
+**Invoke when:** the **session is ending** (or a puzzle is closed) and a non-obvious lesson emerged — process friction, a tooling gotcha, a workflow fix. The output is a permanent learning entry. Requires a worktree, a velocity row, and a closing commit — not a casual note.
+
+**Do NOT use for:** mid-task handoffs. That is `handoff`. Write-TIL is end-of-session only.
 
 **Notes from practice:**
 - High adoption: 61+ TIL entries across all agents in the first 10 days of parallel operation.
