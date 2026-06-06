@@ -17,57 +17,57 @@ describe('formatLccSource', () => {
   // ── instructions ─────────────────────────────────────────────────────────────
 
   test('instruction with no indent is indented 8 spaces', () => {
-    expect(formatLccSource('mov r0, 1')).toBe('        mov r0, 1');
+    expect(formatLccSource('mov r0, 1')).toBe('        mov r0, 1\n');
   });
 
   test('instruction with wrong indent is normalised to 8 spaces', () => {
-    expect(formatLccSource('  mov r0, 1')).toBe('        mov r0, 1');
+    expect(formatLccSource('  mov r0, 1')).toBe('        mov r0, 1\n');
   });
 
   test('instruction already indented 8 spaces is unchanged', () => {
-    expect(formatLccSource('        mov r0, 1')).toBe('        mov r0, 1');
+    expect(formatLccSource('        mov r0, 1')).toBe('        mov r0, 1\n');
   });
 
   test('trailing whitespace is stripped from instruction', () => {
-    expect(formatLccSource('        mov r0, 1   ')).toBe('        mov r0, 1');
+    expect(formatLccSource('        mov r0, 1   ')).toBe('        mov r0, 1\n');
   });
 
   // ── labels ───────────────────────────────────────────────────────────────────
 
   test('label-only line normalised to column 0', () => {
-    expect(formatLccSource('        main:')).toBe('main:');
+    expect(formatLccSource('        main:')).toBe('main:\n');
   });
 
   test('label already at column 0 is unchanged', () => {
-    expect(formatLccSource('main:')).toBe('main:');
+    expect(formatLccSource('main:')).toBe('main:\n');
   });
 
   test('label+body split onto two lines', () => {
-    expect(formatLccSource('msg:    .string "hello"')).toBe('msg:\n        .string "hello"');
+    expect(formatLccSource('msg:    .string "hello"')).toBe('msg:\n        .string "hello"\n');
   });
 
   test('label+body with extra spaces between colon and body', () => {
-    expect(formatLccSource('data_word:      .word 5')).toBe('data_word:\n        .word 5');
+    expect(formatLccSource('data_word:      .word 5')).toBe('data_word:\n        .word 5\n');
   });
 
   test('label with space before colon normalised', () => {
-    expect(formatLccSource('main :')).toBe('main:');
+    expect(formatLccSource('main :')).toBe('main:\n');
   });
 
   test('@-prefix label placed at column 0', () => {
-    expect(formatLccSource('        @loop:')).toBe('@loop:');
+    expect(formatLccSource('        @loop:')).toBe('@loop:\n');
   });
 
   test('$-prefix label placed at column 0', () => {
-    expect(formatLccSource('        $local:')).toBe('$local:');
+    expect(formatLccSource('        $local:')).toBe('$local:\n');
   });
 
   test('@-prefix label+body split onto two lines', () => {
-    expect(formatLccSource('@loop: br @loop')).toBe('@loop:\n        br @loop');
+    expect(formatLccSource('@loop: br @loop')).toBe('@loop:\n        br @loop\n');
   });
 
   test('$-prefix label+body split onto two lines', () => {
-    expect(formatLccSource('$local: .word 0')).toBe('$local:\n        .word 0');
+    expect(formatLccSource('$local: .word 0')).toBe('$local:\n        .word 0\n');
   });
 
   test('@-prefix label not misclassified as instruction', () => {
@@ -79,41 +79,41 @@ describe('formatLccSource', () => {
   // ── comments ─────────────────────────────────────────────────────────────────
 
   test('full-line comment normalised to column 0', () => {
-    expect(formatLccSource('        ; indented comment')).toBe('; indented comment');
+    expect(formatLccSource('        ; indented comment')).toBe('; indented comment\n');
   });
 
   test('full-line comment already at column 0 is unchanged', () => {
-    expect(formatLccSource('; a comment')).toBe('; a comment');
+    expect(formatLccSource('; a comment')).toBe('; a comment\n');
   });
 
   test('trailing whitespace stripped from comment', () => {
-    expect(formatLccSource('; a comment   ')).toBe('; a comment');
+    expect(formatLccSource('; a comment   ')).toBe('; a comment\n');
   });
 
   test('inline comment on instruction line is preserved', () => {
     const input = '  mov r0, 1     ; load 1';
-    expect(formatLccSource(input)).toBe('        mov r0, 1     ; load 1');
+    expect(formatLccSource(input)).toBe('        mov r0, 1     ; load 1\n');
   });
 
   // ── blank lines ──────────────────────────────────────────────────────────────
 
   test('blank line between instructions is preserved', () => {
     const input = '        mov r0, 1\n\n        mov r1, 2';
-    expect(formatLccSource(input)).toBe('        mov r0, 1\n\n        mov r1, 2');
+    expect(formatLccSource(input)).toBe('        mov r0, 1\n\n        mov r1, 2\n');
   });
 
   test('trailing blank lines are stripped', () => {
-    expect(formatLccSource('        halt\n\n')).toBe('        halt');
+    expect(formatLccSource('        halt\n\n')).toBe('        halt\n');
   });
 
   // ── directives ───────────────────────────────────────────────────────────────
 
   test('.start directive indented 8 spaces', () => {
-    expect(formatLccSource('.start main')).toBe('        .start main');
+    expect(formatLccSource('.start main')).toBe('        .start main\n');
   });
 
   test('.word directive indented 8 spaces', () => {
-    expect(formatLccSource('.word 42')).toBe('        .word 42');
+    expect(formatLccSource('.word 42')).toBe('        .word 42\n');
   });
 
   // ── multi-line ───────────────────────────────────────────────────────────────
@@ -140,7 +140,7 @@ describe('formatLccSource', () => {
       '        halt',
       'msg:',
       '        .string "Hello, World!"',
-    ].join('\n');
+    ].join('\n') + '\n';
 
     expect(formatLccSource(input)).toBe(expected);
   });
@@ -156,7 +156,7 @@ describe('formatLccSource', () => {
       '        halt',
       'msg:',
       '        .string "Hello, World!"',
-    ].join('\n');
+    ].join('\n') + '\n';
 
     expect(formatLccSource(src)).toBe(src);
   });
