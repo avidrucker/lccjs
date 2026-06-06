@@ -31,6 +31,7 @@
     "ice:score": "node scripts/ice-score.js"
   },
   "devDependencies": {
+    "@lezer/highlight": "^1.2.1",
     "@lezer/lr": "^1.4.10",
     "better-sqlite3": "^12.10.0",
     "dotenv": "^17.2.3",
