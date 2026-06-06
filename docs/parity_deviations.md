@@ -786,6 +786,81 @@ identifies the affected directive, reducing user confusion. LCC.js-stricter-is-s
 
 ---
 
+### 26. Empty / comment-only / whitespace-only `.hex`: oracle exits 1 with missing-executable error; lccjs exits 0 silently (#934)
+
+When a `.hex` file produces zero words (empty file, comment-only lines, whitespace-only
+lines), the oracle attempts to open and run the `.e` file it did not create, fails with a
+file-not-found error, and exits 1. LCC.js exits 0 silently without creating any artifacts.
+
+| | Oracle (cuh63 6.3) | LCC.js |
+|---|---|---|
+| Empty file | `Cannot open executable file <name>.e` | *(silent)* |
+| Comment-only lines | `Cannot open executable file <name>.e` | *(silent)* |
+| Whitespace-only lines | `Cannot open executable file <name>.e` | *(silent)* |
+| Exit code | 1 | 0 |
+| Artifacts emitted | none | none |
+
+**Oracle behavior:** after parsing a `.hex` file and getting 0 words, the oracle skips
+creating the `.e` file but then proceeds to the run step anyway, where it fails with a
+file-not-found message.
+
+**LCC.js behavior:** `parseHexFile()` detects `locCtr === 0` → `abortAssembly('Empty file', 0)` →
+`fatalExit('Empty file', 0)` → `process.exit(0)`. The exit code is 0 and no message is printed
+(same `fatalExit` behavior documented in §9).
+
+**Why BY DESIGN:** this follows the same design choice documented in §9 for empty `.a` files —
+LCC.js treats a zero-word `.hex` input as a clean no-op rather than an error. The comment at
+`assembler.js:880` explicitly calls this "custom LCC.js behavior in 12/2024". If strict parity
+is ever required, flip to exit 1 at the `abortAssembly('Empty file', 0)` call in `parseHexFile`.
+
+**Source:** `src/core/assembler.js:883` (`abortAssembly('Empty file', 0)` in `parseHexFile`).
+
+**Evidence:** `docs/research/hex-oracle-parity-934.md` Cases 5–7.
+
+**GitHub issue:** [#934](https://github.com/avidrucker/lccjs/issues/934)
+
+---
+
+### 27. Malformed `.hex` line error diagnostics: oracle prints descriptive errors; lccjs exits 1 silently (#934)
+
+When a `.hex` file line has bad content (wrong number of nibbles, non-hex characters),
+the oracle prints a multi-line error identifying the file, line number, source text, and
+specific error type. LCC.js exits 1 with no output.
+
+| Case | Oracle error text | LCC.js output |
+|---|---|---|
+| 3 nibbles (`1A2`) | `Fewer than four hex digits in hex number` | *(silent)* |
+| 5 nibbles (`1A2F3`) | `More than four hex digits in hex number` | *(silent)* |
+| Non-hex char (`1G2F`) | `Bad hex number` | *(silent)* |
+
+Oracle error format for all cases:
+```
+Error on line N of <file>:
+<source line text>
+<error description>
+```
+
+**LCC.js behavior:** `parseHexFile()` calls `abortAssembly(message, 1)` where `message` is
+a descriptive string (e.g. `"Error: line 1 in .hex file does not have exactly 4 nibbles: …"`).
+However, `abortAssembly` routes to `fatalExit(message, 1)`, which calls `process.exit(1)`
+and **discards the message text** (text only surfaces when `isTestMode` is true). The user
+sees no diagnostic.
+
+Both sides agree on exit code 1 and no artifact creation.
+
+**Why BY DESIGN:** this is a property of the `fatalExit` wrapper, not a bug in the hex
+parser. The messages are present in the code and surfaced in tests; they are just not
+forwarded to stdout/stderr in CLI mode. Changing to `cliErrorExit` would print them but is a
+separate decision from parity. No production code changes are made here.
+
+**Source:** `src/core/assembler.js:860–863` (`abortAssembly` calls in `parseHexFile`).
+
+**Evidence:** `docs/research/hex-oracle-parity-934.md` Cases 2–4.
+
+**GitHub issue:** [#934](https://github.com/avidrucker/lccjs/issues/934)
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -820,3 +895,4 @@ _None pending._
 | 2026-06-03 | §25 LCC.js BUG fixed (#538) | `assembleBR` now calls `isNumLiteral(operands[0])` before `evaluateOperand` — bare integer branch targets are rejected with `Bad label` (exit 1), matching oracle intent. Regression tests #95–#97 added to `tests/new/assembler.instructions.integration.spec.js`. §25 removed from "LCC.js BUG" section. |
 | 2026-06-05 | LCC.js BUG §25 re-added (#852) | `din` newline-consumption parity: lccjs consumes the trailing `\n` after reading a decimal; OG LCC leaves it in stdin. Double-`ain` workaround in `simpleCalc.a` broken under lccjs (works under OG LCC). Classified LCC.js BUG. Research doc: `docs/research/ain-din-newline-parity-852.md`. |
 | 2026-06-05 | §25 LCC.js BUG fixed (#857) | `readLineFromStdin()` simulated path now leaves `\n` in `inputBuffer` after reading a non-empty line (conditional `slice`); empty-line reads consume the `\n` to avoid infinite retry. TTY path prepends `\n` to `inputBuffer` instead of discarding it. `simpleCalc.a` double-`ain` program now produces `Result: 8` as expected. §25 removed from "LCC.js BUG" section. |
+| 2026-06-06 | BY DESIGN §26 and §27 added (#934) | `.hex` oracle parity characterization complete. §26: empty/comment-only/whitespace-only `.hex` → oracle exits 1 ("Cannot open executable file"); lccjs exits 0 silently (BY DESIGN, mirrors §9). §27: malformed line diagnostics → oracle prints "Fewer/More than four hex digits" / "Bad hex number"; lccjs is silent on exit 1 (BY DESIGN — `fatalExit` discards message text). Evidence: `docs/research/hex-oracle-parity-934.md`. |
