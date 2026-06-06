@@ -48,6 +48,15 @@ class InterpreterPlus extends Interpreter {
     this.disableInfiniteLoopDetection = true;
   }
 
+  // Register an external extension module's trap handlers.
+  // ext.trapHandlers: { [trapVec]: function } — each fn is bound to this instance.
+  registerExtension(ext) {
+    this._extTrapHandlers = this._extTrapHandlers || {};
+    for (const [vec, fn] of Object.entries(ext.trapHandlers || {})) {
+      this._extTrapHandlers[Number(vec)] = fn.bind(this);
+    }
+  }
+
   main(args) {
     args = args || process.argv.slice(2);
 
@@ -282,6 +291,9 @@ class InterpreterPlus extends Interpreter {
   // LCC+ trap vectors occupy the HIGH end of the 8-bit space (0xF9–0xFF) so
   // they cannot alias future core traps that grow upward from 0x0F.
   executeTRAP() {
+    if (this._extTrapHandlers && this._extTrapHandlers[this.trapvec]) {
+      return this._extTrapHandlers[this.trapvec]();
+    }
     switch (this.trapvec) {
       // Keep parent's existing trap handling
       // but we add back the ones we removed from parent:

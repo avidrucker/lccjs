@@ -33,6 +33,20 @@ class AssemblerPlus extends Assembler {
     t['whodis'] = { encoder: (_ops) => this.assembleTrap([], TRAP_WHO),   operandShape: '(none)' };
   }
 
+  // Register an external extension module's mnemonics into _instructionTable.
+  // ext.mnemonics: { [name]: { trapVec, operandShape } } — encoder is auto-generated.
+  // ext.getMnemonics(this): for complex encoders that need the assembler instance.
+  registerExtension(ext) {
+    const entries = typeof ext.getMnemonics === 'function'
+      ? ext.getMnemonics(this)
+      : (ext.mnemonics || {});
+    for (const [name, entry] of Object.entries(entries)) {
+      this._instructionTable[name] = entry.trapVec !== undefined
+        ? { encoder: (ops) => this.assembleTrap(ops, entry.trapVec), operandShape: entry.operandShape }
+        : entry;
+    }
+  }
+
   main(args) {
     args = args || process.argv.slice(2);
     if (!this.inputFileName) {
