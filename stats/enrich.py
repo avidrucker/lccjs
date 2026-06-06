@@ -2,7 +2,7 @@
 """Enrich the velocity log with git churn, GitHub issue timestamps,
 and notes-parsed flags, writing stats/puzzle-velocity-enriched.csv.
 
-Data source: ~/.lccjs/velocity.db (SQLite — seeded by npm run velocity:seed).
+Data source: ~/.lccjs/lccjs.db (SQLite — seeded by npm run velocity:seed).
 Reads all rows from the `velocity` table; schema is always valid, so no
 field-count crashes are possible. Falls back gracefully when git or gh is
 unavailable (those columns are left blank).
@@ -21,7 +21,7 @@ Three enrichment layers:
                    from the free-text notes column, plus derived ratios.
 
 Usage:  python3 stats/enrich.py   (run from repo root or anywhere)
-        Precondition: ~/.lccjs/velocity.db must exist (npm run velocity:seed).
+        Precondition: ~/.lccjs/lccjs.db must exist (npm run velocity:seed).
         Refresh after any new velocity rows are logged.
 """
 
@@ -38,7 +38,7 @@ from datetime import datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DB_PATH   = Path.home() / ".lccjs" / "velocity.db"
+DB_PATH   = Path.home() / ".lccjs" / "lccjs.db"
 OUT_CSV   = REPO_ROOT / "stats" / "puzzle-velocity-enriched.csv"
 TMP_CSV   = OUT_CSV.with_suffix(".csv.tmp")
 GH_REPO   = "avidrucker/lccjs"

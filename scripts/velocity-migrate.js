@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * velocity-migrate.js — add the unique session index to an existing ~/.lccjs/velocity.db.
+ * velocity-migrate.js — add the unique session index to an existing ~/.lccjs/lccjs.db.
  *
  * Adds a UNIQUE INDEX on (ticket, agent, started_iso) WHERE started_iso IS NOT NULL.
  * This is a one-time migration for DBs created before #536. Idempotent — safe to re-run.
@@ -14,11 +14,9 @@
  */
 'use strict';
 
-const os   = require('os');
 const path = require('path');
 const Database = require('better-sqlite3');
-
-const DB_PATH = process.env.VELOCITY_DB || path.join(os.homedir(), '.lccjs', 'velocity.db');
+const { DB_PATH } = require('./db-path');
 
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');

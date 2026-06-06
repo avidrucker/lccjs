@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * error-log.js — insert an error row into ~/.lccjs/velocity.db.
+ * error-log.js — insert an error row into ~/.lccjs/lccjs.db.
  *
  * Accepts a JSON object as a positional argument. Only `occurred_iso` is
  * required (it is NOT NULL in the schema); all other fields are optional.
@@ -15,11 +15,9 @@
  */
 'use strict';
 
-const os   = require('os');
 const path = require('path');
 const Database = require('better-sqlite3');
-
-const DB_PATH = process.env.VELOCITY_DB || path.join(os.homedir(), '.lccjs', 'velocity.db');
+const { DB_PATH } = require('./db-path');
 
 const VALID_ERROR_TYPES = new Set([
   'TOOL_DENIED', 'HOOK_BLOCK', 'CLAIM_FAIL', 'BASH_FAIL', 'GIT_FAIL',

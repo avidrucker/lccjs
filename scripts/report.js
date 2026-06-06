@@ -16,12 +16,10 @@
 'use strict';
 
 const fs   = require('fs');
-const os   = require('os');
 const path = require('path');
 const { execSync } = require('child_process');
 const Database = require('better-sqlite3');
-
-const DB_PATH  = process.env.VELOCITY_DB || path.join(os.homedir(), '.lccjs', 'velocity.db');
+const { DB_PATH } = require('./db-path');
 const OUT_PATH = path.join(__dirname, '..', 'docs', 'velocity-report.md');
 
 // YYYY-MM-DD of the Monday of the ISO week containing `date` (UTC-based).
@@ -162,7 +160,7 @@ function run() {
   const lines = [
     '# Velocity Report',
     '',
-    `_Generated ${now} by \`npm run report\`. Source: \`~/.lccjs/velocity.db\` + GitHub API._`,
+    `_Generated ${now} by \`npm run report\`. Source: \`~/.lccjs/lccjs.db\` + GitHub API._`,
     `_Gitignored — re-run to refresh._`,
     '',
     '## Tickets closed per week (past 8 weeks)',

@@ -24,7 +24,7 @@ Write idiomatic, correct LCC+ assembly (`.ap` files) — extended ISA with `.lcc
 - Coverage is narrower than `lccjs-assembly` (fewer oracle parity fixtures for plus programs). Gaps in extended-ISA instruction combinations may not be caught until a new program exercises them.
 
 ### `log-error`
-Record significant agent errors into the lccjs errors table (`~/.lccjs/velocity.db`) for retrospective analysis.
+Record significant agent errors into the lccjs errors table (`~/.lccjs/lccjs.db`) for retrospective analysis.
 
 **Invoke when:** a tool call fails with work impact, `npm run claim` fails, a git/gh/DB operation fails, or a hook blocks a commit. Log via `npm run error:log`. Full column reference: [`docs/errors-schema.md`](./errors-schema.md). Current vocabulary: 15 `error_type` codes (added `GIT_STATE`, `GH_INFO`, `EDIT_PRECOND` in #936/#954).
 

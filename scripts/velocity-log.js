@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * velocity-log.js — insert a velocity row into ~/.lccjs/velocity.db.
+ * velocity-log.js — insert a velocity row into ~/.lccjs/lccjs.db.
  *
  * Accepts a JSON object as a positional argument, validates required fields,
  * INSERTs into the velocity table, then auto-exports docs/puzzle-velocity.csv.
@@ -22,12 +22,10 @@
 'use strict';
 
 const { execSync } = require('child_process');
-const os   = require('os');
 const path = require('path');
 const Database = require('better-sqlite3');
 const { exportCSV } = require('./velocity-export');
-
-const DB_PATH  = process.env.VELOCITY_DB || path.join(os.homedir(), '.lccjs', 'velocity.db');
+const { DB_PATH } = require('./db-path');
 const REQUIRED = ['role', 'agent'];
 
 const VALID_ROLES = new Set([

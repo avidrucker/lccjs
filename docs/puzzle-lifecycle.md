@@ -97,7 +97,7 @@ Resolving a puzzle is a deletion, not a status change. In order:
 1. **Do the work** (write the code/doc, make tests pass) and capture the finish
    timestamp (`date '+%Y-%m-%dT%H:%M:%S%z'`).
 2. **Log the velocity row** with `npm run velocity:log -- '{"ticket":N,…}'`. This
-   validates and inserts the row into the SQLite store (`~/.lccjs/velocity.db`, the
+   validates and inserts the row into the SQLite store (`~/.lccjs/lccjs.db`, the
    source of truth) and **auto-exports** `docs/puzzle-velocity.csv`. Never hand-edit
    the CSV — it is a generated, read-only view (see
    [`puzzle-velocity.md`](./puzzle-velocity.md)).

@@ -155,7 +155,7 @@ A `gh` CLI call or GitHub API call failed — rate limit, authentication error, 
 
 ### `DB_FAIL`
 
-A SQLite operation failed after validation passed — insert error, locked database, schema mismatch, file-permission issue on `~/.lccjs/velocity.db`.
+A SQLite operation failed after validation passed — insert error, locked database, schema mismatch, file-permission issue on `~/.lccjs/lccjs.db`.
 
 **Concrete scenarios:**
 - `npm run velocity:log` fails with `SQLITE_BUSY` because another process holds a write lock

@@ -477,7 +477,7 @@ function checkKeywordMatch(issue, closingCommitSha) {
 // (first-time setup, CI) — logs a warning instead of blocking. die()s only when
 // the DB is readable but contains no row for this ticket.
 function checkVelocityRowExists(issue) {
-  const dbPath = path.join(os.homedir(), '.lccjs', 'velocity.db');
+  const dbPath = path.join(os.homedir(), '.lccjs', 'lccjs.db');
   let Database;
   try {
     Database = require('better-sqlite3'); // eslint-disable-line global-require

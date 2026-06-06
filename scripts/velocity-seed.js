@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * velocity-seed.js — seed ~/.lccjs/velocity.db from docs/puzzle-velocity.csv.
+ * velocity-seed.js — seed ~/.lccjs/lccjs.db from docs/puzzle-velocity.csv.
  *
  * Run after docs/puzzle-velocity.csv has been repaired (#276). Idempotent
  * with --force (drops and recreates the table). Without --force, exits non-zero
@@ -20,7 +20,7 @@ const Database = require('better-sqlite3');
 
 const FORCE   = process.argv.includes('--force');
 const DB_DIR  = path.join(os.homedir(), '.lccjs');
-const DB_PATH = path.join(DB_DIR, 'velocity.db');
+const DB_PATH = path.join(DB_DIR, 'lccjs.db');
 const CSV     = path.join(__dirname, '..', 'docs', 'puzzle-velocity.csv');
 
 const CREATE_TABLE = `

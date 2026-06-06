@@ -2,7 +2,7 @@
 
 ## Canonical store
 
-**`~/.lccjs/velocity.db`** — SQLite database, local-only, not git-tracked.  
+**`~/.lccjs/lccjs.db`** — SQLite database, local-only, not git-tracked.  
 Lives outside the repo; survives `git clean`; accessible from any worktree via absolute path.
 
 The errors table is a sibling of `velocity`. It uses the same conventions (ISO 8601 timestamps, `agent`, `model`, `repo` columns, controlled vocabulary) with one stricter rule: `occurred_iso` is NOT NULL (unlike velocity, where all columns are nullable).
@@ -151,28 +151,28 @@ The `error:log` command validates `error_type` against the vocabulary and `model
 
 ```bash
 # Most recent 10 error rows
-sqlite3 ~/.lccjs/velocity.db \
+sqlite3 ~/.lccjs/lccjs.db \
   "SELECT id, occurred_iso, agent, error_type, message FROM errors ORDER BY id DESC LIMIT 10"
 
 # Error counts by type
-sqlite3 ~/.lccjs/velocity.db \
+sqlite3 ~/.lccjs/lccjs.db \
   "SELECT error_type, COUNT(*) as n FROM errors GROUP BY error_type ORDER BY n DESC"
 
 # All errors for a specific ticket
-sqlite3 ~/.lccjs/velocity.db \
+sqlite3 ~/.lccjs/lccjs.db \
   "SELECT id, error_type, message, notes FROM errors WHERE ticket = 880"
 
 # Errors by a specific agent
-sqlite3 ~/.lccjs/velocity.db \
+sqlite3 ~/.lccjs/lccjs.db \
   "SELECT id, occurred_iso, error_type, message FROM errors WHERE agent = 'CHERRY' ORDER BY occurred_iso"
 
 # Errors in a time window
-sqlite3 ~/.lccjs/velocity.db \
+sqlite3 ~/.lccjs/lccjs.db \
   "SELECT agent, error_type, message FROM errors
    WHERE occurred_iso >= '2026-06-01' AND occurred_iso < '2026-06-08'"
 
 # Context field extraction (BASH_FAIL commands)
-sqlite3 ~/.lccjs/velocity.db \
+sqlite3 ~/.lccjs/lccjs.db \
   "SELECT id, json_extract(context, '$.cmd') as cmd FROM errors WHERE error_type = 'BASH_FAIL'"
 ```
 

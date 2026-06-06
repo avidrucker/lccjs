@@ -12,7 +12,7 @@ forward-looking estimates over time.
 
 ## Where the data is
 
-**Canonical store:** `~/.lccjs/velocity.db` (SQLite, local-only, not git-tracked).
+**Canonical store:** `~/.lccjs/lccjs.db` (SQLite, local-only, not git-tracked).
 See [`docs/velocity-schema.md`](./velocity-schema.md) for the full schema reference.
 
 **Read-only export:** [`puzzle-velocity.csv`](./puzzle-velocity.csv) — auto-generated
@@ -81,7 +81,7 @@ When I pick up a ticket:
 3. **Work** — do the puzzle.
 4. **Finish** — capture finish timestamp before the closing commit.
 5. **Log the row** — run `npm run velocity:log -- '{"ticket":N,"role":"...","agent":"...",...}'`
-   (validates, INSERTs into `~/.lccjs/velocity.db`, auto-exports `docs/puzzle-velocity.csv`).
+   (validates, INSERTs into `~/.lccjs/lccjs.db`, auto-exports `docs/puzzle-velocity.csv`).
 6. **Close in ONE commit** — delete the puzzle's source marker and commit:
    `git commit -m "… Closes #N"`. The exported CSV rides along automatically.
 7. **Land + clean up** — `npm run close N` (from inside the worktree). Loops
@@ -95,7 +95,7 @@ When I pick up a ticket:
 A row tracks **work/time, not file changes.** Tasks that ship **no code** —
 `PM` (tracker updates, issue triage), `RESEARCH`, `SPIKE` — still get a row; the
 DB already has many (PM #143/#204, RESEARCH #203, SPIKE #193/#166). The only
-skips are: (a) `~/.lccjs/velocity.db` doesn't exist *and* you haven't been asked to
+skips are: (a) `~/.lccjs/lccjs.db` doesn't exist *and* you haven't been asked to
 set it up, (b) a **sub-minute** fast-clarification turn, or (c) a **pure
 tracker/epic** — see the umbrella test below. "No repo files changed" means only
 that no worktree was needed for the *work itself* — it never means "no velocity

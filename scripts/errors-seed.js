@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * errors-seed.js — create the errors table in ~/.lccjs/velocity.db.
+ * errors-seed.js — create the errors table in ~/.lccjs/lccjs.db.
  *
  * Idempotent: uses CREATE TABLE IF NOT EXISTS, safe to run multiple times.
  * Run once after the DB is first created, or after a fresh DB wipe.
@@ -11,11 +11,9 @@
  */
 'use strict';
 
-const os   = require('os');
 const path = require('path');
 const Database = require('better-sqlite3');
-
-const DB_PATH = process.env.VELOCITY_DB || path.join(os.homedir(), '.lccjs', 'velocity.db');
+const { DB_PATH } = require('./db-path');
 
 const CREATE_TABLE = `
 CREATE TABLE IF NOT EXISTS errors (

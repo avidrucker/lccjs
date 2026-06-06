@@ -3,7 +3,7 @@
 A Python/Jupyter analysis of the velocity log for this project's Yegor-style
 microtask workflow (dual **H**ard-cap / **C**alibrated estimates vs actuals).
 
-**Data source:** `~/.lccjs/velocity.db` (SQLite, local-only).
+**Data source:** `~/.lccjs/lccjs.db` (SQLite, local-only).
 Seeded from [`docs/puzzle-velocity.csv`](../docs/puzzle-velocity.csv) via
 `npm run velocity:seed`. New rows are appended via `npm run velocity:log`.
 See [`docs/velocity-schema.md`](../docs/velocity-schema.md) for the full schema.
@@ -12,7 +12,7 @@ See [`docs/velocity-schema.md`](../docs/velocity-schema.md) for the full schema.
 
 | File | What it is |
 |---|---|
-| `enrich.py` | Reads `~/.lccjs/velocity.db`, adds three enrichment layers, writes `puzzle-velocity-enriched.csv` atomically |
+| `enrich.py` | Reads `~/.lccjs/lccjs.db`, adds three enrichment layers, writes `puzzle-velocity-enriched.csv` atomically |
 | `puzzle-velocity-enriched.csv` | Generated dataset the notebook reads — **local-only, gitignored** (re-generate with `enrich.py` before running notebooks; see #286) |
 | `puzzle_velocity_analysis.ipynb` | Day-one analysis notebook (committed **with** embedded outputs/plots → renders on GitHub) |
 | `day-two-analysis.ipynb` | Day-two re-run — adds the over-time axis (HST day-bucketing) + auto-graduating power gates |
@@ -32,7 +32,7 @@ Then, from the repo root:
 
 ```bash
 # 0. ensure the DB is seeded (one-time, or after git clean)
-npm run velocity:seed          # imports docs/puzzle-velocity.csv → ~/.lccjs/velocity.db
+npm run velocity:seed          # imports docs/puzzle-velocity.csv → ~/.lccjs/lccjs.db
 
 # 1. refresh the enriched dataset (reads SQLite; needs git + gh; degrades offline)
 ~/.venvs/datasci/bin/python stats/enrich.py

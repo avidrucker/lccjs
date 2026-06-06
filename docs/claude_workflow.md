@@ -267,7 +267,7 @@ A pause happens in two shapes:
 > close immediately with `✗ working tree is not clean`.
 
 ```bash
-# 1. Log the velocity row (validates + inserts into ~/.lccjs/velocity.db,
+# 1. Log the velocity row (validates + inserts into ~/.lccjs/lccjs.db,
 #    then auto-exports docs/puzzle-velocity.csv)
 npm run velocity:log -- '{"ticket":N,"role":"DEV","agent":"BANANA",...}'
 
@@ -335,7 +335,7 @@ One row per closed puzzle, written via `npm run velocity:log`. Full column refer
 
 ## Error logging
 
-When a non-trivial error occurs during puzzle work, log it to `~/.lccjs/velocity.db` using `npm run error:log`. Full protocol: `~/.claude/skills/log-error/SKILL.md`. Schema reference: [`docs/errors-schema.md`](./errors-schema.md).
+When a non-trivial error occurs during puzzle work, log it to `~/.lccjs/lccjs.db` using `npm run error:log`. Full protocol: `~/.claude/skills/log-error/SKILL.md`. Schema reference: [`docs/errors-schema.md`](./errors-schema.md).
 
 **Log when:** a tool call fails with work impact, `npm run claim` fails, a git/gh/DB operation fails, or a hook blocks a commit.
 
@@ -416,7 +416,7 @@ inside a token like `AT_TODO`). Rules:
 - **H / C** — Human / Claude time estimates. H drives the Yegor cap (discipline). C is my forward-looking forecast (calibration).
 - **Worktree** — a separate working directory + branch for parallel-agent work. Lives at `.claude/worktrees/<fruit>-issue-<N>/` on branch `<fruit>/issue-<N>-<slug>`, claimed via `npm run claim`. The fruit (apple, banana, …) is the **agent identity** for the session. See `docs/design-agent-worktree-identity.md`.
 - **Trunk-based** — agents push directly to `main` (with `git push origin HEAD:main` from a feature branch). No PRs by default.
-- **velocity row** — a single record logged into `~/.lccjs/velocity.db` (exported to `docs/puzzle-velocity.csv`) for one ticket: role, agent identity, H/C estimates, start/finish timestamps, and actuals. Written via `npm run velocity:log`.
+- **velocity row** — a single record logged into `~/.lccjs/lccjs.db` (exported to `docs/puzzle-velocity.csv`) for one ticket: role, agent identity, H/C estimates, start/finish timestamps, and actuals. Written via `npm run velocity:log`.
 - **pre-flight** — the discipline of capturing `started_iso` (`date '+%Y-%m-%dT%H:%M:%S%z'`) and running `gh issue view <N> --comments` *before* any work begins. Skipping it forces reconstructed timestamps, which is an honesty tax. The `--comments` flag is essential: research findings, corrections, and scope clarifications are posted as issue comments — omitting it leaves that context invisible (#652).
 - **`at_todo` trap** — the anti-pattern where a doc, CSV field, or comment discussing the marker concept accidentally contains the live `@todo` substring, tripping the case-sensitive `pdd` scanner. Use the lowercase `at_todo` spelling (see above) in non-scanned files to discuss it safely.
 - **phantom marker** — a `@todo` or `@inprogress` marker whose backing GitHub issue is already closed. Shows as `STALE` in `npm run puzzle:status`. Must be deleted from source; leaving it inflates the open-puzzle count and misleads other agents.
