@@ -868,3 +868,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 881,861,test: update formatter expected values to include trailing newline (pre-req for R6 trial),TEST,,,,,,,,,,FIG,sonnet-4.6,lccjs
 882,941,lezer-grammar: add @lezer/lr + @lezer/highlight to devDeps,DEV,15,5,3,12,2,2026-06-06T10:51:17-1000,2026-06-06T10:54:37-1000,,@lezer/lr was already in package.json+lock but not installed; added @lezer/highlight (used by index.js); npm install + 8 tests green,GRAPE,sonnet-4.6,lccjs
 883,927,until-grep polling loop exits early on conflict text,DEV,20,10,1,19,9,2026-06-06T10:53:54-10:00,2026-06-06T10:55:04-10:00,,,DRAGONFRUIT,sonnet-4.6,lccjs
+884,954,update log-error skill with 3 new error_type codes,WRITER,15,5,3,12,2,2026-06-06T10:52:14-1000,2026-06-06T10:55:37-1000,,,BANANA,sonnet-4.6,lccjs
