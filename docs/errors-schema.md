@@ -57,15 +57,18 @@ The informal "significant / work impact" rule had gaps — four event shapes fro
 ### Log the error when any of the following is true
 
 1. **State-assumption revealed wrong** — the error shows the agent held a false belief about current state (file exists, issue is open, worktree is present, `old_string` matches). Even if the operation ultimately succeeded after correction, the false assumption is signal.
-2. **Caused a retry or course correction** — the agent had to change its next action (different command, corrected argument, different tool call) because of the error. A silent retry of the identical call that immediately succeeds is covered by the "skip" rule below; a corrected retry is not.
+2. **Caused a retry or course correction** — the agent had to change its next action (different command, corrected argument, different tool call) because of the error. Corrected retries are always loggable; even a silent retry of the identical call should be logged (unless already logged this session).
 3. **Repeated failure on the same operation** — a second or later attempt on an identical command. Even if the first attempt was not logged, the second one should be.
 4. **Non-zero exit code, not a transient fluke** — any unexpected non-zero exit that is not immediately retried identically and successfully.
 
-### Skip the error when all of the following are true
+### Always log
 
-1. The identical command was retried immediately (same arguments, no state changes) and succeeded.
-2. The error message is a purely informational warning with no work-plan impact (e.g. `[MODULE_TYPELESS_PACKAGE_JSON]`, deprecation notices).
-3. An identical error was already logged for this ticket in this session.
+Log every error, misfire, glitch, and mistake — including those immediately retried and resolved with no lasting impact. Use the `notes` field to record the resolution; that is not a reason to omit the row.
+
+### Skip the error (de-duplication only) when
+
+1. The error message is a purely informational warning with no work-plan impact (e.g. `[MODULE_TYPELESS_PACKAGE_JSON]`, deprecation notices) — these are not errors; log nothing.
+2. An identical error was already logged for this ticket in this session.
 
 ### The four previously-unclassified event shapes (ELDERBERRY/#924)
 
@@ -107,7 +110,7 @@ npm run error:log -- '{
 
 The `error:log` command validates `error_type` against the vocabulary and `model` against the canonical format (`<family>-<major>.<minor>`). Exit 0 on success, 1 on any validation or DB error.
 
-> **Tool-error payloads are loggable events.** Edit/Write/Read tool errors (e.g. "File has not been read yet", "Denied by auto mode classifier") are not Bash exits, but they are still errors — count them in any error audit and log them with the appropriate `error_type` (`EDIT_PRECOND`, `TOOL_DENIED`, or `FILE_FAIL`). The skip rule (transient, resolved in next step) still applies — but the recovery itself does not make the original error invisible.
+> **Tool-error payloads are loggable events.** Edit/Write/Read tool errors (e.g. "File has not been read yet", "Denied by auto mode classifier") are not Bash exits, but they are still errors — count them in any error audit and log them with the appropriate `error_type` (`EDIT_PRECOND`, `TOOL_DENIED`, or `FILE_FAIL`). Resolution in the next step does not make the original error invisible; log the row at the moment of failure.
 
 ---
 
