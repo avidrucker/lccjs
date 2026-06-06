@@ -114,6 +114,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | [TIL 2026-06-05 ELDERBERRY session 2](./today-i-learned-2026-06-05-elderberry-2.md) | 2026-06-05 | ELDERBERRY | Tracker closes from main use `gh` not `npm run close`; four-file LCC+ pseudo-instruction pattern; assembler-level mnemonic aliases share one TRAP vector; stale ISA doc trap vectors; velocity-export skeleton reuse for errors table. |
 | [TIL 2026-06-05 BANANA](./today-i-learned-2026-06-05-banana.md) | 2026-06-05 | BANANA | Read tool misidentifies .a files as binary; worktree remove must run from main; cluster test failures before filing tickets; devDependency ≠ installed package; human-gate is the throughput bottleneck. |
 | [TIL 2026-06-06 FIG](./today-i-learned-2026-06-06-fig.md) | 2026-06-06 | FIG | Naming absent concepts backfires as confabulation; claim requires --as flag; gh comment multi-line quoting; error:log schema (occurred_iso + fixed enum); log errors immediately at occurrence. |
+| [TIL 2026-06-06 DRAGONFRUIT](./today-i-learned-2026-06-06-dragonfruit.md) | 2026-06-06 | DRAGONFRUIT | Own-fix verifies prior fix in production; .claire/ vs .claude/ jest exclusion gap; until-grep is wrong for background tasks; auto-mode Self-Modification block is per-task not per-path; tracker checkboxes are frozen snapshots; pre-stated triage criteria collapse judgment into lookup. |
 
 ## Recurring threads (informal — #207 will formalize)
 
