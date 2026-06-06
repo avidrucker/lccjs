@@ -23,7 +23,7 @@ The LCC architecture has 8 general-purpose registers: `r0` through `r7`. The 3-b
 | `r6` | `sp` | stack pointer (reserved by calling convention) |
 | `r7` | `lr` | link register / return address (reserved by calling convention) |
 
-**These 3 aliases (`fp`, `sp`, `lr`) are the only register aliases recognised by the assembler.** There is no `ra`, `a0`, `a1`, `v0`, `t0`, `zero`, or any other MIPS/RISC-V-style alias. Source: `assembler.js` `isRegister()` accepts only `^(r[0-7]|fp|sp|lr)$`. See [#881](https://github.com/avidrucker/lccjs/issues/881) for the `ra` false-positive incident that triggered this note.
+**These 3 aliases (`fp`, `sp`, `lr`) are the only register aliases recognised by the assembler.** Any other name — including names from MIPS, RISC-V, or other ISAs — is not valid. Source: `assembler.js` `isRegister()` accepts only `^(r[0-7]|fp|sp|lr)$`.
 
 ---
 
