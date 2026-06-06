@@ -806,3 +806,7 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 819,,,DEV,,,,,-3,,,,,TEST,,lccjs
 820,880,decouple name.js filesystem resolution from report generation,DEV,30,15,17,13,-2,2026-06-05T16:29:39-1000,2026-06-05T16:46:21-1000,,removed nameHandler from assembler.js+interpreter.js; lcc.js pre-sets assembler.userName; updated 2 tests in name.integration + 1 in object-modules,CHERRY,sonnet-4.6,lccjs
 821,898,Agent errors are untracked — no errors table in velocity.db,DEV,45,15,3,42,12,2026-06-05T16:50:31-1000,2026-06-05T16:53:01-1000,,errors-seed.js + error-log.js + package.json wired; test row id=1 inserted and verified; write-path ownership: agent responsibility (not hooks),GRAPE,sonnet-4.6,lccjs
+822,,,DEV,,,,,-3,,,,,TEST,,lccjs
+823,,,DEV,,,,,-3,,,,,TEST,,lccjs
+824,,,DEV,,,,,-3,,,,,TEST,,lccjs
+825,897,docs: add commit-first callout to close sequence,WRITER,10,4,2,8,2,2026-06-05T17:04:36-1000,2026-06-05T17:06:05-1000,,callout block in claude_workflow.md + step-5 rewrite + cheatsheet comment in puzzle-lifecycle.md,DRAGONFRUIT,sonnet-4.6,lccjs

@@ -105,13 +105,16 @@ Resolving a puzzle is a deletion, not a status change. In order:
    is the step people forget; a leftover marker goes STALE.
 4. **Make one commit** carrying everything — the marker deletion *and* the exported
    CSV — with `Closes #N` in the message.
-5. **Land and tear down with `npm run close N`.** It loops fetch/rebase/push until
-   the commit is on `origin/main`, and **only then** removes the worktree + branch
-   (the gate that makes "clean up after a failed push" impossible). It also
-   fast-forward-pulls the main checkout and prints `Shell re-root: cd <path>` — don't
-   run `git pull` yourself after close, the shell's CWD is the now-deleted worktree.
-   GitHub auto-closes `#N` from the `Closes #N` keyword once the commit lands;
-   close.js verifies this and closes it explicitly if the keyword lagged.
+5. **Land and tear down with `npm run close N`.** `close` only **pushes** — it does
+   not commit. The closing commit from step 4 must already exist before you run it;
+   a dirty working tree aborts close immediately with `✗ working tree is not clean`.
+   Once running, it loops fetch/rebase/push until the commit is on `origin/main`, and
+   **only then** removes the worktree + branch (the gate that makes "clean up after a
+   failed push" impossible). It also fast-forward-pulls the main checkout and prints
+   `Shell re-root: cd <path>` — don't run `git pull` yourself after close, the
+   shell's CWD is the now-deleted worktree. GitHub auto-closes `#N` from the
+   `Closes #N` keyword once the commit lands; close.js verifies this and closes it
+   explicitly if the keyword lagged.
 6. **Post a closing comment on the issue** summarising what changed (an append-only
    comment, not a body edit — body edits race with parallel agents). For **research
    tickets**: post findings here, not in a `docs/learnings/` TIL file. Write a TIL
@@ -163,7 +166,7 @@ date '+%Y-%m-%dT%H:%M:%S%z'  # capture t₁ BEFORE the closing commit (finish ti
 npm run velocity:log -- '{"ticket":N,"role":"ROLE","agent":"NAME"}'  # row -> SQLite, auto-exports the CSV
 # ... delete the @todo / @inprogress marker ...
 git add -A && git commit -m "... Closes #N"   # one commit: marker deletion + exported CSV
-npm run close N               # loops rebase/push until on origin/main, then tears down the worktree
+npm run close N               # push-only — commit must exist first; loops rebase/push, then tears down
 ```
 
 ## See also

@@ -259,12 +259,17 @@ A pause happens in two shapes:
 
 **The close sequence** (full protocol in [`puzzle-velocity.md`](./puzzle-velocity.md)):
 
+> **`npm run close` does not commit.** It only pushes what is already committed.
+> All changes must be in a commit before step 3 — a dirty working tree aborts
+> close immediately with `✗ working tree is not clean`.
+
 ```bash
 # 1. Log the velocity row (validates + inserts into ~/.lccjs/velocity.db,
 #    then auto-exports docs/puzzle-velocity.csv)
 npm run velocity:log -- '{"ticket":N,"role":"DEV","agent":"BANANA",...}'
 
 # 2. One commit carries everything: delete the source marker + the exported CSV
+#    (close will abort if anything is uncommitted — commit BEFORE step 3)
 git add -A
 git commit -m "... Closes #N"
 
