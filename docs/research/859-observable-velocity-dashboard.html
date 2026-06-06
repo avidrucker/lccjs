@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LCC.js Velocity Dashboard — Prototype</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      color: #222;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.05rem; margin: 2.5rem 0 0.4rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem; }
+    .subtitle { color: #666; font-size: 0.88rem; margin-bottom: 2rem; }
+    .chart { margin: 0.5rem 0 1.5rem; overflow-x: auto; }
+    .caption { color: #555; font-size: 0.82rem; margin-top: 0.25rem; }
+    .error {
+      color: #c00;
+      background: #fff0f0;
+      border: 1px solid #fcc;
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+    details {
+      margin-top: 3rem;
+      padding: 1rem 1.25rem;
+      background: #f8f8f8;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+    }
+    summary { cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+    pre {
+      font-size: 0.83rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0.75rem 0 0;
+      line-height: 1.5;
+    }
+    #loading { color: #888; font-style: italic; }
+  </style>
+</head>
+<body>
+
+<h1>LCC.js Velocity Dashboard — Prototype</h1>
+<p class="subtitle">
+  Data: <code>docs/puzzle-velocity.csv</code> &nbsp;·&nbsp;
+  Issue: <a href="https://github.com/avidrucker/lccjs/issues/859">#859</a> &nbsp;·&nbsp;
+  Charts: <a href="https://observablehq.com/@observablehq/plot">Observable Plot 0.6</a>
+</p>
+
+<p id="loading">Loading data…</p>
+
+<h2>1 · Tickets closed per week</h2>
+<div id="chart1" class="chart"></div>
+<p class="caption">Each point is one ISO week (Monday–Sunday). Counts all rows where <code>finished_iso</code> is set.</p>
+
+<h2>2 · Agent activity</h2>
+<div id="chart2" class="chart"></div>
+<p class="caption">Rows without an <code>agent</code> value are excluded.</p>
+
+<h2>3 · Estimate accuracy — C estimate vs actual (minutes)</h2>
+<div id="chart3" class="chart"></div>
+<p class="caption">
+  Dashed diagonal = perfect prediction. Points below the line = under-estimated (ran over).
+  Hover a dot for ticket details.
+  Only rows with both <code>c_min</code> and <code>actual_min</code> are shown.
+</p>
+
+<details>
+  <summary>Spike findings &amp; embedding notes</summary>
+  <pre id="notes"></pre>
+</details>
+
+<script type="module">
+import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/+esm";
+import * as d3   from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+
+// ── spike findings text (must be defined before the try/catch error path) ────
+
+const NOTES = `
+SPIKE FINDINGS — Observable Plot for lccjs velocity dashboard
+==============================================================
+
+Verdict: FEASIBLE. Observable Plot 0.6 loads clean from CDN with no build step and
+renders all three required charts from puzzle-velocity.csv with ~80 lines of JS.
+
+────────────────────────────────────────────────────────────────────────────────
+DATA PREP NOTES
+────────────────────────────────────────────────────────────────────────────────
+• puzzle-velocity.csv starts with a "# AUTO-GENERATED…" comment line that must be
+  stripped before d3.csvParse(). One-liner: lines.filter(l => !l.startsWith('#')).
+• d3.autoType() converts empty CSV cells → null and numeric strings → numbers.
+  ISO timestamp fields (started_iso, finished_iso) come back as Date objects, which
+  Plot consumes natively for its time axes.
+• Rows with finished_iso === null are excluded from all charts (in-progress work).
+• About 40% of rows have no agent value (legacy rows before agent tracking was
+  added). The agent bar excludes them; they are counted in the weekly sparkline.
+• c_min coverage: ~70% of rows. RESEARCH/SPIKE roles have the highest fill rate;
+  early WRITER rows have none. The scatter chart only plots rows with both fields.
+
+────────────────────────────────────────────────────────────────────────────────
+EMBEDDING IN docs/site/
+────────────────────────────────────────────────────────────────────────────────
+Three options ranked by effort:
+
+  1. Static copy-alongside (recommended for now)
+     • Copy this HTML to docs/site/ and ensure the CSV is co-located one level up.
+     • npm run velocity:export already writes docs/puzzle-velocity.csv; the site
+       build just needs to copy that file into the built output.
+     • No build tool change required; CDN script tags handle the rest.
+     • Downside: dashboard is a standalone page, not in the Docusaurus nav.
+
+  2. Docusaurus MDX page (medium effort)
+     • Wrap Plot charts in a React component (Plot.plot() returns a DOM element;
+       use useEffect + containerRef.current.append(chart)).
+     • Import CSV with Docusaurus asset handling or a loader plugin.
+     • Enables sidebar, search, and theme integration.
+     • Downside: adds a React dependency for what is essentially a static chart.
+
+  3. Observable notebook on observablehq.com (zero-infrastructure option)
+     • Publish a notebook that fetches the raw CSV from the GitHub repo's
+       raw.githubusercontent.com URL.
+     • Links directly from README / docs.
+     • Downside: CSV must be public; notebook lives outside the repo; auto-updates
+       only work if the CSV URL is stable (it is, on main).
+
+Recommendation: start with option 1 (static copy) for zero friction, file a follow-up
+ticket for option 2 (Docusaurus component) when the dashboard proves its value.
+
+────────────────────────────────────────────────────────────────────────────────
+BLOCKER GRAPH (STRETCH GOAL — NOT PROTOTYPED IN THIS SPIKE)
+────────────────────────────────────────────────────────────────────────────────
+Requires a separate data export step:
+
+  gh api graphql -f query='{ repository(owner:"avidrucker", name:"lccjs") {
+    issues(first:100, states:OPEN) { nodes { number title body labels { nodes { name } } } }
+  } }' > docs/data/issues.json
+
+Then extract "Blocked by #N" patterns from issue bodies and render with D3 force
+layout. Scope was tight for the 60m spike; recommend filing a child issue off #838.
+
+────────────────────────────────────────────────────────────────────────────────
+LOCAL TESTING
+────────────────────────────────────────────────────────────────────────────────
+fetch() is blocked on file:// by browser CORS policy. An HTTP server is required.
+
+  # From repo root:
+  python3 -m http.server
+  # Then open:
+  # http://localhost:8000/docs/research/859-observable-velocity-dashboard.html
+`;
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function err(id, msg) {
+  document.getElementById(id).innerHTML = `<div class="error">${msg}</div>`;
+}
+
+function mount(id, chart) {
+  const el = document.getElementById(id);
+  el.innerHTML = "";
+  el.append(chart);
+}
+
+// ── load CSV ─────────────────────────────────────────────────────────────────
+// Served from docs/research/; CSV is one directory up at docs/puzzle-velocity.csv.
+// Requires an HTTP server — fetch() is blocked on file:// by browser CORS policy.
+// Quick local test:  python3 -m http.server  (from repo root), then open
+//   http://localhost:8000/docs/research/859-observable-velocity-dashboard.html
+
+let rawText;
+try {
+  const resp = await fetch("../puzzle-velocity.csv");
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+  rawText = await resp.text();
+} catch (e) {
+  const hint = location.protocol === "file:"
+    ? "You opened this file directly. Serve from repo root: <code>python3 -m http.server</code> then visit <code>http://localhost:8000/docs/research/859-observable-velocity-dashboard.html</code>"
+    : `Fetch failed: ${e.message}`;
+  ["chart1","chart2","chart3"].forEach(id => err(id, hint));
+  document.getElementById("loading").remove();
+  document.getElementById("notes").textContent = NOTES;
+  throw e;
+}
+
+// Strip leading comment lines (the CSV starts with "# AUTO-GENERATED…")
+const csvText = rawText.split("\n").filter(l => !l.startsWith("#")).join("\n");
+
+// d3.autoType converts: empty string → null, "30" → 30, ISO strings → Date
+const data = d3.csvParse(csvText, d3.autoType);
+
+// Rows considered "closed" = have a finished_iso value
+const closed = data.filter(d => d.finished_iso instanceof Date || (d.finished_iso && String(d.finished_iso).trim()));
+
+document.getElementById("loading").remove();
+
+// ── Chart 1: velocity sparkline ──────────────────────────────────────────────
+
+const withWeek = closed.map(d => ({
+  week: d3.timeMonday.floor(new Date(d.finished_iso)),
+  ticket: d.ticket,
+}));
+
+const byWeek = d3.rollup(withWeek, v => v.length, d => d.week.getTime());
+const weekData = Array.from(byWeek, ([ms, count]) => ({ week: new Date(ms), count }))
+  .sort((a, b) => a.week - b.week);
+
+mount("chart1", Plot.plot({
+  width: 860,
+  height: 220,
+  marginLeft: 50,
+  y: { label: "tickets closed", grid: true },
+  x: { label: null },
+  marks: [
+    Plot.ruleY([0], { stroke: "#eee" }),
+    Plot.areaY(weekData, {
+      x: "week", y: "count",
+      fill: "steelblue", fillOpacity: 0.15,
+    }),
+    Plot.lineY(weekData, {
+      x: "week", y: "count",
+      stroke: "steelblue", strokeWidth: 2,
+    }),
+    Plot.dotY(weekData, {
+      x: "week", y: "count",
+      fill: "steelblue", r: 3,
+    }),
+  ],
+}));
+
+// ── Chart 2: agent activity bar ───────────────────────────────────────────────
+
+const agentCounts = d3.rollup(
+  closed.filter(d => d.agent),
+  v => v.length,
+  d => d.agent,
+);
+const agentRows = Array.from(agentCounts, ([agent, count]) => ({ agent, count }))
+  .sort((a, b) => b.count - a.count);
+
+mount("chart2", Plot.plot({
+  width: 860,
+  height: 260,
+  marginBottom: 70,
+  x: { label: null, tickRotate: -35 },
+  y: { label: "tickets closed", grid: true },
+  color: { legend: false },
+  marks: [
+    Plot.ruleY([0], { stroke: "#eee" }),
+    Plot.barY(agentRows, {
+      x: "agent", y: "count",
+      fill: "agent",
+      tip: true,
+    }),
+  ],
+}));
+
+// ── Chart 3: estimate accuracy scatter ───────────────────────────────────────
+
+const scatter = closed.filter(d =>
+  typeof d.c_min === "number" &&
+  typeof d.actual_min === "number"
+);
+
+const maxVal = Math.max(
+  d3.max(scatter, d => d.c_min)    ?? 60,
+  d3.max(scatter, d => d.actual_min) ?? 60,
+);
+
+mount("chart3", Plot.plot({
+  width: 860,
+  height: 460,
+  marginLeft: 60,
+  grid: true,
+  color: { legend: true },
+  x: { label: "C estimate (min)" },
+  y: { label: "actual (min)" },
+  marks: [
+    // perfect-prediction diagonal
+    Plot.line(
+      [{ v: 0 }, { v: maxVal * 1.05 }],
+      { x: "v", y: "v", stroke: "#bbb", strokeDasharray: "5 4" },
+    ),
+    Plot.dot(scatter, {
+      x: "c_min",
+      y: "actual_min",
+      fill: "role",
+      r: 5,
+      fillOpacity: 0.7,
+      title: d =>
+        `#${d.ticket ?? "—"} ${d.title ?? ""}\n` +
+        `Agent: ${d.agent ?? "—"}  Role: ${d.role ?? "—"}\n` +
+        `C: ${d.c_min}m → actual: ${d.actual_min}m` +
+        (d.delta_c_min != null ? `  (Δ ${d.delta_c_min > 0 ? "+" : ""}${d.delta_c_min}m)` : ""),
+    }),
+  ],
+}));
+
+// ── Notes ─────────────────────────────────────────────────────────────────────
+
+document.getElementById("notes").textContent = NOTES;
+
+</script>
+
+</body>
+</html>
