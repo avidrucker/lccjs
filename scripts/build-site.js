@@ -597,32 +597,14 @@ function lccHighlightStyle(themeObj) {
   ]);
 }
 
-const editor = new EditorView({
-  doc: ${starterCodeJson},
-  extensions: [
-    basicSetup,
-    lineNumbers(), // basicSetup@0.20's gutter is inert under the @6 view; add an explicit @6 gutter (#1024, mirrors #985)
-    lcc(),
-    // Initial fallback; reconfigured to a per-theme HighlightStyle once Shiki's
-    // themes are loaded (and on every theme change). (#1124)
-    highlightCompartment.of(syntaxHighlighting(defaultHighlightStyle)),
-    keymap.of([indentWithTab, { key: 'Mod-/', run: toggleLineComment }]),
-    autocompletion({ override: [lccCompletionSource] }),
-    EditorView.theme({
-      '&': { height: '100%', fontSize: '.85rem' },
-      '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--mono-font)' },
-      '.cm-content': { background: 'var(--border)', color: 'var(--fg)', caretColor: 'var(--fg)' },
-      '.cm-gutters': { background: 'var(--border)', borderRight: '1px solid var(--muted)', color: 'var(--muted)' },
-      '.cm-activeLineGutter': { background: 'rgba(128,128,128,0.1)' },
-      '&.cm-focused': { outline: 'none' },
-    }),
-  ],
-  parent: document.getElementById('editor'),
-});
-// Test hook: Playwright e2e suite uses this to set editor content without
-// depending on CM6 internals or a defunct #playground-input element.
+// Editor will be initialized inside the async IIFE after Shiki loads,
+// so it starts with the correct theme and avoids flicker.
+// Test hook reference — set after editor creation in the async IIFE.
+let editor;
 window.__lccSetSource = function(src) {
-  editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: src } });
+  if (editor) {
+    editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: src } });
+  }
 };
 const runStatus         = document.getElementById('playground-status');
 const runBtn            = document.getElementById('run-btn');
@@ -792,8 +774,36 @@ runBtn.addEventListener('click', () => {
     return;
   }
 
-  // Reconfigure the CM editor's HighlightStyle to match the selected theme, using
-  // the same Shiki theme object that drives the preview. (#1124)
+  // Build the initial theme-specific HighlightStyle so the editor
+  // starts with correct colors — no flicker from defaultHighlightStyle.
+  let themeObj = null;
+  try { themeObj = hl.getTheme(sel.value); } catch (err) { themeObj = null; }
+  const initialHighlightStyle = lccHighlightStyle(themeObj);
+
+  // Create the editor now that we have the themed highlighting.
+  editor = new EditorView({
+    doc: ${starterCodeJson},
+    extensions: [
+      basicSetup,
+      lineNumbers(),
+      lcc(),
+      // Use themed highlighting from the start — avoids flicker.
+      highlightCompartment.of(syntaxHighlighting(initialHighlightStyle)),
+      keymap.of([indentWithTab, { key: 'Mod-/', run: toggleLineComment }]),
+      autocompletion({ override: [lccCompletionSource] }),
+      EditorView.theme({
+        '&': { height: '100%', fontSize: '.85rem' },
+        '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--mono-font)' },
+        '.cm-content': { background: 'var(--border)', color: 'var(--fg)', caretColor: 'var(--fg)' },
+        '.cm-gutters': { background: 'var(--border)', borderRight: '1px solid var(--muted)', color: 'var(--muted)' },
+        '.cm-activeLineGutter': { background: 'rgba(128,128,128,0.1)' },
+        '&.cm-focused': { outline: 'none' },
+      }),
+    ],
+    parent: document.getElementById('editor'),
+  });
+
+  // Reconfigure the CM editor's HighlightStyle on theme change.
   function applyEditorHighlight(theme) {
     let themeObj = null;
     try { themeObj = hl.getTheme(theme); } catch (err) { themeObj = null; }
@@ -803,8 +813,6 @@ runBtn.addEventListener('click', () => {
   }
 
   sel.addEventListener('change', () => { applyEditorHighlight(sel.value); });
-
-  applyEditorHighlight(sel.value);
 })();
 </script>`;
 
