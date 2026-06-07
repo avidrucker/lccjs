@@ -1,6 +1,6 @@
 // tests/e2e/showcase.e2e.spec.js
 //
-// Regression / e2e suite for the GitHub Pages showcase/playground (#774, #775).
+// Regression / e2e suite for the GitHub Pages sandbox (#774, #775).
 // Catches page-load failures (e.g. CDN import breakage like #772), editor mount
 // failures, broken Run pipelines, and the pre/post-pause separator case (#793).
 //
@@ -21,10 +21,10 @@ const { test, expect } = require('@playwright/test');
 const path = require('path');
 const fs   = require('fs');
 
-const BUNDLE   = path.resolve(__dirname, '../../docs/site/dist/lcc.bundle.js');
-const SHOWCASE = path.resolve(__dirname, '../../docs/site/showcase/index.html');
+const BUNDLE  = path.resolve(__dirname, '../../docs/site/dist/lcc.bundle.js');
+const SANDBOX = path.resolve(__dirname, '../../docs/site/sandbox/index.html');
 
-const canRun = fs.existsSync(BUNDLE) && fs.existsSync(SHOWCASE);
+const canRun = fs.existsSync(BUNDLE) && fs.existsSync(SANDBOX);
 
 // ---------------------------------------------------------------------------
 // Test programs
@@ -93,7 +93,7 @@ async function waitForOutput(page) {
 // Suite
 // ---------------------------------------------------------------------------
 
-test.describe('Showcase E2E', () => {
+test.describe('Sandbox E2E', () => {
   test.skip(!canRun, 'build artefacts absent — run: npm run build');
 
   // T1 — catches CDN import failures (#772) which surface as uncaught
@@ -102,7 +102,7 @@ test.describe('Showcase E2E', () => {
     const errors = [];
     page.on('pageerror', err => errors.push(err.message));
 
-    await page.goto('/showcase/');
+    await page.goto('/sandbox/');
     await waitForEditor(page);
 
     const importErrors = errors.filter(m =>
@@ -113,7 +113,7 @@ test.describe('Showcase E2E', () => {
 
   // T2 — confirms CodeMirror mounted; would be an empty div if CDN import failed.
   test('T2 — CodeMirror editor mounts (.cm-editor element is visible)', async ({ page }) => {
-    await page.goto('/showcase/');
+    await page.goto('/sandbox/');
     await expect(page.locator('.cm-editor')).toBeVisible({ timeout: 15_000 });
 
     // Editor must contain starter content (not an empty blank div).
@@ -123,7 +123,7 @@ test.describe('Showcase E2E', () => {
 
   // T3 — golden path: the pre-loaded Hello World starter runs to correct output.
   test('T3 — happy path: starter Hello World produces expected output', async ({ page }) => {
-    await page.goto('/showcase/');
+    await page.goto('/sandbox/');
     await waitForEditor(page);
 
     await setSource(page, HELLO_WORLD);
@@ -141,7 +141,7 @@ test.describe('Showcase E2E', () => {
 
   // T4 — error path: a bad mnemonic triggers the error display.
   test('T4 — assembly error: bad mnemonic shows lcc-error class and error message', async ({ page }) => {
-    await page.goto('/showcase/');
+    await page.goto('/sandbox/');
     await waitForEditor(page);
 
     await setSource(page, BAD_MNEMONIC);
@@ -160,7 +160,7 @@ test.describe('Showcase E2E', () => {
   // T5 — stdin pre-supply: pre-supplied lines are consumed by din without
   // pausing for interactive input; dout echoes the value to output.
   test('T5 — stdin pre-supply: din/dout echoes pre-supplied integer', async ({ page }) => {
-    await page.goto('/showcase/');
+    await page.goto('/sandbox/');
     await waitForEditor(page);
 
     await setSource(page, DIN_DOUT);
@@ -193,7 +193,7 @@ test.describe('Showcase E2E', () => {
   //   dout r1      → "42\n"
   //   halted       → displayWithSeparator("Enter: 42\n42\n", 7) = "Enter: \n42\n42\n"
   test('T6 — separator: displayWithSeparator injects \\n after prompt lacking trailing newline', async ({ page }) => {
-    await page.goto('/showcase/');
+    await page.goto('/sandbox/');
     await waitForEditor(page);
 
     // No pre-supplied stdin — din must pause so preResumeOutputLength is captured.

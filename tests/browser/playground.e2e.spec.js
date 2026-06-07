@@ -57,11 +57,11 @@ async function waitForOutput(page) {
   }, { timeout: 10_000 });
 }
 
-test.describe('Playground E2E', () => {
+test.describe('Sandbox E2E', () => {
   test.skip(!bundleExists, 'lcc.bundle.js not built — run npm run build first');
 
   test('happy path: Hello World runs and prints output', async ({ page }) => {
-    await page.goto('/showcase/');
+    await page.goto('/sandbox/');
 
     // Replace editor content via the CM6 test hook exposed on window
     await page.evaluate((src) => { window.__lccSetSource(src); }, HELLO_WORLD);
@@ -77,7 +77,7 @@ test.describe('Playground E2E', () => {
   });
 
   test('assembly error: bad mnemonic shows error class and text', async ({ page }) => {
-    await page.goto('/showcase/');
+    await page.goto('/sandbox/');
 
     await page.evaluate((src) => { window.__lccSetSource(src); }, BAD_MNEMONIC);
 
@@ -92,7 +92,7 @@ test.describe('Playground E2E', () => {
   });
 
   test('stdin pass-through: din/dout echoes input value', async ({ page }) => {
-    await page.goto('/showcase/');
+    await page.goto('/sandbox/');
 
     await page.evaluate((src) => { window.__lccSetSource(src); }, DIN_DOUT);
 
@@ -109,7 +109,7 @@ test.describe('Playground E2E', () => {
   });
 
   test('displayWithSeparator: prompt before din stays inline with echo', async ({ page }) => {
-    await page.goto('/showcase/');
+    await page.goto('/sandbox/');
 
     await page.evaluate((src) => { window.__lccSetSource(src); }, DIN_PROMPT);
     await page.fill('#stdin-input', DIN_STDIN_VALUE);

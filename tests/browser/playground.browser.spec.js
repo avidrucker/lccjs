@@ -1,5 +1,5 @@
 /**
- * Playwright smoke tests for the lccjs playground page.
+ * Playwright smoke tests for the lccjs sandbox page.
  *
  * Prerequisites (auto-skipped if missing):
  *   - docs/site/dist/lcc.bundle.js  (npm run build:browser && npm run build:site)
@@ -7,9 +7,9 @@
  *
  * Run: npm run test:browser
  *
- * The tests open docs/site/showcase/index.html via file:// using the fallback
+ * The tests open docs/site/sandbox/index.html via file:// using the fallback
  * synchronous execution path (window.lcc) — Web Workers are not available on
- * file:// in Chromium, but the playground has a try/catch that falls back
+ * file:// in Chromium, but the sandbox has a try/catch that falls back
  * automatically. (#711)
  */
 
@@ -19,7 +19,7 @@ const path = require('path');
 const fs   = require('fs');
 
 const BUNDLE = path.join(__dirname, '..', '..', 'docs', 'site', 'dist', 'lcc.bundle.js');
-const PAGE   = 'file://' + path.join(__dirname, '..', '..', 'docs', 'site', 'showcase', 'index.html');
+const PAGE   = 'file://' + path.join(__dirname, '..', '..', 'docs', 'site', 'sandbox', 'index.html');
 
 // Auto-skip when the bundle hasn't been built yet (mirrors oracle test pattern).
 const SKIP = !fs.existsSync(BUNDLE);
@@ -74,7 +74,7 @@ test('T1 — happy path: Hello World starter runs and produces correct output', 
 test('T2 — assembly error: bad mnemonic shows red error text with lcc-error class', async () => {
   if (maybeSkip()) return;
 
-  await page.locator('#playground-input').fill('        badmnemonic r0\n        halt');
+  await page.evaluate(s => window.__lccSetSource(s), '        badmnemonic r0\n        halt');
   await page.locator('#run-btn').click();
   const out = await waitForOutput('Hello, World!');
 
@@ -95,7 +95,7 @@ test('T3 — stdin pass-through: din/dout program reads and echoes pre-supplied 
     '        halt',
   ].join('\n');
 
-  await page.locator('#playground-input').fill(prog);
+  await page.evaluate(s => window.__lccSetSource(s), prog);
   await page.locator('#stdin-input').fill('42');
   await page.locator('#run-btn').click();
   const out = await waitForOutput('Assembly error');
