@@ -280,7 +280,8 @@ A pause happens in two shapes:
 
    Green-light only when all three are "no" or "filed #N for it." (Addresses C-1, C-2, C-3, E-2 from [`docs/research/orchestration-failure-modes.md`](./research/orchestration-failure-modes.md), #627. Skill enforcement layer: M7 / #644.)
 5. **Research closes — file follow-up tickets for proposals.** If this is a research or spike ticket whose deliverable proposes concrete changes (new rules, doc updates, code modifications), file a follow-up DEV (or SPIKE) ticket for each distinct proposal before running the close sequence. A research close that ends with "here are N proposed changes" but no child issue is half-finished: the findings exist but have no path to implementation. Filing is not optional — a wrong ticket can be closed immediately. Cross-ref: scope-discipline failure mode taxonomy in [`docs/research/601-scope-discipline.md`](./research/601-scope-discipline.md), #615. (#621)
-6. **Run `/next-best-action`** — the pre-close finding checklist. Answers five questions (bug/regression, process recurrence, doc contradiction, closing loop, deferred decision/external routing). Takes 2–3 minutes; catches the findings most likely to evaporate at close time. Skip only for pure velocity-log-only or sub-minute clarification turns. (#644)
+6. **Run `/next-best-action`** — the pre-close finding checklist. Answers six questions (bug/regression, process recurrence, doc contradiction, closing loop, deferred decision/external routing, error self-audit). Takes 2–3 minutes; catches the findings most likely to evaporate at close time. Skip only for pure velocity-log-only or sub-minute clarification turns. (#644)
+7. **Pre-close error self-audit (mandatory — RULES.md 16 / R021):** Before the velocity log and closing commit, re-read your session history from the point you claimed the ticket to now and enumerate every loggable error (the `log-error` triggers — failed tool/Bash/git/`gh`/claim calls, hook blocks, denied permissions, schema/validation failures, *including* ones you retried and resolved). For each, confirm an `errors` row already exists (`sqlite3 ~/.lccjs/lccjs.db "SELECT id,error_type FROM errors WHERE ticket=N"`) or log it now via `npm run error:log`. Then state the outcome explicitly in your closing comment — one of *"error self-audit: N row(s) logged"* or *"error self-audit: no loggable errors this session."* This is the [Option D mechanism from #1117](#error-logging): `close.js` can't see the transcript, but you can, so the audit is yours to run. The explicit statement is what turns silence into a checkable acknowledgement — without it, "I hit no errors" and "I forgot to log" look identical (the #1108 repro). Reflexive case: if the audit catches an error you should have logged earlier, log it now (and, once #1118 lands, also log a `COMPLIANCE_FAIL` row recording that error logging was missed-then-caught).
 
 **The close sequence** (full protocol in [`puzzle-velocity.md`](./puzzle-velocity.md)):
 
@@ -373,6 +374,39 @@ npm run error:log -- '{"occurred_iso":"<occurred_iso>","agent":"CHERRY","model":
 Valid `error_type` values (15, mirroring `VALID_ERROR_TYPES` in `scripts/error-log.js`): `TOOL_DENIED`, `HOOK_BLOCK`, `CLAIM_FAIL`, `BASH_FAIL`, `GIT_FAIL`, `GIT_STATE`, `GH_FAIL`, `GH_INFO`, `DB_FAIL`, `FILE_FAIL`, `EDIT_PRECOND`, `SKILL_FAIL`, `NETWORK_FAIL`, `VALIDATION_FAIL`, `OTHER`.
 
 Error logging is a **manual, deliberate step** — not a hook. Hooks can't tell transient noise from significant failures; agents can.
+
+### Pre-close self-audit (the reliability mechanism — #1117)
+
+Logging "at the moment of failure" is the ideal, but it is **easy to forget**: an agent
+self-corrects a misfire, moves on, and the row never gets written. The discipline therefore
+under-reports — it captures an error only when the agent both *notices* the trigger and
+*remembers* the protocol mid-task. The #1108 repro: three loggable errors (a `CLAIM_FAIL`, two
+`VALIDATION_FAIL`s, a `TOOL_DENIED`) went unlogged until a human asked "did you log your errors?",
+then were backfilled as rows 49–51.
+
+The fix (chosen as **Option D** in #1117) is a **mandatory pre-close transcript self-audit**, not an
+automated hook and not a `close.js` gate. The reasoning: `close.js` runs as a plain script and cannot
+see the conversation, so it can only check whether rows *exist* — it can never know whether errors
+*occurred*. The agent, by contrast, has the full transcript and reliably reconstructs its misfires
+when prompted. So the check belongs to the agent. The human's recurring "did you log your errors?"
+prompt is internalized as a required close step rather than something a human has to ask.
+
+**The audit, run before the velocity log at every close (RULES.md 16 / R021):**
+
+1. Re-read your session from the point you claimed the ticket to now.
+2. Enumerate every event matching the `log-error` triggers above — *including resolved ones*.
+3. For each, confirm a row exists or log it now:
+   ```bash
+   sqlite3 ~/.lccjs/lccjs.db "SELECT id,error_type,message FROM errors WHERE ticket=N"
+   ```
+4. State the outcome explicitly in the closing comment — one of:
+   - `error self-audit: N row(s) logged (#ids …)`
+   - `error self-audit: no loggable errors this session`
+
+The explicit statement is the point: it converts silence into a checkable acknowledgement, so a
+clean session and a forgotten log no longer look identical in the record. (Cross-refs: the
+`next-best-action` skill carries this as a checklist question; #1118 adds a `COMPLIANCE_FAIL`
+`error_type` so a *forgotten-then-caught* episode is itself recordable.)
 
 ---
 

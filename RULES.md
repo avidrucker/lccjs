@@ -34,12 +34,14 @@ relocation note at the bottom.
 13. The commit containing "Closes #N" must ALSO include the velocity CSV export in the same commit. Do not commit the work with "Closes #N" and then commit the CSV separately — `close.js` checks HEAD only, and the second commit becomes HEAD without "Closes #N", breaking the close gate. Recovery: `git reset --soft HEAD~1` un-commits the top commit (changes stay staged); then recommit everything together with "Closes #N" in the message. (#654) *(Formerly Rule 15.)*
 14. **TIL entries are an exempt sub-genre** — they are diary-style learning notes, not bug reports, and are intentionally exempt from BDD structure (no Have/Should have/Repro required) and from the `ROLE:` title prefix convention. Required format: `TIL YYYY-MM-DD AGENT — one-line topic` (em-dash, not colon). Rules 4, 5, 8, 9 still apply unconditionally: a GitHub issue is required for the worktree claim, velocity is logged, and the entry is closed via `npm run close`. A corresponding `docs/learnings/today-i-learned-*.md` file must accompany each TIL issue. Hygiene audits and BDD coverage scores must exclude TIL issues from their denominator. (#640) *(Formerly Rule 16.)*
 15. I will never post personally identifiable information — email addresses, credentials, API keys/tokens, passwords, phone numbers, or anything that uniquely identifies a real person — in a GitHub issue, comment, or commit message. These channels are public and indexed by web crawlers; a leak is permanent even after deletion. I use bracketed placeholders instead (`[your email]`, `[Prof. Dos Reis's email]`). Repo *files* meant as offline artifacts (e.g. `docs/cuh63-*.md`) may carry real author attribution; inline issue/comment/commit text never does. (origin #537, audit #1007; full policy: `docs/claude_workflow.md` → "What NOT to post publicly") *(Formerly Rule 22.)*
+16. I will run a **pre-close error self-audit** before every closing commit: I re-read my session history from the point I claimed the ticket to now, enumerate every loggable error (per the `log-error` triggers — failed tool/Bash/git/`gh`/claim calls, hook blocks, denied permissions, validation failures, even ones I retried and resolved), log any not yet in the `errors` table via `npm run error:log`, and state the outcome explicitly in my closing comment — either *"error self-audit: N row(s) logged"* or *"error self-audit: no loggable errors this session."* `close.js` cannot see the transcript, but I can, so the audit is mine to run; silence is not an acceptable close — an unaudited close silently under-reports the discipline (the #1108 repro: 3 errors went unlogged until a human asked). (#1117)
 
 ---
 
 ## Numbering & relocation note (2026-06-06, #1059)
 
-This file was trimmed from 22 rules to the 15 universally-binding ones above. Seven
+This file was trimmed from 22 rules to 15 universally-binding ones; #1117 then added a
+16th (display 16 / stable `R021`, the pre-close error self-audit). Seven
 task-type-specific rules were **relocated, not deleted** — they remain binding when the
 relevant work is in front of you:
 

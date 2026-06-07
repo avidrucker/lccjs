@@ -182,6 +182,15 @@
       "added": "2026-06-03",
       "added_issue": 761,
       "comment": "`test.failing` runs the test, documents the broken behavior, and alerts when the fix lands (it flips to a test failure, signalling the annotation can be removed). `test.skip` silently hides the problem (#761)."
+    },
+    {
+      "id": "R021",
+      "version": 1,
+      "category": "workflow",
+      "text": "I will run a pre-close error self-audit before every closing commit: re-read my session history from claim to now, enumerate every loggable error, log any not yet in the errors table via `npm run error:log`, and state the outcome explicitly in the closing comment (\"error self-audit: N row(s) logged\" or \"error self-audit: no loggable errors this session\").",
+      "added": "2026-06-06",
+      "added_issue": 1117,
+      "comment": "Error logging was being silently under-reported: agents self-correct a misfire and never log it (the #1108 repro — 3 errors went unlogged until a human asked, then backfilled as rows 49-51). close.js cannot see the transcript, but the agent can, so the audit lives with the agent, not the script. The explicit outcome statement converts silence into a checkable acknowledgement. Mechanism chosen in #1117 (Option D — agent transcript self-audit) over a close.js acknowledgement gate; preserves the manual-judgement decision in the log-error skill (no auto-logging)."
     }
   ]
 }
