@@ -455,6 +455,30 @@ function classifyClaimPushResult(output) {
   return 'TRANSIENT';
 }
 
+// Pure (#1038): build the message for the standalone claim commit-tree object.
+// The object must be PER-AGENT-UNIQUE so two clones racing the same issue push
+// DIFFERENT shas — a same-base same-sha push reports "Everything up-to-date" at
+// exit 0 and lets both win (#1018); distinct shas make the second push reject
+// non-fast-forward. `pid` distinguishes two processes; `stamp` (an ISO time with
+// a high-resolution nanos suffix) distinguishes two same-fruit agents in the same
+// second within one process tree. Exported so a test can assert two calls with
+// different (pid, stamp) yield distinct messages.
+function buildClaimMessage(issue, branch, pid, stamp) {
+  return `claim issue-${issue} ${branch} pid=${pid} ${stamp}`;
+}
+
+// Pure (#1038): map a classifyClaimPushResult verdict + the --force flag to the
+// claim action. Exported so the decision wiring is unit-tested without git I/O.
+//   'ROLLBACK_DIE' — another clone holds the ref → tear down our worktree+branch, die.
+//   'WARN_PROCEED' — offline/best-effort → warn, keep the worktree.
+//   'PROCEED'      — claim is ours (OK), or --force overrides the block.
+function claimPushAction(verdict, force) {
+  if (force) return 'PROCEED';          // --force bypasses the cross-clone block (mirrors :453)
+  if (verdict === 'CONFLICT') return 'ROLLBACK_DIE';
+  if (verdict === 'TRANSIENT') return 'WARN_PROCEED';
+  return 'PROCEED';                     // 'OK'
+}
+
 // Side-effect: scan live worktrees for orphans — issue branches whose issue is
 // CLOSED, meaning the deferred teardown from a prior npm run close failed (#541,
 // #551). Prints a recovery hint for each stale entry; never blocks the claim.
@@ -650,6 +674,38 @@ function main() {
       }
     }
 
+    // Cross-clone claim (#1038, spike #1018): the same-issue rollback above closes
+    // the single-clone race, but two agents in SEPARATE clones sharing only the
+    // remote are still mutually invisible (listWorktreeBranches sees only this
+    // clone). Stake a server-authoritative claim: fabricate a per-agent-unique
+    // commit off the base tree with `git commit-tree` — kept OFF the working branch
+    // — and push it to refs/claims/issue-<N>. A plain same-base push reports
+    // "Everything up-to-date" and lets both win (#1018); the unique object makes a
+    // real collision surface as a non-fast-forward reject. classifyClaimPushResult
+    // (#1037) then decides: CONFLICT → roll back + die; TRANSIENT → warn + proceed
+    // (offline best-effort, like readIssue/warnOrphanedWorktrees); OK → ours.
+    // --force stakes the ref but never blocks (claimPushAction).
+    const baseTree = (sh(`git rev-parse ${base}^{tree}`, true) || '').trim();
+    if (baseTree) {
+      const stamp = `${new Date().toISOString()}.${process.hrtime.bigint()}`;
+      const claimMsg = buildClaimMessage(issue, branch, process.pid, stamp);
+      const claimSha = (sh(`git commit-tree ${baseTree} -m ${JSON.stringify(claimMsg)}`, true) || '').trim();
+      if (claimSha) {
+        const pushOut = sh(`git push origin ${claimSha}:refs/claims/issue-${issue} 2>&1 || true`, true) || '';
+        const action = claimPushAction(classifyClaimPushResult(pushOut), opts.force);
+        if (action === 'ROLLBACK_DIE') {
+          sh(`git worktree remove ${wtPath} --force`, true);
+          sh(`git branch -D ${branch}`, true);
+          die(`issue #${issue} is already claimed in another clone ` +
+              `(cross-clone collision on refs/claims/issue-${issue}) — rolled back "${branch}". ` +
+              `cd into that clone's worktree, claim a different issue, or pass --force to override.`);
+        } else if (action === 'WARN_PROCEED') {
+          console.error(`[claim] ⚠ could not confirm a cross-clone claim for #${issue} ` +
+                        `(remote unreachable/auth — best-effort) — proceeding.`);
+        }
+      }
+    }
+
     // Copy .env from repo root into the new worktree so oracle tests run without
     // a manual cp step. Silent no-op if .env doesn't exist (CI / fresh clone).
     const rootEnv = path.join(root, '.env');
@@ -713,4 +769,5 @@ module.exports = {
   sentinelBranch, isSentinelStaleByAge,
   applyMarkerFlip, buildBannerLines, findLiveWorktreeForIssue, findSameIssueCollision,
   shouldBlockWorktreeGuard, classifyClaimPushResult,
+  buildClaimMessage, claimPushAction,
 };

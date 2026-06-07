@@ -12,6 +12,8 @@ const {
   worktreesWithIssue,
   findSameIssueCollision,
   classifyClaimPushResult,
+  buildClaimMessage,
+  claimPushAction,
 } = require('../../scripts/claim');
 
 // Pure identity-resolution seam from scripts/claim.js. These tests exercise the
@@ -480,5 +482,43 @@ describe('claim.js classifyClaimPushResult()', () => {
     test('unrecognised non-empty failure → TRANSIENT (default)', () => {
       expect(classifyClaimPushResult('some weird git output we have never seen')).toBe('TRANSIENT');
     });
+  });
+});
+
+// Cross-clone claim push helpers (#1038, spike #1018). The unique-object builder
+// and the decision wiring are pure; the git round-trip in main() is not tested here.
+describe('claim.js buildClaimMessage()', () => {
+  test('encodes issue, branch, pid and stamp', () => {
+    const m = buildClaimMessage(1038, 'fig/issue-1038-x', 4242, '2026-06-07T00:00:00.000Z.123456789');
+    expect(m).toBe('claim issue-1038 fig/issue-1038-x pid=4242 2026-06-07T00:00:00.000Z.123456789');
+  });
+  // The whole point (#1018): two agents racing one issue must push DISTINCT objects.
+  test('distinct pid → distinct message (different process)', () => {
+    const a = buildClaimMessage(1038, 'fig/issue-1038-x', 100, '2026-06-07T00:00:00.000Z.1');
+    const b = buildClaimMessage(1038, 'fig/issue-1038-x', 200, '2026-06-07T00:00:00.000Z.1');
+    expect(a).not.toBe(b);
+  });
+  test('distinct stamp → distinct message (same-second within one process)', () => {
+    const a = buildClaimMessage(1038, 'fig/issue-1038-x', 100, '2026-06-07T00:00:00.000Z.111');
+    const b = buildClaimMessage(1038, 'fig/issue-1038-x', 100, '2026-06-07T00:00:00.000Z.222');
+    expect(a).not.toBe(b);
+  });
+});
+
+describe('claim.js claimPushAction()', () => {
+  test('CONFLICT → ROLLBACK_DIE (another clone holds the ref)', () => {
+    expect(claimPushAction('CONFLICT', false)).toBe('ROLLBACK_DIE');
+  });
+  test('TRANSIENT → WARN_PROCEED (offline/best-effort)', () => {
+    expect(claimPushAction('TRANSIENT', false)).toBe('WARN_PROCEED');
+  });
+  test('OK → PROCEED', () => {
+    expect(claimPushAction('OK', false)).toBe('PROCEED');
+  });
+  // --force bypasses the block regardless of verdict (mirrors the :453 guard).
+  test('--force → PROCEED even on CONFLICT', () => {
+    expect(claimPushAction('CONFLICT', true)).toBe('PROCEED');
+    expect(claimPushAction('TRANSIENT', true)).toBe('PROCEED');
+    expect(claimPushAction('OK', true)).toBe('PROCEED');
   });
 });
