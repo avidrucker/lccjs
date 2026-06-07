@@ -144,6 +144,7 @@ Test organization under `tests/new/`:
 | [docs/status.md](./docs/status.md) | Current status, parity areas, known gaps |
 | [docs/core-behavior-matrix.md](./docs/core-behavior-matrix.md) | Behavior contracts and oracle-vs-lccjs matrix |
 | [docs/parity_deviations.md](./docs/parity_deviations.md) | Documented intentional deviations from oracle behavior |
+| [docs/lccjs-unique-features.md](./docs/lccjs-unique-features.md) | The inverse of the parity doc — additive features LCC.js offers *beyond* OG LCC (`--explain`, `ilcc` debugger, browser playground, disassembler, LCC+, …) |
 | [docs/lcc-isa.md](./docs/lcc-isa.md) | LCC instruction set summary (instructions, traps, directives, branch codes) |
 | [docs/pitfalls.md](./docs/pitfalls.md) | Canonical catalog of LCC-assembly pitfalls — the surprises that bite first-timers (symptom → why → fix) |
 | [docs/lccplus-isa.md](./docs/lccplus-isa.md) | LCC+ instruction set addendum (new instructions, trap vectors, `.lccplus` directive) |

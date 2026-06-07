@@ -10,6 +10,10 @@ Three categories are used:
 - **LCC.js BUG** — LCC.js deviates from OG LCC; tracked as open bug, fix pending.
 - **BY DESIGN** — Intentional divergence for a documented reason (safety, portability, etc.).
 
+> This doc is the *diff* (where behavior differs). For the *superset* — features
+> LCC.js adds that OG LCC lacks — see
+> [`docs/lccjs-unique-features.md`](./lccjs-unique-features.md).
+
 ---
 
 ## OG BUG — OG LCC is wrong; LCC.js is correct

@@ -74,6 +74,7 @@ const DOCS_SECTIONS = [
   { id: 'learnings', label: 'Learnings', srcDir: path.join(ROOT, 'docs', 'learnings') },
   { id: 'glossary',  label: 'Glossary',  srcDir: path.join(ROOT, 'docs', 'glossary')  },
   { id: 'parity',    label: 'Parity',    files: [
+    path.join(ROOT, 'docs', 'lccjs-unique-features.md'),
     path.join(ROOT, 'docs', 'parity_deviations.md'),
     path.join(ROOT, 'docs', 'cuh63-nocomma-negative-operand-family-bug-report.md'),
     path.join(ROOT, 'docs', 'cuh63-ldr-str-silent-miscompile-bug-report.md'),
