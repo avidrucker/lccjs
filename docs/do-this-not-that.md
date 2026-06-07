@@ -83,6 +83,16 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Personal data in public channels
+
+**Use a bracketed placeholder for any email, credential, or PII in issue/comment/commit text**
+
+- **Do:** write `[your email]`, `[Prof. Dos Reis's email]`, `[sender email]` whenever an address, token, or other PII would otherwise appear in a GitHub issue body, comment, or commit message.
+- **Don't:** paste a real email address, API key, password, OAuth/personal-access token, phone number, or other personally identifying detail into issue bodies, comments, or commit messages.
+- **Why:** GitHub issues, comments, and commits are public and indexed by web crawlers — a leaked address or token is permanent even after deletion. Repo *files* meant as offline artifacts (e.g. `docs/cuh63-*.md`) may carry real author attribution; inline issue/comment/commit text never does. (origin #537, audit #1007; durable rule: `RULES.md` #22; full policy: `docs/claude_workflow.md` → "What NOT to post publicly")
+
+---
+
 ## Worktree discipline
 
 **Verify the target issue is open before starting the claim flow**
