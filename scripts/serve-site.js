@@ -55,6 +55,11 @@ const MIME = {
   '.wasm': 'application/wasm',
 };
 
+// @todo #1028:45/DEV add a --dev (alias --watch) mode: fs.watch over
+// scripts/build-site.js, src/browser/, src/lang-lcc/, docs/site/dist/lang-lcc.js
+// (debounced) dispatching the MINIMAL build step, plus an SSE /__livereload
+// endpoint + dev-only injected reload snippet. Keep non-dev bytes identical. See
+// docs/research/1027-fast-showcase-dev-loop.md for the full recommendation.
 function parseArgs(argv) {
   const opts = { port: 8080, root: path.join('docs', 'site') };
   for (let i = 0; i < argv.length; i++) {
