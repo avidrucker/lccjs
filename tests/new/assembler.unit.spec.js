@@ -442,6 +442,11 @@ describe('Assembler Unit Tests', () => {
       expect(errCall[0]).not.toContain('Did you mean');
     });
 
+    test('core Assembler does NOT offer .lccplus as a valid directive (#1034 — no leak)', () => {
+      const asm = new Assembler();
+      expect(asm._getValidDirectives()).not.toContain('.lccplus');
+    });
+
     test('verbose Bad register error gives no suggestion when typo is too distant', () => {
       const asm = new Assembler();
       asm.verboseModeOn = true;

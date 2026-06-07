@@ -130,6 +130,14 @@ class AssemblerPlus extends Assembler {
     return macword;
   }
 
+  // Extend the core valid-directive pool with .lccplus so the verbose
+  // "did you mean?" suggester can offer it on a near-miss (e.g. .lcplus,
+  // .lccplu) in a .ap file. Kept out of core Assembler._getValidDirectives()
+  // so .lccplus is never suggested for a plain .a source. (#1034)
+  _getValidDirectives() {
+    return super._getValidDirectives().concat(['.lccplus']);
+  }
+
   // Override or extend handleDirective to add .lccplus
   handleDirective(mnemonic, operands) {
     const lowerMnemonic = mnemonic.toLowerCase();

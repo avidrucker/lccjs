@@ -81,4 +81,26 @@ describe('assemblerplus — first coverage (#197)', () => {
       expect((out.match(/Missing register/g) || []).length).toBe(1);
     });
   });
+
+  describe('.lccplus in the typo-suggestion pool (#1034)', () => {
+    const { suggestClosest } = require('../../src/utils/suggest');
+
+    test('AssemblerPlus offers .lccplus as a valid directive', () => {
+      const a = new AssemblerPlus();
+      expect(a._getValidDirectives()).toContain('.lccplus');
+    });
+
+    test('AssemblerPlus still includes the inherited core directives', () => {
+      const a = new AssemblerPlus();
+      expect(a._getValidDirectives()).toEqual(
+        expect.arrayContaining(['.word', '.start', '.fill', '.stringz'])
+      );
+    });
+
+    test('a near-miss on .lccplus resolves to .lccplus via suggestClosest', () => {
+      const a = new AssemblerPlus();
+      expect(suggestClosest('.lcplus', a._getValidDirectives())).toBe('.lccplus');
+      expect(suggestClosest('.lccplu', a._getValidDirectives())).toBe('.lccplus');
+    });
+  });
 });
