@@ -69,6 +69,10 @@ lccjs has three distinct browser-facing components at different maturity levels.
 
 **Updated 2026-06-05 (APPLE, #714 checklist pass):** Sections B–C reflect the original #700 audit state. Sections A and D and the gap table below have been updated to reflect features shipped since then (#715, #734, #735, #736, #732, #733, #882, showcase CM6 upgrade).
 
+> **Corrected 2026-06-06 (GRAPE, #1025 — verified in a browser against the _built_ page per `docs/showcase-local-dev.md`/#987, not by reading source).** Several CM6 claims below were established by source-reading and were false or stale at runtime. Two things to keep straight:
+> - **The deployed surface is the _generated_ Playground at `/showcase/`** (`docs/site/showcase/index.html`, produced by `scripts/build-site.js` and uploaded as the Pages artifact). The nav "Playground" link points there. The standalone source pages **`docs/showcase/index.html`** (Section A) and **`docs/playground/index.html`** (Section D) are **not deployed** — Section D in particular documents a legacy page whose runtime no longer matches what users see.
+> - **On the deployed Playground, verified post-fix:** syntax highlighting renders via the **Lezer `lcc()` LanguageSupport** (not a ViewPlugin) — but it rendered **zero** spans until **#986** pinned `@lezer/highlight` identity; and the **line-number gutter** was **absent** (`basicSetup@0.20`'s gutter is inert under the @6 view) until **#1024** added an explicit `lineNumbers()`. Both are ✅ as of #986 / #1024. The "custom ViewPlugin tokenizer" wording in Section D describes the non-deployed `docs/playground/index.html`, not the deployed surface.
+
 ---
 
 ### A. Showcase page (`docs/showcase/index.html`)
@@ -78,7 +82,7 @@ A static demo page served under `docs/` and included in the GitHub Pages site. *
 | Feature | State | Notes |
 |---------|-------|-------|
 | Code editor (CM6 EditorView) | ✅ | `basicSetup` + `lcc()` Lezer LanguageSupport; previously a raw `<textarea>` |
-| Syntax highlighting (editor) | ✅ | Lezer `lcc()` LanguageSupport (#882) in the CM6 editor pane |
+| Syntax highlighting (editor) | ✅ | Lezer `lcc()` LanguageSupport (#882) in the CM6 editor pane; on the deployed page, spans rendered **zero** until #986 pinned `@lezer/highlight` identity |
 | Syntax highlighting (preview) | ✅ | Shiki v1 + custom LCC TextMate grammar; live 150ms debounce |
 | Side-by-side highlight preview | ✅ | CM6 editor on left, Shiki read-only view on right |
 | Tab → indent | ✅ | `indentWithTab` keymap via CM6 (previously `keydown` Tab override) |
@@ -129,6 +133,8 @@ building custom tools, not direct use.
 
 ### D. Playground page (`docs/playground/index.html`) — added via #715, #734, #735, #736, #732, #733
 
+> **⚠ Not the deployed surface (GRAPE, #1025).** This section documents the standalone source page `docs/playground/index.html`, which is **not deployed** (no `docs/site/playground/` is built; the nav "Playground" link targets `/showcase/`). The deployed Playground is the **generated** `docs/site/showcase/index.html` (`scripts/build-site.js`), which uses the **Lezer `lcc()` LanguageSupport** and an explicit `lineNumbers()` (#1024) — **not** the ViewPlugin tokenizer / bare `basicSetup` gutter described below. The rows below describe that legacy file, which no longer reflects the deployed surface; treat them as historical.
+
 A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`) and custom ViewPlugin syntax highlighting.
 
 | Feature | State | Notes |
@@ -159,7 +165,7 @@ A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`)
 | Feature | ILCC dashboard | lccjs (best surface) |
 |---------|:--------------:|:--------------------:|
 | Code editor (writable) | ✅ | ✅ playground (CM6) |
-| Syntax highlighting | ❌ | ✅ playground (ViewPlugin) + showcase (Lezer CM6 + Shiki) |
+| Syntax highlighting | ❌ | ✅ deployed Playground `/showcase/`: Lezer CM6 `lcc()` + Shiki preview ~~(ViewPlugin)~~ (corrected #1025; rendered only after #986) |
 | Run / assemble / execute | ✅ | ✅ playground |
 | Terminal output panel | ✅ | ✅ playground + injector |
 | Interactive stdin | ❌ | ❌ |
@@ -170,7 +176,7 @@ A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`)
 | Share as link | ✅ | ✅ playground (#732, closed 2026-06-05) |
 | Download as `.a` | ✅ | ✅ playground (#733, closed 2026-06-05) |
 | Auto-format / prettify | ✅ | ✅ playground |
-| Line numbers (editor) | ✅ | ✅ playground (CM6 basicSetup) + showcase (CM6 lineNumbers()) |
+| Line numbers (editor) | ✅ | ✅ deployed Playground `/showcase/`: explicit CM6 `lineNumbers()` (#1024) ~~(CM6 basicSetup)~~ — `basicSetup@0.20`'s gutter is inert under the @6 view |
 | Dark / light theme | ✅ (5 themes) | ❌ dark only |
 | LCC+ (`.ap`) support | ❌ | ~ playground highlights; no LCC+ run path |
 | Save to localStorage | ❌ | ❌ |
