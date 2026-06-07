@@ -28,6 +28,11 @@ class AssemblerError extends LccError {}
 
 class LinkerError extends LccError {}
 
+// Thrown by the test-runner spec loader (loadTestSpec) on malformed JSON or a
+// spec that is missing/ill-typed required fields. Keeps the pure loader seam
+// free of console output / process.exit (#1090).
+class TestSpecError extends LccError {}
+
 // Not an error — a non-local exit used to suspend execution when
 // inputBuffer is exhausted and pauseOnInput is enabled.
 class InputPauseSignal {
@@ -40,6 +45,7 @@ module.exports = {
   LccError,
   AssemblerError,
   LinkerError,
+  TestSpecError,
   InvalidExecutableFormatError,
   InterpreterRuntimeError,
   InputPauseSignal,

@@ -2,6 +2,7 @@ const {
   LccError,
   AssemblerError,
   LinkerError,
+  TestSpecError,
   InvalidExecutableFormatError,
   InterpreterRuntimeError,
 } = require('../../src/utils/errors');
@@ -36,6 +37,14 @@ describe('Errors Unit Tests', () => {
 
     expect(error).toBeInstanceOf(LccError);
     expect(error.name).toBe('InvalidExecutableFormatError');
+  });
+
+  test('TestSpecError should extend LccError', () => {
+    const error = new TestSpecError('bad test spec');
+
+    expect(error).toBeInstanceOf(LccError);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('TestSpecError');
   });
 
   test('InterpreterRuntimeError should extend LccError', () => {
