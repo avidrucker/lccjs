@@ -867,5 +867,24 @@ ${playgroundThemeOptions}
   fs.writeFileSync(playgroundFile, playgroundHtml);
   console.log(`build:site — playground: ${path.relative(ROOT, playgroundFile)}`);
 
+  // Generate redirect from old /showcase/ route to new /sandbox/ route.
+  const redirectDir = path.join(OUT_DIR, 'showcase');
+  fs.mkdirSync(redirectDir, { recursive: true });
+  const redirectHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=../sandbox/">
+  <title>Redirecting to Sandbox</title>
+</head>
+<body>
+  <p>Redirecting to <a href="../sandbox/">Sandbox</a>...</p>
+  <script>window.location.href = "../sandbox/";</script>
+</body>
+</html>`;
+  const redirectFile = path.join(redirectDir, 'index.html');
+  fs.writeFileSync(redirectFile, redirectHtml);
+  console.log(`build:site — redirect: ${path.relative(ROOT, redirectFile)}`);
+
   console.log('build:site — done.');
 })();
