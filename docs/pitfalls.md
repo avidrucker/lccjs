@@ -168,6 +168,32 @@ before anything else.
 
 ---
 
+### 2.10 One mnemonic per source line — extra tokens are silently dropped
+
+The assembler processes exactly **one** mnemonic per source line. Any tokens after the
+operands are silently ignored — a second instruction crammed onto the same line (e.g.
+`dout r0  nl`) will **not** assemble the second mnemonic, and you get no error.
+
+- **Symptom:** an instruction "disappears"; output is missing a `nl`, a `dout`, etc.
+  This accounts for the parity failures in textbook demos 029–032.
+- **Fix:** write each instruction on its own line.
+- (Was `RULES.md` Rule 18 — relocated #1059, origin #759.)
+
+---
+
+### 2.11 `.hex`/`.bin` fixtures use raw 16-bit words, not `.e` bytes
+
+When writing `.hex` or `.bin` test fixtures, use **raw 16-bit word values** (e.g. `D005`
+for `mvi r0, 5`) — NOT the bytes of a `.e` file.
+
+- **Why:** a `.e` file begins with an `oC` preamble and stores words little-endian.
+  `.hex`/`.bin` files contain plain word values with no wrapper. Copying bytes out of a
+  `.e` file into a `.hex` fixture produces silently wrong machine code with **no
+  assembler error**.
+- (Was `RULES.md` Rule 17 — relocated #1059, origin #758.)
+
+---
+
 ## 3. Runtime-level pitfalls (assembles fine, breaks when run)
 
 ### 3.1 Divide/remainder by zero reports "Floating point exception"
@@ -261,6 +287,8 @@ the two you're most likely to hit:
 ## 6. Toolchain / workflow pitfalls
 
 **`*.spec.js` files are outside PDD scan coverage.** `tests/**/*.spec.js` is excluded from `.pddignore` (#367), so a `@todo` marker placed inside a spec file will not appear in `npm run puzzles` output and will not be enforced against a GitHub issue. Real puzzle markers belong in source files under `src/`.
+
+**Wrap every toolchain invocation in `scripts/lccrun.sh`.** Any shell invocation of `lcc.js`, `assembler.js`, `interpreter.js`, `linker.js`, or the oracle binary (`$LCC_ORACLE`) must go through `scripts/lccrun.sh [secs]`. Bare invocations block **indefinitely** when `name.nnn` is absent and stdin is not a TTY — `lccrun.sh` adds a timeout and kills a hung process. (Was `RULES.md` Rule 13 — relocated #1059, origin #376.)
 
 ## See also
 
