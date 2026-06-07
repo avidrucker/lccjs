@@ -6,11 +6,13 @@
  *
  * Why this exists (#987): the live showcase is the GENERATED page
  * docs/site/showcase/index.html (emitted by scripts/build-site.js, with
- * docs/site as the Pages artifact root per .github/workflows/pages.yml) — NOT
- * the standalone source page docs/showcase/index.html. CM6 features (line
- * numbers, syntax highlighting) were twice declared working from a source
- * reading while the deployed page silently lacked them (#985, #986). Serving the
- * built artifact locally is the only way to catch that gap before deploy.
+ * docs/site as the Pages artifact root per .github/workflows/pages.yml). CM6
+ * features (line numbers, syntax highlighting) were twice declared working from
+ * a source reading while the deployed page silently lacked them (#985, #986) —
+ * the fixes had landed on standalone source pages that were never deployed
+ * (those legacy pages, docs/showcase + docs/playground, were removed in #1045).
+ * Serving the built artifact locally is the only way to catch that gap before
+ * deploy.
  *
  * It deliberately uses only Node built-ins — the repo ships with no runtime
  * dependencies (Node >=18), and `npx serve` would pull from the registry every

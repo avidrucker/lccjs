@@ -25,7 +25,7 @@ npm run build:browser                        # webpack → dist/lcc.bundle.js + 
 npm run build                                 # regenerate docs/site (build:browser + build:site)
 npm run serve:site                            # serve the BUILT docs/site at http://localhost:8080/showcase/
 # See docs/showcase-local-dev.md for the required pre-deploy verification checklist.
-# Serve docs/site (the generated, deployed page), NOT docs/showcase (a non-deployed source page).
+# Serve docs/site (the generated, deployed page). The legacy standalone source pages were removed in #1045 — /showcase/ is now generated solely by scripts/build-site.js.
 
 # Tests
 npm test                                      # primary suite (tests/new, --runInBand)

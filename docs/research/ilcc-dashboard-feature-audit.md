@@ -133,7 +133,7 @@ building custom tools, not direct use.
 
 ### D. Playground page (`docs/playground/index.html`) — added via #715, #734, #735, #736, #732, #733
 
-> **⚠ Not the deployed surface (GRAPE, #1025).** This section documents the standalone source page `docs/playground/index.html`, which is **not deployed** (no `docs/site/playground/` is built; the nav "Playground" link targets `/showcase/`). The deployed Playground is the **generated** `docs/site/showcase/index.html` (`scripts/build-site.js`), which uses the **Lezer `lcc()` LanguageSupport** and an explicit `lineNumbers()` (#1024) — **not** the ViewPlugin tokenizer / bare `basicSetup` gutter described below. The rows below describe that legacy file, which no longer reflects the deployed surface; treat them as historical.
+> **⚠ Not the deployed surface (GRAPE, #1025).** This section documents the standalone source page `docs/playground/index.html`, which is **not deployed** (no `docs/site/playground/` is built; the nav "Playground" link targets `/showcase/`). The deployed Playground is the **generated** `docs/site/showcase/index.html` (`scripts/build-site.js`), which uses the **Lezer `lcc()` LanguageSupport** and an explicit `lineNumbers()` (#1024) — **not** the ViewPlugin tokenizer / bare `basicSetup` gutter described below. The rows below describe that legacy file, which no longer reflects the deployed surface; treat them as historical. **Update (#1045): `docs/playground/index.html` and `docs/showcase/index.html` were removed** — the generated `/showcase/` page is now the single source of truth.
 
 A standalone page combining editor + run + output. Ships with CM6 (`basicSetup`) and custom ViewPlugin syntax highlighting.
 
