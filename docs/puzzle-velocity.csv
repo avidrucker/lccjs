@@ -930,3 +930,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 943,1001,docs(workflow): triage-criteria convention for RESEARCH tickets,WRITER,15,5,1,14,4,2026-06-06T17:06:06-1000,2026-06-06T17:06:50-1000,,,BANANA,opus-4.8,lccjs
 944,1017,same-issue post-worktree-add rollback covers forced --as,DEV,35,12,3,32,9,2026-06-06T17:04:03-1000,2026-06-06T17:07:32-1000,,added identity-agnostic findSameIssueCollision pure seam + wired post-add rollback outside !identity.name gate; respects --force escape hatch; 5 unit tests,CHERRY,opus-4.8,lccjs
 945,969,docs: claude_workflow.md error-logging section — type list + skip criteria,WRITER,15,5,1,14,4,2026-06-06T17:07:26-1000,2026-06-06T17:08:18-1000,,,BANANA,opus-4.8,lccjs
+946,970,docs: error-logging-discipline memory — type list + skip criteria,WRITER,10,4,1,9,3,2026-06-06T17:09:06-1000,2026-06-06T17:09:42-1000,,,BANANA,opus-4.8,lccjs
