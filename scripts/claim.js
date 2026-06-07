@@ -123,6 +123,13 @@ function worktreesWithIssue(branches) {
 // session ends or the stale-sweep reclaims it (#194).
 const SESSION_SENTINEL_MAX_AGE_S = 7 * 24 * 60 * 60; // 7 days
 
+// TTL after which an OPEN issue's cross-clone claim ref (#1038) is treated as
+// abandoned by the stale-ref sweep (#1040). Tasks are ≤60m (yegor-microtasks), so
+// a claim that has sat for days almost certainly belongs to a dead session that
+// never ran `npm run close` (which deletes the ref, #1039). Shorter than the
+// session-sentinel TTL because a claim is a far more transient thing than a session.
+const CLAIM_REF_MAX_AGE_S = 2 * 24 * 60 * 60; // 2 days
+
 function sentinelBranch(fruit) {
   return `${fruit}/session`;
 }
@@ -479,6 +486,29 @@ function claimPushAction(verdict, force) {
   return 'PROCEED';                     // 'OK'
 }
 
+// Pure (#1040): is a remote claim ref (refs/claims/issue-N, #1038) stale and worth
+// sweeping/warning? Mirrors the warnOrphanedWorktrees CLOSED-issue test and reuses
+// the isSentinelStaleByAge TTL shape. Takes resolved inputs (no git/gh I/O) so it is
+// unit-testable.
+//   - issue CLOSED/MERGED      → stale (the claim outlived its issue; #1039 deletes
+//                                 on close, but a crashed/pre-#1039 close leaves it).
+//   - issue OPEN, claim past ttl → stale (the claiming session is almost certainly
+//                                 dead — tasks are ≤60m, so a days-old claim is abandoned).
+//   - issue OPEN, within ttl    → NOT stale (a live claim).
+//   - unknown state (gh offline / issue missing) → NOT stale (best-effort: never
+//                                 sweep what we can't verify — matches readIssue/
+//                                 warnOrphanedWorktrees).
+function claimRefIsStale({ issueState, claimCommitTs, nowS, ttl = CLAIM_REF_MAX_AGE_S }) {
+  const state = issueState == null ? '' : String(issueState).trim().toUpperCase();
+  if (state === '') return false;                       // offline / unknown → best-effort
+  if (state === 'CLOSED' || state === 'MERGED') return true;
+  if (state === 'OPEN') {
+    // Only the TTL can stale an OPEN claim, and only when the commit date is known.
+    return Number.isFinite(claimCommitTs) ? (nowS - claimCommitTs) > ttl : false;
+  }
+  return false;                                         // any other state → conservative
+}
+
 // Side-effect: scan live worktrees for orphans — issue branches whose issue is
 // CLOSED, meaning the deferred teardown from a prior npm run close failed (#541,
 // #551). Prints a recovery hint for each stale entry; never blocks the claim.
@@ -498,6 +528,52 @@ function warnOrphanedWorktrees() {
       `           git worktree remove "${wtPath}" --force\n` +
       `           git branch -D ${branch}`
     );
+  }
+}
+
+// Side-effect (#1040): the cross-clone analogue of warnOrphanedWorktrees. A claim
+// ref (refs/claims/issue-N, #1038) is normally deleted at close (#1039); a session
+// that dies without closing strands it on the remote, blocking future claims of that
+// issue. List the remote claim refs and warn about any that are stale per
+// claimRefIsStale (CLOSED issue, or an OPEN issue whose claim commit is older than
+// the TTL). Best-effort and non-destructive — offline/no-refs is a silent skip, and
+// it WARNS with the manual sweep command rather than deleting (matches the
+// warn-only warnOrphanedWorktrees default; an opt-in auto-sweep is a deferred follow-up).
+function warnStaleClaimRefs() {
+  const listing = sh(`git ls-remote origin 'refs/claims/*' 2>/dev/null`, true);
+  if (!listing || !listing.trim()) return; // offline, or no claim refs staked anywhere
+  const nowS = Math.floor(Date.now() / 1000);
+  for (const line of listing.trim().split('\n')) {
+    const [sha, ref] = line.split('\t');
+    const m = /refs\/claims\/issue-(\d+)\b/.exec(ref || '');
+    if (!m) continue;
+    const issueNum = m[1];
+    // Lightweight state read (mirrors warnOrphanedWorktrees): null/'' when gh offline.
+    const stateRaw = sh(`gh issue view ${issueNum} --json state -q .state`, true);
+    const issueState = stateRaw && stateRaw.trim() ? stateRaw.trim() : null;
+    // The TTL test needs the claim commit's date — only relevant while the issue is
+    // still OPEN (a CLOSED issue is already stale). Try the local object first (no
+    // network); if it isn't local, best-effort fetch the single ref to FETCH_HEAD.
+    let claimCommitTs = null;
+    if (issueState && issueState.toUpperCase() === 'OPEN') {
+      let ts = sh(`git log -1 --format=%ct ${sha} 2>/dev/null`, true);
+      if (!ts || !/^\d+/.test(ts.trim())) {
+        sh(`git fetch --quiet origin refs/claims/issue-${issueNum} 2>/dev/null`, true);
+        ts = sh('git log -1 --format=%ct FETCH_HEAD 2>/dev/null', true);
+      }
+      if (ts && /^\d+/.test(ts.trim())) claimCommitTs = Number(ts.trim());
+    }
+    if (claimRefIsStale({ issueState, claimCommitTs, nowS })) {
+      const up = (issueState || '').toUpperCase();
+      const reason = (up === 'CLOSED' || up === 'MERGED')
+        ? `issue #${issueNum} is ${up}`
+        : `claim older than ${Math.round(CLAIM_REF_MAX_AGE_S / 86400)}d — likely abandoned`;
+      console.error(
+        `[claim] ⚠ stale claim ref refs/claims/issue-${issueNum} (${reason}).\n` +
+        `         A dead session may have stranded it (#1038 stakes it; #1039 deletes it on close).\n` +
+        `         To sweep:  git push origin :refs/claims/issue-${issueNum}`
+      );
+    }
   }
 }
 
@@ -576,6 +652,7 @@ function main() {
   }
 
   warnOrphanedWorktrees();
+  warnStaleClaimRefs(); // #1040: cross-clone analogue — warn about stranded claim refs
 
   // Live-worktree guard (#629): die if another agent already has this issue checked
   // out as a worktree, unless --force (mirrors CLOSED guard). --dry-run shows the
@@ -769,5 +846,5 @@ module.exports = {
   sentinelBranch, isSentinelStaleByAge,
   applyMarkerFlip, buildBannerLines, findLiveWorktreeForIssue, findSameIssueCollision,
   shouldBlockWorktreeGuard, classifyClaimPushResult,
-  buildClaimMessage, claimPushAction,
+  buildClaimMessage, claimPushAction, claimRefIsStale,
 };

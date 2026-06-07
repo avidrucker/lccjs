@@ -14,6 +14,7 @@ const {
   classifyClaimPushResult,
   buildClaimMessage,
   claimPushAction,
+  claimRefIsStale,
 } = require('../../scripts/claim');
 
 // Pure identity-resolution seam from scripts/claim.js. These tests exercise the
@@ -520,5 +521,46 @@ describe('claim.js claimPushAction()', () => {
     expect(claimPushAction('CONFLICT', true)).toBe('PROCEED');
     expect(claimPushAction('TRANSIENT', true)).toBe('PROCEED');
     expect(claimPushAction('OK', true)).toBe('PROCEED');
+  });
+});
+
+// Stale claim-ref sweep decision (#1040). Pure seam — the ls-remote / gh / fetch
+// I/O lives in warnStaleClaimRefs() and is not tested here.
+describe('claim.js claimRefIsStale()', () => {
+  const TTL = 2 * 24 * 60 * 60;          // 2 days, matching CLAIM_REF_MAX_AGE_S
+  const NOW = 1_000_000_000;             // fixed "now" (unix seconds)
+
+  test('CLOSED issue → stale (claim outlived its issue)', () => {
+    expect(claimRefIsStale({ issueState: 'CLOSED', claimCommitTs: NOW, nowS: NOW, ttl: TTL })).toBe(true);
+  });
+  test('MERGED issue → stale', () => {
+    expect(claimRefIsStale({ issueState: 'MERGED', claimCommitTs: NOW, nowS: NOW, ttl: TTL })).toBe(true);
+  });
+
+  test('OPEN + fresh claim → not stale', () => {
+    const ts = NOW - 60 * 60; // 1h old
+    expect(claimRefIsStale({ issueState: 'OPEN', claimCommitTs: ts, nowS: NOW, ttl: TTL })).toBe(false);
+  });
+  test('OPEN + claim older than TTL → stale (abandoned)', () => {
+    const ts = NOW - (TTL + 1);
+    expect(claimRefIsStale({ issueState: 'OPEN', claimCommitTs: ts, nowS: NOW, ttl: TTL })).toBe(true);
+  });
+  test('OPEN exactly at TTL boundary → not stale (strictly greater)', () => {
+    expect(claimRefIsStale({ issueState: 'OPEN', claimCommitTs: NOW - TTL, nowS: NOW, ttl: TTL })).toBe(false);
+  });
+  test('OPEN with no usable commit timestamp → not stale (TTL undecidable)', () => {
+    expect(claimRefIsStale({ issueState: 'OPEN', claimCommitTs: null, nowS: NOW, ttl: TTL })).toBe(false);
+  });
+
+  test('unknown state (gh offline) → not stale (best-effort)', () => {
+    expect(claimRefIsStale({ issueState: null, claimCommitTs: NOW - (TTL + 1), nowS: NOW, ttl: TTL })).toBe(false);
+    expect(claimRefIsStale({ issueState: '', claimCommitTs: NOW, nowS: NOW, ttl: TTL })).toBe(false);
+  });
+  test('is case/whitespace tolerant on state', () => {
+    expect(claimRefIsStale({ issueState: ' closed ', claimCommitTs: NOW, nowS: NOW, ttl: TTL })).toBe(true);
+  });
+  test('defaults ttl to CLAIM_REF_MAX_AGE_S when omitted', () => {
+    // 3 days old, default TTL is 2 days → stale without passing ttl explicitly.
+    expect(claimRefIsStale({ issueState: 'OPEN', claimCommitTs: NOW - 3 * 24 * 3600, nowS: NOW })).toBe(true);
   });
 });
