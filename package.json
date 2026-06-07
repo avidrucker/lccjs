@@ -25,6 +25,7 @@
     "build": "npm run build:browser && npm run build:site",
     "build:site": "node scripts/build-site.js",
     "build:browser": "webpack --config webpack.browser.config.js",
+    "serve:site": "node scripts/serve-site.js",
     "test:e2e": "playwright test --config playwright.e2e.config.js",
     "test:potato-tokens": "node scripts/potato-token-test.js",
     "report": "node scripts/report.js",

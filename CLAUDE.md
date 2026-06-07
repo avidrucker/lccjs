@@ -21,6 +21,12 @@ node ./src/plus/lccplus.js <file.ap>         # LCC+ pipeline (see "Two toolchain
 # Browser bundle
 npm run build:browser                        # webpack → dist/lcc.bundle.js + dist/lcc-injector.js
 
+# Showcase / Playground — local dev (verify CM6 features before deploy)
+npm run build                                 # regenerate docs/site (build:browser + build:site)
+npm run serve:site                            # serve the BUILT docs/site at http://localhost:8080/showcase/
+# See docs/showcase-local-dev.md for the required pre-deploy verification checklist.
+# Serve docs/site (the generated, deployed page), NOT docs/showcase (a non-deployed source page).
+
 # Tests
 npm test                                      # primary suite (tests/new, --runInBand)
 npm run test:all                              # full suite incl. slow tests
@@ -134,3 +140,5 @@ Both hooks are in `scripts/git-hooks/` and stay current as the branch evolves (s
 ## Gotchas
 
 Non-obvious foot-guns that are not obvious from the code: **[`docs/project-gotchas.md`](./docs/project-gotchas.md)**. For ISA-level assembly surprises see [`docs/pitfalls.md`](./docs/pitfalls.md); for workflow/tooling preferences see [`docs/do-this-not-that.md`](./docs/do-this-not-that.md).
+
+For any **showcase / playground** change, CM6 features must be verified in a browser against the *built* page before deploy — see **[`docs/showcase-local-dev.md`](./docs/showcase-local-dev.md)** (`npm run build && npm run serve:site`). Source reading is not sufficient (#985, #986, #987).
