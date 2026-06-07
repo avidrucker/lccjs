@@ -139,6 +139,12 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 - **Don't:** `cd /path/to/worktree && git log …` (then forget to return)
 - **Why:** a bare `cd` changes the persistent shell cwd for the entire conversation. All subsequent `git`, `npm run claim`, and `git pull` commands run from the wrong directory. `git pull` silently reports "Already up to date" on the feature branch instead of on main — false confirmation. (#819)
 
+**Run `git worktree remove` from the main checkout; `git worktree prune` before retrying a failed remove**
+
+- **Do:** prefer `npm run close <N>` — it tears the worktree down for you. When removing by hand, run `git worktree remove .claude/worktrees/<fruit>-issue-<N>` **from the main checkout** (or use `git -C <main-path> worktree remove …`). If it fails with `fatal: not a working tree` (exit 128), the worktree was already auto-pruned — run `git worktree prune` once, then retry; treat an already-gone worktree as success, not a new failure.
+- **Don't:** run `git worktree remove` while the shell's cwd is *inside* the worktree being removed; don't re-run the same `remove` on an already-pruned worktree without `prune` first.
+- **Why:** removing from inside the target yields `fatal: could not get current working directory` / `getcwd: cannot access parent directories` because the cwd vanishes mid-command. Retrying a remove on an already-pruned worktree yields `fatal: not a working tree` — that is a stale ref, not a live failure; `git worktree prune` clears it. Worktree-teardown failures are the single most recurring `GIT_STATE` pattern in the errors table — five rows across both shapes (audit #1007). This is the *teardown* counterpart to the `git -C` inspect rule above.
+
 **Treat a stale-worktree warning from `npm run claim` as an action item, not a notice**
 
 - **Do:** when `npm run claim` prints `⚠ stale worktree: "<branch>" references CLOSED issue #N`, immediately run the two cleanup commands printed in the warning before proceeding with the claim.
