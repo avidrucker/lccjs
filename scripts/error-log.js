@@ -2,8 +2,10 @@
 /**
  * error-log.js — insert an error row into ~/.lccjs/lccjs.db.
  *
- * Accepts a JSON object as a positional argument. Only `occurred_iso` is
- * required (it is NOT NULL in the schema); all other fields are optional.
+ * Accepts a JSON object as a positional argument. `occurred_iso` (NOT NULL in
+ * the schema) and a non-empty `message` are required; all other fields are
+ * optional. A row with no message carries only a timestamp and error_type and
+ * is analytically useless — it cannot be classified or acted on (#1022).
  *
  * Usage:
  *   node scripts/error-log.js '{"occurred_iso":"2026-06-05T10:00:00-1000","agent":"GRAPE",...}'
@@ -48,6 +50,11 @@ try {
 // --- Validate ---
 if (!input.occurred_iso || typeof input.occurred_iso !== 'string') {
   die('Missing required field: "occurred_iso"');
+}
+if (input.message == null || String(input.message).trim() === '') {
+  die('Missing required field: "message" — a row with only a timestamp and ' +
+      'error_type cannot be classified or acted on (analytically useless, #1022). ' +
+      'Provide a short description of what failed.');
 }
 if (input.error_type != null && !VALID_ERROR_TYPES.has(input.error_type)) {
   die(`unknown error_type "${input.error_type}" (valid: ${[...VALID_ERROR_TYPES].join(', ')})`);
