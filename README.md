@@ -139,6 +139,7 @@ Test organization under `tests/new/`:
 | Doc | Contents |
 |-----|---------|
 | [docs/who_lccjs_is_for.md](./docs/who_lccjs_is_for.md) | Persona-based "start here" guide — learners, teachers, and hobbyists each get a first-steps path into LCC.js |
+| [docs/common-workflows.md](./docs/common-workflows.md) | Recurring operational workflows — when/why to run `npm run build`, manual vs. CI-automated deploy, the pre-push freshness guard |
 | [docs/api.md](./docs/api.md) | Programmatic API — `assembleSource`, `executeBuffer`, return value shapes |
 | [docs/oracle-setup.md](./docs/oracle-setup.md) | Oracle binary install, `.env` config, env knobs |
 | [docs/status.md](./docs/status.md) | Current status, parity areas, known gaps |
