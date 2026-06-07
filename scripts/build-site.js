@@ -96,10 +96,10 @@ const CSS = `
   src:url("https://cdn.jsdelivr.net/gh/avidrucker/anki-card-test-1/public/UnifontMedium.woff") format("woff");
 }
 :root { --mono-font:monospace; }
-body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
-body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
-body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
-body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+html.dark,  body.dark  { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d; }
+html.light, body.light { --bg:#f6f8fa; --fg:#24292e; --muted:#57606a; --border:#d0d7de; }
+html.dark.retro,  body.dark.retro  { --bg:#233501; --fg:#d0cf9d; --muted:#446710; --border:#446710; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
+html.light.retro, body.light.retro { --bg:#d0cf9d; --fg:#233501; --muted:#8d9a4a; --border:#8d9a4a; --mono-font:"UnifontMedium",monospace; font-family:"UnifontMedium",monospace; -webkit-font-smoothing:none; }
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 body {
   background:var(--bg); color:var(--fg);
@@ -154,25 +154,79 @@ code { font-family:var(--mono-font); }
 .back-link { margin-bottom:1.5rem; font-size:.85rem; }
 .back-link a { color:#58a6ff; text-decoration:none; }
 .back-link a:hover { text-decoration:underline; }
+.theme-toggle {
+  background:none; border:1px solid var(--border); border-radius:4px;
+  color:var(--fg); font-size:1rem; cursor:pointer; padding:.2rem .5rem;
+  line-height:1; margin-left:auto;
+}
+.theme-toggle:hover { background:var(--border); }
 `;
 
+// Inline script injected into <head> to set the correct theme class before the
+// body renders, preventing a flash of the wrong theme. Runs synchronously.
+const HEAD_SCRIPT = `
+<script>
+(function(){
+  var DARK=${JSON.stringify(DARK_IDS)};
+  var LIGHT_ID='github-light';
+  var DARK_ID='github-dark';
+  function isDark(t){return DARK.indexOf(t)>=0;}
+  function pick(){
+    var s=localStorage.getItem('lcc-theme');
+    if(s)return s;
+    return window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?DARK_ID:LIGHT_ID;
+  }
+  var t=pick();
+  var cls=isDark(t)?'dark':'light';
+  if(t.indexOf('retro-console')===0)cls+=' retro';
+  document.documentElement.className=cls;
+})();
+</script>`;
+
+// Shared JS for landing + docs pages: theme dropdown + light/dark toggle + persistence.
 const JS = `
 (function () {
   var DARK = new Set(${JSON.stringify(DARK_IDS)});
+  var LIGHT_ID = 'github-light';
+  var DARK_ID = 'github-dark';
   var sel = document.getElementById('theme-select');
+  var toggle = document.getElementById('theme-toggle');
+  function isDark(t) { return DARK.has(t); }
   function apply(t) {
     document.querySelectorAll('.theme-panel').forEach(function (p) {
       p.hidden = p.dataset.theme !== t;
     });
-    document.body.className = (DARK.has(t) ? 'dark' : 'light') + (t.indexOf('retro-console') === 0 ? ' retro' : '');
+    var cls = (isDark(t) ? 'dark' : 'light') + (t.indexOf('retro-console') === 0 ? ' retro' : '');
+    document.body.className = cls;
+    document.documentElement.className = cls;
+    localStorage.setItem('lcc-theme', t);
+    if (sel) sel.value = t;
+    updateToggleIcon(t);
   }
-  sel.addEventListener('change', function () { apply(sel.value); });
-  apply(sel.value);
+  function updateToggleIcon(t) {
+    if (!toggle) return;
+    toggle.textContent = isDark(t) ? '☀' : '☾';
+    toggle.setAttribute('aria-label', isDark(t) ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+  if (sel) {
+    sel.addEventListener('change', function () { apply(sel.value); });
+  }
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      var current = sel ? sel.value : (localStorage.getItem('lcc-theme') || DARK_ID);
+      apply(isDark(current) ? LIGHT_ID : DARK_ID);
+    });
+  }
+  // Apply saved theme on load (head script set body class; this syncs the dropdown)
+  var saved = localStorage.getItem('lcc-theme');
+  if (saved && sel) { sel.value = saved; }
+  if (sel) { apply(sel.value); }
 }());
 `;
 
 // Build the <nav> bar. activeId matches a DOCS_SECTIONS id, 'home', or 'showcase'.
-function buildNav(rootPath, activeId) {
+// includeToggle adds a light/dark mode toggle button (used on all pages).
+function buildNav(rootPath, activeId, includeToggle) {
   const home  = `<a href="${rootPath}"${activeId === 'home' ? ' class="active"' : ''}>Home</a>`;
   const links = DOCS_SECTIONS.map(s => {
     const href = `${rootPath}docs/${s.id}/`;
@@ -181,7 +235,10 @@ function buildNav(rootPath, activeId) {
   });
   const playgroundCls = activeId === 'sandbox' ? ' class="active"' : '';
   const playground = `<a href="${rootPath}sandbox/"${playgroundCls}>Sandbox</a>`;
-  return `<nav>${[home, ...links, playground].join('\n  ')}\n</nav>`;
+  const toggle = includeToggle
+    ? '<button id="theme-toggle" class="theme-toggle" aria-label="Toggle light/dark mode"></button>'
+    : '';
+  return `<nav>${[home, ...links, playground, toggle].filter(Boolean).join('\n  ')}\n</nav>`;
 }
 
 // Render one code snippet as a <section> with per-theme panels.
@@ -209,14 +266,16 @@ function demoTitle(filePath) {
 }
 
 // Wrap content in a full HTML doc (dark body class for landing, light for docs).
-function makePage({ title, bodyClass = 'dark', nav, themeToolbar = '', content, footer, script = '', extraCss = '' }) {
+// includeHeadScript injects the inline theme script into <head> to prevent flash.
+function makePage({ title, bodyClass = 'dark', nav, themeToolbar = '', content, footer, script = '', extraCss = '', includeHeadScript = false }) {
+  const headScript = includeHeadScript ? HEAD_SCRIPT : '';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${title}</title>
-  <style>${CSS}${extraCss}</style>
+  <style>${CSS}${extraCss}</style>${headScript}
 </head>
 <body class="${bodyClass}">
 ${nav}
@@ -305,10 +364,11 @@ ${lccplusSections}
   const landingHtml = makePage({
     title: 'LCC Assembly — Syntax Highlighting',
     bodyClass: 'dark',
-    nav: buildNav('./', 'home'),
+    nav: buildNav('./', 'home', true),
     content: landingContent,
     footer: '',
     script: JS,
+    includeHeadScript: true,
   });
   const landingFile = path.join(OUT_DIR, 'index.html');
   fs.writeFileSync(landingFile, landingHtml);
@@ -337,11 +397,13 @@ ${lccplusSections}
       const pageHtml = makePage({
         title: `${slug} — LCC Docs`,
         bodyClass: 'light',
-        nav: buildNav('../../', section.id),
+        nav: buildNav('../../', section.id, true),
         content: `${backNav}\n  <div class="prose">\n${htmlBody}\n  </div>`,
         footer: `  <footer>
     <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
   </footer>`,
+        script: JS,
+        includeHeadScript: true,
       });
       fs.writeFileSync(outFile, pageHtml);
       fileLinks.push({ href: `./${slug}.html`, label: mdFile });
@@ -362,11 +424,13 @@ ${listItems}
     const indexHtml = makePage({
       title: `${section.label} — LCC Docs`,
       bodyClass: 'light',
-      nav: buildNav('../../', section.id),
+      nav: buildNav('../../', section.id, true),
       content: indexContent,
       footer: `  <footer>
     <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
   </footer>`,
+      script: JS,
+      includeHeadScript: true,
     });
     const indexFile = path.join(sectionOut, 'index.html');
     fs.writeFileSync(indexFile, indexHtml);
@@ -657,8 +721,10 @@ function hidePrompt() {
 }
 
 function applyBodyClass(themeId) {
-  document.body.className = (DARK.has(themeId) ? 'dark' : 'light') +
+  var cls = (DARK.has(themeId) ? 'dark' : 'light') +
     (themeId.startsWith('retro-console') ? ' retro' : '');
+  document.body.className = cls;
+  document.documentElement.className = cls;
 }
 
 let currentWorker = null;
@@ -847,9 +913,38 @@ runBtn.addEventListener('click', () => {
     }
   }
 
+  // Light/dark toggle button
+  var toggleBtn = document.getElementById('theme-toggle');
+  if (toggleBtn) {
+    function updateToggleIcon(t) {
+      toggleBtn.textContent = DARK.has(t) ? '☀' : '☾';
+      toggleBtn.setAttribute('aria-label', DARK.has(t) ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+    toggleBtn.addEventListener('click', () => {
+      var current = sel.value;
+      var next = DARK.has(current) ? 'github-light' : 'github-dark';
+      sel.value = next;
+      applyBodyClass(next);
+      applyEditorHighlight(next);
+      localStorage.setItem('lcc-theme', next);
+      updateToggleIcon(next);
+    });
+    // Initialize toggle icon to match saved/current theme
+    var savedTheme = localStorage.getItem('lcc-theme');
+    if (savedTheme) { sel.value = savedTheme; }
+    applyBodyClass(sel.value);
+    applyEditorHighlight(sel.value);
+    updateToggleIcon(sel.value);
+  }
+
   sel.addEventListener('change', () => {
     applyBodyClass(sel.value);
     applyEditorHighlight(sel.value);
+    localStorage.setItem('lcc-theme', sel.value);
+    if (toggleBtn) {
+      toggleBtn.textContent = DARK.has(sel.value) ? '☀' : '☾';
+      toggleBtn.setAttribute('aria-label', DARK.has(sel.value) ? 'Switch to light mode' : 'Switch to dark mode');
+    }
   });
 })();
 </script>`;
@@ -902,11 +997,12 @@ ${playgroundThemeOptions}
   const playgroundHtml = makePage({
     title: 'Sandbox — LCC Assembly',
     bodyClass: 'dark',
-    nav: buildNav('../', 'sandbox'),
+    nav: buildNav('../', 'sandbox', true),
     content: playgroundContent,
     footer: '',
     script: '',
     extraCss: '',
+    includeHeadScript: true,
   }).replace('</body>', playgroundScript + '\n</body>');
 
   const playgroundFile = path.join(playgroundDir, 'index.html');
