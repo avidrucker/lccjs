@@ -83,6 +83,28 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Ticket scoping & closure
+
+**Split a workstream's research, decision, and implementation into separate tickets — put `human-required` on the *decision*, not the research**
+
+- **Do:** when one effort has a "find out / inventory" phase, a "rule on it" phase, and a "build it" phase, file them as distinct tickets (research → decision → implementation), each closeable on its own. Tag `human-required`/`pair-work` on the *decision* ticket; leave the research ticket agent-closeable once its artifact (the doc, the inventory, the options) exists.
+- **Don't:** braid all three into one ticket (e.g. "review which X belong, decide, and implement") — no one can then tell what state actually closes it.
+- **Why:** a single ticket carrying research *and* a human decision can't be closed by the agent that finished the research, nor safely by the human until they reverse-engineer what "done" means. The #1123 cluster braided research + decision and spawned a redundant close-request ticket (#1154) purely to ask for the close. (#1123 / #1173)
+
+**Give every ticket an explicit Definition of Done + who-may-close in its body**
+
+- **Do:** end each ticket body with a close-criteria line — the concrete, verifiable condition that closes it (machine-checkable where possible), and whether an **agent** or a **human** may close it.
+- **Don't:** rely on the title or implied scope to signal when it's done.
+- **Why:** legible close-criteria are the only thing that lets a second agent (or the maintainer) close a ticket without re-deriving intent. Their absence is what turns "is this closeable?" into a recurring question and invites close-proxy tickets (below). (#1173)
+
+**Never file a ticket whose only job is to request closing another ticket**
+
+- **Do:** if a ticket looks done but you can't close it yourself (e.g. it's `human-required`), post the close-criteria + a readiness summary as a *comment on that ticket* and leave it for whoever may close it.
+- **Don't:** open a new "PM: close #N" ticket to track the close request.
+- **Why:** a ticket that exists only to ask for another's closure is a smell — it means the original lacked close-criteria. Fix the original (add the criteria) instead of wrapping it. #1154 was exactly this shape; it was closed as redundant the moment #1123 carried its own close-criteria. (#1154 / #1173)
+
+---
+
 ## Issue commenting
 
 **Comment only when required or explicitly permitted — never for progress or intermediate findings**
