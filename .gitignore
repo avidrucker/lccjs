@@ -38,6 +38,7 @@ docs/velocity-report.md
 refactor-plan-wave-2.md
 .claude/*
 !.claude/settings.json
+.claire/
 stats/puzzle-velocity-enriched.csv
 
 # Playwright output
