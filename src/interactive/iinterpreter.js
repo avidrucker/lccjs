@@ -15,6 +15,7 @@
 const Interpreter = require('../core/interpreter');
 const { h4, REG_ALIASES } = require('../core/debug/format');
 const { diffRegisters, diffFlags } = require('../core/debug/stateDelta');
+const { suggestClosest } = require('../utils/suggest');
 
 class IInterpreter extends Interpreter {
   constructor() {
@@ -33,6 +34,12 @@ class IInterpreter extends Interpreter {
     this.memDisplayBase = 0;      // a{hex}: base address for the memory pane
     this.memDisplayRows = 2;      // m{int}: number of rows (8 words each) in the memory pane
     this.stackAnchor = 'sp';      // s{hex|register}: anchor for the stack pane
+
+    // Label → address map from the assembler, wired in by ilcc.js when a source
+    // file was assembled this session. null when a .e was loaded directly
+    // (no assembler ran, so no symbols are available). Used by the a{label}
+    // memory command to resolve labels to addresses. (#1041)
+    this.symbolTable = null;
 
     // Pane layout — l{layout} command; up to 3 columns separated by /
     // Pane chars: r=registers, c=code snippet, m=memory, o=output
@@ -576,8 +583,13 @@ class IInterpreter extends Interpreter {
       }
 
       if (cmd.startsWith('a')) {
-        const addr = parseInt(cmd.slice(1), 16);
-        if (!isNaN(addr)) this.memDisplayBase = addr & 0xFFFF;
+        const { address, error } = this.resolveMemAddress(cmd.slice(1).trim());
+        if (error) {
+          process.stdout.write(error + '\n');
+          newlineCount++;
+          continue;
+        }
+        if (address !== null) this.memDisplayBase = address;
         render();
         continue;
       }
@@ -656,6 +668,35 @@ class IInterpreter extends Interpreter {
     }
   }
 
+  // resolveMemAddress(arg) — resolve the a{...} memory command argument to a
+  // base address. Accepts either a symbol-table label or a hex address. (#1041)
+  //   - empty arg          → { address: null, error: null }  (no-op redisplay)
+  //   - known label        → { address, error: null }        (symbol table wins)
+  //   - hex string         → { address, error: null }
+  //   - unknown non-hex    → { address: null, error: '...' }  (with "did you mean?")
+  // A defined label takes precedence over a hex reading of the same token, so a
+  // label literally named e.g. "face" resolves to its address, not 0xface.
+  resolveMemAddress(arg) {
+    if (!arg) return { address: null, error: null };
+
+    const table = this.symbolTable;
+    if (table && Object.prototype.hasOwnProperty.call(table, arg)) {
+      return { address: table[arg] & 0xFFFF, error: null };
+    }
+
+    const n = parseInt(arg, 16);
+    if (!isNaN(n)) {
+      return { address: n & 0xFFFF, error: null };
+    }
+
+    let msg = `Error: '${arg}' is not a known label or hex address.`;
+    if (table) {
+      const suggestion = suggestClosest(arg, Object.keys(table));
+      if (suggestion) msg += ` Did you mean '${suggestion}'?`;
+    }
+    return { address: null, error: msg };
+  }
+
   // displayHelp() — return the interactive mode help text.
   displayHelp() {
     return [
@@ -664,7 +705,7 @@ class IInterpreter extends Interpreter {
       '  {-N}        step backward N instructions',
       '  0           re-display without stepping',
       '  <enter>     repeat last step count',
-      '  a{hex}      set memory base address  (e.g. a0010)',
+      '  a{hex|label} set memory base address  (e.g. a0010, amyData)',
       '  m{N}        set memory row count     (e.g. m4)',
       '  c{N}        set code context rows    (e.g. c5, c0=hide)',
       '  s{anchor}   set stack anchor         (e.g. ssp, sfff2)',

@@ -359,6 +359,54 @@ describe('IInterpreter.displayMemory() — memory pane format (OB-047)', () => {
   });
 });
 
+describe('IInterpreter.resolveMemAddress() — symbolic memory address (#1041)', () => {
+  test('empty arg is a no-op (null address, no error)', () => {
+    const interp = new IInterpreter();
+    expect(interp.resolveMemAddress('')).toEqual({ address: null, error: null });
+  });
+
+  test('hex string resolves to its numeric value', () => {
+    const interp = new IInterpreter();
+    expect(interp.resolveMemAddress('0010')).toEqual({ address: 0x10, error: null });
+  });
+
+  test('known label resolves through the symbol table', () => {
+    const interp = new IInterpreter();
+    interp.symbolTable = { myData: 0x20 };
+    expect(interp.resolveMemAddress('myData')).toEqual({ address: 0x20, error: null });
+  });
+
+  test('symbol table takes precedence over a hex interpretation of the same token', () => {
+    const interp = new IInterpreter();
+    interp.symbolTable = { face: 0x05 };
+    // 'face' is valid hex (0xface) but is also a defined label → label wins
+    expect(interp.resolveMemAddress('face')).toEqual({ address: 0x05, error: null });
+  });
+
+  test('unknown non-hex token returns a clear error', () => {
+    const interp = new IInterpreter();
+    interp.symbolTable = { myData: 0x20 };
+    const { address, error } = interp.resolveMemAddress('zzzz');
+    expect(address).toBeNull();
+    expect(error).toMatch(/not a known label or hex address/i);
+  });
+
+  test('typo’d label gets a "did you mean" suggestion', () => {
+    const interp = new IInterpreter();
+    interp.symbolTable = { myData: 0x20 };
+    const { error } = interp.resolveMemAddress('myDate'); // distance 1 from myData
+    expect(error).toMatch(/did you mean 'myData'/i);
+  });
+
+  test('no symbol table: non-hex token still errors without crashing', () => {
+    const interp = new IInterpreter();
+    interp.symbolTable = null;
+    const { address, error } = interp.resolveMemAddress('myData');
+    expect(address).toBeNull();
+    expect(error).toMatch(/not a known label or hex address/i);
+  });
+});
+
 describe('IInterpreter.displayStack() — stack pane format (OB-047)', () => {
   test('output contains the word at the SP address', () => {
     const interp = new IInterpreter();
@@ -432,6 +480,26 @@ describe('IInterpreter.runInteractive() — prompt loop (OB-044)', () => {
   test('memory command a{hex} updates memDisplayBase', () => {
     const interp = runWithInput(MIN_EXE, 'a0010\nq\n');
     expect(interp.memDisplayBase).toBe(0x10);
+  });
+
+  test('memory command a{label} resolves through the symbol table (#1041)', () => {
+    const interp = loadedInterp(MIN_EXE);
+    interp.initialMem = interp.mem.slice();
+    interp.symbolTable = { myData: 0x20 };
+    interp.inputBuffer = 'amyData\nq\n';
+    interp.runInteractive(null);
+    expect(interp.memDisplayBase).toBe(0x20);
+  });
+
+  test('memory command a{unknown-label} prints an error and leaves base unchanged (#1041)', () => {
+    const interp = loadedInterp(MIN_EXE);
+    interp.initialMem = interp.mem.slice();
+    interp.symbolTable = { myData: 0x20 };
+    interp.inputBuffer = 'azzzz\nq\n';
+    interp.runInteractive(null);
+    const allOutput = stdoutSpy.mock.calls.map((c) => c[0]).join('');
+    expect(allOutput).toContain('not a known label or hex address');
+    expect(interp.memDisplayBase).toBe(0);
   });
 
   test('row command m{N} updates memDisplayRows', () => {

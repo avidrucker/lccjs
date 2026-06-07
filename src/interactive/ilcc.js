@@ -105,6 +105,10 @@ class ILCC {
     // null when the .e was loaded directly (no assembler ran in this session).
     const sourceMap = (this.assembler && this.assembler.sourceMap) ? this.assembler.sourceMap : null;
 
+    // symbolTable: label → address, from the assembler. Lets the a{label} memory
+    // command resolve labels to addresses. null when a .e was loaded directly. (#1041)
+    interpreter.symbolTable = (this.assembler && this.assembler.symbolTable) ? this.assembler.symbolTable : null;
+
     if (this.options.noInteractive) {
       // Batch mode (-n): run without the interactive prompt, then flush captured output
       interpreter.run();
