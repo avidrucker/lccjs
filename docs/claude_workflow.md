@@ -351,14 +351,16 @@ When a non-trivial error occurs during puzzle work, log it to `~/.lccjs/lccjs.db
 
 **Log when:** a tool call fails with work impact, `npm run claim` fails, a git/gh/DB operation fails, or a hook blocks a commit.
 
-**Skip when:** the error is transient and immediately resolved with no work impact, or the same error was already logged this session.
+**Always log** — every error, misfire, and mistake, *including* those retried and resolved immediately. A single resolved conflict is noise; ten in a week is a pattern. Record how it was resolved in `notes`; resolution is not a reason to skip the row.
+
+**Skip only when:** (a) the message is a purely informational warning with no work-plan impact (e.g. `[MODULE_TYPELESS_PACKAGE_JSON]`, deprecation notices — not errors), or (b) the identical error was already logged for this ticket this session.
 
 ```bash
 occurred_iso=$(date '+%Y-%m-%dT%H:%M:%S%z')
 npm run error:log -- '{"occurred_iso":"<occurred_iso>","agent":"CHERRY","model":"sonnet-4.6","ticket":<N>,"error_type":"<TYPE>","message":"<raw message>","context":"<JSON>"}'
 ```
 
-Valid `error_type` values: `TOOL_DENIED`, `HOOK_BLOCK`, `CLAIM_FAIL`, `BASH_FAIL`, `GIT_FAIL`, `GH_FAIL`, `DB_FAIL`, `FILE_FAIL`, `SKILL_FAIL`, `NETWORK_FAIL`, `VALIDATION_FAIL`, `OTHER`.
+Valid `error_type` values (15, mirroring `VALID_ERROR_TYPES` in `scripts/error-log.js`): `TOOL_DENIED`, `HOOK_BLOCK`, `CLAIM_FAIL`, `BASH_FAIL`, `GIT_FAIL`, `GIT_STATE`, `GH_FAIL`, `GH_INFO`, `DB_FAIL`, `FILE_FAIL`, `EDIT_PRECOND`, `SKILL_FAIL`, `NETWORK_FAIL`, `VALIDATION_FAIL`, `OTHER`.
 
 Error logging is a **manual, deliberate step** — not a hook. Hooks can't tell transient noise from significant failures; agents can.
 
