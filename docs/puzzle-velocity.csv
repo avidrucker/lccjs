@@ -1015,3 +1015,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 1036,1165,TIL 2026-06-07 CHERRY — kick back refuted designs; search closed; did you ask for THIS,WRITER,15,10,4,11,6,2026-06-07T11:48:48-1000,2026-06-07T11:53:15-1000,,,CHERRY,opus-4.8,lccjs
 1037,1164,TIL 2026-06-07 ELDERBERRY — internalizing the error-logging discipline,WRITER,15,10,3,12,7,2026-06-07T11:50:47-1000,2026-06-07T11:53:49-1000,,"TIL retrospective for #1117 session (Option D self-audit, wrong-checkout trap, dogfooding).",ELDERBERRY,opus-4.8,lccjs
 1038,1163,"TIL 2026-06-07 DRAGONFRUIT — db-path compliance, velocity delta sign, benign close exit-1",WRITER,15,10,5,10,5,2026-06-07T11:49:37-1000,2026-06-07T11:54:56-1000,,session retrospective for #1127/#1104,DRAGONFRUIT,opus-4.8,lccjs
+1039,1168,"TIL 2026-06-07 GRAPE — review trackers, living a guardrail, stale-base footguns",WRITER,15,10,2.2,12.8,7.8,2026-06-07T11:55:45-1000,2026-06-07T11:57:55-1000,,,GRAPE,opus-4.8,lccjs
