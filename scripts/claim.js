@@ -45,7 +45,7 @@ const path = require('path');
 // Lowest-index-first. Common, unambiguous, easy to say aloud over a call.
 const FRUITS = [
   'apple', 'banana', 'cherry', 'date', 'dragonfruit', 'elderberry', 'fig', 'grape',
-  'honeydew', 'kiwi', 'lemon', 'mango', 'nectarine', 'olive', 'peach',
+  'honeydew', 'incaberry', 'jackfruit', 'kiwi', 'lemon', 'mango', 'nectarine', 'olive', 'peach',
   'quince', 'raspberry', 'strawberry', 'tangerine', 'ugli', 'vanilla',
   'watermelon', 'ximenia', 'yuzu', 'zucchini',
 ];

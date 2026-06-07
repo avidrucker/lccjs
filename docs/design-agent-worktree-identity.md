@@ -19,7 +19,7 @@ We want a visible, collision-free, self-assigned agent name.
 
 ## Goals
 
-- A human-readable agent name (`apple`, `banana`, `cherry`, …) visible in
+### A human-readable agent name (`apple`, `banana`, `cherry`, `incaberry`, `jackfruit`, …) visible in
   `git worktree list` with zero extra tooling.
 - **Self-assigned** — no human step required; an agent picks its own name.
 - **Stable per session** — an agent keeps one fruit for every worktree it opens
