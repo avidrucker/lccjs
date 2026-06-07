@@ -26,13 +26,12 @@ const SCRIPTS_DIR = path.join(__dirname, '..', '..', 'scripts');
 // it IS the resolver (and owns the one-time velocity.db → lccjs.db migration).
 const RESOLVER = 'db-path.js';
 
-// Residual hand-rolled resolvers that #984 did not unify. They use the *new*
-// filename (lccjs.db) so the canonical location is correct, but they bypass the
-// shared resolver and therefore silently ignore the LCCJS_DB override. Tracked
-// for cleanup in #1023 — when that lands and switches them to require('./db-path'),
-// it must also delete the corresponding entry here (the exact-match assertion
-// below fails otherwise, which is the intended nudge).
-const KNOWN_BYPASSERS = ['close.js', 'velocity-seed.js'];
+// Residual hand-rolled resolvers that the unify-on-db-path refactor (#984) had
+// not yet absorbed. close.js and velocity-seed.js were the last two; #1023
+// switched them to require('./db-path'), so the allowlist is now empty: every
+// script that touches the store must route through the shared resolver. A new
+// entry here should be a deliberate, documented exception — not the default.
+const KNOWN_BYPASSERS = [];
 
 // --- helpers -------------------------------------------------------------
 

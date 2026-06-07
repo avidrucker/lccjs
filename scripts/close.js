@@ -40,7 +40,6 @@
 'use strict';
 
 const { execSync, spawn } = require('child_process');
-const os   = require('os');
 const path = require('path');
 
 const DEFAULT_MAX_RETRIES = 5;
@@ -492,7 +491,7 @@ function checkKeywordMatch(issue, closingCommitSha) {
 // (first-time setup, CI) — logs a warning instead of blocking. die()s only when
 // the DB is readable but contains no row for this ticket.
 function checkVelocityRowExists(issue) {
-  const dbPath = path.join(os.homedir(), '.lccjs', 'lccjs.db');
+  const { DB_PATH: dbPath } = require('./db-path'); // eslint-disable-line global-require
   let Database;
   try {
     Database = require('better-sqlite3'); // eslint-disable-line global-require

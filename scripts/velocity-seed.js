@@ -13,14 +13,13 @@
 'use strict';
 
 const fs   = require('fs');
-const os   = require('os');
 const path = require('path');
 const readline = require('readline');
 const Database = require('better-sqlite3');
+const { DB_PATH } = require('./db-path');
 
 const FORCE   = process.argv.includes('--force');
-const DB_DIR  = path.join(os.homedir(), '.lccjs');
-const DB_PATH = path.join(DB_DIR, 'lccjs.db');
+const DB_DIR  = path.dirname(DB_PATH);
 const CSV     = path.join(__dirname, '..', 'docs', 'puzzle-velocity.csv');
 
 const CREATE_TABLE = `
