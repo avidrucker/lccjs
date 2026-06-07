@@ -951,3 +951,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 964,1012,#1012 (title unavailable),CHORE,20,8,,,,,2026-06-07T03:40:47Z,,GH Actions label-area.yml auto-applies area:uncategorized on issue open; logic verified vs mock payloads,DRAGONFRUIT,opus-4.8,lccjs
 965,1054,TIL 2026-06-06 BANANA session 2,WRITER,15,8,3,12,5,2026-06-06T17:38:26-1000,2026-06-06T17:40:58-1000,,session-2 TIL; also backfilled missing session-1 (#993) README index row,BANANA,opus-4.8,lccjs
 966,972,feat(settings): add skill-file Edit permissions to .claude/settings.json to prevent TOOL_DENIED in auto-mode,DEV,10,5,,,,,2026-06-07T03:43:21Z,,add 4 Edit() skill-file allow entries to .claude/settings.json; JSON validated; paths verified,DRAGONFRUIT,opus-4.8,lccjs
+967,999,chore: gitignore .claire/ to prevent recurring untracked-directory noise,CHORE,5,3,,,,,2026-06-07T03:45:30Z,,add .claire/ to .gitignore; verified via git check-ignore,DRAGONFRUIT,opus-4.8,lccjs
