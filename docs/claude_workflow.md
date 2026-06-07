@@ -76,6 +76,15 @@ is to be ready when asked (#377).
 
 ## At start (picking up a puzzle)
 
+> **Investigation and research requests are tickets too.** "File a ticket to investigate X", "look
+> into Y", "audit Z" are *work*, not pre-work — they get the same claim → start-timestamp → work
+> sequence as any puzzle. **Scope or claim before producing findings;** never run `gh`/`git`
+> forensics on `main` and publish conclusions before a worktree exists. Carve-out: if the request is
+> genuinely just "file the issue" with no findings yet, filing the issue without a claim is fine —
+> the moment you start *producing findings*, that's claimable work. (#1122: an agent asked to *file*
+> an investigation ticket did the whole investigation inline on `main` first — no claim, no start
+> timestamp — and filed inaccurate findings because it never read the evidence that already existed.)
+
 **Pre-claim checklist (run all three before `npm run claim`):**
 
 ```bash
@@ -110,9 +119,10 @@ If any file your ticket will touch is untracked or modified on main, commit or s
    > **If this is a tracker ticket, verify each child's live state** — do not trust the checkboxes in the body. Run `gh issue view N --json state -q .state` for each `#N` listed. Tracker bodies are frozen snapshots; GitHub does not auto-check boxes when children close. See [`docs/do-this-not-that.md`](../docs/do-this-not-that.md) → "Don't trust unchecked boxes." (#904, #906)
 
 4. Read referenced docs / source files needed for context.
-5. **Verify the repro before writing any code.** Run the exact commands or steps from the issue's "Have" section and confirm the bug or gap is still present. If the described state is already absent — the fix landed in a sibling branch, the feature already exists, or the condition no longer triggers — **stop and investigate** before proceeding; do not assume the issue is live without checking. Only proceed to implementation once a hands-on repro confirms the "have" state. If the issue is already resolved, the closing commit is a `chore:` or `docs:` noting the discovery (the close sequence and velocity log still apply).
-6. (Optional) `TaskCreate` if the puzzle has 3+ distinct sub-steps worth tracking.
-7. Pick the smallest concrete first step and start.
+5. **Sweep existing in-repo evidence before forming conclusions.** For any subject ticket `#M` your work investigates, check `docs/logs/*M*`, `docs/research/*M*`, the subject's GitHub comments, and any artifact it produced *before* reconstructing the story from `git`/`gh` alone. A captured work log or prior findings doc is primary source; git archaeology is the fallback. (#1122: a review called a stale-HEAD timing bug a "confabulation" purely because `docs/logs/1076-honeydew-ticket-work-log.md` was never opened.)
+6. **Verify the repro before writing any code.** Run the exact commands or steps from the issue's "Have" section and confirm the bug or gap is still present. If the described state is already absent — the fix landed in a sibling branch, the feature already exists, or the condition no longer triggers — **stop and investigate** before proceeding; do not assume the issue is live without checking. Only proceed to implementation once a hands-on repro confirms the "have" state. If the issue is already resolved, the closing commit is a `chore:` or `docs:` noting the discovery (the close sequence and velocity log still apply).
+7. (Optional) `TaskCreate` if the puzzle has 3+ distinct sub-steps worth tracking.
+8. Pick the smallest concrete first step and start.
 
 **What I do *not* do at start:**
 
