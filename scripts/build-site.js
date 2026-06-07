@@ -428,7 +428,9 @@ import { EditorView, keymap } from 'https://esm.sh/@codemirror/view@6?deps=@code
 import { basicSetup } from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
 import { indentWithTab, toggleLineComment } from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
 import { autocompletion } from 'https://esm.sh/@codemirror/autocomplete@6?deps=@codemirror/state@6';
-import { syntaxHighlighting, defaultHighlightStyle } from 'https://esm.sh/@codemirror/language@6?deps=@codemirror/state@6';
+// language@6 must pin @lezer/highlight@1 in ?deps= so defaultHighlightStyle's tags
+// share identity with lang-lcc.js's styleTags — otherwise zero highlight spans. (#986)
+import { syntaxHighlighting, defaultHighlightStyle } from 'https://esm.sh/@codemirror/language@6?deps=@codemirror/state@6,@lezer/highlight@1';
 import { lcc } from '../dist/lang-lcc.js';
 
 const LCC_COMPLETIONS = [

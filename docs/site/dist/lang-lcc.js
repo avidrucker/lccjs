@@ -6,9 +6,15 @@
 // map, add entries for "@codemirror/language", "@lezer/lr", "@lezer/highlight"
 // and load this file with ?external=@codemirror/language,@lezer/lr,@lezer/highlight.
 
-import { LRLanguage, LanguageSupport } from 'https://esm.sh/@codemirror/language@6';
-import { LRParser } from 'https://esm.sh/@lezer/lr';
-import { styleTags, tags } from 'https://esm.sh/@lezer/highlight';
+// Pin @lezer/highlight@1 in @codemirror/language@6's ?deps= (and import the same
+// @lezer/highlight@1.2.3 / @lezer/lr@1 / @codemirror/language@6?deps= URLs the
+// playground's syntaxHighlighting() call uses) so esm.sh externalizes a single
+// shared @lezer/highlight module and a single @codemirror/language instance. Without
+// this, defaultHighlightStyle's tags differ by identity from the styleTags below and
+// no highlight spans are produced. (#986; mirrors docs/showcase/lcc-lang.js #882.)
+import { LRParser } from 'https://esm.sh/@lezer/lr@1';
+import { LRLanguage, LanguageSupport } from 'https://esm.sh/@codemirror/language@6?deps=@codemirror/state@6,@lezer/highlight@1';
+import { styleTags, tags } from 'https://esm.sh/@lezer/highlight@1.2.3';
 
 // ── Compiled parser tables (lezer-generator 1.8.0) ───────────────────────────
 
