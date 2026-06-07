@@ -534,14 +534,18 @@ const stdinInput = document.getElementById('stdin-input');
 
 let debounce;
 
-// ── Per-theme editor highlighting (#1124) ────────────────────────────────────
-// The CM editor now uses Shiki themes for syntax highlighting (per-theme).
+// ── Per-theme editor highlighting & background (#1124, #1142) ─────────────────
+// The CM editor uses Shiki themes for syntax highlighting (per-theme).
 // Shiki loads every theme; we read each theme's TextMate token colors back out
 // (getTheme) and map them onto the Lezer tags the lcc() parser emits, then swap
 // the HighlightStyle via a Compartment on theme change. Without this the editor
 // is frozen at @codemirror/language's static defaultHighlightStyle regardless of
 // theme.
+// Additionally (#1142): extract the theme's background color and update the
+// editor's background via a separate compartment so it changes per-theme, not
+// just dark/light.
 const highlightCompartment = new Compartment();
+const backgroundCompartment = new Compartment();
 
 // Longest-prefix TextMate scope match (mirrors how Shiki resolves a token color):
 // a theme rule scoped 'keyword' applies to 'keyword.control.branch.lcc'; a more
@@ -595,6 +599,21 @@ function lccHighlightStyle(themeObj) {
     Object.assign({ tag: tags.number },                     S(['constant.numeric.lcc', 'constant.numeric', 'constant'])),
     Object.assign({ tag: tags.name },                       S(['entity.name.label.lcc', 'entity.name', 'variable'])),
   ]);
+}
+
+// Extract background color from a Shiki theme object.
+// Returns CSS color string or null if not found.
+function lccThemeBackground(themeObj) {
+  if (!themeObj) return null;
+  // Check root-level bg property (common in Shiki themes)
+  if (themeObj.bg) return themeObj.bg;
+  // Check first rule's background setting (used by custom retro themes)
+  const rules = themeObj.settings || themeObj.tokenColors || [];
+  for (const rule of rules) {
+    const s = rule && rule.settings;
+    if (s && s.background) return s.background;
+  }
+  return null;
 }
 
 // Editor will be initialized inside the async IIFE after Shiki loads,
@@ -789,6 +808,10 @@ runBtn.addEventListener('click', () => {
       lcc(),
       // Use themed highlighting from the start — avoids flicker.
       highlightCompartment.of(syntaxHighlighting(initialHighlightStyle)),
+      // Per-theme editor background (#1142)
+      backgroundCompartment.of(
+        EditorView.theme({ '.cm-content': { background: 'var(--border)' }, '.cm-gutters': { background: 'var(--border)' } })
+      ),
       keymap.of([indentWithTab, { key: 'Mod-/', run: toggleLineComment }]),
       autocompletion({ override: [lccCompletionSource] }),
       EditorView.theme({
@@ -803,16 +826,31 @@ runBtn.addEventListener('click', () => {
     parent: document.getElementById('editor'),
   });
 
-  // Reconfigure the CM editor's HighlightStyle on theme change.
+  // Apply initial per-theme background (#1142)
+  applyEditorHighlight(sel.value);
+
+  // Reconfigure the CM editor's HighlightStyle AND background on theme change.
   function applyEditorHighlight(theme) {
     let themeObj = null;
     try { themeObj = hl.getTheme(theme); } catch (err) { themeObj = null; }
     editor.dispatch({
       effects: highlightCompartment.reconfigure(syntaxHighlighting(lccHighlightStyle(themeObj))),
     });
+    // Update editor background per-theme (#1142)
+    const bg = lccThemeBackground(themeObj);
+    if (bg) {
+      editor.dispatch({
+        effects: backgroundCompartment.reconfigure(
+          EditorView.theme({ '.cm-content': { background: bg }, '.cm-gutters': { background: bg } })
+        ),
+      });
+    }
   }
 
-  sel.addEventListener('change', () => { applyEditorHighlight(sel.value); });
+  sel.addEventListener('change', () => {
+    applyBodyClass(sel.value);
+    applyEditorHighlight(sel.value);
+  });
 })();
 </script>`;
 
