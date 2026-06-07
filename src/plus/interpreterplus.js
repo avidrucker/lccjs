@@ -180,25 +180,48 @@ class InterpreterPlus extends Interpreter {
     try {
       this.startNonBlockingLoop();
     } catch (error) {
-      console.error(`Runtime Error: ${error.message}`);
-      fatalExit(`Runtime Error: ${error.message}`, 1);
+      // Belt-and-suspenders: runBatch catches its own throws (below), so this
+      // only fires if startNonBlockingLoop throws *before* entering runBatch's
+      // try. Route it through the same funnel for one consistent error contract.
+      this.handleRuntimeError(error);
     }
   }
 
   startNonBlockingLoop() {
     this.running = true;
-  
+
     const runBatch = () => {
       if (!this.running) return;
-      for (let i = 0; i < ASYNC_BATCH_SIZE; i++) {
-        if (!this.running) break;
-        this.step();
+      // The loop runs across many setImmediate ticks; a throw in any tick but
+      // the first would escape main()'s try/catch and become an uncaught
+      // exception (Node dumps a raw stack trace). Wrapping the per-tick stepping
+      // funnels every batch's errors into one handler. (#1031)
+      try {
+        for (let i = 0; i < ASYNC_BATCH_SIZE; i++) {
+          if (!this.running) break;
+          this.step();
+        }
+      } catch (error) {
+        this.handleRuntimeError(error);
+        return; // do not schedule another tick after a fatal runtime error
       }
       setImmediate(runBatch);
     };
-  
+
     runBatch();
-  }  
+  }
+
+  // Single funnel for runtime errors thrown anywhere in the async run loop,
+  // regardless of which setImmediate batch raised them. Mirrors the core
+  // toolchain contract (lcc.js): print "Runtime Error: <msg>" and exit 1, so a
+  // runtime fault in an .ap is surfaced as reliably as in a plain .a/.e run.
+  // (#1031 — capture; #1011 child B adds terminal restoration before printing.)
+  handleRuntimeError(error) {
+    this.running = false;
+    const message = `Runtime Error: ${error && error.message ? error.message : error}`;
+    console.error(message);
+    fatalExit(message, 1);
+  }
 
   // extracts header entries and loads machine code into memory
   loadExecutableBuffer(buffer, secondIntroHeader = '') {
