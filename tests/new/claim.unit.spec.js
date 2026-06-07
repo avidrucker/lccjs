@@ -10,6 +10,7 @@ const {
   applyMarkerFlip,
   buildBannerLines,
   worktreesWithIssue,
+  findSameIssueCollision,
 } = require('../../scripts/claim');
 
 // Pure identity-resolution seam from scripts/claim.js. These tests exercise the
@@ -360,5 +361,67 @@ describe('worktreesWithIssue() — orphan detection seam (#665)', () => {
   test('returns empty array for null/undefined input', () => {
     expect(worktreesWithIssue(null)).toEqual([]);
     expect(worktreesWithIssue(undefined)).toEqual([]);
+  });
+});
+
+// Pure decision seam for the same-issue rollback that closes the single-clone
+// TOCTOU the :453 guard / `worktree add` gap leaves open (#1017, extends #629).
+// The call site sits OUTSIDE the `!identity.name` gate, so the rollback applies to
+// forced `--as` too; these tests pin the predicate that backs that decision. The
+// predicate takes no identity argument — it is identity-agnostic by construction —
+// so "fires regardless of identity.name" is proven by it firing on the worktree
+// list alone, independent of which agent created ownBranch.
+describe('findSameIssueCollision() — same-issue rollback seam (#1017)', () => {
+  // The forced `--as` regression #629 left open: two APPLE agents racing #997 in one
+  // clone. Both pass :453, both `worktree add`. After our add the list carries a
+  // SECOND branch for the same issue under a different agent — the collision must fire.
+  test('fires when a DIFFERENT branch carries the same issue (forced --as race)', () => {
+    const postAdd = worktreesWithIssue([
+      { branch: 'apple/issue-997-fix-a', fruit: 'apple' }, // the racer who won
+      { branch: 'apple-2/issue-997-fix-a', fruit: 'apple-2' }, // ownBranch (just added)
+    ]);
+    expect(findSameIssueCollision(postAdd, 997, 'apple-2/issue-997-fix-a')).toEqual(
+      { branch: 'apple/issue-997-fix-a', fruit: 'apple', issue: 997 },
+    );
+  });
+
+  // Robustness vs. the issue's suggested findLiveWorktreeForIssue approach: that
+  // returns the FIRST match, which could be ownBranch when ours sorts first — missing
+  // the collision. findSameIssueCollision excludes ownBranch, so it fires either way.
+  test('fires regardless of whether ownBranch sorts before or after the racer', () => {
+    const racerFirst = worktreesWithIssue([
+      { branch: 'banana/issue-997-x', fruit: 'banana' },
+      { branch: 'cherry/issue-997-x', fruit: 'cherry' }, // ownBranch, sorts last
+    ]);
+    const racerLast = worktreesWithIssue([
+      { branch: 'cherry/issue-997-x', fruit: 'cherry' }, // ownBranch, sorts first
+      { branch: 'banana/issue-997-x', fruit: 'banana' },
+    ]);
+    const own = 'cherry/issue-997-x';
+    expect(findSameIssueCollision(racerFirst, 997, own).branch).toBe('banana/issue-997-x');
+    expect(findSameIssueCollision(racerLast, 997, own).branch).toBe('banana/issue-997-x');
+  });
+
+  // No false positive: the only branch for this issue is our own — no collision.
+  test('returns null when ownBranch is the sole worktree for the issue', () => {
+    const postAdd = worktreesWithIssue([
+      { branch: 'main', fruit: null },
+      { branch: 'cherry/issue-997-x', fruit: 'cherry' },
+    ]);
+    expect(findSameIssueCollision(postAdd, 997, 'cherry/issue-997-x')).toBeNull();
+  });
+
+  // No cross-issue bleed: a different issue's worktree must not be read as a collision.
+  test('ignores worktrees for a different issue', () => {
+    const postAdd = worktreesWithIssue([
+      { branch: 'apple/issue-100-other', fruit: 'apple' },
+      { branch: 'cherry/issue-997-x', fruit: 'cherry' },
+    ]);
+    expect(findSameIssueCollision(postAdd, 997, 'cherry/issue-997-x')).toBeNull();
+  });
+
+  test('returns null for empty / null entries', () => {
+    expect(findSameIssueCollision([], 997, 'cherry/issue-997-x')).toBeNull();
+    expect(findSameIssueCollision(null, 997, 'cherry/issue-997-x')).toBeNull();
   });
 });

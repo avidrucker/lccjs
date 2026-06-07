@@ -352,6 +352,18 @@ function findLiveWorktreeForIssue(entries, issueNum) {
   return entries.find((w) => w.issue === issueNum) || null;
 }
 
+// Pure: given a post-`worktree add` list (worktreesWithIssue() result), the target
+// issue number, and the branch THIS process just created, return the FIRST entry
+// that carries the same issue under a DIFFERENT branch — i.e. a same-issue
+// collision — or null. Unlike findLiveWorktreeForIssue (which returns the first
+// match and could hand back our own just-created branch), this excludes ownBranch,
+// so it fires whether our branch sorts before or after the racing one. Backs the
+// identity-agnostic same-issue rollback that closes the single-clone TOCTOU the
+// :453 guard / `worktree add` gap leaves open for forced --as (#1017, #1010, #629).
+function findSameIssueCollision(entries, issueNum, ownBranch) {
+  return (entries || []).find((w) => w.issue === issueNum && w.branch !== ownBranch) || null;
+}
+
 // Pure decision seam for the live-worktree guard (#629, #796). Returns true when
 // the guard should block (die), false when it should warn-and-continue or skip.
 // --force or --dry-run both bypass the hard block, mirroring shouldBlockClaim().
@@ -518,6 +530,32 @@ function main() {
       }
     }
 
+    // Same-issue rollback (#1017, extends #629): the live-worktree guard at :453 and
+    // this `git worktree add` are NOT atomic (TOCTOU, #1010). Two agents racing the
+    // SAME issue in one clone both pass :453 (neither worktree existed at check time),
+    // then both `worktree add` succeed. The same-fruit block above only catches a
+    // shared FRUIT and only in auto mode, so two forced `--as` agents on one issue
+    // slip through — the single-clone half of the #997 double-work incident.
+    //
+    // Re-scan the post-add worktree list for a DIFFERENT branch carrying this issue;
+    // if found, the other agent won the race — roll back our worktree+branch and die.
+    // This sits OUTSIDE the `!identity.name` gate above, so it applies to forced
+    // `--as` too (the regression #629 left open). --force keeps its documented escape
+    // hatch (mirrors shouldBlockWorktreeGuard): a deliberate override skips the check.
+    // Cross-clone races (separate checkouts sharing only the remote) are out of scope
+    // here — tracked by the Layer-2 atomic-signal spike (#1018).
+    if (!opts.force) {
+      const collision = findSameIssueCollision(
+        worktreesWithIssue(listWorktreeBranches()), Number(issue), branch);
+      if (collision) {
+        sh(`git worktree remove ${wtPath} --force`, true);
+        sh(`git branch -D ${branch}`, true);
+        die(`issue #${issue} was claimed concurrently in worktree "${collision.branch}" ` +
+            `(agent: ${collision.fruit || 'unknown'}) — rolled back "${branch}". ` +
+            `cd into the existing worktree, or claim a different issue (pass --force to override).`);
+      }
+    }
+
     // Copy .env from repo root into the new worktree so oracle tests run without
     // a manual cp step. Silent no-op if .env doesn't exist (CI / fresh clone).
     const rootEnv = path.join(root, '.env');
@@ -579,5 +617,6 @@ module.exports = {
   parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
   checkIdentityName, readIssue, shouldBlockClaim,
   sentinelBranch, isSentinelStaleByAge,
-  applyMarkerFlip, buildBannerLines, findLiveWorktreeForIssue, shouldBlockWorktreeGuard,
+  applyMarkerFlip, buildBannerLines, findLiveWorktreeForIssue, findSameIssueCollision,
+  shouldBlockWorktreeGuard,
 };
