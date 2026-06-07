@@ -12,6 +12,7 @@ const {
   velocityRowExists, markerStillPresent,
   bodyClosesIssue,
   findParentTrackers,
+  scopeAuditDiffCommand,
 } = require('../../scripts/close');
 
 describe('close.js classifyPushError()', () => {
@@ -1133,5 +1134,26 @@ describe('close.js classifyClaimRefDelete() — idempotent, never aborts', () =>
   test('offline/unknown → WARN', () => {
     expect(classifyClaimRefDelete('fatal: Could not resolve host: github.com')).toBe('WARN');
     expect(classifyClaimRefDelete('some unrecognised git output')).toBe('WARN');
+  });
+});
+
+// #1145 — the scope audit must diff merge-base..HEAD (the branch's own delta),
+// not the bare origin/main tip, so sibling commits that landed on main after
+// this branch's base do not show as phantom deletions.
+describe('close.js scopeAuditDiffCommand() — merge-base over tip (#1145)', () => {
+  test('a merge-base is available → diff merge-base..HEAD', () => {
+    expect(scopeAuditDiffCommand('abc1234')).toBe('git diff --stat abc1234 HEAD');
+  });
+  test('trims surrounding whitespace/newline from the merge-base SHA', () => {
+    expect(scopeAuditDiffCommand('  abc1234\n')).toBe('git diff --stat abc1234 HEAD');
+  });
+  // Offline / detached / unrelated histories: merge-base can't be computed.
+  test('empty merge-base → fall back to the old origin/main comparison', () => {
+    expect(scopeAuditDiffCommand('')).toBe('git diff --stat origin/main');
+    expect(scopeAuditDiffCommand('   ')).toBe('git diff --stat origin/main');
+  });
+  test('null/undefined merge-base → fall back (never throws)', () => {
+    expect(scopeAuditDiffCommand(null)).toBe('git diff --stat origin/main');
+    expect(scopeAuditDiffCommand(undefined)).toBe('git diff --stat origin/main');
   });
 });

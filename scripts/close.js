@@ -129,6 +129,17 @@ function shCapture(cmd) {
   }
 }
 
+// Pure: pick the diff the scope audit shows. Given the computed merge-base of
+// HEAD and origin/main, prefer `merge-base..HEAD` — the branch's OWN delta, so
+// a file another agent added to main after this branch's base does not show as
+// a phantom deletion. Fall back to the old `origin/main` comparison when no
+// merge-base is available (offline / detached / unrelated histories), so the
+// audit degrades gracefully instead of hard-failing. (#1145)
+function scopeAuditDiffCommand(base) {
+  const b = (base || '').trim();
+  return b ? `git diff --stat ${b} HEAD` : 'git diff --stat origin/main';
+}
+
 function die(msg) {
   console.error(`[close] ✗ ${msg}`);
   process.exit(1);
@@ -874,12 +885,19 @@ function main() {
         '(marker deletion + `Closes #N`) FIRST, then run close. ' +
         'This tool lands an existing close commit; it does not author one.');
   }
-  // Scope audit (#671): print git diff --stat origin/main so agents see the full
-  // delta in context before the Guards run. Non-blocking — informational only.
+  // Scope audit (#671): show the closing branch's delta so agents see the full
+  // scope in context before the Guards run. Non-blocking — informational only.
+  // Fetch first so the comparison is against the real origin/main tip, then diff
+  // merge-base..HEAD: only what THIS branch introduces, regardless of how far
+  // main has moved. Diffing the bare tip conflated sibling commits as phantom
+  // deletions on a slightly-stale base (the parallel-agent default). (#1145)
   if (!opts.skipScopeAudit) {
-    const stat = sh('git diff --stat origin/main', true);
+    sh('git fetch origin main', true);
+    const base = (sh('git merge-base HEAD origin/main', true) || '').trim();
+    const stat = sh(scopeAuditDiffCommand(base), true);
     if (stat && stat.trim()) {
-      console.log('[close] scope audit (git diff --stat origin/main):');
+      const label = base ? 'merge-base..HEAD' : 'origin/main (fallback)';
+      console.log(`[close] scope audit (git diff --stat ${label}):`);
       console.log(stat.trimEnd());
     }
   }
@@ -1010,4 +1028,5 @@ module.exports = {
   bodyClosesIssue, findClosingCommitOnMain,
   logCommentPrompt,
   findParentTrackers,
+  scopeAuditDiffCommand,
 };
