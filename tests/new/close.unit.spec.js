@@ -3,6 +3,7 @@
 const {
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
   isVelocityCsvOnlyConflict,
+  README_LEARNINGS, isReadmeLearningsConflict, resolveReadmeConflict,
   DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET,
   extractTicketFromCsvDiff, extractRowsFromCsvDiff, velocityTicketMismatch,
   computeVelocityMismatch,
@@ -341,6 +342,168 @@ describe('close.js isVelocityCsvOnlyConflict()', () => {
 
   test('VELOCITY_CSV constant matches the actual export path', () => {
     expect(VELOCITY_CSV).toBe('docs/puzzle-velocity.csv');
+  });
+});
+
+describe('close.js isReadmeLearningsConflict()', () => {
+  test('learnings README alone → true (append-only, auto-resolvable)', () => {
+    expect(isReadmeLearningsConflict([README_LEARNINGS])).toBe(true);
+  });
+
+  test('learnings README + velocity CSV → true (both auto-resolvable)', () => {
+    expect(isReadmeLearningsConflict([README_LEARNINGS, VELOCITY_CSV])).toBe(true);
+  });
+
+  test('learnings README + a source file → false (human-resolvable)', () => {
+    expect(isReadmeLearningsConflict([README_LEARNINGS, 'src/core/assembler.js'])).toBe(false);
+  });
+
+  test('velocity CSV alone → true (subset of the auto-resolvable set)', () => {
+    // CSV-only is caught earlier by isVelocityCsvOnlyConflict(); this predicate
+    // still classifies it as auto-resolvable so the ordering in tryLand() is the
+    // only thing that routes it to the re-export path.
+    expect(isReadmeLearningsConflict([VELOCITY_CSV])).toBe(true);
+  });
+
+  test('the top-level repo README is NOT the learnings README → false', () => {
+    expect(isReadmeLearningsConflict(['README.md'])).toBe(false);
+  });
+
+  test('empty array → false', () => {
+    expect(isReadmeLearningsConflict([])).toBe(false);
+  });
+
+  test('null / undefined → false', () => {
+    expect(isReadmeLearningsConflict(null)).toBe(false);
+    expect(isReadmeLearningsConflict(undefined)).toBe(false);
+  });
+
+  test('path strings are trimmed before comparison', () => {
+    expect(isReadmeLearningsConflict([`  ${README_LEARNINGS}  `])).toBe(true);
+  });
+
+  test('README_LEARNINGS constant matches the actual index path', () => {
+    expect(README_LEARNINGS).toBe('docs/learnings/README.md');
+  });
+});
+
+describe('close.js resolveReadmeConflict()', () => {
+  const fs   = require('fs');
+  const os   = require('os');
+  const path = require('path');
+
+  let tmpDir;
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-readme-conflict-'));
+  });
+  afterEach(() => {
+    if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  const write = (text) => {
+    const f = path.join(tmpDir, 'README.md');
+    fs.writeFileSync(f, text, 'utf8');
+    return f;
+  };
+  const read = (f) => fs.readFileSync(f, 'utf8');
+
+  test('strips conflict markers and keeps BOTH appended rows (the real case)', () => {
+    const f = write([
+      '| Doc | Date | Agent | Themes |',
+      '| --- | --- | --- | --- |',
+      '| [older](./a.md) | 2026-06-05 | APPLE | x |',
+      '<<<<<<< HEAD',
+      '| [mine](./b.md) | 2026-06-06 | DRAGONFRUIT | y |',
+      '=======',
+      '| [theirs](./c.md) | 2026-06-06 | CHERRY | z |',
+      '>>>>>>> 1a2b3c4',
+      '',
+    ].join('\n'));
+    resolveReadmeConflict(f);
+    expect(read(f)).toBe([
+      '| Doc | Date | Agent | Themes |',
+      '| --- | --- | --- | --- |',
+      '| [older](./a.md) | 2026-06-05 | APPLE | x |',
+      '| [mine](./b.md) | 2026-06-06 | DRAGONFRUIT | y |',
+      '| [theirs](./c.md) | 2026-06-06 | CHERRY | z |',
+      '',
+    ].join('\n'));
+  });
+
+  test('collapses two identical appended rows to one (dedup safety net)', () => {
+    const f = write([
+      '| [older](./a.md) | 2026-06-05 | APPLE | x |',
+      '<<<<<<< HEAD',
+      '| [same](./b.md) | 2026-06-06 | FIG | y |',
+      '=======',
+      '| [same](./b.md) | 2026-06-06 | FIG | y |',
+      '>>>>>>> 1a2b3c4',
+    ].join('\n'));
+    resolveReadmeConflict(f);
+    expect(read(f)).toBe([
+      '| [older](./a.md) | 2026-06-05 | APPLE | x |',
+      '| [same](./b.md) | 2026-06-06 | FIG | y |',
+    ].join('\n'));
+  });
+
+  test('preserves blank lines elsewhere in the file (no whole-file dedup)', () => {
+    const f = write([
+      '# Learnings',
+      '',
+      'Intro paragraph.',
+      '',
+      '## Index',
+      '',
+      '| [older](./a.md) | 2026-06-05 | APPLE | x |',
+      '<<<<<<< HEAD',
+      '| [mine](./b.md) | 2026-06-06 | GRAPE | y |',
+      '=======',
+      '| [theirs](./c.md) | 2026-06-06 | BANANA | z |',
+      '>>>>>>> 1a2b3c4',
+      '',
+    ].join('\n'));
+    resolveReadmeConflict(f);
+    expect(read(f)).toBe([
+      '# Learnings',
+      '',
+      'Intro paragraph.',
+      '',
+      '## Index',
+      '',
+      '| [older](./a.md) | 2026-06-05 | APPLE | x |',
+      '| [mine](./b.md) | 2026-06-06 | GRAPE | y |',
+      '| [theirs](./c.md) | 2026-06-06 | BANANA | z |',
+      '',
+    ].join('\n'));
+  });
+
+  test('handles the diff3 base marker (|||||||) — empty base for an append', () => {
+    const f = write([
+      '| [older](./a.md) | 2026-06-05 | APPLE | x |',
+      '<<<<<<< HEAD',
+      '| [mine](./b.md) | 2026-06-06 | DRAGONFRUIT | y |',
+      '||||||| merged common ancestor',
+      '=======',
+      '| [theirs](./c.md) | 2026-06-06 | ELDERBERRY | z |',
+      '>>>>>>> 1a2b3c4',
+    ].join('\n'));
+    resolveReadmeConflict(f);
+    expect(read(f)).toBe([
+      '| [older](./a.md) | 2026-06-05 | APPLE | x |',
+      '| [mine](./b.md) | 2026-06-06 | DRAGONFRUIT | y |',
+      '| [theirs](./c.md) | 2026-06-06 | ELDERBERRY | z |',
+    ].join('\n'));
+  });
+
+  test('a clean file with no markers is left unchanged', () => {
+    const original = [
+      '| [a](./a.md) | 2026-06-05 | APPLE | x |',
+      '| [b](./b.md) | 2026-06-06 | CHERRY | y |',
+      '',
+    ].join('\n');
+    const f = write(original);
+    resolveReadmeConflict(f);
+    expect(read(f)).toBe(original);
   });
 });
 

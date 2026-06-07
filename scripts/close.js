@@ -40,6 +40,7 @@
 'use strict';
 
 const { execSync, spawn } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 const DEFAULT_MAX_RETRIES = 5;
@@ -65,6 +66,45 @@ const VELOCITY_CSV = 'docs/puzzle-velocity.csv';
 function isVelocityCsvOnlyConflict(paths) {
   const list = (paths || []).map((p) => String(p).trim()).filter(Boolean);
   return list.length > 0 && list.every((p) => p === VELOCITY_CSV);
+}
+
+// The append-only learnings index. Two agents closing TIL tickets concurrently
+// each append a row at the bottom, producing a trivially resolvable rebase
+// conflict that close.js used to abort on (#928). tryLand() auto-resolves it the
+// same way it does the velocity CSV. (#971)
+const README_LEARNINGS = 'docs/learnings/README.md';
+
+// Returns true when every conflicted path is auto-resolvable without human
+// help: the velocity CSV (re-exported from SQLite) and/or the append-only
+// learnings README (markers stripped, both rows kept). The CSV-only case is
+// caught earlier by isVelocityCsvOnlyConflict(), so a branch gated on this
+// predicate implies at least one README conflict. Pure. (#971)
+function isReadmeLearningsConflict(paths) {
+  const list = (paths || []).map((p) => String(p).trim()).filter(Boolean);
+  return list.length > 0 && list.every(
+    (p) => p === README_LEARNINGS || p === VELOCITY_CSV,
+  );
+}
+
+// Resolve an append-only markdown conflict in place: drop git conflict-marker
+// lines (keeping both sides' appended rows), then collapse any adjacent
+// exact-duplicate non-blank line — the case where two agents appended an
+// identical row, which always lands adjacent once the `=======` separator is
+// removed. Blank lines are never deduped, so document spacing is preserved
+// (a naive whole-file dedup would collapse every blank line in the file). The
+// diff3 base marker (|||||||) is stripped too; for an append-only file the base
+// section is empty, so the result is correct regardless of the local
+// merge.conflictstyle. Pure w.r.t. inputs; writes only the given file. (#971)
+function resolveReadmeConflict(filePath) {
+  const MARKERS = ['<<<<<<<', '|||||||', '=======', '>>>>>>>'];
+  const lines = fs.readFileSync(filePath, 'utf8').split('\n');
+  const out = [];
+  for (const line of lines) {
+    if (MARKERS.some((m) => line.startsWith(m))) continue;
+    if (line !== '' && out.length > 0 && out[out.length - 1] === line) continue;
+    out.push(line);
+  }
+  fs.writeFileSync(filePath, out.join('\n'), 'utf8');
 }
 
 function sh(cmd, allowFail = false) {
@@ -620,6 +660,30 @@ function onOriginMain(sha) {
   return out.split('\n').some((l) => l.trim() === 'origin/main');
 }
 
+// Re-export the velocity CSV from SQLite (the source of truth, already holding
+// both agents' rows) and stage it, to auto-resolve a velocity CSV rebase
+// conflict. On failure, aborts the rebase and die()s — the caller's commit is
+// safe and local. (#313)
+function reexportAndStageVelocityCsv() {
+  const exportScript = path.join(__dirname, 'velocity-export.js');
+  // Pass --force so the isMainCheckout() guard in velocity-export.js is
+  // bypassed: when close.js is invoked via --branch from the main checkout,
+  // __dirname resolves to the main scripts/ dir, making isMainCheckout()
+  // return true and silently skip the export (exit 0). --force ensures the
+  // re-export always runs during conflict resolution regardless of invoke path.
+  const exported = shCapture(`node "${exportScript}" --force`);
+  if (!exported.ok) {
+    sh('git rebase --abort', true);
+    die('velocity CSV conflict: auto-resolve via velocity-export.js failed. ' +
+        'Aborted the rebase; your commit is safe and local.');
+  }
+  const staged = shCapture(`git add "${VELOCITY_CSV}"`);
+  if (!staged.ok) {
+    sh('git rebase --abort', true);
+    die('velocity CSV conflict: re-export succeeded but git add failed. Aborted.');
+  }
+}
+
 // One fetch/rebase/push round. Returns 'ok' | 'race' | 'rejected-other', or
 // throws via die() on a blocking rebase conflict (which is not retryable).
 function tryLand() {
@@ -630,23 +694,7 @@ function tryLand() {
     if (isVelocityCsvOnlyConflict(conflicted)) {
       // Auto-resolve: two agents committed divergent CSV snapshots. Re-export
       // from SQLite (the source of truth, already has both rows) then continue.
-      const exportScript = path.join(__dirname, 'velocity-export.js');
-      // Pass --force so the isMainCheckout() guard in velocity-export.js is
-      // bypassed: when close.js is invoked via --branch from the main checkout,
-      // __dirname resolves to the main scripts/ dir, making isMainCheckout()
-      // return true and silently skip the export (exit 0). --force ensures the
-      // re-export always runs during conflict resolution regardless of invoke path.
-      const exported = shCapture(`node "${exportScript}" --force`);
-      if (!exported.ok) {
-        sh('git rebase --abort', true);
-        die('velocity CSV conflict: auto-resolve via velocity-export.js failed. ' +
-            'Aborted the rebase; your commit is safe and local.');
-      }
-      const staged = shCapture(`git add "${VELOCITY_CSV}"`);
-      if (!staged.ok) {
-        sh('git rebase --abort', true);
-        die('velocity CSV conflict: re-export succeeded but git add failed. Aborted.');
-      }
+      reexportAndStageVelocityCsv();
       const cont = shCapture('GIT_EDITOR=true git rebase --continue');
       if (!cont.ok) {
         sh('git rebase --abort', true);
@@ -654,6 +702,30 @@ function tryLand() {
             `--continue failed: ${cont.out.trim()}. Your commit is safe and local.`);
       }
       log('velocity CSV conflict auto-resolved (re-exported from SQLite).');
+    } else if (isReadmeLearningsConflict(conflicted)) {
+      // Every conflicted path is the append-only learnings README and/or the
+      // velocity CSV (CSV-only was handled above, so there is >=1 README here).
+      // Resolve each in place, stage, and continue — same 3-step pattern. (#971)
+      const trimmed = conflicted.map((p) => String(p).trim());
+      if (trimmed.includes(README_LEARNINGS)) {
+        resolveReadmeConflict(path.join(process.cwd(), README_LEARNINGS));
+        const stagedReadme = shCapture(`git add "${README_LEARNINGS}"`);
+        if (!stagedReadme.ok) {
+          sh('git rebase --abort', true);
+          die('learnings README conflict: marker-strip succeeded but git add ' +
+              'failed. Aborted the rebase; your commit is safe and local.');
+        }
+      }
+      const alsoCsv = trimmed.includes(VELOCITY_CSV);
+      if (alsoCsv) reexportAndStageVelocityCsv();
+      const cont = shCapture('GIT_EDITOR=true git rebase --continue');
+      if (!cont.ok) {
+        sh('git rebase --abort', true);
+        die('learnings README conflict: resolve + stage succeeded but rebase ' +
+            `--continue failed: ${cont.out.trim()}. Your commit is safe and local.`);
+      }
+      log('learnings README conflict auto-resolved (kept both rows)' +
+          (alsoCsv ? '; velocity CSV re-exported from SQLite.' : '.'));
     } else {
       const kind = classifyRebaseConflict(conflicted);
       sh('git rebase --abort', true);
@@ -889,6 +961,7 @@ module.exports = {
   DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET, SHORT_TECH_WORDS,
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
   isVelocityCsvOnlyConflict,
+  README_LEARNINGS, isReadmeLearningsConflict, resolveReadmeConflict,
   extractTicketFromCsvDiff, extractRowsFromCsvDiff, velocityTicketMismatch,
   computeVelocityMismatch,
   extractKeywords, keywordsOverlap,
