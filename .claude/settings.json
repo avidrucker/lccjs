@@ -1,6 +1,13 @@
 {
   "permissions": {
-    "allow": ["Bash(gh issue comment *)", "Bash(npm run puzzle:status)"]
+    "allow": [
+      "Bash(gh issue comment *)",
+      "Bash(npm run puzzle:status)",
+      "Edit(~/.claude/skills/log-error/SKILL.md)",
+      "Edit(~/.claude/skills/puzzle-velocity/SKILL.md)",
+      "Edit(~/.claude/skills/lccjs-assembly/SKILL.md)",
+      "Edit(~/.claude/skills/write-til-doc/SKILL.md)"
+    ]
   },
   "hooks": {
     "PostToolBatch": [
