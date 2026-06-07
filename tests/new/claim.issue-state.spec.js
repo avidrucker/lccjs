@@ -1,6 +1,6 @@
 'use strict';
 
-const { shouldBlockClaim, parseArgs, findLiveWorktreeForIssue, shouldBlockWorktreeGuard, needsAreaLabel } = require('../../scripts/claim');
+const { shouldBlockClaim, parseArgs, findLiveWorktreeForIssue, shouldBlockWorktreeGuard, needsAreaLabel, shouldBlockUncategorized } = require('../../scripts/claim');
 
 // #227: claim.js must refuse to stake a worktree for an already-CLOSED issue, but
 // ONLY on a *definitive* CLOSED state. A missing/unknown issue or an unavailable
@@ -57,6 +57,50 @@ describe('claim.js needsAreaLabel() -- #1013 area-label nudge', () => {
   test('non-array (gh offline / unknown labels) is best-effort: no warning', () => {
     expect(needsAreaLabel(null)).toBe(false);
     expect(needsAreaLabel(undefined)).toBe(false);
+  });
+});
+
+// #1151: hardens the #1013 warn into a HARD BLOCK at the claim choke point —
+// categorization is mandatory before work begins. Mirrors shouldBlockClaim's
+// (info, bypass) shape: offline (null info) never blocks, and an explicit human
+// bypass short-circuits. Pure decision seam (no gh round-trip).
+describe('claim.js shouldBlockUncategorized() -- #1151 lane gate', () => {
+  test('an uncategorized-placeholder issue is blocked', () => {
+    expect(shouldBlockUncategorized({ labels: ['bug', 'area:uncategorized'] }, false)).toBe(true);
+  });
+
+  test('an issue with no area:* label at all is blocked', () => {
+    expect(shouldBlockUncategorized({ labels: ['bug', 'severity:medium'] }, false)).toBe(true);
+  });
+
+  test('a real area:* label is not blocked', () => {
+    expect(shouldBlockUncategorized({ labels: ['area:process', 'bug'] }, false)).toBe(false);
+  });
+
+  test('a real area:* alongside the placeholder is still blocked (placeholder must be removed)', () => {
+    expect(shouldBlockUncategorized({ labels: ['area:process', 'area:uncategorized'] }, false)).toBe(true);
+  });
+
+  test('--allow-uncategorized bypass short-circuits the block', () => {
+    expect(shouldBlockUncategorized({ labels: ['area:uncategorized'] }, true)).toBe(false);
+  });
+
+  test('null info (gh unavailable) is best-effort: never blocked, even without bypass', () => {
+    expect(shouldBlockUncategorized(null, false)).toBe(false);
+  });
+});
+
+describe('claim.js parseArgs() -- #1151 --allow-uncategorized lane bypass', () => {
+  test('--allow-uncategorized sets opts.allowUncategorized true', () => {
+    expect(parseArgs(['239', '--allow-uncategorized']).allowUncategorized).toBe(true);
+  });
+
+  test('--no-lane-check is an accepted alias', () => {
+    expect(parseArgs(['239', '--no-lane-check']).allowUncategorized).toBe(true);
+  });
+
+  test('opts.allowUncategorized defaults to false', () => {
+    expect(parseArgs(['239']).allowUncategorized).toBe(false);
   });
 });
 

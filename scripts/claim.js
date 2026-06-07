@@ -184,7 +184,7 @@ function branchExists(branch) {
 }
 
 function parseArgs(argv) {
-  const opts = { issue: null, slug: null, as: null, base: 'main', dryRun: false, allowStaleMain: false, force: false, custom: false };
+  const opts = { issue: null, slug: null, as: null, base: 'main', dryRun: false, allowStaleMain: false, force: false, custom: false, allowUncategorized: false };
   const positionals = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -193,6 +193,7 @@ function parseArgs(argv) {
     else if (a === '--dry-run') opts.dryRun = true;
     else if (a === '--force') opts.force = true;
     else if (a === '--allow-stale-main') opts.allowStaleMain = true;
+    else if (a === '--allow-uncategorized' || a === '--no-lane-check') opts.allowUncategorized = true;
     else if (a === '--custom') opts.custom = true;
     else if (a.startsWith('--')) die(`unknown flag: ${a}`);
     else positionals.push(a);
@@ -360,6 +361,17 @@ function needsAreaLabel(labels) {
   const areas = labels.filter((l) => typeof l === 'string' && l.startsWith('area:'));
   if (areas.length === 0) return true;
   return areas.includes('area:uncategorized');
+}
+
+// Pure decision seam (#1151, revisits the #1013 warn-only choice): given an
+// issue's resolved info and the human bypass flag, return true when the claim
+// should be HARD-BLOCKED for lacking a real lane. Threads the bypass exactly
+// like shouldBlockClaim(info, force): `allow` short-circuits, and offline
+// (info === null) returns false so an offline claim is never blocked on a label
+// it cannot read. Kept pure (no I/O) for unit testing.
+function shouldBlockUncategorized(info, allow) {
+  if (allow) return false;
+  return !!(info && needsAreaLabel(info.labels));
 }
 
 // Validate the resolved identity name against the known fruit list (#366 Option C).
@@ -591,7 +603,7 @@ function warnStaleClaimRefs() {
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
-    die('usage: node scripts/claim.js <issue-number> [slug] [--as <fruit>] [--base <ref>] [--dry-run] [--force] [--custom]');
+    die('usage: node scripts/claim.js <issue-number> [slug] [--as <fruit>] [--base <ref>] [--dry-run] [--force] [--custom] [--allow-uncategorized]');
   }
   const issue = opts.issue;
 
@@ -625,16 +637,20 @@ function main() {
     die(`#${issue} is CLOSED -- nothing to claim (raced a concurrent close? cf. #223). Pass --force to claim it anyway.`);
   }
 
-  // Area-label nudge (#1013, child of #1004): warn — never block — when the claimed
-  // issue still carries only the auto-applied `area:uncategorized` placeholder, or
-  // has no `area:*` label at all. Makes the placeholder actionable rather than
-  // decorative. Mirrors the warn-style guards (checkIdentityName, warnOrphanedWork-
-  // trees); offline (info === null) stays silent, like shouldBlockClaim.
-  if (info && needsAreaLabel(info.labels)) {
-    console.error(
-      `[claim] ⚠ issue #${issue} has no real area:* label (only area:uncategorized or none). ` +
-      `Assign one before starting:\n` +
-      `  gh issue edit ${issue} --add-label "area:<name>" --remove-label area:uncategorized`);
+  // Lane gate (#1151, hardens the #1013/#1004 warn-only seam per human request):
+  // BLOCK the claim when the issue carries no real `area:*` label (only the
+  // auto-applied `area:uncategorized` placeholder, or none). Categorization is
+  // now mandatory before work begins, so the placeholder stops being decorative
+  // and cross-lane collisions are prevented. Offline (info === null) stays
+  // silent like shouldBlockClaim; `--allow-uncategorized` (alias --no-lane-check)
+  // is the explicit, log-visible human bypass — distinct from --force, which
+  // only bypasses the #227 CLOSED-state guard.
+  if (shouldBlockUncategorized(info, opts.allowUncategorized)) {
+    die(
+      `#${issue} has no real area:* label (only area:uncategorized or none). ` +
+      `Assign a lane before claiming:\n` +
+      `  gh issue edit ${issue} --add-label "area:<name>" --remove-label area:uncategorized\n` +
+      `then re-run the claim. To deliberately work it uncategorized, pass --allow-uncategorized.`);
   }
 
   // Derive a slug from the issue title if none was given (best-effort).
@@ -853,7 +869,7 @@ if (require.main === module) main();
 module.exports = {
   FRUITS, slugify, listWorktreeBranches, worktreesWithIssue, takenFruits,
   parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
-  checkIdentityName, readIssue, shouldBlockClaim, needsAreaLabel,
+  checkIdentityName, readIssue, shouldBlockClaim, needsAreaLabel, shouldBlockUncategorized,
   sentinelBranch, isSentinelStaleByAge,
   applyMarkerFlip, buildBannerLines, findLiveWorktreeForIssue, findSameIssueCollision,
   shouldBlockWorktreeGuard, classifyClaimPushResult,
