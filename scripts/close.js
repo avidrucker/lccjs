@@ -232,6 +232,39 @@ function shouldCleanup({ onOriginMain }) {
   return onOriginMain === true;
 }
 
+// Pure (#1039): the refspec command that deletes the cross-clone claim ref (#1038)
+// staked at claim time. A leading `:` deletes the remote ref. Exported for tests.
+function claimRefDeleteCommand(issue) {
+  return `git push origin :refs/claims/issue-${issue}`;
+}
+
+// Pure (#1039): classify the combined stdout+stderr of the claim-ref delete into
+// the close-side outcome. Idempotent by design — a ref that is already gone (or was
+// never pushed / offline) is NOT a failure. Exported for unit testing.
+//   'DELETED' — the ref was removed, or a clean exit (nothing to report).
+//   'ABSENT'  — the ref did not exist remotely → already deleted / never staked.
+//   'WARN'    — offline / auth / unrecognised → best-effort; the close MUST continue.
+function classifyClaimRefDelete(output) {
+  const s = String(output || '');
+  if (/\[deleted\]/i.test(s)) return 'DELETED';
+  if (/remote ref does not exist|unable to delete/i.test(s)) return 'ABSENT';
+  if (s.trim() === '') return 'DELETED';
+  return 'WARN';
+}
+
+// Best-effort, idempotent (#1039): delete the claim ref so a closed issue can't
+// falsely block a future re-open/re-claim. Runs AFTER the on-origin-main gate but
+// independent of the detached teardown (skipped under --keep; a failed teardown
+// would otherwise strand the ref). `2>&1 || true` guarantees the delete can never
+// abort the close — a missing ref / offline remote is a logged no-op, never a throw.
+function deleteClaimRef(issue) {
+  const out = sh(`${claimRefDeleteCommand(issue)} 2>&1 || true`, true) || '';
+  const verdict = classifyClaimRefDelete(out);
+  if (verdict === 'DELETED') log(`claim ref refs/claims/issue-${issue} deleted.`);
+  else if (verdict === 'ABSENT') log(`claim ref refs/claims/issue-${issue} already absent — no-op.`);
+  else log(`warn: could not delete claim ref refs/claims/issue-${issue} (best-effort; close continues).`);
+}
+
 // Guard 1 (#310/#301): extract the ticket number(s) from the velocity rows ADDED
 // in a commit, by parsing the unified diff of `git show HEAD -- <csv>`. Catches
 // the #278 failure mode — a digit transposition where `Closes #N` and the
@@ -812,6 +845,7 @@ function main() {
       const state = sh(`gh issue view ${issue} --json state -q .state`, true);
       if (state && state.trim().toUpperCase() !== 'OPEN') {
         log(`commit ${alreadyLandedSha.slice(0, 12)} already on origin/main and #${issue} is ${state.trim()} — treating as clean close.`);
+        deleteClaimRef(issue); // #1039: same claim-ref cleanup on the already-landed recovery path
         scanParentTrackers(issue, opts.updateTrackers);
         if (opts.keep) {
           report({ issue, branch, wtPath, sha: alreadyLandedSha, kept: true, dry: false });
@@ -908,6 +942,12 @@ function main() {
   }
   log(`commit ${landedSha.slice(0, 12)} confirmed on origin/main.`);
 
+  // Delete the cross-clone claim ref (#1039) now that the close is committed —
+  // BEFORE the --keep early-return and independent of the detached teardown, so a
+  // closed issue never leaves a refs/claims/issue-N ref that falsely blocks a
+  // future re-claim. Best-effort/idempotent: never aborts the close.
+  deleteClaimRef(issue);
+
   // --- best-effort: confirm the issue actually closed (the keyword can lag).
   if (opts.verifyIssue) {
     const st = sh(`gh issue view ${issue} --json state -q .state`, true);
@@ -960,6 +1000,7 @@ if (require.main === module) main();
 module.exports = {
   DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET, SHORT_TECH_WORDS,
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
+  claimRefDeleteCommand, classifyClaimRefDelete,
   isVelocityCsvOnlyConflict,
   README_LEARNINGS, isReadmeLearningsConflict, resolveReadmeConflict,
   extractTicketFromCsvDiff, extractRowsFromCsvDiff, velocityTicketMismatch,

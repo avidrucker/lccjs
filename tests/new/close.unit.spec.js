@@ -2,6 +2,7 @@
 
 const {
   parseArgs, classifyPushError, shouldCleanup, classifyRebaseConflict,
+  claimRefDeleteCommand, classifyClaimRefDelete,
   isVelocityCsvOnlyConflict,
   README_LEARNINGS, isReadmeLearningsConflict, resolveReadmeConflict,
   DEFAULT_MAX_RETRIES, UNION_FILES, VELOCITY_CSV, KEYWORD_STOP_SET,
@@ -1100,5 +1101,37 @@ describe('close.js findParentTrackers() — parent-tracker checklist scan (#907)
       expect(result).toHaveLength(1);
       expect((result[0].line.match(/#\d+/g) || []).length).toBe(1);
     });
+  });
+});
+
+// Claim-ref deletion on close (#1039). Pure seams only — the git push lives in
+// deleteClaimRef()'s `|| true` runner, which by construction cannot abort the close.
+describe('close.js claimRefDeleteCommand()', () => {
+  test('emits the deleting refspec for the issue (normal close)', () => {
+    expect(claimRefDeleteCommand(1039)).toBe('git push origin :refs/claims/issue-1039');
+  });
+  // The command is issue-keyed, identical under --keep (the wiring runs it before
+  // the --keep early-return), so the emitted delete is the same in both modes.
+  test('same command regardless of --keep (issue-keyed, not mode-keyed)', () => {
+    expect(claimRefDeleteCommand(42)).toBe('git push origin :refs/claims/issue-42');
+  });
+});
+
+describe('close.js classifyClaimRefDelete() — idempotent, never aborts', () => {
+  test('[deleted] → DELETED', () => {
+    expect(classifyClaimRefDelete(' - [deleted]         refs/claims/issue-1039')).toBe('DELETED');
+  });
+  test('clean/empty exit → DELETED', () => {
+    expect(classifyClaimRefDelete('')).toBe('DELETED');
+    expect(classifyClaimRefDelete(null)).toBe('DELETED');
+  });
+  // A missing ref (already deleted / never staked) is NOT a failure.
+  test('remote ref does not exist → ABSENT (idempotent)', () => {
+    expect(classifyClaimRefDelete("error: unable to delete 'refs/claims/issue-1039': remote ref does not exist")).toBe('ABSENT');
+  });
+  // Offline / auth / unknown → WARN (the close continues; never a hard fail).
+  test('offline/unknown → WARN', () => {
+    expect(classifyClaimRefDelete('fatal: Could not resolve host: github.com')).toBe('WARN');
+    expect(classifyClaimRefDelete('some unrecognised git output')).toBe('WARN');
   });
 });
