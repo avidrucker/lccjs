@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated": "2026-06-05",
-  "note": "Experimental prototype — see docs/research/842-rules-json-spike.md for assessment. RULES.md remains authoritative.",
+  "generated": "2026-06-07",
+  "note": "Reconciled with post-#1059 RULES.md (trimmed + relocated rules). Relocated rules keep their original stable R0NN ids and gain status=\"relocated\" + relocated_to. Active rules have status=\"active\". New rules after the reconciliation get sequential ids (R023+). Sync policy: RULES.json must be updated in the same PR that changes RULES.md; see #1061.",
   "rules": [
     {
       "id": "R001",
@@ -10,7 +10,8 @@
       "text": "I will not run `rm` on the main branch without explicit permission.",
       "added": "2026-05-01",
       "added_issue": null,
-      "comment": "Destructive filesystem operation. Requires explicit human go-ahead to prevent accidental data loss."
+      "comment": "Destructive filesystem operation. Requires explicit human go-ahead to prevent accidental data loss.",
+      "status": "active"
     },
     {
       "id": "R002",
@@ -19,7 +20,8 @@
       "text": "I will not run `rmSync()` on the main branch without explicit permission.",
       "added": "2026-05-01",
       "added_issue": null,
-      "comment": "Node.js synchronous delete — same destructive risk as `rm`. Paired with R001."
+      "comment": "Node.js synchronous delete \u2014 same destructive risk as `rm`. Paired with R001.",
+      "status": "active"
     },
     {
       "id": "R003",
@@ -28,16 +30,18 @@
       "text": "I will never ever ever delete the main branch, or the entire project folder, no matter what, so help me God.",
       "added": "2026-05-01",
       "added_issue": 434,
-      "comment": "Absolute prohibition. Introduced after an agent deleted the main checkout during a debugging session (#434). The emphatic phrasing is intentional — this is a hard stop with no exception path."
+      "comment": "Absolute prohibition. Introduced after an agent deleted the main checkout during a debugging session (#434). The emphatic phrasing is intentional \u2014 this is a hard stop with no exception path.",
+      "status": "active"
     },
     {
       "id": "R004",
       "version": 1,
       "category": "workflow",
-      "text": "I will always work on a worktree, no matter what — including TIL docs, velocity CSV updates, and PM-only tickets. Any git commit to this repo must come from a worktree. There are no small-enough exceptions.",
+      "text": "I will always work on a worktree, no matter what \u2014 including TIL docs, velocity CSV updates, and PM-only tickets. Any git commit to this repo must come from a worktree. There are no small-enough exceptions.",
       "added": "2026-05-15",
       "added_issue": null,
-      "comment": "Prevents direct commits to main. The explicit call-out of TIL docs and PM tickets closes the 'it's too small' loophole that caused earlier violations."
+      "comment": "Prevents direct commits to main. The explicit call-out of TIL docs and PM tickets closes the 'it's too small' loophole that caused earlier violations.",
+      "status": "active"
     },
     {
       "id": "R005",
@@ -46,7 +50,8 @@
       "text": "I will always log and track my time, no matter what. Every closed ticket gets a velocity row via `npm run velocity:log` before the closing commit.",
       "added": "2026-05-15",
       "added_issue": null,
-      "comment": "Calibration data degrades without consistent logging. The 'before the closing commit' constraint ensures the row is never forgotten — close.js can enforce it."
+      "comment": "Calibration data degrades without consistent logging. The 'before the closing commit' constraint ensures the row is never forgotten \u2014 close.js can enforce it.",
+      "status": "active"
     },
     {
       "id": "R006",
@@ -55,7 +60,8 @@
       "text": "I will not do work I was not scoped/authorized to do, though I will file a ticket if I have a question or concern.",
       "added": "2026-05-15",
       "added_issue": null,
-      "comment": "Scope discipline prevents silent scope creep and keeps velocity data honest. Filing a ticket is the approved channel for surfacing out-of-scope findings."
+      "comment": "Scope discipline prevents silent scope creep and keeps velocity data honest. Filing a ticket is the approved channel for surfacing out-of-scope findings.",
+      "status": "active"
     },
     {
       "id": "R007",
@@ -64,7 +70,8 @@
       "text": "I will not delete data from the database unless I am given explicit permission by a human user.",
       "added": "2026-06-01",
       "added_issue": null,
-      "comment": "Protects ~/.lccjs/lccjs.db from accidental truncation. Always SELECT first to verify scope before any destructive SQL."
+      "comment": "Protects ~/.lccjs/lccjs.db from accidental truncation. Always SELECT first to verify scope before any destructive SQL.",
+      "status": "active"
     },
     {
       "id": "R008",
@@ -73,7 +80,8 @@
       "text": "I will always close via `npm run close <N>`. I will never `git push` directly to main.",
       "added": "2026-05-20",
       "added_issue": 242,
-      "comment": "The manual push-to-main sequence (#200/#242 footgun) was error-prone. `npm run close` handles rebase, push, and issue-close atomically."
+      "comment": "The manual push-to-main sequence (#200/#242 footgun) was error-prone. `npm run close` handles rebase, push, and issue-close atomically.",
+      "status": "active"
     },
     {
       "id": "R009",
@@ -82,16 +90,18 @@
       "text": "Every worktree must be tied to an open GitHub issue. If none exists, I will file one before claiming.",
       "added": "2026-05-20",
       "added_issue": null,
-      "comment": "No-ticket work is invisible to the tracker and cannot be velocity-logged. Filing first ensures every commit is attributable."
+      "comment": "No-ticket work is invisible to the tracker and cannot be velocity-logged. Filing first ensures every commit is attributable.",
+      "status": "active"
     },
     {
       "id": "R010",
       "version": 1,
       "category": "workflow",
-      "text": "At close time, any work discovered but not done — deferred scope, a found bug, or an open design question — must become a ticket before the closing commit. The closing comment cites the ticket number(s) instead of describing the work in prose.",
+      "text": "At close time, any work discovered but not done \u2014 deferred scope, a found bug, or an open design question \u2014 must become a ticket before the closing commit. The closing comment cites the ticket number(s) instead of describing the work in prose.",
       "added": "2026-05-22",
       "added_issue": null,
-      "comment": "Prose in a closing comment is not discoverable; a ticket is. See `docs/research/followup-trigger-brainstorming.md` for the options considered before settling on this convention."
+      "comment": "Prose in a closing comment is not discoverable; a ticket is. See `docs/research/followup-trigger-brainstorming.md` for the options considered before settling on this convention.",
+      "status": "active"
     },
     {
       "id": "R011",
@@ -100,16 +110,19 @@
       "text": "When fixing or reviewing a write-path bug in a test harness, I will add a regression test that reads back what was written through the actual write surface and asserts the bytes are intact.",
       "added": "2026-05-25",
       "added_issue": null,
-      "comment": "A test that only checks the producer's in-memory state leaves the write path dark. The canonical surface for lccjs is `virtualFs`. Read-back through the real write surface catches serialization bugs."
+      "comment": "A test that only checks the producer's in-memory state leaves the write path dark. The canonical surface for lccjs is `virtualFs`. Read-back through the real write surface catches serialization bugs.",
+      "status": "relocated",
+      "relocated_to": "docs/project-gotchas.md#3-write-path-bugs-need-a-read-back-regression-test-through-the-real-write-surface"
     },
     {
       "id": "R012",
       "version": 1,
       "category": "workflow",
-      "text": "For any tracker ticket, I will always file a concrete child issue for the chosen sub-item before doing any work — unconditionally, not just 'if the item is large enough.' No exceptions.",
+      "text": "For any tracker ticket, I will always file a concrete child issue for the chosen sub-item before doing any work \u2014 unconditionally, not just 'if the item is large enough.' No exceptions.",
       "added": "2026-05-28",
       "added_issue": 559,
-      "comment": "The child issue is where velocity is logged and where the work is tracked. 'Small enough' exceptions were found to consistently corrupt calibration data (#559)."
+      "comment": "The child issue is where velocity is logged and where the work is tracked. 'Small enough' exceptions were found to consistently corrupt calibration data (#559).",
+      "status": "active"
     },
     {
       "id": "R013",
@@ -118,7 +131,9 @@
       "text": "I will wrap every shell invocation of `lcc.js`, `assembler.js`, `interpreter.js`, `linker.js`, or the oracle binary in `scripts/lccrun.sh`.",
       "added": "2026-05-28",
       "added_issue": 376,
-      "comment": "Bare invocations block indefinitely when `name.nnn` is absent and stdin is not a TTY (#376). `lccrun.sh` adds a configurable timeout (default: 10s) and kills the process if it hangs."
+      "comment": "Bare invocations block indefinitely when `name.nnn` is absent and stdin is not a TTY (#376). `lccrun.sh` adds a configurable timeout (default: 10s) and kills the process if it hangs.",
+      "status": "relocated",
+      "relocated_to": "docs/pitfalls.md#6-toolchain--workflow-pitfalls"
     },
     {
       "id": "R014",
@@ -127,7 +142,8 @@
       "text": "One deliverable per close. Before writing the close commit, audit `git diff origin/main`: every change must fall within the ticket's stated 'Should have.' Out-of-scope changes get their own ticket, worktree, and velocity row.",
       "added": "2026-05-30",
       "added_issue": 601,
-      "comment": "Fixes absorbed silently into another ticket's close corrupt calibration data (FM-1: bug tax; FM-2: discovery bleed; FM-3: multi-fix bundling). See `docs/research/601-scope-discipline.md`."
+      "comment": "Fixes absorbed silently into another ticket's close corrupt calibration data (FM-1: bug tax; FM-2: discovery bleed; FM-3: multi-fix bundling). See `docs/research/601-scope-discipline.md`.",
+      "status": "active"
     },
     {
       "id": "R015",
@@ -136,25 +152,29 @@
       "text": "The commit containing 'Closes #N' must ALSO include the velocity CSV export in the same commit.",
       "added": "2026-05-31",
       "added_issue": 654,
-      "comment": "close.js checks HEAD only. A separate CSV commit becomes HEAD without 'Closes #N', breaking the close gate. Recovery: `git reset --soft HEAD~1` (#654)."
+      "comment": "close.js checks HEAD only. A separate CSV commit becomes HEAD without 'Closes #N', breaking the close gate. Recovery: `git reset --soft HEAD~1` (#654).",
+      "status": "active"
     },
     {
       "id": "R016",
       "version": 2,
       "category": "workflow",
-      "text": "TIL entries are an exempt sub-genre — diary-style learning notes, not bug reports. Exempt from BDD structure and from the ROLE: title prefix. Required format: `TIL YYYY-MM-DD AGENT — one-line topic`. Rules R004, R005, R008, R009 still apply unconditionally.",
+      "text": "TIL entries are an exempt sub-genre \u2014 diary-style learning notes, not bug reports. Exempt from BDD structure and from the ROLE: title prefix. Required format: `TIL YYYY-MM-DD AGENT \u2014 one-line topic`. Rules R004, R005, R008, R009 still apply unconditionally.",
       "added": "2026-06-01",
       "added_issue": 640,
-      "comment": "Hygiene audits and BDD coverage scores must exclude TIL issues from their denominator. Version 2 because the format was refined after initial introduction."
+      "comment": "Hygiene audits and BDD coverage scores must exclude TIL issues from their denominator. Version 2 because the format was refined after initial introduction.",
+      "status": "active"
     },
     {
       "id": "R017",
       "version": 1,
       "category": "testing",
-      "text": "When writing `.hex` or `.bin` test fixtures, use raw 16-bit word values — NOT the bytes of a `.e` file.",
+      "text": "When writing `.hex` or `.bin` test fixtures, use raw 16-bit word values \u2014 NOT the bytes of a `.e` file.",
       "added": "2026-06-03",
       "added_issue": 758,
-      "comment": "A `.e` file begins with an `oC` preamble and stores words little-endian. Copying bytes from a `.e` file into a `.hex` fixture produces silently wrong machine code with no assembler error (#758)."
+      "comment": "A `.e` file begins with an `oC` preamble and stores words little-endian. Copying bytes from a `.e` file into a `.hex` fixture produces silently wrong machine code with no assembler error (#758).",
+      "status": "relocated",
+      "relocated_to": "docs/pitfalls.md#211-hexbin-fixtures-use-raw-16-bit-words-not-e-bytes"
     },
     {
       "id": "R018",
@@ -163,7 +183,9 @@
       "text": "lccjs's assembler processes exactly one mnemonic per source line. Write each instruction on its own line.",
       "added": "2026-06-03",
       "added_issue": 759,
-      "comment": "Extra tokens after the operands are silently ignored. A second instruction on the same line (e.g. `dout r0  nl`) will not assemble the second mnemonic. Accounts for parity failures in demos 029–032 (#759)."
+      "comment": "Extra tokens after the operands are silently ignored. A second instruction on the same line (e.g. `dout r0  nl`) will not assemble the second mnemonic. Accounts for parity failures in demos 029\u2013032 (#759).",
+      "status": "relocated",
+      "relocated_to": "docs/pitfalls.md#210-one-mnemonic-per-source-line--extra-tokens-are-silently-dropped"
     },
     {
       "id": "R019",
@@ -172,7 +194,9 @@
       "text": "For tests that compare lccjs stdout against another runtime, drive lccjs via `spawnSync` with `{ input: stdinString }`, not via `lcc.inputBuffer`.",
       "added": "2026-06-03",
       "added_issue": 760,
-      "comment": "`inputBuffer` triggers 'simulated' mode in `readLineFromStdin()` which echoes each input line back through `writeOutput`, producing extra output that C programs never emit. Piped stdin takes the non-simulated path (#760)."
+      "comment": "`inputBuffer` triggers 'simulated' mode in `readLineFromStdin()` which echoes each input line back through `writeOutput`, producing extra output that C programs never emit. Piped stdin takes the non-simulated path (#760).",
+      "status": "relocated",
+      "relocated_to": "docs/project-gotchas.md#4-cross-runtime-stdout-tests-drive-lccjs-via-spawnsyncinput-not-inputbuffer"
     },
     {
       "id": "R020",
@@ -181,16 +205,40 @@
       "text": "In Jest, use `test.failing` for tests covering confirmed bugs with open fix tickets. Use `test.skip` only for tests incompatible by design. Never use `test.skip` to silence a fixable bug.",
       "added": "2026-06-03",
       "added_issue": 761,
-      "comment": "`test.failing` runs the test, documents the broken behavior, and alerts when the fix lands (it flips to a test failure, signalling the annotation can be removed). `test.skip` silently hides the problem (#761)."
+      "comment": "`test.failing` runs the test, documents the broken behavior, and alerts when the fix lands (it flips to a test failure, signalling the annotation can be removed). `test.skip` silently hides the problem (#761).",
+      "status": "relocated",
+      "relocated_to": "docs/project-gotchas.md#5-jest-testfailing-for-fixable-bugs-testskip-only-for-by-design-incompatibility"
     },
     {
       "id": "R021",
+      "version": 1,
+      "category": "testing",
+      "text": "Any input-validation pattern (character class, regex, or predicate) that appears in more than one module \u2014 assembler, formatter, tmLanguage grammar, or elsewhere \u2014 must be covered by a test that runs the same edge-case inputs against every copy. Divergence is only detectable when all copies are exercised together.",
+      "added": "2026-06-03",
+      "added_issue": 850,
+      "comment": "See tests/new/grammar.unit.spec.js (label edge-case tests from #850). Known gap: formatter's label regex in src/utils/formatter.js does not cover @- or $-prefixed labels \u2014 tracked in #798. Was RULES.md Rule 21 \u2014 relocated #1059 to docs/project-gotchas.md \u00a76.",
+      "status": "relocated",
+      "relocated_to": "docs/project-gotchas.md#6-cross-module-validation-parity--test-every-copy-together"
+    },
+    {
+      "id": "R022",
+      "version": 1,
+      "category": "safety",
+      "text": "I will never post personally identifiable information \u2014 email addresses, credentials, API keys/tokens, passwords, phone numbers, or anything that uniquely identifies a real person \u2014 in a GitHub issue, comment, or commit message. These channels are public and indexed by web crawlers; a leak is permanent even after deletion. I use bracketed placeholders instead ([your email], [Prof. Dos Reis's email]). Repo files meant as offline artifacts (e.g. docs/cuh63-*.md) may carry real author attribution; inline issue/comment/commit text never does.",
+      "added": "2026-05-01",
+      "added_issue": 537,
+      "comment": "Hygiene audits must exclude TIL issues from denominator. Origin #537, audit #1007; full policy: docs/claude_workflow.md \u2192 \"What NOT to post publicly\". Was RULES.md Rule 22 \u2014 now display 15 after #1059 trim.",
+      "status": "active"
+    },
+    {
+      "id": "R023",
       "version": 1,
       "category": "workflow",
       "text": "I will run a pre-close error self-audit before every closing commit: re-read my session history from claim to now, enumerate every loggable error, log any not yet in the errors table via `npm run error:log`, and state the outcome explicitly in the closing comment (\"error self-audit: N row(s) logged\" or \"error self-audit: no loggable errors this session\").",
       "added": "2026-06-06",
       "added_issue": 1117,
-      "comment": "Error logging was being silently under-reported: agents self-correct a misfire and never log it (the #1108 repro — 3 errors went unlogged until a human asked, then backfilled as rows 49-51). close.js cannot see the transcript, but the agent can, so the audit lives with the agent, not the script. The explicit outcome statement converts silence into a checkable acknowledgement. Mechanism chosen in #1117 (Option D — agent transcript self-audit) over a close.js acknowledgement gate; preserves the manual-judgement decision in the log-error skill (no auto-logging)."
+      "comment": "Error logging was being silently under-reported: agents self-correct a misfire and never log it (the #1108 repro \u2014 3 errors went unlogged until a human asked, then backfilled as rows 49-51). close.js cannot see the transcript, but the agent can, so the audit lives with the agent, not the script. The explicit outcome statement converts silence into a checkable acknowledgement. Mechanism chosen in #1117 (Option D \u2014 agent transcript self-audit) over a close.js acknowledgement gate; preserves the manual-judgement decision in the log-error skill (no auto-logging).",
+      "status": "active"
     }
   ]
 }
