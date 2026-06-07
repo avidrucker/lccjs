@@ -388,6 +388,73 @@ function shouldBlockWorktreeGuard(existingWt, opts) {
   return !opts.force && !opts.dryRun;
 }
 
+// Pure decision seam (#1037, spike #1018): classify the combined stdout+stderr of a
+// `git push <sha>:refs/claims/issue-<N>` into the cross-clone claim decision. Mirrors
+// close.js:classifyPushError but with claim-side semantics — the claim path needs to
+// tell a *conflict reject* (another clone already staked the ref → block) apart from a
+// *transient/offline* failure (no remote, auth, timeout → best-effort proceed). Pure:
+// takes a string, returns one of 'CONFLICT' / 'TRANSIENT' / 'OK'. No git I/O.
+//
+//   'CONFLICT'  — the push was rejected because the ref already points elsewhere: the
+//                 non-fast-forward / ref-lock family. Another clone holds the claim →
+//                 the caller blocks (unless --force). These are the same git reject
+//                 signatures close.js treats as a retryable 'race'; here a reject is
+//                 authoritative, not retryable — it means we lost the claim.
+//   'TRANSIENT' — offline / unreachable / auth: no remote, DNS failure, refused/timed-out
+//                 connection, permission denied. The guard is best-effort, so the caller
+//                 warns and proceeds (consistent with readIssue/warnOrphanedWorktrees).
+//   'OK'        — the ref was created or already matches ours: '[new reference]', a clean
+//                 exit, or the empirically observed 'Everything up-to-date' (#1018 — a
+//                 same-sha re-push reports up-to-date at exit 0; treat as success, NOT a
+//                 conflict, since the unique-object push in #1038 makes a real collision
+//                 surface as a non-fast-forward reject instead).
+//
+// Order matters: success markers are checked FIRST so a benign '[new reference]' /
+// 'Everything up-to-date' is never mis-read by a stray substring; then the conflict
+// reject family; then transient signals. An UNRECOGNISED failure defaults to 'TRANSIENT'
+// (warn + proceed), not 'CONFLICT' — the git reject family below is well-known and
+// exhaustive, so an unfamiliar string is far likelier offline/auth noise than a novel
+// conflict phrasing, and a false block (which --force must then override) is worse for
+// the offline-first workflow than a rare missed cross-clone race the local guard still
+// partly covers.
+function classifyClaimPushResult(output) {
+  const s = String(output || '');
+  // Success first — these can co-occur with banner noise but are definitive wins.
+  if (/\[new reference\]|Everything up-to-date|\bnew branch\b/i.test(s)) return 'OK';
+  // Conflict reject family (mirrors close.js classifyPushError RACE list): the ref
+  // moved under us → another clone owns the claim.
+  const CONFLICT = [
+    /\[rejected\]/i,
+    /non-fast-forward/i,
+    /\bfetch first\b/i,
+    /cannot lock ref/i,
+    /failed to push some refs/i,
+    /tip of your current branch is behind/i,
+  ];
+  if (CONFLICT.some((re) => re.test(s))) return 'CONFLICT';
+  // Transient / offline / auth — best-effort proceed.
+  const TRANSIENT = [
+    /could not resolve host/i,
+    /couldn't resolve host/i,
+    /connection refused/i,
+    /connection timed out/i,
+    /operation timed out/i,
+    /\btimed out\b/i,
+    /network is unreachable/i,
+    /unable to access/i,
+    /could not read from remote/i,
+    /permission denied/i,
+    /authentication failed/i,
+    /\b403\b/,
+    /no such remote|does not appear to be a git repository|no configured push destination/i,
+  ];
+  if (TRANSIENT.some((re) => re.test(s))) return 'TRANSIENT';
+  // Empty / clean output with no failure markers → the push succeeded silently.
+  if (s.trim() === '') return 'OK';
+  // Unrecognised failure → best-effort proceed (see header rationale).
+  return 'TRANSIENT';
+}
+
 // Side-effect: scan live worktrees for orphans — issue branches whose issue is
 // CLOSED, meaning the deferred teardown from a prior npm run close failed (#541,
 // #551). Prints a recovery hint for each stale entry; never blocks the claim.
@@ -645,5 +712,5 @@ module.exports = {
   checkIdentityName, readIssue, shouldBlockClaim, needsAreaLabel,
   sentinelBranch, isSentinelStaleByAge,
   applyMarkerFlip, buildBannerLines, findLiveWorktreeForIssue, findSameIssueCollision,
-  shouldBlockWorktreeGuard,
+  shouldBlockWorktreeGuard, classifyClaimPushResult,
 };

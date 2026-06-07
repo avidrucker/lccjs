@@ -11,6 +11,7 @@ const {
   buildBannerLines,
   worktreesWithIssue,
   findSameIssueCollision,
+  classifyClaimPushResult,
 } = require('../../scripts/claim');
 
 // Pure identity-resolution seam from scripts/claim.js. These tests exercise the
@@ -423,5 +424,61 @@ describe('findSameIssueCollision() — same-issue rollback seam (#1017)', () => 
   test('returns null for empty / null entries', () => {
     expect(findSameIssueCollision([], 997, 'cherry/issue-997-x')).toBeNull();
     expect(findSameIssueCollision(null, 997, 'cherry/issue-997-x')).toBeNull();
+  });
+});
+
+// Pure cross-clone claim-push classifier (#1037, spike #1018). Mirrors the
+// close.js classifyPushError tests: every branch is exercised against captured
+// `git push …:refs/claims/issue-N` stderr strings, no git round-trip.
+describe('claim.js classifyClaimPushResult()', () => {
+  describe('OK — claim staked or already ours', () => {
+    test('[new reference] → OK', () => {
+      expect(classifyClaimPushResult(' * [new reference]   abc123 -> refs/claims/issue-42')).toBe('OK');
+    });
+    // #1018: a same-sha re-push reports up-to-date at exit 0 — success, not a conflict.
+    test('Everything up-to-date → OK (#1018)', () => {
+      expect(classifyClaimPushResult('Everything up-to-date')).toBe('OK');
+    });
+    test('empty/clean output → OK', () => {
+      expect(classifyClaimPushResult('')).toBe('OK');
+      expect(classifyClaimPushResult(null)).toBe('OK');
+      expect(classifyClaimPushResult(undefined)).toBe('OK');
+    });
+  });
+
+  describe('CONFLICT — another clone holds the ref', () => {
+    // #1038's unique-object push makes a real cross-clone race surface here.
+    test('non-fast-forward reject → CONFLICT', () => {
+      const msg = ' ! [rejected]        abc123 -> refs/claims/issue-42 (non-fast-forward)';
+      expect(classifyClaimPushResult(msg)).toBe('CONFLICT');
+    });
+    test('fetch first → CONFLICT', () => {
+      expect(classifyClaimPushResult('error: failed to push some refs\nhint: Updates were rejected; fetch first')).toBe('CONFLICT');
+    });
+    test('cannot lock ref → CONFLICT', () => {
+      expect(classifyClaimPushResult("! [remote rejected] (cannot lock ref 'refs/claims/issue-42')")).toBe('CONFLICT');
+    });
+    test('bare [rejected] → CONFLICT', () => {
+      expect(classifyClaimPushResult(' ! [rejected] something -> refs/claims/issue-7')).toBe('CONFLICT');
+    });
+  });
+
+  describe('TRANSIENT — offline / unreachable / auth (best-effort proceed)', () => {
+    test('could not resolve host → TRANSIENT', () => {
+      expect(classifyClaimPushResult('fatal: unable to access ...: Could not resolve host: github.com')).toBe('TRANSIENT');
+    });
+    test('connection refused → TRANSIENT', () => {
+      expect(classifyClaimPushResult('ssh: connect to host github.com port 22: Connection refused')).toBe('TRANSIENT');
+    });
+    test('permission/auth failure → TRANSIENT', () => {
+      expect(classifyClaimPushResult('remote: Permission denied\nfatal: Authentication failed')).toBe('TRANSIENT');
+    });
+    test('timed out → TRANSIENT', () => {
+      expect(classifyClaimPushResult('fatal: unable to access: Operation timed out')).toBe('TRANSIENT');
+    });
+    // Unrecognised failure defaults to TRANSIENT (warn + proceed), per the header rationale.
+    test('unrecognised non-empty failure → TRANSIENT (default)', () => {
+      expect(classifyClaimPushResult('some weird git output we have never seen')).toBe('TRANSIENT');
+    });
   });
 });
