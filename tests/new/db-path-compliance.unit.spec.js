@@ -31,7 +31,14 @@ const RESOLVER = 'db-path.js';
 // switched them to require('./db-path'), so the allowlist is now empty: every
 // script that touches the store must route through the shared resolver. A new
 // entry here should be a deliberate, documented exception — not the default.
-const KNOWN_BYPASSERS = [];
+const KNOWN_BYPASSERS = [
+  // preflight.js does NOT touch the DB. It writes a per-issue session scratch
+  // stamp (`~/.lccjs/preflight-<issue>.iso`, #652) into the same config dir —
+  // a sidecar file, not lccjs.db — so routing it through the DB-specific
+  // db-path.js resolver would be a semantic mismatch. Legitimate ~/.lccjs use,
+  // documented exception (#1127, dedups #1104).
+  'preflight.js',
+];
 
 // --- helpers -------------------------------------------------------------
 
