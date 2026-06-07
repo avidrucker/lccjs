@@ -179,8 +179,8 @@ function buildNav(rootPath, activeId) {
     const cls  = activeId === s.id ? ' class="active"' : '';
     return `<a href="${href}"${cls}>${s.label}</a>`;
   });
-  const playgroundCls = activeId === 'showcase' ? ' class="active"' : '';
-  const playground = `<a href="${rootPath}showcase/"${playgroundCls}>Playground</a>`;
+  const playgroundCls = activeId === 'sandbox' ? ' class="active"' : '';
+  const playground = `<a href="${rootPath}sandbox/"${playgroundCls}>Sandbox</a>`;
   return `<nav>${[home, ...links, playground].join('\n  ')}\n</nav>`;
 }
 
@@ -533,15 +533,14 @@ const sel        = document.getElementById('theme-select');
 const stdinInput = document.getElementById('stdin-input');
 
 let debounce;
-let renderFn = null;
 
 // ── Per-theme editor highlighting (#1124) ────────────────────────────────────
-// The CM editor and the Shiki "Syntax preview" must share one source of truth
-// for token colors. Shiki already loads every theme; we read each theme's
-// TextMate token colors back out (getTheme) and map them onto the Lezer tags the
-// lcc() parser emits, then swap the HighlightStyle via a Compartment on theme
-// change. Without this the editor is frozen at @codemirror/language's static
-// defaultHighlightStyle regardless of theme.
+// The CM editor now uses Shiki themes for syntax highlighting (per-theme).
+// Shiki loads every theme; we read each theme's TextMate token colors back out
+// (getTheme) and map them onto the Lezer tags the lcc() parser emits, then swap
+// the HighlightStyle via a Compartment on theme change. Without this the editor
+// is frozen at @codemirror/language's static defaultHighlightStyle regardless of
+// theme.
 const highlightCompartment = new Compartment();
 
 // Longest-prefix TextMate scope match (mirrors how Shiki resolves a token color):
@@ -609,12 +608,6 @@ const editor = new EditorView({
     highlightCompartment.of(syntaxHighlighting(defaultHighlightStyle)),
     keymap.of([indentWithTab, { key: 'Mod-/', run: toggleLineComment }]),
     autocompletion({ override: [lccCompletionSource] }),
-    EditorView.updateListener.of(function(update) {
-      if (update.docChanged && renderFn) {
-        clearTimeout(debounce);
-        debounce = setTimeout(renderFn, 150);
-      }
-    }),
     EditorView.theme({
       '&': { height: '100%', fontSize: '.85rem' },
       '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--mono-font)' },
@@ -631,9 +624,7 @@ const editor = new EditorView({
 window.__lccSetSource = function(src) {
   editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: src } });
 };
-const output            = document.getElementById('playground-output');
 const runStatus         = document.getElementById('playground-status');
-const shikiStatus       = document.getElementById('shiki-status');
 const runBtn            = document.getElementById('run-btn');
 const stopBtn           = document.getElementById('stop-btn');
 const execOut           = document.getElementById('exec-output');
@@ -796,20 +787,9 @@ runBtn.addEventListener('click', () => {
     ]);
     const grammar = await grammarRes.json();
     hl = await createHighlighter({ langs: [grammar], themes: [...CUSTOM_THEMES, ...BUILTIN_THEMES] });
-    shikiStatus.textContent = '';
   } catch (err) {
-    shikiStatus.textContent = 'Highlighting unavailable: ' + err.message;
+    console.error('Highlighting unavailable:', err.message);
     return;
-  }
-
-  function render() {
-    const theme = sel.value;
-    applyBodyClass(theme);
-    try {
-      output.innerHTML = hl.codeToHtml(editor.state.doc.toString(), { lang: 'lcc', theme });
-    } catch (err) {
-      shikiStatus.textContent = 'Highlight error: ' + err.message;
-    }
   }
 
   // Reconfigure the CM editor's HighlightStyle to match the selected theme, using
@@ -822,16 +802,14 @@ runBtn.addEventListener('click', () => {
     });
   }
 
-  renderFn = render;
-  sel.addEventListener('change', () => { applyEditorHighlight(sel.value); render(); });
+  sel.addEventListener('change', () => { applyEditorHighlight(sel.value); });
 
   applyEditorHighlight(sel.value);
-  render();
 })();
 </script>`;
 
   const playgroundContent = `
-  <h1>Playground</h1>
+  <h1>Sandbox</h1>
   <p class="subtitle">Assemble and run LCC assembly in the browser — syntax highlighting updates live.</p>
   <div class="theme-toolbar">
     <label for="theme-select">Theme:</label>
@@ -862,18 +840,9 @@ ${playgroundThemeOptions}
         </div>
       </div>
     </div>
-  </div>
-  <section style="margin-top:2rem;">
-    <h2>Syntax preview</h2>
-    <p class="panel-label">Highlights as you type</p>
-    <div id="playground-output" style="min-height:200px;border-radius:6px;overflow:auto;font-size:.85rem;"></div>
-    <p id="shiki-status" style="color:#f85149;font-size:.8rem;margin-top:.5rem;"></p>
-  </section>
-  <footer style="margin-top:3.5rem;font-size:.8rem;color:var(--muted);border-top:1px solid var(--border);padding-top:1rem;">
-    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
-  </footer>`;
+  </div>\n  <footer style="margin-top:3.5rem;font-size:.8rem;color:var(--muted);border-top:1px solid var(--border);padding-top:1rem;">\n    <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>\n  </footer>`;
 
-  const playgroundDir = path.join(OUT_DIR, 'showcase');
+  const playgroundDir = path.join(OUT_DIR, 'sandbox');
   fs.mkdirSync(playgroundDir, { recursive: true });
 
   // Deploy the Web Worker script alongside index.html.
@@ -885,9 +854,9 @@ ${playgroundThemeOptions}
   }
 
   const playgroundHtml = makePage({
-    title: 'Playground — LCC Assembly',
+    title: 'Sandbox — LCC Assembly',
     bodyClass: 'dark',
-    nav: buildNav('../', 'showcase'),
+    nav: buildNav('../', 'sandbox'),
     content: playgroundContent,
     footer: '',
     script: '',
