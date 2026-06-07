@@ -31,6 +31,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 
 | Doc | Date | Agent | Themes |
 |---|---|---|---|
+| [TIL 2026-06-07 JACKFRUIT](./today-i-learned-2026-06-07-jackfruit.md) | 2026-06-07 | JACKFRUIT | Fruit roster sync, CodeMirror per-theme bg compartments, Pages doc curation audit. |
 | [oracle-e2e `.bst` redundancy](./2026-05-25-lcc-oracle-e2e-bst-redundancy.md) | 2026-05-25 | — | A redundant `.bst` golden in the `lcc.oracle.e2e` suite: the bug, the fix, and general golden-hygiene lessons. |
 | [adopting PDD on lccjs](./2026-05-26-pdd-adoption.md) | 2026-05-26 | — | Why/how PDD was adopted: the layering architecture, decomposition in practice, resolution lifecycle, and where it deviates from canonical Yegor. |
 | [TIL 2026-05-28-001](./today-i-learned-2026-05-28-001.md) | 2026-05-28 | — | Worktree isolation isn't a judgment call; one-shot spike scaffolding; de-noising docs; verify counts vs headings; asserting edit scripts; murky multi-pass velocity. |
