@@ -80,10 +80,15 @@ build time). It shows:
 
 ### b. The doc sub-sections (`docs/site/docs/<section>/`)
 Markdown rendered to HTML, one section per folder/list:
-`guides`, `research`, `learnings`, `glossary` (folder-based), plus `parity` and
-`workflow` (explicit file lists — e.g. `parity_deviations.md`, the `cuh63-*` bug
-reports, `claude_workflow.md`, `RULES.md`). Each section gets an index page plus
-one page per source `.md`.
+`guides` and `glossary` (folder-based — every `.md` deploys), plus `research`,
+`learnings`, and `parity` (**explicit curated file lists** — e.g.
+`parity_deviations.md`, the `cuh63-*` bug reports, a hand-picked ~12 `research`
+docs and ~5 `learnings` docs). Each section gets an index page plus one page per
+source `.md`. `research`/`learnings` are curated rather than folder-based because
+the full folders are ~100+ internal engineering/process artifacts, not public
+educational content (curation ruling: `docs/github-pages-docs-audit.md`, #1123;
+implemented in #1153). The former internal `workflow` section
+(`claude_workflow.md`, `RULES.md`) is intentionally **not** deployed.
 
 ### c. The playground (`docs/site/showcase/index.html`)
 The interactive editor+runner — see §4. Its editor markup lives in the

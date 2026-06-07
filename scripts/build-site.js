@@ -68,10 +68,38 @@ const LCCPLUS_SAMPLES = [
 
 // Docs sections to expose as subpages.
 // Use srcDir for folder-based sections; use files[] for explicit per-file lists.
+// research + learnings are CURATED to an explicit user-facing subset (#1153):
+// the full folders are ~106 + ~140 internal engineering/process artifacts (spike
+// outputs, agent TIL retrospectives, velocity/PM minutiae) that are not public
+// educational content. The `workflow` section (internal PDD process docs) was
+// dropped entirely. Curation ruling recorded in docs/github-pages-docs-audit.md
+// (#1123). A reusable whitelist/blacklist mechanism is the planned follow-up so
+// this stays maintainable rather than a hand-edited list.
 const DOCS_SECTIONS = [
   { id: 'guides',    label: 'Guides',    srcDir: path.join(ROOT, 'docs', 'guides')    },
-  { id: 'research',  label: 'Research',  srcDir: path.join(ROOT, 'docs', 'research')  },
-  { id: 'learnings', label: 'Learnings', srcDir: path.join(ROOT, 'docs', 'learnings') },
+  { id: 'research',  label: 'Research',  files: [
+    // ISA / assembly / toolchain semantics — educational reference
+    path.join(ROOT, 'docs', 'research', 'mnemonic-descriptor-table.md'),
+    path.join(ROOT, 'docs', 'research', 'sext-semantics-report.md'),
+    path.join(ROOT, 'docs', 'research', 'sra-shift-by-zero-513.md'),
+    path.join(ROOT, 'docs', 'research', 'jmp-condition-suffix-mnemonics.md'),
+    path.join(ROOT, 'docs', 'research', 'string-escape-parity.md'),
+    path.join(ROOT, 'docs', 'research', 'tokenizer-comma-parity.md'),
+    path.join(ROOT, 'docs', 'research', 'line-length-limit.md'),
+    path.join(ROOT, 'docs', 'research', '560-free-implementation-in-lcc-assembly.md'),
+    // Playground / web toolchain — about the live site
+    path.join(ROOT, 'docs', 'research', 'lezer-grammar-lcc-assembly.md'),
+    path.join(ROOT, 'docs', 'research', 'codemirror-feature-inventory.md'),
+    path.join(ROOT, 'docs', 'research', 'web-ilcc-terminal-simulation.md'),
+    path.join(ROOT, 'docs', 'research', 'playground-e2e-test-strategy.md'),
+  ]},
+  { id: 'learnings', label: 'Learnings', files: [
+    path.join(ROOT, 'docs', 'learnings', 'README.md'),
+    path.join(ROOT, 'docs', 'learnings', 'til-synthesis-2026-06-01.md'),
+    path.join(ROOT, 'docs', 'learnings', 'til-synthesis-2026-06-04.md'),
+    path.join(ROOT, 'docs', 'learnings', '2026-05-26-pdd-adoption.md'),
+    path.join(ROOT, 'docs', 'learnings', '2026-05-25-lcc-oracle-e2e-bst-redundancy.md'),
+  ]},
   { id: 'glossary',  label: 'Glossary',  srcDir: path.join(ROOT, 'docs', 'glossary')  },
   { id: 'parity',    label: 'Parity',    files: [
     path.join(ROOT, 'docs', 'lccjs-unique-features.md'),
@@ -81,10 +109,6 @@ const DOCS_SECTIONS = [
     path.join(ROOT, 'docs', 'cuh63-mov-immediate-bug-report.md'),
     path.join(ROOT, 'docs', 'cuh63-line-length-silent-split-bug-report.md'),
     path.join(ROOT, 'docs', 'cuh63-o-assemble-exit-code-bug-report.md'),
-  ]},
-  { id: 'workflow',  label: 'Workflow',  files: [
-    path.join(ROOT, 'docs', 'claude_workflow.md'),
-    path.join(ROOT, 'RULES.md'),
   ]},
 ];
 
