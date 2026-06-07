@@ -269,10 +269,42 @@ describe('applyMarkerFlip()', () => {
     expect(flipped).toBe(false);
   });
 
-  test('matches when marker is at end of line with no trailing character', () => {
-    const { flipped, updated } = applyMarkerFlip('// @todo #99\n', '99');
+  test('matches a canonical marker at end of line with no trailing character', () => {
+    const { flipped, updated } = applyMarkerFlip('// @todo #99:30m/DEV\n', '99');
     expect(flipped).toBe(true);
-    expect(updated).toBe('// @inprogress #99\n');
+    expect(updated).toBe('// @inprogress #99:30m/DEV\n');
+  });
+
+  test('matches a canonical marker at the very end of content (no newline)', () => {
+    const { flipped, updated } = applyMarkerFlip('// @todo #99:30m/DEV', '99');
+    expect(flipped).toBe(true);
+    expect(updated).toBe('// @inprogress #99:30m/DEV');
+  });
+
+  // #1116: a bare `@todo #N` (no :<est>/<ROLE> tail) is NOT a live puzzle marker
+  // — it is an incidental mention (velocity-CSV note, TIL, cross-reference) and
+  // must never be flipped, or the flip corrupts record/doc files.
+  test('does NOT flip a bare @todo #N with no :Est/ROLE tail (#1116)', () => {
+    const { flipped, updated } = applyMarkerFlip('// see @todo #88 in ilcc.js\n', '88');
+    expect(flipped).toBe(false);
+    expect(updated).toBe('// see @todo #88 in ilcc.js\n');
+  });
+
+  test('does NOT flip a velocity-CSV-style note mentioning the marker (#1116)', () => {
+    const note = '975,1027,research note,...,@todo #1028 placed,ELDERBERRY,opus-4.8,lccjs\n';
+    const { flipped, updated } = applyMarkerFlip(note, '1028');
+    expect(flipped).toBe(false);
+    expect(updated).toBe(note);
+  });
+
+  test('flips the canonical marker even when a bare mention precedes it (#1116)', () => {
+    // The bare mention (a note) sorts first but must be skipped; the real
+    // code-site marker below is the one that flips.
+    const content = '# note: @todo #1028 placed\n// @todo #1028:45m/RESEARCH wire it up\n';
+    const { flipped, updated, line } = applyMarkerFlip(content, '1028');
+    expect(flipped).toBe(true);
+    expect(line).toBe(2);
+    expect(updated).toBe('# note: @todo #1028 placed\n// @inprogress #1028:45m/RESEARCH wire it up\n');
   });
 
   test('returns content unchanged and flipped=false when no marker present', () => {

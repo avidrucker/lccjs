@@ -261,15 +261,22 @@ function assessBaseStaleness(base, behind) {
 const todoKw = '@' + 'todo';
 const inprogressKw = '@' + 'inprogress';
 
-// Pure: find the first at_todo #N marker in `content` and flip it to at_inprogress #N.
-// The negative lookahead (?![0-9]) guards against matching #42 inside #420.
+// Pure: find the first LIVE at_todo #N marker in `content` and flip it to
+// at_inprogress #N. A live marker is the canonical PDD shape
+// `at_todo #N:<est>/<ROLE>` (e.g. #134:60m/ARC) — the SAME shape
+// scripts/puzzle-status.js recognizes. Requiring the `:<est>/<ROLE>` tail is
+// what keeps the flip from rewriting an incidental *mention* of the string —
+// a velocity-CSV note ("...at_todo #1028 placed"), a TIL, or a "(see at_todo #88)"
+// cross-reference comment — none of which is a puzzle and none of which must be
+// touched (#1116). The required colon after the number also subsumes the old
+// #42-in-#420 guard (#420: cannot match the pattern #42:).
 // Returns { updated, flipped, line } where `line` is the 1-indexed line number (0 if
 // none found) and `updated` is the modified string. No file I/O — unit-testable.
 function applyMarkerFlip(content, issue) {
-  const re = new RegExp(`${todoKw} (#${issue}(?![0-9]))`);
+  const re = new RegExp(`${todoKw}(\\s+#${issue}:\\s*\\d+\\w*\\/[A-Z]+)`);
   const match = content.match(re);
   if (!match) return { updated: content, flipped: false, line: 0 };
-  const updated = content.replace(re, `${inprogressKw} $1`);
+  const updated = content.replace(re, `${inprogressKw}$1`);
   const line = content.slice(0, content.indexOf(match[0])).split('\n').length;
   return { updated, flipped: true, line };
 }
@@ -278,12 +285,16 @@ function applyMarkerFlip(content, issue) {
 // Prints a one-liner on success, skip, double-flip guard, or write failure.
 // The modified file is left unstaged — the agent commits it in their own commit.
 function flipMarker(issue, wtPath) {
-  const inprogress = sh(`git -C "${wtPath}" grep -l "${inprogressKw} #${issue}"`, true);
+  // Both greps match only the canonical marker shape (at_todo #N:<est>/<ROLE>),
+  // mirroring scripts/puzzle-status.js, so a bare mention of the string in a
+  // record/doc file (e.g. a velocity-CSV note) is never the double-flip guard
+  // nor the flip target (#1116). `-I` skips binary files.
+  const inprogress = sh(`git -C "${wtPath}" grep -lE "${inprogressKw} #${issue}:[0-9]"`, true);
   if (inprogress && inprogress.trim()) {
     console.log(`[claim] ${inprogressKw} #${issue} already present — skipping flip`);
     return;
   }
-  const grep = sh(`git -C "${wtPath}" grep -nE "${todoKw} #${issue}([^0-9]|$)"`, true);
+  const grep = sh(`git -C "${wtPath}" grep -nIE "${todoKw} #${issue}:[0-9]"`, true);
   if (!grep || !grep.trim()) {
     console.log(`[claim] no ${todoKw} #${issue} marker found — skipping flip`);
     return;
