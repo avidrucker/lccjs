@@ -152,7 +152,7 @@ code { font-family:var(--mono-font); }
 // subpackages; esm.sh cannot surface those re-exports regardless of ?bundle.
 // Fix: import each symbol from its source package, pinning them all to the same
 // @codemirror/state@6 instance via ?deps= so instanceof checks work. (#772)
-import { EditorView, keymap } from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
+import { EditorView, keymap, lineNumbers } from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
 import { basicSetup } from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
 import { indentWithTab, toggleLineComment } from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
 import { autocompletion } from 'https://esm.sh/@codemirror/autocomplete@6?deps=@codemirror/state@6';
@@ -169,9 +169,10 @@ const LCC_COMPLETIONS = [
   { label: 'r4', type: 'variable', detail: 'general-purpose' },
   { label: 'r5', type: 'variable', detail: 'fp (frame pointer)' },
   { label: 'r6', type: 'variable', detail: 'sp (stack pointer)' },
-  { label: 'r7', type: 'variable', detail: 'lr (link register / return address)' },
+  { label: 'r7', type: 'variable', detail: 'ra / lr (return address)' },
   { label: 'fp', type: 'variable', detail: '= r5 (frame pointer)' },
   { label: 'sp', type: 'variable', detail: '= r6 (stack pointer)' },
+  { label: 'ra', type: 'variable', detail: '= r7 (return address)' },
   { label: 'lr', type: 'variable', detail: '= r7 (link register)' },
   { label: 'add',  type: 'keyword', detail: 'rd, rs1, rs2' },
   { label: 'sub',  type: 'keyword', detail: 'rd, rs1, rs2' },
@@ -244,6 +245,7 @@ const editor = new EditorView({
   doc: "; helloWorld.a: print Hello, World! and halt\n        lea r0, msg\n        sout r0\n        nl\n        halt\nmsg:    .string \"Hello, World!\"",
   extensions: [
     basicSetup,
+    lineNumbers(), // basicSetup@0.20's gutter is inert under the @6 view; add an explicit @6 gutter (#1024, mirrors #985)
     lcc(),
     syntaxHighlighting(defaultHighlightStyle),
     keymap.of([indentWithTab, { key: 'Mod-/', run: toggleLineComment }]),
@@ -321,8 +323,13 @@ function finishRun() {
   hidePrompt();
 }
 
-function displayWithSeparator(fullOutput) {
-  return fullOutput || '(no output)';
+function displayWithSeparator(fullOutput, preResumeLen) {
+  if (!preResumeLen || !fullOutput || fullOutput.length <= preResumeLen) {
+    return fullOutput || '(no output)';
+  }
+  const pre = fullOutput.slice(0, preResumeLen);
+  const post = fullOutput.slice(preResumeLen);
+  return (pre.endsWith('\n') ? pre : pre + '\n') + post;
 }
 
 stopBtn.addEventListener('click', () => {
