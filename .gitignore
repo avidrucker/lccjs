@@ -44,3 +44,11 @@ stats/puzzle-velocity-enriched.csv
 # Playwright output
 test-results/
 playwright-report/
+
+# Generated showcase/playground site (#1075).
+# docs/site/** is rebuilt from source by `npm run build:site`, and CI (the Pages
+# workflow) is the sole producer of what actually deploys. Committing it only
+# created churn + merge conflicts and dirtied the tree on every local build,
+# blocking `npm run close`. The committed browser artifacts it COPIES from
+# (dist/lcc.bundle.js, dist/lang-lcc.js) are tracked under dist/, not here.
+docs/site/

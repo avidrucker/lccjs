@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
     paths:
+      # browser bundle sources — CI rebuilds the bundle, so a change here must
+      # redeploy (#1075). dist/** covers a manually re-committed bundle/lang file.
+      - 'src/browser/**'
+      - 'src/lang-lcc/**'
+      - 'dist/**'
+      - 'webpack.browser.config.js'
       # grammar + theme assets
       - 'docs/lcc.tmLanguage.json'
       - 'docs/themes/**'
@@ -77,6 +83,10 @@ jobs:
           node-version: '24'
           cache: 'npm'
       - run: npm ci
+      # Build the browser bundle FRESH in CI so the deployed playground engine can
+      # never lag src/browser/** (the #985/#986 silent-staleness class). build:site
+      # then copies the fresh dist/ artifacts into docs/site/. (#1075)
+      - run: npm run build:browser
       - run: npm run build:site
       - uses: actions/upload-pages-artifact@v3
         with:

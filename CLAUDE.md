@@ -133,7 +133,7 @@ Code-area scopes (assembler, interpreter, linker, plus, jest, cli, debug, etc.) 
 |------|----------|--------|
 | `pre-commit` | No code changes (`src/`, `scripts/`, `tests/`) staged directly on `main` | `git commit --no-verify` |
 | `commit-msg` | No issue-ID scopes; no compound types | `git commit --no-verify` |
-| `pre-push` | PDD puzzle scan; no conflict markers; no push mid-rebase | `git push --no-verify` |
+| `pre-push` | PDD puzzle scan; no conflict markers; no push mid-rebase; browser-bundle freshness (`src/browser/**` changed ⇒ `dist/**` must be re-committed, #1075) | `git push --no-verify` |
 
 Both hooks are in `scripts/git-hooks/` and stay current as the branch evolves (symlink, not a copy).
 

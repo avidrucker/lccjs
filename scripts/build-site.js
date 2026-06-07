@@ -391,6 +391,22 @@ ${listItems}
     console.warn('build:site — WARNING: dist/lcc.bundle.js not found; run `npm run build:browser` first');
   }
 
+  // Copy the CodeMirror 6 language support into docs/site/dist/ so the playground's
+  // `import { lcc } from '../dist/lang-lcc.js'` resolves. Unlike lcc.bundle.js this
+  // file is NOT produced by webpack — it is a hand-maintained, CDN-ready ESM module
+  // (see its header) that lives canonically at dist/lang-lcc.js alongside the other
+  // committed browser artifacts. Copying it here keeps docs/site/** 100% generated
+  // so it can stay gitignored (#1075).
+  const LANG_SRC  = path.join(ROOT, 'dist', 'lang-lcc.js');
+  const LANG_DEST = path.join(OUT_DIR, 'dist', 'lang-lcc.js');
+  if (fs.existsSync(LANG_SRC)) {
+    fs.mkdirSync(path.dirname(LANG_DEST), { recursive: true });
+    fs.copyFileSync(LANG_SRC, LANG_DEST);
+    console.log(`build:site — lang:    ${path.relative(ROOT, LANG_DEST)}`);
+  } else {
+    console.warn('build:site — WARNING: dist/lang-lcc.js not found; playground syntax highlighting will break');
+  }
+
   const playgroundThemeOptions = THEMES.map(({ id, label }) =>
     `      <option value="${id}"${id === DEFAULT_THEME ? ' selected' : ''}>${label}</option>`
   ).join('\n');
