@@ -11,6 +11,7 @@
     "test:browser": "playwright test tests/browser/",
     "puzzle:status": "node scripts/puzzle-status.js",
     "puzzles": "bash scripts/run-pdd.sh",
+    "preflight": "node scripts/preflight.js",
     "claim": "bash scripts/claim.sh",
     "close": "exec node scripts/close.js",
     "setup": "bash scripts/setup-hooks.sh",
