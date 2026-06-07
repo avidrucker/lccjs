@@ -1,6 +1,6 @@
 'use strict';
 
-const { shouldBlockClaim, parseArgs, findLiveWorktreeForIssue, shouldBlockWorktreeGuard } = require('../../scripts/claim');
+const { shouldBlockClaim, parseArgs, findLiveWorktreeForIssue, shouldBlockWorktreeGuard, needsAreaLabel } = require('../../scripts/claim');
 
 // #227: claim.js must refuse to stake a worktree for an already-CLOSED issue, but
 // ONLY on a *definitive* CLOSED state. A missing/unknown issue or an unavailable
@@ -27,6 +27,36 @@ describe('claim.js shouldBlockClaim() -- #227 closed-issue guard', () => {
 
   test('an unexpected/empty state is not blocked (only CLOSED is definitive)', () => {
     expect(shouldBlockClaim({ title: 't', state: '' }, false)).toBe(false);
+  });
+});
+
+// #1013 (child of #1004): claim.js nudges — never blocks — when the claimed issue
+// still carries only the auto-applied `area:uncategorized` placeholder, or has no
+// `area:*` label at all. These exercise the pure decision seam (no gh round-trip).
+describe('claim.js needsAreaLabel() -- #1013 area-label nudge', () => {
+  test('warns when the issue carries area:uncategorized', () => {
+    expect(needsAreaLabel(['bug', 'area:uncategorized'])).toBe(true);
+  });
+
+  test('warns when the issue has no area:* label at all', () => {
+    expect(needsAreaLabel(['bug', 'severity:medium'])).toBe(true);
+  });
+
+  test('warns when the label set is empty', () => {
+    expect(needsAreaLabel([])).toBe(true);
+  });
+
+  test('does NOT warn when a real area label is present', () => {
+    expect(needsAreaLabel(['area:process', 'bug'])).toBe(false);
+  });
+
+  test('still warns when area:uncategorized sits alongside a real area label', () => {
+    expect(needsAreaLabel(['area:process', 'area:uncategorized'])).toBe(true);
+  });
+
+  test('non-array (gh offline / unknown labels) is best-effort: no warning', () => {
+    expect(needsAreaLabel(null)).toBe(false);
+    expect(needsAreaLabel(undefined)).toBe(false);
   });
 });
 

@@ -302,11 +302,11 @@ function flipMarker(issue, wtPath) {
 }
 
 // Read an issue's title, state, and comment count in one best-effort gh round-trip
-// (#227, #661). Returns { title, state, commentCount } with state upper-cased, or
-// null when gh is unavailable / the issue is unknown -- callers MUST treat null as
-// "proceed", never as a block.
+// (#227, #661, #1013). Returns { title, state, commentCount, labels } with state
+// upper-cased and labels as a name array, or null when gh is unavailable / the
+// issue is unknown -- callers MUST treat null as "proceed", never as a block.
 function readIssue(issue) {
-  const out = sh(`gh issue view ${issue} --json title,state,comments`, true);
+  const out = sh(`gh issue view ${issue} --json title,state,comments,labels`, true);
   if (!out) return null;
   try {
     const j = JSON.parse(out);
@@ -314,6 +314,7 @@ function readIssue(issue) {
       title: j.title || null,
       state: String(j.state || '').toUpperCase(),
       commentCount: Array.isArray(j.comments) ? j.comments.length : 0,
+      labels: Array.isArray(j.labels) ? j.labels.map((l) => l && l.name).filter(Boolean) : [],
     };
   } catch {
     return null;
@@ -327,6 +328,20 @@ function readIssue(issue) {
 function shouldBlockClaim(info, force) {
   if (force) return false;
   return !!(info && info.state === 'CLOSED');
+}
+
+// Pure decision seam (#1013, child of #1004): given an issue's label-name array,
+// return true when the agent should be nudged to assign a real area before work —
+// i.e. the issue has NO `area:*` label, or still carries the auto-applied
+// `area:uncategorized` placeholder (even alongside a real one). Warn-only, never a
+// block: a null/absent label set (gh offline) returns false so the offline-first
+// workflow proceeds unprompted. Kept pure (no I/O) so it is unit-testable, like
+// shouldBlockClaim / assessBaseStaleness.
+function needsAreaLabel(labels) {
+  if (!Array.isArray(labels)) return false;
+  const areas = labels.filter((l) => typeof l === 'string' && l.startsWith('area:'));
+  if (areas.length === 0) return true;
+  return areas.includes('area:uncategorized');
 }
 
 // Validate the resolved identity name against the known fruit list (#366 Option C).
@@ -430,6 +445,18 @@ function main() {
   const info = readIssue(issue);
   if (shouldBlockClaim(info, opts.force)) {
     die(`#${issue} is CLOSED -- nothing to claim (raced a concurrent close? cf. #223). Pass --force to claim it anyway.`);
+  }
+
+  // Area-label nudge (#1013, child of #1004): warn — never block — when the claimed
+  // issue still carries only the auto-applied `area:uncategorized` placeholder, or
+  // has no `area:*` label at all. Makes the placeholder actionable rather than
+  // decorative. Mirrors the warn-style guards (checkIdentityName, warnOrphanedWork-
+  // trees); offline (info === null) stays silent, like shouldBlockClaim.
+  if (info && needsAreaLabel(info.labels)) {
+    console.error(
+      `[claim] ⚠ issue #${issue} has no real area:* label (only area:uncategorized or none). ` +
+      `Assign one before starting:\n` +
+      `  gh issue edit ${issue} --add-label "area:<name>" --remove-label area:uncategorized`);
   }
 
   // Derive a slug from the issue title if none was given (best-effort).
@@ -615,7 +642,7 @@ if (require.main === module) main();
 module.exports = {
   FRUITS, slugify, listWorktreeBranches, worktreesWithIssue, takenFruits,
   parseArgs, normalizeIdentity, inferFruitFromBranch, resolveIdentity, assessBaseStaleness,
-  checkIdentityName, readIssue, shouldBlockClaim,
+  checkIdentityName, readIssue, shouldBlockClaim, needsAreaLabel,
   sentinelBranch, isSentinelStaleByAge,
   applyMarkerFlip, buildBannerLines, findLiveWorktreeForIssue, findSameIssueCollision,
   shouldBlockWorktreeGuard,
