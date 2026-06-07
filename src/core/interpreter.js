@@ -1131,7 +1131,7 @@ class Interpreter {
         // decrement stack pointer and store value
         this.r[6] = (this.r[6] - 1) & 0xFFFF;
         // save source register to memory at address pointed at by stack pointer
-        this.mem[this.r[6]] = this.r[this.sr];
+        this.storeMem(this.r[6], this.r[this.sr]);
         break;
       case EOP_POP: // POP // dr = mem[sp++];
         // load value from memory at address pointed at by stack pointer to destination
@@ -1288,9 +1288,20 @@ class Interpreter {
     this.r[this.dr] = this.mem[address];
   }
 
+  // storeMem(address, value) — the single choke point for every *runtime* memory
+  // store (ST/STR/PUSH and memory-writing traps). Subclasses observe stores here
+  // to record an undo-log / trace without re-scanning memory: the interactive
+  // debugger overrides this to capture address+old value so backward stepping can
+  // undo writes anywhere in the 64K space, including the stack above memMax
+  // (#1085; the store-observer #252 asks for). Load-time writes go direct to
+  // this.mem and are deliberately NOT routed here.
+  storeMem(address, value) {
+    this.mem[address] = value;
+  }
+
   executeST() {
     const address = (this.pc + this.pcoffset9) & 0xFFFF;
-    this.mem[address] = this.r[this.sr];
+    this.storeMem(address, this.r[this.sr]);
     if (address > this.memMax) this.memMax = address;
   }
 
@@ -1309,7 +1320,7 @@ class Interpreter {
 
   executeSTR() {
     const address = (this.r[this.baser] + this.offset6) & 0xFFFF;
-    this.mem[address] = this.r[this.sr];
+    this.storeMem(address, this.r[this.sr]);
   }
 
   executeJMP() {
@@ -1469,11 +1480,11 @@ class Interpreter {
     }
 
     for (let i = 0; i < input.length; i++) {
-      this.mem[address] = input.charCodeAt(i);
+      this.storeMem(address, input.charCodeAt(i));
       address = (address + 1) & 0xFFFF;
     }
     // Null-terminate the string
-    this.mem[address] = 0;
+    this.storeMem(address, 0);
 
     // add newline here if input is simulated
     if (isSimulated) {

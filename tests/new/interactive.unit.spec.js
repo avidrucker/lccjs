@@ -17,6 +17,16 @@ const MIN_EXE = Buffer.from([0x6f, 0x43, 0x05, 0xd0, 0x02, 0xf0, 0x01, 0xf0, 0x0
 //   0x0000 = val (data, initial=0)
 const ST_EXE = Buffer.from([0x6f, 0x43, 0x63, 0xd0, 0x01, 0x30, 0x00, 0xf0, 0x00, 0x00]);
 
+// PUSH executable: mvi r0, 42  →  push r0  →  halt
+// Used to test Gap A (#1085): a stack write lands ABOVE the loaded program
+// region (sp starts at 0, push decrements to 0xFFFF and writes there), so the
+// old loadPoint..memMax scan never saw it and could not undo it on step-back.
+// Encoding:
+//   0xD02A = MVI r0, 42  (opcode=13, dr=0, imm8=0x2A)
+//   0xA000 = PUSH r0     (opcode=10, sr=0, eopcode=0 → mem[--sp] = r0)
+//   0xF000 = HALT
+const PUSH_EXE = Buffer.from([0x6f, 0x43, 0x2a, 0xd0, 0x00, 0xa0, 0x00, 0xf0]);
+
 /** Load an executable buffer into a fresh IInterpreter without running it. */
 function loadedInterp(exe = MIN_EXE) {
   const interp = new IInterpreter();
@@ -82,21 +92,10 @@ describe('IInterpreter.initSnapshot()', () => {
     expect(interp.snapshot[0].flags).toEqual({ c: 0, v: 0, n: 0, z: 0 });
   });
 
-  test('snapshot[0].memory.hasChanged is false', () => {
+  test('snapshot[0] has no memory writes (baseline has nothing to undo)', () => {
     const interp = loadedInterp();
     interp.initSnapshot();
-    expect(interp.snapshot[0].memory.hasChanged).toBe(false);
-  });
-
-  test('snapshot[0].memory.new matches initial memory range', () => {
-    const interp = loadedInterp();
-    interp.initSnapshot();
-    const { address, new: newMem } = interp.snapshot[0].memory;
-    // The memory region should be non-empty and match initialMem at those addresses
-    expect(newMem.length).toBeGreaterThan(0);
-    for (let i = 0; i < newMem.length; i++) {
-      expect(newMem[i]).toBe(interp.initialMem[address + i]);
-    }
+    expect(interp.snapshot[0].memory.writes).toEqual([]);
   });
 
   test('currentIteration remains 0 after initSnapshot()', () => {
@@ -159,32 +158,45 @@ describe('IInterpreter.step() — snapshot logging', () => {
     expect(interp.snapshot[1].ir).toBe(0xD005);
   });
 
-  test('after non-memory-writing step: memory.hasChanged is false', () => {
+  test('after non-memory-writing step: memory.writes is empty', () => {
     const interp = snapshotInterp();
     interp.step(); // MVI r0, 5 — no memory write
-    expect(interp.snapshot[1].memory.hasChanged).toBe(false);
+    expect(interp.snapshot[1].memory.writes).toEqual([]);
   });
 
-  test('after ST: memory.hasChanged is true', () => {
+  test('after ST: exactly one write is recorded', () => {
     const interp = snapshotInterp(ST_EXE);
     interp.step(); // MVI r0, 99
     interp.step(); // ST r0, 3
-    expect(interp.snapshot[2].memory.hasChanged).toBe(true);
+    expect(interp.snapshot[2].memory.writes).toHaveLength(1);
   });
 
-  test('after ST: memory.address points to the written location', () => {
+  test('after ST: the write points to the written location', () => {
     const interp = snapshotInterp(ST_EXE);
     interp.step(); // MVI r0, 99
     interp.step(); // ST r0, 3
-    expect(interp.snapshot[2].memory.address).toBe(3);
+    expect(interp.snapshot[2].memory.writes[0].address).toBe(3);
   });
 
-  test('after ST: memory.old was 0, memory.new is 99', () => {
+  test('after ST: the write records old 0 and new 99', () => {
     const interp = snapshotInterp(ST_EXE);
     interp.step(); // MVI r0, 99
     interp.step(); // ST r0, 3
-    expect(interp.snapshot[2].memory.old).toEqual([0]);
-    expect(interp.snapshot[2].memory.new).toEqual([99]);
+    expect(interp.snapshot[2].memory.writes[0].old).toBe(0);
+    expect(interp.snapshot[2].memory.writes[0].new).toBe(99);
+  });
+
+  test('Gap A (#1085): a stack PUSH above memMax is captured in the undo-log', () => {
+    const interp = snapshotInterp(PUSH_EXE);
+    interp.step(); // MVI r0, 42
+    interp.step(); // PUSH r0 → mem[0xFFFF] = 42, far above memMax
+    const writes = interp.snapshot[2].memory.writes;
+    expect(writes).toHaveLength(1);
+    expect(writes[0].address).toBe(0xFFFF);
+    expect(writes[0].old).toBe(0);
+    expect(writes[0].new).toBe(42);
+    // Sanity: the write really is outside the scanned program region.
+    expect(writes[0].address).toBeGreaterThan(interp.memMax);
   });
 
   test('efficient mode: snapshot never exceeds length 2', () => {
@@ -259,6 +271,16 @@ describe('IInterpreter.handleSteps() — forward/backward navigation', () => {
     expect(interp.mem[3]).toBe(99); // confirm write happened
     interp.handleSteps(-1); // undo ST
     expect(interp.mem[3]).toBe(0);  // memory restored to pre-ST value
+  });
+
+  test('Gap A (#1085): PUSH then backward restores the stack word', () => {
+    const interp = snapshotInterp(PUSH_EXE);
+    interp.handleSteps(2); // MVI r0, 42  →  PUSH r0
+    const sp = interp.r[6] & 0xFFFF;
+    expect(sp).toBe(0xFFFF);          // sp grew down off the top of memory
+    expect(interp.mem[0xFFFF]).toBe(42); // confirm the stack write happened
+    interp.handleSteps(-1);           // step back over the PUSH
+    expect(interp.mem[0xFFFF]).toBe(0); // stack contents restored, not just sp
   });
 
   test('efficient mode: backward step is ignored', () => {

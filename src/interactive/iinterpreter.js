@@ -25,6 +25,7 @@ class IInterpreter extends Interpreter {
     this.snapshot = [];           // Per-instruction state deltas; index 0 = initial state
     this.currentIteration = 0;   // Which snapshot index is currently active (≥ 0)
     this.memoryChange = null;     // Most-recent memory delta; set by initSnapshot() and step()
+    this._stepWrites = [];        // Writes captured by storeMem() during the in-flight step()
 
     // Mode flags (set from CLI options in runInteractive)
     this.efficientMode = false;   // -e: disable snapshot logging (forward-only, lower memory)
@@ -62,6 +63,22 @@ class IInterpreter extends Interpreter {
     this.output += message;
   }
 
+  // storeMem(address, value) — observe every runtime memory store so the undo-log
+  // can reverse it on backward step, regardless of where it lands. This replaces
+  // the old per-step full-region scan (loadPoint..memMax), which silently missed
+  // writes on the stack — `call`/`push`/locals all write high addresses above
+  // memMax — so step-back left the stack contents stale (#1085, Gap A of #1043).
+  // We record the OLD value before delegating the write; step() collects these
+  // into the snapshot. Each capture is {address, old, new}; a single instruction
+  // may produce several (e.g. the sin trap writes a whole string).
+  // Efficient mode disables backward stepping, so skip the bookkeeping there.
+  storeMem(address, value) {
+    if (!this.efficientMode) {
+      this._stepWrites.push({ address, old: this.mem[address], new: value });
+    }
+    super.storeMem(address, value);
+  }
+
   // initSnapshot() — capture the pre-execution initial machine state as snapshot[0].
   // Must be called AFTER loadExecutableBuffer() and this.initialMem = this.mem.slice()
   // so that this.loadPoint, this.memMax, this.pc, this.r, this.initialMem are all set.
@@ -69,12 +86,11 @@ class IInterpreter extends Interpreter {
   initSnapshot() {
     this.snapshot = [];
     this.currentIteration = 0;
-    this.memoryChange = {
-      hasChanged: false,
-      address: this.loadPoint,
-      old: Array(this.memMax + 1 - this.loadPoint).fill(0),
-      new: Array.from(this.initialMem.slice(this.loadPoint, this.memMax + 1)),
-    };
+    // snapshot[0] is the pre-execution baseline; it has no write to undo. Memory
+    // is restored by replaying per-step write deltas in reverse down to
+    // targetIteration+1, so snapshot[0].memory.writes is never replayed — an
+    // empty list is correct and sufficient (#1085).
+    this.memoryChange = { writes: [] };
     const logEntry = {
       pc: this.pc,
       ir: 0,
@@ -89,9 +105,11 @@ class IInterpreter extends Interpreter {
   // step() — execute one instruction and record a state delta in snapshot[].
   // Overrides Interpreter.step() to add snapshot logging.
   //
-  // Memory-change detection: scans loadPoint..memMax before and after execution
-  // to find the first word that changed. Covers ST/STR/LD-style writes within
-  // the loaded program region; stack writes (outside memMax) are not tracked here.
+  // Memory-change capture: every store routes through storeMem() (overridden
+  // above), which records {address, old, new} into this._stepWrites — regardless
+  // of region. This replaces the old per-step full-region scan that missed stack
+  // writes (Gap A, #1085) and could only ever record one changed word per step.
+  // The delta stored in each snapshot entry is { writes: [...] }.
   //
   // Snapshot indexing:
   //   - snapshot[0] = initial state (from initSnapshot())
@@ -99,43 +117,23 @@ class IInterpreter extends Interpreter {
   //   - currentIteration tracks which snapshot index is the current position
   //   - In efficient mode: only the two most-recent entries are kept
   step() {
-    // 1. Capture pre-step state
-    const preRegs = Array.from(this.r);
-    const preFlags = { c: this.c, v: this.v, n: this.n, z: this.z };
-    const loadPt = this.loadPoint;
-    const scanMax = this.memMax;
-    const preMem = this.mem.slice(loadPt, scanMax + 1);
+    // 1. Reset the per-step write log; storeMem() appends to it during execution.
+    this._stepWrites = [];
 
-    // 2. Reset memory-change tracking for this instruction
-    this.memoryChange = {
-      hasChanged: false,
-      address: null,
-      old: null,
-      new: null,
-    };
-
-    // 3. Execute the instruction
+    // 2. Execute the instruction (stores are captured via storeMem()).
     super.step();
 
-    // 4. Detect first changed address in the loaded program region
-    for (let i = 0; i < preMem.length; i++) {
-      if (this.mem[loadPt + i] !== preMem[i]) {
-        this.memoryChange.hasChanged = true;
-        this.memoryChange.address = loadPt + i;
-        this.memoryChange.old = [preMem[i]];
-        this.memoryChange.new = [this.mem[loadPt + i]];
-        break;
-      }
-    }
+    // 3. Record this step's memory writes as the delta.
+    this.memoryChange = { writes: this._stepWrites };
 
-    // 5. Build the log entry for this step
+    // 4. Build the log entry for this step
     const logEntry = {
       pc: this.pc,
       ir: this.ir,
       running: this.running,
       registers: Array.from(this.r),
       flags: { c: this.c, v: this.v, n: this.n, z: this.z },
-      memory: { ...this.memoryChange },
+      memory: this.memoryChange,
     };
 
     // 6. Append / overwrite snapshot at the next position
@@ -189,10 +187,10 @@ class IInterpreter extends Interpreter {
   // in snapshot[targetIteration].
   //
   // CPU (pc, flags, registers) is read directly from the snapshot entry.
-  // Memory is restored by replaying memory deltas in reverse: for each step from
-  // currentIteration down to targetIteration+1, undo the memory write if hasChanged.
-  // We stop at targetIteration+1 (not targetIteration) because the delta recorded in
-  // snapshot[N] was the write that PRODUCED state N; it should remain applied.
+  // Memory is restored by replaying write deltas in reverse: for each step from
+  // currentIteration down to targetIteration+1, undo that step's writes.
+  // We stop at targetIteration+1 (not targetIteration) because the writes recorded
+  // in snapshot[N] PRODUCED state N; they should remain applied.
   restorePrevState(targetIteration) {
     const log = this.snapshot[targetIteration];
 
@@ -205,22 +203,23 @@ class IInterpreter extends Interpreter {
     this.z = log.flags.z;
     for (let i = 0; i < 8; i++) this.r[i] = log.registers[i];
 
-    // Restore memory by undoing writes from currentIteration down to targetIteration+1
+    // Restore memory by undoing each step's writes from currentIteration down to
+    // targetIteration+1.
     for (let i = this.currentIteration; i > targetIteration; i--) {
-      if (this.snapshot[i] && this.snapshot[i].memory.hasChanged) {
-        this.restorePrevMemory(i);
-      }
+      this.restorePrevMemory(i);
     }
   }
 
-  // restorePrevMemory(state) — undo the memory write recorded in snapshot[state]
-  // by writing snapshot[state].memory.old back into this.mem.
+  // restorePrevMemory(state) — undo the memory writes recorded in snapshot[state]
+  // by writing each captured old value back into this.mem. Writes are undone in
+  // reverse capture order so overlapping writes within a single step (e.g. two
+  // stores to the same address) restore the correct earliest value.
   restorePrevMemory(state) {
-    const delta = this.snapshot[state].memory;
-    if (delta.address != null) {
-      for (let i = 0; i < delta.old.length; i++) {
-        this.mem[delta.address + i] = delta.old[i];
-      }
+    const entry = this.snapshot[state];
+    const writes = entry && entry.memory && entry.memory.writes;
+    if (!writes) return;
+    for (let i = writes.length - 1; i >= 0; i--) {
+      this.mem[writes[i].address] = writes[i].old;
     }
   }
 
