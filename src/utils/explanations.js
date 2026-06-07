@@ -9,9 +9,10 @@
 // Pure data + lookup: no console, no I/O. The render wrappers (assembler's
 // formatAssemblerError, cliExit's exit helpers) own where the block is printed.
 //
-// This is the infra slice: pcoffset9 is wired end-to-end here. The remaining
-// error classes are filled in by the content batches (#1097–#1101); each adds
-// its entries to this table and attaches the key at its throw sites.
+// pcoffset9 was wired end-to-end by the infra slice (#1096). The encoding/range
+// batch (#1097) adds imm5/imm9/pcoffset11. The remaining error classes are
+// filled in by the later content batches (#1098–#1101); each adds its entries to
+// this table and attaches the key at its throw sites.
 
 'use strict';
 
@@ -32,6 +33,23 @@ const EXPLANATIONS = {
     correctForm:
       'Place the callee within range, or compute its address in a register and ' +
       'call through the register form.',
+  },
+  IMM5_RANGE: {
+    concept:
+      'An immediate operand on a register/immediate instruction (e.g. add, sub) is ' +
+      'encoded in a signed 5-bit field, so it must lie within -16..15. A literal ' +
+      'outside that window cannot be encoded inline.',
+    correctForm:
+      'Use a value in -16..15, or load the constant into a register first ' +
+      '(e.g. `mvi r2, 1000`) and use the register-register form (e.g. `add r0, r1, r2`).',
+  },
+  IMM9_RANGE: {
+    concept:
+      'A mov/mvi immediate is encoded in a signed 9-bit field, so it must lie ' +
+      'within -256..255. A larger constant cannot be moved in a single immediate.',
+    correctForm:
+      'Use a value in -256..255, or store the constant in memory with `.word` and ' +
+      'load it (e.g. `lea r0, k` then `ldr r0, r0, 0`, with `k: .word 30000`).',
   },
 };
 

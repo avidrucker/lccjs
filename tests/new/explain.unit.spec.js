@@ -142,3 +142,64 @@ describe('pcoffset9 tracer bullet — end to end through assembleSource', () => 
     expect(out).not.toContain('explain:');
   });
 });
+
+describe('encoding/range explain content (#1097)', () => {
+  // One row per wired throw site: a minimal source that forces the specific
+  // out-of-range error, plus the explainKey whose concept text must appear.
+  const CASES = [
+    { name: 'imm5 (add immediate)', key: 'IMM5_RANGE',
+      message: 'imm5 out of range',
+      src: '        add r0, r1, 99\n        halt\n' },
+    { name: 'imm9 (mov immediate)', key: 'IMM9_RANGE',
+      message: 'mov immediate value out of range',
+      src: '        mov r0, 9999\n        halt\n' },
+    { name: 'imm9 (mvi immediate)', key: 'IMM9_RANGE',
+      message: 'mvi immediate out of range',
+      src: '        mvi r0, 9999\n        halt\n' },
+    { name: 'pcoffset11 (bl target)', key: 'PCOFFSET11_RANGE',
+      message: 'pcoffset11 out of range',
+      src: '        bl far\n        .org 0x800\nfar:    halt\n' },
+  ];
+
+  test.each(CASES)('$name: catalog has a {concept, correctForm} entry', ({ key }) => {
+    const e = getExplanation(key);
+    expect(e).toBeTruthy();
+    expect(e.concept.length).toBeGreaterThan(0);
+    expect(e.correctForm.length).toBeGreaterThan(0);
+  });
+
+  describe('end to end through assembleSource', () => {
+    let errSpy;
+    beforeEach(() => {
+      errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+    afterEach(() => jest.restoreAllMocks());
+    const errOut = () => errSpy.mock.calls.map((c) => c.join(' ')).join('\n');
+
+    test.each(CASES)(
+      '$name: --explain renders the message AND its explain block',
+      ({ key, message, src }) => {
+        const a = new Assembler();
+        a.explainModeOn = true;
+        expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
+        const out = errOut();
+        expect(out).toContain(message);
+        expect(out).toContain('explain:');
+        expect(out).toContain(getExplanation(key).concept);
+      }
+    );
+
+    test.each(CASES)(
+      '$name: without --explain, the message is bare (no explain block)',
+      ({ message, src }) => {
+        const a = new Assembler();
+        a.explainModeOn = false;
+        expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
+        const out = errOut();
+        expect(out).toContain(message);
+        expect(out).not.toContain('explain:');
+      }
+    );
+  });
+});

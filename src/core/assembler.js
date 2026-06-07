@@ -1337,7 +1337,7 @@ class Assembler {
 
     if(!this.isRegister(sr2orImm5)) {
       // compare with immediate
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5");
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5", 'IMM5_RANGE');
       macword = macword | (sr1 << 6) | (imm5 & 0x1F) | 0x0020;
     } else {
       // compare with register
@@ -1416,7 +1416,7 @@ class Assembler {
       let sr2 = this.getRegister(sr2orImm5);
       macword |= sr2;
     } else {
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5");
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, "imm5", 'IMM5_RANGE');
       if (imm5 === null) {
         this.failAssembly('Bad number', 1);
       };
@@ -1444,7 +1444,7 @@ class Assembler {
       let sr2 = this.getRegister(sr2orImm5);
       macword |= sr2;
     } else {
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5');
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5', 'IMM5_RANGE');
       if (imm5 === null) {
         this.failAssembly('Bad number', 1);
       };
@@ -1603,7 +1603,7 @@ class Assembler {
       let sr2 = this.getRegister(sr2orImm5);
       macword |= sr2;
     } else {
-      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5');
+      let imm5 = this.evaluateImmediate(sr2orImm5, -16, 15, 'imm5', 'IMM5_RANGE');
       if (imm5 === null || imm5 === undefined) {
         this.failAssembly('Bad number', 1);
       };
@@ -1762,7 +1762,7 @@ class Assembler {
     } else {
       pcoffset11 = address - this.locCtr - 1;
       if (pcoffset11 < -1024 || pcoffset11 > 1023) {
-        this.error('pcoffset11 out of range');
+        this.error('pcoffset11 out of range', null, 'PCOFFSET11_RANGE');
         return null;
       }
     }
@@ -1861,7 +1861,7 @@ class Assembler {
         // Translate to 'mvi dr, imm9' — same range (-256..255) and machine code as mvi.
         // Charlie confirmed: mov dr, imm9 is a pseudo-instruction for mvi dr, imm9.
         // The oracle's rejection of negatives is a known oracle bug (OB-001).
-        let imm9 = this.evaluateImmediate(operands[1], -256, 255, "mov immediate value");
+        let imm9 = this.evaluateImmediate(operands[1], -256, 255, "mov immediate value", 'IMM9_RANGE');
         if (imm9 === null) {
           this.failAssembly('Missing number', 1);
         };
@@ -1872,7 +1872,7 @@ class Assembler {
     } else if (mnemonic === 'mvi') {
 
       // mvi dr, imm9
-      let imm9 =  this.evaluateImmediate(operands[1], -256, 255, "mvi immediate"); // this.evaluateImmediate(operands[1], -256, 255);
+      let imm9 =  this.evaluateImmediate(operands[1], -256, 255, "mvi immediate", 'IMM9_RANGE'); // this.evaluateImmediate(operands[1], -256, 255);
       if (imm9 === null) {
         this.failAssembly('Missing number', 1);
       };
@@ -2171,7 +2171,7 @@ class Assembler {
     return this.isCharLiteral(operand) || !isNaN(operand) || this.isValidHexNumber(operand);
   }
 
-  evaluateImmediate(valueStr, min, max, type='') {
+  evaluateImmediate(valueStr, min, max, type='', explainKey=null) {
     let value = this.parseNumber(valueStr);
 
     if (isNaN(value)) {
@@ -2181,7 +2181,7 @@ class Assembler {
 
     if (value < min || value > max) {
       // this.error(`Immediate value out of range: ${valueStr}`);
-      this.error(`${type} out of range`);
+      this.error(`${type} out of range`, null, explainKey);
       return null;
     }
     return value;
