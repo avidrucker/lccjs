@@ -26,6 +26,16 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Cleanup in Bash calls
+
+**Issue `rm`/cleanup as its own Bash call — never append it to a command that does real work**
+
+- **Do:** run the substantive command (assemble, run tests, query the DB, generate a file) on its own; if scratch files need removing, delete them in a separate, later Bash call.
+- **Don't:** append `&& rm scratch.tmp` (or a heredoc cleanup tail) to a command that also does the real work.
+- **Why:** bundling cleanup into a substantive command triggers a permission denial for the *whole* command — the real work is rejected along with the `rm`. Four `TOOL_DENIED` rows share this exact root cause (one recurred ~4×, resolved each time by re-running the same command without the `rm` tail — audit #1007). Keeping cleanup separate avoids the denial regardless of how the broader scratch-file `rm`-permission *policy* (#968) is ultimately decided — this is the safe tactic, not a policy change.
+
+---
+
 ## Waiting for background tasks
 
 **Wait for the `<task-notification>` event; do NOT poll with `until grep`**
