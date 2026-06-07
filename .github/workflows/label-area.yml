@@ -1,0 +1,37 @@
+name: Auto-label uncategorized issues
+
+# Structural enforcement at creation time: any issue opened without an `area:*`
+# label gets `area:uncategorized` so unlabeled issues can't silently accumulate
+# until someone tries to claim them. Cannot be bypassed by direct
+# `gh issue create`, since the runner reacts to the `issues: opened` event. (#1012)
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  label-area:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply area:uncategorized when no area:* label is present
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const hasArea = (issue.labels || []).some(
+              (l) => (typeof l === 'string' ? l : l.name).startsWith('area:')
+            );
+            if (hasArea) {
+              core.info(`#${issue.number} already has an area:* label — nothing to do.`);
+              return;
+            }
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: ['area:uncategorized'],
+            });
+            core.info(`Applied area:uncategorized to #${issue.number}.`);
