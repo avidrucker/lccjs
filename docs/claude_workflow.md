@@ -127,6 +127,15 @@ If any file your ticket will touch is untracked or modified on main, commit or s
 - **Stay in scope.** Anything outside the ticket gets logged as a finding, not pursued.
 - **Tracker tickets require a child issue before any work.** If the assigned ticket is a tracker (body says "stays open until children resolve"), file a concrete child issue for the chosen sub-item *before* claiming a worktree or starting work. Velocity is logged on the child; the tracker stays open. No exceptions for small or obvious items. (RULES.md #12)
 - **Surface findings as I notice them — file tickets immediately and unilaterally.** Open questions, unexpected behaviour, brittle code, or deferred work discovered mid-task all become GitHub issues, filed without asking permission. The tracker is the only shared memory that survives context compaction and agent rotation; if something isn't filed, it disappears. Filing is not a destructive action — a wrong ticket can be closed immediately. Cite the new number inline and move on: "Filed #N for X — continuing." Do **not** ask "should I create a ticket?" or "want me to file an issue?" (#511)
+- **Pre-state decision criteria when filing a RESEARCH or triage ticket.** When the deliverable is to classify or triage a set of items, write the decision rule into the issue body so the executing agent does lookups, not judgment calls. A criteria block makes triage mechanical (the #933 triage processed 14 items in ~2 minutes this way). Example:
+  ```
+  **Decision criteria:**
+  1. Fix to an existing artifact → DATA or STATS ticket
+  2. New analysis → RESEARCH or SPIKE ticket
+  3. Blocked on data volume → explicit defer with threshold (e.g. "revisit at day 14")
+  4. Already covered → link and close
+  ```
+  An author who states the criteria up front has already made the judgment calls; the triage agent should not have to re-derive them. (#1001)
 - **Issue titles must use `ROLE:` prefix — commit format is prohibited.** (#641) Every issue title must begin with an uppercase role word followed by a colon and a space: `ROLE: short description`. The commit-message format (`type(scope): description`) is **never** valid as an issue title — do not write `fix(linker): …` or `docs(learnings): …` in a GitHub issue title.
 
   Canonical role vocabulary (use exactly as shown):
