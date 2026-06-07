@@ -1,0 +1,8 @@
+; echo.a — read one line from stdin and echo it back (no trailing newline).
+; Used by the test-runner e2e suite to exercise the real piped-stdin path and
+; prove the runner pre-seeds name.nnn (otherwise the name prompt eats this input).
+  lea r0, buf
+  sin r0
+  sout r0
+  halt
+buf: .zero 80

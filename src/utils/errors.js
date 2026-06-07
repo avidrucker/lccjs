@@ -33,6 +33,12 @@ class LinkerError extends LccError {}
 // free of console output / process.exit (#1090).
 class TestSpecError extends LccError {}
 
+// Thrown by the test-runner core (runTestSpec) on a harness-level failure that
+// is not a per-case test result — e.g. the spec's program file does not exist.
+// The CLI maps this to exit code 2 ("your harness is broken"), distinct from a
+// failing test case (exit 1). See docs/research/1044-yaml-test-runner-scope.md §5 (#1091).
+class TestRunnerError extends LccError {}
+
 // Not an error — a non-local exit used to suspend execution when
 // inputBuffer is exhausted and pauseOnInput is enabled.
 class InputPauseSignal {
@@ -46,6 +52,7 @@ module.exports = {
   AssemblerError,
   LinkerError,
   TestSpecError,
+  TestRunnerError,
   InvalidExecutableFormatError,
   InterpreterRuntimeError,
   InputPauseSignal,
