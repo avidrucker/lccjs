@@ -6,7 +6,10 @@ const lccParser = parser.configure({
   props: [
     styleTags({
       Comment:        tags.comment,
-      Directive:      tags.keyword,
+      // Distinct from MnemonicCore (tags.keyword) so directives can take their
+      // own theme color in the CM editor — mirrors the grammar's separate
+      // storage.type.directive TextMate scope used by the Shiki preview (#1124).
+      Directive:      tags.definitionKeyword,
       LabelDef:       tags.definition(tags.labelName),
       StringLiteral:  tags.string,
       CharLiteral:    tags.character,

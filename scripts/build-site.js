@@ -441,12 +441,18 @@ ${listItems}
 // Fix: import each symbol from its source package, pinning them all to the same
 // @codemirror/state@6 instance via ?deps= so instanceof checks work. (#772)
 import { EditorView, keymap, lineNumbers } from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
+import { Compartment } from 'https://esm.sh/@codemirror/state@6';
 import { basicSetup } from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
 import { indentWithTab, toggleLineComment } from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
 import { autocompletion } from 'https://esm.sh/@codemirror/autocomplete@6?deps=@codemirror/state@6';
 // language@6 must pin @lezer/highlight@1 in ?deps= so defaultHighlightStyle's tags
 // share identity with lang-lcc.js's styleTags — otherwise zero highlight spans. (#986)
-import { syntaxHighlighting, defaultHighlightStyle } from 'https://esm.sh/@codemirror/language@6?deps=@codemirror/state@6,@lezer/highlight@1';
+import { syntaxHighlighting, defaultHighlightStyle, HighlightStyle } from 'https://esm.sh/@codemirror/language@6?deps=@codemirror/state@6,@lezer/highlight@1';
+// tags MUST come from the exact same @lezer/highlight@1.2.3 URL lang-lcc.js uses,
+// or the HighlightStyle's tags differ by identity from the parser's styleTags and
+// no editor token gets styled — the #986 identity trap, here for the editor's own
+// per-theme highlight style. (#1124)
+import { tags } from 'https://esm.sh/@lezer/highlight@1.2.3';
 import { lcc } from '../dist/lang-lcc.js';
 
 const LCC_COMPLETIONS = [
@@ -529,13 +535,78 @@ const stdinInput = document.getElementById('stdin-input');
 let debounce;
 let renderFn = null;
 
+// ── Per-theme editor highlighting (#1124) ────────────────────────────────────
+// The CM editor and the Shiki "Syntax preview" must share one source of truth
+// for token colors. Shiki already loads every theme; we read each theme's
+// TextMate token colors back out (getTheme) and map them onto the Lezer tags the
+// lcc() parser emits, then swap the HighlightStyle via a Compartment on theme
+// change. Without this the editor is frozen at @codemirror/language's static
+// defaultHighlightStyle regardless of theme.
+const highlightCompartment = new Compartment();
+
+// Longest-prefix TextMate scope match (mirrors how Shiki resolves a token color):
+// a theme rule scoped 'keyword' applies to 'keyword.control.branch.lcc'; a more
+// specific 'keyword.control' rule wins over it. Returns CM style props.
+function lccTokenStyle(themeObj, targetScopes, fallback) {
+  const rules = (themeObj && (themeObj.settings || themeObj.tokenColors)) || [];
+  let best = null;
+  let bestLen = -1;
+  for (const rule of rules) {
+    const s = rule && rule.settings;
+    if (!s || (!s.foreground && !s.fontStyle)) continue;
+    let scopes = rule.scope;
+    if (typeof scopes === 'string') scopes = scopes.split(',');
+    if (!Array.isArray(scopes)) continue;
+    for (const raw of scopes) {
+      const rs = String(raw).trim();
+      if (!rs) continue;
+      for (const t of targetScopes) {
+        if ((t === rs || t.indexOf(rs + '.') === 0) && rs.length > bestLen) {
+          best = s;
+          bestLen = rs.length;
+        }
+      }
+    }
+  }
+  const out = { color: (best && best.foreground) || fallback };
+  const fs = (best && best.fontStyle) ? best.fontStyle : '';
+  if (fs.indexOf('italic') >= 0) out.fontStyle = 'italic';
+  if (fs.indexOf('bold') >= 0) out.fontWeight = 'bold';
+  if (fs.indexOf('underline') >= 0) out.textDecoration = 'underline';
+  return out;
+}
+
+// Build a CM HighlightStyle from a Shiki theme object, mapping each Lezer tag the
+// lcc() parser emits to the same TextMate scope color the Shiki preview uses.
+function lccHighlightStyle(themeObj) {
+  const fg = (themeObj && themeObj.fg) || '#c9d1d9';
+  const S = (scopes) => lccTokenStyle(themeObj, scopes, fg);
+  return HighlightStyle.define([
+    Object.assign({ tag: tags.comment },                    S(['comment.line.semicolon.lcc', 'comment'])),
+    Object.assign({ tag: tags.definitionKeyword },          S(['storage.type.directive.lcc', 'storage.type', 'storage', 'keyword'])),
+    Object.assign({ tag: tags.labelName },                  S(['entity.name.label.lcc', 'entity.name', 'variable'])),
+    Object.assign({ tag: tags.string },                     S(['string.quoted.double.lcc', 'string'])),
+    Object.assign({ tag: tags.character },                  S(['string.quoted.single.lcc', 'string'])),
+    Object.assign({ tag: tags.variableName },               S(['variable.language.register.lcc', 'variable.language', 'variable'])),
+    Object.assign({ tag: tags.special(tags.variableName) }, S(['variable.language.pc.lcc', 'variable.language', 'variable'])),
+    Object.assign({ tag: tags.operatorKeyword },            S(['keyword.other.io.lcc', 'keyword.other', 'keyword'])),
+    Object.assign({ tag: tags.controlKeyword },             S(['keyword.control.branch.lcc', 'keyword.control', 'keyword'])),
+    Object.assign({ tag: tags.keyword },                    S(['keyword.mnemonic.lcc', 'keyword'])),
+    Object.assign({ tag: tags.atom },                       S(['keyword.mnemonic.extension.lcc', 'keyword'])),
+    Object.assign({ tag: tags.number },                     S(['constant.numeric.lcc', 'constant.numeric', 'constant'])),
+    Object.assign({ tag: tags.name },                       S(['entity.name.label.lcc', 'entity.name', 'variable'])),
+  ]);
+}
+
 const editor = new EditorView({
   doc: ${starterCodeJson},
   extensions: [
     basicSetup,
     lineNumbers(), // basicSetup@0.20's gutter is inert under the @6 view; add an explicit @6 gutter (#1024, mirrors #985)
     lcc(),
-    syntaxHighlighting(defaultHighlightStyle),
+    // Initial fallback; reconfigured to a per-theme HighlightStyle once Shiki's
+    // themes are loaded (and on every theme change). (#1124)
+    highlightCompartment.of(syntaxHighlighting(defaultHighlightStyle)),
     keymap.of([indentWithTab, { key: 'Mod-/', run: toggleLineComment }]),
     autocompletion({ override: [lccCompletionSource] }),
     EditorView.updateListener.of(function(update) {
@@ -741,9 +812,20 @@ runBtn.addEventListener('click', () => {
     }
   }
 
-  renderFn = render;
-  sel.addEventListener('change', render);
+  // Reconfigure the CM editor's HighlightStyle to match the selected theme, using
+  // the same Shiki theme object that drives the preview. (#1124)
+  function applyEditorHighlight(theme) {
+    let themeObj = null;
+    try { themeObj = hl.getTheme(theme); } catch (err) { themeObj = null; }
+    editor.dispatch({
+      effects: highlightCompartment.reconfigure(syntaxHighlighting(lccHighlightStyle(themeObj))),
+    });
+  }
 
+  renderFn = render;
+  sel.addEventListener('change', () => { applyEditorHighlight(sel.value); render(); });
+
+  applyEditorHighlight(sel.value);
   render();
 })();
 </script>`;
