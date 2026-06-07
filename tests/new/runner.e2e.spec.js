@@ -16,10 +16,10 @@ function makeProgramDir() {
   return dir;
 }
 
-// Each case waits the full timeout_sec even on instant completion: lccrun.sh's
-// watchdog orphans its `sleep`, which holds the stdout pipe open until it
-// elapses, so spawnSync blocks for the timeout. Use a small value here to keep
-// the suite fast. (Tracked as a separate lccrun latency bug — see #1091 notes.)
+// Per-case timeout. Passing cases now return as soon as the program exits,
+// independent of this value — the lccrun.sh watchdog no longer orphans a
+// `sleep` that held the stdout pipe open for the full timeout (#1149, fixed;
+// regression-guarded by lccrun.e2e.spec.js). Kept small as a sane default.
 const FAST = 2;
 
 describe('runTestSpec (e2e — real piped stdin)', () => {

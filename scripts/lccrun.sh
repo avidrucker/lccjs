@@ -60,17 +60,24 @@ CHILD_PID=$!
 CHILD_PGID="$CHILD_PID"
 
 # Background watchdog: fires after TIMEOUT seconds if the child is still alive.
+#
+# stdout/stderr are redirected to /dev/null so that when the child finishes
+# early and we kill this subshell, the orphaned `sleep` it spawned does NOT
+# keep holding lccrun's stdout/stderr file descriptors. A caller capturing
+# output via spawnSync would otherwise never see pipe EOF until the orphaned
+# `sleep` naturally elapsed — blocking for the full TIMEOUT on instant
+# completion (#1149). The FLAG file (not the message) is what signals a timeout
+# to the parent, so the user-facing timeout message is printed by the parent
+# under the `[[ -s "$FLAG" ]]` check below instead of here.
 (
   sleep "$TIMEOUT"
   if kill -0 "$CHILD_PID" 2>/dev/null; then
-    printf 'lccrun: timeout after %ds — killing process group (pgid=%d)\n' \
-      "$TIMEOUT" "$CHILD_PGID" >&2
     printf '1' > "$FLAG"
     kill -TERM -- -"$CHILD_PGID" 2>/dev/null || true
     sleep 2
     kill -KILL -- -"$CHILD_PGID" 2>/dev/null || true
   fi
-) &
+) >/dev/null 2>&1 &
 WATCHDOG_PID=$!
 
 wait "$CHILD_PID"
@@ -81,6 +88,8 @@ kill "$WATCHDOG_PID" 2>/dev/null || true
 wait "$WATCHDOG_PID" 2>/dev/null || true
 
 if [[ -s "$FLAG" ]]; then
+  printf 'lccrun: timeout after %ds — killing process group (pgid=%d)\n' \
+    "$TIMEOUT" "$CHILD_PGID" >&2
   exit 124
 fi
 
