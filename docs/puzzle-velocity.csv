@@ -984,3 +984,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 1005,1110,TIL 2026-06-06 CHERRY — generated-dir landmine; node_modules symlink trap; A/B reframing,WRITER,15,10,4,11,6,2026-06-06T22:56:58-1000,2026-06-06T23:00:35-1000,,,cherry,opus-4.8,lccjs
 1006,1076,test(skills): verify issue-review Hermes skill end-to-end,DEV,15,10,2,13,8,2026-06-06T23:04:10-1000,2026-06-06T23:05:53-1000,,,honeydew,nemotron-3.0,lccjs
 1007,1112,add HONEYDEW to orchestration roster,DEV,10,5,,,,2026-06-06T00:00:00-1000,2026-06-06T00:00:00-1000,,docs-only; roster enumeration + user-level skill; agent-priorities intentionally not fabricated,FIG,opus-4.8,lccjs
+1008,1108,audit HONEYDEW comments/artifacts/DB logging (1066-1073),DATA,45,35,20,,,2026-06-07T08:50:00Z,2026-06-07T09:06:10Z,34586b9,"read-only audit; pre-finding confirmed (0 velocity/0 errors, real Rule-5 gap, no exemption); filed #1113",DRAGONFRUIT,opus-4.8,lccjs
