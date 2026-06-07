@@ -32,6 +32,28 @@ function resetProcessStdin() {
   process.stdout.write('\u001B[?25h'); // show cursor
   }
 
+// Restore a screen-manipulated terminal before printing a runtime error, so the
+// message isn't clobbered by hidden-cursor / cleared-screen artifacts (#1032).
+// Superset of resetProcessStdin: it also drops to a fresh line when the program
+// moved or cleared the screen, so the error lands visibly below its output.
+// Cursor/screen escapes target stdout, so they're guarded on stdout.isTTY (the
+// pattern the `cursor`/`resetc` extras use) — never on stdin — to keep piped
+// output clean.
+function restoreTerminal(screenManipulated) {
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(false);
+    process.stdin.pause();
+  }
+  if (process.stdout.isTTY) {
+    process.stdout.write('\u001B[?25h'); // show cursor (undo a `cursor` hide)
+    if (screenManipulated) {
+      // After clear / cursor moves the cursor may sit mid-screen; move to a
+      // fresh line so the message prints below the program's output.
+      process.stdout.write('\n');
+    }
+  }
+}
+
 function fatalExit(message, code = 1) {
   resetProcessStdin();
   exitProcess(message, code);
@@ -46,6 +68,9 @@ class InterpreterPlus extends Interpreter {
     // .ap programs run indefinitely by design (game loops); disable the
     // maxSteps-based infinite-loop detection inherited from Interpreter.
     this.disableInfiniteLoopDetection = true;
+    // Tracks whether the program cleared the screen or moved/hid the cursor, so
+    // a runtime error can restore the terminal before printing (#1032).
+    this.screenManipulated = false;
   }
 
   // Register an external extension module's trap handlers.
@@ -215,9 +240,13 @@ class InterpreterPlus extends Interpreter {
   // regardless of which setImmediate batch raised them. Mirrors the core
   // toolchain contract (lcc.js): print "Runtime Error: <msg>" and exit 1, so a
   // runtime fault in an .ap is surfaced as reliably as in a plain .a/.e run.
-  // (#1031 — capture; #1011 child B adds terminal restoration before printing.)
+  // (#1031 — capture; #1032 — restore the terminal before printing.)
   handleRuntimeError(error) {
     this.running = false;
+    // Restore screen-manipulated state first (show cursor, leave raw mode, drop
+    // to a fresh line) so the message isn't clobbered by a hidden cursor or a
+    // cleared/repositioned screen the program left behind (#1032).
+    restoreTerminal(this.screenManipulated);
     const message = `Runtime Error: ${error && error.message ? error.message : error}`;
     console.error(message);
     fatalExit(message, 1);
@@ -394,6 +423,7 @@ class InterpreterPlus extends Interpreter {
   // We re-add the actual methods:
   executeClear() {
     console.clear();
+    this.screenManipulated = true; // so a later runtime error restores first (#1032)
   }
 
   executeSleep() {
@@ -428,6 +458,7 @@ class InterpreterPlus extends Interpreter {
     if (!process.stdout.isTTY) return; // escape targets stdout — guard on stdout, not stdin
     if (this.r[this.dr] === 0) {
       process.stdout.write('\u001B[?25l');
+      this.screenManipulated = true; // hidden cursor must be restored on error (#1032)
       //process.stdout.write(ansiEscapes.cursorHide); // hide cursor
     } else {
       process.stdout.write('\u001B[?25h'); // show cursor
@@ -471,6 +502,7 @@ class InterpreterPlus extends Interpreter {
   executeResetCursor() {
     if (!process.stdout.isTTY) return; // escape targets stdout — guard on stdout, not stdin
     process.stdout.write('\u001B[H'); // move cursor to home
+    this.screenManipulated = true; // cursor moved — restore before an error print (#1032)
   }
 
   executeBeep() {
