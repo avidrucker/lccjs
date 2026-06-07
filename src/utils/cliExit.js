@@ -12,8 +12,27 @@
 
 'use strict';
 
+const { formatExplanation } = require('./explanations');
+
 // crude check for Jest
 const isTestMode = (typeof global.it === 'function');
+
+// --explain mode (#1096). Off by default; the CLI driver flips it on when
+// `--explain` is parsed. When on, the exit helpers append an explanation block
+// for any error that carries a stable `explainKey`. Gated so default (and
+// oracle-parity) output is byte-for-byte unchanged.
+let explainModeOn = false;
+function setExplainMode(on) {
+  explainModeOn = !!on;
+}
+
+// Prints the `explain:` block for a key when explain mode is on and an entry
+// exists. No-op otherwise — keeps the non-explain path unchanged.
+function maybeExplain(explainKey) {
+  if (!explainModeOn || !explainKey) return;
+  const block = formatExplanation(explainKey);
+  if (block) console.error(block);
+}
 
 function fatalExit(message, code = 1) {
   if (isTestMode) {
@@ -23,14 +42,22 @@ function fatalExit(message, code = 1) {
   }
 }
 
-function cliErrorExit(message, code = 1) {
+function cliErrorExit(message, code = 1, explainKey = null) {
   console.error(message);
+  maybeExplain(explainKey);
   fatalExit(message, code);
 }
 
 function cliWrappedErrorExit(prefix, error, code = 1) {
   console.error(prefix, error.message);
+  maybeExplain(error && error.explainKey);
   fatalExit(`${prefix} ${error.message}`, code);
 }
 
-module.exports = { isTestMode, fatalExit, cliErrorExit, cliWrappedErrorExit };
+module.exports = {
+  isTestMode,
+  fatalExit,
+  cliErrorExit,
+  cliWrappedErrorExit,
+  setExplainMode,
+};

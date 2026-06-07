@@ -8,9 +8,15 @@
  * callers.
  */
 class LccError extends Error {
-  constructor(message) {
+  // `options.explainKey` (optional) is a stable catalog key consumed by the
+  // --explain render seams (#1096). Single-argument construction is unchanged,
+  // so existing `new AssemblerError(msg)` callers are unaffected.
+  constructor(message, options = {}) {
     super(message);
     this.name = this.constructor.name;
+    if (options && options.explainKey) {
+      this.explainKey = options.explainKey;
+    }
   }
 }
 

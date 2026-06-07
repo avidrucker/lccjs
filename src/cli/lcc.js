@@ -14,7 +14,7 @@ const { constructSiblingFileName, writeReportFiles } = require('../utils/fileArt
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 
-const { fatalExit, cliErrorExit, cliWrappedErrorExit } = require('../utils/cliExit');
+const { fatalExit, cliErrorExit, cliWrappedErrorExit, setExplainMode } = require('../utils/cliExit');
 
 class LCC {
   constructor() {
@@ -209,6 +209,7 @@ class LCC {
     console.log('   Note: -t, -x, -f are forwarded to interactive mode; -m and -r are not');
     console.log('         (-m/-r are post-run batch dumps; interactive mode has no batch path)');
     console.log('   -v / --verbose: verbose output (assembler, interpreter, and linker)');
+    console.log('   --explain: append a student-friendly explanation to known errors');
     console.log('   -nostats: suppress .lst/.bst report generation');
     console.log('   --max-steps N: set execution step cap (default 500000; use -1 for unlimited)');
     console.log('What lcc.js does depends on the extension in the input file name:');
@@ -273,6 +274,13 @@ class LCC {
           case '--verbose':
             this.options.verbose = true;
             break;
+          case '--explain':
+            // Opt-in student-friendly error explanations (#1096). Combinable
+            // with -v. Off by default so oracle-parity output is unchanged.
+            // (No short alias: -x is already taken by hex output.)
+            this.options.explain = true;
+            setExplainMode(true);
+            break;
           case '--max-steps': {
             i++;
             if (i >= args.length) {
@@ -324,6 +332,9 @@ class LCC {
 
     // Wire -v/--verbose flag
     assembler.verboseModeOn = !!this.options.verbose;
+
+    // Wire --explain flag (#1096)
+    assembler.explainModeOn = !!this.options.explain;
 
     // Set input and output file names
     assembler.inputFileName = this.inputFileName;

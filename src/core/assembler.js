@@ -31,6 +31,7 @@ const {
 
 const { fatalExit, cliErrorExit } = require('../utils/cliExit');
 const { suggestClosest } = require('../utils/suggest');
+const { formatExplanation } = require('../utils/explanations');
 
 /**
  * Set to false to match original LCC behavior of reporting only 
@@ -85,6 +86,13 @@ class Assembler {
      * Set via the -v/--verbose CLI flag.
      */
     this.verboseModeOn = false;
+
+    /**
+     * When true, error() appends a student-friendly `explain:` block for any
+     * diagnostic that carries an explainKey (#1096). Set via the --explain CLI
+     * flag. Independent of verbose; the two compose.
+     */
+    this.explainModeOn = false;
 
     /**
      * Buffer to hold machine code words
@@ -1386,7 +1394,7 @@ class Assembler {
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
-      this.error('pcoffset9 out of range'); // for branch instruction
+      this.error('pcoffset9 out of range', null, 'PCOFFSET9_RANGE'); // for branch instruction
       return null;
     }
     macword |= (pcoffset9 & 0x01FF);
@@ -1645,7 +1653,7 @@ class Assembler {
     } else {
       pcoffset9 = address - this.locCtr - 1;
       if (pcoffset9 < -256 || pcoffset9 > 255) {
-        this.error('pcoffset9 out of range for ld');
+        this.error('pcoffset9 out of range for ld', null, 'PCOFFSET9_RANGE');
         return null;
       }
     }
@@ -1686,7 +1694,7 @@ class Assembler {
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
-      this.error('pcoffset9 out of range for st');
+      this.error('pcoffset9 out of range for st', null, 'PCOFFSET9_RANGE');
       return null;
     }
     let macword = OP_ST | (sr << 9) | (pcoffset9 & 0x1FF);
@@ -1727,7 +1735,7 @@ class Assembler {
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
-      this.failAssembly('pcoffset9 out of range', 1);
+      this.failAssembly('pcoffset9 out of range', 1, null, 'PCOFFSET9_RANGE');
     }
     let macword = OP_LEA | (dr << 9) | (pcoffset9 & 0x1FF);
     return macword;
@@ -2193,26 +2201,33 @@ class Assembler {
     return value & 0xFFFF;
   }
 
-  failAssembly(message, code = 1, verboseContext = null) {
-    this.error(message, verboseContext);
+  failAssembly(message, code = 1, verboseContext = null, explainKey = null) {
+    this.error(message, verboseContext, explainKey);
 
     if (REPORT_MULTI_ERRORS) {
       this.abortAssembly(message, code);
     }
   }
 
-  formatAssemblerError(message, verboseContext = null) {
+  // `explainKey` (optional) selects a --explain catalog entry appended after the
+  // diagnostic when explain mode is on. It is added last, so it composes with —
+  // and never replaces — a verbose suggestClosest "Did you mean?" suffix already
+  // baked into `message`. When explain mode is off (or the key is null) the
+  // returned string is byte-for-byte the pre-#1096 format.
+  formatAssemblerError(message, verboseContext = null, explainKey = null) {
+    const explainBlock = this.explainModeOn ? formatExplanation(explainKey) : null;
+    const explainClause = explainBlock ? `\n${explainBlock}` : '';
     if (this.verboseModeOn) {
       const typeClause = verboseContext
         ? `\nfound: ${verboseContext.found}, expected: ${verboseContext.expected}`
         : '';
-      return `[assembler] Error on line ${this.lineNum} of ${this.inputFileName}:\n    ${this.currentLine}\n${message}${typeClause}`;
+      return `[assembler] Error on line ${this.lineNum} of ${this.inputFileName}:\n    ${this.currentLine}\n${message}${typeClause}${explainClause}`;
     }
-    return `Error on line ${this.lineNum} of ${this.inputFileName}:\n${this.currentLine}\n${message}`;
+    return `Error on line ${this.lineNum} of ${this.inputFileName}:\n${this.currentLine}\n${message}${explainClause}`;
   }
 
-  error(message, verboseContext = null) {
-    const errorMsg = this.formatAssemblerError(message, verboseContext);
+  error(message, verboseContext = null, explainKey = null) {
+    const errorMsg = this.formatAssemblerError(message, verboseContext, explainKey);
     console.error(errorMsg);
     this.errors.push(errorMsg);
     this.errorFlag = true;
