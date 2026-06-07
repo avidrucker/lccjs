@@ -424,7 +424,7 @@ ${listItems}
 // subpackages; esm.sh cannot surface those re-exports regardless of ?bundle.
 // Fix: import each symbol from its source package, pinning them all to the same
 // @codemirror/state@6 instance via ?deps= so instanceof checks work. (#772)
-import { EditorView, keymap } from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
+import { EditorView, keymap, lineNumbers } from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
 import { basicSetup } from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
 import { indentWithTab, toggleLineComment } from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
 import { autocompletion } from 'https://esm.sh/@codemirror/autocomplete@6?deps=@codemirror/state@6';
@@ -517,6 +517,7 @@ const editor = new EditorView({
   doc: ${starterCodeJson},
   extensions: [
     basicSetup,
+    lineNumbers(),
     lcc(),
     syntaxHighlighting(defaultHighlightStyle),
     keymap.of([indentWithTab, { key: 'Mod-/', run: toggleLineComment }]),
