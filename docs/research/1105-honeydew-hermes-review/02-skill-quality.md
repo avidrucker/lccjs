@@ -22,7 +22,7 @@ subagent per skill (read both sides + diff); all MATERIAL findings re-verified b
 | log-error | ✅ | ◑ (`## Triggers` not `When to Use`) | ◑ | ⚠️ partial (residual hardcodes) | ✅ (error_type vocab intact) | **MINOR** |
 | write-til-doc | ✅ | ✅ | ◑ | ⚠️ claim cmd + CSV path not abstracted | ✅ (REFERENCE.md transferred) | **MINOR** |
 | yegor-pm | ✅ | ✅ | ✅ | ⚠️ lccjs cmds hardcoded | ⚠️ 10→11 roster drift | **MINOR** |
-| puzzle-velocity | ✅ | ✅ | ✅ | ✅ | ❌ **delta sign inverted** + invented rules | **MATERIAL** |
+| puzzle-velocity | ✅ | ✅ | ✅ | ✅ | ✅ **RESOLVED #1125** (was: delta sign inverted + invented rules) | **MATERIAL → fixed** |
 | puzzle-triage | ✅ | ◑ (ships scaffolding section) | ✅ | ⚠️ `npm run puzzle:status` hardcoded | ⚠️ dropped Locked partition | **MINOR**¹ |
 
 ¹ Subagent graded puzzle-triage MATERIAL on "bash fences"; downgraded to MINOR after hand-check —
@@ -140,8 +140,13 @@ guide-human-decision even improved on the source with dynamic repo detection
 
 ## Filed tickets (per #1105 close protocol / Rule 10)
 
-- **#1125** — `fix(skills)`: puzzle-velocity correctness defects (inverted delta sign, invented
-  lowercase-agent pitfall, dropped "Skip when" guards — the MATERIAL finding).
+- **#1125** ✅ **RESOLVED** — `fix(skills)`: puzzle-velocity correctness defects (inverted delta sign,
+  invented lowercase-agent pitfall, dropped "Skip when" guards — the MATERIAL finding). All three
+  corrected in the Hermes port (`delta = estimate − actual`, uppercase terminal-name pitfall,
+  restored "Skip when"). Note: the dropped-guard list above mentioned "skip no-repo-file work", but
+  the canonical source carries no such guard and project convention (#215/#216) logs no-repo-file
+  work — so the restored section matches the canonical's three bullets and explicitly excludes that
+  non-guard.
 - **#1126** — `chore(skills)`: authoring-hygiene sweep across the ported skills (config abstraction
   CC-1, remove `## Hermes Tool Mapping (from Claude)` scaffolding CC-2, drop `fruit-agent-orchestrate`
   from puzzle-triage related_skills CC-4, resolve the yegor-pm 10-vs-11 roster question, rule on the
