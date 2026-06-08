@@ -79,16 +79,26 @@ build time). It shows:
   "Retro Console" themes), with a "Try it" link into the playground.
 
 ### b. The doc sub-sections (`docs/site/docs/<section>/`)
-Markdown rendered to HTML, one section per folder/list:
-`guides` and `glossary` (folder-based — every `.md` deploys), plus `research`,
-`learnings`, and `parity` (**explicit curated file lists** — e.g.
-`parity_deviations.md`, the `cuh63-*` bug reports, a hand-picked ~12 `research`
-docs and ~5 `learnings` docs). Each section gets an index page plus one page per
-source `.md`. `research`/`learnings` are curated rather than folder-based because
-the full folders are ~100+ internal engineering/process artifacts, not public
-educational content (curation ruling: `docs/github-pages-docs-audit.md`, #1123;
-implemented in #1153). The former internal `workflow` section
-(`claude_workflow.md`, `RULES.md`) is intentionally **not** deployed.
+Markdown rendered to HTML, one section per folder/list. Each section gets an index
+page plus one page per source `.md`. Two shapes:
+
+- **Folder sections** — `guides`, `research`, `learnings`, `glossary`: every `.md`
+  in the folder deploys **unless** its path is matched by the root **`.pages-ignore`**
+  (`.gitignore` syntax, matched by the `ignore` dev-dependency). This is how
+  `research`/`learnings` are curated down to a user-facing subset (~12 + ~5) without
+  a hand-edited list in `build-site.js` — the full folders are ~100+ internal
+  engineering/process artifacts, not public educational content. To publish (or
+  un-publish) a doc, edit `.pages-ignore`, not the build script. `guides`/`glossary`
+  have no `.pages-ignore` entries, so they deploy in full.
+- **Explicit list** — `parity`: a `files: []` array in `build-site.js`, because it
+  cherry-picks a few root-level `docs/*.md` (`parity_deviations.md`, the `cuh63-*`
+  bug reports, `lccjs-unique-features.md`) rather than a whole folder; an ignore
+  file can't cleanly express "publish exactly these N of the dozens of `docs/*.md`."
+
+Curation ruling: `docs/github-pages-docs-audit.md` (#1123); curated in #1153; made
+maintainable via `.pages-ignore` in #1182. The former internal `workflow` section
+(`claude_workflow.md`, `RULES.md`) is intentionally **not** deployed (and is listed
+in `.pages-ignore` so it stays out if ever folded into a folder section).
 
 ### c. The playground (`docs/site/showcase/index.html`)
 The interactive editor+runner — see §4. Its editor markup lives in the

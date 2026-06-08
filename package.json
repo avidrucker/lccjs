@@ -38,6 +38,7 @@
     "@lezer/lr": "^1.4.10",
     "better-sqlite3": "^12.10.0",
     "dotenv": "^17.2.3",
+    "ignore": "^7.0.5",
     "jest": "^29.7.0",
     "marked": "^18.0.4",
     "path-browserify": "^1.0.1",

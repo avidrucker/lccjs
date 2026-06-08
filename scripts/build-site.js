@@ -6,10 +6,23 @@
 
 const fs = require('fs');
 const path = require('path');
+const ignore = require('ignore');
 
 const ROOT       = path.join(__dirname, '..');
 const GRAMMAR_PATH = path.join(ROOT, 'docs', 'lcc.tmLanguage.json');
 const OUT_DIR    = path.join(ROOT, 'docs', 'site');
+
+// Curation policy for the folder-based docs sections (#1182): every .md in a
+// section's srcDir is published UNLESS its repo-root-relative path is matched by
+// .pages-ignore (gitignore syntax). A missing .pages-ignore publishes everything
+// (back-compat). The `parity` section uses an explicit include list and is not
+// subject to this filter. Ruling/rationale: docs/github-pages-docs-audit.md (#1123).
+const PAGES_IGNORE_FILE = path.join(ROOT, '.pages-ignore');
+const pagesIgnore = ignore().add(
+  fs.existsSync(PAGES_IGNORE_FILE) ? fs.readFileSync(PAGES_IGNORE_FILE, 'utf8') : ''
+);
+// `ignore` matches forward-slash paths relative to the repo root.
+const relFromRoot = (p) => path.relative(ROOT, p).split(path.sep).join('/');
 
 // Browser-side CDN import for the playground/showcase. Must stay aligned with the @cmshiki/shiki
 // peer dep (shiki@^3). Separate from the npm "shiki" dep below, which is a Node.js-only build
@@ -68,38 +81,16 @@ const LCCPLUS_SAMPLES = [
 
 // Docs sections to expose as subpages.
 // Use srcDir for folder-based sections; use files[] for explicit per-file lists.
-// research + learnings are CURATED to an explicit user-facing subset (#1153):
-// the full folders are ~106 + ~140 internal engineering/process artifacts (spike
-// outputs, agent TIL retrospectives, velocity/PM minutiae) that are not public
-// educational content. The `workflow` section (internal PDD process docs) was
-// dropped entirely. Curation ruling recorded in docs/github-pages-docs-audit.md
-// (#1123). A reusable whitelist/blacklist mechanism is the planned follow-up so
-// this stays maintainable rather than a hand-edited list.
+// Folder-based sections (guides/research/learnings/glossary) publish every .md in
+// their srcDir EXCEPT paths matched by .pages-ignore (see pagesIgnore above) —
+// research/learnings are thereby curated to a user-facing subset without a
+// hand-edited list here (#1182). `parity` stays an explicit include list because
+// it cherry-picks a few root-level docs/*.md, not a folder. The former internal
+// `workflow` section was dropped in #1153. Curation ruling: docs/github-pages-docs-audit.md (#1123).
 const DOCS_SECTIONS = [
   { id: 'guides',    label: 'Guides',    srcDir: path.join(ROOT, 'docs', 'guides')    },
-  { id: 'research',  label: 'Research',  files: [
-    // ISA / assembly / toolchain semantics — educational reference
-    path.join(ROOT, 'docs', 'research', 'mnemonic-descriptor-table.md'),
-    path.join(ROOT, 'docs', 'research', 'sext-semantics-report.md'),
-    path.join(ROOT, 'docs', 'research', 'sra-shift-by-zero-513.md'),
-    path.join(ROOT, 'docs', 'research', 'jmp-condition-suffix-mnemonics.md'),
-    path.join(ROOT, 'docs', 'research', 'string-escape-parity.md'),
-    path.join(ROOT, 'docs', 'research', 'tokenizer-comma-parity.md'),
-    path.join(ROOT, 'docs', 'research', 'line-length-limit.md'),
-    path.join(ROOT, 'docs', 'research', '560-free-implementation-in-lcc-assembly.md'),
-    // Playground / web toolchain — about the live site
-    path.join(ROOT, 'docs', 'research', 'lezer-grammar-lcc-assembly.md'),
-    path.join(ROOT, 'docs', 'research', 'codemirror-feature-inventory.md'),
-    path.join(ROOT, 'docs', 'research', 'web-ilcc-terminal-simulation.md'),
-    path.join(ROOT, 'docs', 'research', 'playground-e2e-test-strategy.md'),
-  ]},
-  { id: 'learnings', label: 'Learnings', files: [
-    path.join(ROOT, 'docs', 'learnings', 'README.md'),
-    path.join(ROOT, 'docs', 'learnings', 'til-synthesis-2026-06-01.md'),
-    path.join(ROOT, 'docs', 'learnings', 'til-synthesis-2026-06-04.md'),
-    path.join(ROOT, 'docs', 'learnings', '2026-05-26-pdd-adoption.md'),
-    path.join(ROOT, 'docs', 'learnings', '2026-05-25-lcc-oracle-e2e-bst-redundancy.md'),
-  ]},
+  { id: 'research',  label: 'Research',  srcDir: path.join(ROOT, 'docs', 'research')  },
+  { id: 'learnings', label: 'Learnings', srcDir: path.join(ROOT, 'docs', 'learnings') },
   { id: 'glossary',  label: 'Glossary',  srcDir: path.join(ROOT, 'docs', 'glossary')  },
   { id: 'parity',    label: 'Parity',    files: [
     path.join(ROOT, 'docs', 'lccjs-unique-features.md'),
@@ -408,7 +399,9 @@ ${lccplusSections}
     const mdEntries = section.files
       ? section.files.map(fp => ({ fullPath: fp, mdFile: path.basename(fp) }))
       : fs.readdirSync(section.srcDir).filter(f => f.endsWith('.md')).sort()
-          .map(f => ({ fullPath: path.join(section.srcDir, f), mdFile: f }));
+          .map(f => ({ fullPath: path.join(section.srcDir, f), mdFile: f }))
+          // Curate folder sections through .pages-ignore (#1182).
+          .filter(({ fullPath }) => !pagesIgnore.ignores(relFromRoot(fullPath)));
 
     // Render each .md file to its own .html.
     const fileLinks = [];

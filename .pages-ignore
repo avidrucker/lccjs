@@ -1,0 +1,40 @@
+# .pages-ignore — paths NOT deployed to the public GitHub Pages site (#1182).
+#
+# .gitignore syntax, matched by the `ignore` npm package in scripts/build-site.js.
+# Applies to the folder-based docs sections (guides, research, learnings, glossary):
+# every .md in those folders is published UNLESS matched here. The `parity` section
+# is an explicit include list in build-site.js and is unaffected by this file.
+#
+# Curation policy / rationale: docs/github-pages-docs-audit.md (#1123).
+# NOTE: use `dir/**` + `!keep` (never a bare `dir/`) so individual files can be
+# re-included — gitignore cannot re-include a child of an excluded *directory*.
+
+# --- Internal dirs/files never published (documentary: not built as sections today,
+#     but excluded up-front so they stay out if ever folded into a section) ---
+docs/agent-priorities/
+docs/logs/
+docs/claude_workflow.md
+RULES.md
+
+# --- research: ~100 internal spike/design docs excluded; keep the user-facing set ---
+docs/research/**
+!docs/research/mnemonic-descriptor-table.md
+!docs/research/sext-semantics-report.md
+!docs/research/sra-shift-by-zero-513.md
+!docs/research/jmp-condition-suffix-mnemonics.md
+!docs/research/string-escape-parity.md
+!docs/research/tokenizer-comma-parity.md
+!docs/research/line-length-limit.md
+!docs/research/560-free-implementation-in-lcc-assembly.md
+!docs/research/lezer-grammar-lcc-assembly.md
+!docs/research/codemirror-feature-inventory.md
+!docs/research/web-ilcc-terminal-simulation.md
+!docs/research/playground-e2e-test-strategy.md
+
+# --- learnings: ~135 agent TIL retrospectives excluded; keep synthesis/overview ---
+docs/learnings/**
+!docs/learnings/README.md
+!docs/learnings/til-synthesis-2026-06-01.md
+!docs/learnings/til-synthesis-2026-06-04.md
+!docs/learnings/2026-05-26-pdd-adoption.md
+!docs/learnings/2026-05-25-lcc-oracle-e2e-bst-redundancy.md
