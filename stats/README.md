@@ -14,9 +14,9 @@ See [`docs/velocity-schema.md`](../docs/velocity-schema.md) for the full schema.
 |---|---|
 | `enrich.py` | Reads `~/.lccjs/lccjs.db`, adds three enrichment layers, writes `puzzle-velocity-enriched.csv` atomically |
 | `puzzle-velocity-enriched.csv` | Generated dataset the notebook reads — **local-only, gitignored** (re-generate with `enrich.py` before running notebooks; see #286) |
-| `puzzle_velocity_analysis.ipynb` | Day-one analysis notebook (committed **with** embedded outputs/plots → renders on GitHub) |
-| `day-two-analysis.ipynb` | Day-two re-run — adds the over-time axis (HST day-bucketing) + auto-graduating power gates |
-| `day-three-analysis.ipynb` | Day-three re-run — 🆕 3-day calibration trend + per-agent cut; repairs a CSV-escaping corruption **in-memory** (committed CSV untouched) |
+| `day-01-analysis.ipynb` | Day-one analysis notebook (committed **with** embedded outputs/plots → renders on GitHub) |
+| `day-02-analysis.ipynb` | Day-two re-run — adds the over-time axis (HST day-bucketing) + auto-graduating power gates |
+| `day-03-analysis.ipynb` | Day-three re-run — 🆕 3-day calibration trend + per-agent cut; repairs a CSV-escaping corruption **in-memory** (committed CSV untouched) |
 | `requirements.txt` | Python deps (prefer the shared venv below) |
 
 ## Running it
@@ -38,13 +38,13 @@ npm run velocity:seed          # imports docs/puzzle-velocity.csv → ~/.lccjs/l
 ~/.venvs/datasci/bin/python stats/enrich.py
 
 # 2. open the notebook interactively...
-jupyter lab stats/puzzle_velocity_analysis.ipynb
+jupyter lab stats/day-01-analysis.ipynb
 
 # ...or re-execute it headless (re-embeds all outputs in place)
-jupyter nbconvert --to notebook --execute --inplace stats/puzzle_velocity_analysis.ipynb
+jupyter nbconvert --to notebook --execute --inplace stats/day-01-analysis.ipynb
 
 # ...or render a standalone HTML (gitignored)
-jupyter nbconvert --to html stats/puzzle_velocity_analysis.ipynb
+jupyter nbconvert --to html stats/day-01-analysis.ipynb
 ```
 
 (Standalone fallback without the shared venv: `python3 -m venv .venv && . .venv/bin/activate

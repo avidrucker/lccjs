@@ -3,7 +3,7 @@
 # Preferred: use the shared data-science workbench venv provisioned by the
 # dotfiles `datascience` section (single source of truth) —
 #     ~/dotfiles/install.sh datascience      # creates ~/.venvs/datasci
-#     ~/.venvs/datasci/bin/jupyter lab stats/puzzle_velocity_analysis.ipynb
+#     ~/.venvs/datasci/bin/jupyter lab stats/day-01-analysis.ipynb
 #
 # This file is the fallback for a standalone project-local venv:
 #     python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
