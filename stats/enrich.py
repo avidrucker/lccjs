@@ -34,7 +34,7 @@ import re
 import sqlite3
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -147,13 +147,23 @@ def notes_flags(notes: str | None) -> dict:
     }
 
 
+# Project timezone (HST, UTC−10) — the velocity analysis buckets in HST, so a
+# timestamp logged without an offset is assumed project-local. Attaching it makes
+# every parsed datetime tz-aware, so rows mixing naive and aware stamps subtract
+# cleanly instead of raising "can't subtract offset-naive and offset-aware" (#1212).
+_HST = timezone(timedelta(hours=-10))
+
+
 def _parse_iso(s):
     if not s:
         return None
     try:
-        return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
     except ValueError:
         return None
+    if dt.tzinfo is None:  # tz-naive stamp → assume project-local HST
+        dt = dt.replace(tzinfo=_HST)
+    return dt
 
 
 def _minutes_between(a, b):
