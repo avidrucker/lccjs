@@ -60,4 +60,5 @@ module.exports = {
   cliErrorExit,
   cliWrappedErrorExit,
   setExplainMode,
+  maybeExplain,
 };

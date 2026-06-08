@@ -24,6 +24,8 @@ const Linker      = require('../../src/core/linker');
 const Interpreter = require('../../src/core/interpreter');
 const { LinkerError } = require('../../src/utils/errors');
 const { installMockFileSystem } = require('../helpers/virtualFs');
+const { setExplainMode } = require('../../src/utils/cliExit');
+const { getExplanation } = require('../../src/utils/explanations');
 
 jest.mock('fs');
 
@@ -281,6 +283,81 @@ shared:   .word 2
       // createExecutable() is never reached, so no 'o' signature byte is
       // written — the output file must be absent from the virtual FS.
       expect(state.files['fail.e']).toBeUndefined();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // --explain content for the linker error classes (#1098). The linker reads
+  // the module-level explain flag in cliExit (set by the CLI's --explain), so
+  // these toggle it directly and reset it afterward to avoid leaking the flag
+  // into other tests under --runInBand.
+  // -------------------------------------------------------------------------
+  describe('--explain content (#1098)', () => {
+    afterEach(() => setExplainMode(false));
+
+    const errOut = () => console.error.mock.calls.map((c) => c.join(' ')).join('\n');
+
+    const EXTERN_SRC = `
+          .extern ghost
+          ld r0, ghost
+          halt
+      `;
+    const DUP1 = `
+          .global shared
+shared:   .word 1
+      `;
+    const DUP2 = `
+          .global shared
+shared:   .word 2
+      `;
+
+    test('UNDEFINED_EXTERN: --explain appends the explain block', () => {
+      setExplainMode(true);
+      state.files['bad.o'] = assembleToBytes(EXTERN_SRC, 'bad.a');
+      expect(() => new Linker().link(['bad.o'], 'out.e')).toThrow(LinkerError);
+      const out = errOut();
+      expect(out).toContain('ghost is an undefined external reference');
+      expect(out).toContain('explain:');
+      expect(out).toContain(getExplanation('UNDEFINED_EXTERN').concept);
+    });
+
+    test('UNDEFINED_EXTERN: without --explain, the message is bare (parity)', () => {
+      setExplainMode(false);
+      state.files['bad.o'] = assembleToBytes(EXTERN_SRC, 'bad.a');
+      expect(() => new Linker().link(['bad.o'], 'out.e')).toThrow(LinkerError);
+      const out = errOut();
+      expect(out).toContain('ghost is an undefined external reference');
+      expect(out).not.toContain('explain:');
+    });
+
+    test('MULTIPLE_GLOBAL: --explain appends the explain block', () => {
+      setExplainMode(true);
+      state.files['dup1.o'] = assembleToBytes(DUP1, 'dup1.a');
+      state.files['dup2.o'] = assembleToBytes(DUP2, 'dup2.a');
+      expect(() => new Linker().link(['dup1.o', 'dup2.o'], 'out.e')).toThrow(LinkerError);
+      const out = errOut();
+      expect(out).toContain('More than one global declaration for shared');
+      expect(out).toContain('explain:');
+      expect(out).toContain(getExplanation('MULTIPLE_GLOBAL').concept);
+    });
+
+    test('MULTIPLE_GLOBAL: without --explain, the message is bare (parity)', () => {
+      setExplainMode(false);
+      state.files['dup1.o'] = assembleToBytes(DUP1, 'dup1.a');
+      state.files['dup2.o'] = assembleToBytes(DUP2, 'dup2.a');
+      expect(() => new Linker().link(['dup1.o', 'dup2.o'], 'out.e')).toThrow(LinkerError);
+      const out = errOut();
+      expect(out).toContain('More than one global declaration for shared');
+      expect(out).not.toContain('explain:');
+    });
+
+    test('catalog has a {concept, correctForm} entry for both linker keys', () => {
+      for (const key of ['UNDEFINED_EXTERN', 'MULTIPLE_GLOBAL']) {
+        const e = getExplanation(key);
+        expect(e).toBeTruthy();
+        expect(e.concept.length).toBeGreaterThan(0);
+        expect(e.correctForm.length).toBeGreaterThan(0);
+      }
     });
   });
 

@@ -10,8 +10,10 @@
 // formatAssemblerError, cliExit's exit helpers) own where the block is printed.
 //
 // pcoffset9 was wired end-to-end by the infra slice (#1096). The encoding/range
-// batch (#1097) adds imm5/imm9/pcoffset11. The remaining error classes are
-// filled in by the later content batches (#1098–#1101); each adds its entries to
+// batch (#1097) adds imm5/imm9/pcoffset11. The register + label/symbol batch
+// (#1098) adds REGISTER, BAD_LABEL, UNDEFINED_LABEL, DUPLICATE_LABEL (assembler)
+// and UNDEFINED_EXTERN, MULTIPLE_GLOBAL (linker). The remaining error classes are
+// filled in by the later content batches (#1099–#1101); each adds its entries to
 // this table and attaches the key at its throw sites.
 
 'use strict';
@@ -50,6 +52,64 @@ const EXPLANATIONS = {
     correctForm:
       'Use a value in -256..255, or store the constant in memory with `.word` and ' +
       'load it (e.g. `lea r0, k` then `ldr r0, r0, 0`, with `k: .word 30000`).',
+  },
+
+  // Register + label/symbol error classes (#1098).
+  REGISTER: {
+    concept:
+      'The LCC has exactly eight general-purpose registers, r0 through r7, and a ' +
+      'register operand is encoded in a 3-bit field — so there is no r8 or higher. ' +
+      'Three registers also have conventional aliases by calling convention: ' +
+      'r5=fp (frame pointer), r6=sp (stack pointer), r7=lr (link register).',
+    correctForm:
+      'Name one of r0–r7 (or the aliases fp, sp, lr) wherever a register operand ' +
+      'is required, e.g. `add r0, r1, r2`.',
+  },
+  BAD_LABEL: {
+    concept:
+      'A label definition is written at the start of a line and terminated by a ' +
+      'colon, and a label name may contain only letters, digits, and underscores ' +
+      'and may not begin with a digit. Text that does not fit that shape cannot be ' +
+      'read as a label.',
+    correctForm:
+      'Define a label at line start with a trailing colon (e.g. `loop:`), then ' +
+      'reference it by name without the colon (e.g. `br loop`).',
+  },
+  UNDEFINED_LABEL: {
+    concept:
+      'Every label you reference must be defined somewhere in the program. A ' +
+      'forward reference to a label defined later is fine — the assembler resolves ' +
+      'it in pass 2 — but a label that is used and never defined (often a typo) ' +
+      'cannot be resolved to an address.',
+    correctForm:
+      'Define the label (e.g. `done: halt`), correct the spelling to match an ' +
+      'existing definition, or declare it `.extern` if it lives in another module.',
+  },
+  DUPLICATE_LABEL: {
+    concept:
+      'Each label may be defined only once: the assembler builds a single symbol ' +
+      'table mapping each name to one address, so defining the same label twice is ' +
+      'ambiguous.',
+    correctForm:
+      'Rename one definition so every label is unique, or remove the redundant one.',
+  },
+  UNDEFINED_EXTERN: {
+    concept:
+      'A symbol marked `.extern` in one module must be provided as a `.global` ' +
+      'definition by exactly one of the modules being linked. An undefined external ' +
+      'reference means none of the linked modules exports that symbol.',
+    correctForm:
+      'Add a `.global <name>` definition in the module that owns the symbol, include ' +
+      'that module in the link command, or fix the name to match an existing global.',
+  },
+  MULTIPLE_GLOBAL: {
+    concept:
+      'Across all modules being linked, a symbol may be declared `.global` ' +
+      '(exported) by only one module — the linker needs a single, unambiguous ' +
+      'address for each global name.',
+    correctForm:
+      'Keep exactly one `.global` definition of the symbol (mark the others ' +
+      '`.extern`), or rename the duplicates so each global is unique.',
   },
 };
 

@@ -476,7 +476,7 @@ class Assembler {
         } else {
           // Note: as of 12/2024, LCC does not print any message for this case
           // and instead ignores undefined .start labels, but LCC.js treats it as an error.
-          this.failAssembly('Undefined label', 1);
+          this.failAssembly('Undefined label', 1, null, 'UNDEFINED_LABEL');
         }
       } else {
         // If no .start directive is present, default the start address to 0.
@@ -762,11 +762,11 @@ class Assembler {
           label = label.slice(0, -1); 
         }
         if (!this.isValidLabel(label)) {
-          this.error(`Bad label`); // `Invalid label format: ${label}`
+          this.error('Bad label', null, 'BAD_LABEL'); // `Invalid label format: ${label}`
         }
         if (this.pass === 1) {
           if (this.labels.has(label)) {
-            this.error(`Duplicate label`); // `Duplicate label: ${label}`
+            this.error('Duplicate label', null, 'DUPLICATE_LABEL'); // `Duplicate label: ${label}`
           } else {
             this.symbolTable[label] = this.locCtr;
             this.labels.add(label);
@@ -1369,7 +1369,7 @@ class Assembler {
       this.failAssembly('Missing operand', 1);
     }
     if (this.isNumLiteral(operands[0])) {
-      this.failAssembly('Bad label', 1);
+      this.failAssembly('Bad label', 1, null, 'BAD_LABEL');
     }
     if(!this.isNumLiteral(operands[0]) && operands[1] && operands[2]) {
 
@@ -1390,7 +1390,7 @@ class Assembler {
     if (address === null) {
       // Dead in single-error mode: evaluateOperand already throws 'Undefined label'
       // before returning null. Kept as guard for any future multi-error-mode path.
-      this.failAssembly('Undefined label', 1);
+      this.failAssembly('Undefined label', 1, null, 'UNDEFINED_LABEL');
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1405,7 +1405,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let sr2orImm5 = operands[2];
     if (sr2orImm5 === null || sr2orImm5 === undefined) {
@@ -1436,7 +1436,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     }
     let sr2orImm5 = operands[2];
     let macword = OP_SUB | (dr << 9) | (sr1 << 6);
@@ -1456,7 +1456,7 @@ class Assembler {
   assemblePUSH(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let macword = OP_EXT | (sr << 9) | EOP_PUSH;
     return macword;
@@ -1465,7 +1465,7 @@ class Assembler {
   assemblePOP(operands) {
     let dr = this.getRegister(operands[0]);
     if (dr === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let macword = OP_EXT | (dr << 9) | EOP_POP;
     return macword;
@@ -1475,7 +1475,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let macword = OP_EXT | EOP_DIV | (dr << 9) | (sr1 << 6);
     return macword;
@@ -1484,7 +1484,7 @@ class Assembler {
   assembleROL(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
@@ -1497,7 +1497,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_MUL;
     return macword;
@@ -1507,7 +1507,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     }
     let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_REM;
     return macword;
@@ -1517,7 +1517,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     }
     let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_OR;
     return macword;
@@ -1527,7 +1527,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     }
     let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_XOR;
     return macword;
@@ -1537,7 +1537,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_SEXT;
     return macword;
@@ -1546,7 +1546,7 @@ class Assembler {
   assembleROR(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
@@ -1558,7 +1558,7 @@ class Assembler {
   assembleSRL(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
@@ -1570,7 +1570,7 @@ class Assembler {
   assembleSRA(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
@@ -1582,7 +1582,7 @@ class Assembler {
   assembleSLL(operands) {
     let sr = this.getRegister(operands[0]);
     if (sr === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let ct = null;
     if (operands[1]) ct = this.evaluateImmediateNaive(operands[1]);
@@ -1641,7 +1641,7 @@ class Assembler {
 
     let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
     if (address === null) {
-      this.failAssembly('Bad label', 1);
+      this.failAssembly('Bad label', 1, null, 'BAD_LABEL');
     };
     
     let isExternal = this.externLabels.has(label);
@@ -1690,7 +1690,7 @@ class Assembler {
 
     let address = this.evaluateOperand(label, 'e'); // Pass 'e' as usageType
     if (address === null) {
-      this.failAssembly('Bad label', 1);
+      this.failAssembly('Bad label', 1, null, 'BAD_LABEL');
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1731,7 +1731,7 @@ class Assembler {
 
     let address = this.evaluateOperand(label, 'e');
     if (address === null) {
-      this.failAssembly('Bad label', 1);
+      this.failAssembly('Bad label', 1, null, 'BAD_LABEL');
     };
     let pcoffset9 = address - this.locCtr - 1;
     if (pcoffset9 < -256 || pcoffset9 > 255) {
@@ -1745,12 +1745,12 @@ class Assembler {
     let label = operands[0];
 
     if(!this.isValidLabel(label)) {
-      this.failAssembly(`Bad label`, 1); // : ${label}
+      this.failAssembly('Bad label', 1, null, 'BAD_LABEL'); // : ${label}
     }
 
     let address = this.evaluateOperand(label, 'E'); // Pass 'E' as usageType
     if (address === null) {
-      this.failAssembly('Bad label', 1);
+      this.failAssembly('Bad label', 1, null, 'BAD_LABEL');
     }
     
     let isExternal = this.externLabels.has(label);
@@ -1787,7 +1787,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let baser = this.getRegister(operands[1]);
     if (dr === null || baser === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let offset6 = this.evaluateImmediate(operands[2], -32, 31, 'offset6');
     if (offset6 === null) return null;
@@ -1799,7 +1799,7 @@ class Assembler {
     let sr = this.getRegister(operands[0]);
     let baser = this.getRegister(operands[1]);
     if (sr === null || baser === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let offset6 = this.evaluateImmediate(operands[2], -32, 31, 'offset6');
     if (offset6 === null) return null;
@@ -1837,7 +1837,7 @@ class Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
     let macword = OP_NOT | (dr << 9) | (sr1 << 6);
     return macword;
@@ -1846,7 +1846,7 @@ class Assembler {
   assembleMOV(mnemonic, operands) {
     let dr = this.getRegister(operands[0]);
     if (dr === null) {
-      this.failAssembly('Missing register', 1);
+      this.failAssembly('Missing register', 1, null, 'REGISTER');
     };
 
     if (mnemonic === 'mov') {
@@ -1882,7 +1882,7 @@ class Assembler {
       // mvr dr, sr1
       let sr1 = this.getRegister(operands[1]);
       if (sr1 === null) {
-        this.failAssembly('Missing register', 1);
+        this.failAssembly('Missing register', 1, null, 'REGISTER');
       };
       // Ensure eopcode 12 is set
       let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_MVR;
@@ -1898,7 +1898,7 @@ class Assembler {
     if (operands[0]) {
       sr = this.getRegister(operands[0]);
       if (sr === null) {
-        this.failAssembly('Bad register', 1);
+        this.failAssembly('Bad register', 1, null, 'REGISTER');
       };
     } 
     let macword = OP_TRAP | (sr << 9) | (trapVector & 0xFF);
@@ -1919,7 +1919,7 @@ class Assembler {
         if (suggestion) msg += `. Did you mean '${suggestion}'?`;
       }
       this.failAssembly(msg, 1,
-        { found: this.determineOperandType(regStr), expected: 'register' });
+        { found: this.determineOperandType(regStr), expected: 'register' }, 'REGISTER');
     }
     if (regStr === "fp") {
       regStr = "r5";
@@ -2120,7 +2120,7 @@ class Assembler {
           const suggestion = suggestClosest(label, Object.keys(this.symbolTable));
           if (suggestion) msg += `. Did you mean '${suggestion}'?`;
         }
-        this.error(msg);
+        this.error(msg, null, 'UNDEFINED_LABEL');
         return null;
       }
   

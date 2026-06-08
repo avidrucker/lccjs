@@ -5,7 +5,7 @@
 const fs = require('fs');
 const { LinkerError } = require('../utils/errors');
 
-const { fatalExit, cliErrorExit } = require('../utils/cliExit');
+const { fatalExit, cliErrorExit, maybeExplain } = require('../utils/cliExit');
 const { suggestClosest } = require('../utils/suggest');
 
 class Linker {
@@ -207,7 +207,7 @@ class Linker {
           break;
         case 'G':
           if (this.globalSymbolTable.hasOwnProperty(header.label)) {
-            this.error(`More than one global declaration for ${header.label}`);
+            this.error(`More than one global declaration for ${header.label}`, 'MULTIPLE_GLOBAL');
           }
           this.globalSymbolTable[header.label] = header.address + this.moduleCurrentAddress;
           break;
@@ -259,7 +259,7 @@ class Linker {
     // Adjust externalReferenceTable11 (11-bit addresses)
     for (let ref of this.externalReferenceTable11) {
       if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
-        this.error(this._undefinedExternalRefMsg(ref.label));
+        this.error(this._undefinedExternalRefMsg(ref.label), 'UNDEFINED_EXTERN');
       }
       let Gaddr = this.globalSymbolTable[ref.label];
       let offset = ((this.machineCode[ref.address] + Gaddr - ref.address - 1) & 0x7ff);
@@ -269,7 +269,7 @@ class Linker {
     // Adjust externalReferenceTable9 (9-bit addresses)
     for (let ref of this.externalReferenceTable9) {
       if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
-        this.error(this._undefinedExternalRefMsg(ref.label));
+        this.error(this._undefinedExternalRefMsg(ref.label), 'UNDEFINED_EXTERN');
       }
       let Gaddr = this.globalSymbolTable[ref.label];
       let offset = ((this.machineCode[ref.address] + Gaddr - ref.address - 1) & 0x1ff);
@@ -279,7 +279,7 @@ class Linker {
     // Adjust virtualAddressTable (full addresses)
     for (let ref of this.virtualAddressTable) {
       if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
-        this.error(this._undefinedExternalRefMsg(ref.label));
+        this.error(this._undefinedExternalRefMsg(ref.label), 'UNDEFINED_EXTERN');
       }
       let Gaddr = this.globalSymbolTable[ref.label];
       this.machineCode[ref.address] += Gaddr;
@@ -350,9 +350,12 @@ class Linker {
     fs.closeSync(outFile);
   }
 
-  error(message) {
+  // `explainKey` (optional, #1098) selects a --explain catalog entry printed
+  // after the error line when explain mode is on; default output is unchanged.
+  error(message, explainKey = null) {
     const prefix = this.verboseModeOn ? '[linker] ' : '';
     console.error(`${prefix}${message}`);
+    maybeExplain(explainKey);
     throw new LinkerError(message);
   }
 }

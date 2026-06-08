@@ -203,3 +203,68 @@ describe('encoding/range explain content (#1097)', () => {
     );
   });
 });
+
+describe('register + label/symbol explain content (#1098)', () => {
+  // One row per error class wired in #1098. Triggers verified empirically against
+  // the assembler (e.g. `add r9,...` fails as "Invalid operation" before reaching
+  // the register check — `not r0, r9` is the clean Bad-register path).
+  const CASES = [
+    { name: 'Bad register (not sr)', key: 'REGISTER',
+      message: 'Bad register',
+      src: '        not r0, r9\n        halt\n' },
+    { name: 'Missing register (not, one operand)', key: 'REGISTER',
+      message: 'Missing register',
+      src: '        not r0\n        halt\n' },
+    { name: 'Bad label (malformed definition)', key: 'BAD_LABEL',
+      message: 'Bad label',
+      src: '9bad:   halt\n' },
+    { name: 'Undefined label (branch to unknown)', key: 'UNDEFINED_LABEL',
+      message: 'Undefined label',
+      src: '        br nowhere\n        halt\n' },
+    { name: 'Duplicate label (defined twice)', key: 'DUPLICATE_LABEL',
+      message: 'Duplicate label',
+      src: 'x:      halt\nx:      halt\n' },
+  ];
+
+  test.each(CASES)('$name: catalog has a {concept, correctForm} entry', ({ key }) => {
+    const e = getExplanation(key);
+    expect(e).toBeTruthy();
+    expect(e.concept.length).toBeGreaterThan(0);
+    expect(e.correctForm.length).toBeGreaterThan(0);
+  });
+
+  describe('end to end through assembleSource', () => {
+    let errSpy;
+    beforeEach(() => {
+      errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+    afterEach(() => jest.restoreAllMocks());
+    const errOut = () => errSpy.mock.calls.map((c) => c.join(' ')).join('\n');
+
+    test.each(CASES)(
+      '$name: --explain renders the message AND its explain block',
+      ({ key, message, src }) => {
+        const a = new Assembler();
+        a.explainModeOn = true;
+        expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
+        const out = errOut();
+        expect(out).toContain(message);
+        expect(out).toContain('explain:');
+        expect(out).toContain(getExplanation(key).concept);
+      }
+    );
+
+    test.each(CASES)(
+      '$name: without --explain, the message is bare (no explain block)',
+      ({ message, src }) => {
+        const a = new Assembler();
+        a.explainModeOn = false;
+        expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
+        const out = errOut();
+        expect(out).toContain(message);
+        expect(out).not.toContain('explain:');
+      }
+    );
+  });
+});
