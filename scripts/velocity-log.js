@@ -81,9 +81,16 @@ if (input.ticket != null && (typeof input.ticket !== 'number' || !Number.isInteg
 if (typeof input.delta_h_min === 'number' && input.delta_h_min < 0) {
   die(`delta_h_min must be >= 0 (got ${input.delta_h_min}); convention is estimate - actual`);
 }
+// #1184: notice-not-prevent. A new model (or a non-canonical one) is recorded,
+// not rejected — models are an open-growth list, so an unrecognised value is far
+// more likely a legitimately-new release than an error worth aborting on. We
+// still emit a one-line notice so a human can see it and bless/normalise it.
+// (Roles below stay a hard reject: they are a deliberately closed vocabulary.)
 const CANONICAL_MODEL = /^[a-z]+-\d+\.\d+$/;
 if (input.model != null && input.model !== '' && !CANONICAL_MODEL.test(String(input.model))) {
-  die(`"model" must follow canonical format <family>-<major>.<minor> (e.g. sonnet-4.6, opus-4.8) — got "${input.model}"`);
+  console.error(
+    `velocity-log: note: model "${input.model}" is new or non-canonical ` +
+    `(canonical form is <family>-<major>.<minor>, e.g. opus-4.8) — recording it anyway`);
 }
 if (VALID_ROLES.size > 0 && !VALID_ROLES.has(input.role)) {
   die(`unknown role "${input.role}" (valid: ${[...VALID_ROLES].join(', ')})`);

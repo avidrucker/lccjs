@@ -152,16 +152,17 @@ describe('claim.js identity resolution', () => {
       expect(checkIdentityName({ name: 'apple', source: 'as' }, { custom: false })).toBeNull();
     });
 
-    test('unknown name via --as without --custom → error with valid-names list', () => {
+    // #1184: notice-not-prevent. An unrecognised --as name is no longer a hard
+    // error — it warns and proceeds. --custom no longer changes this (it stays a
+    // documented opt-in but the unknown name warns either way).
+    test('unknown name via --as without --custom → warn (proceed, no longer an error)', () => {
       const result = checkIdentityName({ name: 'durian', source: 'as' }, { custom: false });
-      expect(result).toHaveProperty('error');
-      expect(result.error).toMatch(/not a recognised agent name/);
-      expect(result.error).toMatch(/apple.*banana.*cherry/);
-      expect(result.error).toMatch(/--custom/);
-      expect(result.error).not.toHaveProperty('warn');
+      expect(result).toHaveProperty('warn');
+      expect(result.error).toBeUndefined();
+      expect(result.warn).toMatch(/using it anyway/);
     });
 
-    test('unknown name via --as with --custom → warn (proceed)', () => {
+    test('unknown name via --as with --custom → warn (still a notice, just not an error)', () => {
       const result = checkIdentityName({ name: 'custard', source: 'as' }, { custom: true });
       expect(result).toHaveProperty('warn');
       expect(result.error).toBeUndefined();

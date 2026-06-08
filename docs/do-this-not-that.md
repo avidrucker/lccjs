@@ -247,7 +247,7 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 - **Do:** run `date '+%Y-%m-%dT%H:%M:%S%z'` the moment a task is assigned — before the issue number is known, before reading the body. Then set `c_min` as your honest forward-looking estimate. Use `sonnet-4.6` (not `claude-sonnet-4-6`). Use `COMBO` for refactor+test, not a compound string.
 - **Don't:** set `c_min` or capture `started_iso` retroactively, use the full model ID, or invent role codes.
-- **Why:** retroactive timestamps produce approximate rows that gap calibration data. The CSV test enforces canonical values; non-canonical strings fail validation and the row is rejected. (#819)
+- **Why:** retroactive timestamps produce approximate rows that gap calibration data. Canonical short-form keeps the model column queryable. Note since #1184: a non-canonical `model` is no longer *rejected* — `velocity:log` records it and prints a one-line notice, and the CSV test reports (does not fail on) non-canonical values. Roles are still hard-rejected (a closed vocabulary). So canonical form is the convention to follow, not a gate that blocks you. (#819, #1184)
 
 ---
 

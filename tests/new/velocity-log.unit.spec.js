@@ -60,18 +60,25 @@ describe('velocity-log — negative delta validation (#440)', () => {
   });
 });
 
-describe('velocity-log — model canonical format validation (#453)', () => {
-  test('rejects full model ID (claude-sonnet-4-6) with exit 1 and error message', () => {
-    const result = run({ role: 'DEV', agent: 'TEST', model: 'claude-sonnet-4-6' });
-    expect(result.status).toBe(1);
-    expect(result.stderr).toMatch(/canonical format/);
-    expect(result.stderr).toMatch(/claude-sonnet-4-6/);
+// #453 added a hard reject for non-canonical models; #1184 relaxed it to
+// notice-not-prevent — a non-canonical/new model is RECORDED with a note, never
+// rejected. An invalid role is used below as a stopper: the role check runs
+// *after* the model check, so it both proves we got past the model code and
+// halts before the real DB write (the canonical-accept tests use a bad `ticket`,
+// but ticket is validated *before* the model, so it can't probe past it).
+describe('velocity-log — non-canonical model is a notice, not a reject (#453, #1184)', () => {
+  test('records full model ID (claude-sonnet-4-6) with a notice and proceeds', () => {
+    const result = run({ role: 'BOGUS', agent: 'TEST', model: 'claude-sonnet-4-6' });
+    expect(result.stderr).toMatch(/note: model "claude-sonnet-4-6" is new or non-canonical/);
+    expect(result.stderr).toMatch(/recording it anyway/);
+    expect(result.stderr).not.toMatch(/must follow canonical/);
+    expect(result.stderr).toMatch(/unknown role/); // proceeded past the model check
   });
 
-  test('rejects full model ID (claude-opus-4-8) with exit 1', () => {
-    const result = run({ role: 'DEV', agent: 'TEST', model: 'claude-opus-4-8' });
-    expect(result.status).toBe(1);
-    expect(result.stderr).toMatch(/canonical format/);
+  test('records full model ID (claude-opus-4-8) with a notice and proceeds', () => {
+    const result = run({ role: 'BOGUS', agent: 'TEST', model: 'claude-opus-4-8' });
+    expect(result.stderr).toMatch(/note: model "claude-opus-4-8" is new or non-canonical/);
+    expect(result.stderr).not.toMatch(/must follow canonical/);
   });
 
   test('accepts canonical short-form sonnet-4.6 (fails later on bad ticket)', () => {

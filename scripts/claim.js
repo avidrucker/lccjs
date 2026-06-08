@@ -374,19 +374,16 @@ function shouldBlockUncategorized(info, allow) {
   return !!(info && needsAreaLabel(info.labels));
 }
 
-// Validate the resolved identity name against the known fruit list (#366 Option C).
-// Returns null if the name is valid or absent.
-// Returns { error } when --as supplied an unknown name without --custom (die path).
-// Returns { warn } when an unknown name is tolerated (env/branch source, or --custom).
-function checkIdentityName(identity, opts) {
+// Validate the resolved identity name against the known fruit list (#366 Option C,
+// relaxed to notice-not-prevent in #1184).
+// Returns null when the name is a known fruit or absent.
+// Returns { warn } for any unrecognised name: it is USED anyway, with a one-line
+// notice. An unrecognised agent name is never a hard error — agent identities are
+// an open-growth list, so we notice new ones, we don't block them. --custom
+// remains the documented opt-in for deliberately non-list names, but it no longer
+// changes behaviour here: with or without it, an unknown name warns and proceeds.
+function checkIdentityName(identity, opts) { // eslint-disable-line no-unused-vars
   if (!identity.name || FRUITS.includes(identity.name.toLowerCase())) return null;
-  if (identity.source === 'as' && !opts.custom) {
-    return {
-      error: `"${identity.name}" is not a recognised agent name.\n` +
-             `  Valid names: ${FRUITS.join(', ')}\n` +
-             `  Re-run with --as <valid-name>, or pass --custom to use this name anyway.`,
-    };
-  }
   return { warn: `"${identity.name}" is not in the known fruit list — using it anyway.` };
 }
 
@@ -622,11 +619,9 @@ function main() {
     );
   }
 
+  // #1184: an unrecognised agent name only ever produces a notice — never a die.
   const nameCheck = checkIdentityName(identity, opts);
-  if (nameCheck) {
-    if (nameCheck.error) die(nameCheck.error);
-    else console.error(`[claim] note: ${nameCheck.warn}`);
-  }
+  if (nameCheck) console.error(`[claim] note: ${nameCheck.warn}`);
 
   // One gh round-trip serves both the slug and the open/closed guard (#227).
   // Best-effort: gh may be absent/offline (info === null) -> proceed; only a

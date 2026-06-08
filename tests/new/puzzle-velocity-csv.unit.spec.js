@@ -91,9 +91,13 @@ describe('docs/puzzle-velocity.csv — model column backfill', () => {
   });
 });
 
-// Concern #314-5: all non-empty model values in the CSV must follow the
-// canonical short form: <family>-<major>.<minor>  e.g. sonnet-4.6, opus-4.8
-// Convention chosen: lowercase family name, version with a dot (not dashes).
+// Concern #314-5, relaxed by #1184 (notice-not-prevent): the canonical short form
+// for a model is <family>-<major>.<minor>  e.g. sonnet-4.6, opus-4.8 (lowercase
+// family, dot version). A value that doesn't match is NO LONGER a build failure —
+// models are an open-growth list, so a new release lands as data first and gets
+// blessed/normalised by a human later. This block REPORTS non-canonical values
+// (so drift stays visible) but never fails the suite on them. The hard guard
+// lives upstream in velocity-log.js, which now also only warns (#1184).
 describe('docs/puzzle-velocity.csv — model column naming convention', () => {
   const csvPath = path.join(__dirname, '..', '..', 'docs', 'puzzle-velocity.csv');
   const raw = fs.readFileSync(csvPath, 'utf8');
@@ -108,12 +112,22 @@ describe('docs/puzzle-velocity.csv — model column naming convention', () => {
     expect(modelIdx).toBeGreaterThanOrEqual(0);
   });
 
-  test('all non-empty model values match canonical format: <family>-<major>.<minor>', () => {
+  // Report-only: surface non-canonical model values without failing the build.
+  test('reports any non-canonical model values (notice-not-prevent, #1184)', () => {
     const canonical = /^[a-z]+-\d+\.\d+$/;
-    const violations = dataRows
+    const nonCanonical = dataRows
       .map(line => parseCSVLine(line))
       .map((fields, i) => ({ row: i + 2, value: fields[modelIdx] }))
       .filter(({ value }) => value && !canonical.test(value));
-    expect(violations).toEqual([]);
+    if (nonCanonical.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[velocity-csv] note: ${nonCanonical.length} non-canonical model value(s) present ` +
+        `(new releases or drift to normalise — not a failure):\n` +
+        nonCanonical.map(v => `  row ${v.row}: "${v.value}"`).join('\n'));
+    }
+    // The contract is observability, not enforcement: collection must succeed,
+    // but a non-canonical value never reds the build.
+    expect(Array.isArray(nonCanonical)).toBe(true);
   });
 });
