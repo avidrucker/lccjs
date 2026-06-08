@@ -27,7 +27,7 @@ const VALID_ERROR_TYPES = new Set([
   'SKILL_FAIL', 'NETWORK_FAIL', 'VALIDATION_FAIL', 'OTHER',
 ]);
 
-const CANONICAL_MODEL = /^[a-z]+-\d+\.\d+$/;
+const CANONICAL_MODEL = /^[a-z]+-[a-z0-9.]+$/;
 
 function die(msg) {
   console.error(`error-log: ${msg}`);
@@ -60,7 +60,7 @@ if (input.error_type != null && !VALID_ERROR_TYPES.has(input.error_type)) {
   die(`unknown error_type "${input.error_type}" (valid: ${[...VALID_ERROR_TYPES].join(', ')})`);
 }
 if (input.model != null && input.model !== '' && !CANONICAL_MODEL.test(String(input.model))) {
-  die(`"model" must follow canonical format <family>-<major>.<minor> (e.g. sonnet-4.6) — got "${input.model}"`);
+  die(`"model" must follow canonical format <family>-<major.minor> or <family>-<label> (e.g. sonnet-4.6 or owl-alpha) — got "${input.model}"`);
 }
 if (input.ticket != null && (!Number.isInteger(input.ticket) || input.ticket <= 0)) {
   die(`"ticket" must be a positive integer — got ${input.ticket}`);
