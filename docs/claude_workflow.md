@@ -116,6 +116,8 @@ If any file your ticket will touch is untracked or modified on main, commit or s
 
    > **If the orchestrator briefing contradicts the issue body, surface the conflict before starting work.** The issue body is the spec; the briefing is a hint. One sentence to the user ("your briefing says X, the issue says Y — implementing Y; confirm if wrong") prevents silent misalignment.
 
+   > **An orchestrator briefing is a point-in-time snapshot — re-validate OPEN before claiming.** The assignment list was triaged when the orchestrator ran; in parallel operation an assigned `#N` may have CLOSED in the interval (the `fruit-agent-orchestrate` output now carries a `⏱ Triaged as of <ISO>` banner for exactly this reason). Step 1 above (`gh issue view <N>` → confirm OPEN) is the guard — never skip it because the briefing "just" handed you the ticket. (#1159)
+
    > **If this is a tracker ticket, verify each child's live state** — do not trust the checkboxes in the body. Run `gh issue view N --json state -q .state` for each `#N` listed. Tracker bodies are frozen snapshots; GitHub does not auto-check boxes when children close. See [`docs/do-this-not-that.md`](../docs/do-this-not-that.md) → "Don't trust unchecked boxes." (#904, #906)
 
 4. Read referenced docs / source files needed for context.
