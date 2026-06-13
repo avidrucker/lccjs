@@ -119,13 +119,14 @@ interpreter in the browser. Three moving parts:
 | Part | Source | Role |
 |------|--------|------|
 | **Editor** | CodeMirror 6, imported from **esm.sh** CDN URLs | the code editor: line numbers, comment toggle, autocomplete |
-| **Syntax highlighting** | **`dist/lang-lcc.js`** (a hand-maintained, CDN-ready CM6 `LanguageSupport`, compiled from the Lezer grammar in `src/lang-lcc/`) | colorizes LCC assembly as you type |
+| **Syntax highlighting** | **`src/lang-lcc/lang-lcc.cdn.js`** (a hand-maintained, CDN-ready CM6 `LanguageSupport`, compiled from the Lezer grammar in `src/lang-lcc/`) | colorizes LCC assembly as you type |
 | **Assemble + run** | **`dist/lcc.bundle.js`** (webpack bundle of `src/browser/api.js`) executed inside a **Web Worker** (`src/browser/lcc-worker.js`) | runs the program off the main thread so a busy loop can't freeze the tab |
 
-`build:site` **copies** `dist/lcc.bundle.js` and `dist/lang-lcc.js` into
-`docs/site/dist/`, and `src/browser/lcc-worker.js` into `docs/site/showcase/`, so
-the page's relative imports (`../dist/lcc.bundle.js`, `../dist/lang-lcc.js`)
-resolve on `file://`, local HTTP, and Pages alike.
+`build:site` **copies** `dist/lcc.bundle.js` and `src/lang-lcc/lang-lcc.cdn.js`
+into `docs/site/dist/` (the latter emitted as `docs/site/dist/lang-lcc.js`), and
+`src/browser/lcc-worker.js` into `docs/site/showcase/`, so the page's relative
+imports (`../dist/lcc.bundle.js`, `../dist/lang-lcc.js`) resolve on `file://`,
+local HTTP, and Pages alike.
 
 > **CM6 + esm.sh gotcha (#772, #986):** the page imports each CodeMirror symbol
 > from its individual subpackage with a pinned `?deps=` so every `@codemirror/*`
@@ -135,11 +136,12 @@ resolve on `file://`, local HTTP, and Pages alike.
 
 ### Why two `lang-lcc` files exist
 `src/lang-lcc/` is the **Node/build-time** grammar (Lezer parser tables generated
-from `lcc.grammar`, consumed by tests). **`dist/lang-lcc.js`** is a separate,
-**hand-maintained** browser port that uses CDN URLs and needs no build step. They
-are not auto-synced today — editing the grammar does **not** regenerate the
-browser file. (Relocated from `docs/site/dist/` to `dist/` in #1075 so the
-generated tree stays 100% generated; see §5.)
+from `lcc.grammar`, consumed by tests). **`src/lang-lcc/lang-lcc.cdn.js`** is a
+separate, **hand-maintained** browser port that uses CDN URLs and needs no build
+step. They are not auto-synced today — editing the grammar does **not** regenerate
+the browser file. (Relocated `docs/site/dist/` → `dist/` in #1075 so the generated
+tree stays 100% generated, then `dist/` → `src/lang-lcc/` in #1176 so it reads as
+the hand-maintained source it is, not a build output; see §5.)
 
 ---
 
@@ -154,8 +156,10 @@ Two trees look generated but are governed differently:
 
 So: **don't commit `docs/site/`** (a local `npm run build` will leave it dirty —
 that's expected; it's ignored), and **do re-commit `dist/`** after a browser-bundle
-change (the pre-push hook enforces it). The one hand-maintained file that *lives*
-in `dist/` but isn't webpack-built — `dist/lang-lcc.js` — is edited directly.
+change (the pre-push hook enforces it). The hand-maintained CM6 language support is
+**not** in `dist/` — it lives at `src/lang-lcc/lang-lcc.cdn.js` (relocated out of
+`dist/` in #1176 so `dist/` is unambiguously webpack output) and is edited directly;
+`build:site` copies it to the deployed `docs/site/dist/lang-lcc.js`.
 
 ---
 
@@ -167,8 +171,9 @@ For iterating on the showcase without a manual rebuild-and-refresh cycle:
 npm run dev:site        # = serve-site.js --dev
 ```
 
-It watches `scripts/build-site.js`, `src/browser/`, `src/lang-lcc/`, and
-`dist/lang-lcc.js`; on a change it runs the **minimal** build step (template →
+It watches `scripts/build-site.js`, `src/browser/`, and `src/lang-lcc/` (which
+includes the hand-maintained `lang-lcc.cdn.js`); on a change it runs the
+**minimal** build step (template →
 `build:site`; `src/browser/*` → `build:browser` + `build:site`) and pushes a
 live-reload over SSE so the open tab refreshes itself. The reload `<script>` is
 injected **only** under `--dev`, so the page bytes stay identical to deploy.
@@ -203,6 +208,6 @@ deploys. Source reading is not sufficient.
 | `webpack.browser.config.js` | builds `dist/lcc.bundle.js` + `dist/lcc-injector.js` from `src/browser/` |
 | `src/browser/{api,lcc-injector,lcc-worker}.js` | browser entry points (API bundle, slide injector, playground worker) |
 | `src/lang-lcc/` | Lezer grammar + generated parser (build/test time) |
-| `dist/lang-lcc.js` | hand-maintained CM6 language support for the browser (CDN-ready) |
+| `src/lang-lcc/lang-lcc.cdn.js` | hand-maintained CM6 language support for the browser (CDN-ready) |
 | `dist/**` (committed) | consumer-facing bundle; copied into `docs/site/dist/` by `build:site` |
 | `docs/site/**` (gitignored) | the generated, deployed site — never hand-edit |

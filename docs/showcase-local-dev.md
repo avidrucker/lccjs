@@ -37,10 +37,11 @@ Playground's editor markup lives in the `playgroundScript` template inside
 > | Artifact | Canonical (committed) | How it reaches the page |
 > |----------|-----------------------|-------------------------|
 > | `lcc.bundle.js` | `dist/lcc.bundle.js` (built by `build:browser` from `src/browser/`) | copied to `docs/site/dist/` |
-> | `lang-lcc.js`   | `dist/lang-lcc.js` (**hand-maintained CDN ESM**, not webpack-built) | copied to `docs/site/dist/` |
+> | `lang-lcc.cdn.js` | `src/lang-lcc/lang-lcc.cdn.js` (**hand-maintained CDN ESM**, not webpack-built) | copied to `docs/site/dist/lang-lcc.js` |
 >
-> So change the CM6 language support at **`dist/lang-lcc.js`** (its old home under
-> `docs/site/dist/` was relocated in #1075), and change the assemble/run engine via
+> So change the CM6 language support at **`src/lang-lcc/lang-lcc.cdn.js`** (relocated
+> from `docs/site/dist/` in #1075, then out of `dist/` to `src/lang-lcc/` in #1176 so
+> it reads as the hand-maintained source it is), and change the assemble/run engine via
 > `src/browser/` + `npm run build:browser`. A `pre-push` guard blocks a push that
 > edits `src/browser/**` without re-committing the rebuilt `dist/` bundle.
 

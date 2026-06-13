@@ -476,17 +476,19 @@ ${listItems}
   // Copy the CodeMirror 6 language support into docs/site/dist/ so the playground's
   // `import { lcc } from '../dist/lang-lcc.js'` resolves. Unlike lcc.bundle.js this
   // file is NOT produced by webpack — it is a hand-maintained, CDN-ready ESM module
-  // (see its header) that lives canonically at dist/lang-lcc.js alongside the other
-  // committed browser artifacts. Copying it here keeps docs/site/** 100% generated
-  // so it can stay gitignored (#1075).
-  const LANG_SRC  = path.join(ROOT, 'dist', 'lang-lcc.js');
+  // (see its header) that lives canonically at src/lang-lcc/lang-lcc.cdn.js, beside
+  // the grammar it mirrors. It was relocated out of dist/ (#1176) precisely so it is
+  // not mistaken for a build output; build:site still emits it to the stable deployed
+  // path docs/site/dist/lang-lcc.js, keeping docs/site/** 100% generated so it can
+  // stay gitignored (#1075).
+  const LANG_SRC  = path.join(ROOT, 'src', 'lang-lcc', 'lang-lcc.cdn.js');
   const LANG_DEST = path.join(OUT_DIR, 'dist', 'lang-lcc.js');
   if (fs.existsSync(LANG_SRC)) {
     fs.mkdirSync(path.dirname(LANG_DEST), { recursive: true });
     fs.copyFileSync(LANG_SRC, LANG_DEST);
     console.log(`build:site — lang:    ${path.relative(ROOT, LANG_DEST)}`);
   } else {
-    console.warn('build:site — WARNING: dist/lang-lcc.js not found; playground syntax highlighting will break');
+    console.warn('build:site — WARNING: src/lang-lcc/lang-lcc.cdn.js not found; playground syntax highlighting will break');
   }
 
   const playgroundThemeOptions = THEMES.map(({ id, label }) =>

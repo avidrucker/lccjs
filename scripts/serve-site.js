@@ -162,19 +162,21 @@ function runStep(name) {
 }
 
 // Map a set of changed absolute paths to the minimal steps needed. Adapted from
-// the #1027 plan for the post-#1075 layout: lang-lcc.js now lives at
-// dist/lang-lcc.js and is COPIED into docs/site by build:site (it was served
-// in-place before), so a change to it needs build:site, not "reload only".
+// the #1027 plan for the post-#1075 layout: the hand-maintained CDN language
+// support lives at src/lang-lcc/lang-lcc.cdn.js (#1176) and is COPIED into
+// docs/site by build:site, so a change to it needs build:site, not "reload only".
+// Other files under src/lang-lcc/ are the Lezer grammar/parser — editing those
+// does NOT auto-propagate into the CDN file (manual port), so they only warn.
 function classifyChanges(paths) {
   const srcBrowser = path.join(ROOT, 'src', 'browser') + path.sep;
   const srcLang    = path.join(ROOT, 'src', 'lang-lcc') + path.sep;
   const buildSite  = path.join(ROOT, 'scripts', 'build-site.js');
-  const distLang   = path.join(ROOT, 'dist', 'lang-lcc.js');
+  const cdnLang    = path.join(ROOT, 'src', 'lang-lcc', 'lang-lcc.cdn.js');
   const plan = { browser: false, site: false, langReminder: false };
   for (const p of paths) {
     if (p.startsWith(srcBrowser))   { plan.browser = true; plan.site = true; }
     else if (p === buildSite)       { plan.site = true; }
-    else if (p === distLang)        { plan.site = true; }
+    else if (p === cdnLang)         { plan.site = true; }
     else if (p.startsWith(srcLang)) { plan.langReminder = true; }
   }
   return plan;
@@ -195,9 +197,9 @@ function flushChanges() {
   const plan = classifyChanges(paths);
   if (!plan.browser && !plan.site) {
     if (plan.langReminder) {
-      console.log('dev:site — src/lang-lcc/ changed, but the browser parser ' +
-        '(dist/lang-lcc.js) is a MANUAL port today (#1075). Re-port by hand, ' +
-        'then save dist/lang-lcc.js to rebuild + reload.');
+      console.log('dev:site — src/lang-lcc/ grammar changed, but the browser parser ' +
+        '(src/lang-lcc/lang-lcc.cdn.js) is a MANUAL port today (#1075). Re-port by ' +
+        'hand, then save lang-lcc.cdn.js to rebuild + reload.');
     }
     return;
   }
@@ -211,8 +213,7 @@ function startWatchers() {
   const targets = [
     path.join(ROOT, 'scripts', 'build-site.js'),
     path.join(ROOT, 'src', 'browser'),
-    path.join(ROOT, 'src', 'lang-lcc'),
-    path.join(ROOT, 'dist', 'lang-lcc.js'),
+    path.join(ROOT, 'src', 'lang-lcc'),   // includes the hand-maintained lang-lcc.cdn.js (#1176)
   ];
   for (const t of targets) {
     if (!fs.existsSync(t)) {
@@ -283,7 +284,7 @@ server.listen(opts.port, () => {
   if (opts.dev) {
     startWatchers();
     console.log('  dev mode: watching scripts/build-site.js, src/browser/, ' +
-      'src/lang-lcc/, dist/lang-lcc.js → auto-rebuild + live-reload.');
+      'src/lang-lcc/ (incl. lang-lcc.cdn.js) → auto-rebuild + live-reload.');
     console.log('  NOTE: dev injects a reload <script>; run the pre-deploy ' +
       'checklist against plain `npm run serve:site` (no --dev).');
   }
