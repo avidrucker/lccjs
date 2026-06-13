@@ -11,6 +11,10 @@ Review a GitHub issue for quality, clarity, and agent-readiness before work begi
 
 Use this skill when the user asks whether a ticket is ready, asks to review or improve an issue, asks to make a ticket agent-ready, or is doing triage/backlog grooming. Do not use this for PR review or code review.
 
+## Invocation
+
+Use `$issue-review` in Codex when you want this review workflow explicitly. Codex can also surface the skill from `/skills` by matching the description.
+
 ## Workflow
 
 ### 1. Fetch And Classify
