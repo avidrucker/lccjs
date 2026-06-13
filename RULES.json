@@ -239,6 +239,36 @@
       "added_issue": 1117,
       "comment": "Error logging was being silently under-reported: agents self-correct a misfire and never log it (the #1108 repro \u2014 3 errors went unlogged until a human asked, then backfilled as rows 49-51). close.js cannot see the transcript, but the agent can, so the audit lives with the agent, not the script. The explicit outcome statement converts silence into a checkable acknowledgement. Mechanism chosen in #1117 (Option D \u2014 agent transcript self-audit) over a close.js acknowledgement gate; preserves the manual-judgement decision in the log-error skill (no auto-logging).",
       "status": "active"
+    },
+    {
+      "id": "R024",
+      "version": 1,
+      "category": "workflow",
+      "text": "I will not claim a ticket whose active work I estimate at over 60 minutes without first decomposing it into child tickets each estimated at 60 minutes or less; the parent then becomes an umbrella tracker, worked only through its children and earning no velocity row of its own. Exception: a human may explicitly approve taking it whole, noted in the ticket.",
+      "added": "2026-06-13",
+      "added_issue": 1228,
+      "comment": "yegor-microtasks: cap a unit of work at ~60m and split before claiming, so oversized tickets are decomposed rather than worked open-ended (the architect-heavy drift named in retro #1227). The human-override escape hatch keeps it practical. Ratified in #1228; sibling to R026 (epic case).",
+      "status": "active"
+    },
+    {
+      "id": "R025",
+      "version": 1,
+      "category": "workflow",
+      "text": "I will not file implementation tickets for, or claim, a large or fuzzy ticket (no clear code site or scope) without first gating it behind a `spike`-labeled session of 60 minutes or less that produces scope, code sites, and ROI. Exception: a human may explicitly approve proceeding without a spike, noted in the ticket.",
+      "added": "2026-06-13",
+      "added_issue": 1228,
+      "comment": "yegor-spikes: bound fuzzy/large work with a scoping spike before implementation, reusing the existing `spike` label. Prevents open-ended sessions (e.g. an unbounded #1206 review). Human-override allowed. Ratified in #1228.",
+      "status": "active"
+    },
+    {
+      "id": "R026",
+      "version": 1,
+      "category": "workflow",
+      "text": "I will never claim or work an epic/tracker issue as a unit of work; only its bounded child tickets are claimed and worked, and the epic stays open until its children resolve. It earns no velocity row of its own.",
+      "added": "2026-06-13",
+      "added_issue": 1228,
+      "comment": "Epics/trackers are pure umbrellas (the #1217 'dumb tracker' model); the children carry the work and the velocity. Ratified as-is in #1228.",
+      "status": "active"
     }
   ]
 }
