@@ -2,12 +2,15 @@
 
 // lcc.js
 
+const fs = require('fs');
 const path = require('path');
 const Assembler = require('../core/assembler');
 const Interpreter = require('../core/interpreter');
 const Linker = require('../core/linker');
 const ILCC = require('../interactive/ilcc');
-const { LinkerError } = require('../utils/errors');
+const { LinkerError, TestSpecError, TestRunnerError } = require('../utils/errors');
+const { loadTestSpec } = require('../testrunner/specLoader');
+const { runTestSpec } = require('../testrunner/runner');
 const nameHandler = require('../utils/name.js');
 const { buildReportArtifacts } = require('../utils/reportArtifacts');
 const { constructSiblingFileName, writeReportFiles } = require('../utils/fileArtifacts');
@@ -59,6 +62,14 @@ class LCC {
     }
 
     this.parseArguments(args);
+
+    // --test short-circuits the normal assemble/link/run dispatch entirely
+    // (#1092). The spec path was consumed by parseArguments, so this.args may be
+    // empty here — run the test mode before the no-input-file guard below.
+    if (this.options.testSpec !== undefined) {
+      this.runTestMode(this.options.testSpec);
+      return;
+    }
 
     if (this.args.length === 0) {
       cliErrorExit('No input file specified.', 1);
@@ -194,6 +205,120 @@ class LCC {
     }
   }
 
+  /**
+   * Assignment test-runner — CLI surface for `lcc --test <spec.json>` (#1092).
+   *
+   * Orchestration only: resolve the spec (loadSpec), run it through the runner
+   * core (runTestSpec, #1091), print a pass/fail report, and map the outcome to
+   * a CI exit code:
+   *   0 — every case passed
+   *   1 — the spec ran but one or more cases failed
+   *   2 — the spec could not be run (malformed spec / missing program / format)
+   */
+  runTestMode(specPath) {
+    let spec;
+    try {
+      spec = this.loadSpec(specPath);
+    } catch (err) {
+      if (err instanceof TestSpecError) {
+        cliErrorExit(err.message, 2);
+      }
+      throw err;
+    }
+
+    let results;
+    try {
+      results = runTestSpec(spec);
+    } catch (err) {
+      if (err instanceof TestRunnerError) {
+        cliErrorExit(err.message, 2);
+      }
+      throw err;
+    }
+
+    this.reportTestResults(results);
+  }
+
+  /**
+   * Spec-format dispatch seam (#1092 design ruling). Today only `.json` is
+   * wired, to the shipped JSON loader (#1090). The default arm is the slot the
+   * fenced literal-block reader (#1114) drops into — so the CLI surface is
+   * written once, not retrofitted. `program` inside the spec is resolved
+   * relative to the spec file's own directory.
+   */
+  loadSpec(specPath) {
+    const ext = path.extname(specPath).toLowerCase();
+    switch (ext) {
+      case '.json': {
+        const buffer = fs.readFileSync(specPath);
+        const baseDir = path.dirname(path.resolve(specPath));
+        return loadTestSpec(buffer, baseDir);
+      }
+      default:
+        throw new TestSpecError(
+          `Unsupported test-spec format '${ext || '(none)'}': only .json is ` +
+          `supported today (fenced format: #1114).`
+        );
+    }
+  }
+
+  /**
+   * Print the per-case report and exit with the CI-appropriate code.
+   * Result shape (from runTestSpec): { name, pass, reason, expected, actual }.
+   * On a FAIL whose reason is an output mismatch, show a first-diff block;
+   * other failures (timeout, exit-code mismatch) just show the reason.
+   */
+  reportTestResults(results) {
+    let passed = 0;
+    let failed = 0;
+
+    for (const r of results) {
+      if (r.pass) {
+        passed++;
+        console.log(`PASS  ${r.name}`);
+      } else {
+        failed++;
+        console.log(`FAIL  ${r.name}  (${r.reason})`);
+        if (r.reason === 'output mismatch') {
+          console.log(this.formatFirstDiff(r.expected, r.actual));
+        }
+      }
+    }
+
+    console.log(`${passed} passed, ${failed} failed`);
+
+    if (failed > 0) {
+      // fatalExit → process.exit(1) in normal runs; throws under Jest so an
+      // in-process test can assert on it. The e2e suite (#1093) spawns a real
+      // subprocess and observes the literal exit code.
+      fatalExit(`${failed} test case(s) failed`, 1);
+    }
+    // All passed → return for a natural exit 0.
+  }
+
+  /**
+   * Render the first line at which expected and actual diverge, with both
+   * full multi-line bodies for context. Keeps a teacher's eye on *where* the
+   * mismatch starts rather than forcing a full manual diff.
+   */
+  formatFirstDiff(expected, actual) {
+    const exp = String(expected).split('\n');
+    const act = String(actual).split('\n');
+    const max = Math.max(exp.length, act.length);
+    let firstDiffLine = max; // 0 if identical (shouldn't happen on a mismatch)
+    for (let i = 0; i < max; i++) {
+      if (exp[i] !== act[i]) {
+        firstDiffLine = i + 1;
+        break;
+      }
+    }
+    return [
+      `      first diff at line ${firstDiffLine}:`,
+      `        expected: ${JSON.stringify(expected)}`,
+      `        actual:   ${JSON.stringify(actual)}`,
+    ].join('\n');
+  }
+
   constructOutputFileName(inputFileName) {
     return constructSiblingFileName(inputFileName, '.e');
   }
@@ -212,6 +337,8 @@ class LCC {
     console.log('   --explain: append a student-friendly explanation to known errors');
     console.log('   -nostats: suppress .lst/.bst report generation');
     console.log('   --max-steps N: set execution step cap (default 500000; use -1 for unlimited)');
+    console.log('   --test <spec.json>: run an assignment spec (input->expected_output cases);');
+    console.log('         prints PASS/FAIL per case; exits 0 all-pass, 1 any-fail, 2 spec error');
     console.log('What lcc.js does depends on the extension in the input file name:');
     console.log('   .hex: execute and output .lst, .bst files');
     console.log('   .bin: execute and output .lst, .bst files');
@@ -281,6 +408,19 @@ class LCC {
             this.options.explain = true;
             setExplainMode(true);
             break;
+          case '--test': {
+            // Assignment test-runner surface (#1092, parent #1044). Consumes the
+            // next arg as the spec path and short-circuits the extension dispatch
+            // in main(). Exit 2 (not 1) on a missing value: like a malformed spec,
+            // the tests could not be run — the CI "couldn't-run" bucket, distinct
+            // from exit 1 "tests ran, some failed".
+            i++;
+            if (i >= args.length) {
+              cliErrorExit('Missing spec path after --test', 2);
+            }
+            this.options.testSpec = args[i];
+            break;
+          }
           case '--max-steps': {
             i++;
             if (i >= args.length) {
