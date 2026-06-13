@@ -159,6 +159,12 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 - **Don't:** run `npm run claim` immediately without inspecting main.
 - **Why:** `git worktree add` branches from the last *committed* state. Untracked files on main are silently absent in the new worktree. The worktree looks like a clean copy — it just happens to be missing whatever was floating uncommitted.
 
+**Point file writes at the worktree path — an absolute main-checkout path strands the file on `main`**
+
+- **Do:** write new files to `.claude/worktrees/<agent>-issue-N/…` (the worktree's absolute path), or `cd` into the worktree so relative paths resolve there.
+- **Don't:** call Write/Edit/Patch with the **main-checkout** absolute path (e.g. `/…/lccjs/docs/foo.md`) while working a claimed worktree.
+- **Why:** the tools write to whatever absolute path they're given; being "in" a worktree doesn't redirect a main-checkout path. The file lands untracked on `main`, and the only symptom is a later `git add … did not match any files` in the worktree. Hit three agents in one day — FIG (#1130), INCABERRY (#1162), ELDERBERRY (#1167).
+
 **Use `npm run close <N>` — never hand-push to main**
 
 - **Do:** commit `Closes #N`, then `npm run close <N>`.
