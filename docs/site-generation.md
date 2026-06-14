@@ -30,10 +30,10 @@ can verify the *real* deployed page in a browser before shipping.
  ─────────────               ──────────                 ─────────────────
  docs/{guides,research,                                 docs/site/index.html
    learnings,glossary,…}  ┐                          ┌─ docs/site/docs/<section>/*.html
- docs/lcc.tmLanguage.json ├─►  build:site  ──────────┤  docs/site/dist/{lcc.bundle,lang-lcc}.js
+ docs/lcc.tmLanguage.json ├─►  build:site  ──────────┤  docs/site/dist/{lcc.bundle,editor.bundle}.js
  demos/*.a, plusdemos/*   │   (build-site.js)         ├─ docs/site/showcase/index.html
  src/browser/lcc-worker.js┘                           └─ docs/site/showcase/lcc-worker.js
- src/browser/{api,injector}.js ─► build:browser ─► dist/lcc.bundle.js (copied in by build:site)
+ src/browser/{api,injector,editor}.js ─► build:browser ─► dist/{lcc.bundle,editor.bundle}.js (copied in by build:site)
 ```
 
 `npm run build` = `build:browser` **then** `build:site`. `build:site` copies the
@@ -120,30 +120,37 @@ interpreter in the browser. Three moving parts:
 
 | Part | Source | Role |
 |------|--------|------|
-| **Editor** | CodeMirror 6, imported from **esm.sh** CDN URLs | the code editor: line numbers, comment toggle, autocomplete |
-| **Syntax highlighting** | **`src/lang-lcc/lang-lcc.cdn.js`** (a hand-maintained, CDN-ready CM6 `LanguageSupport`, compiled from the Lezer grammar in `src/lang-lcc/`) | colorizes LCC assembly as you type |
+| **Editor + syntax highlighting** | **`dist/editor.bundle.js`** (webpack bundle of `src/browser/editor.js`: CodeMirror 6 + Lezer + the `lcc()` `LanguageSupport` from `src/lang-lcc/index.js`), exposed as `window.LccEditor` | the code editor — line numbers, comment toggle, autocomplete — and LCC syntax colors as you type |
+| **Per-theme colors** | precomputed at **build time** from the Shiki themes and inlined into the playground script as `LCC_THEME_STYLES` (#1283) | no Shiki at runtime; the editor recolors instantly on theme change |
 | **Assemble + run** | **`dist/lcc.bundle.js`** (webpack bundle of `src/browser/api.js`) executed inside a **Web Worker** (`src/browser/lcc-worker.js`) | runs the program off the main thread so a busy loop can't freeze the tab |
 
-`build:site` **copies** `dist/lcc.bundle.js` and `src/lang-lcc/lang-lcc.cdn.js`
-into `docs/site/dist/` (the latter emitted as `docs/site/dist/lang-lcc.js`), and
-`src/browser/lcc-worker.js` into `docs/site/showcase/`, so the page's relative
-imports (`../dist/lcc.bundle.js`, `../dist/lang-lcc.js`) resolve on `file://`,
-local HTTP, and Pages alike.
+`build:site` **copies** `dist/lcc.bundle.js` and `dist/editor.bundle.js` into
+`docs/site/dist/`, and `src/browser/lcc-worker.js` into `docs/site/showcase/`, so
+the page's relative refs (`../dist/lcc.bundle.js`, `../dist/editor.bundle.js`)
+resolve on `file://`, local HTTP, and Pages alike. Both bundles load via plain
+`<script src>` (UMD → `window.lcc` and `window.LccEditor`), so since #1283/#1284
+the playground makes **zero** runtime requests to esm.sh.
 
-> **CM6 + esm.sh gotcha (#772, #986):** the page imports each CodeMirror symbol
-> from its individual subpackage with a pinned `?deps=` so every `@codemirror/*`
-> and `@lezer/*` resolves to one shared instance — otherwise `instanceof` checks
-> fail and highlighting silently renders zero spans. Don't "simplify" those
-> imports back to the umbrella package.
+> **CM6 instance-identity (historical — #772, #986):** when the editor loaded each
+> CodeMirror symbol from a separate esm.sh URL, every `@codemirror/*` / `@lezer/*`
+> had to pin the same `?deps=` so they shared one instance — otherwise `instanceof`
+> checks failed and highlighting silently rendered zero spans. Bundling the whole
+> stack into `editor.bundle.js` (#1284) yields a single `@codemirror/state`
+> instance by construction, so this trap no longer applies.
 
-### Why two `lang-lcc` files exist
-`src/lang-lcc/` is the **Node/build-time** grammar (Lezer parser tables generated
-from `lcc.grammar`, consumed by tests). **`src/lang-lcc/lang-lcc.cdn.js`** is a
-separate, **hand-maintained** browser port that uses CDN URLs and needs no build
-step. They are not auto-synced today — editing the grammar does **not** regenerate
-the browser file. (Relocated `docs/site/dist/` → `dist/` in #1075 so the generated
-tree stays 100% generated, then `dist/` → `src/lang-lcc/` in #1176 so it reads as
-the hand-maintained source it is, not a build output; see §5.)
+### The `src/lang-lcc/` sources
+`src/lang-lcc/index.js` is the CM6 `LanguageSupport` (`lcc()`): it wires the Lezer
+parser tables (`lcc.js`, generated from `lcc.grammar`) to the syntax tags the editor
+colors. Since #1284 it is compiled into `editor.bundle.js` (via `src/browser/editor.js`),
+so the playground needs no CDN module for the language. The grammar is not
+auto-synced to the parser tables — editing `lcc.grammar` does **not** regenerate
+`lcc.js` automatically.
+
+> **Legacy — `src/lang-lcc/lang-lcc.cdn.js`:** the older hand-maintained,
+> esm.sh-importing browser port the playground loaded as `dist/lang-lcc.js`
+> **before** #1284. It is now **superseded by the bundle** and no longer copied or
+> imported by the build. Retiring the file — and rewiring `serve-site.js`'s dev-loop
+> to rebuild `editor.bundle.js` on `src/lang-lcc/**` changes — is tracked in **#1304**.
 
 ---
 
@@ -154,7 +161,7 @@ Two trees look generated but are governed differently:
 | Tree | Nature | Committed? | Kept fresh by |
 |------|--------|------------|---------------|
 | **`docs/site/**`** | Pure derived HTML; CI rebuilds on deploy | **No — gitignored** | CI (`build:site`) is the sole producer |
-| **`dist/lcc.bundle.js` + `dist/lcc-injector.js`** | Webpack output (bundles `src/core/**`+`src/utils/**`+`src/browser/**`) | **No — gitignored (#1178)** | built on demand by `build:site`/`serve:site`; CI rebuilds fresh on every deploy |
+| **`dist/lcc.bundle.js`, `dist/lcc-injector.js`, `dist/editor.bundle.js`** | Webpack output (bundles `src/core/**`+`src/utils/**`+`src/browser/**`; the editor bundle also pulls in CodeMirror 6 + `src/lang-lcc/**`) | **No — gitignored (#1178, #1284)** | built on demand by `build:site`/`serve:site`; CI rebuilds fresh on every deploy |
 
 So: **don't commit `docs/site/`** (a local `npm run build` will leave it dirty —
 that's expected; it's ignored), and **don't commit the webpack bundles** either —
@@ -163,10 +170,11 @@ they were untracked + gitignored in #1178 because they transitively bundle
 (see `docs/research/1171-committed-dist-churn.md`). `build:site`/`serve:site` build
 them on demand if missing, and CI rebuilds them on deploy. The former `pre-push`
 browser-bundle freshness guard was retired in the same change (nothing left to
-protect once the committed copy is gone). The hand-maintained CM6 language support
-is **not** a build output — it lives at `src/lang-lcc/lang-lcc.cdn.js` (relocated out
-of `dist/` in #1176) and **is** tracked; `build:site` copies it to the deployed
-`docs/site/dist/lang-lcc.js`.
+protect once the committed copy is gone). Since #1284 the editor's CodeMirror stack
+and the `lcc()` language are part of the webpack output too (`dist/editor.bundle.js`),
+so there is no longer a hand-maintained `dist/` file to special-case: the former
+`src/lang-lcc/lang-lcc.cdn.js` → `docs/site/dist/lang-lcc.js` copy was dropped (that
+file's retirement is tracked in #1304).
 
 ---
 
@@ -178,12 +186,17 @@ For iterating on the showcase without a manual rebuild-and-refresh cycle:
 npm run dev:site        # = serve-site.js --dev
 ```
 
-It watches `scripts/build-site.js`, `src/browser/`, and `src/lang-lcc/` (which
-includes the hand-maintained `lang-lcc.cdn.js`); on a change it runs the
-**minimal** build step (template →
-`build:site`; `src/browser/*` → `build:browser` + `build:site`) and pushes a
-live-reload over SSE so the open tab refreshes itself. The reload `<script>` is
-injected **only** under `--dev`, so the page bytes stay identical to deploy.
+It watches `scripts/build-site.js`, `src/browser/`, and `src/lang-lcc/`; on a
+change it runs the **minimal** build step (template → `build:site`; `src/browser/*`
+→ `build:browser` + `build:site`) and pushes a live-reload over SSE so the open tab
+refreshes itself. The reload `<script>` is injected **only** under `--dev`, so the
+page bytes stay identical to deploy.
+
+> **Known gap (#1304):** the change classifier still keys on the retired
+> `lang-lcc.cdn.js` and only *warns* on other `src/lang-lcc/**` edits, so since #1284
+> a grammar/language edit does **not** auto-rebuild `editor.bundle.js` under `--dev`.
+> Until #1304 lands, re-run `npm run build:browser` by hand after editing
+> `src/lang-lcc/**` or `src/browser/editor.js`.
 
 `dev:site` is for speed; it does **not** replace verification.
 
@@ -212,9 +225,9 @@ deploys. Source reading is not sufficient.
 | `.github/workflows/pages.yml` | CI: build fresh + deploy `docs/site/` to Pages |
 | `scripts/build-site.js` | renders landing + doc sections + playground into `docs/site/` |
 | `scripts/serve-site.js` | local static server for the built site; `--dev` adds watch + live-reload |
-| `webpack.browser.config.js` | builds `dist/lcc.bundle.js` + `dist/lcc-injector.js` from `src/browser/` |
-| `src/browser/{api,lcc-injector,lcc-worker}.js` | browser entry points (API bundle, slide injector, playground worker) |
-| `src/lang-lcc/` | Lezer grammar + generated parser (build/test time) |
-| `src/lang-lcc/lang-lcc.cdn.js` | hand-maintained CM6 language support for the browser (CDN-ready) |
-| `dist/**` (committed) | consumer-facing bundle; copied into `docs/site/dist/` by `build:site` |
+| `webpack.browser.config.js` | builds `dist/lcc.bundle.js`, `dist/lcc-injector.js`, and `dist/editor.bundle.js` from `src/browser/` |
+| `src/browser/{api,lcc-injector,lcc-worker,editor}.js` | browser entry points (API bundle, slide injector, playground worker, CM6 editor bundle) |
+| `src/lang-lcc/` | Lezer grammar + generated parser + `index.js` (`lcc()` `LanguageSupport`, bundled into `editor.bundle.js`) |
+| `src/lang-lcc/lang-lcc.cdn.js` | **legacy** — pre-#1284 esm.sh browser port, superseded by `editor.bundle.js`; retirement tracked in #1304 |
+| `dist/**` (gitignored, built on demand) | webpack bundles; copied into `docs/site/dist/` by `build:site`; CI rebuilds on deploy (#1178) |
 | `docs/site/**` (gitignored) | the generated, deployed site — never hand-edit |

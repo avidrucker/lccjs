@@ -1,9 +1,9 @@
 # Showcase / Playground — local dev & pre-deploy verification
 
 The live showcase (https://avidrucker.github.io/lccjs/showcase/) is the CM6
-editor "Playground". CM6 editor features depend on **runtime** behaviour — ES
-module dedup across esm.sh, Lezer/highlight tag identity, `basicSetup` extensions
-under CodeMirror 6 — that **cannot be verified by reading the source**. Twice the
+editor "Playground". CM6 editor features depend on **runtime** behaviour — the
+editor bundle wiring (`window.LccEditor`), Lezer/highlight tag identity, `basicSetup`
+extensions under CodeMirror 6 — that **cannot be verified by reading the source**. Twice the
 feature-audit doc declared line numbers ✅ and syntax highlighting ✅ from a code
 reading while the deployed page silently lacked them (#985, #986).
 
@@ -37,12 +37,11 @@ Playground's editor markup lives in the `playgroundScript` template inside
 > | Artifact | Canonical source | How it reaches the page |
 > |----------|------------------|-------------------------|
 > | `lcc.bundle.js` | `src/browser/` → webpack (`npm run build:browser`); the `dist/lcc.bundle.js` output is **gitignored, built on demand**, not committed (#1178) | `build:site` builds it if missing, then copies to `docs/site/dist/` |
-> | `lang-lcc.cdn.js` | `src/lang-lcc/lang-lcc.cdn.js` (**hand-maintained CDN ESM**, not webpack-built, tracked) | copied to `docs/site/dist/lang-lcc.js` |
+> | `editor.bundle.js` | `src/browser/editor.js` → webpack: CodeMirror 6 + Lezer + the `lcc()` language from `src/lang-lcc/index.js`; **gitignored, built on demand** (#1284) | `build:site` builds it if missing, then copies to `docs/site/dist/` |
 >
-> So change the CM6 language support at **`src/lang-lcc/lang-lcc.cdn.js`** (relocated
-> from `docs/site/dist/` in #1075, then out of `dist/` to `src/lang-lcc/` in #1176 so
-> it reads as the hand-maintained source it is), and change the assemble/run engine via
-> `src/browser/` + `npm run build:browser`. The webpack bundle is **not committed** —
+> So change the CM6 editor or the LCC language at **`src/browser/editor.js`** /
+> **`src/lang-lcc/index.js`**, and the assemble/run engine under `src/browser/`, then
+> `npm run build:browser` to rebuild the bundles. The webpack bundle is **not committed** —
 > `build:site`/`serve:site` rebuild it on demand if missing, and CI rebuilds it fresh
 > on every Pages deploy (#1178). (The former `pre-push` browser-bundle freshness guard
 > was retired in #1178, since there's no longer a committed copy to keep in sync.)
