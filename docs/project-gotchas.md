@@ -93,4 +93,16 @@ example). **Known gap:** the formatter's label regex (`/^([A-Za-z_]\w*)\s*:(.*)/
 
 ---
 
+## 7. Adding an npm dep inside a worktree — don't `--ignore-scripts`
+
+A freshly-claimed worktree (`<repo>/.claude/worktrees/<agent>-issue-N/`) has **no `node_modules`** of its own — Node resolves modules from the **main checkout's `node_modules`** via parent-directory walk, which is why `npm test` works in a worktree with no install. Most worktree work needs no `npm install` at all.
+
+If you *do* add a dependency in a worktree, `npm install <pkg> --save-dev` builds a full, separate `node_modules` there. **Do not add `--ignore-scripts`** (tempting, to skip Playwright's browser download): it also skips `better-sqlite3`'s native build (prebuild-install / node-gyp), leaving its binding unbuilt. The install exits 0, but the next full `npm test` then fails ~16 db-touching suites with `Could not locate the bindings file` — which looks like a regression but is not. Remedy: `npm rebuild better-sqlite3`.
+
+`node_modules` is gitignored: only `package.json` + `package-lock.json` are committed, and `npm ci` (CI) builds natives from them. But a **stale main `node_modules` fails `npm test` until you run `npm install` on main** — so after a dep lands, sync the main checkout (cf. #1214, a declared-but-not-installed devDep that reddened the suite).
+
+*(Origin: #1252 jest-cucumber dev-dep; errors-table row 134. Filed as #1256.)*
+
+---
+
 *(More entries to be added as they surface.)*

@@ -46,6 +46,16 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Adding an npm dep in a worktree
+
+**Let install scripts run; never `--ignore-scripts`**
+
+- **Do:** `npm install <pkg> --save-dev` in the worktree (let native builds run), then commit `package.json` + `package-lock.json` and run `npm install` on the main checkout to sync it.
+- **Don't:** add `--ignore-scripts` to dodge Playwright's browser download — it also skips `better-sqlite3`'s native build, so `npm test` then reds ~16 db-touching suites with `Could not locate the bindings file` (install exits 0, so it looks like a regression but isn't).
+- **Why:** see [`docs/project-gotchas.md`](./project-gotchas.md) §7. If you already ran `--ignore-scripts`, recover with `npm rebuild better-sqlite3`. (#1252 / #1256)
+
+---
+
 ## Issue filing
 
 **File sibling issues sequentially; verify each with `gh issue view N` before writing the marker**
