@@ -59,3 +59,14 @@
 # --- append-friendly cluster manifest (#233 prototype; design #222): same rationale ---
 # Agents append cluster/blocked_by rows as they group issues; union keeps both sides.
 docs/puzzle-clusters.csv merge=union
+
+# --- generated webpack bundle: keep it committed, but out of diffs (#1254) ---
+# dist/ is a consumer-facing distributable (reveal-md `--scripts dist/lcc-injector.js`
+# and `<script src="dist/lcc.bundle.js">` per docs/guides/), so it stays tracked and
+# the pre-push freshness hook (#1075) still applies. But the bundle is minified to a
+# single line, so a re-commit otherwise renders as one giant unreadable blob in
+# `git diff`/PRs. These attributes keep that noise out without un-tracking the file:
+#   -diff               → `git diff`/`git log -p` show "Binary files … differ"
+#   linguist-generated  → GitHub collapses it in PR diffs + drops it from the lang bar
+# Scope: only the webpack output (*.js/*.txt). lang-lcc lives in src/, not dist/ (#1176).
+dist/** -diff linguist-generated=true
