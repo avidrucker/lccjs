@@ -504,6 +504,11 @@ ${listItems}
 
   const starterCode = fs.readFileSync(path.join(ROOT, 'demos', 'helloWorld.a'), 'utf8').trimEnd();
   const starterCodeJson = JSON.stringify(starterCode);
+  // HTML-escaped starter code for the static first-paint placeholder (#1248).
+  const starterCodeHtml = starterCode
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 
   const playgroundScript = `
 <style>
@@ -866,34 +871,27 @@ runBtn.addEventListener('click', () => {
 (async () => {
   applyBodyClass(sel.value);
 
+  // Shiki is loaded in the background at the END of this IIFE; until then hl
+  // is undefined and applyEditorHighlight() is a no-op (keeps defaultHighlightStyle).
   let hl;
-  try {
-    const [{ createHighlighter }, grammarRes] = await Promise.all([
-      import('${SHIKI_CDN_URL}'),
-      fetch('../lcc.tmLanguage.json'),
-    ]);
-    const grammar = await grammarRes.json();
-    hl = await createHighlighter({ langs: [grammar], themes: [...CUSTOM_THEMES, ...BUILTIN_THEMES] });
-  } catch (err) {
-    console.error('Highlighting unavailable:', err.message);
-    return;
-  }
 
-  // Build the initial theme-specific HighlightStyle so the editor
-  // starts with correct colors — no flicker from defaultHighlightStyle.
-  let themeObj = null;
-  try { themeObj = hl.getTheme(sel.value); } catch (err) { themeObj = null; }
-  const initialHighlightStyle = lccHighlightStyle(themeObj);
+  // First paint (#1248): mount the editor IMMEDIATELY. CM6 is a static import
+  // (already loaded by the time this runs), so text + line numbers can show now —
+  // we do NOT block on the Shiki theme stack (~60 CDN modules), which loads in the
+  // background below and upgrades the colors when ready. Drop the static
+  // #editor-placeholder (same text, same mono font) as the real editor mounts.
+  var placeholder = document.getElementById('editor-placeholder');
+  if (placeholder) placeholder.remove();
 
-  // Create the editor now that we have the themed highlighting.
   editor = new EditorView({
     doc: ${starterCodeJson},
     extensions: [
       basicSetup,
       lineNumbers(),
       lcc(),
-      // Use themed highlighting from the start — avoids flicker.
-      highlightCompartment.of(syntaxHighlighting(initialHighlightStyle)),
+      // Start with @codemirror/language's defaultHighlightStyle; applyEditorHighlight
+      // swaps in the per-theme Shiki-derived style once Shiki has loaded (#1248).
+      highlightCompartment.of(syntaxHighlighting(defaultHighlightStyle)),
       // Per-theme editor background (#1142)
       backgroundCompartment.of(
         EditorView.theme({ '.cm-content': { background: 'var(--border)' }, '.cm-gutters': { background: 'var(--border)' } })
@@ -912,11 +910,11 @@ runBtn.addEventListener('click', () => {
     parent: document.getElementById('editor'),
   });
 
-  // Apply initial per-theme background (#1142)
-  applyEditorHighlight(sel.value);
-
   // Reconfigure the CM editor's HighlightStyle AND background on theme change.
+  // No-op until Shiki has loaded (hl undefined) — the editor keeps
+  // defaultHighlightStyle so first paint isn't flattened to the fallback (#1248).
   function applyEditorHighlight(theme) {
+    if (!hl) return;
     let themeObj = null;
     try { themeObj = hl.getTheme(theme); } catch (err) { themeObj = null; }
     editor.dispatch({
@@ -966,6 +964,23 @@ runBtn.addEventListener('click', () => {
       toggleBtn.setAttribute('aria-label', DARK.has(sel.value) ? 'Switch to light mode' : 'Switch to dark mode');
     }
   });
+
+  // Progressive enhancement (#1248): load Shiki in the BACKGROUND, then upgrade the
+  // editor from defaultHighlightStyle to per-theme Shiki-derived colors. The editor
+  // is already mounted and usable above; if this fails it stays on the default style
+  // rather than blocking first paint or leaving the pane blank.
+  try {
+    const [{ createHighlighter }, grammarRes] = await Promise.all([
+      import('${SHIKI_CDN_URL}'),
+      fetch('../lcc.tmLanguage.json'),
+    ]);
+    const grammar = await grammarRes.json();
+    hl = await createHighlighter({ langs: [grammar], themes: [...CUSTOM_THEMES, ...BUILTIN_THEMES] });
+  } catch (err) {
+    console.error('Themed highlighting unavailable (editor still usable):', err.message);
+    return;
+  }
+  applyEditorHighlight(sel.value);
 })();
 </script>`;
 
@@ -986,7 +1001,7 @@ ${playgroundThemeOptions}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
     <div>
       <p class="panel-label">LCC Assembly</p>
-      <div id="editor" style="width:100%;height:280px;border:1px solid var(--muted);border-radius:6px;overflow:hidden;"></div>
+      <div id="editor" style="width:100%;height:280px;border:1px solid var(--muted);border-radius:6px;overflow:hidden;"><pre id="editor-placeholder" style="margin:0;padding:4px 6px 4px 30px;height:100%;box-sizing:border-box;overflow:hidden;background:var(--border);color:var(--fg);font-family:var(--mono-font);font-size:.85rem;line-height:1.4;white-space:pre;">${starterCodeHtml}</pre></div>
       <p class="panel-label" style="margin-top:.75rem;">stdin <span style="font-style:italic;">(pre-supply lines, or leave blank — an interactive prompt appears when the program waits for input)</span></p>
       <textarea id="stdin-input" spellcheck="false" style="width:100%;height:80px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
     </div>
