@@ -1,3 +1,11 @@
+<!--
+  Provenance: this is the canonical DDD analysis (committed 2026-06-01).
+  A duplicate re-import (849-ddd-analysis-2026-06-05.md, exported from a Claude.ai
+  app conversation found in ~/Downloads/lccjs-ddd-analysis.md, imported by ELDERBERRY
+  via #849) was deduped into this file in #1239 — this file is the one to keep.
+  Source: direct codebase analysis of github.com/avidrucker/lccjs.
+-->
+
 # DDD Analysis: `avidrucker/lccjs`
 
 > A thorough critique of the lccjs project through the lens of Domain-Driven Design.
