@@ -598,7 +598,7 @@ ${listItems}
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
-  const playgroundScript = `
+const playgroundScript = `
 <style>
 #run-btn { background:var(--fg);color:var(--bg);border:none;border-radius:4px;padding:.4rem 1.1rem;font-size:.9rem;cursor:pointer;font-weight:600; }
 #run-btn:hover { opacity:.85; }
@@ -619,12 +619,15 @@ ${listItems}
 // imports (#1284). The single bundle means one @codemirror/state instance, so the
 // instanceof / tag-identity pinning the esm.sh imports needed (#772/#986) is moot.
 const {
-  EditorView, keymap, lineNumbers,
+  EditorView, keymap, lineNumbers, drawSelection, dropCursor,
+  highlightActiveLine, highlightActiveLineGutter, rectangularSelection,
+  crosshairCursor, highlightSpecialChars,
   Compartment,
-  basicSetup,
-  indentWithTab, toggleLineComment,
-  autocompletion,
-  syntaxHighlighting, HighlightStyle,
+  history, defaultKeymap, historyKeymap, indentWithTab,
+  toggleLineComment, insertNewlineAndIndent,
+  autocompletion, completionKeymap,
+  syntaxHighlighting, HighlightStyle, indentOnInput, bracketMatching,
+  foldGutter, foldKeymap,
   tags,
   lcc,
 } = window.LccEditor;
@@ -747,6 +750,14 @@ let editor;
 window.__lccSetSource = function(src) {
   if (editor) {
     editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: src } });
+  }
+};
+window.__lccGetSource = function() {
+  return editor ? editor.state.doc.toString() : '';
+};
+window.__lccSetSelection = function(from, to = from) {
+  if (editor) {
+    editor.dispatch({ selection: { anchor: from, head: to } });
   }
 };
 const runStatus         = document.getElementById('playground-status');
@@ -918,8 +929,27 @@ runBtn.addEventListener('click', () => {
   editor = new EditorView({
     doc: ${starterCodeJson},
     extensions: [
-      basicSetup,
       lineNumbers(),
+      history(),
+      drawSelection(),
+      dropCursor(),
+      highlightSpecialChars(),
+      highlightActiveLine(),
+      highlightActiveLineGutter(),
+      rectangularSelection(),
+      crosshairCursor(),
+      indentOnInput(),
+      bracketMatching(),
+      foldGutter(),
+      keymap.of([
+        indentWithTab,
+        { key: 'Enter', run: insertNewlineAndIndent },
+        { key: 'Mod-/', run: toggleLineComment },
+        ...defaultKeymap,
+        ...historyKeymap,
+        ...foldKeymap,
+        ...completionKeymap,
+      ]),
       lcc(),
       // Per-theme highlight from the inlined precomputed table (#1283).
       highlightCompartment.of(syntaxHighlighting(lccHighlightStyle(sel.value))),
@@ -927,7 +957,6 @@ runBtn.addEventListener('click', () => {
       backgroundCompartment.of(
         EditorView.theme({ '.cm-content': { background: initialBg }, '.cm-gutters': { background: initialBg } })
       ),
-      keymap.of([indentWithTab, { key: 'Mod-/', run: toggleLineComment }]),
       autocompletion({ override: [lccCompletionSource] }),
       EditorView.theme({
         '&': { height: '100%', fontSize: '.85rem' },

@@ -10,22 +10,35 @@
 //
 // Build: npm run build:browser (webpack.browser.config.js).
 
-import { EditorView, keymap, lineNumbers } from '@codemirror/view';
+import {
+  EditorView, keymap, lineNumbers, drawSelection, dropCursor,
+  highlightActiveLine, highlightActiveLineGutter, rectangularSelection,
+  crosshairCursor, highlightSpecialChars,
+} from '@codemirror/view';
 import { Compartment } from '@codemirror/state';
-import { basicSetup } from 'codemirror';
-import { indentWithTab, toggleLineComment } from '@codemirror/commands';
-import { autocompletion } from '@codemirror/autocomplete';
-import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
+import {
+  history, defaultKeymap, historyKeymap, indentWithTab,
+  toggleLineComment, insertNewlineAndIndent,
+} from '@codemirror/commands';
+import { autocompletion, completionKeymap } from '@codemirror/autocomplete';
+import {
+  syntaxHighlighting, HighlightStyle, indentOnInput, bracketMatching,
+  foldGutter, foldKeymap,
+} from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { lcc } from '../lang-lcc/index.js';
 
 export {
   EditorView, keymap, lineNumbers,
+  drawSelection, dropCursor,
+  highlightActiveLine, highlightActiveLineGutter, rectangularSelection,
+  crosshairCursor, highlightSpecialChars,
   Compartment,
-  basicSetup,
-  indentWithTab, toggleLineComment,
-  autocompletion,
-  syntaxHighlighting, HighlightStyle,
+  history, defaultKeymap, historyKeymap, indentWithTab,
+  toggleLineComment, insertNewlineAndIndent,
+  autocompletion, completionKeymap,
+  syntaxHighlighting, HighlightStyle, indentOnInput, bracketMatching,
+  foldGutter, foldKeymap,
   tags,
   lcc,
 };

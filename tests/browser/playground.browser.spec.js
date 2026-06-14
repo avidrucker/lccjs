@@ -85,7 +85,23 @@ test('T2 — assembly error: bad mnemonic shows red error text with lcc-error cl
   expect(hasErrClass).toBe(true);
 }, 20000);
 
-test('T3 — stdin pass-through: din/dout program reads and echoes pre-supplied input', async () => {
+test('T3 — editor input: no auto-pairing and Enter preserves indentation', async () => {
+  if (maybeSkip()) return;
+
+  await page.evaluate((src) => {
+    window.__lccSetSource(src);
+  }, '    sout');
+
+  await page.locator('.cm-content').click();
+  await page.evaluate((src) => { window.__lccSetSelection(src.length); }, '    sout');
+  await page.keyboard.type('(');
+  expect(await page.evaluate(() => window.__lccGetSource())).toBe('    sout(');
+
+  await page.keyboard.press('Enter');
+  expect(await page.evaluate(() => window.__lccGetSource())).toBe('    sout(\n    ');
+}, 20000);
+
+test('T4 — stdin pass-through: din/dout program reads and echoes pre-supplied input', async () => {
   if (maybeSkip()) return;
 
   const prog = [
