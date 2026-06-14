@@ -105,4 +105,26 @@ If you *do* add a dependency in a worktree, `npm install <pkg> --save-dev` build
 
 ---
 
+## 8. `error()` vs `raiseRuntimeError()` — opposite control-flow contracts
+
+The interpreter has two error-reporting calls that look interchangeable but are not:
+
+- `this.error(msg)` (`interpreter.js`) sets `this.running = false` and **returns** — callers
+  typically follow it with a `return;` to bail out of the current function.
+- `this.raiseRuntimeError(typedError)` sets `running = false` and ends in `throw error`
+  — control leaves the function via exception, so any following `return;` is dead.
+
+Swapping one for the other is therefore **never a local edit**: it changes how control
+leaves the function, putting the *callers* inside the change surface. A throw needs a
+catcher. The core load path models this — `loadExecutableBuffer` raises typed errors and
+its caller (`interpreter.js` ~`:555-561`) wraps the call in `try/catch` to forward
+`error.explainKey`. When converting bare `error()` sites to `raiseRuntimeError`, audit the
+call chain for a catch and add one (route it through the existing error funnel, e.g.
+`InterpreterPlus.handleRuntimeError`) rather than only editing the error sites.
+
+*(Origin: #1273 — converting `InterpreterPlus.loadExecutableBuffer`'s six file-format
+errors; the `:165` caller needed a new try/catch the ticket hadn't mentioned.)*
+
+---
+
 *(More entries to be added as they surface.)*
