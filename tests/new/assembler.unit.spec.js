@@ -129,6 +129,51 @@ describe('Assembler Unit Tests', () => {
     });
   });
 
+  describe('assembleSource() caller-config reuse: verbose/explain/userName (#1277)', () => {
+    const source = '  mov r0, 5\n  dout r0\n  halt\n';
+
+    test('applies per-call verboseModeOn/explainModeOn, surviving the internal reset', () => {
+      const assembler = new Assembler();
+      assembler.assembleSource(source, {
+        inputFileName: 'a.a',
+        verboseModeOn: true,
+        explainModeOn: true,
+      });
+      // resetAssemblyState() runs inside assembleSource(); an option-supplied
+      // value must be re-applied after the reset, not wiped. (same shape as #1238)
+      expect(assembler.verboseModeOn).toBe(true);
+      expect(assembler.explainModeOn).toBe(true);
+    });
+
+    test('does NOT leak verboseModeOn/explainModeOn into a later reuse', () => {
+      const assembler = new Assembler();
+
+      // Run 1: display flags on for a reused instance.
+      assembler.assembleSource(source, {
+        inputFileName: 'a.a', verboseModeOn: true, explainModeOn: true,
+      });
+
+      // Run 2: same instance, flags omitted — must default back to false,
+      // not inherit run 1's flags (which would emit unrequested output).
+      assembler.assembleSource(source, { inputFileName: 'b.a' });
+      expect(assembler.verboseModeOn).toBe(false);
+      expect(assembler.explainModeOn).toBe(false);
+    });
+
+    test('does NOT leak userName into a later reuse', () => {
+      const assembler = new Assembler();
+
+      // Run 1: caller identity supplied.
+      assembler.assembleSource(source, { inputFileName: 'a.a', userName: 'Alice' });
+      expect(assembler.userName).toBe('Alice');
+
+      // Run 2: same instance, omitted — must default back to null, not 'Alice'
+      // (a leak would stamp the wrong creator into a later object-module report).
+      assembler.assembleSource(source, { inputFileName: 'b.a' });
+      expect(assembler.userName).toBeNull();
+    });
+  });
+
   test('assembleSource() should require userName when buildReports is true', () => {
     const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/demoA-3.a'), 'utf8');
 

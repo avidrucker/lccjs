@@ -293,6 +293,16 @@ class Assembler {
     // later assembly; callers (CLI/in-memory) re-supply it via the
     // assembleSource() listingLoadPoint option. (#1238)
     this.listingLoadPoint = 0;
+    // Caller-provided display/identity config (set by lcc.js before main()):
+    // verbose/explain flags and the resolved userName. Like listingLoadPoint,
+    // these are per-run inputs, not derived state — cleared here so a reused
+    // instance does not leak a prior run's value, and re-applied per-call via
+    // the assembleSource() options below (default off / null). main() threads
+    // the CLI-wired values through those options so they survive this reset.
+    // (#1277, identical shape to the #1238 listingLoadPoint fix)
+    this.verboseModeOn = false;
+    this.explainModeOn = false;
+    this.userName = null;
     this.programSize = 0;
     this.startLabel = null;
     this.startAddress = null;
@@ -373,6 +383,8 @@ class Assembler {
       inputFileName = this.inputFileName,
       outputFileName = this.outputFileName,
       listingLoadPoint = 0,
+      verboseModeOn = false,
+      explainModeOn = false,
       throwOnAssemblyError = true,
       buildReports = false,
       userName,
@@ -387,6 +399,14 @@ class Assembler {
     // offset) so an omitted option means "this run has no -l", never an
     // inherited value from a prior assembly on the same instance. (#1238)
     this.listingLoadPoint = listingLoadPoint;
+    // Re-apply the caller-provided display/identity config after the reset, for
+    // the same reason as listingLoadPoint: an omitted option means "this run has
+    // none", never a value inherited from a prior assembly on the same instance.
+    // userName must survive because main()'s object-module report consumes
+    // this.userName after assembleSource() returns. (#1277)
+    this.verboseModeOn = verboseModeOn;
+    this.explainModeOn = explainModeOn;
+    this.userName = userName ?? null;
     this.sourceLines = sourceCode.split('\n');
     this.throwOnAssemblyError = throwOnAssemblyError;
 
@@ -638,6 +658,12 @@ class Assembler {
       // main()) through as a per-call option so resetAssemblyState() inside
       // assembleSource() does not wipe it. (#1238)
       listingLoadPoint: this.listingLoadPoint,
+      // Same for the -v/--explain flags and the resolved userName: lcc.js sets
+      // them on the instance before main(); thread them through so the internal
+      // reset re-applies rather than wipes them. (#1277)
+      verboseModeOn: this.verboseModeOn,
+      explainModeOn: this.explainModeOn,
+      userName: this.userName,
       throwOnAssemblyError: false,
     });
 

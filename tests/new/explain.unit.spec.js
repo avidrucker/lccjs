@@ -126,8 +126,8 @@ describe('pcoffset9 tracer bullet — end to end through assembleSource', () => 
 
   test('with explain mode on, the pcoffset9 error prints the explain block', () => {
     const a = new Assembler();
-    a.explainModeOn = true;
-    expect(() => a.assembleSource(OVERFLOW_SRC, { inputFileName: 't.a' })).toThrow();
+    // explainModeOn is a per-call assembleSource() option (#1277).
+    expect(() => a.assembleSource(OVERFLOW_SRC, { inputFileName: 't.a', explainModeOn: true })).toThrow();
     const out = errOutput();
     expect(out).toContain('pcoffset9 out of range');
     expect(out).toContain('explain:');
@@ -135,7 +135,7 @@ describe('pcoffset9 tracer bullet — end to end through assembleSource', () => 
 
   test('with explain mode off, output is the bare error (no explain block)', () => {
     const a = new Assembler();
-    a.explainModeOn = false;
+    // explainModeOn defaults to false when the option is omitted (#1277).
     expect(() => a.assembleSource(OVERFLOW_SRC, { inputFileName: 't.a' })).toThrow();
     const out = errOutput();
     expect(out).toContain('pcoffset9 out of range');
@@ -181,8 +181,9 @@ describe('encoding/range explain content (#1097)', () => {
       '$name: --explain renders the message AND its explain block',
       ({ key, message, src }) => {
         const a = new Assembler();
-        a.explainModeOn = true;
-        expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
+        // explainModeOn is a per-call assembleSource() option (#1277); a pre-set
+        // instance field would be wiped by the internal resetAssemblyState().
+        expect(() => a.assembleSource(src, { inputFileName: 't.a', explainModeOn: true })).toThrow();
         const out = errOut();
         expect(out).toContain(message);
         expect(out).toContain('explain:');
@@ -194,7 +195,7 @@ describe('encoding/range explain content (#1097)', () => {
       '$name: without --explain, the message is bare (no explain block)',
       ({ message, src }) => {
         const a = new Assembler();
-        a.explainModeOn = false;
+        // explainModeOn defaults to false when the option is omitted (#1277).
         expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
         const out = errOut();
         expect(out).toContain(message);
@@ -246,8 +247,9 @@ describe('register + label/symbol explain content (#1098)', () => {
       '$name: --explain renders the message AND its explain block',
       ({ key, message, src }) => {
         const a = new Assembler();
-        a.explainModeOn = true;
-        expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
+        // explainModeOn is a per-call assembleSource() option (#1277); a pre-set
+        // instance field would be wiped by the internal resetAssemblyState().
+        expect(() => a.assembleSource(src, { inputFileName: 't.a', explainModeOn: true })).toThrow();
         const out = errOut();
         expect(out).toContain(message);
         expect(out).toContain('explain:');
@@ -259,7 +261,7 @@ describe('register + label/symbol explain content (#1098)', () => {
       '$name: without --explain, the message is bare (no explain block)',
       ({ message, src }) => {
         const a = new Assembler();
-        a.explainModeOn = false;
+        // explainModeOn defaults to false when the option is omitted (#1277).
         expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
         const out = errOut();
         expect(out).toContain(message);
@@ -315,8 +317,9 @@ describe('directive + structural explain content (#1099)', () => {
       '$name: --explain renders the message AND its explain block',
       ({ key, message, src }) => {
         const a = new Assembler();
-        a.explainModeOn = true;
-        expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
+        // explainModeOn is a per-call assembleSource() option (#1277); a pre-set
+        // instance field would be wiped by the internal resetAssemblyState().
+        expect(() => a.assembleSource(src, { inputFileName: 't.a', explainModeOn: true })).toThrow();
         const out = errOut();
         expect(out).toContain(message);
         expect(out).toContain('explain:');
@@ -328,7 +331,7 @@ describe('directive + structural explain content (#1099)', () => {
       '$name: without --explain, the message is bare (no explain block)',
       ({ message, src }) => {
         const a = new Assembler();
-        a.explainModeOn = false;
+        // explainModeOn defaults to false when the option is omitted (#1277).
         expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
         const out = errOut();
         expect(out).toContain(message);
@@ -340,10 +343,9 @@ describe('directive + structural explain content (#1099)', () => {
     // verbose suggestClosest "Did you mean?" suffix, not replace it.
     test('Invalid operation: --explain + --verbose shows both the suggestion AND the explain block', () => {
       const a = new Assembler();
-      a.explainModeOn = true;
-      a.verboseModeOn = true;
+      // explain + verbose are per-call assembleSource() options (#1277).
       // `addd` is one edit from `add`, so suggestClosest fires.
-      expect(() => a.assembleSource('        addd r0, r1, r2\n        halt\n', { inputFileName: 't.a' })).toThrow();
+      expect(() => a.assembleSource('        addd r0, r1, r2\n        halt\n', { inputFileName: 't.a', explainModeOn: true, verboseModeOn: true })).toThrow();
       const out = errOut();
       expect(out).toContain('Invalid operation');
       expect(out).toContain("Did you mean 'add'?");

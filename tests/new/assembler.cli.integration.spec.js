@@ -71,6 +71,27 @@ describe('Assembler CLI Integration', () => {
     expect(lstContent).toMatch(/^3000 /m);
   });
 
+  test('4c. should thread pre-set verbose/explain/userName through main(), surviving the internal reset (#1277)', () => {
+    const aFilePath = 'demoA.a';
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-cli/demoA.a'), 'utf8');
+    virtualFs[aFilePath] = source;
+
+    // Mirrors lcc.js assembleFile(): -v/--explain and the resolved userName are
+    // wired onto the instance before main(). resetAssemblyState() runs inside
+    // assembleSource(); main() must thread these back through so a naive reset
+    // does not silently wipe them (the #1238 -l regression, same shape).
+    // (console.log is already mocked by the integration harness, so the verbose
+    // output this triggers stays suppressed.)
+    assembler.verboseModeOn = true;
+    assembler.explainModeOn = true;
+    assembler.userName = 'Tester';
+    assembler.main([aFilePath]);
+
+    expect(assembler.verboseModeOn).toBe(true);
+    expect(assembler.explainModeOn).toBe(true);
+    expect(assembler.userName).toBe('Tester');
+  });
+
   test('12. should assemble demoN.a (division by zero) successfully (no assembler error)', () => {
     const aFilePath = 'demoN.a';
     const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-cli/demoN.a'), 'utf8');
