@@ -534,3 +534,70 @@ describe('file-format explain content (#1101)', () => {
     });
   });
 });
+
+describe('CLI file-load path renders --explain (#1247)', () => {
+  // #1245 ruling (decision B): NOT_LCC_FORMAT / BAD_EXE_HEADER must surface through
+  // the executable-load path lcc.js uses (loadExecutableFile), not only the pure
+  // seams. loadExecutableFile reads from disk, so these use real temp files; under
+  // --explain the block must render at the two cliErrorExit sites (the signature
+  // scan and the loadExecutableBuffer catch). Wording is unchanged (out of scope).
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+  const Interpreter = require('../../src/core/interpreter');
+  const cliExit = require('../../src/utils/cliExit');
+
+  const tmpPaths = [];
+  const writeExe = (key, bytes) => {
+    const p = path.join(os.tmpdir(), `explain1247-${key}.e`);
+    fs.writeFileSync(p, Buffer.from(bytes));
+    if (!tmpPaths.includes(p)) tmpPaths.push(p);
+    return p;
+  };
+
+  const CASES = [
+    // No `o`..`C` signature -> rejected by loadExecutableFile's own scan (line 546).
+    { name: 'NOT_LCC_FORMAT (bad signature)', key: 'NOT_LCC_FORMAT',
+      message: 'is not a valid LCC executable file', bytes: [0x00, 0x00, 0x43] },
+    // `o`,`S`,`C` passes the o..C scan, then loadExecutableBuffer hits a truncated
+    // S entry -> BAD_EXE_HEADER, whose key must survive the catch (line 556).
+    { name: 'BAD_EXE_HEADER (truncated entry past o..C)', key: 'BAD_EXE_HEADER',
+      message: 'Incomplete start address', bytes: [0x6F, 0x53, 0x43] },
+  ];
+
+  let errSpy;
+  beforeEach(() => {
+    errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    cliExit.setExplainMode(false);
+  });
+  afterEach(() => {
+    cliExit.setExplainMode(false);
+    jest.restoreAllMocks();
+  });
+  afterAll(() => {
+    for (const p of tmpPaths) {
+      try { fs.unlinkSync(p); } catch (e) { /* best effort */ }
+    }
+  });
+  const errOut = () => errSpy.mock.calls.map((c) => c.join(' ')).join('\n');
+
+  test.each(CASES)('$name: --explain renders the block through loadExecutableFile', ({ key, message, bytes }) => {
+    const p = writeExe(key, bytes);
+    cliExit.setExplainMode(true);
+    expect(() => new Interpreter().loadExecutableFile(p)).toThrow();
+    const out = errOut();
+    expect(out).toContain(message);
+    expect(out).toContain('explain:');
+    expect(out).toContain(getExplanation(key).concept);
+  });
+
+  test.each(CASES)('$name: without --explain, the message is bare (parity)', ({ key, message, bytes }) => {
+    const p = writeExe(key, bytes);
+    cliExit.setExplainMode(false);
+    expect(() => new Interpreter().loadExecutableFile(p)).toThrow();
+    const out = errOut();
+    expect(out).toContain(message);
+    expect(out).not.toContain('explain:');
+  });
+});

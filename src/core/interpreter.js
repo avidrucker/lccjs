@@ -541,9 +541,11 @@ class Interpreter {
       }
     }
 
-    // If either "o" or "C" was not found in the expected order, throw an error
+    // If either "o" or "C" was not found in the expected order, throw an error.
+    // Carry the NOT_LCC_FORMAT explain key so `--explain` surfaces the "what
+    // makes a file runnable" guidance here (the wording is unchanged; #1247/#1245).
     if (!foundO || !foundC) {
-      cliErrorExit(`${fileName} is not a valid LCC executable file`, 1);
+      cliErrorExit(`${fileName} is not a valid LCC executable file`, 1, 'NOT_LCC_FORMAT');
     }
 
     // this prints out when called by lcc.js
@@ -553,7 +555,9 @@ class Interpreter {
     try {
       this.loadExecutableBuffer(buffer);
     } catch (error) {
-      cliErrorExit(error.message, 1);
+      // Forward any explain key the typed error carries (e.g. BAD_EXE_HEADER on a
+      // truncated/corrupt header) so `--explain` renders the block here (#1247/#1245).
+      cliErrorExit(error.message, 1, error && error.explainKey);
     }
 
     this.initialMem = this.mem.slice(); // Makes a copy of the memory array
@@ -773,6 +777,9 @@ class Interpreter {
         this.executeTRAP();
         break;
       default:
+        // Unreachable: opcode is (ir >> 12) & 0xF, and all 16 values (0-15) have a
+        // case above. Kept as a defensive guard; the reachable UNKNOWN_OPCODE path
+        // is the extended-opcode default in executeCase10() (#1245 decision A).
         this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown opcode: ${this.opcode}`, { explainKey: 'UNKNOWN_OPCODE' }));
     }
 
