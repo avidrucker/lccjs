@@ -14,10 +14,11 @@ See [`docs/velocity-schema.md`](../docs/velocity-schema.md) for the full schema.
 |---|---|
 | `enrich.py` | Reads `~/.lccjs/lccjs.db`, adds three enrichment layers, writes `puzzle-velocity-enriched.csv` atomically |
 | `puzzle-velocity-enriched.csv` | Generated dataset the notebook reads — **local-only, gitignored** (re-generate with `enrich.py` before running notebooks; see #286) |
-| `day-01-analysis.ipynb` | Day-one analysis notebook (committed **with** embedded outputs/plots → renders on GitHub) |
-| `day-02-analysis.ipynb` | Day-two re-run — adds the over-time axis (HST day-bucketing) + auto-graduating power gates |
-| `day-03-analysis.ipynb` | Day-three re-run — 🆕 3-day calibration trend + per-agent cut; repairs a CSV-escaping corruption **in-memory** (committed CSV untouched) |
+| `week-NN-analysis.ipynb` | **Active series** — one weekly-cadence pass (NN = whole weeks since data logging began 2026-05-28). Committed **with** embedded outputs/plots → renders on GitHub |
+| `archive/day-01..day-11-analysis.ipynb` | **Archived daily era** (2026-05-28 → 2026-06-08). The original ~daily passes; kept as historical record. `day-01` is the seed notebook, `day-02` adds the over-time axis, `day-03` adds the 3-day calibration trend + per-agent cut, etc. (day-08 never existed) |
 | `requirements.txt` | Python deps (prefer the shared venv below) |
+
+> **Cadence:** analysis switched from **daily** (`archive/day-NN`) to **weekly** (`week-NN`) as of 2026-06-14; `day-11` was the last daily pass. File one `week-NN` ticket per week going forward.
 
 ## Running it
 
@@ -37,14 +38,14 @@ npm run velocity:seed          # imports docs/puzzle-velocity.csv → ~/.lccjs/l
 # 1. refresh the enriched dataset (reads SQLite; needs git + gh; degrades offline)
 ~/.venvs/datasci/bin/python stats/enrich.py
 
-# 2. open the notebook interactively...
-jupyter lab stats/day-01-analysis.ipynb
+# 2. open the latest weekly notebook interactively (archived dailies live in stats/archive/)...
+jupyter lab stats/week-03-analysis.ipynb
 
 # ...or re-execute it headless (re-embeds all outputs in place)
-jupyter nbconvert --to notebook --execute --inplace stats/day-01-analysis.ipynb
+jupyter nbconvert --to notebook --execute --inplace stats/week-03-analysis.ipynb
 
 # ...or render a standalone HTML (gitignored)
-jupyter nbconvert --to html stats/day-01-analysis.ipynb
+jupyter nbconvert --to html stats/week-03-analysis.ipynb
 ```
 
 (Standalone fallback without the shared venv: `python3 -m venv .venv && . .venv/bin/activate
