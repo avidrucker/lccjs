@@ -12,9 +12,11 @@
 // pcoffset9 was wired end-to-end by the infra slice (#1096). The encoding/range
 // batch (#1097) adds imm5/imm9/pcoffset11. The register + label/symbol batch
 // (#1098) adds REGISTER, BAD_LABEL, UNDEFINED_LABEL, DUPLICATE_LABEL (assembler)
-// and UNDEFINED_EXTERN, MULTIPLE_GLOBAL (linker). The remaining error classes are
-// filled in by the later content batches (#1099–#1101); each adds its entries to
-// this table and attaches the key at its throw sites.
+// and UNDEFINED_EXTERN, MULTIPLE_GLOBAL (linker). The directive + structural batch
+// (#1099) adds ORG_DIRECTIVE, BAD_OPERAND_LABEL, INVALID_OPERATION, PROGRAM_TOO_BIG
+// (assembler). The remaining error classes are filled in by the later content
+// batches (#1100–#1101); each adds its entries to this table and attaches the key
+// at its throw sites.
 
 'use strict';
 
@@ -110,6 +112,47 @@ const EXPLANATIONS = {
     correctForm:
       'Keep exactly one `.global` definition of the symbol (mark the others ' +
       '`.extern`), or rename the duplicates so each global is unique.',
+  },
+
+  // Directive + structural error classes (#1099).
+  ORG_DIRECTIVE: {
+    concept:
+      'The `.org` directive sets the location counter — the address the next word ' +
+      'is assembled at — to an absolute value, so its operand must be a number in ' +
+      '0..65535. The counter only advances as code is laid down, so `.org` cannot ' +
+      'rewind it to an address at or below the current position.',
+    correctForm:
+      'Give `.org` a numeric address (decimal or `0x` hex) within 0..0xFFFF that is ' +
+      'ahead of the current location, e.g. `.org 0x3000`.',
+  },
+  BAD_OPERAND_LABEL: {
+    concept:
+      'Directives that name a symbol — `.start`, `.global`/`.globl`, `.extern` — ' +
+      'take a single label name as their operand. The name must follow label ' +
+      'syntax (letters, digits, and underscores, not beginning with a digit); a ' +
+      'number or a malformed token cannot be read as a label here.',
+    correctForm:
+      'Pass one valid label name that matches a definition in the program, e.g. ' +
+      '`.global main` or `.start main`.',
+  },
+  INVALID_OPERATION: {
+    concept:
+      'Every statement begins with either a known instruction mnemonic (e.g. add, ' +
+      'ld, br, halt) or a directive (a token starting with `.`, e.g. `.word`). A ' +
+      'leading token that matches neither cannot be assembled — usually a typo or a ' +
+      'misplaced operand.',
+    correctForm:
+      'Use a valid instruction or directive name; under `-v`/`--verbose` the ' +
+      'assembler suggests the closest match (e.g. `add` for `addd`).',
+  },
+  PROGRAM_TOO_BIG: {
+    concept:
+      'The LCC addresses memory with 16-bit addresses, so the entire program plus ' +
+      'its data must fit within a 65536-word address space. Assembling past the ' +
+      'final word would overflow that range.',
+    correctForm:
+      'Reduce the code or data so the total stays within 65536 words, e.g. by ' +
+      'shrinking large `.blkw`/`.space` reservations.',
   },
 };
 

@@ -800,7 +800,7 @@ class Assembler {
       }
 
       if (this.locCtr > 65536) {
-        this.error('Program too big');
+        this.error('Program too big', null, 'PROGRAM_TOO_BIG');
         return;
       }
 
@@ -1087,7 +1087,7 @@ class Assembler {
         }
 
         if(!this.isValidLabel(operands[0])) {
-          this.failAssembly("Bad operand--not a valid label", 1);
+          this.failAssembly("Bad operand--not a valid label", 1, null, 'BAD_OPERAND_LABEL');
         }
 
         this.startLabel = operands[0];
@@ -1104,7 +1104,7 @@ class Assembler {
         if (isNaN(orgAddress)) {
           // Custom LCC.js behavior: keep the .org-specific error wording rather
           // than the shorter oracle message ("Bad number") for non-numeric args.
-          this.failAssembly('Invalid number for .org directive', 1);
+          this.failAssembly('Invalid number for .org directive', 1, null, 'ORG_DIRECTIVE');
         }
 
         if (orgAddress < 0 || orgAddress > 0xFFFF) {
@@ -1112,7 +1112,7 @@ class Assembler {
         }
 
         if (orgAddress < this.locCtr) {
-          this.failAssembly('Backward address on .org', 1);
+          this.failAssembly('Backward address on .org', 1, null, 'ORG_DIRECTIVE');
         }
 
         if (this.pass === 2) {
@@ -1132,7 +1132,7 @@ class Assembler {
         }
 
         if(!this.isValidLabel(operands[0])) {
-          this.failAssembly("Bad operand--not a valid label", 1);
+          this.failAssembly("Bad operand--not a valid label", 1, null, 'BAD_OPERAND_LABEL');
         }
 
         this.isObjectModule = true; // Set flag to produce .o file
@@ -1153,7 +1153,7 @@ class Assembler {
         }
 
         if(!this.isValidLabel(operands[0])) {
-          this.failAssembly("Bad operand--not a valid label", 1);
+          this.failAssembly("Bad operand--not a valid label", 1, null, 'BAD_OPERAND_LABEL');
         }
 
         this.isObjectModule = true; // Set flag to produce .o file
@@ -1288,7 +1288,7 @@ class Assembler {
           const suggestion = suggestClosest(mnemonic, this._getValidDirectives());
           if (suggestion) msg += `. Did you mean '${suggestion}'?`;
         }
-        this.failAssembly(msg, 1);
+        this.failAssembly(msg, 1, null, 'INVALID_OPERATION');
         break;
       }
     }
@@ -1307,7 +1307,7 @@ class Assembler {
         const suggestion = suggestClosest(mnemonic, Object.keys(this._instructionTable));
         if (suggestion) msg += `. Did you mean '${suggestion}'?`;
       }
-      this.error(msg);
+      this.error(msg, null, 'INVALID_OPERATION');
       return;
     }
     const machineWord = desc.encoder(operands);

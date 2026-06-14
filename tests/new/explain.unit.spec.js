@@ -268,3 +268,88 @@ describe('register + label/symbol explain content (#1098)', () => {
     );
   });
 });
+
+describe('directive + structural explain content (#1099)', () => {
+  // One row per wired throw site. Both .org throw sites share ORG_DIRECTIVE; both
+  // Invalid-operation sites (the directive default case and the unknown-instruction
+  // path) share INVALID_OPERATION. Triggers verified empirically — e.g. `.org foo`
+  // fails as a non-numeric operand before any address check.
+  const CASES = [
+    { name: 'Invalid number for .org (non-numeric operand)', key: 'ORG_DIRECTIVE',
+      message: 'Invalid number for .org directive',
+      src: '        .org foo\n        halt\n' },
+    { name: 'Backward address on .org (rewind)', key: 'ORG_DIRECTIVE',
+      message: 'Backward address on .org',
+      src: '        .org 0x100\n        halt\n        .org 0x10\n        halt\n' },
+    { name: 'Bad operand label (.global numeric)', key: 'BAD_OPERAND_LABEL',
+      message: 'Bad operand--not a valid label',
+      src: '        .global 9bad\n        halt\n' },
+    { name: 'Invalid operation (unknown instruction)', key: 'INVALID_OPERATION',
+      message: 'Invalid operation',
+      src: '        frobnicate\n        halt\n' },
+    { name: 'Invalid operation (unknown directive)', key: 'INVALID_OPERATION',
+      message: 'Invalid operation',
+      src: '        .frob\n        halt\n' },
+    { name: 'Program too big (overflow address space)', key: 'PROGRAM_TOO_BIG',
+      message: 'Program too big',
+      src: '        .org 0xFFFF\n        halt\n        halt\n' },
+  ];
+
+  test.each(CASES)('$name: catalog has a {concept, correctForm} entry', ({ key }) => {
+    const e = getExplanation(key);
+    expect(e).toBeTruthy();
+    expect(e.concept.length).toBeGreaterThan(0);
+    expect(e.correctForm.length).toBeGreaterThan(0);
+  });
+
+  describe('end to end through assembleSource', () => {
+    let errSpy;
+    beforeEach(() => {
+      errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+    afterEach(() => jest.restoreAllMocks());
+    const errOut = () => errSpy.mock.calls.map((c) => c.join(' ')).join('\n');
+
+    test.each(CASES)(
+      '$name: --explain renders the message AND its explain block',
+      ({ key, message, src }) => {
+        const a = new Assembler();
+        a.explainModeOn = true;
+        expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
+        const out = errOut();
+        expect(out).toContain(message);
+        expect(out).toContain('explain:');
+        expect(out).toContain(getExplanation(key).concept);
+      }
+    );
+
+    test.each(CASES)(
+      '$name: without --explain, the message is bare (no explain block)',
+      ({ message, src }) => {
+        const a = new Assembler();
+        a.explainModeOn = false;
+        expect(() => a.assembleSource(src, { inputFileName: 't.a' })).toThrow();
+        const out = errOut();
+        expect(out).toContain(message);
+        expect(out).not.toContain('explain:');
+      }
+    );
+
+    // AC: the Invalid-operation explanation must COMPOSE with the existing
+    // verbose suggestClosest "Did you mean?" suffix, not replace it.
+    test('Invalid operation: --explain + --verbose shows both the suggestion AND the explain block', () => {
+      const a = new Assembler();
+      a.explainModeOn = true;
+      a.verboseModeOn = true;
+      // `addd` is one edit from `add`, so suggestClosest fires.
+      expect(() => a.assembleSource('        addd r0, r1, r2\n        halt\n', { inputFileName: 't.a' })).toThrow();
+      const out = errOut();
+      expect(out).toContain('Invalid operation');
+      expect(out).toContain("Did you mean 'add'?");
+      expect(out).toContain('explain:');
+      // explanation comes last, after the suggestion suffix
+      expect(out.indexOf('explain:')).toBeGreaterThan(out.indexOf("Did you mean 'add'?"));
+    });
+  });
+});
