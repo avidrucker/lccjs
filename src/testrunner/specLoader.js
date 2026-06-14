@@ -1,14 +1,16 @@
 /**
- * Test-runner spec loader — pure seam (#1090, parent #1044).
+ * Test-runner spec loaders — pure seams (#1090 / #1114, parent #1044).
  *
- * `loadTestSpec(buffer, baseDir)` parses a JSON test spec and returns a
- * validated in-memory object:
+ * Two front-ends, one internal object. Both `loadTestSpec` (JSON, #1090) and
+ * `loadFencedSpec` (fenced literal-block, #1114) return the SAME shape, so the
+ * CLI sniffer (#1092) and runner core (#1091) are format-agnostic:
  *
  *   { program: string,
  *     tests: Array<{ name?, input, expected_output, exit_code?, timeout_sec? }> }
  *
- * Design constraints (see docs/research/1044-yaml-test-runner-scope.md §3):
- *   - JSON-only. No YAML parser — the repo is intentionally zero-runtime-dep.
+ *   - JSON is the zero-dep interchange format; fenced is the human-authoring
+ *     format (students paste multi-line stdin/stdout literally, no escaping).
+ *     Format rationale: docs/research/1103-spec-format-recommendation.md.
  *   - Pure: no file I/O (the caller reads the buffer), no console.*, no
  *     process.exit. Validation failures throw a typed TestSpecError.
  *   - `program` is resolved relative to `baseDir` (string math via path.resolve;
@@ -83,4 +85,155 @@ function loadTestSpec(buffer, baseDir) {
   return { program, tests };
 }
 
-module.exports = { loadTestSpec };
+/**
+ * Parse the fenced literal-block format (#1114) into the internal spec object.
+ *
+ * Grammar (bespoke-fenced — the research doc's default; final grammar was the
+ * impl ticket's call per docs/research/1103-spec-format-recommendation.md):
+ *
+ *   program: <path>                ← required file header (resolved vs baseDir)
+ *
+ *   test: <name>                   ← starts a case; <name> optional
+ *   exit: <int>                    ← optional case metadata (any order)
+ *   timeout: <positive number>     ← optional case metadata
+ *   --- input ---                  ← literal stdin block follows
+ *   ...lines taken verbatim...
+ *   --- expected ---               ← literal expected-stdout block follows
+ *   ...lines taken verbatim...
+ *   --- end ---                    ← closes the case
+ *
+ * Literal blocks: every line between two delimiters is verbatim — no escaping,
+ * no significant whitespace. Each content line contributes `line + "\n"`, so an
+ * input block of `3 1 2` yields `"3 1 2\n"` (the newline a program's stdin
+ * needs) and an empty block yields `""`. The runner normalizes a single
+ * trailing newline on both sides, so this matches a hand-written JSON spec.
+ *
+ * Delimiter collision: the three `--- … ---` delimiters are structural ONLY when
+ * alone on a line at column 0. An indented or decorated look-alike (e.g.
+ * `  --- end ---`) is preserved as literal content. A bare delimiter line that a
+ * program genuinely emits is the one un-expressible payload — a documented v1
+ * limitation; a longer/parameterized fence (the Markdown trick) is the future
+ * escape hatch if it ever bites.
+ */
+function loadFencedSpec(text, baseDir) {
+  const raw = Buffer.isBuffer(text) ? text.toString('utf8') : text;
+  if (typeof raw !== 'string') {
+    throw new TestSpecError('Fenced test spec must be a string or Buffer.');
+  }
+
+  const lines = raw.replace(/\r\n/g, '\n').split('\n');
+  const n = lines.length;
+  let i = 0;
+
+  // --- file header: program: <path> ---
+  while (i < n && lines[i].trim() === '') i++;
+  if (i >= n) {
+    throw new TestSpecError('Fenced test spec is empty.');
+  }
+  const header = /^program:[ \t]?(.*)$/.exec(lines[i]);
+  if (!header) {
+    throw new TestSpecError(
+      `Fenced test spec must begin with a "program:" header (got: ${JSON.stringify(lines[i])}).`
+    );
+  }
+  const programRaw = header[1].trim();
+  if (programRaw === '') {
+    throw new TestSpecError('Fenced test spec "program:" header has no value.');
+  }
+  const program = path.resolve(baseDir, programRaw);
+  i++;
+
+  const tests = [];
+
+  while (i < n) {
+    if (lines[i].trim() === '') {
+      i++;
+      continue;
+    }
+
+    // --- case header: test: <name> ---
+    const testLine = /^test:[ \t]?(.*)$/.exec(lines[i]);
+    if (!testLine) {
+      throw new TestSpecError(
+        `Expected a "test:" line to start a test case (got: ${JSON.stringify(lines[i])}).`
+      );
+    }
+    const tc = {};
+    const name = testLine[1].trim();
+    const where = name ? `test case "${name}"` : 'unnamed test case';
+    if (name !== '') tc.name = name;
+    i++;
+
+    // --- optional metadata scalars until "--- input ---" ---
+    while (i < n && lines[i] !== '--- input ---') {
+      if (lines[i].trim() === '') {
+        i++;
+        continue;
+      }
+      const scalar = /^([A-Za-z_]+):[ \t]?(.*)$/.exec(lines[i]);
+      if (!scalar) {
+        throw new TestSpecError(
+          `Expected "exit:", "timeout:", or "--- input ---" in ${where} (got: ${JSON.stringify(lines[i])}).`
+        );
+      }
+      const key = scalar[1];
+      const value = scalar[2].trim();
+      if (key === 'exit') {
+        if (!/^-?\d+$/.test(value)) {
+          throw new TestSpecError(`"exit:" must be an integer in ${where} (got: ${JSON.stringify(value)}).`);
+        }
+        tc.exit_code = parseInt(value, 10);
+      } else if (key === 'timeout') {
+        const num = Number(value);
+        if (!(num > 0)) {
+          throw new TestSpecError(`"timeout:" must be a positive number in ${where} (got: ${JSON.stringify(value)}).`);
+        }
+        tc.timeout_sec = num;
+      } else {
+        throw new TestSpecError(`Unknown key "${key}:" in ${where} (expected "exit:" or "timeout:").`);
+      }
+      i++;
+    }
+
+    // --- input block ---
+    if (i >= n) {
+      throw new TestSpecError(`${where} is missing its "--- input ---" block.`);
+    }
+    i++; // consume "--- input ---"
+    const inputLines = [];
+    while (i < n && lines[i] !== '--- expected ---') {
+      if (lines[i] === '--- end ---') {
+        throw new TestSpecError(`${where} reached "--- end ---" before "--- expected ---".`);
+      }
+      inputLines.push(lines[i]);
+      i++;
+    }
+    if (i >= n) {
+      throw new TestSpecError(`${where} is missing its "--- expected ---" block.`);
+    }
+    i++; // consume "--- expected ---"
+
+    // --- expected block ---
+    const expectedLines = [];
+    while (i < n && lines[i] !== '--- end ---') {
+      expectedLines.push(lines[i]);
+      i++;
+    }
+    if (i >= n) {
+      throw new TestSpecError(`${where} is missing its "--- end ---" delimiter.`);
+    }
+    i++; // consume "--- end ---"
+
+    tc.input = inputLines.length ? inputLines.join('\n') + '\n' : '';
+    tc.expected_output = expectedLines.length ? expectedLines.join('\n') + '\n' : '';
+    tests.push(tc);
+  }
+
+  if (tests.length === 0) {
+    throw new TestSpecError('Fenced test spec must contain at least one test case.');
+  }
+
+  return { program, tests };
+}
+
+module.exports = { loadTestSpec, loadFencedSpec };
