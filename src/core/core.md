@@ -42,7 +42,10 @@ Current responsibilities:
 - parse object-module headers and code
 - resolve global and external references
 - adjust addresses and create a final executable
-- expose a small pure seam through `parseObjectModuleBuffer(...)`
+- expose pure seams: `parseObjectModuleBuffer(...)` (one `.o` buffer → module) and
+  `linkObjectModules(buffers, options) → { outputBytes }` (link `.o` buffers → `.e` image),
+  both throwing typed `LinkerError`; the CLI wrapper (`link`/`main`) owns file I/O,
+  progress logs, and exit codes
 
 ### `lcc.js`
 

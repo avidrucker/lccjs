@@ -1,13 +1,12 @@
 // linker.seam.spec.js
 //
-// Design contract for the linker.js pure seam `linkObjectModules(buffers, options)`.
-// Authored by #1224 (ARCHITECT, design-only); implemented by #1274 (DEV, blocked-by #1224).
+// Regression contract for the linker.js pure seam `linkObjectModules(buffers, options)`.
+// Authored by #1224 (ARCHITECT, design-only); implemented by #1274 (DEV).
 //
-// These use `test.failing` deliberately (docs/project-gotchas.md §5): the seam is a
-// confirmed gap with an open fix ticket (#1274), so the tests RUN, document the intended
-// contract, and report green while the method is unimplemented (the call throws TypeError).
-// When #1274 lands, the assertions pass — which flips `test.failing` to a FAILURE, the
-// signal to delete the `.failing` annotations and keep these as ordinary regression tests.
+// Originally authored as `test.failing` specs (the design contract before the seam
+// existed); #1274 implemented the seam and flipped them to ordinary `test` (per
+// docs/project-gotchas.md §5: `test.failing` is for a confirmed gap with an open fix
+// ticket — once fixed, the annotation is removed).
 //
 // No `fs` mocking: the seam consumes Buffers and returns a Buffer. Passing buffers directly
 // is the contract — an implementation that reached for `fs` here would be visibly wrong.
@@ -37,7 +36,7 @@ function objectModule({ start, code = [] }) {
 const O_SIGNATURE = 'o'.charCodeAt(0); // 0x6f — first byte of a linked .e executable
 
 describe('linker pure seam: linkObjectModules(buffers, options) — design contract (#1224 → #1274)', () => {
-  test.failing('links two in-memory .o buffers into a single .e executable buffer', () => {
+  test('links two in-memory .o buffers into a single .e executable buffer', () => {
     const moduleA = objectModule({ start: 0, code: [0x0000] });
     const moduleB = objectModule({ code: [0x0000] });
 
@@ -50,7 +49,7 @@ describe('linker pure seam: linkObjectModules(buffers, options) — design contr
     expect(result.outputBytes[0]).toBe(O_SIGNATURE);
   });
 
-  test.failing('throws LinkerError on a buffer with a bad object-module signature', () => {
+  test('throws LinkerError on a buffer with a bad object-module signature', () => {
     const notLinkable = Buffer.from([0x00, 0x43]); // first byte is not 'o'
 
     expect(() => new Linker().linkObjectModules([notLinkable], {})).toThrow(LinkerError);

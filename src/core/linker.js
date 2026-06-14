@@ -17,6 +17,11 @@ class Linker {
     // verboseModeOn is a configuration property (not per-link state) — it must
     // survive resetState() calls so callers can set it once before link().
     this.verboseModeOn = false;
+    // silent (also a configuration property) suppresses error()'s console
+    // output so the pure seam linkObjectModules() can throw LinkerError without
+    // printing. The CLI wrapper path (link/main) leaves it false and keeps the
+    // existing output; the seam toggles it locally and restores it.
+    this.silent = false;
   }
 
   // Reset all per-link state so the same Linker instance can be reused across
@@ -292,25 +297,64 @@ class Linker {
     }
   }
 
-  createExecutable() {
-    // Write executable file
-    let outfileName = this.outputFileName;
+  // Pure in-memory seam (#1224 design → #1274): link an array of object-module
+  // Buffers into a single executable image, returning data and throwing typed
+  // LinkerError — no console output, no fs, no process.exit. Mirrors
+  // assembler.assembleSource / interpreter.executeBuffer. The CLI wrapper
+  // (link/main) owns file reads, progress logs, output writes, and exit codes.
+  // `options.fileNames` (optional, parallel to `buffers`) supplies filenames for
+  // parse-error context only. Composes the existing parseObjectModuleBuffer seam.
+  linkObjectModules(buffers, options = {}) {
+    const { fileNames = [] } = options;
+    this.resetState();
+    const previousSilent = this.silent;
+    this.silent = true; // suppress error()'s console output; the seam only throws
+    try {
+      buffers.forEach((buffer, i) => {
+        this.objectModules.push(
+          this.parseObjectModuleBuffer(buffer, fileNames[i] || '<buffer>')
+        );
+      });
+      for (let module of this.objectModules) {
+        this.processModule(module);
+      }
+      this.adjustExternalReferences();
+      this.adjustLocalReferences();
+      return this.createLinkResult({ outputBytes: this.buildExecutableBuffer() });
+    } finally {
+      this.silent = previousSilent;
+    }
+  }
 
-    // Write executable file
-    const outFile = fs.openSync(outfileName, 'w');
+  // Result builder for the pure seam, mirroring assembler.createAssemblyResult
+  // ({ outputBytes, ... }) and interpreter.createExecutionResult. Returns an
+  // object (not a bare Buffer) so fields can be added later without breaking
+  // callers — the same reasoning the assembler/interpreter seams already follow.
+  createLinkResult({ outputBytes }) {
+    return { outputBytes };
+  }
 
-    // Write file signature
-    fs.writeSync(outFile, 'o');
+  // Build the .e executable image as an in-memory Buffer (pure: no fs, no
+  // console). Byte layout is the linker output format: 'o' signature, optional
+  // 'S' start entry, 'G' global entries, 'A' address entries, 'C' header
+  // terminator, then little-endian machine-code words. The single source of
+  // truth for the output bytes: createExecutable() (CLI wrapper) writes this to
+  // disk; linkObjectModules() (pure seam) returns it as result.outputBytes.
+  buildExecutableBuffer() {
+    const parts = [];
 
-    // Write 'S' entry if we have a start address
+    // File signature
+    parts.push(Buffer.from('o', 'ascii'));
+
+    // 'S' entry if we have a start address
     if (this.gotStart) {
       const buffer = Buffer.alloc(3);
       buffer.write('S', 0, 'ascii');
       buffer.writeUInt16LE(this.start, 1);
-      fs.writeSync(outFile, buffer);
+      parts.push(buffer);
     }
 
-    // Write 'G' entries
+    // 'G' entries
     for (let label in this.globalSymbolTable) {
       const address = this.globalSymbolTable[label];
       const buffer = Buffer.alloc(3 + label.length + 1);
@@ -318,44 +362,57 @@ class Linker {
       buffer.writeUInt16LE(address, 1);
       buffer.write(label, 3, 'ascii');
       buffer.writeUInt8(0, 3 + label.length); // Null terminator
-      fs.writeSync(outFile, buffer);
+      parts.push(buffer);
     }
 
-    // Write 'A' entries for virtualAddressTable entries
+    // 'A' entries for virtualAddressTable entries
     for (let ref of this.virtualAddressTable) {
       const buffer = Buffer.alloc(3);
       buffer.write('A', 0, 'ascii');
       buffer.writeUInt16LE(ref.address, 1);
-      fs.writeSync(outFile, buffer);
+      parts.push(buffer);
     }
 
-    // Write 'A' entries
+    // 'A' entries
     for (let ref of this.addressAdjustmentTable) {
       const buffer = Buffer.alloc(3);
       buffer.write('A', 0, 'ascii');
       buffer.writeUInt16LE(ref.address, 1);
-      fs.writeSync(outFile, buffer);
+      parts.push(buffer);
     }
 
     // Terminate header
-    fs.writeSync(outFile, 'C');
+    parts.push(Buffer.from('C', 'ascii'));
 
-    // Write machine code
+    // Machine code
     const codeBuffer = Buffer.alloc(this.machineCode.length * 2);
     for (let i = 0; i < this.machineCode.length; i++) {
       codeBuffer.writeUInt16LE(this.machineCode[i], i * 2);
     }
-    fs.writeSync(outFile, codeBuffer);
+    parts.push(codeBuffer);
 
+    return Buffer.concat(parts);
+  }
+
+  createExecutable() {
+    // CLI wrapper path: write the (pure) executable image to disk. Uses the
+    // same fs.openSync/writeSync/closeSync calls as before — only the byte
+    // production moved into buildExecutableBuffer(), so output is unchanged.
+    const outFile = fs.openSync(this.outputFileName, 'w');
+    fs.writeSync(outFile, this.buildExecutableBuffer());
     fs.closeSync(outFile);
   }
 
   // `explainKey` (optional, #1098) selects a --explain catalog entry printed
   // after the error line when explain mode is on; default output is unchanged.
   error(message, explainKey = null) {
-    const prefix = this.verboseModeOn ? '[linker] ' : '';
-    console.error(`${prefix}${message}`);
-    maybeExplain(explainKey);
+    // The pure seam sets `silent` so it can throw without writing to the
+    // console; the CLI wrapper leaves it false and keeps the existing output.
+    if (!this.silent) {
+      const prefix = this.verboseModeOn ? '[linker] ' : '';
+      console.error(`${prefix}${message}`);
+      maybeExplain(explainKey);
+    }
     throw new LinkerError(message);
   }
 }
