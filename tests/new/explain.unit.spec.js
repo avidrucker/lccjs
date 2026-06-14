@@ -450,3 +450,87 @@ describe('runtime/interpreter explain content (#1100)', () => {
     });
   });
 });
+
+describe('file-format explain content (#1101)', () => {
+  // Format errors are typed (InvalidExecutableFormatError) and carry the
+  // explainKey from the throw site; the render seam is cliExit (lcc.js catches
+  // and calls cliWrappedErrorExit). The buffers here are crafted directly — the
+  // assembler/linker would never emit them. `via` picks the entry method:
+  // executeBuffer (its own signature guard, line 305) or loadExecutableBuffer
+  // (the header parser reached by lcc.js's loadExecutableFile path).
+  const Interpreter = require('../../src/core/interpreter');
+  const cliExit = require('../../src/utils/cliExit');
+  const B = (arr) => Buffer.from(arr);
+
+  const formatError = (buf, via) => {
+    const interp = new Interpreter();
+    let thrown = null;
+    try {
+      if (via === 'load') interp.loadExecutableBuffer(buf);
+      else interp.executeBuffer(buf, { inputFileName: 't.e' });
+    } catch (e) {
+      thrown = e;
+    }
+    return thrown;
+  };
+
+  const CASES = [
+    { name: 'not in lcc format (executeBuffer signature guard)', key: 'NOT_LCC_FORMAT',
+      message: 'is not in lcc format', via: 'exec', buf: B([0x00, 0x00]) },
+    { name: 'missing o signature (loadExecutableBuffer)', key: 'NOT_LCC_FORMAT',
+      message: 'missing "o"', via: 'load', buf: B([0x00, 0x00]) },
+    { name: 'incomplete start address (truncated S)', key: 'BAD_EXE_HEADER',
+      message: 'Incomplete start address', via: 'load', buf: B([0x6F, 0x53]) },
+    { name: 'incomplete G entry (truncated G)', key: 'BAD_EXE_HEADER',
+      message: 'Incomplete G entry', via: 'load', buf: B([0x6F, 0x47]) },
+    { name: 'incomplete A entry (truncated A)', key: 'BAD_EXE_HEADER',
+      message: 'Incomplete A entry', via: 'load', buf: B([0x6F, 0x41]) },
+    { name: 'unknown header entry', key: 'BAD_EXE_HEADER',
+      message: 'Unknown header entry', via: 'load', buf: B([0x6F, 0x5A]) },
+  ];
+
+  test.each(CASES)('$name: catalog has a {concept, correctForm} entry', ({ key }) => {
+    const e = getExplanation(key);
+    expect(e).toBeTruthy();
+    expect(e.concept.length).toBeGreaterThan(0);
+    expect(e.correctForm.length).toBeGreaterThan(0);
+  });
+
+  describe('through the file-format error path', () => {
+    let errSpy;
+    beforeEach(() => {
+      errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+      cliExit.setExplainMode(false);
+    });
+    afterEach(() => {
+      cliExit.setExplainMode(false);
+      jest.restoreAllMocks();
+    });
+    const errOut = () => errSpy.mock.calls.map((c) => c.join(' ')).join('\n');
+
+    test.each(CASES)('$name: the error carries its explainKey', ({ key, message, buf, via }) => {
+      const err = formatError(buf, via);
+      expect(err).toBeTruthy();
+      expect(err.message).toContain(message);
+      expect(err.explainKey).toBe(key);
+    });
+
+    test.each(CASES)('$name: --explain renders the explain block via cliExit', ({ key, buf, via }) => {
+      const err = formatError(buf, via);
+      cliExit.setExplainMode(true);
+      expect(() => cliExit.cliWrappedErrorExit('Error running t.e:', err, 1)).toThrow();
+      const out = errOut();
+      expect(out).toContain('explain:');
+      expect(out).toContain(getExplanation(key).concept);
+    });
+
+    test.each(CASES)('$name: without --explain, no explain block (parity)', ({ buf, via }) => {
+      const err = formatError(buf, via);
+      cliExit.setExplainMode(false);
+      expect(() => cliExit.cliWrappedErrorExit('Error running t.e:', err, 1)).toThrow();
+      const out = errOut();
+      expect(out).not.toContain('explain:');
+    });
+  });
+});

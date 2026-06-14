@@ -75,7 +75,7 @@ class Linker {
     let offset = 0;
 
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      throw new LinkerError(`${filename} not a linkable file`);
+      throw new LinkerError(`${filename} not a linkable file`, { explainKey: 'NOT_LINKABLE' });
     }
 
     const module = {
@@ -94,7 +94,7 @@ class Linker {
       switch (entryType) {
         case 'S': {
           if (offset + 1 >= buffer.length) {
-            throw new LinkerError('Invalid S entry');
+            throw new LinkerError('Invalid S entry', { explainKey: 'BAD_OBJECT_HEADER' });
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -106,7 +106,7 @@ class Linker {
         case 'e':
         case 'V': {
           if (offset + 1 >= buffer.length) {
-            throw new LinkerError(`Invalid ${entryType} entry`);
+            throw new LinkerError(`Invalid ${entryType} entry`, { explainKey: 'BAD_OBJECT_HEADER' });
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -121,7 +121,7 @@ class Linker {
         }
         case 'A': {
           if (offset + 1 >= buffer.length) {
-            throw new LinkerError('Invalid A entry');
+            throw new LinkerError('Invalid A entry', { explainKey: 'BAD_OBJECT_HEADER' });
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -129,7 +129,7 @@ class Linker {
           break;
         }
         default:
-          throw new LinkerError(`Unknown header entry ${entryType} in file ${filename}`);
+          throw new LinkerError(`Unknown header entry ${entryType} in file ${filename}`, { explainKey: 'BAD_OBJECT_HEADER' });
       }
     }
 
@@ -150,7 +150,7 @@ class Linker {
       this.objectModules.push(module);
     } catch (error) {
       if (error instanceof LinkerError) {
-        this.error(error.message); // log then re-throw as LinkerError
+        this.error(error.message, error.explainKey); // log (with any explain key) then re-throw
       }
       throw error;
     }
@@ -200,7 +200,7 @@ class Linker {
       switch (header.type) {
         case 'S':
           if (this.gotStart) {
-            this.error('Multiple entry points');
+            this.error('Multiple entry points', 'MULTIPLE_ENTRY');
           }
           this.start = header.address + this.moduleCurrentAddress;
           this.gotStart = true;

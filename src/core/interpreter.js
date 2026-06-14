@@ -302,7 +302,7 @@ class Interpreter {
 
     // Check file signature
     if (buffer[0] !== 'o'.charCodeAt(0)) {
-      throw new InvalidExecutableFormatError(`${this.inputFileName} is not in lcc format`);
+      throw new InvalidExecutableFormatError(`${this.inputFileName} is not in lcc format`, { explainKey: 'NOT_LCC_FORMAT' });
     }
 
     // Load the executable into memory
@@ -565,7 +565,7 @@ class Interpreter {
 
     // Read file signature
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      this.raiseRuntimeError(new InvalidExecutableFormatError('Invalid file signature: missing "o"'));
+      this.raiseRuntimeError(new InvalidExecutableFormatError('Invalid file signature: missing "o"', { explainKey: 'NOT_LCC_FORMAT' }));
     }
 
     // Do not store the 'o' signature in headerLines
@@ -583,7 +583,7 @@ class Interpreter {
       } else if (entryChar === 'S') {
         // Start address entry: read two bytes as little endian
         if (offset + 1 >= buffer.length) {
-          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete start address in header'));
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete start address in header', { explainKey: 'BAD_EXE_HEADER' }));
         }
         startAddress = buffer.readUInt16LE(offset);
         offset += 2;
@@ -591,7 +591,7 @@ class Interpreter {
       } else if (entryChar === 'G') {
         // Skip 'G' entry: Read address and label
         if (offset + 1 >= buffer.length) {
-          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete G entry in header'));
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete G entry in header', { explainKey: 'BAD_EXE_HEADER' }));
         }
         const address = buffer.readUInt16LE(offset);
         offset += 2;
@@ -605,14 +605,14 @@ class Interpreter {
       } else if (entryChar === 'A') {
         // Skip 'A' entry: Read address
         if (offset + 1 >= buffer.length) {
-          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete A entry in header'));
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete A entry in header', { explainKey: 'BAD_EXE_HEADER' }));
         }
         const address = buffer.readUInt16LE(offset);
         offset += 2;
         this.headerLines.push(`A ${address.toString(16).padStart(4, '0')}`);
       } else {
         // Skip unknown entries or handle as needed
-        this.raiseRuntimeError(new InvalidExecutableFormatError(`Unknown header entry: '${entryChar}'`));
+        this.raiseRuntimeError(new InvalidExecutableFormatError(`Unknown header entry: '${entryChar}'`, { explainKey: 'BAD_EXE_HEADER' }));
       }
     }
 

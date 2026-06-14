@@ -16,9 +16,11 @@
 // (#1099) adds ORG_DIRECTIVE, BAD_OPERAND_LABEL, INVALID_OPERATION, PROGRAM_TOO_BIG
 // (assembler). The runtime/interpreter batch (#1100) adds DIV_BY_ZERO,
 // TRAP_VECTOR_RANGE, UNKNOWN_OPCODE, EOF_ON_STDIN (interpreter; rendered via the
-// cliExit seam). The remaining error classes are filled in by the last content
-// batch (#1101 — linker + file-format); each adds its entries to this table and
-// attaches the key at its throw sites.
+// cliExit seam). The linker + file-format batch (#1101) adds NOT_LINKABLE,
+// BAD_OBJECT_HEADER, MULTIPLE_ENTRY (linker) and NOT_LCC_FORMAT, BAD_EXE_HEADER
+// (interpreter file-format), completing the epic (#1042). Each entry is attached
+// at its throw site; the render seams are formatAssemblerError (assembler) and
+// cliExit's exit helpers plus the linker's own error() (linker/runtime/format).
 
 'use strict';
 
@@ -201,6 +203,60 @@ const EXPLANATIONS = {
       'Supply enough input on stdin for every input trap the program runs — pipe ' +
       'or redirect it (e.g. `echo 5 | lcc prog.e` or `lcc prog.e < input.txt`) — ' +
       'or guard the read so the program never requests more input than is given.',
+  },
+
+  // Linker + file-format error classes (#1101). (Undefined-external references
+  // are taught by UNDEFINED_EXTERN, added in #1098 — referenced, not re-authored.)
+  NOT_LINKABLE: {
+    concept:
+      'The linker combines object modules, and every object file (`.o`) begins ' +
+      'with an `o` signature byte followed by a header of S/G/E/e/V/A entries. A ' +
+      'file that does not start that way is not a linkable object — commonly an ' +
+      'executable (`.e`), an assembly source (`.a`), or some unrelated file passed ' +
+      'to the linker by mistake.',
+    correctForm:
+      'Pass the `.o` object files produced by assembling each module (e.g. ' +
+      '`lcc -c mod.a` then link the resulting `mod.o`), not `.e`/`.a` files.',
+  },
+  BAD_OBJECT_HEADER: {
+    concept:
+      "An object module's header is a sequence of typed entries (S for the start " +
+      'address, G/E/e/V for symbols, A for an adjustment), each followed by its ' +
+      'fixed-size payload. An entry whose payload runs past the end of the file, ' +
+      'or an unrecognized entry type, means the object file is truncated or ' +
+      'corrupt — not something the assembler would emit.',
+    correctForm:
+      'Re-assemble the module to regenerate a clean `.o`, and make sure the file ' +
+      'was not truncated in transit or hand-edited.',
+  },
+  MULTIPLE_ENTRY: {
+    concept:
+      'Exactly one module in a link may set the program start address (the `S` ' +
+      'entry produced by `.start`). When two or more modules each declare a start ' +
+      'point, the linker cannot choose which one the program begins at.',
+    correctForm:
+      'Keep `.start` in a single module (typically the one with `main`) and remove ' +
+      'it from the others.',
+  },
+  NOT_LCC_FORMAT: {
+    concept:
+      'An LCC executable (`.e`) must begin with the `o` signature byte; the ' +
+      'interpreter checks it before loading. A file lacking that signature is not ' +
+      'an LCC executable — often an assembly source or object file, or a file that ' +
+      'was never assembled/linked.',
+    correctForm:
+      'Run a `.e` produced by the assembler/linker (e.g. assemble `prog.a` to ' +
+      '`prog.e`, then `lcc prog.e`), not a `.a` source or `.o` object.',
+  },
+  BAD_EXE_HEADER: {
+    concept:
+      "An executable's header lists typed entries (S start address, G globals, A " +
+      'adjustment) terminated by `C` before the code. A header that ends mid-entry ' +
+      'or contains an unrecognized entry type means the file is truncated or ' +
+      'corrupt rather than a complete LCC executable.',
+    correctForm:
+      'Re-assemble/re-link to regenerate the `.e`, and check the file was not ' +
+      'truncated or modified after it was produced.',
   },
 };
 

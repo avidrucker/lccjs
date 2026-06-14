@@ -362,6 +362,63 @@ shared:   .word 2
   });
 
   // -------------------------------------------------------------------------
+  // --explain content for the linker + object-header error classes (#1101).
+  // Bad object buffers are crafted directly (the assembler never emits them);
+  // the linker renders the block via its own error()/maybeExplain seam during
+  // link(). Toggle the module-level explain flag directly and reset afterward.
+  // -------------------------------------------------------------------------
+  describe('--explain content: linker (#1101)', () => {
+    afterEach(() => setExplainMode(false));
+    const errOut = () => console.error.mock.calls.map((c) => c.join(' ')).join('\n');
+
+    const NOT_OBJECT = Buffer.from([0x00, 0x00]);                  // no 'o' signature
+    const TRUNC_S    = Buffer.from([0x6F, 0x53]);                  // 'o','S' then truncated
+    const ONE_ENTRY  = Buffer.from([0x6F, 0x53, 0x00, 0x00, 0x43]); // 'o' S 0x0000 'C'
+
+    const LINK_CASES = [
+      { name: 'NOT_LINKABLE (no o signature)', key: 'NOT_LINKABLE',
+        message: 'not a linkable file',
+        setup: () => { state.files['bad.o'] = NOT_OBJECT; return ['bad.o']; } },
+      { name: 'BAD_OBJECT_HEADER (truncated S entry)', key: 'BAD_OBJECT_HEADER',
+        message: 'Invalid S entry',
+        setup: () => { state.files['bad.o'] = TRUNC_S; return ['bad.o']; } },
+      { name: 'MULTIPLE_ENTRY (two start addresses)', key: 'MULTIPLE_ENTRY',
+        message: 'Multiple entry points',
+        setup: () => {
+          state.files['m1.o'] = ONE_ENTRY;
+          state.files['m2.o'] = ONE_ENTRY;
+          return ['m1.o', 'm2.o'];
+        } },
+    ];
+
+    test.each(LINK_CASES)('$name: catalog has a {concept, correctForm} entry', ({ key }) => {
+      const e = getExplanation(key);
+      expect(e).toBeTruthy();
+      expect(e.concept.length).toBeGreaterThan(0);
+      expect(e.correctForm.length).toBeGreaterThan(0);
+    });
+
+    test.each(LINK_CASES)('$name: --explain appends the explain block', ({ key, message, setup }) => {
+      setExplainMode(true);
+      const files = setup();
+      expect(() => new Linker().link(files, 'out.e')).toThrow(LinkerError);
+      const out = errOut();
+      expect(out).toContain(message);
+      expect(out).toContain('explain:');
+      expect(out).toContain(getExplanation(key).concept);
+    });
+
+    test.each(LINK_CASES)('$name: without --explain, the message is bare (parity)', ({ message, setup }) => {
+      setExplainMode(false);
+      const files = setup();
+      expect(() => new Linker().link(files, 'out.e')).toThrow(LinkerError);
+      const out = errOut();
+      expect(out).toContain(message);
+      expect(out).not.toContain('explain:');
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // Pipeline integrity: the .o bytes round-trip through parseObjectModuleBuffer
   // -------------------------------------------------------------------------
 
