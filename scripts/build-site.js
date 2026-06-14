@@ -549,11 +549,13 @@ ${listItems}
   // and GitHub Pages (where docs/site/ is the pages root).
   const BUNDLE_SRC  = path.join(ROOT, 'dist', 'lcc.bundle.js');
   const BUNDLE_DEST = path.join(OUT_DIR, 'dist', 'lcc.bundle.js');
-  // The webpack bundle is no longer committed (#1178) — it's gitignored and
-  // rebuilt by CI on deploy. For local `build:site`/`serve:site`, build it on
-  // demand if missing so the playground works without a prior `build:browser`.
-  if (!fs.existsSync(BUNDLE_SRC)) {
-    console.log('build:site — dist/lcc.bundle.js missing; running `npm run build:browser`…');
+  // The webpack bundles are no longer committed (#1178) — gitignored and rebuilt
+  // by CI on deploy. For local `build:site`/`serve:site`, build them on demand if
+  // EITHER the API bundle or the editor bundle (#1284) is missing, so the
+  // playground works without a prior `build:browser`.
+  const EDITOR_BUNDLE_SRC = path.join(ROOT, 'dist', 'editor.bundle.js');
+  if (!fs.existsSync(BUNDLE_SRC) || !fs.existsSync(EDITOR_BUNDLE_SRC)) {
+    console.log('build:site — a webpack bundle is missing; running `npm run build:browser`…');
     execSync('npm run build:browser', { cwd: ROOT, stdio: 'inherit' });
   }
   if (fs.existsSync(BUNDLE_SRC)) {
@@ -564,22 +566,19 @@ ${listItems}
     console.warn('build:site — WARNING: dist/lcc.bundle.js still not found after `npm run build:browser`');
   }
 
-  // Copy the CodeMirror 6 language support into docs/site/dist/ so the playground's
-  // `import { lcc } from '../dist/lang-lcc.js'` resolves. Unlike lcc.bundle.js this
-  // file is NOT produced by webpack — it is a hand-maintained, CDN-ready ESM module
-  // (see its header) that lives canonically at src/lang-lcc/lang-lcc.cdn.js, beside
-  // the grammar it mirrors. It was relocated out of dist/ (#1176) precisely so it is
-  // not mistaken for a build output; build:site still emits it to the stable deployed
-  // path docs/site/dist/lang-lcc.js, keeping docs/site/** 100% generated so it can
-  // stay gitignored (#1075).
-  const LANG_SRC  = path.join(ROOT, 'src', 'lang-lcc', 'lang-lcc.cdn.js');
-  const LANG_DEST = path.join(OUT_DIR, 'dist', 'lang-lcc.js');
-  if (fs.existsSync(LANG_SRC)) {
-    fs.mkdirSync(path.dirname(LANG_DEST), { recursive: true });
-    fs.copyFileSync(LANG_SRC, LANG_DEST);
-    console.log(`build:site — lang:    ${path.relative(ROOT, LANG_DEST)}`);
+  // Copy the editor bundle (CodeMirror 6 + Lezer + the lcc() language) into
+  // docs/site/dist/ so the playground's <script src="../dist/editor.bundle.js">
+  // resolves on file://, local HTTP, and GitHub Pages. Produced by webpack
+  // (src/browser/editor.js → dist/editor.bundle.js); replaces the former
+  // per-subpackage esm.sh imports and the hand-maintained dist/lang-lcc.js (#1284).
+  const EDITOR_SRC  = EDITOR_BUNDLE_SRC;
+  const EDITOR_DEST = path.join(OUT_DIR, 'dist', 'editor.bundle.js');
+  if (fs.existsSync(EDITOR_SRC)) {
+    fs.mkdirSync(path.dirname(EDITOR_DEST), { recursive: true });
+    fs.copyFileSync(EDITOR_SRC, EDITOR_DEST);
+    console.log(`build:site — editor:  ${path.relative(ROOT, EDITOR_DEST)}`);
   } else {
-    console.warn('build:site — WARNING: src/lang-lcc/lang-lcc.cdn.js not found; playground syntax highlighting will break');
+    console.warn('build:site — WARNING: dist/editor.bundle.js not found; run `npm run build:browser` first');
   }
 
   const playgroundThemeOptions = THEMES.map(({ id, label }) =>
@@ -613,25 +612,22 @@ ${listItems}
 #stdin-prompt-submit:hover { opacity:.85; }
 </style>
 <script src="../dist/lcc.bundle.js"></script>
+<script src="../dist/editor.bundle.js"></script>
 <script type="module">
-// The codemirror@6 umbrella re-exports EditorView etc. from @codemirror/*
-// subpackages; esm.sh cannot surface those re-exports regardless of ?bundle.
-// Fix: import each symbol from its source package, pinning them all to the same
-// @codemirror/state@6 instance via ?deps= so instanceof checks work. (#772)
-import { EditorView, keymap, lineNumbers } from 'https://esm.sh/@codemirror/view@6?deps=@codemirror/state@6';
-import { Compartment } from 'https://esm.sh/@codemirror/state@6';
-import { basicSetup } from 'https://esm.sh/@codemirror/basic-setup@0.20?deps=@codemirror/state@6';
-import { indentWithTab, toggleLineComment } from 'https://esm.sh/@codemirror/commands@6?deps=@codemirror/state@6';
-import { autocompletion } from 'https://esm.sh/@codemirror/autocomplete@6?deps=@codemirror/state@6';
-// language@6 must pin @lezer/highlight@1 in ?deps= so defaultHighlightStyle's tags
-// share identity with lang-lcc.js's styleTags — otherwise zero highlight spans. (#986)
-import { syntaxHighlighting, defaultHighlightStyle, HighlightStyle } from 'https://esm.sh/@codemirror/language@6?deps=@codemirror/state@6,@lezer/highlight@1';
-// tags MUST come from the exact same @lezer/highlight@1.2.3 URL lang-lcc.js uses,
-// or the HighlightStyle's tags differ by identity from the parser's styleTags and
-// no editor token gets styled — the #986 identity trap, here for the editor's own
-// per-theme highlight style. (#1124)
-import { tags } from 'https://esm.sh/@lezer/highlight@1.2.3';
-import { lcc } from '../dist/lang-lcc.js';
+// CodeMirror 6 + Lezer + the lcc() language are bundled into one local asset
+// (dist/editor.bundle.js → window.LccEditor) instead of ~58 per-subpackage esm.sh
+// imports (#1284). The single bundle means one @codemirror/state instance, so the
+// instanceof / tag-identity pinning the esm.sh imports needed (#772/#986) is moot.
+const {
+  EditorView, keymap, lineNumbers,
+  Compartment,
+  basicSetup,
+  indentWithTab, toggleLineComment,
+  autocompletion,
+  syntaxHighlighting, HighlightStyle,
+  tags,
+  lcc,
+} = window.LccEditor;
 
 const LCC_COMPLETIONS = [
   { label: 'r0', type: 'variable', detail: 'general-purpose' },

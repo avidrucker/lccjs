@@ -68,4 +68,20 @@ module.exports = [
     resolve: { fallback: sharedFallback },
     plugins: sharedPlugins,
   },
+
+  // ── editor.bundle.js ───────────────────────────────────────────────────────
+  // CodeMirror 6 + Lezer + the lcc() language for the playground editor, bundled
+  // into one local asset so the sandbox no longer fetches ~58 modules from esm.sh
+  // (#1284). UMD → window.LccEditor. Pure browser ESM — no Node polyfills needed.
+  {
+    name: 'editor',
+    mode: 'production',
+    entry: path.resolve(__dirname, 'src/browser/editor.js'),
+    output: {
+      filename: 'editor.bundle.js',
+      path: path.resolve(__dirname, 'dist'),
+      library: { name: 'LccEditor', type: 'umd' },
+      globalObject: 'typeof self !== "undefined" ? self : this',
+    },
+  },
 ];

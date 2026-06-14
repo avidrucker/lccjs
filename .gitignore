@@ -65,3 +65,5 @@ dist/lcc.bundle.js
 dist/lcc.bundle.js.LICENSE.txt
 dist/lcc-injector.js
 dist/lcc-injector.js.LICENSE.txt
+dist/editor.bundle.js
+dist/editor.bundle.js.LICENSE.txt
