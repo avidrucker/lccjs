@@ -23,6 +23,7 @@
     "error:seed": "node scripts/errors-seed.js",
     "error:log": "node scripts/error-log.js",
     "errors:export": "node scripts/errors-export.js",
+    "file-issue": "node scripts/file-issue.js",
     "lccrun": "bash scripts/lccrun.sh",
     "build": "npm run build:browser && npm run build:site",
     "build:site": "node scripts/build-site.js",
