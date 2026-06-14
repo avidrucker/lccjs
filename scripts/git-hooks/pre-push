@@ -50,36 +50,14 @@ if markers=$(git grep -nE '^(<<<<<<<|>>>>>>>)' -- ':!*.md' 2>/dev/null) && [ -n 
   exit 1
 fi
 
-# --- Browser-bundle freshness guard (#1075) ---
-# dist/** is a committed, consumer-facing artifact (the reveal-md `lcc-injector.js`,
-# the code-block embed bundle, and the showcase engine CI copies into docs/site/).
-# webpack builds it from src/browser/** + webpack.browser.config.js. If a push
-# changes that source but does NOT re-commit dist/, the checked-in bundle goes
-# stale silently — the #985/#986 failure class. Block so the contributor rebuilds.
-# (CI also rebuilds the bundle fresh on deploy; this protects the committed copy.)
-# Reads git's pre-push ref protocol from stdin: <local_ref> <local_sha> <remote_ref> <remote_sha>.
-_zero='0000000000000000000000000000000000000000'
-while read -r _lref _lsha _rref _rsha; do
-  [ "$_lsha" = "$_zero" ] && continue                      # branch deletion — nothing to check
-  if [ "$_rsha" = "$_zero" ]; then                         # new branch on remote
-    _base=$(git rev-parse --verify --quiet refs/remotes/origin/main) || _base=''
-  else
-    _base="$_rsha"
-  fi
-  [ -z "$_base" ] && continue                              # can't resolve a base — skip, don't block
-  _changed=$(git diff --name-only "$_base" "$_lsha" 2>/dev/null) || continue
-  _src_hits=$(printf '%s\n' "$_changed" | grep -E '^(src/browser/|webpack\.browser\.config\.js)' || true)
-  _dist_hits=$(printf '%s\n' "$_changed" | grep -E '^dist/' || true)
-  if [ -n "$_src_hits" ] && [ -z "$_dist_hits" ]; then
-    echo "[pre-push] BLOCKED — browser bundle source changed but dist/ was not rebuilt:"
-    printf '%s\n' "$_src_hits" | sed 's/^/    /'
-    echo "  dist/lcc.bundle.js + dist/lcc-injector.js are committed, consumer-facing"
-    echo "  artifacts. Rebuild and commit them so the checkout never lags source:"
-    echo "      npm run build:browser && git add dist/ && git commit"
-    echo "  If the rebuild produced no change, bypass with: git push --no-verify"
-    exit 1
-  fi
-done
+# --- Browser-bundle freshness guard: RETIRED (#1178) ---
+# This guard previously blocked a push that edited src/browser/** without
+# re-committing the rebuilt dist/ bundle. The webpack bundles (dist/lcc.bundle.js
+# + dist/lcc-injector.js) are no longer committed — they're gitignored and
+# rebuilt fresh by CI on every Pages deploy (.github/workflows/pages.yml), while
+# local build:site/serve:site build them on demand if missing. With no committed
+# copy to protect, the guard had nothing left to guard. See #1171 research
+# (docs/research/1171-committed-dist-churn.md) and the #1175 external-consumer ruling.
 
 # --- PDD puzzle scan (gem-gated) ---
 if ! command -v pdd >/dev/null 2>&1; then

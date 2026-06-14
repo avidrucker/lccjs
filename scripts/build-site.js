@@ -6,6 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const ignore = require('ignore');
 
 const ROOT       = path.join(__dirname, '..');
@@ -548,12 +549,19 @@ ${listItems}
   // and GitHub Pages (where docs/site/ is the pages root).
   const BUNDLE_SRC  = path.join(ROOT, 'dist', 'lcc.bundle.js');
   const BUNDLE_DEST = path.join(OUT_DIR, 'dist', 'lcc.bundle.js');
+  // The webpack bundle is no longer committed (#1178) — it's gitignored and
+  // rebuilt by CI on deploy. For local `build:site`/`serve:site`, build it on
+  // demand if missing so the playground works without a prior `build:browser`.
+  if (!fs.existsSync(BUNDLE_SRC)) {
+    console.log('build:site — dist/lcc.bundle.js missing; running `npm run build:browser`…');
+    execSync('npm run build:browser', { cwd: ROOT, stdio: 'inherit' });
+  }
   if (fs.existsSync(BUNDLE_SRC)) {
     fs.mkdirSync(path.dirname(BUNDLE_DEST), { recursive: true });
     fs.copyFileSync(BUNDLE_SRC, BUNDLE_DEST);
     console.log(`build:site — bundle:  ${path.relative(ROOT, BUNDLE_DEST)}`);
   } else {
-    console.warn('build:site — WARNING: dist/lcc.bundle.js not found; run `npm run build:browser` first');
+    console.warn('build:site — WARNING: dist/lcc.bundle.js still not found after `npm run build:browser`');
   }
 
   // Copy the CodeMirror 6 language support into docs/site/dist/ so the playground's

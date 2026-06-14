@@ -31,19 +31,21 @@ Playground's editor markup lives in the `playgroundScript` template inside
 > **`docs/site/**` is gitignored (#1075).** It is 100% generated and CI is the
 > sole producer of what deploys, so there is **nothing to "mirror into a committed
 > copy"** — just edit the source (`scripts/build-site.js`, the browser bundle, the
-> grammar) and rebuild. The browser artifacts the page loads are committed under
-> `dist/` and *copied* into `docs/site/dist/` by `build:site`:
+> grammar) and rebuild. The browser artifacts the page loads land under `dist/` and
+> are *copied* into `docs/site/dist/` by `build:site`:
 >
-> | Artifact | Canonical (committed) | How it reaches the page |
-> |----------|-----------------------|-------------------------|
-> | `lcc.bundle.js` | `dist/lcc.bundle.js` (built by `build:browser` from `src/browser/`) | copied to `docs/site/dist/` |
-> | `lang-lcc.cdn.js` | `src/lang-lcc/lang-lcc.cdn.js` (**hand-maintained CDN ESM**, not webpack-built) | copied to `docs/site/dist/lang-lcc.js` |
+> | Artifact | Canonical source | How it reaches the page |
+> |----------|------------------|-------------------------|
+> | `lcc.bundle.js` | `src/browser/` → webpack (`npm run build:browser`); the `dist/lcc.bundle.js` output is **gitignored, built on demand**, not committed (#1178) | `build:site` builds it if missing, then copies to `docs/site/dist/` |
+> | `lang-lcc.cdn.js` | `src/lang-lcc/lang-lcc.cdn.js` (**hand-maintained CDN ESM**, not webpack-built, tracked) | copied to `docs/site/dist/lang-lcc.js` |
 >
 > So change the CM6 language support at **`src/lang-lcc/lang-lcc.cdn.js`** (relocated
 > from `docs/site/dist/` in #1075, then out of `dist/` to `src/lang-lcc/` in #1176 so
 > it reads as the hand-maintained source it is), and change the assemble/run engine via
-> `src/browser/` + `npm run build:browser`. A `pre-push` guard blocks a push that
-> edits `src/browser/**` without re-committing the rebuilt `dist/` bundle.
+> `src/browser/` + `npm run build:browser`. The webpack bundle is **not committed** —
+> `build:site`/`serve:site` rebuild it on demand if missing, and CI rebuilds it fresh
+> on every Pages deploy (#1178). (The former `pre-push` browser-bundle freshness guard
+> was retired in #1178, since there's no longer a committed copy to keep in sync.)
 
 Serving `docs/` (as opposed to `docs/site/`) would not serve the Playground at all.
 Always serve `docs/site`.

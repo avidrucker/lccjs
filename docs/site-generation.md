@@ -36,8 +36,10 @@ can verify the *real* deployed page in a browser before shipping.
  src/browser/{api,injector}.js ─► build:browser ─► dist/lcc.bundle.js (copied in by build:site)
 ```
 
-`npm run build` = `build:browser` **then** `build:site`. The order matters: the
-browser bundle must exist before `build:site` copies it into `docs/site/`.
+`npm run build` = `build:browser` **then** `build:site`. `build:site` copies the
+browser bundle into `docs/site/`; if it is missing (it is gitignored, not committed
+— #1178), `build:site` builds it on demand first, so running `build:site` alone also
+works.
 
 ---
 
@@ -152,14 +154,19 @@ Two trees look generated but are governed differently:
 | Tree | Nature | Committed? | Kept fresh by |
 |------|--------|------------|---------------|
 | **`docs/site/**`** | Pure derived HTML; CI rebuilds on deploy | **No — gitignored** | CI (`build:site`) is the sole producer |
-| **`dist/**`** | Consumer-facing bundle — the reveal-md injector + code-block embed guides tell users to grab it from a checkout | **Yes — committed** | a `pre-push` guard: if `src/browser/**` changed, `dist/**` must be re-committed |
+| **`dist/lcc.bundle.js` + `dist/lcc-injector.js`** | Webpack output (bundles `src/core/**`+`src/utils/**`+`src/browser/**`) | **No — gitignored (#1178)** | built on demand by `build:site`/`serve:site`; CI rebuilds fresh on every deploy |
 
 So: **don't commit `docs/site/`** (a local `npm run build` will leave it dirty —
-that's expected; it's ignored), and **do re-commit `dist/`** after a browser-bundle
-change (the pre-push hook enforces it). The hand-maintained CM6 language support is
-**not** in `dist/` — it lives at `src/lang-lcc/lang-lcc.cdn.js` (relocated out of
-`dist/` in #1176 so `dist/` is unambiguously webpack output) and is edited directly;
-`build:site` copies it to the deployed `docs/site/dist/lang-lcc.js`.
+that's expected; it's ignored), and **don't commit the webpack bundles** either —
+they were untracked + gitignored in #1178 because they transitively bundle
+`src/core/**`+`src/utils/**` and so went stale on nearly every toolchain commit
+(see `docs/research/1171-committed-dist-churn.md`). `build:site`/`serve:site` build
+them on demand if missing, and CI rebuilds them on deploy. The former `pre-push`
+browser-bundle freshness guard was retired in the same change (nothing left to
+protect once the committed copy is gone). The hand-maintained CM6 language support
+is **not** a build output — it lives at `src/lang-lcc/lang-lcc.cdn.js` (relocated out
+of `dist/` in #1176) and **is** tracked; `build:site` copies it to the deployed
+`docs/site/dist/lang-lcc.js`.
 
 ---
 
