@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 // const ansiEscapes = require('ansi-escapes');
 const Interpreter = require('../core/interpreter.js');
+const { InvalidExecutableFormatError } = require('../utils/errors');
 
 // Shared exit logic (isTestMode throw-vs-exit); wrapped below to add stdin cleanup.
 // maybeExplain renders the `--explain` block for an error's explainKey, gated on
@@ -161,8 +162,16 @@ class InterpreterPlus extends Interpreter {
     let offset = 0;
     const realBuffer = buffer.slice(offset);
 
-    // Now let parent's loadExecutableBuffer handle from that point on
-    this.loadExecutableBuffer(realBuffer, 'p');
+    // Now let parent's loadExecutableBuffer handle from that point on.
+    // It raises typed InvalidExecutableFormatError (carrying NOT_LCC_FORMAT /
+    // BAD_EXE_HEADER explain keys) on a corrupt header, which throws — route it
+    // through the same funnel runtime faults use so `--explain` renders the block
+    // here, mirroring the core driver's try/catch at interpreter.js (#1273).
+    try {
+      this.loadExecutableBuffer(realBuffer, 'p');
+    } catch (error) {
+      this.handleRuntimeError(error);
+    }
 
     this.initialMem = this.mem.slice(); // copy memory
 
@@ -259,23 +268,22 @@ class InterpreterPlus extends Interpreter {
     fatalExit(message, 1);
   }
 
-  // extracts header entries and loads machine code into memory
-  // @todo #1273:30m/DEV the bare this.error('…') file-format errors below carry no
-  // explainKey (base Interpreter.error is single-arg), so --explain renders no block
-  // here — unlike the core load path (NOT_LCC_FORMAT / BAD_EXE_HEADER). Thread the
-  // keys once base error() gains an explainKey param (or convert to raiseRuntimeError).
+  // extracts header entries and loads machine code into memory.
+  // File-format/header faults raise typed InvalidExecutableFormatError carrying the
+  // same NOT_LCC_FORMAT / BAD_EXE_HEADER explain keys the core load path uses
+  // (interpreter.js loadExecutableBuffer), so `--explain` renders a block here too.
+  // raiseRuntimeError throws; the caller (main) catches and funnels through
+  // handleRuntimeError (#1273).
   loadExecutableBuffer(buffer, secondIntroHeader = '') {
     let offset = 0;
 
     // Read file signature
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      this.error('Invalid file signature: missing "o"');
-      return;
+      this.raiseRuntimeError(new InvalidExecutableFormatError('Invalid file signature: missing "o"', { explainKey: 'NOT_LCC_FORMAT' }));
     }
 
     if (secondIntroHeader !== '' && buffer[offset++] !== 'p'.charCodeAt(0)) {
-      this.error('Invalid file signature: missing "p"');
-      return;
+      this.raiseRuntimeError(new InvalidExecutableFormatError('Invalid file signature: missing "p"', { explainKey: 'NOT_LCC_FORMAT' }));
     }
 
     // Do not store the 'o' or 'p' signatures in headerLines
@@ -293,8 +301,7 @@ class InterpreterPlus extends Interpreter {
       } else if (entryChar === 'S') {
         // Start address entry: read two bytes as little endian
         if (offset + 1 >= buffer.length) {
-          this.error('Incomplete start address in header');
-          return;
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete start address in header', { explainKey: 'BAD_EXE_HEADER' }));
         }
         startAddress = buffer.readUInt16LE(offset);
         offset += 2;
@@ -302,8 +309,7 @@ class InterpreterPlus extends Interpreter {
       } else if (entryChar === 'G') {
         // Skip 'G' entry: Read address and label
         if (offset + 1 >= buffer.length) {
-          this.error('Incomplete G entry in header');
-          return;
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete G entry in header', { explainKey: 'BAD_EXE_HEADER' }));
         }
         const address = buffer.readUInt16LE(offset);
         offset += 2;
@@ -317,16 +323,14 @@ class InterpreterPlus extends Interpreter {
       } else if (entryChar === 'A') {
         // Skip 'A' entry: Read address
         if (offset + 1 >= buffer.length) {
-          this.error('Incomplete A entry in header');
-          return;
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete A entry in header', { explainKey: 'BAD_EXE_HEADER' }));
         }
         const address = buffer.readUInt16LE(offset);
         offset += 2;
         this.headerLines.push(`A ${address.toString(16).padStart(4, '0')}`);
       } else {
         // Skip unknown entries or handle as needed
-        this.error(`Unknown header entry: '${entryChar}'`);
-        return;
+        this.raiseRuntimeError(new InvalidExecutableFormatError(`Unknown header entry: '${entryChar}'`, { explainKey: 'BAD_EXE_HEADER' }));
       }
     }
 

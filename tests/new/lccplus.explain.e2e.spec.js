@@ -63,6 +63,43 @@ describe('lccplus driver forwards --explain to the assembler error path (#1102)'
   });
 });
 
+// Drive the driver with a hand-written corrupt `.ep` (not an assembled `.ap`) to
+// reach InterpreterPlus.loadExecutableBuffer's file-format/header faults. `opXX`
+// passes the `'op'` LCC+ signature guard, then `X` is an unrecognized header entry
+// → BAD_EXE_HEADER. (#1273 — deferred from #1102.)
+function runRawEp(bytes, name, extraArgs) {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-lccplus-explain-ep-'));
+  try {
+    const epPath = path.join(tmpDir, `${name}.ep`);
+    fs.writeFileSync(epPath, Buffer.from(bytes));
+    return spawnSync(
+      process.execPath,
+      [LCCPLUS, ...extraArgs, `${name}.ep`],
+      { cwd: tmpDir, encoding: 'utf8', input: '', timeout: 10000 }
+    );
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
+describe('lccplus driver forwards --explain to the interpreter file-format load path (#1273)', () => {
+  const CORRUPT_EP = 'opXX'; // valid 'op' signature, then an unknown header entry 'X'
+
+  test('--explain renders the BAD_EXE_HEADER block on a corrupt .ep header', () => {
+    const run = runRawEp(CORRUPT_EP, 'badep', ['--explain']);
+    const out = `${run.stdout || ''}${run.stderr || ''}`;
+    expect(out).toContain("Unknown header entry: 'X'");
+    expect(out).toContain("explain: An executable's header lists typed entries");
+  });
+
+  test('default (no flag) path is unchanged — the load error emits no explain block', () => {
+    const run = runRawEp(CORRUPT_EP, 'badep', []);
+    const out = `${run.stdout || ''}${run.stderr || ''}`;
+    expect(out).toContain("Unknown header entry: 'X'");
+    expect(out).not.toContain('explain:');
+  });
+});
+
 describe('lccplus driver forwards --explain to the interpreter runtime path (#1102)', () => {
   test('--explain renders the DIV_BY_ZERO block on a runtime divide-by-zero in an .ap', () => {
     const run = runDriver(DIV_BY_ZERO_AP, 'divzero', ['--explain']);
