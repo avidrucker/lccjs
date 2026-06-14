@@ -9,7 +9,7 @@ const Interpreter = require('../core/interpreter');
 const Linker = require('../core/linker');
 const ILCC = require('../interactive/ilcc');
 const { LinkerError, TestSpecError, TestRunnerError } = require('../utils/errors');
-const { loadTestSpec } = require('../testrunner/specLoader');
+const { loadTestSpec, loadFencedSpec } = require('../testrunner/specLoader');
 const { runTestSpec } = require('../testrunner/runner');
 const nameHandler = require('../utils/name.js');
 const { buildReportArtifacts } = require('../utils/reportArtifacts');
@@ -240,26 +240,23 @@ class LCC {
   }
 
   /**
-   * Spec-format dispatch seam (#1092 design ruling). Today only `.json` is
-   * wired, to the shipped JSON loader (#1090). The default arm is the slot the
-   * fenced literal-block reader (#1114) drops into — so the CLI surface is
-   * written once, not retrofitted. `program` inside the spec is resolved
-   * relative to the spec file's own directory.
+   * Spec-format dispatch seam (#1092 design ruling; sniff convention ruled in
+   * #1240). The format is detected by CONTENT, not extension: a JSON spec always
+   * opens with `{`, a fenced literal-block spec (#1114) with a `program:` header.
+   * So the first non-blank character decides — `{` → JSON loader (#1090), any-
+   * thing else → fenced loader. This means any extension works (.json / .test /
+   * .txt), which is the student-friendly choice and unambiguous because the two
+   * formats cannot be mistaken for each other. `program` inside the spec is
+   * resolved relative to the spec file's own directory.
    */
   loadSpec(specPath) {
-    const ext = path.extname(specPath).toLowerCase();
-    switch (ext) {
-      case '.json': {
-        const buffer = fs.readFileSync(specPath);
-        const baseDir = path.dirname(path.resolve(specPath));
-        return loadTestSpec(buffer, baseDir);
-      }
-      default:
-        throw new TestSpecError(
-          `Unsupported test-spec format '${ext || '(none)'}': only .json is ` +
-          `supported today (fenced format: #1114).`
-        );
+    const buffer = fs.readFileSync(specPath);
+    const baseDir = path.dirname(path.resolve(specPath));
+    const firstNonBlank = (buffer.toString('utf8').match(/\S/) || [])[0];
+    if (firstNonBlank === '{') {
+      return loadTestSpec(buffer, baseDir);
     }
+    return loadFencedSpec(buffer, baseDir);
   }
 
   /**
@@ -337,7 +334,8 @@ class LCC {
     console.log('   --explain: append a student-friendly explanation to known errors');
     console.log('   -nostats: suppress .lst/.bst report generation');
     console.log('   --max-steps N: set execution step cap (default 500000; use -1 for unlimited)');
-    console.log('   --test <spec.json>: run an assignment spec (input->expected_output cases);');
+    console.log('   --test <spec>: run an assignment spec (input->expected_output cases);');
+    console.log('         spec may be JSON or the fenced literal-block format (auto-detected by content);');
     console.log('         prints PASS/FAIL per case; exits 0 all-pass, 1 any-fail, 2 spec error');
     console.log('What lcc.js does depends on the extension in the input file name:');
     console.log('   .hex: execute and output .lst, .bst files');
