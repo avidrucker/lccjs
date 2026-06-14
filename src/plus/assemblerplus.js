@@ -106,7 +106,9 @@ class AssemblerPlus extends Assembler {
       if (this.symbolTable.hasOwnProperty(this.startLabel)) {
         this.startAddress = this.symbolTable[this.startLabel];
       } else {
-        this.error(`Undefined label`);
+        // Reuse the base-class UNDEFINED_LABEL explanation (#1102) — this plus
+        // override mirrors the core .start/undefined-label check.
+        this.error(`Undefined label`, null, 'UNDEFINED_LABEL');
         fatalExit(`Undefined label`, 1);
       }
     } else {
@@ -123,7 +125,10 @@ class AssemblerPlus extends Assembler {
     let dr = this.getRegister(operands[0]);
     let sr1 = this.getRegister(operands[1]);
     if (dr === null || sr1 === null) {
-      this.error('Missing register');
+      // `rand dr, sr` requires two register operands. Reuse the base-class
+      // REGISTER explanation (#1102) — a plus-only mnemonic, but the error is the
+      // generic "a register operand is required" concept the catalog already teaches.
+      this.error('Missing register', null, 'REGISTER');
       return null;
     };
     let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_RAND;

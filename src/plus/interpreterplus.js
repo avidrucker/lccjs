@@ -8,7 +8,9 @@ const path = require('path');
 const Interpreter = require('../core/interpreter.js');
 
 // Shared exit logic (isTestMode throw-vs-exit); wrapped below to add stdin cleanup.
-const { fatalExit: exitProcess } = require('../utils/cliExit');
+// maybeExplain renders the `--explain` block for an error's explainKey, gated on
+// the module-level cliExit flag the lccplus driver flips via setExplainMode (#1102).
+const { fatalExit: exitProcess, maybeExplain } = require('../utils/cliExit');
 const { TRAP_HALT, TRAP_BP } = require('../core/constants');
 const {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
@@ -249,10 +251,19 @@ class InterpreterPlus extends Interpreter {
     restoreTerminal(this.screenManipulated);
     const message = `Runtime Error: ${error && error.message ? error.message : error}`;
     console.error(message);
+    // The inherited runtime errors (DIV_BY_ZERO, UNKNOWN_OPCODE, EOF_ON_STDIN, …)
+    // carry an explainKey; render its `--explain` block before exiting so .ap
+    // runtime faults are explained just like core .e runs (#1102, mirrors the
+    // core interpreter's cliErrorExit(..., explainKey) funnel).
+    maybeExplain(error && error.explainKey);
     fatalExit(message, 1);
   }
 
   // extracts header entries and loads machine code into memory
+  // @todo #1273:30m/DEV the bare this.error('…') file-format errors below carry no
+  // explainKey (base Interpreter.error is single-arg), so --explain renders no block
+  // here — unlike the core load path (NOT_LCC_FORMAT / BAD_EXE_HEADER). Thread the
+  // keys once base error() gains an explainKey param (or convert to raiseRuntimeError).
   loadExecutableBuffer(buffer, secondIntroHeader = '') {
     let offset = 0;
 

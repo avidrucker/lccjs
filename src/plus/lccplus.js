@@ -8,7 +8,7 @@ const path = require('path');
 const AssemblerPlus = require('./assemblerplus.js');
 const InterpreterPlus = require('./interpreterplus.js');
 
-const { fatalExit } = require('../utils/cliExit');
+const { fatalExit, setExplainMode } = require('../utils/cliExit');
 
 class LCCPlus {
     constructor() {
@@ -20,6 +20,7 @@ class LCCPlus {
 
       let playMode = false;
       let verbose = false;
+      let explain = false;
       const positional = [];
       for (const arg of args) {
         if (arg === '--play' || arg === '-p') {
@@ -28,6 +29,14 @@ class LCCPlus {
           // Forward verbose into the constructed AssemblerPlus/InterpreterPlus
           // below, unlocking the inherited "did you mean?" suggester (#1005).
           verbose = true;
+        } else if (arg === '--explain') {
+          // Forward --explain into the LCC+ toolchain (#1102), mirroring the
+          // verbose seam above. Two render gates must both be flipped:
+          //   * the assembler renders its `explain:` block from the instance
+          //     `explainModeOn` (formatAssemblerError);
+          //   * the interpreter's runtime/file-format funnel renders via the
+          //     module-level cliExit gate, flipped by setExplainMode().
+          explain = true;
         } else if (!arg.startsWith('-')) {
           positional.push(arg);
         } else {
@@ -37,9 +46,13 @@ class LCCPlus {
       }
 
       if (positional.length < 1) {
-        console.error('Usage: lccplus.js <input file (.ap or .ep)> [-v|--verbose] [--play]');
+        console.error('Usage: lccplus.js <input file (.ap or .ep)> [-v|--verbose] [--explain] [--play]');
         fatalExit('No input file specified.', 1);
       }
+
+      // Flip the module-level cliExit gate once for this run so the interpreter's
+      // runtime/file-format error funnel renders explanations (#1102).
+      setExplainMode(explain);
 
       this.inputFileName = positional[0];
       const extension = path.extname(this.inputFileName).toLowerCase();
@@ -51,6 +64,7 @@ class LCCPlus {
         // 1) Assemble .ap -> .ep
         const assembler = new AssemblerPlus();
         assembler.verboseModeOn = verbose;
+        assembler.explainModeOn = explain;
         for (const ext of extensions) assembler.registerExtension(ext);
         assembler.main([this.inputFileName]);
         const epFile = assembler.outputFileName;
@@ -59,6 +73,7 @@ class LCCPlus {
         const interpreter = new InterpreterPlus();
         interpreter.generateStats = false;
         interpreter.verboseModeOn = verbose;
+        interpreter.explainModeOn = explain;
         for (const ext of extensions) interpreter.registerExtension(ext);
         interpreter.main([epFile]);
 
@@ -66,6 +81,7 @@ class LCCPlus {
         const interpreter = new InterpreterPlus();
         interpreter.generateStats = false;
         interpreter.verboseModeOn = verbose;
+        interpreter.explainModeOn = explain;
         for (const ext of extensions) interpreter.registerExtension(ext);
         interpreter.main([this.inputFileName]);
 
