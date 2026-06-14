@@ -288,6 +288,11 @@ class Assembler {
     this.outFile = null;
     this.listing = [];
     this.loadPoint = this.defaultLoadPoint;
+    // listingLoadPoint is a per-run display offset (the -l<hex> value). It is
+    // cleared here so a reused instance does not leak a prior run's -l into a
+    // later assembly; callers (CLI/in-memory) re-supply it via the
+    // assembleSource() listingLoadPoint option. (#1238)
+    this.listingLoadPoint = 0;
     this.programSize = 0;
     this.startLabel = null;
     this.startAddress = null;
@@ -367,6 +372,7 @@ class Assembler {
     const {
       inputFileName = this.inputFileName,
       outputFileName = this.outputFileName,
+      listingLoadPoint = 0,
       throwOnAssemblyError = true,
       buildReports = false,
       userName,
@@ -377,6 +383,10 @@ class Assembler {
     this.resetAssemblyState();
     this.inputFileName = inputFileName;
     this.outputFileName = outputFileName;
+    // Re-apply the display-only -l offset after the reset. Defaults to 0 (no
+    // offset) so an omitted option means "this run has no -l", never an
+    // inherited value from a prior assembly on the same instance. (#1238)
+    this.listingLoadPoint = listingLoadPoint;
     this.sourceLines = sourceCode.split('\n');
     this.throwOnAssemblyError = throwOnAssemblyError;
 
@@ -624,6 +634,10 @@ class Assembler {
     this.assembleSource(sourceCode, {
       inputFileName: this.inputFileName,
       outputFileName: this.outputFileName,
+      // Thread the CLI-wired -l<hex> value (set on the instance by lcc.js before
+      // main()) through as a per-call option so resetAssemblyState() inside
+      // assembleSource() does not wipe it. (#1238)
+      listingLoadPoint: this.listingLoadPoint,
       throwOnAssemblyError: false,
     });
 

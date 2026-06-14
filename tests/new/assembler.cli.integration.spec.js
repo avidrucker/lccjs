@@ -55,6 +55,22 @@ describe('Assembler CLI Integration', () => {
     expect(assembler.outputBuffer.length).toBeGreaterThan(0);
   });
 
+  test('4b. should thread a pre-set listingLoadPoint (-l) through main(), surviving the internal reset (#1238)', () => {
+    const aFilePath = 'demoA.a';
+    const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-cli/demoA.a'), 'utf8');
+    virtualFs[aFilePath] = source;
+
+    // Mirrors lcc.js assembleFile(): -l<hex> is wired onto the instance before main().
+    assembler.listingLoadPoint = 0x3000;
+    assembler.main([aFilePath]);
+
+    // resetAssemblyState() runs inside assembleSource(); main() must thread the
+    // pre-set value back through so -l is not silently wiped.
+    expect(assembler.listingLoadPoint).toBe(0x3000);
+    const { lstContent } = assembler.buildReportArtifacts('Tester');
+    expect(lstContent).toMatch(/^3000 /m);
+  });
+
   test('12. should assemble demoN.a (division by zero) successfully (no assembler error)', () => {
     const aFilePath = 'demoN.a';
     const source = realFs.readFileSync(path.join(__dirname, '../fixtures/assembler-cli/demoN.a'), 'utf8');

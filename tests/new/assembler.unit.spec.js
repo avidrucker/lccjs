@@ -92,6 +92,43 @@ describe('Assembler Unit Tests', () => {
     expect(result.reports.bst).toContain('Cheese');
   });
 
+  describe('assembleSource() listingLoadPoint (-l offset) handling (#1238)', () => {
+    const source = '  mov r0, 5\n  dout r0\n  halt\n';
+
+    test('applies a per-call listingLoadPoint offset to the listing, surviving the internal reset', () => {
+      const assembler = new Assembler();
+      const result = assembler.assembleSource(source, {
+        inputFileName: 'shifted.a',
+        listingLoadPoint: 0x3000,
+        buildReports: true,
+        userName: 'Tester',
+      });
+      // -l shifts displayed Loc addresses without changing machine code.
+      // Because resetAssemblyState() runs inside assembleSource(), this also
+      // pins that an option-supplied offset is re-applied after the reset.
+      expect(result.reports.lst).toMatch(/^3000 /m);
+      expect(assembler.listingLoadPoint).toBe(0x3000);
+    });
+
+    test('does NOT leak a prior run\'s listingLoadPoint into a later reuse without -l', () => {
+      const assembler = new Assembler();
+
+      // Run 1: with -l 3000 on a reused instance.
+      const r1 = assembler.assembleSource(source, {
+        inputFileName: 'a.a', listingLoadPoint: 0x3000, buildReports: true, userName: 'Tester',
+      });
+      expect(r1.reports.lst).toMatch(/^3000 /m);
+
+      // Run 2: same instance, no -l — must default back to 0, not inherit 0x3000.
+      const r2 = assembler.assembleSource(source, {
+        inputFileName: 'b.a', buildReports: true, userName: 'Tester',
+      });
+      expect(assembler.listingLoadPoint).toBe(0);
+      expect(r2.reports.lst).toMatch(/^0000 /m);
+      expect(r2.reports.lst).not.toMatch(/^3000 /m);
+    });
+  });
+
   test('assembleSource() should require userName when buildReports is true', () => {
     const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/demoA-3.a'), 'utf8');
 
