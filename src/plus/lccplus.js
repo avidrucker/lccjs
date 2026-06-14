@@ -19,10 +19,15 @@ class LCCPlus {
       args = args || process.argv.slice(2);
 
       let playMode = false;
+      let verbose = false;
       const positional = [];
       for (const arg of args) {
         if (arg === '--play' || arg === '-p') {
           playMode = true;
+        } else if (arg === '-v' || arg === '--verbose') {
+          // Forward verbose into the constructed AssemblerPlus/InterpreterPlus
+          // below, unlocking the inherited "did you mean?" suggester (#1005).
+          verbose = true;
         } else if (!arg.startsWith('-')) {
           positional.push(arg);
         } else {
@@ -32,7 +37,7 @@ class LCCPlus {
       }
 
       if (positional.length < 1) {
-        console.error('Usage: lccplus.js <input file (.ap or .ep)> [--play]');
+        console.error('Usage: lccplus.js <input file (.ap or .ep)> [-v|--verbose] [--play]');
         fatalExit('No input file specified.', 1);
       }
 
@@ -45,6 +50,7 @@ class LCCPlus {
       if (extension === '.ap') {
         // 1) Assemble .ap -> .ep
         const assembler = new AssemblerPlus();
+        assembler.verboseModeOn = verbose;
         for (const ext of extensions) assembler.registerExtension(ext);
         assembler.main([this.inputFileName]);
         const epFile = assembler.outputFileName;
@@ -52,12 +58,14 @@ class LCCPlus {
         // 2) Interpret the resulting .ep
         const interpreter = new InterpreterPlus();
         interpreter.generateStats = false;
+        interpreter.verboseModeOn = verbose;
         for (const ext of extensions) interpreter.registerExtension(ext);
         interpreter.main([epFile]);
 
       } else if (extension === '.ep') {
         const interpreter = new InterpreterPlus();
         interpreter.generateStats = false;
+        interpreter.verboseModeOn = verbose;
         for (const ext of extensions) interpreter.registerExtension(ext);
         interpreter.main([this.inputFileName]);
 
