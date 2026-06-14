@@ -14,9 +14,11 @@
 // (#1098) adds REGISTER, BAD_LABEL, UNDEFINED_LABEL, DUPLICATE_LABEL (assembler)
 // and UNDEFINED_EXTERN, MULTIPLE_GLOBAL (linker). The directive + structural batch
 // (#1099) adds ORG_DIRECTIVE, BAD_OPERAND_LABEL, INVALID_OPERATION, PROGRAM_TOO_BIG
-// (assembler). The remaining error classes are filled in by the later content
-// batches (#1100–#1101); each adds its entries to this table and attaches the key
-// at its throw sites.
+// (assembler). The runtime/interpreter batch (#1100) adds DIV_BY_ZERO,
+// TRAP_VECTOR_RANGE, UNKNOWN_OPCODE, EOF_ON_STDIN (interpreter; rendered via the
+// cliExit seam). The remaining error classes are filled in by the last content
+// batch (#1101 — linker + file-format); each adds its entries to this table and
+// attaches the key at its throw sites.
 
 'use strict';
 
@@ -153,6 +155,52 @@ const EXPLANATIONS = {
     correctForm:
       'Reduce the code or data so the total stays within 65536 words, e.g. by ' +
       'shrinking large `.blkw`/`.space` reservations.',
+  },
+
+  // Runtime / interpreter error classes (#1100).
+  DIV_BY_ZERO: {
+    concept:
+      'The div and rem instructions divide the destination register by the ' +
+      'source register; when that divisor register holds 0 the result is ' +
+      'undefined, and the machine raises a "Floating point exception" (the ' +
+      'conventional name for an integer divide-by-zero fault).',
+    correctForm:
+      'Ensure the divisor register is non-zero before div/rem — e.g. compare it ' +
+      'against 0 and branch past the division when it is zero.',
+  },
+  TRAP_VECTOR_RANGE: {
+    concept:
+      'A trap instruction selects an OS service by an 8-bit trap vector, but only ' +
+      'a small fixed set is defined (halt, the output/input traps such as nl, ' +
+      'dout, sout, din, sin, and the breakpoint trap). A vector outside that set ' +
+      'has no handler — often a sign that the program counter ran off the end of ' +
+      'the code and is interpreting data as an instruction.',
+    correctForm:
+      'Use one of the defined trap mnemonics (e.g. halt, nl, dout, din, sin) and ' +
+      'make sure the program halts before control falls through code into data.',
+  },
+  UNKNOWN_OPCODE: {
+    concept:
+      "An instruction word's top four bits select the operation, and case-10 " +
+      'words further select an extended operation from a 5-bit sub-field. A word ' +
+      'whose (extended) operation code is not one the machine defines cannot be ' +
+      'executed — almost always corrupt or mis-assembled code, or the program ' +
+      'counter running off into data and decoding it as an instruction.',
+    correctForm:
+      'Re-assemble from source so only valid instructions are emitted, and ensure ' +
+      'the program halts (or branches away) before control reaches data.',
+  },
+  EOF_ON_STDIN: {
+    concept:
+      'The input traps (sin, din, hin, ain) read from standard input. This error ' +
+      'means the trap tried to read but standard input was already at end-of-' +
+      'stream — there was no more input to consume. In the batch toolchain stdin ' +
+      'is whatever you pipe or redirect in, and once it is exhausted further input ' +
+      'traps cannot succeed.',
+    correctForm:
+      'Supply enough input on stdin for every input trap the program runs — pipe ' +
+      'or redirect it (e.g. `echo 5 | lcc prog.e` or `lcc prog.e < input.txt`) — ' +
+      'or guard the read so the program never requests more input than is given.',
   },
 };
 

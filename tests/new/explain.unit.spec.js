@@ -353,3 +353,100 @@ describe('directive + structural explain content (#1099)', () => {
     });
   });
 });
+
+describe('runtime/interpreter explain content (#1100)', () => {
+  // Runtime errors are typed (InterpreterRuntimeError) and carry the explainKey
+  // from the throw site; the render seam is cliExit (the lcc.js driver catches
+  // the error and calls cliWrappedErrorExit, which appends the block when explain
+  // mode is on). Triggers verified empirically: div/rem by zero via real
+  // instructions; `.word` injects raw opcode/trap words the assembler would never
+  // emit (0xF0FF = TRAP with vector 0xFF; 0xA00E = case-10 with eopcode 0x0E, one
+  // past the last defined extended op 0x0D); EOF is forced by stubbing the stdin
+  // readers to report end-of-stream (the real EOF path needs a closed stdin).
+  const Interpreter = require('../../src/core/interpreter');
+  const cliExit = require('../../src/utils/cliExit');
+
+  const asm = (src) =>
+    new Assembler().assembleSource(src, { inputFileName: 't.a' }).outputBytes;
+
+  // Make the input traps report end-of-stream deterministically.
+  const eofStub = (interp) => {
+    interp.readLineFromStdin = () => ({ inputLine: '', isSimulated: false, isEOF: true });
+    interp.readCharFromStdin = () => ({ char: '', isSimulated: false, isEOF: true });
+  };
+
+  // Run a program through executeBuffer and return the thrown runtime error.
+  const runtimeError = (src, prep) => {
+    const interp = new Interpreter();
+    if (prep) prep(interp);
+    let thrown = null;
+    try {
+      interp.executeBuffer(asm(src), { inputFileName: 't.e', inputBuffer: '' });
+    } catch (e) {
+      thrown = e;
+    }
+    return thrown;
+  };
+
+  const CASES = [
+    { name: 'div by zero', key: 'DIV_BY_ZERO', message: 'Floating point exception',
+      src: '        div r0, r1\n        halt\n' },
+    { name: 'rem by zero', key: 'DIV_BY_ZERO', message: 'Floating point exception',
+      src: '        rem r0, r1\n        halt\n' },
+    { name: 'trap vector out of range', key: 'TRAP_VECTOR_RANGE', message: 'Trap vector out of range',
+      src: '        .word 0xF0FF\n        halt\n' },
+    { name: 'unknown extended opcode', key: 'UNKNOWN_OPCODE', message: 'Unknown extended opcode',
+      src: '        .word 0xA00E\n        halt\n' },
+    { name: 'din EOF on stdin', key: 'EOF_ON_STDIN', message: 'din: unexpected EOF on stdin',
+      src: '        din r0\n        halt\n', prep: eofStub },
+    { name: 'sin EOF on stdin', key: 'EOF_ON_STDIN', message: 'sin: unexpected EOF on stdin',
+      src: '        sin r0\n        halt\n', prep: eofStub },
+    { name: 'ain EOF on stdin', key: 'EOF_ON_STDIN', message: 'ain: unexpected EOF on stdin',
+      src: '        ain r0\n        halt\n', prep: eofStub },
+  ];
+
+  test.each(CASES)('$name: catalog has a {concept, correctForm} entry', ({ key }) => {
+    const e = getExplanation(key);
+    expect(e).toBeTruthy();
+    expect(e.concept.length).toBeGreaterThan(0);
+    expect(e.correctForm.length).toBeGreaterThan(0);
+  });
+
+  describe('through the interpreter runtime-error path', () => {
+    let errSpy;
+    beforeEach(() => {
+      errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+      cliExit.setExplainMode(false);
+    });
+    afterEach(() => {
+      cliExit.setExplainMode(false);
+      jest.restoreAllMocks();
+    });
+    const errOut = () => errSpy.mock.calls.map((c) => c.join(' ')).join('\n');
+
+    test.each(CASES)('$name: the runtime error carries its explainKey', ({ key, message, src, prep }) => {
+      const err = runtimeError(src, prep);
+      expect(err).toBeTruthy();
+      expect(err.message).toContain(message);
+      expect(err.explainKey).toBe(key);
+    });
+
+    test.each(CASES)('$name: --explain renders the explain block via cliExit', ({ key, src, prep }) => {
+      const err = runtimeError(src, prep);
+      cliExit.setExplainMode(true);
+      expect(() => cliExit.cliWrappedErrorExit('Error running t.e:', err, 1)).toThrow();
+      const out = errOut();
+      expect(out).toContain('explain:');
+      expect(out).toContain(getExplanation(key).concept);
+    });
+
+    test.each(CASES)('$name: without --explain, no explain block (parity)', ({ src, prep }) => {
+      const err = runtimeError(src, prep);
+      cliExit.setExplainMode(false);
+      expect(() => cliExit.cliWrappedErrorExit('Error running t.e:', err, 1)).toThrow();
+      const out = errOut();
+      expect(out).not.toContain('explain:');
+    });
+  });
+});

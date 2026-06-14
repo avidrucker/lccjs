@@ -773,7 +773,7 @@ class Interpreter {
         this.executeTRAP();
         break;
       default:
-        this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown opcode: ${this.opcode}`));
+        this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown opcode: ${this.opcode}`, { explainKey: 'UNKNOWN_OPCODE' }));
     }
 
     // if any registers changed or flags were set, print them out
@@ -1195,14 +1195,14 @@ class Interpreter {
         break;
       case EOP_DIV: // DIV
         if (this.r[this.sr1] === 0) {
-          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception'));
+          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO' }));
         }
         this.r[this.dr] = (this.r[this.dr] / this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
       case EOP_REM: // REM
         if (this.r[this.sr1] === 0) {
-          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception'));
+          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO' }));
         }
         this.r[this.dr] = (this.r[this.dr] % this.r[this.sr1]) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
@@ -1225,7 +1225,7 @@ class Interpreter {
       default:
         // Oracle (cuh63 6.3): silently exits (undefined behavior) for unknown eocodes.
         // LCC.js intentionally throws to surface invalid binaries rather than silently ignoring.
-        this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown extended opcode: ${this.eopcode}`));
+        this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown extended opcode: ${this.eopcode}`, { explainKey: 'UNKNOWN_OPCODE' }));
     }
   }
 
@@ -1476,7 +1476,7 @@ class Interpreter {
     let { inputLine: input, isSimulated, isEOF } = this.readLineFromStdin();
 
     if (isEOF) {
-      this.raiseRuntimeError(new InterpreterRuntimeError('sin: unexpected EOF on stdin'));
+      this.raiseRuntimeError(new InterpreterRuntimeError('sin: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN' }));
     }
 
     for (let i = 0; i < input.length; i++) {
@@ -1641,7 +1641,7 @@ class Interpreter {
           let { inputLine: dinInput, isSimulated, isEOF } = this.readLineFromStdin();
 
           if (isEOF) {
-            this.raiseRuntimeError(new InterpreterRuntimeError('din: unexpected EOF on stdin'));
+            this.raiseRuntimeError(new InterpreterRuntimeError('din: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN' }));
           }
           if (dinInput.trim() === '') {
             continue;
@@ -1671,7 +1671,7 @@ class Interpreter {
           let { inputLine: hinInput, isSimulated, isEOF: hinEOF } = this.readLineFromStdin();
 
           if (hinEOF) {
-            this.raiseRuntimeError(new InterpreterRuntimeError('hin: unexpected EOF on stdin'));
+            this.raiseRuntimeError(new InterpreterRuntimeError('hin: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN' }));
           }
           if (hinInput.trim() === '') {
             continue;
@@ -1698,7 +1698,7 @@ class Interpreter {
       case 9: // AIN
         let { char: ainChar, isSimulated, isEOF: ainEOF } = this.readCharFromStdin();
         if (ainEOF) {
-          this.raiseRuntimeError(new InterpreterRuntimeError('ain: unexpected EOF on stdin'));
+          this.raiseRuntimeError(new InterpreterRuntimeError('ain: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN' }));
         }
         this.r[this.dr] = ainChar.charCodeAt(0);
         // No need to echo input here; already handled in readCharFromStdin()
@@ -1723,7 +1723,7 @@ class Interpreter {
         // `Unknown TRAP vector: ${this.trapvec}`
         console.error(`Error on line 0 of ${this.inputFileName}`);
         console.error();
-        this.raiseRuntimeError(new InterpreterRuntimeError('Trap vector out of range')); // : ${this.trapvec}
+        this.raiseRuntimeError(new InterpreterRuntimeError('Trap vector out of range', { explainKey: 'TRAP_VECTOR_RANGE' })); // : ${this.trapvec}
     }
   }
 
