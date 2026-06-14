@@ -61,11 +61,17 @@ describe('docs/puzzle-velocity.md — column reference', () => {
   });
 });
 
-// Concern #314-2: every row logged on or after the model column was introduced
-// (#275, DB row 126) should have a non-empty model value.  Rows before that
-// are legitimately blank (pre-column era); we track the cutoff by id.
-// Rows with agent='TEST' are excluded: they are test-suite artifacts injected
-// by velocity-log tests into the shared DB (#940 tracks the isolation fix).
+// Concern #314-2, relaxed by #1184 (notice-not-prevent), ruled on in #1215:
+// rows logged on or after the model column was introduced (#275, DB row 126)
+// should have a non-empty model value. This is now REPORT-ONLY: #1184 made the
+// model field optional (velocity-log.js only warns, and the canonical-format
+// test below is report-only), so hard-failing the build on a missing model was
+// the lone contradictory holdout — and a one-off backfill always recurs (the
+// red set churned 22 → 6 between #1215's filing and its ruling). We surface the
+// rows missing a model (so drift stays visible) but never red the suite on them.
+// Rows before id 126 are legitimately blank (pre-column era). Rows with
+// agent='TEST' are excluded: they are test-suite artifacts injected by
+// velocity-log tests into the shared DB (#940 tracks the isolation fix).
 describe('docs/puzzle-velocity.csv — model column backfill', () => {
   const csvPath = path.join(__dirname, '..', '..', 'docs', 'puzzle-velocity.csv');
   const raw = fs.readFileSync(csvPath, 'utf8');
@@ -80,14 +86,24 @@ describe('docs/puzzle-velocity.csv — model column backfill', () => {
   // id 126 = first row that introduced the model column (ticket #275, DRAGONFRUIT).
   const MODEL_COLUMN_SINCE_ID = 126;
 
-  test('all non-TEST rows with id >= 126 have a non-empty model value', () => {
+  // Report-only: surface id>=126 rows missing a model without failing the build.
+  test('reports any non-TEST rows with id >= 126 missing a model value (notice-not-prevent, #1184/#1215)', () => {
     const missing = dataRows
       .map(line => parseCSVLine(line))
       .filter(fields => Number(fields[idIdx]) >= MODEL_COLUMN_SINCE_ID)
       .filter(fields => fields[agentIdx] !== 'TEST')
       .filter(fields => !fields[modelIdx])
       .map(fields => ({ id: fields[idIdx], ticket: fields[1] }));
-    expect(missing).toEqual([]);
+    if (missing.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[velocity-csv] note: ${missing.length} row(s) with id>=126 missing a model value ` +
+        `(best-effort backfill candidates — not a failure):\n` +
+        missing.map(m => `  id ${m.id} (ticket #${m.ticket})`).join('\n'));
+    }
+    // The contract is observability, not enforcement: collection must succeed,
+    // but a missing model never reds the build.
+    expect(Array.isArray(missing)).toBe(true);
   });
 });
 
