@@ -1835,12 +1835,6 @@ class Interpreter {
     return this.signExtendMaskedValue(value, fieldSelector);
   }
 
-  error(message) {
-    // console.error(`Interpreter Error: ${message}`);
-    console.error(`${message}`);
-    this.running = false;
-  }
-
   raiseRuntimeError(error) {
     this.running = false;
 

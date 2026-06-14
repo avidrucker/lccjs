@@ -105,25 +105,32 @@ If you *do* add a dependency in a worktree, `npm install <pkg> --save-dev` build
 
 ---
 
-## 8. `error()` vs `raiseRuntimeError()` — opposite control-flow contracts
+## 8. Flag-setting `error()` vs throwing `raiseRuntimeError()` — opposite control-flow contracts
 
-The interpreter has two error-reporting calls that look interchangeable but are not:
+A class can have two error-reporting calls that look interchangeable but are not:
 
-- `this.error(msg)` (`interpreter.js`) sets `this.running = false` and **returns** — callers
+- A flag-setting `this.error(msg)` sets `this.running = false` and **returns** — callers
   typically follow it with a `return;` to bail out of the current function.
-- `this.raiseRuntimeError(typedError)` sets `running = false` and ends in `throw error`
-  — control leaves the function via exception, so any following `return;` is dead.
+- A throwing `this.raiseRuntimeError(typedError)` sets `running = false` and ends in
+  `throw error` — control leaves the function via exception, so any following `return;` is dead.
 
 Swapping one for the other is therefore **never a local edit**: it changes how control
 leaves the function, putting the *callers* inside the change surface. A throw needs a
-catcher. The core load path models this — `loadExecutableBuffer` raises typed errors and
-its caller (`interpreter.js` ~`:555-561`) wraps the call in `try/catch` to forward
-`error.explainKey`. When converting bare `error()` sites to `raiseRuntimeError`, audit the
-call chain for a catch and add one (route it through the existing error funnel, e.g.
-`InterpreterPlus.handleRuntimeError`) rather than only editing the error sites.
+catcher. The interpreter's load path models this — `loadExecutableBuffer` raises typed
+errors and its caller (`interpreter.js` ~`:555-561`) wraps the call in `try/catch` to
+forward `error.explainKey`. When converting bare flag-setting error sites to a throwing
+reporter, audit the call chain for a catch and add one (route it through the existing error
+funnel, e.g. `InterpreterPlus.handleRuntimeError`) rather than only editing the error sites.
+
+**Status on the interpreter:** the `Interpreter` class now has *only* the throwing
+`raiseRuntimeError` — its old non-throwing `error()` was removed (#1301) once #1273 retired
+its last caller, so this footgun is structurally eliminated there. The lesson still applies
+to `Assembler` and `Linker`, which retain their own non-throwing-then-throw `error()`
+reporters (different methods, with `explainKey` support).
 
 *(Origin: #1273 — converting `InterpreterPlus.loadExecutableBuffer`'s six file-format
-errors; the `:165` caller needed a new try/catch the ticket hadn't mentioned.)*
+errors; the `:165` caller needed a new try/catch the ticket hadn't mentioned. The dead
+`Interpreter.error()` it exposed was removed in #1301.)*
 
 ---
 
