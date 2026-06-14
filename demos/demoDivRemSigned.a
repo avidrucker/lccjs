@@ -1,0 +1,49 @@
+; demoDivRemSigned.a — signed div/rem oracle parity (#1237)
+; div/rem operate on SIGNED 16-bit integers: division truncates toward
+; zero and the remainder takes the sign of the dividend, matching the
+; reference LCC. Operands are loaded from .word memory because the oracle
+; rejects negative mov immediates (a separate parity quirk, out of scope).
+        ld   r0, n6
+        ld   r1, p2
+        div  r0, r1
+        dout r0        ; -6 / 2  = -3
+        nl
+        ld   r0, n7
+        ld   r1, p2
+        div  r0, r1
+        dout r0        ; -7 / 2  = -3 (truncate toward zero, not -4)
+        nl
+        ld   r0, p7
+        ld   r1, n2
+        div  r0, r1
+        dout r0        ; 7 / -2  = -3
+        nl
+        ld   r0, n20
+        ld   r1, n6
+        div  r0, r1
+        dout r0        ; -20 / -6 = 3
+        nl
+        ld   r0, n7
+        ld   r1, p3
+        rem  r0, r1
+        dout r0        ; -7 % 3  = -1 (sign of dividend)
+        nl
+        ld   r0, p7
+        ld   r1, n3
+        rem  r0, r1
+        dout r0        ; 7 % -3  = 1
+        nl
+        ld   r0, n20
+        ld   r1, n6
+        rem  r0, r1
+        dout r0        ; -20 % -6 = -2
+        nl
+        halt
+n6:     .word -6
+n7:     .word -7
+n2:     .word -2
+n3:     .word -3
+n20:    .word -20
+p2:     .word 2
+p3:     .word 3
+p7:     .word 7

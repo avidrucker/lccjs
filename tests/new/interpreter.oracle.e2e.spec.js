@@ -49,6 +49,7 @@ const DEMOS = [
   { file: 'demoT', inputs: [], comment: 'and, or, xor' },
   { file: 'demoU', inputs: [], comment: 'sext' },
   { file: 'demoV', inputs: [], comment: 'mul, div, rem' },
+  { file: 'demoDivRemSigned', inputs: [], comment: 'signed div/rem — trunc toward zero, rem takes sign of dividend (#1237)' },
   { file: 'demoW', inputs: [], comment: 'cmp, branch instructions' },
   { file: 'demoX', inputs: [], comment: 'hex, cea, implicit r0 args' },
   { file: 'demoY', inputs: [], comment: 'label offsets for ld and .word directive' },

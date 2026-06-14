@@ -1204,14 +1204,17 @@ class Interpreter {
         if (this.r[this.sr1] === 0) {
           this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO' }));
         }
-        this.r[this.dr] = (this.r[this.dr] / this.r[this.sr1]) & 0xFFFF;
+        // Signed 16-bit division, truncating toward zero (C semantics; oracle parity #1237).
+        // Registers are Uint16Array, so operate on the signed view then mask back.
+        this.r[this.dr] = Math.trunc(this.toSigned16(this.r[this.dr]) / this.toSigned16(this.r[this.sr1])) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
       case EOP_REM: // REM
         if (this.r[this.sr1] === 0) {
           this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO' }));
         }
-        this.r[this.dr] = (this.r[this.dr] % this.r[this.sr1]) & 0xFFFF;
+        // Signed 16-bit remainder; result takes the sign of the dividend (C semantics; oracle parity #1237).
+        this.r[this.dr] = (this.toSigned16(this.r[this.dr]) % this.toSigned16(this.r[this.sr1])) & 0xFFFF;
         this.setNZ(this.r[this.dr]);
         break;
       case EOP_OR: // OR

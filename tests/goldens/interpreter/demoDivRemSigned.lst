@@ -1,0 +1,67 @@
+LCC Assemble/Link/Interpret/Debug Ver 6.3  Sun Jun 14 11:03:58 2026
+TestUser
+
+Header
+o
+C
+
+Loc   Code
+0000  2023
+0001  2227
+0002  a048
+0003  f002
+0004  f001
+0005  201f
+0006  2222
+0007  a048
+0008  f002
+0009  f001
+000a  2020
+000b  221a
+000c  a048
+000d  f002
+000e  f001
+000f  2018
+0010  2213
+0011  a048
+0012  f002
+0013  f001
+0014  2010
+0015  2214
+0016  a049
+0017  f002
+0018  f001
+0019  2011
+001a  220c
+001b  a049
+001c  f002
+001d  f001
+001e  2009
+001f  2204
+0020  a049
+0021  f002
+0022  f001
+0023  f000
+0024  fffa
+0025  fff9
+0026  fffe
+0027  fffd
+0028  ffec
+0029  0002
+002a  0003
+002b  0007
+====================================================== Output
+-3
+-3
+-3
+3
+-1
+1
+-2
+
+========================================== Program statistics
+Input file name       =      demoDivRemSigned1.e
+Instructions executed =   24 (hex)    36 (dec)
+Program size          =   2c (hex)    44 (dec)
+Max stack size        =    0 (hex)     0 (dec)
+Load point            =    0 (hex)     0 (dec)
