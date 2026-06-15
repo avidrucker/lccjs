@@ -1,121 +1,168 @@
 ---
 name: log-error
-description: Use when a tool, shell command, Git/GitHub operation, claim/close step, database write, validation check, or pre-close audit finds an lccjs agent error to record.
+description: "Protocol for recording agent errors into the lccjs errors table — when to log, what fields to populate, the exact command, and when to skip. Use whenever a tool call fails, a hook blocks, a claim fails, or any non-trivial error occurs during puzzle work."
 ---
 
-# Log Error
+# Error Logging Protocol (lccjs)
 
-Record lccjs agent errors in the shared SQLite database so process problems are visible and reviewable. This Codex skill is repo-local and version-controlled with the lccjs repository.
+When a non-trivial error occurs during puzzle work, log it to `~/.lccjs/lccjs.db` using `npm run error:log`.
 
-## When To Use
+## Triggers — log when any of these occur
 
-Use this skill when any of these happen during lccjs work:
+- A Bash command exits non-zero and the failure affects the work (not just a harmless grep miss)
+- A tool call (`Edit`, `Write`, `Read`, `Bash`) returns an error result
+- A `npm run claim` fails (closed issue, already claimed, wrong syntax)
+- A git operation fails (`push`, `rebase`, `commit`)
+- A `gh` CLI call returns an error (rate limit, not found, auth)
+- A SQLite / `velocity:log` / `error:log` call fails
+- A skill invocation errors or returns unexpected output
+- A pre-commit / commit-msg / pre-push hook exits non-zero and blocks the commit
 
-- a shell command exits non-zero and affects the work
-- a tool call fails, including file read/write/edit failures
-- `npm run claim`, `npm run close`, or a hook blocks or fails
-- a Git operation fails, including commit, rebase, push, or worktree state errors
-- a `gh` command or GitHub API operation fails or reveals a wrong workflow assumption
-- `npm run velocity:log`, `npm run error:log`, or any SQLite/database operation fails
-- schema validation rejects a value
-- a skill or workflow step is invoked incorrectly or produces unexpected output
-- the required pre-close self-audit finds an error that has not yet been logged
+## Always log
 
-**Behavioral / process errors count too.** "Error" is not limited to technical / tool failures — it also includes undesirable agent *behaviors*, which are first-class loggable events, not edge cases. Log when you:
+Log every error, misfire, glitch, and mistake — including those immediately retried and resolved with no lasting impact. A single resolved conflict is noise; ten resolved conflicts in a week is a pattern. Use the `notes` field to record how it was resolved, not as a reason to skip the row.
 
-- did not follow instructions / rules / protocol — skipped a required step (e.g. the pre-close self-audit), missed a worktree, used the wrong commit convention, ignored a stated constraint
-- did something non-ideal that was not asked for — overstep, unrequested action, scope creep, editing outside the stated task
-- asked for approval for something already blanket- or explicitly-approved — redundant permission-seeking that wastes a round-trip
-- made a confidently-wrong claim or unverified assumption that changed the plan or sent work down a wrong path
+## Skip when (de-duplication only)
 
-(Seeded from the #1160 behavioral-error catalog; extend as it lands.) For now log these as `OTHER` with `context.behavioral = true`; once #1118 lands, use `COMPLIANCE_FAIL` (rule/protocol violation) or `BEHAVIORAL_FAIL` (non-ideal action / wrong claim), keeping `context.behavioral = true`. These criteria add to the technical ones; they do not replace them.
+- The error message is a purely informational warning with no work-plan impact (e.g. `[MODULE_TYPELESS_PACKAGE_JSON]`, deprecation notices) — these are not errors; log nothing
+- The same error has already been logged for this ticket in this session
 
-Always log resolved mistakes too. Resolution belongs in `notes`; it is not a reason to skip the row.
-
-Skip only when the message is a purely informational warning with no work-plan impact, or when the identical error has already been logged for this ticket in this session.
-
-## Sources Of Truth
-
-Read these repo docs instead of relying on memory:
-
-- `RULES.md` for the mandatory pre-close error self-audit
-- `docs/claude_workflow.md` for the close protocol and audit wording
-- `docs/errors-schema.md` for fields, valid `error_type` values, context JSON shapes, and query examples
-- `docs/errors-lookup.md` for error vocabulary guidance
-- `scripts/error-log.js` for validation and insert behavior
-
-The canonical database is `~/.lccjs/lccjs.db`. Do not use the legacy `velocity.db` path.
-
-## Immediate Logging Protocol
-
-Capture the timestamp at the moment of failure:
+## The command
 
 ```bash
-date '+%Y-%m-%dT%H:%M:%S%z'
+npm run error:log -- '{"occurred_iso":"<ISO8601>","agent":"<NAME>","model":"<model>","ticket":<N>,"error_type":"<TYPE>","message":"<raw message>","context":"<JSON>","notes":"<annotation>"}'
 ```
 
-Then log a row:
+Capture `occurred_iso` with `date '+%Y-%m-%dT%H:%M:%S%z'` at the moment of failure.
+
+## Field guide
+
+| Field | Required | Value |
+|---|---|---|
+| `occurred_iso` | **YES** | ISO 8601 with tz offset, captured at moment of error |
+| `agent` | yes | Terminal/worktree name (e.g. `CHERRY`) |
+| `model` | yes | Canonical short-form: `sonnet-4.6`, `opus-4.8`, `haiku-4.5` |
+| `ticket` | if in puzzle context | Active GitHub issue number (integer) |
+| `error_type` | yes | One of the controlled values below |
+| `message` | yes | First ~200 chars of the raw error or stderr |
+| `context` | recommended | JSON object with type-specific fields (see below) |
+| `notes` | optional | Free-form annotation about impact or workaround |
+
+### `error_type` vocabulary
+
+| Code | When to use |
+|---|---|
+| `TOOL_DENIED` | User rejected a tool permission prompt (Bash, Edit, Write, etc.) |
+| `HOOK_BLOCK` | pre-commit / commit-msg / pre-push hook exited non-zero |
+| `CLAIM_FAIL` | `npm run claim` failed (closed issue, already claimed, missing `--as`) |
+| `BASH_FAIL` | Any Bash command exited non-zero with work impact |
+| `GIT_FAIL` | `git push`, `git rebase`, `git commit` failed |
+| `GIT_STATE` | Git/shell state mismatch: getcwd errors (cwd deleted), "not a working tree", detached HEAD, etc. |
+| `GH_FAIL` | `gh` CLI / GitHub API error (rate limit, network, not found) |
+| `GH_INFO` | `gh` returned a non-error warning that revealed a wrong workflow assumption ("already closed", "already merged") |
+| `DB_FAIL` | `velocity:log`, `error:log`, or any SQLite operation failed |
+| `FILE_FAIL` | Read / Write / Edit tool failure (path not found, permission denied) |
+| `EDIT_PRECOND` | Edit/Write precondition not met: `old_string` not found, file not read before edit, "no changes to make" |
+| `SKILL_FAIL` | Skill invocation errored or produced unexpected output |
+| `NETWORK_FAIL` | Timeout or connectivity error on web fetch / API call |
+| `VALIDATION_FAIL` | Schema validation error (velocity:log field check, etc.) |
+| `OTHER` | Fallback for errors that resist quick categorization. Use when no existing code fits and picking the right one would take more than a few seconds — log promptly with `OTHER` rather than delaying to find the perfect type. `error_type` may be corrected retroactively via a DB UPDATE once the right code is known. |
+
+### `context` JSON shapes by type
+
+```jsonc
+// BASH_FAIL / GIT_FAIL / GH_FAIL
+{"cmd": "git push origin HEAD:main", "exit_code": 1, "stderr": "first ~100 chars"}
+
+// TOOL_DENIED
+{"tool": "Bash", "cmd_preview": "rm -rf /tmp/foo"}
+
+// HOOK_BLOCK
+{"hook": "pre-push", "stderr": "first ~100 chars of hook output"}
+
+// CLAIM_FAIL
+{"cmd": "npm run claim -- 880 --as CHERRY", "reason": "already claimed by GRAPE"}
+
+// FILE_FAIL
+{"tool": "Edit", "path": "/src/core/assembler.js", "error": "ENOENT"}
+
+// EDIT_PRECOND
+{"tool": "Edit", "path": "/src/core/assembler.js", "error": "no changes to make"}
+
+// GIT_STATE
+{"cmd": "git worktree remove .claude/worktrees/foo", "exit_code": 128, "stderr": "not a working tree"}
+
+// GH_INFO
+{"cmd": "gh issue close 924", "exit_code": 0, "stderr": "Issue #924 is already closed"}
+
+// DB_FAIL / VALIDATION_FAIL
+{"script": "velocity:log", "field": "model", "value": "claude-opus-4-8"}
+```
+
+## Example row
 
 ```bash
-npm run error:log -- '{"occurred_iso":"<ISO8601>","agent":"HONEYDEW","ticket":N,"error_type":"<TYPE>","message":"<short raw error>","context":"<JSON>","notes":"<impact and resolution>"}'
+npm run error:log -- '{
+  "occurred_iso": "2026-06-05T16:30:00-1000",
+  "agent": "CHERRY",
+  "model": "sonnet-4.6",
+  "ticket": 880,
+  "error_type": "BASH_FAIL",
+  "message": "git push: rejected — updates were rejected because the remote contains work",
+  "context": "{\"cmd\":\"git push origin HEAD:main\",\"exit_code\":1}",
+  "notes": "resolved via git pull --rebase"
+}'
 ```
 
-`occurred_iso` and `message` are required. `ticket` is required when the error occurred in puzzle context. Leave `model` blank when unknown; do not invent model values.
+## Decision: manual, not hook-triggered
 
-Use the terminal/worktree agent name in `agent`, e.g. `HONEYDEW`.
+Error logging is a **deliberate manual step**, not an automated hook. Reasons:
+1. Not every non-zero exit is an error — harmless informational warnings (e.g. `[MODULE_TYPELESS_PACKAGE_JSON]`, deprecation notices) are not errors and generate no row.
+2. The agent has context the hook doesn't: which ticket is active, what the error meant in context, how it was resolved.
+3. Hook-triggered logging would double-count identical retries that should be de-duplicated within a session.
 
-## Choosing `error_type`
+Log the row at the moment the error occurs, even if you expect to resolve it immediately.
 
-Use the controlled vocabulary in `docs/errors-schema.md`. Common choices:
+## Pre-close self-audit (required — RULES.md 16 / R021)
 
-- `TOOL_DENIED` for rejected permission prompts
-- `HOOK_BLOCK` for pre-commit, commit-msg, or pre-push hook failures
-- `CLAIM_FAIL` for `npm run claim` failures
-- `BASH_FAIL` for shell command failures with work impact
-- `GIT_FAIL` for Git operation failures
-- `GIT_STATE` for wrong checkout, deleted cwd, detached HEAD, or not-a-worktree state problems
-- `GH_FAIL` for `gh` / GitHub API errors
-- `GH_INFO` for GitHub warnings that reveal a wrong workflow assumption
-- `DB_FAIL` for SQLite, `velocity:log`, or `error:log` failures
-- `FILE_FAIL` for file read/write/edit failures
-- `EDIT_PRECOND` for failed edit preconditions
-- `SKILL_FAIL` for skill or workflow invocation errors
-- `NETWORK_FAIL` for network/API timeouts or connectivity failures
-- `VALIDATION_FAIL` for schema validation failures
-- `OTHER` when no existing code fits quickly, and (interim) for behavioral / process errors with `context.behavioral = true` until #1118 lands `BEHAVIORAL_FAIL` / `COMPLIANCE_FAIL` — see "When To Use" above
+Logging "at the moment of failure" is the ideal, but it is easy to forget: you self-correct a misfire, move on, and the row never gets written — so the table under-reports (the #1108 repro: 3 errors went unlogged until a human asked, then backfilled as rows 49–51). The backstop, mandated as a close step, is a **transcript self-audit** — chosen as Option D in #1117 precisely because `npm run close` cannot see the conversation but **you can**:
 
-Prefer a prompt row with `OTHER` over delaying the log to find the perfect type. The type can be corrected later if needed.
+**Before the velocity log at every close:**
 
-## Context JSON
-
-Put machine-readable details in `context`, encoded as a JSON string inside the outer JSON payload. Follow the shapes in `docs/errors-schema.md`.
-
-Examples:
-
-```json
-{"cmd":"git push origin HEAD:main","exit_code":1,"stderr":"first useful stderr"}
-```
-
-```json
-{"tool":"apply_patch","path":".agents/skills/log-error/SKILL.md","error":"failed to create parent directories"}
-```
-
-## Pre-Close Self-Audit
-
-Before every closing commit:
-
-1. Re-read the session from claim to now.
-2. Enumerate every loggable error, including resolved mistakes.
-3. Confirm each already has a row or log it.
-4. Include one exact statement in the closing comment:
-   - `error self-audit: N row(s) logged (#ids ...)`
+1. Re-read your session from the point you claimed the ticket to now.
+2. Enumerate every event matching the triggers above — *including resolved ones*.
+3. For each, confirm a row exists or log it now:
+   ```bash
+   sqlite3 ~/.lccjs/lccjs.db "SELECT id,error_type,message FROM errors WHERE ticket=N"
+   ```
+4. State the outcome explicitly in the closing comment — one of:
+   - `error self-audit: N row(s) logged (#ids …)`
    - `error self-audit: no loggable errors this session`
 
-The audit happens before the velocity row and closing commit. `npm run close` cannot see the transcript; the agent must do this manually.
+The explicit statement is the point: it turns silence into a checkable acknowledgement, so a clean session and a forgotten log stop looking identical. The `next-best-action` pre-close checklist carries this as a question; #1118 adds a `COMPLIANCE_FAIL` type so a *forgotten-then-caught* episode is itself recordable — when the audit catches a miss, log both the original error row(s) and (once #1118 lands) one `COMPLIANCE_FAIL` row.
 
-## Guardrails
+## Querying logged errors
 
-- Do not delete or modify database rows without explicit human permission.
-- Do not create `docs/errors.csv` manually; `docs/errors-schema.md` documents it as a future generated export.
-- If `npm run error:log` itself fails, that failure is loggable once logging works again.
-- Keep error rows factual: what failed, what command/tool was involved, and how it was resolved.
+```bash
+# Recent errors
+sqlite3 ~/.lccjs/lccjs.db \
+  "SELECT id, occurred_iso, agent, error_type, message FROM errors ORDER BY id DESC LIMIT 10"
+
+# Errors by type
+sqlite3 ~/.lccjs/lccjs.db \
+  "SELECT error_type, COUNT(*) as n FROM errors GROUP BY error_type ORDER BY n DESC"
+
+# Errors for a specific ticket
+sqlite3 ~/.lccjs/lccjs.db \
+  "SELECT id, error_type, message FROM errors WHERE ticket = 880"
+
+# All errors from a specific agent
+sqlite3 ~/.lccjs/lccjs.db \
+  "SELECT id, occurred_iso, error_type, message FROM errors WHERE agent = 'CHERRY' ORDER BY occurred_iso"
+```
+
+## Related
+
+- `docs/errors-schema.md` — canonical field reference and full column rationale
+- `puzzle-velocity` skill — velocity row logging (parallel discipline for time tracking)
+- `docs/velocity-schema.md` — velocity table schema (models the errors table design)
