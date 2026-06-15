@@ -75,7 +75,8 @@ Current preserved behavior:
 
 `lcc.js` currently accepts and routes these switches:
 
-- `-d`
+- `-d` — enter the **OG-style debugger** (oracle-parity; see below)
+- `-i` — enter the **ILCC TUI** (interactive stepping UI with reverse stepping)
 - `-m`
 - `-r`
 - `-f`
@@ -85,6 +86,11 @@ Current preserved behavior:
 - `-h`
 - `-o <outfile>`
 - `-l<hexloadpoint>`
+
+> **Two debuggers, mutually exclusive:** `-d` and `-i` enter *different* debuggers
+> and cannot run together (the `-i` interactive path short-circuits first). See the
+> user guide [`docs/guides/debuggers.md`](./guides/debuggers.md) and the per-command
+> registry [`docs/debugger-command-registry.md`](./debugger-command-registry.md).
 
 Some option behavior is already covered well by tests; some still need additional cleanup and documentation verification.
 

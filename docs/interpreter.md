@@ -116,19 +116,26 @@ Important current rule:
 
 ## `bp` and Debugger Status
 
-The debugger behavior is only partially implemented.
+> lccjs has **two** interactive debuggers (mutually exclusive): the OG-style
+> `-d` debugger lives here in `interpreter.js` (`debug()`); the `-i` ILCC TUI is a
+> separate path in `src/interactive/`. User guide:
+> [`docs/guides/debuggers.md`](./guides/debuggers.md). Authoritative per-command
+> registry + provenance: [`docs/debugger-command-registry.md`](./debugger-command-registry.md).
+
+The OG-style `-d` debugger (`debug()`) is mostly at oracle parity.
 
 Current state:
 
 - `bp` is no longer treated as an always-fatal unimplemented trap
-- CLI behavior is debugger-oriented
-- in-memory behavior remains non-interactive
+- CLI behavior is debugger-oriented; in-memory behavior remains non-interactive
+- commands implemented: Enter/`integer n`, `b`/`g`, `c <loc> val`, `r`, `m`, `i`,
+  `s`, `h`, `q` (`c` and `integer n` added in #1349)
 
-Still open:
+Still open (OG-parity backlog, tracked in the registry):
 
-- full oracle parity for `bp`
-- exact non-interactive oracle continuation behavior
-- final symbolic debugger feature completeness
+- `z` (run-to-end), `w` (watchpoint), `t` (interactive trace toggle) — real oracle
+  commands not yet implemented in lccjs's `-d` debugger
+- full oracle parity for `bp`; exact non-interactive oracle continuation behavior
 
 ## Internal Architecture
 

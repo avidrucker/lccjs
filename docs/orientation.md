@@ -102,7 +102,9 @@ flowchart TD
 | Run a pre-built `.e` binary | `node src/cli/lcc.js <file>.e` |
 | Link object files | `node src/core/linker.js m1.o m2.o` |
 | Assemble + run a `.ap` file (LCC+) | `node src/plus/lccplus.js <file>.ap` |
-| Step-debug interactively | `node src/interactive/ilcc.js <file>` |
+| Step-debug interactively (TUI) | `node src/cli/lcc.js -i <file>` (or `ilcc.js <file>`) |
+| Step-debug, OG/textbook style | `node src/cli/lcc.js -d <file>.e` |
+| Learn the two debuggers (`-d` vs `-i`) | see `docs/guides/debuggers.md` |
 | Play a demo game | `node src/plus/lccplus.js plusdemos/<game>.ap` |
 | Run primary test suite | `npm test` |
 | Run full test suite (slow) | `npm run test:all` |
