@@ -59,6 +59,21 @@ fi
 # copy to protect, the guard had nothing left to guard. See #1171 research
 # (docs/research/1171-committed-dist-churn.md) and the #1175 external-consumer ruling.
 
+# --- RULES.md freshness backstop (#1189) ---
+# RULES.md is generated from RULES.json (Option B, #845). The pre-commit hook
+# auto-regenerates it, but a `--no-verify` commit or a hand-edit of RULES.md can
+# still slip a stale render through. Block the push if RULES.md is out of sync with
+# RULES.json (or if a `text` edit left the version metadata unrendered). Needs only
+# node; skipped cleanly if node or the render script is absent.
+if command -v node >/dev/null 2>&1 && [ -f scripts/rules-render.js ]; then
+  if ! node scripts/rules-render.js --check >/dev/null 2>&1; then
+    echo "[pre-push] BLOCKED — RULES.md is stale (out of sync with RULES.json)."
+    echo "  Fix:  npm run rules:render   then commit the regenerated RULES.md."
+    echo "  Bypass:  git push --no-verify"
+    exit 1
+  fi
+fi
+
 # --- PDD puzzle scan (gem-gated) ---
 if ! command -v pdd >/dev/null 2>&1; then
   echo "[pre-push] pdd not installed; skipping puzzle scan. (gem install pdd to enable.)"

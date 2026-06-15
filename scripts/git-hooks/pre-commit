@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# pre-commit: block code-path changes staged on main (#668).
+# pre-commit:
+#   (1) block code-path changes staged on main (#668);
+#   (2) auto-regenerate RULES.md from RULES.json when the latter is staged (#1189).
 # Enforces worktree-per-task discipline — code changes always belong in a
 # worktree branch, never committed directly on main.
 branch=$(git rev-parse --abbrev-ref HEAD)
@@ -12,4 +14,27 @@ if [ "$branch" = "main" ]; then
     echo "  Bypass:  git commit --no-verify"
     exit 1
   fi
+fi
+
+# (2) RULES.json is the single source of truth (Option B, #845); RULES.md is a
+# generated artifact. When RULES.json is staged, re-render and stage the result so
+# a stale RULES.md can never be committed and the human only ever edits RULES.json.
+# rules-render also bumps a rule's version/text_sha when its `text` changed, so we
+# re-stage RULES.json too. Adding files here does not re-trigger pre-commit (no loop).
+# Note: rules-render reads the working tree; this assumes whole-file staging of
+# RULES.json (the repo convention), not partial hunks.
+if git diff --cached --name-only | grep -qx 'RULES.json'; then
+  root=$(git rev-parse --show-toplevel)
+  if ! command -v node >/dev/null 2>&1; then
+    echo "[pre-commit] BLOCKED — RULES.json is staged but node is unavailable to regenerate RULES.md."
+    echo "  Install node, or bypass:  git commit --no-verify"
+    exit 1
+  fi
+  if ! node "$root/scripts/rules-render.js"; then
+    echo "[pre-commit] BLOCKED — rules-render failed; RULES.md not regenerated."
+    echo "  Bypass:  git commit --no-verify"
+    exit 1
+  fi
+  git add "$root/RULES.md" "$root/RULES.json"
+  echo "[pre-commit] RULES.md regenerated from RULES.json and staged (#1189)."
 fi
