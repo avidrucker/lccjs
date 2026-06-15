@@ -56,7 +56,6 @@ on:
       - 'docs/cuh63-o-assemble-exit-code-bug-report.md'
       # workflow docs
       - 'docs/claude_workflow.md'
-      - 'RULES.md'
       # build script itself
       - 'scripts/build-site.js'
   workflow_dispatch:
