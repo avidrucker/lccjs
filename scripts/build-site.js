@@ -276,12 +276,6 @@ code { font-family:var(--mono-font); }
 .back-link { margin-bottom:1.5rem; font-size:.85rem; }
 .back-link a { color:#58a6ff; text-decoration:none; }
 .back-link a:hover { text-decoration:underline; }
-.theme-toggle {
-  background:none; border:1px solid var(--border); border-radius:4px;
-  color:var(--fg); font-size:1rem; cursor:pointer; padding:.2rem .5rem;
-  line-height:1; margin-left:auto;
-}
-.theme-toggle:hover { background:var(--border); }
 `;
 
 // Inline script injected into <head> to set the correct theme class before the
@@ -305,14 +299,15 @@ const HEAD_SCRIPT = `
 })();
 </script>`;
 
-// Shared JS for landing + docs pages: theme dropdown + light/dark toggle + persistence.
+// Shared JS for landing + docs pages: the single theme control is the
+// #theme-select dropdown (the standalone light/dark toggle was removed in #1379).
 const JS = `
 (function () {
   var DARK = new Set(${JSON.stringify(DARK_IDS)});
   var LIGHT_ID = 'github-light';
   var DARK_ID = 'github-dark';
   var sel = document.getElementById('theme-select');
-  var toggle = document.getElementById('theme-toggle');
+  if (!sel) return;
   function isDark(t) { return DARK.has(t); }
   function apply(t) {
     document.querySelectorAll('.theme-panel').forEach(function (p) {
@@ -322,42 +317,25 @@ const JS = `
     document.body.className = cls;
     document.documentElement.className = cls;
     localStorage.setItem('lcc-theme', t);
-    if (sel) sel.value = t;
-    updateToggleIcon(t);
+    sel.value = t;
   }
-  function updateToggleIcon(t) {
-    if (!toggle) return;
-    toggle.textContent = isDark(t) ? '☀' : '☾';
-    toggle.setAttribute('aria-label', isDark(t) ? 'Switch to light mode' : 'Switch to dark mode');
-  }
-  if (sel) {
-    sel.addEventListener('change', function () { apply(sel.value); });
-  }
-  if (toggle) {
-    toggle.addEventListener('click', function () {
-      var current = sel ? sel.value : (localStorage.getItem('lcc-theme') || DARK_ID);
-      apply(isDark(current) ? LIGHT_ID : DARK_ID);
-    });
-  }
-  // Apply saved theme on load. The head script already set the correct theme on
-  // <html> pre-paint. Landing has a #theme-select dropdown that drives apply();
-  // docs pages have a #theme-toggle but NO dropdown (#1334), so there sel is
-  // null -- mirror the <html> class onto <body> (otherwise it stays on its baked
-  // class) and initialise the toggle icon directly.
+  sel.addEventListener('change', function () { apply(sel.value); });
+  // On load, resolve the initial theme with the SAME precedence the head script
+  // uses (#1143): saved choice, else prefers-color-scheme. The dropdown is now the
+  // single theme control on every page incl. docs (#1379) — setting sel.value to
+  // the resolved theme (not its default 'selected' option) keeps the dropdown in
+  // sync with the <html> class the head script set pre-paint, and applies it to
+  // <body> (docs bake no body theme class, #1334).
   var saved = localStorage.getItem('lcc-theme');
-  if (sel) {
-    if (saved) { sel.value = saved; }
-    apply(sel.value);
-  } else {
-    document.body.className = document.documentElement.className;
-    updateToggleIcon(saved || (document.documentElement.className.indexOf('dark') === 0 ? DARK_ID : LIGHT_ID));
-  }
+  var initial = saved || ((window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches) ? DARK_ID : LIGHT_ID);
+  apply(initial);
 }());
 `;
 
 // Build the <nav> bar. activeId matches a DOCS_SECTIONS id, 'home', or 'showcase'.
-// includeToggle adds a light/dark mode toggle button (used on all pages).
-function buildNav(rootPath, activeId, includeToggle) {
+// The theme control is the #theme-select dropdown (rendered in the theme toolbar),
+// not a nav button — the standalone light/dark toggle was removed in #1379.
+function buildNav(rootPath, activeId) {
   const home  = `<a href="${rootPath}"${activeId === 'home' ? ' class="active"' : ''}>Home</a>`;
   const links = DOCS_SECTIONS.map(s => {
     const href = `${rootPath}docs/${s.id}/`;
@@ -366,10 +344,7 @@ function buildNav(rootPath, activeId, includeToggle) {
   });
   const playgroundCls = activeId === 'sandbox' ? ' class="active"' : '';
   const playground = `<a href="${rootPath}sandbox/"${playgroundCls}>Sandbox</a>`;
-  const toggle = includeToggle
-    ? '<button id="theme-toggle" class="theme-toggle" aria-label="Toggle light/dark mode"></button>'
-    : '';
-  return `<nav>${[home, ...links, playground, toggle].filter(Boolean).join('\n  ')}\n</nav>`;
+  return `<nav>${[home, ...links, playground].join('\n  ')}\n</nav>`;
 }
 
 // Render one code snippet as a <section> with per-theme panels.
@@ -495,7 +470,7 @@ ${lccplusSections}
   const landingHtml = makePage({
     title: 'LCC Assembly — Syntax Highlighting',
     bodyClass: 'dark',
-    nav: buildNav('./', 'home', true),
+    nav: buildNav('./', 'home'),
     content: landingContent,
     footer: '',
     script: JS,
@@ -530,7 +505,8 @@ ${lccplusSections}
       const pageHtml = makePage({
         title: `${slug} — LCC Docs`,
         bodyClass: '', // #1334: bake no theme class — the pre-paint <html> class drives the theme (a baked body.* var block would shadow it and force light)
-        nav: buildNav('../../', section.id, true),
+        nav: buildNav('../../', section.id),
+        themeToolbar,
         content: `${backNav}\n  <div class="prose">\n${htmlBody}\n  </div>`,
         footer: `  <footer>
     <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
@@ -557,7 +533,8 @@ ${listItems}
     const indexHtml = makePage({
       title: `${section.label} — LCC Docs`,
       bodyClass: '', // #1334: bake no theme class — the pre-paint <html> class drives the theme (a baked body.* var block would shadow it and force light)
-      nav: buildNav('../../', section.id, true),
+      nav: buildNav('../../', section.id),
+      themeToolbar,
       content: indexContent,
       footer: `  <footer>
     <a href="https://github.com/avidrucker/lccjs">avidrucker/lccjs</a>
@@ -1080,42 +1057,20 @@ runBtn.addEventListener('click', () => {
     if (e.bg) { root.setProperty('--surface-bg', e.bg); } else { root.removeProperty('--surface-bg'); }
     if (e.fg) { root.setProperty('--surface-fg', e.fg); } else { root.removeProperty('--surface-fg'); }
   }
-  // Init surfaces on load (covers the path where the toggle-button block below
-  // does not run, e.g. no #theme-toggle in the nav).
-  applySurfaceTheme(sel.value);
-
-  // Light/dark toggle button
-  var toggleBtn = document.getElementById('theme-toggle');
-  if (toggleBtn) {
-    function updateToggleIcon(t) {
-      toggleBtn.textContent = DARK.has(t) ? '☀' : '☾';
-      toggleBtn.setAttribute('aria-label', DARK.has(t) ? 'Switch to light mode' : 'Switch to dark mode');
-    }
-    toggleBtn.addEventListener('click', () => {
-      var current = sel.value;
-      var next = DARK.has(current) ? 'github-light' : 'github-dark';
-      sel.value = next;
-      applyBodyClass(next);
-      applyEditorHighlight(next);
-      localStorage.setItem('lcc-theme', next);
-      updateToggleIcon(next);
-    });
-    // Initialize toggle icon to match saved/current theme
-    var savedTheme = localStorage.getItem('lcc-theme');
-    if (savedTheme) { sel.value = savedTheme; }
-    applyBodyClass(sel.value);
-    applyEditorHighlight(sel.value);
-    updateToggleIcon(sel.value);
-  }
+  // Single theme control (#1379): the #theme-select dropdown drives everything;
+  // the standalone light/dark toggle button was removed. Resolve the initial theme
+  // with the head script's precedence (#1143): saved choice, else prefers-color-scheme.
+  var savedTheme = localStorage.getItem('lcc-theme');
+  var initialTheme = savedTheme ||
+    ((window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches) ? 'github-dark' : 'github-light');
+  sel.value = initialTheme;
+  applyBodyClass(initialTheme);
+  applyEditorHighlight(initialTheme); // also refreshes the surfaces (applySurfaceTheme)
 
   sel.addEventListener('change', () => {
     applyBodyClass(sel.value);
     applyEditorHighlight(sel.value);
     localStorage.setItem('lcc-theme', sel.value);
-    if (toggleBtn) {
-      toggleBtn.textContent = DARK.has(sel.value) ? '☀' : '☾';
-      toggleBtn.setAttribute('aria-label', DARK.has(sel.value) ? 'Switch to light mode' : 'Switch to dark mode');
-    }
   });
 
 })();
@@ -1169,7 +1124,7 @@ ${playgroundThemeOptions}
   const playgroundHtml = makePage({
     title: 'Sandbox — LCC Assembly',
     bodyClass: 'dark',
-    nav: buildNav('../', 'sandbox', true),
+    nav: buildNav('../', 'sandbox'),
     content: playgroundContent,
     footer: '',
     script: '',

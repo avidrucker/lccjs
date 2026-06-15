@@ -44,11 +44,28 @@ describe('docs pages honor the active theme, not forced light (#1334)', () => {
   test('no page is generated with a hardcoded light body class', () => {
     expect(src).not.toMatch(/bodyClass:\s*['"]light['"]/);
   });
+});
 
-  test('on load the body theme class is mirrored from <html> (covers the no-dropdown docs pages)', () => {
-    expect(src).toMatch(
-      /document\.body\.className\s*=\s*document\.documentElement\.className/
-    );
+// #1379 — the site previously had TWO theme controls: a light/dark toggle button
+// (#theme-toggle) and the theme dropdown (#theme-select). They were unified into
+// ONE — the dropdown, now present on every page including docs (which previously
+// had only the toggle). The standalone toggle button — its markup, its CSS class,
+// and all its JS handlers — was removed. (Decided + implemented as pair-work; see
+// the ruling on #1379.) This supersedes the #1334 no-dropdown body-class mirror:
+// docs pages now reconcile their theme through the dropdown's apply() on load, so
+// the #1334 outcome (docs follow the active theme, never forced light) still holds
+// and is browser-verified against the built page.
+describe('unified theme control — single dropdown, no standalone toggle (#1379)', () => {
+  const src = fs.readFileSync(
+    path.join(__dirname, '../../scripts/build-site.js'), 'utf8'
+  );
+
+  test('all traces of the #theme-toggle button (markup, CSS, JS) are removed', () => {
+    expect(src).not.toMatch(/theme-toggle/);
+  });
+
+  test('the #theme-select dropdown remains the theme control', () => {
+    expect(src).toMatch(/id="theme-select"/);
   });
 });
 
