@@ -33,7 +33,8 @@
     "test:e2e": "playwright test --config playwright.e2e.config.js",
     "test:potato-tokens": "node scripts/potato-token-test.js",
     "report": "node scripts/report.js",
-    "ice:score": "node scripts/ice-score.js"
+    "ice:score": "node scripts/ice-score.js",
+    "rules:render": "node scripts/rules-render.js"
   },
   "devDependencies": {
     "@codemirror/autocomplete": "^6.20.3",
