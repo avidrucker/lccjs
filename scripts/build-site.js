@@ -957,13 +957,18 @@ runBtn.addEventListener('click', () => {
       highlightCompartment.of(syntaxHighlighting(lccHighlightStyle(sel.value))),
       // Per-theme editor background (#1142, #1283)
       backgroundCompartment.of(
-        EditorView.theme({ '.cm-content': { background: initialBg }, '.cm-gutters': { background: initialBg } })
+        // Background goes on .cm-scroller, NOT .cm-content: drawSelection() paints the
+        // selection in .cm-selectionLayer at z-index -1, behind .cm-content (z-index 0).
+        // An opaque .cm-content background hides the multi-line selection (#1339).
+        EditorView.theme({ '.cm-scroller': { background: initialBg }, '.cm-gutters': { background: initialBg } })
       ),
       autocompletion({ override: [lccCompletionSource] }),
       EditorView.theme({
         '&': { height: '100%', fontSize: '.85rem' },
-        '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--mono-font)' },
-        '.cm-content': { background: 'var(--border)', color: 'var(--fg)', caretColor: 'var(--fg)' },
+        '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--mono-font)', background: 'var(--border)' },
+        // Background lives on .cm-scroller (above); keep only text/caret color on .cm-content
+        // so the z-index -1 selection layer stays visible behind it (#1339).
+        '.cm-content': { color: 'var(--fg)', caretColor: 'var(--fg)' },
         '.cm-gutters': { background: 'var(--border)', borderRight: '1px solid var(--muted)', color: 'var(--muted)' },
         '.cm-activeLineGutter': { background: 'rgba(128,128,128,0.1)' },
         '&.cm-focused': { outline: 'none' },
@@ -982,7 +987,8 @@ runBtn.addEventListener('click', () => {
     if (bg) {
       editor.dispatch({
         effects: backgroundCompartment.reconfigure(
-          EditorView.theme({ '.cm-content': { background: bg }, '.cm-gutters': { background: bg } })
+          // .cm-scroller, not .cm-content — keep the selection layer visible (#1339).
+          EditorView.theme({ '.cm-scroller': { background: bg }, '.cm-gutters': { background: bg } })
         ),
       });
     }
