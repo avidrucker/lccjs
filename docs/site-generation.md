@@ -146,11 +146,10 @@ so the playground needs no CDN module for the language. The grammar is not
 auto-synced to the parser tables — editing `lcc.grammar` does **not** regenerate
 `lcc.js` automatically.
 
-> **Legacy — `src/lang-lcc/lang-lcc.cdn.js`:** the older hand-maintained,
-> esm.sh-importing browser port the playground loaded as `dist/lang-lcc.js`
-> **before** #1284. It is now **superseded by the bundle** and no longer copied or
-> imported by the build. Retiring the file — and rewiring `serve-site.js`'s dev-loop
-> to rebuild `editor.bundle.js` on `src/lang-lcc/**` changes — is tracked in **#1304**.
+> **History:** before #1284 the playground loaded a hand-maintained,
+> esm.sh-importing port — `src/lang-lcc/lang-lcc.cdn.js`, served as `dist/lang-lcc.js`.
+> The bundle superseded it; the file was **removed in #1304**, which also rewired
+> `serve-site.js`'s dev-loop to rebuild `editor.bundle.js` on `src/lang-lcc/**` changes.
 
 ---
 
@@ -173,8 +172,8 @@ browser-bundle freshness guard was retired in the same change (nothing left to
 protect once the committed copy is gone). Since #1284 the editor's CodeMirror stack
 and the `lcc()` language are part of the webpack output too (`dist/editor.bundle.js`),
 so there is no longer a hand-maintained `dist/` file to special-case: the former
-`src/lang-lcc/lang-lcc.cdn.js` → `docs/site/dist/lang-lcc.js` copy was dropped (that
-file's retirement is tracked in #1304).
+`src/lang-lcc/lang-lcc.cdn.js` → `docs/site/dist/lang-lcc.js` copy was dropped in
+#1284, and the file itself was removed in #1304.
 
 ---
 
@@ -187,16 +186,12 @@ npm run dev:site        # = serve-site.js --dev
 ```
 
 It watches `scripts/build-site.js`, `src/browser/`, and `src/lang-lcc/`; on a
-change it runs the **minimal** build step (template → `build:site`; `src/browser/*`
-→ `build:browser` + `build:site`) and pushes a live-reload over SSE so the open tab
-refreshes itself. The reload `<script>` is injected **only** under `--dev`, so the
-page bytes stay identical to deploy.
-
-> **Known gap (#1304):** the change classifier still keys on the retired
-> `lang-lcc.cdn.js` and only *warns* on other `src/lang-lcc/**` edits, so since #1284
-> a grammar/language edit does **not** auto-rebuild `editor.bundle.js` under `--dev`.
-> Until #1304 lands, re-run `npm run build:browser` by hand after editing
-> `src/lang-lcc/**` or `src/browser/editor.js`.
+change it runs the **minimal** build step and pushes a live-reload over SSE so the
+open tab refreshes itself: a template / `build-site.js` edit runs `build:site`,
+while a `src/browser/**` or `src/lang-lcc/**` edit runs `build:browser` (rebuilding
+`editor.bundle.js` / `lcc.bundle.js`) + `build:site` — the `src/lang-lcc/**` →
+rebuild wiring was added in #1304. The reload `<script>` is injected **only** under
+`--dev`, so the page bytes stay identical to deploy.
 
 `dev:site` is for speed; it does **not** replace verification.
 
@@ -228,6 +223,5 @@ deploys. Source reading is not sufficient.
 | `webpack.browser.config.js` | builds `dist/lcc.bundle.js`, `dist/lcc-injector.js`, and `dist/editor.bundle.js` from `src/browser/` |
 | `src/browser/{api,lcc-injector,lcc-worker,editor}.js` | browser entry points (API bundle, slide injector, playground worker, CM6 editor bundle) |
 | `src/lang-lcc/` | Lezer grammar + generated parser + `index.js` (`lcc()` `LanguageSupport`, bundled into `editor.bundle.js`) |
-| `src/lang-lcc/lang-lcc.cdn.js` | **legacy** — pre-#1284 esm.sh browser port, superseded by `editor.bundle.js`; retirement tracked in #1304 |
 | `dist/**` (gitignored, built on demand) | webpack bundles; copied into `docs/site/dist/` by `build:site`; CI rebuilds on deploy (#1178) |
 | `docs/site/**` (gitignored) | the generated, deployed site — never hand-edit |
