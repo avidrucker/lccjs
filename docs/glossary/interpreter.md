@@ -91,7 +91,7 @@ Three entry points for getting an `.e` file into memory:
 - `loadExecutableBuffer(buffer)` — strict header parser; reads typed entries (`'S'`, `'G'`, `'A'` only — `'E'`/`'e'`/`'V'` are linker-time and never appear in a *finished* `.e`) until `'C'`, then streams little-endian 16-bit words into `mem[loadPoint..]`. Unknown entry → `InvalidExecutableFormatError`.
 - `loadExecutableFile(fileName)` — filesystem wrapper used by `lcc.js`'s flow; looser signature check (looks for `'o'` then `'C'` *anywhere* in the buffer in order, instead of strict header parsing).
 
-**Source:** `src/core/interpreter.js:274-336, 477-521, 523-592`
+**Source:** `interpreter.js` — `loadExecutableBuffer()`, `loadExecutableFile()`, `executeBuffer()`
 **See also:** [.e / .o file format](assembler.md#e--o-file-format), [InvalidExecutableFormatError]
 
 ### `step` / decoded instruction fields
@@ -115,21 +115,21 @@ Three entry points for getting an `.e` file into memory:
 
 Same field shapes as the assembler — see [16-bit instruction word field layout](assembler.md#per-instruction-encoders).
 
-**Source:** `src/core/interpreter.js:602-697`
+**Source:** `interpreter.js` — `step()`
 **See also:** [run], [opcode dispatch table]
 
 ### Opcode dispatch table
 
 The 16-way switch in `step()` dispatching by `opcode`. Most opcodes go to a dedicated `execute<Mnemonic>` method; opcode 10 (`CASE10`) is the extended group containing PUSH/POP/SRL/SRA/SLL/ROL/ROR/MUL/DIV/REM/OR/XOR/MVR/SEXT, demuxed by `eopcode`. Unknown opcode → `[InterpreterRuntimeError]("Unknown opcode: <n>")`.
 
-**Source:** `src/core/interpreter.js:646-697`
+**Source:** `interpreter.js` — `step()`, grep `switch (this.opcode)`
 **See also:** [step], [executeCase10]
 
 ### `run` (main loop)
 
 The top-level loop. Captures `spInitial = r[6]` at entry, then `while (running) step()`. The `running` predicate is flipped by `HALT`, `BP` (if not in interactive debug), runtime errors, or the infinite-loop guard.
 
-**Source:** `src/core/interpreter.js:594-600`
+**Source:** `interpreter.js` — `run()`
 **See also:** [step], [Run-time guard flags]
 
 ### Trace mode
@@ -143,35 +143,35 @@ The top-level loop. Captures `spInitial = r[6]` at entry, then `while (running) 
 
 Lookup table that decodes a 16-bit machine word back into the mnemonic the assembler used. Tables follow the same dispatch as `step()`: 16-entry base, 14-entry extended (for `CASE10`), 15-entry trap (`HALT`/`NL`/`DOUT`/.../`BP`), 8-entry branch-condition. Unknown mnemonic falls back to `Unknown(<hex>)`. Consumed by `[debug]` for the prompt prefix (e.g. `add>>> `).
 
-**Source:** `src/core/interpreter.js:778-855`
+**Source:** `interpreter.js` — `hexToMnemonic()`
 **See also:** [debug]
 
 ### `executeBR`
 
 Conditional branch dispatch. Decodes the 3-bit `code` field into one of 8 conditions: equal (Z=1), not-equal (Z=0), negative (N=1), positive (N==Z), signed less-than (N≠V), signed greater-than (N==V && Z=0), carry (C=1), always. Same condition table as the assembler's branch-code lookup. If condition met, advances PC by `pcoffset9`; sets `hasJumped` accordingly.
 
-**Source:** `src/core/interpreter.js:1037-1069`
+**Source:** `interpreter.js` — `executeBR()`
 **See also:** [NZCV flags], [Branch condition codes](assembler.md#assembleBR)
 
 ### `executeADD` / `executeSUB` / `executeCMP`
 
 The signed-arithmetic trio. Register vs immediate form chosen by `bit5`. Each computes its sum / difference, sets NZCV via `[setNZ]` and `[setCV]`. `executeSUB` and `executeCMP` route through `[toSigned16]` first; `executeADD` works directly on unsigned values for the result computation but uses the operands for overflow detection. `CMP` is `SUB` minus the destination write — same flag side effect, no register mutation.
 
-**Source:** `src/core/interpreter.js:1015-1035, 1178-1216`
+**Source:** `interpreter.js` — `executeADD()`, `executeSUB()`, `executeCMP()`
 **See also:** [setNZ], [setCV], [toSigned16]
 
 ### `executeCase10` (extended-opcode dispatch)
 
 The 14-way demux for opcode 10. Each `eopcode` value (0..13) routes to inline logic for PUSH/POP/SRL/SRA/SLL/ROL/ROR/MUL/DIV/REM/OR/XOR/MVR/SEXT. Shift count `ct` is a 4-bit field from bits 8-5 (defaults to 1 when the assembler omits it; SRA range-checks 0..15 strictly, others use naïve parse). DIV / REM by zero throws `[InterpreterRuntimeError]("Floating point exception")` — LCC's idiosyncratic wording for integer-divide-by-zero, matching the oracle. Unknown `eopcode` → `Unknown extended opcode` runtime error (oracle silently exits; LCC.js prefers to surface invalid binaries).
 
-**Source:** `src/core/interpreter.js:1071-1176`
+**Source:** `interpreter.js` — `executeCase10()`
 **See also:** [executeSEXT], [InterpreterRuntimeError]
 
 ### `executeBLorBLR` / `executeJMP`
 
 Branch-and-link / jump dispatch. `executeBLorBLR` reads `bit11`: 1 → BL (PC += pcoffset11 + 1, save old PC in `r[7]`); 0 → BLR (PC = r[baser] + offset6, save old PC in `r[7]`). `executeJMP` handles both JMP and RET (RET being JMP with baser=7); it just sets PC = r[baser] + offset6 and trips `hasJumped`.
 
-**Source:** `src/core/interpreter.js:1261-1277`
+**Source:** `interpreter.js` — `executeBLorBLR()`, `executeJMP()`
 **See also:** [step], [hasJumped]
 
 ### Memory access methods
@@ -196,28 +196,28 @@ Branch-and-link / jump dispatch. `executeBLorBLR` reads `bit11`: 1 → BL (PC +=
 
 LCC's SEXT (sign-extend) with a quirk: selectors 0..15 follow an oracle-specific *field-number* mapping (a 16×32 lookup table baked into the source), not the raw bit-mask behaviour that larger selectors use. Selectors ≥ 0x10 fall through to `signExtendMaskedValue`. The table exists because the oracle's `sext` treats small field selectors as named field modes rather than literal masks; LCC.js mirrors that to stay oracle-parity.
 
-**Source:** `src/core/interpreter.js:23-40, 1716-1727`
+**Source:** `interpreter.js` — `executeSEXT()`, `SEXT_PARITY_TABLE` (const)
 **See also:** [signExtendMaskedValue]
 
 ### `executeTRAP` (trap dispatch table)
 
 The 15-way trap dispatch by `trapvec`. Vectors match the assembler's encoding exactly: 0 `HALT`, 1 `NL`, 2 `DOUT` (signed decimal), 3 `UDOUT` (unsigned decimal), 4 `HOUT` (hex; `-x` pads to 4 digits), 5 `AOUT` (low 8 bits as ASCII), 6 `SOUT` (null-terminated string from `mem[r[sr]…]`), 7 `DIN` / 8 `HIN` (reprompt on `Invalid <kind> constant. Re-enter:`), 9 `AIN` / 10 `SIN` (line input), 11-13 `M`/`R`/`S` (debug-display traps), 14 `BP` (software breakpoint). Vectors outside this set throw `Trap vector out of range` after a synthetic `"Error on line 0 of <file>"` header.
 
-**Source:** `src/core/interpreter.js:1509-1629`
+**Source:** `interpreter.js` — `executeTRAP()`
 **See also:** [readLineFromStdin], [readCharFromStdin], [handleSoftwareBreakpoint]
 
 ### `readLineFromStdin` / `readCharFromStdin`
 
 Input shims that honour `[inputBuffer]` for simulated input (tests, pure callers). When `inputBuffer` is empty, fall back to a blocking `fs.readSync` on stdin's fd. `readLineFromStdin` handles `\r`, `\n`, and `\r\n` line endings explicitly (Windows-friendliness); `readCharFromStdin` reads one byte at a time. Simulated input is echoed into `[output]` so the listing reports show user input alongside program output.
 
-**Source:** `src/core/interpreter.js:1290-1386`
+**Source:** `interpreter.js` — `readLineFromStdin()`, `readCharFromStdin()`
 **See also:** [executeTRAP], [inputBuffer (runtime bookkeeping)]
 
 ### `handleSoftwareBreakpoint`
 
 Implements the `BP` trap (`0x0e`). If `[allowRuntimeDebugging]` is off, it just throws `[InterpreterRuntimeError]("software breakpoint")`. If on (and we're in a real TTY), prints `"software breakpoint"` and flips into interactive `[debug]`. The distinction lets test runs surface a `BP` cleanly without blocking, while CLI runs drop into the debugger as a developer would expect.
 
-**Source:** `src/core/interpreter.js:1460-1473`
+**Source:** `interpreter.js` — `handleSoftwareBreakpoint()`
 **See also:** [debug], [canEnterInteractiveDebugger]
 
 ### `debug` (interactive debugger)
@@ -237,14 +237,14 @@ The Phase-1 oracle-parity debug REPL. Prompt format is `<mnemonic.lowercase()>>>
 
 Breakpoints fire once: the banner `Breakpoint at` is printed and the breakpoint cleared on first hit.
 
-**Source:** `src/core/interpreter.js:860-977, 982-1011`
+**Source:** `interpreter.js` — `debug()`
 **See also:** [hexToMnemonic], [canEnterInteractiveDebugger], [Run-time guard flags]
 
 ### `canEnterInteractiveDebugger`
 
 Three-way guard: `allowRuntimeDebugging && process.stdin.isTTY && !isTestMode`. Only a real CLI invocation can ever enter the interactive `[debug]` prompt — pure-API callers, in-process tests, and any callsite that didn't opt in via `allowDebugOnInfiniteLoop` will fail-fast or terminate instead of blocking on `readLineFromStdin`.
 
-**Source:** `src/core/interpreter.js:267-271, 758-766`
+**Source:** `interpreter.js` — `canEnterInteractiveDebugger()`
 **See also:** [debug], [handleSoftwareBreakpoint]
 
 ### Output helpers
@@ -291,14 +291,14 @@ CLI entry point: parses args, opens the input file, calls `executeBuffer`, then 
 
 Reports generated by this path contain a **memory-dump code section** (`Loc   Code` column header, no source text), because the interpreter has no access to the original assembly source. This distinguishes the interpreter-only path from the `lcc.js` combined path, where `assembler.listing` supplies a source-annotated code section alongside the runtime output and statistics. See [`.bst` / `.lst` report](assembler.md#bst--lst) for the full three-caller comparison.
 
-**Source:** `src/core/interpreter.js:349-470, 1746-1751`
+**Source:** `interpreter.js` — `main()`
 **See also:** [constructBSTLSTFileName], [executeBuffer]
 
 ### `constructBSTLSTFileName`
 
 Sibling-file naming helper: maps `inputFileName + (isBST ? '.bst' : '.lst')` to the report path via the shared `constructSiblingFileName` utility. Used by `main` to compute the report paths printed before `Output` and (via `writeReportFiles`) to write them.
 
-**Source:** `src/core/interpreter.js:472-474`
+**Source:** `interpreter.js` — `constructBSTLSTFileName()`
 **See also:** [`.lst` / `.bst` report](assembler.md#bst--lst)
 
 ### `userName` (via `nameHandler`)
