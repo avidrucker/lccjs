@@ -220,6 +220,15 @@ class Interpreter {
      * Set by the 'b {addr}' debugger command; cleared on hit or 'b' (no arg).
      */
     this.debugBreakpoint = null;
+
+    /**
+     * Step-count state for the `integer n` debugger command (oracle parity).
+     * `debugStepCount` is the count set by the last `n` (default 1); after a step
+     * command, `debugRunRemaining` instructions auto-run (state shown, no prompt)
+     * before debug() prompts again. (#1349)
+     */
+    this.debugStepCount = 1;
+    this.debugRunRemaining = 0;
   }
 
   // Reset all per-run execution state so the interpreter core can be reused
@@ -948,6 +957,15 @@ class Interpreter {
       const bpText  = bpEntry ? bpEntry.sourceLine : this.mem[addr].toString(16).padStart(4, '0');
       this.writeDebugOutput(`    ${bpText}`);
       this.debugBreakpoint = null; // clear breakpoint after first hit
+      this.debugRunRemaining = 0;  // a breakpoint interrupts a multi-step batch
+    }
+
+    // Mid-batch of an `integer n` / step-count run: show state and execute this
+    // instruction without prompting, until the batch is exhausted. (#1349)
+    if (this.debugRunRemaining > 0) {
+      this.debugRunRemaining--;
+      this._debugShowState(addr);
+      return;
     }
 
     while (true) {
@@ -956,10 +974,23 @@ class Interpreter {
       const input  = inputLine.trim();
       const cmd    = input.toLowerCase();
 
-      // ── step (empty Enter) ─────────────────────────────────────────────
+      // ── step (empty Enter): run step-count instructions ────────────────
       if (cmd === '') {
+        this.debugRunRemaining = Math.max(0, (this.debugStepCount || 1) - 1);
         this._debugShowState(addr);
         return; // execute the instruction
+      }
+
+      // ── integer n: set step count to n (decimal) and run n instructions ─
+      // Oracle treats a bare number at the prompt as a decimal step count.
+      if (/^\d+$/.test(input)) {
+        const n = parseInt(input, 10);
+        if (n > 0) {
+          this.debugStepCount = n;
+          this.debugRunRemaining = n - 1;
+        }
+        this._debugShowState(addr);
+        return; // execute the first instruction of the batch
       }
 
       // ── quit ───────────────────────────────────────────────────────────
@@ -1043,10 +1074,56 @@ class Interpreter {
         continue;
       }
 
+      // ── change value: c <loc> <val> ───────────────────────────────────
+      // loc = register (r0-r7 / fp / sp / lr), a label, or a hex address.
+      // Value is hex (like other debugger numbers). The Oracle segfaults on a
+      // bare `c`; lccjs validates and prints "Missing operand" instead. (#1349)
+      if (cmd === 'c' || /^c\s+\S+$/.test(cmd)) {
+        this.writeDebugOutput('Missing operand');
+        continue;
+      }
+      const cMatch = cmd.match(/^c\s+(\S+)\s+(\S+)$/);
+      if (cMatch) {
+        const loc    = cMatch[1];
+        const rawVal = parseInt(cMatch[2], 16);
+        if (Number.isNaN(rawVal)) { this.writeDebugOutput('Missing operand'); continue; }
+        const val = rawVal & 0xFFFF;
+        const regIdx = this._debugResolveRegister(loc);
+        if (regIdx !== null) { this.r[regIdx] = val; continue; }
+        const memAddr = this._debugResolveAddress(loc);
+        if (memAddr !== null) { this.mem[memAddr] = val; continue; }
+        this.writeDebugOutput('Error: Undefined label'); // matches the Oracle
+        continue;
+      }
+
       // ── step with state (unrecognized input, for backward compat) ───────
       this._debugShowState(addr);
       return;
     }
+  }
+
+  // Resolve a debugger location token to a register index (0-7) or null.
+  // Accepts r0-r7 and the aliases fp (r5), sp (r6), lr (r7). (#1349)
+  _debugResolveRegister(name) {
+    const m = /^r([0-7])$/.exec(name);
+    if (m) return parseInt(m[1], 10);
+    if (name === 'fp') return 5;
+    if (name === 'sp') return 6;
+    if (name === 'lr') return 7;
+    return null;
+  }
+
+  // Resolve a debugger location token to a memory address (0..0xFFFF) or null.
+  // A known symbol wins; then `0x..` hex; then a bare token that *starts with a
+  // digit* is read as hex. A token starting with a letter that is not a known
+  // symbol is treated as an undefined label (the Oracle behaves the same). (#1349)
+  _debugResolveAddress(loc) {
+    if (this.symbolTable && Object.prototype.hasOwnProperty.call(this.symbolTable, loc)) {
+      return this.symbolTable[loc] & 0xFFFF;
+    }
+    if (/^0x[0-9a-f]+$/i.test(loc)) return parseInt(loc, 16) & 0xFFFF;
+    if (/^[0-9][0-9a-f]*$/i.test(loc)) return parseInt(loc, 16) & 0xFFFF;
+    return null;
   }
 
   // Show the current instruction in oracle debug format:
