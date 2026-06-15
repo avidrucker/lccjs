@@ -14,28 +14,28 @@ interactive debugger, and the `.lst` / `.bst` reporting path. See
 
 The interpreter's 65536-word (16-bit each) main memory, modelled as a `Uint16Array`. `MAX_MEMORY` (= 65536) is the literal cap; addresses wrap modulo it on every fetch / store. The word-addressable convention is shared with the assembler — see `[.string` directive](assembler.md#string).
 
-**Source:** `src/core/interpreter.js:18, 67, 215`
+**Source:** `interpreter.js` — `mem` (field), `MAX_MEMORY` (const)
 **See also:** [r], [loadPoint], [memMax]
 
 ### `r` (registers)
 
 The eight general-purpose registers `r0..r7`, modelled as a `Uint16Array(8)`. They are stored as 16-bit *unsigned* values; signedness is applied on demand by `[toSigned16]` inside the arithmetic execute methods. Three of the registers have symbolic aliases honored at the display layer: `r5 = fp` (frame pointer), `r6 = sp` (stack pointer), `r7 = lr` (link register).
 
-**Source:** `src/core/interpreter.js:72, 216, 322-323`
+**Source:** `interpreter.js` — `r` (field)
 **See also:** [pc], [ir], [toSigned16]
 
 ### `pc` / `ir`
 
 `pc` is the program counter; `ir` is the instruction register (the last word fetched from `mem`). On each step `pc` is read, `mem[pc++]` lands in `ir`, then `ir` is decoded into the field set used by the per-instruction execute methods.
 
-**Source:** `src/core/interpreter.js:77, 82, 604`
+**Source:** `interpreter.js` — `pc` (field), `ir` (field)
 **See also:** [step], [decoded instruction fields]
 
 ### NZCV flags
 
 The four condition flags: `n` (negative), `z` (zero), `c` (carry), `v` (overflow). Stored as separate `0`/`1` fields. Set by arithmetic operations via `[setNZ]` and `[setCV]`; consumed by `[executeBR]`'s 3-bit condition decoding. `flagsSet` is a per-step bool indicating whether the current instruction modified any of NZCV — used by trace / debug output to decide whether to render the `<NZCV = …>` line.
 
-**Source:** `src/core/interpreter.js:87-102, 1640-1685`
+**Source:** `interpreter.js` — `n`,`z`,`c`,`v` (flags), `flagsSet` (field); set in `setNZ()`, `setCV()`
 **See also:** [setNZ], [setCV], [executeBR]
 
 ### Runtime state bookkeeping
@@ -51,21 +51,21 @@ A cluster of fields tracking per-run progress and statistics for the `.lst` / `.
 - `memMax` — highest address written (ST and the executable loader update this so the post-run memory display can stop at the right point)
 - `initialMem` — `mem` snapshot taken after loading; the `.lst` / `.bst` `Loc Code` column comes from here so post-run mutations don't pollute the listing
 
-**Source:** `src/core/interpreter.js:107-147, 595, 769-774`
+**Source:** `interpreter.js` — fields: `running`, `output`, `inputBuffer`, `instructionsExecuted`, `spInitial`, `maxStackSize`, `memMax`, `initialMem`
 **See also:** [executeS], [Listing reports (.lst/.bst)](assembler.md#bst--lst)
 
 ### `loadPoint` / `headerLines`
 
 `loadPoint` is the base mem address machine code is written to (default 0; `-L<hex>` CLI flag sets it). PC is initialized to `loadPoint + startAddress` after parsing. `headerLines` is the human-readable representation of the parsed `.e` header entries (`S xxxx`, `G xxxx label`, `A xxxx`); included verbatim in the `.lst` / `.bst` output.
 
-**Source:** `src/core/interpreter.js:137, 162, 551, 565, 573, 591`
+**Source:** `interpreter.js` — `loadPoint` (field), `headerLines` (field)
 **See also:** [executeBuffer], [.e file format (consumer)](#executable-loading)
 
 ### `sourceMap`
 
 PC-to-source-line map produced by the assembler at the end of pass 2 and forwarded by `lcc.js` when `-t` is used. Shape: `{addressToLine: Map<addr, {lineNumber, sourceLine}>, allLines: string[]}`. Consumed by `[debug]` and trace-mode pre-step output to render `addr:   <source text>` instead of raw hex.
 
-**Source:** `src/core/interpreter.js:198-203, 624-626, 982-985`
+**Source:** `interpreter.js` — `sourceMap` (field)
 **See also:** [debug], [trace mode]
 
 ### Run-time guard flags
@@ -80,7 +80,7 @@ A handful of bool flags that gate runtime behaviours:
 - `debugBreakpoint` — address set by debug `b <addr>`; cleared on first hit (single-shot)
 - `hasJumped` — per-step bool set by branch / jump / bl / blr; used by trace / debug output to decide whether to render `<pc = old/new>`
 
-**Source:** `src/core/interpreter.js:167-209, 752-767`
+**Source:** `interpreter.js` — fields: `debugMode`, `traceMode`, `maxSteps`, `disableInfiniteLoopDetection`, `allowRuntimeDebugging`, `debugBreakpoint`, `hasJumped`
 **See also:** [step], [debug], [canEnterInteractiveDebugger]
 
 ### Executable loading (`loadExecutableBuffer` / `loadExecutableFile` / `executeBuffer`)
@@ -136,7 +136,7 @@ The top-level loop. Captures `spInitial = r[6]` at entry, then `while (running) 
 
 `-t` flag: a non-interactive per-instruction trace. Before each step prints `<addr>:   <source text>` (from `sourceMap`, falls back to `(unknown)`). After each step prints a diff line: `<r0 = old/new>` per changed register, `<NZCV = nzcv>` if `flagsSet`, `<pc = old/new>` if `hasJumped`. Parallel to debug-mode formatting but routed straight to stdout (skipping `output`) so the trace doesn't pollute the `.lst` reports.
 
-**Source:** `src/core/interpreter.js:191-196, 620-627, 700-744`
+**Source:** `interpreter.js` — `traceMode` (field); emitted in `step()`, grep `this.traceMode`
 **See also:** [debug], [hasJumped], [flagsSet]
 
 ### `hexToMnemonic`
@@ -178,7 +178,7 @@ Branch-and-link / jump dispatch. `executeBLorBLR` reads `bit11`: 1 → BL (PC +=
 
 `executeLD` / `executeST` / `executeLEA` use pc-relative addressing (`pc + pcoffset9`); `executeLDR` / `executeSTR` use base+offset6 (`r[baser] + offset6`). `executeMVI` loads `imm9` directly into `r[dr]`. `executeST` and `executeSTR` also bump `[memMax]` so the post-run memory display knows the new high-water mark.
 
-**Source:** `src/core/interpreter.js:1232-1259`
+**Source:** `interpreter.js` — `executeLD()`, `executeST()`, `executeLEA()`, `executeLDR()`, `executeSTR()`, `executeMVI()`
 **See also:** [memMax]
 
 ### Arithmetic helpers
@@ -189,7 +189,7 @@ Branch-and-link / jump dispatch. `executeBLorBLR` reads `bit11`: 1 → BL (PC +=
 - `signExtend(value, bitWidth)` — generic sign-extend across a fixed bit-width
 - `signExtendMaskedValue(value, mask)` — sign-extend across an arbitrary bitmask (the sign bit is taken as the highest set bit of `mask`)
 
-**Source:** `src/core/interpreter.js:1631-1714`
+**Source:** `interpreter.js` — `toSigned16()`, `setNZ()`, `setCV()`, `signExtend()`, `signExtendMaskedValue()`
 **See also:** [NZCV flags], [executeSEXT]
 
 ### `executeSEXT` / `SEXT_PARITY_TABLE`
@@ -257,7 +257,7 @@ Three sinks for emitted bytes, differing in newline policy:
 
 `newline` is the platform line-ending constant (`'\r\n'` on win32, `'\n'` elsewhere).
 
-**Source:** `src/core/interpreter.js:1476-1507`
+**Source:** `interpreter.js` — `writeOutput()`, `writeDebugOutput()`, `writeDebugOutputOrElse()`
 **See also:** [executeTRAP]
 
 ### Post-run memory / register displays
@@ -268,7 +268,7 @@ CLI-only output blocks printed *after* `run()` returns, gated by per-call option
 - `options.regDisplay` (`-r`) — `Register display` block: PC/IR/NZCV header + two register lines with `fp`/`sp`/`lr` aliases
 - `options.hexOutput` (`-x`) — forces `HOUT` to 4-digit zero-padded output (otherwise prints the minimum-width hex)
 
-**Source:** `src/core/interpreter.js:308-325, 1533-1535`
+**Source:** `interpreter.js` — grep `Memory display`, `Register display`, `options.hexOutput`
 **See also:** [run], [executeTRAP]
 
 ### Error model
@@ -282,7 +282,7 @@ Two typed errors plus two helpers, mapping cleanly to "you shouldn't be loading 
 
 CLI catch shape: `Runtime Error: <msg>` wraps any thrown `InterpreterRuntimeError`; `"is not in lcc format"` is allowed to pass through verbatim because the user-facing wording is meaningful.
 
-**Source:** `src/core/interpreter.js:8, 444-450, 1729-1743`
+**Source:** `interpreter.js` — `raiseRuntimeError()`, grep `running = false`; `errors.js` — `InvalidExecutableFormatError`, `InterpreterRuntimeError` (classes)
 **See also:** [Possible-infinite-loop error], [Floating-point-exception error]
 
 ### `main` (CLI orchestration)
@@ -305,5 +305,5 @@ Sibling-file naming helper: maps `inputFileName + (isBST ? '.bst' : '.lst')` to 
 
 User identity string read from `name.nnn` by `nameHandler.createNameFile(inputFileName)`. Inserted at the top of every `.lst` / `.bst` report (right after the `LCC.js Assemble/Link/Interpret/Debug Ver` line). Triggered lazily — only when `generateStats` is true and reports are about to be written.
 
-**Source:** `src/core/interpreter.js:14, 454-463`
+**Source:** `interpreter.js` — `userName` (param); `createExecutionResult()`, `buildReportArtifacts()`; grep `userName`
 **See also:** [main]
