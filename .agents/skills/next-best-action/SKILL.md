@@ -1,131 +1,152 @@
 ---
 name: next-best-action
-description: Use before declaring an lccjs ticket complete or running `npm run close N` to catch follow-up tickets, missing close steps, deferred decisions, and unlogged errors that would otherwise evaporate at close time.
+description: "Pre-close checklist that catches findings that should be filed as tickets before the close commit. Run before every `npm run close N` on any substantive puzzle."
 ---
 
-# Next Best Action
+# /next-best-action -- pre-close finding checklist
 
-Run a short pre-close checklist before you say the work is done. This Codex skill is repo-local and version-controlled with the lccjs repository.
+Invoke this skill **before** writing the close commit and before running `npm run close N`. It takes 2-3 minutes and catches the most common oversight: findings that should become tickets, but won't if you close now.
 
-## When To Use
+**Run only with explicit user go-ahead.** This is a token-heavy pass, so don't auto-run it on every close and don't auto-skip it by how long the turn took. At close, *surface* that it applies ("next-best-action would apply here -- run it?") and run it only once the user approves. The cost control is the approval gate, not a duration heuristic (#1279).
 
-Use this skill:
+## Trigger
 
-- before every substantive `npm run close N`
-- before saying a ticket is complete
-- when deciding whether a session is truly ready to close
-- after research, spike, docs, PM, or code work that may have produced follow-up findings
+Every substantive puzzle close -- any ticket whose work produced code changes, doc changes, research findings, or process observations.
 
-Skip only for pure velocity-log-only closes or sub-minute clarification turns with no deliverable.
+## Skip when
 
-## Sources Of Truth
+- Pure velocity-log-only commits (no scope change, just a CSV update)
+- Pure PM/triage sessions with no code or doc output
 
-Read these repo docs instead of relying on memory:
+(Duration is **not** a skip reason -- a sub-minute close can still hide a fileable finding. The gate is user approval, not turn length; see the approval note above.)
 
-- `RULES.md` for the mandatory close and follow-up-ticket rules
-- `docs/claude_workflow.md` for the full close sequence and the detailed wording of the pre-close audits
-- `docs/skills.md` for the local skill inventory and project-specific invocation note
-- `docs/research/orchestration-failure-modes.md` when naming recurring process failures
+## Input (read before answering)
 
-Use companion skills instead of re-deriving their rules:
+1. `git diff origin/main` -- what actually changed vs. the ticket's "Should have"
+2. `gh issue view N` -- the ticket title and scope boundary
+3. Your closing summary -- what you observed, decided, and deferred during this session
 
-- `log-error` when this checklist finds an error that still needs a row
-- `puzzle-velocity` when preparing the velocity row and final close sequence
+## The checklist -- answer each question
 
-## Inputs To Check
+For every YES: name the finding and the ticket shape. **Filing is mandatory** -- a wrong ticket can be closed immediately after filing.
 
-Read these before answering the checklist:
+---
 
-1. `git diff origin/main` to see what actually changed
-2. `gh issue view <N> --comments` to re-check the ticket scope, parent links, and issue state
-3. Your session notes and pending closing summary
+**Q1 -- Bug or regression**
+Did you encounter a bug, parity deviation, or regression that is NOT in this ticket's stated scope?
 
-## Checklist
+- Yes -> file a bug ticket now: `gh issue create --title "bug: ..." --label "bug,severity:medium"`
+- No -> clear.
 
-Answer every question. For every `yes`, take the action before you close.
+---
 
-### 1. Bug Or Regression
+**Q2 -- Process recurrence**
+Did a known failure mode recur this session? Did you state any intent -- "I'll file a ticket", "I'll post a comment", "I'll update the doc" -- and then not follow through?
 
-Did you encounter a bug, parity deviation, or regression that is outside this ticket's stated scope?
+- Yes -> file a process-improvement ticket. Reference the failure mode by name if it appears in `docs/research/orchestration-failure-modes.md`.
+- No -> clear.
 
-- Yes: file a follow-up bug ticket now.
-- No: continue.
+---
 
-### 2. Process Recurrence
+**Q3a -- Doc contradiction**
+Does your output contradict or extend an existing doc, TIL, glossary entry, or open ticket?
 
-Did a known workflow failure recur this session, or did you state an intent such as "I'll file a ticket" or "I'll update the doc" and then fail to do it?
+- Yes -> file a WRITER ticket to update the post, or post a correction comment on the open ticket.
+- No -> clear.
 
-- Yes: file a process ticket now. Name the recurring failure mode if a known one applies.
-- No: continue.
+---
 
-### 3. Doc Or Ticket Contradiction
+**Q3b -- Closing loop**
+Did you post a closing comment on the issue? If you filed a child ticket, does it include `**Parent:** #N` in its body?
 
-Does this work contradict, correct, or extend an existing doc, TIL, glossary entry, or open ticket?
+- Closing comment missing -> post it now: `gh issue comment N --body "Closed in <sha>. <summary>"`
+- Child ticket missing parent link -> edit now: `gh issue edit <child-N> --body "**Parent:** #N\n\n<rest of body>"`
+- Both present -> clear.
 
-- Yes: file a WRITER follow-up or post the needed correction comment before closing.
-- No: continue.
+---
 
-### 4. Closing Loop
+**Q4 -- Deferred decision**
+Did you defer a technical or process decision with no tracking ticket?
 
-Is any required close-time linkage still missing?
+If this is a **research or spike close**: did you file a child DEV/SPIKE ticket for each concrete proposal? A research close with N proposals and zero children is half-finished; the findings exist but have no path to implementation. (Rule source: `claude_workflow.md` step 4, #621.)
 
-Check for:
+- Yes -> file a decision or DEV ticket now.
+- No -> clear.
 
-- a missing closing comment on the issue
-- a child ticket that should include `**Parent:** #<N>` but does not
-- a referenced follow-up ticket that has not actually been filed
+---
 
-If anything is missing, fix it before closing.
+**Q5 -- External routing**
+Is there a follow-up question for a human, Charlie, or Prof. Dos Reis that has no `waiting-on-external` ticket?
 
-### 5. Deferred Decision Or External Routing
+- Yes -> file a ticket labeled `waiting-on-external`. Include the handle of who needs to respond.
+- No -> clear.
 
-Did you defer a technical/process decision, or is there a question for a human or maintainer that has no tracking ticket yet?
+---
 
-- Yes: file the decision or routing ticket now.
-- No: continue.
+**Q6 -- Error self-audit** (RULES.md 16 / R021)
+Re-read your session from claim to now. Did any tool/Bash/git/`gh`/claim call fail, any hook block, any permission get denied, or any schema/validation check fail this session -- *including* ones you retried and resolved?
 
-For research or spike tickets: if the findings propose concrete implementation work, each distinct proposal needs its own follow-up ticket before close.
+- Yes -> confirm each has an `errors` row or log it now via `npm run error:log -- '{"ticket":N,"error_type":"...","message":"..."}'`.
+- Either way -> state the outcome in the closing comment: `error self-audit: N row(s) logged` or `error self-audit: no loggable errors this session`. (Silence is not a pass -- that is the #1108/#1117 failure mode.)
 
-### 6. Error Self-Audit
+---
 
-Re-read the session from claim to now. Did any tool call, shell command, Git operation, `gh` command, claim/close step, permission request, or validation check fail, even if you retried and recovered?
+## Verification Checklist
 
-- Yes: confirm each has an `errors` row or log it now with `log-error`.
-- No: continue.
+Before you start, confirm you can answer all 6:
 
-Your closing comment must state one explicit outcome:
+- [ ] Q1: Bug/regression found?
+- [ ] Q2: Process recurrence?
+- [ ] Q3a: Doc contradiction?
+- [ ] Q3b: Closing loop complete?
+- [ ] Q4: Deferred decisions tracked?
+- [ ] Q5: External routing needed?
+- [ ] Q6: Error self-audit done?
 
-- `error self-audit: N row(s) logged`
-- `error self-audit: no loggable errors this session`
+## One-Shot Recipe
 
-## Decision Rule
-
-Only proceed to the close sequence when every checklist item is either:
-
-- `no`
-- already fixed
-- or backed by a newly filed ticket
-
-If not, the next best action is not `npm run close N`; it is the missing filing, comment, or correction.
-
-## Output Format
-
-Use one of these summaries:
-
-```text
-GREEN - ready to close.
+```
+1. git diff origin/main          # what changed
+2. gh issue view N               # ticket scope
+3. Answer Q1-Q6                  # one by one, file as needed
+4. GREEN or AMBER                 # all clear or list filings
+5. npm run close N               # only after GREEN
 ```
 
-```text
-AMBER - do this before closing:
-- Q1: <finding> -> file <ticket type/title stub>
-- Q4: <missing close linkage>
+## Output format
+
+All questions answered -> emit one of:
+
+```
+GREEN -- all clear. Proceed with npm run close N.
 ```
 
-Do not call the ticket complete until the result is `GREEN`.
+or
 
-## Guardrails
+```
+AMBER -- file before closing:
+  - Q1: <finding> -> bug: <title stub> (label: bug, severity:medium)
+  - Q3b: no closing comment posted on #N
+  (filing is not optional -- a wrong ticket can be closed immediately)
+```
 
-- Keep this skill focused on close-readiness. Do not duplicate the entire velocity or close protocol here.
-- Filing a follow-up ticket is mandatory when the checklist finds deferred scope or a missing decision path.
-- Repo-local Codex skills live under `.agents/skills/...` and are committed normally in lccjs.
+Only proceed to `npm run close N` after reaching GREEN, or after filing tickets for every AMBER item and re-confirming.
+
+## Real-world examples (from lccjs session history)
+
+| Human follow-up that this skill should have prevented | Caught by |
+|---|---|
+| "pls file a ticket, this process isn't being followed consistently" | Q2 -- process recurrence unfiled |
+| "why didn't you follow through?" | Q2 -- stated intent not acted on |
+| "did you leave a closing comment on the ticket?" | Q3b -- no closing comment |
+| "child ticket missing parent link / no comment on #634" | Q3b -- cross-reference omitted |
+| "is there a follow-up ticket to decide what to do about orchestration failure modes?" | Q4 -- research closed with zero children |
+| "pls file a tracker with the 13 mitigations" | Q4 -- N proposals, zero children |
+| "pls create a decision ticket for the #611 audit results" | Q4 -- audit closed with no decision ticket |
+| "file a ticket for the blocked closing comment process-improvement" | Q2 + Q5 -- blocker not filed, routing skipped |
+
+## Related
+
+- `docs/claude_workflow.md` step 5 -- where this skill is wired into the close sequence
+- M3 (#627) -- prose checklist companion (teaches the same questions; this skill enforces them)
+- `docs/research/orchestration-failure-modes.md` -- failure mode catalogue for Q2 naming
