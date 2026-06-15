@@ -148,6 +148,6 @@ Both hooks are in `scripts/git-hooks/` and stay current as the branch evolves (s
 
 ## Gotchas
 
-Non-obvious foot-guns that are not obvious from the code: **[`docs/project-gotchas.md`](./docs/project-gotchas.md)**. For ISA-level assembly surprises see [`docs/pitfalls.md`](./docs/pitfalls.md); for workflow/tooling preferences see [`docs/do-this-not-that.md`](./docs/do-this-not-that.md).
+Non-obvious foot-guns that are not obvious from the code: **[`docs/project-gotchas.md`](./docs/project-gotchas.md)**. For ISA-level assembly surprises see [`docs/pitfalls.md`](./docs/pitfalls.md); for workflow/tooling preferences see [`docs/do-this-not-that.md`](./docs/do-this-not-that.md); for working-practice patterns and anti-patterns (how to approach agent work) see [`docs/agent-patterns.md`](./docs/agent-patterns.md).
 
 For any **showcase / playground** change, CM6 features must be verified in a browser against the *built* page before deploy — see **[`docs/showcase-local-dev.md`](./docs/showcase-local-dev.md)** (`npm run build && npm run serve:site`). Source reading is not sufficient (#985, #986, #987). For the high-level story of how the Pages site + playground are generated (build pipeline, what's committed vs generated, the dev loop), see **[`docs/site-generation.md`](./docs/site-generation.md)**.
