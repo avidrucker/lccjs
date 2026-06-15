@@ -54,7 +54,7 @@ Rank open issues by severity then Yegor priority, split out blocked/iceboxed wor
 - Works well for ranking and identifying blocked work, but cannot distinguish `humans-only` tickets from agent-grabbable ones without label awareness.
 
 ### `fruit-agent-orchestrate`
-Triage all open issues and produce copy-pasteable plain-paragraph work assignments for each named fruit agent (APPLE, BANANA, CHERRY, DRAGONFRUIT, ELDERBERRY, FIG, GRAPE, HONEYDEW, JACKFRUIT).
+Triage all open issues and produce copy-pasteable plain-paragraph work assignments for each named fruit agent (APPLE, BANANA, CHERRY, DRAGONFRUIT, ELDERBERRY, FIG, GRAPE, HONEYDEW, JACKFRUIT, KIWI).
 
 **Invoke when:** the user types the exact text `/fruit-agent-orchestrate`. Never trigger from description alone.
 

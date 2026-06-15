@@ -1,6 +1,6 @@
 ---
 name: fruit-agent-orchestrate
-description: Triage all open issues and produce copy-pasteable plain-paragraph work assignments for each named fruit agent (APPLE, BANANA, CHERRY, DRAGONFRUIT, ELDERBERRY, FIG, GRAPE, HONEYDEW, JACKFRUIT).
+description: Triage all open issues and produce copy-pasteable plain-paragraph work assignments for each named fruit agent (APPLE, BANANA, CHERRY, DRAGONFRUIT, ELDERBERRY, FIG, GRAPE, HONEYDEW, JACKFRUIT, KIWI).
 ---
 
 # Fruit Agent Orchestrate
