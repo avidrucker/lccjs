@@ -558,35 +558,35 @@ Two error-message context handles maintained as side effects of the source-line 
 
 One 4-nibble hexadecimal word per source line. The assembler treats each line as `<comment? ; …> <0-3 whitespace> <4 hex digits>`: comments are stripped (`;` delimiter), all whitespace (including internal) is removed via `s.replace(/\s+/g, '')`, then the regex `^[0-9A-Fa-f]+$` plus a length-equals-4 check validates. Parsed words land in `[outputBuffer]` and the per-line listing.
 
-**Source:** `src/core/assembler.js:772-842`
+**Source:** `assembler.js` — `parseHexFile()`, grep `4 nibbles`
 **See also:** [parseHexFile], [.bin file format], [Listing entry — raw .hex / .bin path shape]
 
 #### `parseHexFile`
 
 The bespoke parser for `.hex` files. Runs entirely separately from the two-pass assembly flow — it has no labels, no directives, no instructions. Just a per-line "read 4 nibbles → 1 word" loop. Behaviour deviations from the oracle (empty-file error, line-length cap) are noted inline in the code.
 
-**Source:** `src/core/assembler.js:772-842`
+**Source:** `assembler.js` — `parseHexFile()`
 **See also:** [.hex file format], [parseBinFile]
 
 #### `.bin` file format
 
 One 16-bit binary word per source line — 16 literal `0`/`1` characters. Same comment / whitespace rules as `[.hex file format]`. Validation regex is `^[01]+$` plus length-equals-16. Parsed words land in `[outputBuffer]` and the per-line listing.
 
-**Source:** `src/core/assembler.js:844-914`
+**Source:** `assembler.js` — `parseBinFile()`, grep `16 bits`
 **See also:** [parseBinFile], [.hex file format]
 
 #### `parseBinFile`
 
 Sibling of `[parseHexFile]` for the `.bin` extension. Same shape, same line-by-line loop, same listing-entry shape. The only differences are `parseInt(line, 2)` instead of `parseInt(line, 16)`, the `^[01]+$` regex, and 16-char length check.
 
-**Source:** `src/core/assembler.js:844-914`
+**Source:** `assembler.js` — `parseBinFile()`
 **See also:** [.bin file format], [parseHexFile]
 
 #### Empty-`.hex` / Empty-`.bin` exit-code-0
 
 Custom LCC.js behaviour (does not match the original LCC as of 12/2024): if `parseHexFile` or `parseBinFile` finishes the source with `locCtr === 0`, it raises `"Empty file"` and exits with status 0. The annotation in the code is explicit about this being a divergence — a follow-up parity decision is open.
 
-**Source:** `src/core/assembler.js:833-837, 905-909`
+**Source:** `assembler.js` — `parseHexFile()`, `parseBinFile()`, grep `abortAssembly('Empty file', 0)`
 **See also:** [.hex file format], [.bin file format], ["Empty file" exit-code-0]
 
 #### Raw-file abort messages
@@ -600,7 +600,7 @@ Custom LCC.js behaviour (does not match the original LCC as of 12/2024): if `par
 
 All four go through `[abortAssembly]`, so they CLI-exit (or throw under `throwOnAssemblyError`) immediately rather than accumulating in `[errors]`.
 
-**Source:** `src/core/assembler.js:812-817, 884-889`
+**Source:** `assembler.js` — `parseHexFile()`, `parseBinFile()`, grep `not purely`
 **See also:** [parseHexFile], [parseBinFile], [abortAssembly]
 
 ### (c) Tokenization & directive/instruction dispatch
