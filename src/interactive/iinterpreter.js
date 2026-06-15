@@ -753,7 +753,10 @@ const COMMAND_REGISTRY = [
   },
   {
     key: '{N}', match: 'numeric', helpLabel: '{N}', help: 'step forward N instructions',
-    helpExtra: ['  {-N}        step backward N instructions'],
+    helpExtra: [
+      '  {-N}        step backward N instructions (time-travel re-simulation)',
+      '              rewind restores registers, memory & output; consumed input is not rewound',
+    ],
     provenance: 'CH', test: 'interactive.unit.spec.js',
     run: (interp, cmd) => {
       const n = parseInt(cmd, 10);

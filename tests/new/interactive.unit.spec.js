@@ -552,6 +552,17 @@ describe('IInterpreter.runInteractive() — prompt loop (OB-044)', () => {
     expect(allOutput).toContain('ilcc interactive commands');
   });
 
+  // #1089: reverse execution (backward step) is documented in the help, with a
+  // one-line determinism boundary that reflects CURRENT behavior — rewind
+  // restores registers/memory/output, but NOT the consumed input stream.
+  test('help documents reverse execution and its determinism boundary (#1089)', () => {
+    const help = new IInterpreter().displayHelp();
+    expect(help).toContain('{-N}');                 // reverse step is discoverable
+    expect(help).toMatch(/step backward N/);
+    expect(help).toMatch(/rewind restores .*memory.* output/i); // boundary: what IS restored
+    expect(help).toMatch(/consumed input is not rewound/i);     // boundary: what is NOT
+  });
+
   test('0 command redisplays without stepping', () => {
     const interp = runWithInput(MIN_EXE, '0\nq\n');
     expect(interp.currentIteration).toBe(0);
