@@ -411,56 +411,56 @@ Builds the `.lst` and `.bst` content strings in memory without touching the file
 
 A label is `[A-Za-z_$@][A-Za-z0-9_$@]*` (one alphabetic / `_` / `$` / `@` head character, then any number of those plus digits). The trailing colon in a definition is optional — both `label:` and `label` are accepted at column 0, since `[isValidLabelDef]` treats either form (and any line without column-0 whitespace) as a label-bearing line. The `$` / `@` characters exist for compiler-mangled identifiers (`@L0`, `@M0`, `@s0_x`, `@A@set$ii`, `@f$ri`); LCC.js doesn't restrict their use to compiler-generated code.
 
-**Source:** `src/core/assembler.js:617-626`
+**Source:** `assembler.js` — `isValidLabelDef()`, `isValidLabel()`
 **See also:** [isValidLabel], [isValidLabelDef], [labels]
 
 #### `isValidLabelDef`
 
 A two-condition heuristic: a line starts with a label if **either** the first token ends with `:` **or** the original line's first character isn't whitespace. The "no whitespace at column 0" branch is what makes the assembler accept old-style labels without colons — a convention preserved for parity with the original LCC.
 
-**Source:** `src/core/assembler.js:617-619`
+**Source:** `assembler.js` — `isValidLabelDef()`
 **See also:** [Label syntax], [isValidLabel], [performPass]
 
 #### `isValidLabel`
 
 Pure regex check (`^[A-Za-z_$@][A-Za-z0-9_$@]*$`) used after `[isValidLabelDef]` has spotted a label-bearing line. Catches malformed labels (digits at the head, illegal characters) and triggers the `"Bad label"` error.
 
-**Source:** `src/core/assembler.js:623-626`
+**Source:** `assembler.js` — `isValidLabel()`
 **See also:** [Label syntax], [isValidLabelDef]
 
 #### Mid-line label detection
 
 A consequence of `[isValidLabelDef]`'s rules: when a line has column-0 whitespace, the first token is *not* treated as a label, even if it would otherwise be a valid identifier. This lets the assembler parse mnemonics directly without ambiguity — `   add r0, r1, r2` is unambiguously an instruction line, not a label `add` followed by garbage.
 
-**Source:** `src/core/assembler.js:617-618, 703`
+**Source:** `assembler.js` — `isValidLabelDef()`, grep `isWhitespace(originalLine[0])`
 **See also:** [isValidLabelDef], [performPass]
 
 #### `@`-prefixed labels (compiler-mangled)
 
 LCC's compiler emits identifiers like `@L0`, `@M0`, `@s0_x`, `@f$ri`, `@A@set$ii` for branch targets, string literals, static locals, and C++ name-mangled symbols respectively. The assembler doesn't distinguish them from any other label — the `@` prefix is just there to keep compiler-generated names from colliding with user-written ones. Treat them as plain labels in any analysis.
 
-**Source:** `src/core/assembler.js:624-625` (regex permits)
+**Source:** `assembler.js` — `isValidLabel()`, grep `[A-Za-z_$@]` (regex permits `@`)
 **See also:** [Label syntax]
 
 #### `$` in label names (C++ name-mangling separator)
 
 The `$` character is permitted in label names primarily so LCC's C++ frontend can emit mangled names like `@f$ri` (function `f` taking `int&`) or `@A@set$ii` (method `A::set(int, int)`). LCC.js doesn't enforce a specific mangling scheme — it just allows `$` in identifiers and lets the compiler use it however.
 
-**Source:** `src/core/assembler.js:624-625` (regex permits)
+**Source:** `assembler.js` — `isValidLabel()`, grep `[A-Za-z_$@]` (regex permits `$`)
 **See also:** [Label syntax], [@-prefixed labels (compiler-mangled)]
 
 #### Duplicate label detection
 
 Performed in pass 1 only, via the `[labels]` set. If a label has already been added to the set when a definition is encountered, `[error]` is called with `"Duplicate label"`. Pass 2 doesn't re-check — it trusts pass 1 to have caught all duplicates and only updates `[symbolTable]` on first sight.
 
-**Source:** `src/core/assembler.js:712-718`
+**Source:** `assembler.js` — `performPass()`, grep `this.labels.has(label)`
 **See also:** [labels], [symbolTable]
 
 #### `"Bad label"` / `"Duplicate label"`
 
 The two label-specific error wordings. `"Bad label"` fires whenever `[isValidLabel]` rejects an identifier (illegal characters, leading digit). `"Duplicate label"` fires on the second pass-1 sighting of a name. Both are raised through `[error]` and so trip `[errorFlag]`.
 
-**Source:** `src/core/assembler.js:710, 714`
+**Source:** `assembler.js` — `performPass()`, grep `'Bad label'`, `'Duplicate label'`
 **See also:** [isValidLabel], [Duplicate label detection], [errorFlag]
 
 #### Pass 1 — symbol table build
