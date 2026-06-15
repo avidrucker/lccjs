@@ -34,8 +34,14 @@ const { suggestClosest } = require('../utils/suggest');
 const { formatExplanation } = require('../utils/explanations');
 
 /**
- * Set to false to match original LCC behavior of reporting only 
- * a single error at a time
+ * Set to false to match original LCC behavior of reporting only
+ * a single error at a time.
+ *
+ * NOTE: this is an ASSEMBLER-ONLY switch. The linker has no equivalent —
+ * `Linker.error()` always throws on the first error (unconditional fail-fast).
+ * Flipping this to `true` would make the assembler collect-and-continue while
+ * the linker keeps aborting, diverging the two halves from each other AND from
+ * the oracle's one-error-at-a-time reporting. See docs/project-gotchas.md §9.
  *  */
 const REPORT_MULTI_ERRORS = false;
 

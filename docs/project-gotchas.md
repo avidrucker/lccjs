@@ -134,4 +134,35 @@ errors; the `:165` caller needed a new try/catch the ticket hadn't mentioned. Th
 
 ---
 
+## 9. `REPORT_MULTI_ERRORS` is assembler-only — the linker is always fail-fast
+
+The assembler has a module-level switch `REPORT_MULTI_ERRORS` (`assembler.js:40`,
+a `const`, currently `false`). When `false`, `Assembler.error()` logs the error,
+records it, then calls `abortAssembly` immediately — so assembly stops at the
+**first** error. The dormant `true` path would instead collect errors in
+`this.errors[]` and keep going (multi-error reporting).
+
+The **linker has no equivalent**. `Linker.error()` (`linker.js:error()`) logs
+(unless `silent`) and then **unconditionally `throw`s** a `LinkerError`; its
+callers in `processModule` ("Multiple entry points", "More than one global
+declaration", etc.) hit it mid-loop, so the first error aborts the whole link.
+There is no flag, no `errors[]` accumulation, no multi-error mode.
+
+**Why this matters:** today the two halves *agree* — both report exactly one
+error and stop — and both deliberately match the oracle, which reports one error
+at a time (see `parity_deviations.md §8` for the linker's matching exit-0
+behavior). The asymmetry is **latent**: if someone flips `REPORT_MULTI_ERRORS`
+to `true` to get multi-error assembler output, the linker will *not* follow, and
+the assembler will also diverge from the oracle. So the flag is intentionally
+off, and adding multi-error reporting is a both-halves (and parity) decision, not
+a one-line assembler toggle. This is distinct from §8 (which is about
+*flag-setting vs throwing* control flow); here both `error()`s throw on the first
+error — the gotcha is the **missing multi-error symmetry**.
+
+*(Origin: #1389 — verify-first triage of the claude-bugs-audit P2 note under
+tracker #1180. Behavior confirmed intentional and oracle-matching; documented
+rather than changed.)*
+
+---
+
 *(More entries to be added as they surface.)*
