@@ -25,9 +25,17 @@ Each term entry follows this shape:
 1–3 sentence definition that explains the LCC-specific angle. Avoid
 restating general assembler/VM/linker knowledge.
 
-**Source:** `src/core/<file>.js:<line-range>` (or function name)
+**Source:** `<file>.js` — `symbolName()`, `OTHER_SYMBOL`
 **See also:** [related-term-1], [related-term-2]
 ```
+
+`Source:` cites **stable symbols only — never line numbers** (functions, methods,
+`const`s, or a distinctive grep landmark string), so a reference survives refactors and
+stays greppable. When the code is not inside a single named symbol, cite the nearest
+enclosing symbol plus a landmark, e.g. ``**Source:** `interpreter.js` — `step()`, grep
+`"unknown opcode"` ``. The rationale and the rejected line-number alternatives are
+recorded in [ADR&nbsp;0001](../adr/0001-symbol-anchored-glossary-source-refs.md). (The
+`stats-analysis.md` glossary cites notebooks, not source, and is unaffected.)
 
 Cross-links use plain-text `[term-name]` refs within a file. Cross-file
 references use the standard `[term](other-file.md#anchor)` markdown form.
