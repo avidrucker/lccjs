@@ -467,91 +467,91 @@ The two label-specific error wordings. `"Bad label"` fires whenever `[isValidLab
 
 The first traversal of `[sourceLines]`. Reads each line, tokenizes, records any label at `locCtr` into `[symbolTable]` + `[labels]`, then increments `locCtr` by whatever the directive or instruction would emit (without actually emitting anything). No machine code, no listing entries — just label addresses + an aggregate `locCtr`. Errors raised here come from bad labels, malformed directives, and out-of-range operands.
 
-**Source:** `src/core/assembler.js:635-770`, dispatched from `[performPass]`
+**Source:** `assembler.js` — `performPass()`, grep `this.pass === 1`
 **See also:** [performPass], [Pass 2 — code emission], [locCtr]
 
 #### Pass 2 — code emission
 
 The second traversal, with `locCtr` reset to `[loadPoint]` and `[outputBuffer]` reset to `[]`. Re-tokenizes each line, dispatches to `[handleDirective]` or `[handleInstruction]`, and accumulates emitted words into `outputBuffer` + per-line entries into `[listing]`. Operand resolution can now look up labels in `[symbolTable]` (built in pass 1), so forward references just work.
 
-**Source:** `src/core/assembler.js:644-645, 752-755, 760-768`
+**Source:** `assembler.js` — `performPass()`, grep `this.pass === 2`
 **See also:** [performPass], [Pass 1 — symbol table build], [outputBuffer], [listing]
 
 #### `performPass`
 
 The single method that drives both passes. Branches on `[pass]` to skip code emission (pass 1) or actually emit (pass 2) at the lowest level — most of the per-line tokenize / dispatch / locCtr-bump logic is shared between passes. Called twice from `[assembleSource]` with the `pass` field toggled between calls.
 
-**Source:** `src/core/assembler.js:635-770`
+**Source:** `assembler.js` — `performPass()`
 **See also:** [Pass 1 — symbol table build], [Pass 2 — code emission]
 
 #### `loadPoint` discipline at pass-1 start
 
 `[loadPoint]` is explicitly set to `[defaultLoadPoint]` (= 0) at the top of pass 1. Without this reset, a program that uses `.org N` (jumping `locCtr` forward) would compute `[programSize] = locCtr - loadPoint` incorrectly on a re-run of the same `[Assembler]` instance. The reset matters because reusable in-process callers (`[assembleSource]`) may run the same instance multiple times.
 
-**Source:** `src/core/assembler.js:640-642`
+**Source:** `assembler.js` — `performPass()`, grep `this.loadPoint = this.defaultLoadPoint`
 **See also:** [loadPoint], [programSize], [.org / .orig]
 
 #### `outputBuffer` reset at pass-2 start
 
 `[outputBuffer]` is set to `[]` at the top of pass 2. Pass 1 doesn't emit, so the buffer is empty at that point regardless; but pass 2 needs a clean slate before re-walking the source. This reset means the same `[Assembler]` instance can be reused across runs.
 
-**Source:** `src/core/assembler.js:644-645`
+**Source:** `assembler.js` — `performPass()`, grep `this.outputBuffer = []`
 **See also:** [outputBuffer], [Pass 2 — code emission]
 
 #### 65536-word maximum address space
 
 Hard cap. After each line is processed in either pass, `locCtr` is checked against `65536`; exceeding it triggers `[error]` with `"Program too big"`. Reflects LCC's 16-bit word-addressable memory model — the executable can't have more code or data than will fit in `mem[0..65535]`.
 
-**Source:** `src/core/assembler.js:747-750`
+**Source:** `assembler.js` — `performPass()`, grep `this.locCtr > 65536`
 **See also:** [locCtr]
 
 #### Trailing empty-line removal
 
 At the end of pass 2, if the last entry in `[listing]` has a `sourceLine` that trims to empty, it's popped. The code comment annotates this as `"possible bug / strange lcc behavior"` — the rule was reverse-engineered from the original LCC's output and may not be deliberate behavior on that side. Worth folding into the oracle parity research.
 
-**Source:** `src/core/assembler.js:766-768`
+**Source:** `assembler.js` — `performPass()`, grep `this.listing.pop()`
 **See also:** [listing], [Pass 2 — code emission]
 
 #### Listing entry — assembly path shape
 
 For lines processed by the normal two-pass `.a` flow, each `[listing]` entry has shape `{lineNum, locCtr, sourceLine, codeWords, label, mnemonic, operands, comment}`. `codeWords` is the array of machine words emitted by this line (often one, sometimes more for `.string` / `.zero`); `label`, `mnemonic`, `operands` are the tokenized form. Consumed by `[buildReportArtifacts]` and by `[sourceMap]` construction.
 
-**Source:** `src/core/assembler.js:654-665, 734-755`
+**Source:** `assembler.js` — `performPass()`, grep `const listingEntry = {` (assembly path)
 **See also:** [listing], [Listing entry — raw .hex / .bin path shape]
 
 #### Listing entry — raw `.hex` / `.bin` path shape
 
 For lines processed by `[parseHexFile]` or `[parseBinFile]`, the shape is `{lineNum, locCtr, sourceLine, macWord, comment}` — no tokenization, no label / mnemonic / operands, and code is a single `macWord` (the parsed value) rather than a `codeWords` array. The same `[listing]` array holds both shapes; downstream code branches on which field is present.
 
-**Source:** `src/core/assembler.js:782-788, 854-860`
+**Source:** `assembler.js` — `parseHexFile()`, `parseBinFile()`, grep `const listingEntry = {`
 **See also:** [listing], [Listing entry — assembly path shape], [parseHexFile], [parseBinFile]
 
 #### `;` as comment delimiter
 
 Anywhere on a line, everything from `;` to end-of-line is a comment. `[performPass]` extracts the comment substring (everything after the first `;`) into the listing entry's `comment` field, then strips it from the line before tokenisation. Same convention in `[parseHexFile]` and `[parseBinFile]`. There is no block-comment form.
 
-**Source:** `src/core/assembler.js:668-678, 791-803, 863-875`
+**Source:** `assembler.js` — `performPass()`, grep `line.indexOf(';')`
 **See also:** [Source-line processing], [tokenizeLine]
 
 #### Source-line processing pipeline
 
 The fixed sequence in `[performPass]`: capture `originalLine` and `currentLine`, validate length, extract comment, strip comment + trim, tokenize, peel off optional label, peel off mnemonic, send the rest to `[handleDirective]` (mnemonic starts with `.`) or `[handleInstruction]`. Empty post-strip lines still produce a listing entry in pass 2 (so the listing reports show blank source lines aligned with the original file).
 
-**Source:** `src/core/assembler.js:648-756`
+**Source:** `assembler.js` — `performPass()` (source-line loop)
 **See also:** [performPass], [handleDirective], [handleInstruction]
 
 #### Mnemonic routing (`.` vs other)
 
 After tokenisation, the mnemonic is lowercased. If it starts with `.`, `[handleDirective]` runs (directives manage their own locCtr bumps); otherwise `[handleInstruction]` runs (which always bumps `locCtr` by 1 — every instruction is exactly one 16-bit word). This single-character dispatch is the boundary between "directive vocabulary" and "instruction vocabulary."
 
-**Source:** `src/core/assembler.js:723, 738-745`
+**Source:** `assembler.js` — `performPass()`, grep `mnemonic.startsWith('.')`
 **See also:** [handleDirective], [handleInstruction], [Pass 1 — symbol table build]
 
 #### `currentLine` / `currentListingEntry`
 
 Two error-message context handles maintained as side effects of the source-line loop. `currentLine` is the original (pre-strip) source for the line being processed; `currentListingEntry` is the in-progress entry. `[error]` formats `currentLine` into the standard `"Error on line N of file:\n    <line>\n<message>"` wording, so the user sees the literal source that failed.
 
-**Source:** `src/core/assembler.js:651, 665, 2276`
+**Source:** `assembler.js` — `currentLine` (field), `currentListingEntry` (field)
 **See also:** [error], [performPass]
 
 #### `.hex` file format
