@@ -20,7 +20,7 @@ encoding & per-mnemonic encoders · **(e)** operand & immediate evaluation.
 
 The next free word address. Bumped by every code-emitting directive (`.word`/`.string`/`.zero`/`.fill`/…) and every instruction. Pass 1 uses `locCtr` to record each label's address in `[symbolTable]`; pass 2 uses it as the destination for `[outputBuffer]` writes via `[writeMachineWord]`. Reset to `[loadPoint]` at the start of each pass.
 
-**Source:** `src/core/assembler.js:81, 635-756`
+**Source:** `assembler.js` — `locCtr` (field)
 **See also:** [loadPoint], [programSize], [writeMachineWord]
 
 #### `loadPoint` / `defaultLoadPoint` / `listingLoadPoint`
@@ -31,91 +31,91 @@ Three closely related fields that exist to keep three different "load point" con
 - `loadPoint` — the assembly-time `locCtr` start. Normally 0; explicitly set to `locCtr` at the beginning of pass 1 so that `[programSize] = locCtr - loadPoint` is correct even when a program starts at a non-zero `locCtr` via `.org`.
 - `listingLoadPoint` — the **display-only** offset from the `-l<hex>` CLI flag. Added to `locCtr` when rendering listing addresses so the listing shows the intended runtime memory layout. **Does not** affect encoded machine code or the `.e` file.
 
-**Source:** `src/core/assembler.js:138-150, 635-770`
+**Source:** `assembler.js` — `loadPoint` (field), `defaultLoadPoint` (field), `listingLoadPoint` (field)
 **See also:** [locCtr], [programSize], [.lst / .bst report](#bst--lst)
 
 #### `programSize`
 
 The size of the assembled program in words, computed at the end of pass 2 as `locCtr - loadPoint`. Included in the listing reports' program-statistics block. Distinct from "highest address used" — `programSize` is the span between `[loadPoint]` and the final `[locCtr]`, not the count of bytes actually written.
 
-**Source:** `src/core/assembler.js:155, 760`
+**Source:** `assembler.js` — `programSize` (field)
 **See also:** [locCtr], [loadPoint]
 
 #### `startLabel` / `startAddress`
 
 `startLabel` holds the string operand of the `.start` directive (or `null` if absent); `startAddress` holds its resolved address after pass 2. Resolution is deferred because `.start`'s argument may be a forward reference. If `.start` was never given, `startAddress` defaults to 0. Both are consumed by `[buildOutputFileChunks]` to emit the `'S'` header entry.
 
-**Source:** `src/core/assembler.js:160-165, 411-422`
+**Source:** `assembler.js` — `startLabel` (field), `startAddress` (field)
 **See also:** [`.e` / `.o` file format], [`'S'` start address record]
 
 #### `pass`
 
 The current assembly pass — `1` (symbol-table build) or `2` (code emission). The same `[performPass]` method runs twice, with this field switching its behaviour. Some directives also branch on `pass` directly (e.g. `.zero` only writes words in pass 2).
 
-**Source:** `src/core/assembler.js:101, 364, 377, 635-770`
+**Source:** `assembler.js` — `pass` (field)
 **See also:** [performPass], [outputBuffer]
 
 #### `errorFlag`
 
 Sticky flag flipped to true whenever `[error]` is called; checked at the end of each pass to decide whether to abort the run. Lets the assembler continue scanning a single line to find multiple unrelated problems while still failing the run as a whole. (Effectively unused when `REPORT_MULTI_ERRORS = false`, but kept in place for the multi-error future.)
 
-**Source:** `src/core/assembler.js:96, 371, 402, 2279`
+**Source:** `assembler.js` — `errorFlag` (field)
 **See also:** [REPORT_MULTI_ERRORS], [error], [failAssembly]
 
 #### `isObjectModule`
 
 True when the source uses any of `.global`/`.globl`/`.extern`. Causes the output extension to be `.o` instead of `.e` and triggers the post-pass-2 `.lst`/`.bst` report generation in `main()`. The flag is set the first time one of those directives runs; it is *not* checked back to `false` if all such directives are later removed.
 
-**Source:** `src/core/assembler.js:170, 1075, 1096, 398-400, 572`
+**Source:** `assembler.js` — `isObjectModule` (field)
 **See also:** [globalLabels], [externLabels], [main]
 
 #### `throwOnAssemblyError`
 
 Per-call switch on `[assembleSource]` that controls failure semantics: when `true`, `[abortAssembly]` throws a typed `[AssemblerError]` instead of calling `process.exit`. Tests and in-process wrappers set this to `true`; the CLI entry leaves it `false`.
 
-**Source:** `src/core/assembler.js:195, 261-267, 305, 431`
+**Source:** `assembler.js` — `throwOnAssemblyError` (field)
 **See also:** [AssemblerError], [abortAssembly], [assembleSource]
 
 #### `sourceMap`
 
 `{addressToLine: Map<addr, {lineNumber, sourceLine}>, allLines: string[]}` — built after pass 2 from the `[listing]` entries that emitted code. Forwarded to the interpreter so debug / trace output can render `addr:   <source text>` instead of raw hex. Built only for `.a` files; `null` for `.bin`/`.hex`/object modules.
 
-**Source:** `src/core/assembler.js:198-202, 384-395`
+**Source:** `assembler.js` — `sourceMap` (field)
 **See also:** [listing], [interpreter sourceMap](interpreter.md#sourcemap)
 
 #### `symbolTable`
 
 The label → `locCtr` map populated in pass 1. Consumed in pass 2 by every operand-resolution path (`[evaluateOperand]`, label-arithmetic, `.start` resolution). Local definitions only — external labels are tracked separately in `[externLabels]`.
 
-**Source:** `src/core/assembler.js:76, 716, 1080, 1171, 2180-2200`
+**Source:** `assembler.js` — `symbolTable` (field)
 **See also:** [labels], [evaluateOperand], [GTable (linker)](linker.md#gtable)
 
 #### `labels`
 
 A `Set` of label strings used purely for **duplicate-label detection** during pass 1. Distinct from `[symbolTable]`: `labels` is just for "have I seen this name?" while `symbolTable` is the actual name → address mapping. Duplicates trigger the `"Duplicate label"` error.
 
-**Source:** `src/core/assembler.js:106, 712-718`
+**Source:** `assembler.js` — `labels` (field)
 **See also:** [symbolTable], [isValidLabel]
 
 #### `globalLabels`
 
 Set of labels that should be exported in the output `.o`. Populated by `.global` / `.globl`; serialized as `'G'` header entries by `[buildOutputFileChunks]`. Setting any global also trips `[isObjectModule]` so the output extension switches to `.o`.
 
-**Source:** `src/core/assembler.js:175, 1074-1084, 467-470`
+**Source:** `assembler.js` — `globalLabels` (field)
 **See also:** [isObjectModule], [`'G'` global record], [externLabels]
 
 #### `externLabels`
 
 Set of labels declared with `.extern` — the symbols the linker will be asked to resolve. The presence of a label here changes operand-resolution semantics: `[evaluateOperand]` returns the placeholder (`0 + offset`) and records an `[externalReferences]` entry instead of erroring on "undefined label".
 
-**Source:** `src/core/assembler.js:180, 1086-1098, 2183-2200`
+**Source:** `assembler.js` — `externLabels` (field)
 **See also:** [externalReferences], [globalLabels], [evaluateOperand]
 
 #### `externalReferences`
 
 Array of `{label, type, address}` records — one per place in the code that references an `.extern` label. The `type` is one of `'e'` / `'E'` / `'V'` (see [externalReferences entry types]) and tells the linker which fix-up encoding to apply. Serialized as the matching header entry types by `[buildOutputFileChunks]`.
 
-**Source:** `src/core/assembler.js:185, 2109-2125, 472-475`
+**Source:** `assembler.js` — `externalReferences` (field)
 **See also:** [externLabels], [externalReferences entry types]
 
 #### externalReferences entry types
@@ -128,35 +128,35 @@ Three single-letter type tags that distinguish how the linker should patch the r
 
 The capitalisation matches the type byte that appears in the `.o` file header. Selected at emit time via the `usageType` argument to `[evaluateOperand]`.
 
-**Source:** `src/core/assembler.js:472-475, 488-518, 1827, 1718, 1163`
+**Source:** `assembler.js` — `handleExternalReference()`, `evaluateOperand()`; grep `type: usageType`
 **See also:** [externalReferences], [ETable / eTable / VTable (linker)](linker.md#etable--etable--vtable)
 
 #### `adjustmentEntries`
 
 Array of addresses that need linker-side relocation when the containing module is concatenated onto another module. A word becomes an adjustment entry whenever `.word label+N` (or a similar label-arithmetic form) references a **local** symbol — the offset survives concatenation but the base must be shifted. Serialized as `'A'` header entries.
 
-**Source:** `src/core/assembler.js:190, 209-213, 1172-1174, 478-480`
+**Source:** `assembler.js` — `adjustmentEntries` (field)
 **See also:** [`'A'` adjustment record], [ATable (linker)](linker.md#atable)
 
 #### `sourceLines`
 
 The raw source split into an array of lines (one per `\n`). Re-iterated by `[performPass]` for pass 1 then pass 2. Populated by `[assembleSource]` from its `sourceCode` argument.
 
-**Source:** `src/core/assembler.js:91, 315, 648`
+**Source:** `assembler.js` — `sourceLines` (field)
 **See also:** [assembleSource], [performPass]
 
 #### `outputBuffer`
 
 Array of 16-bit machine words emitted by pass 2. Each `[writeMachineWord]` call appends one entry. At the end of assembly, `[buildOutputFileChunks]` packs the buffer into UInt16LE bytes for the output file. Reset to `[]` at the start of pass 2.
 
-**Source:** `src/core/assembler.js:116, 524-529, 1399-1406, 645`
+**Source:** `assembler.js` — `outputBuffer` (field)
 **See also:** [writeMachineWord], [buildOutputFileChunks]
 
 #### `listing`
 
 Per-line metadata accumulated across pass 2. Each entry is `{lineNum, locCtr, sourceLine, codeWords, label, mnemonic, operands, comment}` (for assembly source) or `{lineNum, locCtr, sourceLine, macWord, comment}` (for raw `.hex`/`.bin`). Feeds the `.lst` / `.bst` reports via `[buildReportArtifacts]` and the `[sourceMap]` build.
 
-**Source:** `src/core/assembler.js:136, 654-665, 753-755`
+**Source:** `assembler.js` — `listing` (field)
 **See also:** [sourceMap], [.lst / .bst report](#bst--lst)
 
 #### File extensions
