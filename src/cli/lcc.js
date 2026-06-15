@@ -14,6 +14,7 @@ const { runTestSpec } = require('../testrunner/runner');
 const nameHandler = require('../utils/name.js');
 const { buildReportArtifacts } = require('../utils/reportArtifacts');
 const { constructSiblingFileName, writeReportFiles } = require('../utils/fileArtifacts');
+const { formatFlagDiagnostics } = require('../utils/flagDiagnostics');
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 
@@ -356,6 +357,10 @@ class LCC {
   }
 
   parseArguments(args) {
+    // Collected during the loop, reported once at the end as non-blocking
+    // warnings (#1373): unknown flags and known-but-unimplemented flags.
+    const unknownFlags = [];
+    const unimplementedFlags = [];
     let i = 0;
     while (i < args.length) {
       let arg = args[i];
@@ -372,7 +377,10 @@ class LCC {
             this.options.regDisplay = true;
             break;
           case '-f':
+            // Known flag, but currently has no effect (#1371) — report it as
+            // not-yet-implemented. Remove from this list when -f is wired up.
             this.options.fullLineDisplay = true;
+            unimplementedFlags.push('-f');
             break;
           case '-x':
             this.options.hexOutput = true;
@@ -446,7 +454,8 @@ class LCC {
                 cliErrorExit('Missing output file name after -o flag', 1);
               }
             } else {
-              cliErrorExit(`Unknown option: ${arg}`, 1);
+              // Unknown flag — collect and warn at the end, don't abort (#1373).
+              unknownFlags.push(arg);
             }
             break;
         }
@@ -455,6 +464,11 @@ class LCC {
         this.args.push(arg);
       }
       i++;
+    }
+
+    // Report unknown / unimplemented flags as non-blocking warnings (#1373).
+    for (const line of formatFlagDiagnostics({ unknown: unknownFlags, unimplemented: unimplementedFlags })) {
+      process.stderr.write(line + '\n');
     }
   }
 

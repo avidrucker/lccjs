@@ -20,6 +20,7 @@ const IInterpreter = require('./iinterpreter');
 const { constructSiblingFileName } = require('../utils/fileArtifacts');
 
 const { fatalExit, cliErrorExit } = require('../utils/cliExit');
+const { formatFlagDiagnostics } = require('../utils/flagDiagnostics');
 
 class ILCC {
   constructor() {
@@ -121,6 +122,9 @@ class ILCC {
   }
 
   parseArguments(args) {
+    // Collected during the loop, reported once as non-blocking warnings (#1373).
+    const unknownFlags = [];
+    const unimplementedFlags = [];
     let i = 0;
     while (i < args.length) {
       const arg = args[i];
@@ -136,7 +140,9 @@ class ILCC {
             this.options.regDisplay = true;
             break;
           case '-f':
+            // Known but currently no effect (#1371) — report as unimplemented.
             this.options.fullLineDisplay = true;
+            unimplementedFlags.push('-f');
             break;
           case '-x':
             this.options.hexOutput = true;
@@ -170,7 +176,8 @@ class ILCC {
                 cliErrorExit('Missing output file name after -o flag', 1);
               }
             } else {
-              cliErrorExit(`Unknown option: ${arg}`, 1);
+              // Unknown flag — collect and warn at the end, don't abort (#1373).
+              unknownFlags.push(arg);
             }
             break;
         }
@@ -178,6 +185,11 @@ class ILCC {
         this.args.push(arg);
       }
       i++;
+    }
+
+    // Report unknown / unimplemented flags as non-blocking warnings (#1373).
+    for (const line of formatFlagDiagnostics({ unknown: unknownFlags, unimplemented: unimplementedFlags })) {
+      process.stderr.write(line + '\n');
     }
   }
 
