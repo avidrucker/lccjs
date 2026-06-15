@@ -79,6 +79,15 @@ This repo runs a **Puzzle-Driven Development** discipline with multiple agents w
 
 Inherited from the parent `~/Documents/Study/CLAUDE.md`: GitHub `avidrucker`, commit email `6962664+avidrucker@users.noreply.github.com`. Don't override per-repo.
 
+## Collaborators
+
+When a ticket/comment names a collaborator, use their real GitHub handle so the @-mention actually notifies — **`@charlie` is inert; the handle is `@ItBeCharlie`**:
+
+- **Charlie** = `@ItBeCharlie` — architecture/design reviewer (often asked to sign off before implementation)
+- **Prof. Dos Reis** — oracle author. ⚠ GitHub handle currently **unverified** (both `GDR400` and `@profavc` return 404); do not @-mention until confirmed.
+
+Full registry (source of truth): the `CONTRIBUTOR_*` block in [`.env.example`](./.env.example). Validate any handle before @-mentioning with `gh api /users/<handle>` (404 = won't notify).
+
 ## Commit conventions
 
 Format: `type(optional-scope): description` — [Conventional Commits](https://www.conventionalcommits.org/).

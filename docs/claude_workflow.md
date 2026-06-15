@@ -235,7 +235,7 @@ When drafting an email template or message for review in an issue, replace every
 
 Triggered by #507 (personal email in a review comment); rule documented in #537.
 
-**GitHub handle validation:** Before mentioning a GitHub handle in an issue or comment, verify it resolves with `gh api /users/<handle>` — a 404 means the handle doesn't exist and the @-mention will silently not send a notification. Known valid collaborator handles: `@ItBeCharlie` (Charlie), `@profavc` (Prof. Dos Reis). Rule documented in #635.
+**GitHub handle validation:** Before mentioning a GitHub handle in an issue or comment, verify it resolves with `gh api /users/<handle>` — a 404 means the handle doesn't exist and the @-mention will silently not send a notification. Collaborator handles live in one place — the `CONTRIBUTOR_*` registry in `.env.example` (e.g. Charlie = `@ItBeCharlie`), summarized in `CLAUDE.md` → "Collaborators". Don't re-list handles here; this avoids the drift that left two different (both 404) handles recorded for Prof. Dos Reis. Rule documented in #635.
 
 ---
 
