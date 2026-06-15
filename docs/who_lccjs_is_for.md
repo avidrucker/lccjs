@@ -27,7 +27,7 @@ listing files (`.lst`/`.bst`) show you exactly what your source became.
 **Start here (everyone):**
 1. [Install LCC.js](../README.md#installation) and skim the [Quick Start](../README.md#quick-start).
 2. Assemble and run a provided demo to confirm your setup works:
-   `node src/core/lcc.js demos/demoA.a` (the `demos/` folder has `demoA.a`
+   `node src/cli/lcc.js demos/demoA.a` (the `demos/` folder has `demoA.a`
    through `demoZ.a`, smallest first).
 3. Work through [docs/tutorial_01_intro.md](./tutorial_01_intro.md) — the
    step-by-step intro to registers, I/O, directives, control structures, and the

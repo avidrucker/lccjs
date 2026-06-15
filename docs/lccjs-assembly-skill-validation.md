@@ -14,7 +14,7 @@ working directory. No conversation history, no prior skill exposure. Each was
 told the skill exists and could be invoked via the Skill tool, but no skill
 content was leaked into the prompts. Code returned by each agent saved verbatim
 to `experiments/skill-validation/`. Each `.a` file was then assembled
-(`node src/core/lcc.js`) and run (`node src/core/interpreter.js`), with output
+(`node src/cli/lcc.js`) and run (`node src/core/interpreter.js`), with output
 compared to the spec.
 
 **Prompt discipline (lesson from this pass).** The six prompts constrained the
@@ -91,7 +91,7 @@ SKILL.md is a router. It contains:
    (demos 001, 003, 007, 010, 013, 017, 018, 020). The skill points; it does
    not copy. The demos are the single source of truth and already follow the
    house style.
-4. **Verification loop** — `node src/core/lcc.js` for assembly, then
+4. **Verification loop** — `node src/cli/lcc.js` for assembly, then
    `node src/core/interpreter.js` for execution.
 
 ### The four non-negotiable pitfalls

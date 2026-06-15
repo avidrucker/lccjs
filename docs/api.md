@@ -19,7 +19,7 @@ Current wrapper entrypoints:
 - `node ./src/core/assembler.js file.a`
 - `node ./src/core/interpreter.js file.e`
 - `node ./src/core/linker.js file1.o file2.o`
-- `node ./src/core/lcc.js file.a`
+- `node ./src/cli/lcc.js file.a`
 
 Design goals:
 

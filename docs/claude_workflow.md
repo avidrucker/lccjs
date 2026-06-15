@@ -193,7 +193,7 @@ If any file your ticket will touch is untracked or modified on main, commit or s
 - **Register first-use skills in `docs/skills.md` in the same session.** If I invoke a skill that has no entry in `docs/skills.md`, add one before closing. Skills adopted silently leave the inventory perpetually behind usage. (#929)
 - **Wrap tool invocations with `lccrun.sh`.** Any shell call to `lcc.js`, `interpreter.js`, `linker.js`, or the oracle binary (`$LCC_ORACLE`) that could read from stdin **must** go through `scripts/lccrun.sh`:
   ```bash
-  scripts/lccrun.sh [<secs>] node src/core/lcc.js <file>.a      # default 30 s
+  scripts/lccrun.sh [<secs>] node src/cli/lcc.js <file>.a       # default 30 s
   scripts/lccrun.sh [<secs>] "$LCC_ORACLE" probe.a
   ```
   Bare invocations block indefinitely when `name.nnn` is absent and stdin is not a TTY (agent FIG, 2026-06-01: 28 min at 99.9% CPU). The runner kills the full process group on timeout and exits 124. Only skip the runner for `assembler.js` or `linker.js` invocations that provably never reach the interpreter (i.e., `--assemble-only` / `-o` output and no `-i` flag).

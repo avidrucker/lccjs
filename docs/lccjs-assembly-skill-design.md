@@ -99,7 +99,7 @@ Each must be stated as **symptom → why → correct pattern**, not just a rule:
 
 ## 6. Evaluation criteria (drives #117)
 
-**Positive** — fresh session + skill writes, assembles (`node src/core/lcc.js`), and runs:
+**Positive** — fresh session + skill writes, assembles (`node src/cli/lcc.js`), and runs:
 - a countdown loop (tests loop idiom + branch choice),
 - a function with 2 locals and a return value (tests calling convention),
 - a struct or static linked-list traversal (tests pointer/`ldr`/`str` idioms).

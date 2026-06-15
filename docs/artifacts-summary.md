@@ -12,7 +12,7 @@ Produced by the core assembler/linker/interpreter pipeline. All are **local-only
 
 | Artifact | Pattern | Produced by | Value | Staleness |
 |----------|---------|-------------|-------|-----------|
-| Executable | `*.e` | `assembler.js` (single-module) or `linker.js` (multi-module) | The runnable binary the interpreter consumes | Stale when source `.a` changes; regenerate with `node src/core/lcc.js` |
+| Executable | `*.e` | `assembler.js` (single-module) or `linker.js` (multi-module) | The runnable binary the interpreter consumes | Stale when source `.a` changes; regenerate with `node src/cli/lcc.js` |
 | Object file | `*.o` | `assembler.js` with multi-module flag | Relocatable intermediate; input to the linker | Stale when source `.a` changes |
 | Listing file | `*.lst` | assembler/lcc (report path) | Human-readable source + hex + symbol table; oracle-parity reference | Regenerated on each assemble run |
 | BST (batch symbol table) | `*.bst` | interpreter (report path) | Execution trace with register states; oracle-parity reference | Regenerated on each interpreter run |

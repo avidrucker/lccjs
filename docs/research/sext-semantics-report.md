@@ -154,7 +154,7 @@ printf 'TestUser\n' > name.nnn
 lcc probe1.a            # observe the r1=0..15 sweep
 
 # LCC.js (identical output — see §8):
-node src/core/lcc.js experiments/sext_field_probe.a
+node src/cli/lcc.js experiments/sext_field_probe.a
 ```
 
 ## 8. LCC.js parity note (not a divergence)

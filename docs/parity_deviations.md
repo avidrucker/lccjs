@@ -214,7 +214,7 @@ a working build with a broken one.
 
 **Report:** `docs/cuh63-blank-e-on-error-bug-report.md` (filed 2026-06-05, #264).
 
-**Repro:** `printf '    br cheese\n    halt\n' > undef.a`; `node src/core/lcc.js
+**Repro:** `printf '    br cheese\n    halt\n' > undef.a`; `node src/cli/lcc.js
 undef.a` (errors, no `.e`) vs oracle `lcc undef1.a` (errors but leaves a 2-byte
 `undef1.e`; `lcc undef1.e` then infinite-loops).
 
@@ -392,13 +392,13 @@ a different limit, update this" caveat is discharged.
 When the linker encounters an error (undefined external, duplicate global),
 OG LCC prints the error message but exits with code 0 (confirmed by probe).
 LCC.js matches this behavior: `Linker.error()` logs to stderr and throws
-`LinkerError`; `lcc.js:linkObjectFiles` catches `LinkerError` and returns
+`LinkerError`; `src/cli/lcc.js:linkObjectFiles` catches `LinkerError` and returns
 cleanly, so the process exits 0.
 
 This is parity-correct, not a deviation. Documented here because the
 exit-0 outcome must be preserved whenever the error-handling path is changed.
 
-**Source:** `src/core/linker.js` (`error()`), `src/core/lcc.js:linkObjectFiles`
+**Source:** `src/core/linker.js` (`error()`), `src/cli/lcc.js:linkObjectFiles`
 (catch block for `LinkerError`)
 
 ---
@@ -437,7 +437,7 @@ currently intentional no-ops; neither is tracked as a bug.
 **Source:** `src/core/assembler.js:367–369` (`abortAssembly('Empty file', 0)`),
 `src/core/assembler.js:47–53` (`fatalExit` drops the message at code 0)
 
-**Repro:** `node src/core/lcc.js empty.a` on a 0-byte or whitespace-only `.a`;
+**Repro:** `node src/cli/lcc.js empty.a` on a 0-byte or whitespace-only `.a`;
 oracle `lcc empty1.a` for comparison.
 
 ---
@@ -601,7 +601,7 @@ and document the divergence rather than replicating OG LCC's multi-file assembly
 The single-source-file case covers all lccjs use cases; multi-file `.a` is a rare
 OG LCC feature.
 
-**Source:** `src/core/lcc.js` (`main()` dispatch comment: "Multiple .a files: only
+**Source:** `src/cli/lcc.js` (`main()` dispatch comment: "Multiple .a files: only
 args[0] is assembled; remaining .a args are silently ignored"). Full decision record:
 `docs/core-behavior-matrix.md` → "Multi-file .a input".
 
