@@ -13,8 +13,10 @@ const os   = require('os');
 const path = require('path');
 const {
   computeIce, finalScore, sortRows, rankRows, easeFromEhrs,
-  parseCsv, encodeField,
+  parseCsv, encodeField, deriveAutoScore,
 } = require('../../scripts/ice-score.js');
+
+const lbl = (...names) => names.map(name => ({ name }));
 
 describe('computeIce', () => {
   test('applies I*C*E (higher Ease ⇒ higher score)', () => {
@@ -30,6 +32,26 @@ describe('computeIce', () => {
   test('rounds to 4 decimal places', () => {
     // Math.round(x*10000)/10000 caps precision (a safety net for non-discrete inputs).
     expect(computeIce(1 / 3, 1, 1)).toBe(0.3333);
+  });
+});
+
+describe('deriveAutoScore (label-derived provisional inputs, #1322)', () => {
+  test('I tracks severity label', () => {
+    expect(deriveAutoScore(lbl('severity:high')).I).toBe(2);
+    expect(deriveAutoScore(lbl('severity:medium')).I).toBe(1);
+    expect(deriveAutoScore(lbl('severity:low')).I).toBe(0.5);
+  });
+  test('C is a neutral 0.8 (labels cannot reveal confidence)', () => {
+    expect(deriveAutoScore(lbl('bug', 'severity:high')).C).toBe(0.8);
+  });
+  test('E is a coarse ease guess from the type label', () => {
+    expect(deriveAutoScore(lbl('documentation')).E).toBe(7); // docs/chore = easy
+    expect(deriveAutoScore(lbl('research')).E).toBe(3);      // research/spike = hard
+    expect(deriveAutoScore(lbl('enhancement')).E).toBe(5);   // default = moderate
+  });
+  test('no labels → safe defaults (I=1 medium, C=0.8, E=5)', () => {
+    expect(deriveAutoScore([])).toEqual({ I: 1, C: 0.8, E: 5 });
+    expect(deriveAutoScore(undefined)).toEqual({ I: 1, C: 0.8, E: 5 });
   });
 });
 

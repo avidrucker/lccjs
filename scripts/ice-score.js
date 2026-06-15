@@ -21,6 +21,10 @@
  *
  * Usage:
  *   npm run ice:score                                    # interactive: score all unscored open issues
+ *   npm run ice:score -- --auto                          # NON-interactive sweep: provisionally score every
+ *                                                        #   unscored open issue from labels (provisional=1,
+ *                                                        #   for later human review). Keeps the table from
+ *                                                        #   going stale (#1322). Combine with --dry-run to preview.
  *   npm run ice:score -- --issue 956                     # score/update a single issue interactively
  *   npm run ice:score -- '{"956":{"I":2,"C":0.8,"E":5}}' # batch (JSON positional arg)
  *   npm run ice:score -- --seed-from stats/rice-scores.csv  # one-time migration from RICE CSV
@@ -50,7 +54,7 @@ const CSV_TMP   = CSV_PATH + '.tmp';
 const MD_TMP    = MD_PATH  + '.tmp';
 
 const CSV_COLS  = ['issue','title','type','I','C','E','ice_score','ice_rank',
-                   'tier','yegor_priority','actionable','labels','notes','updated_iso'];
+                   'tier','yegor_priority','actionable','provisional','labels','notes','updated_iso'];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -99,12 +103,14 @@ const opts = {
   output:     null,   // --output path (markdown)
   dryRun:     false,  // --dry-run
   exportOnly: false,  // --export-only
+  auto:       false,  // --auto (non-interactive: provisionally score unscored open issues from labels)
 };
 
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
   if (a === '--dry-run')     { opts.dryRun = true; continue; }
   if (a === '--export-only') { opts.exportOnly = true; continue; }
+  if (a === '--auto')        { opts.auto = true; continue; }
   if (a === '--issue')       { opts.issue = parseInt(argv[++i], 10); continue; }
   if (a === '--scores')      { opts.scores = argv[++i]; continue; }
   if (a === '--seed-from')   { opts.seedFrom = argv[++i]; continue; }
@@ -143,6 +149,13 @@ function openDb() {
       updated_iso    TEXT
     )
   `);
+  // Migration (#1322): provisional = 1 for auto-derived rows that want human review,
+  // 0 for explicitly human-scored rows. Guarded ADD COLUMN for pre-existing DBs.
+  const hasProvisional = db.prepare('PRAGMA table_info(ice_scores)').all()
+    .some(c => c.name === 'provisional');
+  if (!hasProvisional) {
+    db.exec('ALTER TABLE ice_scores ADD COLUMN provisional INTEGER DEFAULT 0');
+  }
   return db;
 }
 
@@ -315,6 +328,20 @@ function detectSeverityHint(labels) {
   if (names.includes('severity:medium'))   return { hint: 'severity:medium → I=1', def: 1 };
   if (names.includes('severity:low'))      return { hint: 'severity:low → I=0.5', def: 0.5 };
   return { hint: '', def: 1 };
+}
+
+// Provisional ICE inputs derived from labels alone, for the --auto sweep (#1322).
+// Rough on purpose: I from severity (detectSeverityHint), C a neutral 0.8 (labels
+// can't reveal confidence), E a coarse ease guess from the type label. Rows scored
+// this way are marked provisional=1 so a human can refine I/C/E later.
+function deriveAutoScore(labels) {
+  const names = (labels || []).map(l => l.name);
+  const I = detectSeverityHint(labels).def;
+  const C = 0.8;
+  let E = 5; // moderate default
+  if (names.some(n => ['documentation', 'chore', 'cleanup', 'style'].includes(n))) E = 7;
+  else if (names.some(n => ['research', 'spike', 'experiment'].includes(n)))        E = 3;
+  return { I, C, E };
 }
 
 // ── RICE CSV seed (historical) ──────────────────────────────────────────────
@@ -541,9 +568,9 @@ async function setTier(db, issueNum, tier, opts, dryRun) {
 function upsertRows(db, rows, dryRun) {
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO ice_scores
-      (issue, title, type, I, C, E, ice_score, tier, yegor_priority, actionable, labels, notes, updated_iso)
+      (issue, title, type, I, C, E, ice_score, tier, yegor_priority, actionable, provisional, labels, notes, updated_iso)
     VALUES
-      (@issue, @title, @type, @I, @C, @E, @ice_score, @tier, @yegor_priority, @actionable, @labels, @notes, @updated_iso)
+      (@issue, @title, @type, @I, @C, @E, @ice_score, @tier, @yegor_priority, @actionable, @provisional, @labels, @notes, @updated_iso)
   `);
   const now = new Date().toISOString();
   let count = 0;
@@ -559,6 +586,9 @@ function upsertRows(db, rows, dryRun) {
       tier:           r.tier           ?? '',
       yegor_priority: r.yegor_priority ?? null,
       actionable:     r.actionable     ?? 'Y',
+      // provisional=1 only for --auto label-derived rows; explicit human scoring
+      // (interactive/batch/seed) omits it, so a re-score clears the flag to 0.
+      provisional:    r.provisional    ?? 0,
       labels:         r.labels         ?? null,
       notes:          r.notes          ?? null,
       updated_iso:    now,
@@ -666,6 +696,29 @@ async function main() {
       });
     }
 
+  } else if (opts.auto) {
+    // Auto sweep (#1322): provisionally score every unscored open issue from labels,
+    // so the table never silently goes stale. Marked provisional=1 for human review.
+    const openIssues = fetchOpenIssues();
+    if (!openIssues) die('gh unavailable — cannot fetch open issues for --auto sweep.');
+    const targets = openIssues.filter(i => !scored.has(i.number));
+    for (const issue of targets) {
+      const { I, C, E } = deriveAutoScore(issue.labels);
+      workRows.push({
+        issue:       issue.number,
+        title:       issue.title,
+        I, C, E,
+        tier:        detectTier(issue.labels),
+        actionable:  detectActionable(issue.labels),
+        labels:      (issue.labels || []).map(l => l.name).join(';'),
+        notes:       'auto-swept from labels (provisional — review I/C/E)',
+        provisional: 1,
+      });
+    }
+    log(targets.length
+      ? `Auto sweep: provisionally scored ${targets.length} unscored open issue(s).`
+      : 'Auto sweep: all open issues already have an ICE score — nothing to do.');
+
   } else {
     // Interactive mode: prompt for unscored open issues
     const openIssues = fetchOpenIssues();
@@ -742,6 +795,7 @@ module.exports = {
   sortRows,
   rankRows,
   easeFromEhrs,
+  deriveAutoScore,
   parseRecords,
   parseCsv,
   encodeField,

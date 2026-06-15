@@ -42,7 +42,7 @@ Sort actionable items by:
 3. **Severity** as a secondary tiebreaker when ICE is equal or missing.
 4. **Issue number** as the final stable tiebreaker.
 
-Show each row's ICE score so the ordering is legible. **Unscored** issues (no row in `stats/ice-scores.csv`) sort **last**, flagged as "needs ICE scoring" — never drop them. Keep the ordering explicit so the human can see why one ticket comes before another.
+Show each row's ICE score so the ordering is legible. **Unscored** issues (no row in `stats/ice-scores.csv`) sort **last**, flagged as "needs ICE scoring" — never drop them. **Provisional** rows (`provisional=1` in the CSV — auto-derived from labels by `npm run ice:score -- --auto`) rank normally but get a "⚠ provisional — review I/C/E" marker so the human knows the score is a rough label-based guess, not a considered judgement. Keep the ordering explicit so the human can see why one ticket comes before another.
 
 ### 4. Render The Triage
 
