@@ -21,6 +21,15 @@ Use this skill when any of these happen during lccjs work:
 - a skill or workflow step is invoked incorrectly or produces unexpected output
 - the required pre-close self-audit finds an error that has not yet been logged
 
+**Behavioral / process errors count too.** "Error" is not limited to technical / tool failures — it also includes undesirable agent *behaviors*, which are first-class loggable events, not edge cases. Log when you:
+
+- did not follow instructions / rules / protocol — skipped a required step (e.g. the pre-close self-audit), missed a worktree, used the wrong commit convention, ignored a stated constraint
+- did something non-ideal that was not asked for — overstep, unrequested action, scope creep, editing outside the stated task
+- asked for approval for something already blanket- or explicitly-approved — redundant permission-seeking that wastes a round-trip
+- made a confidently-wrong claim or unverified assumption that changed the plan or sent work down a wrong path
+
+(Seeded from the #1160 behavioral-error catalog; extend as it lands.) For now log these as `OTHER` with `context.behavioral = true`; once #1118 lands, use `COMPLIANCE_FAIL` (rule/protocol violation) or `BEHAVIORAL_FAIL` (non-ideal action / wrong claim), keeping `context.behavioral = true`. These criteria add to the technical ones; they do not replace them.
+
 Always log resolved mistakes too. Resolution belongs in `notes`; it is not a reason to skip the row.
 
 Skip only when the message is a purely informational warning with no work-plan impact, or when the identical error has already been logged for this ticket in this session.
@@ -73,7 +82,7 @@ Use the controlled vocabulary in `docs/errors-schema.md`. Common choices:
 - `SKILL_FAIL` for skill or workflow invocation errors
 - `NETWORK_FAIL` for network/API timeouts or connectivity failures
 - `VALIDATION_FAIL` for schema validation failures
-- `OTHER` when no existing code fits quickly
+- `OTHER` when no existing code fits quickly, and (interim) for behavioral / process errors with `context.behavioral = true` until #1118 lands `BEHAVIORAL_FAIL` / `COMPLIANCE_FAIL` — see "When To Use" above
 
 Prefer a prompt row with `OTHER` over delaying the log to find the perfect type. The type can be corrected later if needed.
 
