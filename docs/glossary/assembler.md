@@ -274,133 +274,133 @@ In every label-bearing header entry (`'G'` / `'E'` / `'e'` / `'V'`), the label n
 
 The typed error class used by every assembler failure path. Wrapping failures in a known type lets test runs and in-process wrappers catch them specifically (instead of conflating with arbitrary `Error`s), and lets the same code path either throw or `process.exit` based on the `[throwOnAssemblyError]` switch.
 
-**Source:** `src/core/assembler.js:20, 242-246`, `src/utils/errors.js`
+**Source:** `assembler.js` — `createAssemblyError()`, grep `new AssemblerError`; `errors.js` — `AssemblerError` (class)
 **See also:** [throwOnAssemblyError], [abortAssembly], [createAssemblyError]
 
 #### `REPORT_MULTI_ERRORS`
 
 Module-level boolean (currently `false`) that controls whether the assembler reports just the first error or accumulates and reports many. False matches the original LCC's one-error-at-a-time behaviour; the multi-error path exists but is intentionally off pending oracle parity research.
 
-**Source:** `src/core/assembler.js:69, 2267-2286`
+**Source:** `assembler.js` — `REPORT_MULTI_ERRORS` (const)
 **See also:** [error], [failAssembly]
 
 #### 300-character source line length limit
 
 Hard limit on raw source line length, enforced by `[validateLineLength]` before any tokenisation. Exceeding it triggers `"Line exceeds maximum length of 300 characters"`. Counts include the comment, pending oracle research on the exact original-LCC behaviour.
 
-**Source:** `src/core/assembler.js:249-258`
+**Source:** `assembler.js` — `validateLineLength()`, grep `length > 300`
 **See also:** [validateLineLength]
 
 #### `validateLineLength`
 
 The 300-character check, called once per source line by `[performPass]` (and by `[parseHexFile]` / `[parseBinFile]`) before any other parsing. Throws via `[abortAssembly]` so it fails the run immediately rather than recording into `[errors]`.
 
-**Source:** `src/core/assembler.js:255-258`
+**Source:** `assembler.js` — `validateLineLength()`
 **See also:** [300-character source line length limit]
 
 #### `createAssemblyError`
 
 Helper that constructs an `[AssemblerError]` with `message` and `exitCode` properties. Used by `[abortAssembly]` to manufacture the error object before throwing — keeps `process.exit` and `throw` paths producing structurally identical errors.
 
-**Source:** `src/core/assembler.js:242-246`
+**Source:** `assembler.js` — `createAssemblyError()`
 **See also:** [AssemblerError], [abortAssembly]
 
 #### `abortAssembly`
 
 Single termination point. Branches on `[throwOnAssemblyError]`: throw a typed `[AssemblerError]` when true (test / in-process callers), or fall through to `fatalExit` (which calls `process.exit` in real CLI mode, throws under Jest's `it`) when false.
 
-**Source:** `src/core/assembler.js:261-267`
+**Source:** `assembler.js` — `abortAssembly()`
 **See also:** [AssemblerError], [throwOnAssemblyError], [fatalExit]
 
 #### `"Empty file"` exit-code-0
 
 Special case: when pass 1 finishes with `locCtr === 0` (no code or data was emitted), the assembler reports `"Empty file"` and exits with **status 0**, not 1. This matches the original LCC's treatment of an empty assembly as not-quite-an-error. Distinct from the empty-`.hex`/empty-`.bin` checks, which are noted as custom LCC.js behaviour that does not match the oracle.
 
-**Source:** `src/core/assembler.js:367-369`
+**Source:** `assembler.js` — `assembleSource()`, grep `Empty file`
 **See also:** [parseHexFile], [parseBinFile]
 
 #### `"Errors encountered during Pass 1/2"`
 
 The user-facing message printed when either pass ends with `[errorFlag]` set. Concrete failures are already reported on the lines they occurred; this aggregate message signals "halting because of the above". The pass number distinguishes early vs late failure for the user.
 
-**Source:** `src/core/assembler.js:372, 407`
+**Source:** `assembler.js` — `assembleSource()`, grep `Errors encountered during Pass`
 **See also:** [errorFlag], [abortAssembly]
 
 #### CLI orchestration (`main`)
 
 The CLI entry point. Reads the input file, calls `[assembleSource]`, then calls `[writeOutputFile]`. When `[isObjectModule]` is true, it also reads the user name via `[nameHandler]` and writes the `.lst` / `.bst` report files via `[writeReportFiles]`. Honours the pre-set `inputFileName` so `lcc.js` can drive the assembler without re-parsing CLI args.
 
-**Source:** `src/core/assembler.js:538-592`
+**Source:** `assembler.js` — `main()`
 **See also:** [assembleSource], [writeOutputFile], [buildReportArtifacts]
 
 #### `"Assembling X"` / `"Starting assembly pass 1/2"`
 
 Status output lines printed to stdout during the run. `"Assembling <file>"` appears for `.bin` and `.hex` inputs (LCC.js-custom — the oracle does not print this); `"Starting assembly pass 1"` and `"Starting assembly pass 2"` appear for `.a` assembly. Used by integration tests as a coarse progress signal.
 
-**Source:** `src/core/assembler.js:326, 338, 363, 376`
+**Source:** `assembler.js` — `assembleSource()`, grep `Starting assembly pass`
 **See also:** [main], [performPass]
 
 #### `"Output file X needs linking"` / `"lst file = X"` / `"bst file = Y"`
 
 Object-module-only status output. Printed by `[main]` when `[isObjectModule]` is true, in this order: the `.o` filename, then the `.lst` filename, then the `.bst` filename. Mirrors the original LCC's wording exactly so test golden files can be reused.
 
-**Source:** `src/core/assembler.js:580, 588-589`
+**Source:** `assembler.js` — `main()`, grep `needs linking`, `lst file =`
 **See also:** [main], [.bst / .lst report]
 
 #### `userName` (from `nameHandler`)
 
 Identity string from `~/name.nnn` (created on first run by `nameHandler.createNameFile`). Inserted at the top of every `.lst` / `.bst` report (right after the `LCC.js Assemble/Link/Interpret/Debug Ver` line). Read lazily — only when reports are about to be written.
 
-**Source:** `src/core/assembler.js:21, 573-578`, `src/utils/name.js`
+**Source:** `assembler.js` — `userName` (param); `createAssemblyResult()`, `buildReportArtifacts()`; grep `userName`
 **See also:** [main], [.bst / .lst report]
 
 #### `assembleSource`
 
 Reusable in-memory entry point: takes source code as a string plus options, performs both passes, and returns an `[createAssemblyResult]` structure. Tests and pure-API callers use this instead of `[main]` so they can run the assembler without touching the filesystem.
 
-**Source:** `src/core/assembler.js:301-433`
+**Source:** `assembler.js` — `assembleSource()`
 **See also:** [createAssemblyResult], [main], [performPass]
 
 #### `createAssemblyResult`
 
 Snapshots the post-pass-2 state into a structured object: `inputFileName`, `outputFileName`, `isObjectModule`, `startAddress`, `loadPoint`, deep copies of `symbolTable`/`listing`/`outputBuffer`, the rendered output bytes, optional reports, and the `sourceMap`. Lets callers consume assembled output without depending on instance mutation.
 
-**Source:** `src/core/assembler.js:271-299`
+**Source:** `assembler.js` — `createAssemblyResult()`
 **See also:** [assembleSource], [buildReportArtifacts]
 
 #### `buildOutputFileChunks`
 
 Produces the array of `Buffer` chunks that make up the `.e` / `.o` file. Writes `'o'`, then the optional `secondIntroHeader`, then the typed header entries (sorted by address), then `'C'`, then the code as UInt16LE words. Returning chunks instead of a single concatenated buffer lets callers stream them to disk or concatenate them in memory.
 
-**Source:** `src/core/assembler.js:447-532`
+**Source:** `assembler.js` — `buildOutputFileChunks()`
 **See also:** [.e / .o file format], [toOutputBuffer], [writeOutputFile]
 
 #### `toOutputBuffer`
 
 In-memory variant of file-writing: concatenates the chunks returned by `[buildOutputFileChunks]` into a single `Buffer`. Used by `[createAssemblyResult]` to surface the assembled bytes to API callers.
 
-**Source:** `src/core/assembler.js:534-536`
+**Source:** `assembler.js` — `toOutputBuffer()`
 **See also:** [buildOutputFileChunks], [createAssemblyResult]
 
 #### `writeOutputFile`
 
 Filesystem variant of `[toOutputBuffer]`: opens the output file, writes the same chunks `[buildOutputFileChunks]` produced, closes the handle. Used by `[main]` (CLI path); pure-API callers use `[toOutputBuffer]` instead.
 
-**Source:** `src/core/assembler.js:594-609`
+**Source:** `assembler.js` — `writeOutputFile()`
 **See also:** [buildOutputFileChunks], [main]
 
 #### `constructOutputFileName`
 
 Default output filename rule: strip the input file's extension and replace with the new extension via `constructSiblingFileName`. So `foo.a` becomes `foo.e` or `foo.o`. Called once after pass 1 (initial `.e`), and again after pass 2 if `[isObjectModule]` flipped (re-named to `.o`).
 
-**Source:** `src/core/assembler.js:611-613, 329, 340, 360, 399`
+**Source:** `assembler.js` — `constructOutputFileName()`
 **See also:** [main], [assembleSource]
 
 #### `buildReportArtifacts`
 
 Builds the `.lst` and `.bst` content strings in memory without touching the filesystem. Delegates to the shared `src/utils/reportArtifacts.js` (also used by the interpreter for post-run reports). Returns `{lstContent, bstContent}`; the caller decides whether to write them to disk.
 
-**Source:** `src/core/assembler.js:437-445`, `src/utils/reportArtifacts.js`
+**Source:** `assembler.js` — `buildReportArtifacts()`; `reportArtifacts.js` — `buildReportArtifacts()`
 **See also:** [.bst / .lst report], [main], [interpreter buildReportArtifacts](interpreter.md#main-cli-orchestration)
 
 ---
