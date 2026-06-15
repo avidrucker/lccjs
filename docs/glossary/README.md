@@ -42,4 +42,4 @@ isn't in the tracker it didn't happen"* — see the canonical **yegor-pm `GLOSSA
 which lives in the standalone `yegor-pm-skills` repo (symlinked into `~/.claude/skills/yegor-*`).
 It is the single source of truth for those terms; this repo points to it rather than
 vendoring a copy that would drift. Those are the terms used across `docs/claude_workflow.md`,
-`RULES.md` (R024–R026 cite them), the `yegor-*` skills, and ticket discussions.
+`RULES.md` (the yegor-derived rules `amber-mantis`, `saffron-marten`, `jade-pangolin` cite them), the `yegor-*` skills, and ticket discussions.

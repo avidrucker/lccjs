@@ -61,9 +61,13 @@ relevant work is in front of you:
 | 20 | `test.failing` vs `test.skip` | [`docs/project-gotchas.md`](./docs/project-gotchas.md) |
 | 21 | Cross-module validation parity | [`docs/project-gotchas.md`](./docs/project-gotchas.md) |
 
-**Stable IDs:** `RULES.json` assigns each rule a stable `R0NN` id that does **not**
-renumber when this list is trimmed (see `docs/research/842-rules-json-spike.md`). Cite
-rules by their `R0NN` id when you need a reference that survives future edits. Note that
-the surviving rules' display numbers above shifted (former 12→11, 14→12, 15→13, 16→14,
-22→15); rules 1–10 are unchanged. Older "Rule N" citations in dated `docs/learnings/`
-TIL entries refer to the pre-2026-06-06 numbering and are left as historical record.
+**Stable IDs:** `RULES.json` assigns each rule a stable two-word **animal-color stem**
+`id` (e.g. `copper-civet`), assigned once and never reused or renumbered (see
+`docs/research/842-rules-json-spike.md` and the #845 ruling). **Cite rules by their
+animal-color stem** when you need a reference that survives future edits — never by
+display number (these shift on a trim) nor by the `-NNN` version suffix (that re-breaks
+on the next text edit). The former `R0NN` code is retained on each rule as `legacy_id`
+so older citations still resolve. Note that the surviving rules’ display numbers above
+shifted (former 12→11, 14→12, 15→13, 16→14, 22→15); rules 1–10 are unchanged. Older
+"Rule N" / `R0NN` citations in dated `docs/learnings/` TIL entries refer to the
+pre-migration numbering and are left as historical record.
