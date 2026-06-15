@@ -443,3 +443,100 @@ describe('close.js e2e — npm wrapper exit code (#434)', () => {
     }
   }, 30_000);
 });
+
+// ─── velocity CSV conflict auto-resolve (#1344, regression of #503) ───────────
+// The auto-resolve re-exports the velocity CSV from SQLite and stages it during a
+// rebase conflict. The re-export MUST target the working tree where the rebase is
+// happening (the worktree), not the main checkout's docs/ (where velocity-export.js
+// resolves its output via __dirname). When it targeted the wrong tree, the
+// worktree's CSV stayed conflicted, `git add` staged the markers, and the close
+// commit landed raw conflict markers — exactly the #503 symptom.
+
+// Build a repo whose worktree branch and origin/main both changed the SAME region
+// of docs/puzzle-velocity.csv, so `git rebase origin/main` conflicts CSV-only.
+function makeRepoWithCsvConflict(issue) {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-close-csvconf-'));
+  const remotePath = path.join(tmpDir, 'remote.git');
+  const mainPath = path.join(tmpDir, 'main');
+  fs.mkdirSync(remotePath);
+  sh(tmpDir, `git init --bare "${remotePath}"`);
+  sh(remotePath, 'git symbolic-ref HEAD refs/heads/main');
+  fs.mkdirSync(mainPath);
+  sh(tmpDir, `git clone "${remotePath}" main`);
+  sh(mainPath, 'git config user.email "test@example.com"');
+  sh(mainPath, 'git config user.name "Test"');
+  sh(mainPath, 'git config commit.gpgsign false');
+
+  // Base commit WITH the CSV, so both later commits diverge from a shared base.
+  const csvRel = 'docs/puzzle-velocity.csv';
+  fs.mkdirSync(path.join(mainPath, 'docs'), { recursive: true });
+  fs.writeFileSync(path.join(mainPath, csvRel), 'header\nrowBASE\n');
+  sh(mainPath, `git add ${csvRel}`);
+  sh(mainPath, 'git commit -m "base csv"');
+  const br = sh(mainPath, 'git rev-parse --abbrev-ref HEAD').trim();
+  if (br !== 'main') sh(mainPath, 'git checkout -b main');
+  sh(mainPath, 'git push -u origin main');
+
+  // Worktree branched from the base; its closing commit edits the CSV.
+  const wtPath = path.join(mainPath, '.claude', 'worktrees', `dragonfruit-issue-${issue}`);
+  const wtBranch = `dragonfruit/issue-${issue}-test`;
+  fs.mkdirSync(path.dirname(wtPath), { recursive: true });
+  sh(mainPath, `git worktree add "${wtPath}" -b "${wtBranch}"`);
+  sh(wtPath, 'git config user.email "test@example.com"');
+  sh(wtPath, 'git config user.name "Test"');
+  sh(wtPath, 'git config commit.gpgsign false');
+  fs.writeFileSync(path.join(wtPath, csvRel), 'header\nrowBASE\nrowWORKTREE\n');
+  sh(wtPath, `git add ${csvRel}`);
+  sh(wtPath, `git commit -m "fix: thing` + `\n\nCloses #${issue}"`);
+
+  // Concurrent commit on origin/main edits the SAME region → rebase conflicts.
+  fs.writeFileSync(path.join(mainPath, csvRel), 'header\nrowBASE\nrowMAIN\n');
+  sh(mainPath, `git add ${csvRel}`);
+  sh(mainPath, 'git commit -m "concurrent csv change"');
+  sh(mainPath, 'git push origin main');
+
+  return { tmpDir, mainPath, wtPath };
+}
+
+describe('close.js e2e — velocity CSV conflict auto-resolve (#1344, regression of #503)', () => {
+  test('re-export targets the WORKTREE CSV so the landed commit has no conflict markers', () => {
+    const Database = require('better-sqlite3');
+    const { tmpDir, mainPath, wtPath } = makeRepoWithCsvConflict('9021');
+
+    // Seed a temp velocity DB for the re-export to read (hermetic; never touches
+    // the real ~/.lccjs/lccjs.db). LCCJS_DB is honored by scripts/db-path.js.
+    const dbPath = path.join(tmpDir, 'lccjs.db');
+    const db = new Database(dbPath);
+    db.exec('CREATE TABLE velocity (id INTEGER PRIMARY KEY AUTOINCREMENT, ticket INTEGER, role TEXT, agent TEXT, repo TEXT)');
+    db.prepare('INSERT INTO velocity (ticket, role, agent, repo) VALUES (?,?,?,?)').run(9021, 'DEV', 'DRAGONFRUIT', 'lccjs');
+    db.close();
+
+    // Pass LCCJS_DB explicitly so the re-export (a child process spawned by
+    // close.js) reads our temp DB, not the developer's real ~/.lccjs/lccjs.db.
+    let ok = true, out = '';
+    try {
+      out = execSync(
+        `node "${CLOSE_JS}" 9021 --no-verify-issue --skip-velocity-check --skip-marker-check`,
+        { cwd: wtPath, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, LCCJS_DB: dbPath } }
+      );
+    } catch (e) {
+      ok = false;
+      out = (e.stdout || '') + (e.stderr || '');
+    }
+    try {
+      // The CSV-only auto-resolve path must have fired and the close must succeed.
+      expect(out).toMatch(/velocity CSV conflict auto-resolved/);
+      expect(ok).toBe(true);
+      expect(out).toMatch(/CLOSE OK/);
+
+      // The landed commit on origin/main must carry a clean, re-exported CSV.
+      sh(mainPath, 'git fetch origin main');
+      const landed = sh(mainPath, 'git show origin/main:docs/puzzle-velocity.csv');
+      expect(landed).not.toMatch(/<<<<<<<|=======|>>>>>>>/);   // no conflict markers
+      expect(landed).toMatch(/AUTO-GENERATED/);                 // it's the DB re-export
+      expect(landed).toMatch(/9021/);                           // seeded row is present (hermetic)
+    } finally {
+      rmrf(tmpDir);
+    }
+  }, 30_000);
+});

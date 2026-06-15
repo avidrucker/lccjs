@@ -715,7 +715,16 @@ function reexportAndStageVelocityCsv() {
   // __dirname resolves to the main scripts/ dir, making isMainCheckout()
   // return true and silently skip the export (exit 0). --force ensures the
   // re-export always runs during conflict resolution regardless of invoke path.
-  const exported = shCapture(`node "${exportScript}" --force`);
+  //
+  // CRITICAL (#1344, regression of #503): velocity-export.js resolves its output
+  // CSV from ITS OWN __dirname (the main scripts/ dir), so by default it rewrites
+  // the MAIN checkout's docs/puzzle-velocity.csv — NOT this worktree's. The rebase
+  // conflict + `git add` below run in process.cwd() (the worktree), so without an
+  // explicit target the worktree's CSV stays conflicted, `git add` stages the
+  // marker-laden file, and the close commits conflict markers. Point the export at
+  // the CWD's CSV (the working tree where the rebase is happening) via VELOCITY_CSV.
+  const csvAbs = path.join(process.cwd(), VELOCITY_CSV);
+  const exported = shCapture(`VELOCITY_CSV="${csvAbs}" node "${exportScript}" --force`);
   if (!exported.ok) {
     sh('git rebase --abort', true);
     die('velocity CSV conflict: auto-resolve via velocity-export.js failed. ' +

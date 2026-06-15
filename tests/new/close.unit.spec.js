@@ -921,7 +921,11 @@ describe('close.js velocity CSV conflict-resolution source guard (#503)', () => 
     const block = src.slice(src.indexOf('isVelocityCsvOnlyConflict'), src.indexOf('log(\'velocity CSV conflict auto-resolved'));
     // velocity-export.js path is on one line; --force is on the next shCapture line.
     expect(block).toMatch(/velocity-export/);
-    expect(block).toMatch(/shCapture\(`node[^`]*--force`\)/);
+    // --force bypasses the isMainCheckout() guard (#503) AND the re-export must be
+    // targeted at the CWD's CSV via VELOCITY_CSV, so it writes the WORKING TREE
+    // where the rebase is happening — not the main checkout's docs/ (#1344).
+    expect(block).toMatch(/shCapture\(`VELOCITY_CSV="\$\{csvAbs\}" node[^`]*--force`\)/);
+    expect(block).toMatch(/csvAbs\s*=\s*path\.join\(process\.cwd\(\),\s*VELOCITY_CSV\)/);
   });
 });
 
