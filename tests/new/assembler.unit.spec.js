@@ -43,6 +43,35 @@ describe('Assembler Unit Tests', () => {
     expect(result.reports).toEqual({ lst: null, bst: null });
   });
 
+  describe('assembleSource() pass-banner progress hook (#1397, audit P2)', () => {
+    // The "Starting assembly pass N" banners are oracle-parity stdout the CLI
+    // must keep, but the pure seam must not emit them itself (no console.* in
+    // assembleSource). They now route through the optional onProgress hook.
+    const SOURCE = '  mov r0, 5\n  halt\n';
+
+    test('pure seam stays console-silent for the pass banners when no onProgress hook is given', () => {
+      console.log.mockClear();
+      const assembler = new Assembler();
+      assembler.assembleSource(SOURCE, { inputFileName: 'silent.a' });
+
+      const bannerCalls = console.log.mock.calls
+        .map((c) => String(c[0]))
+        .filter((m) => m.includes('Starting assembly pass'));
+      expect(bannerCalls).toEqual([]);
+    });
+
+    test('invokes onProgress with both pass banners in order when provided (CLI parity path)', () => {
+      const seen = [];
+      const assembler = new Assembler();
+      assembler.assembleSource(SOURCE, {
+        inputFileName: 'banners.a',
+        onProgress: (msg) => seen.push(msg),
+      });
+
+      expect(seen).toEqual(['Starting assembly pass 1', 'Starting assembly pass 2']);
+    });
+  });
+
   test('toOutputBuffer() should return a serialized executable buffer entirely in memory', () => {
     const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/demoA-2.a'), 'utf8');
 

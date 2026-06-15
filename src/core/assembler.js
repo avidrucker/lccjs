@@ -384,6 +384,16 @@ class Assembler {
     };
   }
 
+  // Emit a progress/banner line WITHOUT coupling the pure seam to the console.
+  // The CLI wrapper (main()) sets this.onProgress = console.log; in-process and
+  // browser callers leave it null, so assembleSource() produces no stdout noise.
+  // Keeps the "Starting assembly pass N" oracle-parity output on the CLI. (#1397)
+  emitProgress(message) {
+    if (typeof this.onProgress === 'function') {
+      this.onProgress(message);
+    }
+  }
+
   assembleSource(sourceCode, options = {}) {
     const {
       inputFileName = this.inputFileName,
@@ -396,6 +406,11 @@ class Assembler {
       userName,
       includeComments = false,
       now,
+      // Optional progress sink for the pass banners. Defaults to null so the
+      // pure seam stays console-silent for in-process/browser/test callers; the
+      // CLI (main()) wires this to console.log to preserve the oracle-parity
+      // "Starting assembly pass N" stdout. (#1397)
+      onProgress = null,
     } = options;
 
     this.resetAssemblyState();
@@ -413,6 +428,9 @@ class Assembler {
     this.verboseModeOn = verboseModeOn;
     this.explainModeOn = explainModeOn;
     this.userName = userName ?? null;
+    // Per-call progress sink; re-applied after the reset like the other caller
+    // config. Omitted → null → emitProgress() is a no-op (seam stays silent). (#1397)
+    this.onProgress = onProgress;
     this.sourceLines = sourceCode.split('\n');
     this.throwOnAssemblyError = throwOnAssemblyError;
 
@@ -458,7 +476,7 @@ class Assembler {
       this.outputFileName = this.constructOutputFileName(this.inputFileName, '.e');
 
       // Perform Pass 1.
-      console.log('Starting assembly pass 1');
+      this.emitProgress('Starting assembly pass 1');
       this.pass = 1;
       this.performPass();
 
@@ -471,7 +489,7 @@ class Assembler {
       }
 
       // Rewind source lines for Pass 2.
-      console.log('Starting assembly pass 2');
+      this.emitProgress('Starting assembly pass 2');
       this.pass = 2;
       this.locCtr = 0;
       this.lineNum = 0;
@@ -671,6 +689,10 @@ class Assembler {
       explainModeOn: this.explainModeOn,
       userName: this.userName,
       throwOnAssemblyError: false,
+      // CLI path prints the pass banners to stdout, matching the oracle's
+      // default-mode output. The pure seam stays silent for in-process callers
+      // (which omit this). (#1397)
+      onProgress: (msg) => console.log(msg),
     });
 
     // Write the assembled output file after the in-memory assembly pass completes.
