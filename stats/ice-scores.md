@@ -1,6 +1,6 @@
 # ICE Scores — lccjs open issues
 
-**Generated:** 2026-06-06   **Issues scored:** 2
+**Generated:** 2026-06-15   **Issues scored:** 2
 
 
 
@@ -12,7 +12,7 @@
 | **C (Confidence)** | 1.0=high · 0.8=medium · 0.5=low |
 | **E (Ease)** | 10=trivial · 7=easy · 5=moderate · 3=hard · 1=very hard |
 
-**Formula:** `ICE = I × C / E`
+**Formula:** `ICE = I × C × E`  (higher Ease ⇒ higher ICE)
 **Tiebreaker:** `+ 1 / (issue × 1000)` — earlier issues win ties but cannot flip a higher-scored ticket.
 
 ## Override tiers
@@ -36,5 +36,5 @@ Use: `npm run ice:score -- --set-tier elevated --issue N`
 
 | Rank | Issue | Title | I | C | E | ICE | Act |
 |---|---|---|---|---|---|---|---|
-| 1 | #956 | feat: replace RICE with ICE scoring + override tiers + scoring script | 2 | 0.8 | 5 | 0.3200 | Y |
-| 2 | #948 |  | 1 | 0.8 | 7 | 0.1143 | Y |
+| 1 | #956 | feat: replace RICE with ICE scoring + override tiers + scoring script | 2 | 0.8 | 5 | 8.0000 | Y |
+| 2 | #948 |  | 1 | 0.8 | 7 | 5.6000 | Y |

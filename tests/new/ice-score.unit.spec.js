@@ -17,14 +17,19 @@ const {
 } = require('../../scripts/ice-score.js');
 
 describe('computeIce', () => {
-  test('applies I*C/E', () => {
-    expect(computeIce(2, 0.8, 5)).toBe(0.32);
-    expect(computeIce(3, 1.0, 10)).toBe(0.3);
+  test('applies I*C*E (higher Ease ⇒ higher score)', () => {
+    expect(computeIce(2, 0.8, 5)).toBe(8);      // 2 * 0.8 * 5
+    expect(computeIce(3, 1.0, 10)).toBe(30);    // 3 * 1   * 10
     expect(computeIce(0.25, 0.5, 1)).toBe(0.125);
+    expect(computeIce(1, 0.8, 7)).toBe(5.6);    // 1 * 0.8 * 7
+  });
+  test('a higher-ease task outscores an otherwise-equal harder one (#1327)', () => {
+    // Same Impact & Confidence: ease must RAISE the score, not lower it.
+    expect(computeIce(1, 1, 10)).toBeGreaterThan(computeIce(1, 1, 1));
   });
   test('rounds to 4 decimal places', () => {
-    // 1*0.8/7 = 0.114285714… → 0.1143
-    expect(computeIce(1, 0.8, 7)).toBe(0.1143);
+    // Math.round(x*10000)/10000 caps precision (a safety net for non-discrete inputs).
+    expect(computeIce(1 / 3, 1, 1)).toBe(0.3333);
   });
 });
 

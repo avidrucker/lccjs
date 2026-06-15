@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ice-score.js — ICE (Impact × Confidence / Ease) scoring for open GitHub issues.
+ * ice-score.js — ICE (Impact × Confidence × Ease) scoring for open GitHub issues.
  *
  * Scores are stored in the canonical lccjs SQLite DB (ice_scores table) and
  * exported to stats/ice-scores.csv + stats/ice-scores.md.
@@ -14,7 +14,10 @@
  *   C (Confidence): 1.0=high  · 0.8=medium · 0.5=low
  *   E (Ease):       10=trivial · 7=easy · 5=moderate · 3=hard · 1=very hard
  *
- * Formula: ICE = I × C / E   tiebreaker: +1/(issue×1000)
+ * Formula: ICE = I × C × E   (higher Ease ⇒ higher ICE)   tiebreaker: +1/(issue×1000)
+ *   All three are factors: a high-impact, high-confidence, easy task floats to the
+ *   top. Ease MULTIPLIES (it does not divide) so the 10=easy scale and the score
+ *   point the same way. (#1327: the prior `/ E` inverted ease — quick wins sank.)
  *
  * Usage:
  *   npm run ice:score                                    # interactive: score all unscored open issues
@@ -146,7 +149,9 @@ function openDb() {
 // ── ICE computation ───────────────────────────────────────────────────────────
 
 function computeIce(I, C, E) {
-  return Math.round((I * C / E) * 10000) / 10000;
+  // Multiplicative ICE: higher Ease ⇒ higher score (matches the 10=easy scale).
+  // Was `I * C / E`, which inverted ease and sank quick wins (#1327).
+  return Math.round((I * C * E) * 10000) / 10000;
 }
 
 function finalScore(ice, issueNum) {
@@ -203,7 +208,7 @@ function exportMd(ranked, mdPath, totalOpen) {
 | **C (Confidence)** | 1.0=high · 0.8=medium · 0.5=low |
 | **E (Ease)** | 10=trivial · 7=easy · 5=moderate · 3=hard · 1=very hard |
 
-**Formula:** \`ICE = I × C / E\`
+**Formula:** \`ICE = I × C × E\`  (higher Ease ⇒ higher ICE)
 **Tiebreaker:** \`+ 1 / (issue × 1000)\` — earlier issues win ties but cannot flip a higher-scored ticket.
 
 ## Override tiers
