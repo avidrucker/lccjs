@@ -104,6 +104,46 @@ describe('Linker Unit Tests', () => {
     }).toThrow(LinkerError);
   });
 
+  // Pins the bounds-check boundary the claude-bugs-audit (#1180 P2) flagged as a
+  // possible off-by-one. A 16-bit address read needs offset AND offset+1 in range,
+  // i.e. valid iff `offset + 1 < buffer.length`. The guards reject exactly when that
+  // fails — confirmed correct, but previously unpinned. Both sides asserted so a
+  // future `>` vs `>=` slip (read-past-buffer / silent garbage word) fails loudly.
+  describe('parseObjectModuleBuffer() header-field truncation bounds (#1380, audit P2)', () => {
+    test('throws BAD_OBJECT_HEADER on an S entry with only 1 byte for its 16-bit address', () => {
+      const linker = new Linker();
+      // 'o' signature, 'S' header type, then a single byte (needs 2 for the address).
+      const truncated = Buffer.from([0x6f, 0x53, 0x05]);
+
+      expect(() => linker.parseObjectModuleBuffer(truncated, 'truncS.o'))
+        .toThrow(/Invalid S entry/);
+      try {
+        linker.parseObjectModuleBuffer(truncated, 'truncS.o');
+      } catch (err) {
+        expect(err).toBeInstanceOf(LinkerError);
+        expect(err.explainKey).toBe('BAD_OBJECT_HEADER');
+      }
+    });
+
+    test('throws on a G entry with only 1 byte for its 16-bit address', () => {
+      const linker = new Linker();
+      const truncated = Buffer.from([0x6f, 0x47, 0x01]); // 'o', 'G', 1 byte
+
+      expect(() => linker.parseObjectModuleBuffer(truncated, 'truncG.o'))
+        .toThrow(/Invalid G entry/);
+    });
+
+    test('accepts an S entry when exactly 2 bytes remain for the address (lower boundary)', () => {
+      const linker = new Linker();
+      // 'o', 'S', 0x02 0x00 — exactly 2 bytes: the case the audit feared was over-rejected.
+      const exact = Buffer.from([0x6f, 0x53, 0x02, 0x00]);
+
+      const module = linker.parseObjectModuleBuffer(exact, 'exactS.o');
+      expect(module.headers).toEqual([{ type: 'S', address: 2 }]);
+      expect(module.code).toEqual([]);
+    });
+  });
+
   test('processModule() should throw LinkerError on duplicate global symbols', () => {
     const linker = new Linker();
     linker.globalSymbolTable.main = 3;
