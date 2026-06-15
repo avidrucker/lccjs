@@ -1059,14 +1059,14 @@ A third (`sp` = `r6`) is used by `[assemblePUSH]` and `[assemblePOP]` at runtime
 
 The symbolic-to-numeric translator for register operands. Accepts `r0..r7` and the three aliases `fp` / `sp` / `lr` (case-insensitive), returning the numeric register index (0-7). Maps `fp` → 5, `sp` → 6, `lr` → 7. Rejects anything else with `"Bad register"`. This is where the assembly-level "stack pointer" abstraction becomes "register 6" — every per-instruction encoder calls this on its register operands.
 
-**Source:** `src/core/assembler.js:1985-2003`
+**Source:** `assembler.js` — `getRegister()`
 **See also:** [isRegister], [Register conventions referenced by encoders]
 
 #### `isRegister`
 
 Boolean predicate: matches `/^(r[0-7]|fp|sp|lr)$/i` against the operand string. Used by encoders to distinguish register operands from immediate or label operands without committing to a parse — e.g. `[assembleADD]` calls `isRegister` on the third operand to decide between register-form (`r2`) and immediate-form (`imm5`).
 
-**Source:** `src/core/assembler.js:2042-2044`
+**Source:** `assembler.js` — `isRegister()`
 **See also:** [getRegister], [assembleADD]
 
 #### Symbolic register aliases
@@ -1079,21 +1079,21 @@ LCC accepts three symbolic register names everywhere a numeric register would wo
 
 The translation happens in `[getRegister]`. Code emitted by the LCC C compiler uses these symbolic names extensively (every function prologue / epilogue references `fp` and `sp`); hand-written assembly can mix-and-match. The assembler treats `fp` and `r5` as identical at the machine-code level.
 
-**Source:** `src/core/assembler.js:1994-2000`
+**Source:** `assembler.js` — `getRegister()`, grep `regStr === "fp"`
 **See also:** [getRegister]
 
 #### `isCharLiteral`
 
 Boolean predicate for single-quoted character literals: matches `/^'(?:\\.|[^\\])'$/`. The regex allows either a single non-backslash character or a backslash-prefixed escape, all enclosed in straight single quotes. Used by `[parseNumber]` and `[parseCharLiteral]` to recognise when an operand is a character literal rather than a numeric or symbolic value.
 
-**Source:** `src/core/assembler.js:2005-2008`
+**Source:** `assembler.js` — `isCharLiteral()`
 **See also:** [parseCharLiteral], [parseNumber]
 
 #### `parseCharLiteral`
 
 Converts a character-literal token into its ASCII codepoint integer. Strips the surrounding quotes; if the remaining content is one character, returns its `charCodeAt(0)`. If it starts with `\`, expands the escape (`\n`, `\t`, `\r`, `\\`, `\'`, `\"`) and returns the resulting char's codepoint. Unknown escapes raise `"Invalid escape sequence: \X"`; malformed content raises `"Invalid character literal: '<X>'"`.
 
-**Source:** `src/core/assembler.js:2010-2040`
+**Source:** `assembler.js` — `parseCharLiteral()`
 **See also:** [isCharLiteral], [parseNumber]
 
 #### `parseNumber`
@@ -1106,28 +1106,28 @@ The number-parsing front door. Dispatches on operand shape:
 
 Returns the parsed value or `NaN` on failure. **Negative hex literals are explicitly unsupported** — `-0x10` won't parse, and the code comment annotates this intentional limitation. The decimal path *does* accept negative literals because `parseInt` handles a leading `-` natively.
 
-**Source:** `src/core/assembler.js:2085-2107`
+**Source:** `assembler.js` — `parseNumber()`
 **See also:** [parseCharLiteral], [isValidHexNumber]
 
 #### `isOperator`
 
 One-liner: `op === '+' || op === '-'`. The only "operators" the assembler recognises in operand expressions. Used by directive handlers (`.word`, `.fill`) to detect the three-token form `label + N` versus the single-operand form.
 
-**Source:** `src/core/assembler.js:2046-2048`
+**Source:** `assembler.js` — `isOperator()`
 **See also:** [parseLabelWithOffset], [.fill / .word]
 
 #### `parseLabelWithOffset`
 
 Regex parser for the `label±N` single-token form: `^([A-Za-z_$@][A-Za-z0-9_$@]*)\s*([+\-]\s*\d+)?$`. Returns `{label, offset}` or `null` if the operand doesn't match. Accepts `label`, `label+N`, `label-N`, and the whitespace variants `label + N` and `label - N` (only the inner whitespace between sign and digits — not on either side of the label). Used by `[evaluateOperand]` to handle label-arithmetic operands.
 
-**Source:** `src/core/assembler.js:2050-2083`
+**Source:** `assembler.js` — `parseLabelWithOffset()`
 **See also:** [evaluateOperand], [Tokenization splitting rules]
 
 #### `*` location-counter operand
 
 The `*` character, when it appears where an operand is expected, refers to the current value of `[locCtr]` (i.e. the address of the *next* word the assembler will emit). Supports `*+N` and `*-N` arithmetic for nearby addresses. Resolved by `[evaluateOperand]` after all other operand-form checks fall through. Classified as `'star'` by `[determineOperandType]` — a distinct syntactic category, even though semantically it's just a number.
 
-**Source:** `src/core/assembler.js:2202-2213`
+**Source:** `assembler.js` — `evaluateOperand()`, grep `operand[0] === '*'`
 **See also:** [evaluateOperand], [determineOperandType], [locCtr]
 
 #### `evaluateOperand`
@@ -1141,70 +1141,70 @@ The operand-resolver. Tries four interpretations in order:
 
 External labels return a placeholder (`0 + offset`) and trigger `[handleExternalReference]` with the `usageType` parameter (`'e'` / `'E'` / `'V'`) telling the linker how to fix up later. Error progression on failure: `"Bad number"` (invalid hex) → `"Bad label"` (invalid label syntax) → `"Undefined label"` (valid syntax but no definition and not external) → `"Unspecified label error for: <X>"` (defensive default).
 
-**Source:** `src/core/assembler.js:2167-2227`
+**Source:** `assembler.js` — `evaluateOperand()`
 **See also:** [parseNumber], [parseLabelWithOffset], [handleExternalReference], [`*` location-counter operand]
 
 #### `usageType` parameter
 
 The single-letter type tag passed into `[evaluateOperand]` to tell the linker how to fix up an external reference if the operand turns out to be unresolved. Values are `'e'` (pcoffset9 fixup — for LD / ST / LEA / BR), `'E'` (pcoffset11 fixup — for BL), `'V'` (full 16-bit value fixup — for `.word`). Each per-instruction encoder picks the right type when calling `evaluateOperand`. See [externalReferences entry types] for the matching consumer-side semantics.
 
-**Source:** `src/core/assembler.js:2167, 1465, 1718, 1827, 1163`
+**Source:** `assembler.js` — `evaluateOperand()`, `handleExternalReference()`; grep `usageType` for call sites
 **See also:** [evaluateOperand], [externalReferences entry types], [handleExternalReference]
 
 #### `determineOperandType`
 
 Syntactic-only operand classifier. Returns one of four strings: `'char'`, `'star'`, `'num'`, `'label'`. Does **no semantic resolution** — `'label'` just means "operand looks like a label-shaped token," not "this label is defined." Currently unused in practice; intended as foundation for future per-mnemonic operand-type schemas once oracle research clarifies which type mismatches the original LCC accepts or rejects. See `core-behavior-matrix.md` § "Operand type checking".
 
-**Source:** `src/core/assembler.js:2127-2152`
+**Source:** `assembler.js` — `determineOperandType()`
 **See also:** [evaluateOperand]
 
 #### `handleExternalReference`
 
 Records an external reference into `[externalReferences]` for later serialization. Stores `{label, type, address: locCtr}` and dedups by `(label, type)` so the same external label referenced multiple times at the same encoding only produces one header entry. Callers (mostly `[evaluateOperand]`) guard with `externLabels.has(label)` before calling — the function assumes the label is already known external.
 
-**Source:** `src/core/assembler.js:2109-2125`
+**Source:** `assembler.js` — `handleExternalReference()`
 **See also:** [externalReferences], [externLabels], [evaluateOperand]
 
 #### `evaluateImmediate` (strict)
 
 Range-checked immediate evaluator. Takes `(valueStr, min, max, type)`. Parses the value via `[parseNumber]`; if outside `[min, max]`, raises `"<type> out of range"`. Used by encoders that genuinely cannot encode out-of-range immediates (e.g. `imm5` is only 5 bits wide, so values above 15 must be rejected before they're masked into garbage).
 
-**Source:** `src/core/assembler.js:2239-2252`
+**Source:** `assembler.js` — `evaluateImmediate()`
 **See also:** [evaluateImmediateNaive], [Immediate field widths and ranges]
 
 #### `evaluateImmediateNaive`
 
 Unchecked immediate evaluator. Takes `valueStr`, returns the parsed number masked with `0xFFFF`. Used for shift counts where bits 8-5 are 4 wide and out-of-range values are intentionally allowed to wrap into nonsense (the user gets garbage, not an error). The name is deliberately less ergonomic than the strict version — the naive path is the rare exception.
 
-**Source:** `src/core/assembler.js:2254-2265`
+**Source:** `assembler.js` — `evaluateImmediateNaive()`
 **See also:** [evaluateImmediate], [Extended-opcode group (OP_EXT)]
 
 #### `isNumLiteral`
 
 Predicate: true if the operand is a character literal **OR** a valid number **OR** a valid hex literal. Used by `.word` / `.fill` to decide whether the second token is a literal value (versus a label-arithmetic operator). Note that `isNumLiteral` accepts character literals — `.word 'A'` is valid and emits a word with the ASCII codepoint.
 
-**Source:** `src/core/assembler.js:2235-2237`
+**Source:** `assembler.js` — `isNumLiteral()`
 **See also:** [isValidHexNumber], [parseNumber]
 
 #### `isValidHexNumber`
 
 Regex check: `^0x[0-9A-Fa-f]+$`. Distinguished from `parseNumber`'s hex path in that this is just the *syntactic* shape, with no implicit-base inference. Used by `[evaluateOperand]`'s error progression to differentiate `"Bad number"` (token *looks* like hex but doesn't parse) from `"Bad label"` (token has illegal label characters).
 
-**Source:** `src/core/assembler.js:2229-2231`
+**Source:** `assembler.js` — `isValidHexNumber()`
 **See also:** [parseNumber], [isNumLiteral]
 
 #### `failAssembly`
 
 The "compatible-with-multi-error" failure path. Calls `[error]` to log the failure (which itself may abort if `[REPORT_MULTI_ERRORS]` is false), and then explicitly calls `[abortAssembly]` if `REPORT_MULTI_ERRORS` is true. The double-handling exists so the codebase can be flipped to multi-error mode in the future without touching every callsite — they just call `failAssembly` and the global flag chooses the behaviour.
 
-**Source:** `src/core/assembler.js:2267-2273`
+**Source:** `assembler.js` — `failAssembly()`
 **See also:** [error], [abortAssembly], [REPORT_MULTI_ERRORS]
 
 #### `error`
 
 The single error-reporting funnel. Formats the message into the standard `"Error on line N of file:\n    <line>\n<message>"` shape, writes it to `console.error`, appends it to `[errors]`, sets `[errorFlag]` true. If `REPORT_MULTI_ERRORS` is false (current default — matches original LCC), it also calls `[abortAssembly]` to exit immediately. Every other module / encoder funnels through this method, so a single point edits the error format for the whole assembler.
 
-**Source:** `src/core/assembler.js:2275-2286`
+**Source:** `assembler.js` — `error()`
 **See also:** [failAssembly], [errorFlag], [REPORT_MULTI_ERRORS]
 
 #### LCC error message format
@@ -1219,12 +1219,12 @@ Error on line <lineNum> of <inputFileName>:
 
 The middle indented line echoes the literal source the assembler was processing when the failure occurred (from `[currentLine]`), so the user sees the exact text they wrote — not a tokenized or normalized version. Matches the original LCC's wording byte-for-byte so golden tests can be reused.
 
-**Source:** `src/core/assembler.js:2276`
+**Source:** `assembler.js` — `formatAssemblerError()`, grep `Error on line ${this.lineNum} of`
 **See also:** [error], [currentLine / currentListingEntry]
 
 #### Module export + CLI auto-instantiation
 
 The bottom-of-file boilerplate that lets `assembler.js` work both as a library (`require('./assembler.js')`) and as a CLI tool (`node assembler.js foo.a`). The CLI path is gated by `require.main === module`, the standard Node idiom for "are we the entry script?"; when true, it instantiates an `Assembler` and calls `[main]`. Library callers can use `[assembleSource]` directly without ever touching `main`.
 
-**Source:** `src/core/assembler.js:2289-2295`
+**Source:** `assembler.js` — module footer; grep `module.exports = Assembler`, `require.main === module`
 **See also:** [main], [assembleSource]
