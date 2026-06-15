@@ -12,7 +12,7 @@ Use this skill when the user explicitly asks for `/fruit-agent-orchestrate` or w
 1. Gather the current queue and worktree state.
 2. Split issues into actionable, blocked, iceboxed, and human-routing groups.
 3. Rank actionable work by ICE score (`stats/ice-scores.csv`), then severity, then issue number.
-4. Assign actionable tickets to fruit-agent lanes without overlapping code areas.
+4. Exclude tickets already in-flight in another agent's worktree, then assign the rest to fruit-agent lanes without overlapping code areas.
 5. Render the final broadcast in scannable sections with one paragraph per agent.
 
 ## Sources Of Truth
@@ -38,19 +38,29 @@ Prefer reusable project helpers where possible. `puzzle-triage` owns the ranking
 
 ## Routing Rules
 
-### 1. Human-Routing First
+### 1. Skip Tickets Already In-Flight
+
+Before assigning, exclude every ticket another agent is **actively working in a live worktree** — never double-book the same issue across two agents.
+
+- From the `git worktree list` output gathered above, each non-main entry's branch is `<fruit>/issue-N-…`. The component before `/issue-` is the **busy agent**; issue `N` is **in-flight**.
+- Drop every in-flight issue `N` from the assignable pool and mark that agent busy (don't assign it more work this cycle).
+- **Surface, don't hide:** show in-flight work in the broadcast as `🔵 <FRUIT> — in-flight on #N, skip this cycle`, rather than silently omitting it, so the human can see *why* an agent was skipped and override if needed.
+
+> Why parse `git worktree list` inline rather than call a tool: the data is already in the Step-1 output, so no extra subprocess is needed (#630 ruling, Q1 = A; Q2 = surface). The eventual cleaner home is the `puzzle:status --json` redesign (#1046), which reports `CLAIMED`/`IN-PROGRESS` directly. Origin repro: #1335.
+
+### 2. Human-Routing First
 
 Tickets labeled `humans-only`, `decision`, or `human-decision-required` do not belong in agent assignments. Put them in a separate human-routing section and leave them unassigned.
 
-### 2. Preserve Lane Separation
+### 3. Preserve Lane Separation
 
 Keep actionable tickets in non-overlapping lanes. Use `area:*` labels when they exist, and avoid assigning two fruit agents to the same code area in the same broadcast.
 
-### 3. Keep Sequencing Explicit
+### 4. Keep Sequencing Explicit
 
 If a ticket must wait on another ticket, surface that dependency in the assignment text. Do not hide sequencing constraints in prose elsewhere.
 
-### 4. Keep Output Copy-Pasteable
+### 5. Keep Output Copy-Pasteable
 
 Write short, direct paragraphs the receiving agent can act on immediately. Each paragraph should name:
 
