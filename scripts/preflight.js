@@ -14,6 +14,9 @@
  *      captured timestamp instead of a reconstructed one (#652).
  *   2. Runs the start-of-task reads an agent should do anyway — `git status`,
  *      `git worktree list`, `gh issue view <N> --comments`.
+ *   2.5 Surfaces existing in-repo evidence (`docs/logs/<M>-*`, `docs/research/<M>-*`)
+ *      for every #M the issue body/comments reference, so a captured work log
+ *      gets read before a story is reconstructed from git/gh (#1131, ← #1122).
  *   3. Asserts the issue is OPEN; fails loudly (exit 1) otherwise.
  *
  * Additive to claim.js — it front-loads the reads that PRECEDE a claim; it does NOT
@@ -53,6 +56,43 @@ function preflightIssueGate(state) {
   return { ok: false, error: `issue is ${s}, not OPEN — nothing to start (raced a close? cf. #223). Pick another issue.` };
 }
 
+// Pure (#1131, follow-up to #1122): given issue text (body + comments) and a
+// candidate file list, surface the in-repo evidence for every #N the issue
+// references — the captured work log / research doc an investigator should read
+// before reconstructing a story from git/gh (the #1122 failure). The repo names
+// these files `<N>-slug.md` under docs/logs/ and docs/research/, so the match is
+// ANCHORED to the basename prefix (`<N>-`): a substring match would make #76
+// spuriously hit `1076-*.md`. No I/O — unit-testable like preflightIssueGate.
+function preflightEvidence(text, fileList) {
+  const refs = new Set();
+  const re = /#(\d+)/g;
+  let m;
+  while ((m = re.exec(String(text || ''))) !== null) refs.add(m[1]);
+
+  const dirs = ['docs/logs/', 'docs/research/'];
+  const hits = new Set();
+  for (const f of Array.isArray(fileList) ? fileList : []) {
+    const p = String(f).replace(/^\.\//, '');
+    const dir = dirs.find((d) => p.startsWith(d));
+    if (!dir) continue;
+    const prefix = p.slice(dir.length).match(/^(\d+)-/);
+    if (prefix && refs.has(prefix[1])) hits.add(p);
+  }
+  return Array.from(hits).sort();
+}
+
+// Best-effort, top-level listing of the two evidence dirs (relative paths, the
+// shape preflightEvidence expects). Never throws — a missing dir just yields no
+// candidates, like the offline gh handling.
+function listEvidenceFiles() {
+  const out = [];
+  for (const d of ['docs/logs', 'docs/research']) {
+    try { for (const name of fs.readdirSync(d)) out.push(`${d}/${name}`); }
+    catch (_) { /* dir absent — best-effort */ }
+  }
+  return out;
+}
+
 function main(argv) {
   const issue = String(argv[0] || '').replace(/^#/, '');
   if (!/^\d+$/.test(issue)) die('usage: npm run preflight <issue-number>');
@@ -84,12 +124,15 @@ function main(argv) {
   let info = null;
   const raw = sh(`gh issue view ${issue} --json number,title,state,body,comments`);
   if (raw) { try { info = JSON.parse(raw); } catch (_) {} }
+  let body = '';
+  let comments = [];
   if (info) {
+    body = info.body || '';
+    comments = Array.isArray(info.comments) ? info.comments : [];
     out(`  #${info.number} [${info.state}] ${info.title}`);
     out('');
     out('  body:');
-    out(indent(info.body && info.body.trim() ? info.body : '(no body)'));
-    const comments = Array.isArray(info.comments) ? info.comments : [];
+    out(indent(body && body.trim() ? body : '(no body)'));
     out(`  comments (${comments.length}):`);
     for (const c of comments) {
       const who = (c.author && c.author.login) || 'unknown';
@@ -97,6 +140,20 @@ function main(argv) {
     }
   } else {
     out(`  ⚠ gh issue view ${issue} unavailable (offline?) — skipping issue read.`);
+  }
+  out('');
+
+  // 2.5) Surface existing in-repo evidence for referenced tickets (#1131). An
+  // agent can otherwise run preflight, read the body, and reconstruct a story
+  // from git/gh while a captured work log sits unread under docs/logs/ — the
+  // #1122 failure. Scan body AND comments (cross-refs often live in comments).
+  const refText = [body, ...comments.map((c) => c && c.body)].join('\n');
+  const evidence = preflightEvidence(refText, listEvidenceFiles());
+  out('  existing evidence — read these before writing findings:');
+  if (evidence.length) {
+    for (const p of evidence) out(`    • ${p}`);
+  } else {
+    out('    (none found for referenced tickets)');
   }
   out('');
 
@@ -113,4 +170,4 @@ function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2));
 
-module.exports = { preflightIssueGate };
+module.exports = { preflightIssueGate, preflightEvidence };
