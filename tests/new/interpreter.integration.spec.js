@@ -250,14 +250,34 @@ describe('Interpreter Integration Tests', () => {
   // -----------------------------------------------------------------------------
   // 8. Test unknown option should throw
   // -----------------------------------------------------------------------------
-  test('8. should fail on unknown option', () => {
+  test('8. unknown option warns (non-blocking) and the program still runs (#1375)', () => {
     const eFilePath = 'demoA.e';
     const test5Bytes = [0x6F, 0x43, 0x00, 0xF0]; // just 'oC' + halt
     virtualFs[eFilePath] = Buffer.from(test5Bytes);
 
-    expect(() => {
-      interpreter.main([eFilePath, '-Z']);
-    }).toThrow('Bad command line switch: -Z'); // Unknown option
+    const errSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => {});
+    try {
+      expect(() => interpreter.main([eFilePath, '-zzz'])).not.toThrow();
+      const stderr = errSpy.mock.calls.map((c) => c[0]).join('');
+      expect(stderr).toContain('Flag {-zzz} is not a known LCCjs flag.');
+    } finally {
+      errSpy.mockRestore();
+    }
+  });
+
+  test('8b. -f warns the documented deviation and the program still runs (#1375)', () => {
+    const eFilePath = 'demoA.e';
+    const test5Bytes = [0x6F, 0x43, 0x00, 0xF0];
+    virtualFs[eFilePath] = Buffer.from(test5Bytes);
+
+    const errSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => {});
+    try {
+      expect(() => interpreter.main([eFilePath, '-f'])).not.toThrow();
+      const stderr = errSpy.mock.calls.map((c) => c[0]).join('');
+      expect(stderr).toContain('Flag {-f} has no effect: LCCjs never truncates');
+    } finally {
+      errSpy.mockRestore();
+    }
   });
 
   // -----------------------------------------------------------------------------

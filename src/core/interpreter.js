@@ -45,6 +45,7 @@ const SEXT_PARITY_TABLE = [
 ];
 
 const { isTestMode, fatalExit, cliErrorExit } = require('../utils/cliExit');
+const { formatFlagDiagnostics } = require('../utils/flagDiagnostics');
 
 class Interpreter {
   // NOTE: grouping these ~50 flat fields into cohesive sub-objects (cpu/io/diag/opts/acct) was
@@ -411,7 +412,10 @@ class Interpreter {
       cliErrorExit('Usage: node interpreter.js <input filename> [options]', 1);
     }
 
-    // Parse arguments
+    // Parse arguments. Unknown / deviated flags are collected and reported as
+    // non-blocking warnings after the loop (consistent with lcc/ilcc, #1373/#1375).
+    const unknownFlags = [];
+    const deviatedFlags = [];
     let i = 0;
     while (i < args.length) {
       let arg = args[i];
@@ -448,8 +452,13 @@ class Interpreter {
             cliErrorExit(`Invalid --max-steps value: ${args[i]}`, 1);
           }
           this.maxSteps = n;
+        } else if (arg === '-f') {
+          // Known LCCjs flag, but a deliberate no-op (LCCjs never truncates
+          // listing lines) — reported as a documented deviation. (#1375/#1371)
+          deviatedFlags.push('-f');
         } else {
-          cliErrorExit(`Bad command line switch: ${arg}`, 1); // `Unknown option: ${arg}`
+          // Unknown flag — collect and warn after the loop, don't abort (#1375).
+          unknownFlags.push(arg);
         }
       } else {
         // Assume it's the input file name
@@ -468,6 +477,11 @@ class Interpreter {
         }
       }
       i++;
+    }
+
+    // Report unknown / deviated flags as non-blocking warnings (#1375).
+    for (const line of formatFlagDiagnostics({ unknown: unknownFlags, deviated: deviatedFlags })) {
+      process.stderr.write(line + '\n');
     }
 
     if (!this.inputFileName) {
