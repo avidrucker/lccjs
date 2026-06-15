@@ -283,6 +283,18 @@ describe('IInterpreter.handleSteps() — forward/backward navigation', () => {
     expect(interp.mem[0xFFFF]).toBe(0); // stack contents restored, not just sp
   });
 
+  test('Gap C (#1087): DOUT then backward truncates future Output pane text', () => {
+    const interp = snapshotInterp();
+    interp.handleSteps(2); // MVI r0, 5  →  DOUT
+    expect(interp.programOutput).toBe('5');
+
+    interp.handleSteps(-1); // step back over DOUT
+
+    expect(interp.programOutput).toBe('');
+    expect(interp.output).toBe('');
+    expect(interp.programOutput).not.toContain('5');
+  });
+
   test('efficient mode: backward step is ignored', () => {
     const interp = snapshotInterp();
     interp.efficientMode = true;

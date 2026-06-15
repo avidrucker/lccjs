@@ -78,9 +78,9 @@ to re-examine earlier state.
 | `h` | Help. |
 | `q` | Quit. |
 
-> Reverse stepping re-simulates the machine and restores **memory**; note that the
-> stdin cursor and the Output pane are not yet rewound on a backward step, and a
-> real terminal in batch mode cannot be un-printed.
+> Reverse stepping re-simulates the machine and restores **memory** plus the
+> Output pane; note that the stdin cursor is not yet rewound on a backward step,
+> and a real terminal in batch mode cannot be un-printed.
 
 ---
 

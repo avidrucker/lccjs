@@ -63,6 +63,15 @@ class IInterpreter extends Interpreter {
     this.output += message;
   }
 
+  // DOUT/UDOUT/HOUT/AOUT route through Interpreter.writeDebugOutputOrElse().
+  // In ilcc they are still program output, so keep them in the Output pane
+  // instead of letting the core implementation write through stdout directly.
+  writeDebugOutputOrElse(message) {
+    const rendered = this.debugMode ? message + '\n' : message;
+    this.programOutput += rendered;
+    this.output += rendered;
+  }
+
   // storeMem(address, value) — observe every runtime memory store so the undo-log
   // can reverse it on backward step, regardless of where it lands. This replaces
   // the old per-step full-region scan (loadPoint..memMax), which silently missed
@@ -98,6 +107,8 @@ class IInterpreter extends Interpreter {
       registers: Array.from(this.r),
       flags: { c: this.c, v: this.v, n: this.n, z: this.z },
       memory: this.memoryChange,
+      programOutputLength: this.programOutput.length,
+      outputLength: this.output.length,
     };
     this.snapshot.push(logEntry);
   }
@@ -134,6 +145,8 @@ class IInterpreter extends Interpreter {
       registers: Array.from(this.r),
       flags: { c: this.c, v: this.v, n: this.n, z: this.z },
       memory: this.memoryChange,
+      programOutputLength: this.programOutput.length,
+      outputLength: this.output.length,
     };
 
     // 6. Append / overwrite snapshot at the next position
@@ -208,6 +221,9 @@ class IInterpreter extends Interpreter {
     for (let i = this.currentIteration; i > targetIteration; i--) {
       this.restorePrevMemory(i);
     }
+
+    this.programOutput = this.programOutput.slice(0, log.programOutputLength || 0);
+    this.output = this.output.slice(0, log.outputLength || 0);
   }
 
   // restorePrevMemory(state) — undo the memory writes recorded in snapshot[state]
