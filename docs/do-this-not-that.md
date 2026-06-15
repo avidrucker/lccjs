@@ -93,6 +93,22 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Scope discipline
+
+**Before any read or action the request didn't name, ask "did the user ask for THIS?"**
+
+- **Do:** before reading a file, producing a derived analysis, or taking an action (close, edit, relabel, comment on another ticket) that the literal request didn't ask for, ask "did the user ask for THIS specific read/action?" If not, don't — note it as a finding or file a ticket instead.
+- **Don't:** expand a narrow request into adjacent work because it seems helpful or thorough — e.g. "file a ticket pointing at doc X" → also read and summarise X; "review #N" → also relabel its siblings.
+- **Why:** over-*acting* is sometimes caught by the permission classifier, but over-*reading* is not (`Read` is auto-allowed), so unrequested derived work slips straight through to the user. The harm is rarely the read itself — it is the unasked summary/analysis that rides on it. Two user corrections on #1180 (errors row 70); the broader overstep pattern recurs (rows 68, 121, 130). Source: [`docs/research/1181-scope-overrun.md`](./research/1181-scope-overrun.md).
+
+**A path named in a request is a referent, not an instruction to read it**
+
+- **Do:** open a mentioned path only when the literal task needs its *contents*. "File a ticket pointing at doc X" needs X's *path* — don't open it. "Summarise / triage / process the findings in X" needs X's *text* — open it. Unsure? The deliverable decides: if X's text would not appear in (or shape) the output, the read is unrequested.
+- **Don't:** treat a path appearing in the request as a cue to read the file.
+- **Why:** reading a referenced artifact and then folding in an unasked summary is the single most common over-read shape (errors row 70 / #1180). Source: [`docs/research/1181-scope-overrun.md`](./research/1181-scope-overrun.md).
+
+---
+
 ## Ticket scoping & closure
 
 **Split a workstream's research, decision, and implementation into separate tickets — put `human-required` on the *decision*, not the research**
