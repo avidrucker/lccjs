@@ -30,8 +30,8 @@ puzzle, plus a comment header line. Empty fields mean "not tracked".
 | `h_min` | number | **H**uman time estimate in minutes — drives Yegor 60m cap |
 | `c_min` | number / empty | **C**laude time estimate in minutes — my forward-looking prediction |
 | `actual_min` | number | wall-clock minutes from start to closing commit. **Valid only when the work performed matches the ticket scope** — if out-of-scope work was absorbed, annotate `notes` as invalid rather than leaving a silent corrupted value (see validity note in `docs/velocity-schema.md`). |
-| `delta_h_min` | number | `actual_min − h_min` (negative = under estimate) |
-| `delta_c_min` | number | `actual_min − c_min` (negative = under estimate) |
+| `delta_h_min` | number | `h_min − actual_min` (positive = under budget; negative = over budget) |
+| `delta_c_min` | number | `c_min − actual_min` (positive = finished faster than predicted; negative = ran longer than predicted) |
 | `started_iso` | ISO 8601 / empty | timestamp when I began work (re-reading the issue counts as start); empty for retroactive rows |
 | `finished_iso` | ISO 8601 | timestamp of the commit that closed the ticket |
 | `closed_commit` | git short SHA / empty | short SHA of the closing commit. Left **empty** at close time since the rebase rewrites it (#186); derive on demand: `git log --grep "Closes #N" -1 --format=%h`. **Cross-repo:** when a puzzle ships in a paired repo (e.g. [`claude-config`](https://github.com/avidrucker/claude-config) skill work), the closing commit lives *there*, so that `git log` run in lccjs finds nothing — the SHA belongs to the sibling repo and the `notes` column names which one. |

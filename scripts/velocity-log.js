@@ -37,6 +37,25 @@ function die(msg) {
   process.exit(1);
 }
 
+function parseOptionalNumber(name, value) {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n)) die(`"${name}" must be a finite number`);
+  return n;
+}
+
+function parseOptionalNonNegativeNumber(name, value) {
+  const n = parseOptionalNumber(name, value);
+  if (n == null) return null;
+  if (n < 0) die(`"${name}" must be >= 0`);
+  return n;
+}
+
+function deriveDelta(estimate, actual) {
+  if (estimate == null || actual == null) return null;
+  return estimate - actual;
+}
+
 // --- Parse args ---
 // Flags: --from-main, --update-id N  (order-independent)
 // Positional: first arg that doesn't start with '--' is the JSON payload.
@@ -77,9 +96,6 @@ for (const f of REQUIRED) {
 }
 if (input.ticket != null && (typeof input.ticket !== 'number' || !Number.isInteger(input.ticket) || input.ticket <= 0)) {
   die('"ticket" must be a positive integer when provided');
-}
-if (typeof input.delta_h_min === 'number' && input.delta_h_min < 0) {
-  die(`delta_h_min must be >= 0 (got ${input.delta_h_min}); convention is estimate - actual`);
 }
 // #1184: notice-not-prevent. A new model (or a non-canonical one) is recorded,
 // not rejected — models are an open-growth list, so an unrecognised value is far
@@ -143,18 +159,22 @@ if ((input.title == null || input.title === '') && input.ticket != null) {
 }
 
 // --- Insert or Update ---
-const toNum = v => (v == null || v === '') ? null : Number(v);
 const toStr = v => (v == null || v === '') ? null : String(v);
+const hMin = parseOptionalNonNegativeNumber('h_min', input.h_min);
+const cMin = parseOptionalNonNegativeNumber('c_min', input.c_min);
+const actualMin = parseOptionalNonNegativeNumber('actual_min', input.actual_min);
+const deltaHMin = deriveDelta(hMin, actualMin);
+const deltaCMin = deriveDelta(cMin, actualMin);
 
 const rowData = {
   ticket:        input.ticket,
   title:         toStr(input.title),
   role:          input.role,
-  h_min:         toNum(input.h_min),
-  c_min:         toNum(input.c_min),
-  actual_min:    toNum(input.actual_min),
-  delta_h_min:   toNum(input.delta_h_min),
-  delta_c_min:   toNum(input.delta_c_min),
+  h_min:         hMin,
+  c_min:         cMin,
+  actual_min:    actualMin,
+  delta_h_min:   deltaHMin,
+  delta_c_min:   deltaCMin,
   started_iso:   toStr(input.started_iso),
   finished_iso:  toStr(input.finished_iso),
   closed_commit: toStr(input.closed_commit),

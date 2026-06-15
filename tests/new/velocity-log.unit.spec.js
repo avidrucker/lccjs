@@ -15,48 +15,99 @@ function run(input, extraArgs = [], extraEnv = {}) {
   });
 }
 
-describe('velocity-log — negative delta validation (#440)', () => {
-  test('rejects negative delta_h_min with exit 1 and error message', () => {
-    const result = run({ role: 'DEV', agent: 'TEST', delta_h_min: -5 });
+describe('velocity-log — numeric metric validation and derived deltas (#1133)', () => {
+  const os = require('os');
+  const fs = require('fs');
+  const Database = require('better-sqlite3');
+
+  const CREATE_TABLE = `
+    CREATE TABLE IF NOT EXISTS velocity (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ticket INTEGER, title TEXT, role TEXT, h_min REAL, c_min REAL,
+      actual_min REAL, delta_h_min REAL, delta_c_min REAL,
+      started_iso TEXT, finished_iso TEXT, closed_commit TEXT,
+      notes TEXT, agent TEXT, model TEXT, repo TEXT DEFAULT 'lccjs'
+    )
+  `;
+  const CREATE_INDEX = `
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_velocity_session
+      ON velocity(ticket, agent, started_iso)
+      WHERE started_iso IS NOT NULL
+  `;
+
+  let testDbPath;
+  let testCsvPath;
+  let testDb;
+
+  beforeEach(() => {
+    const suffix = `${process.pid}-${Math.floor(Math.random() * 1e9)}`;
+    testDbPath = path.join(os.tmpdir(), `vel-metric-${suffix}.db`);
+    testCsvPath = path.join(os.tmpdir(), `vel-metric-${suffix}.csv`);
+    testDb = new Database(testDbPath);
+    testDb.exec(CREATE_TABLE);
+    testDb.exec(CREATE_INDEX);
+  });
+
+  afterEach(() => {
+    try { testDb.close(); } catch (_) {}
+    for (const p of [testDbPath, testCsvPath, testCsvPath + '.tmp']) {
+      try { fs.unlinkSync(p); } catch (_) {}
+    }
+  });
+
+  function runWithTestDb(input, extraArgs = []) {
+    return run(input, extraArgs, { VELOCITY_DB: testDbPath, VELOCITY_CSV: testCsvPath });
+  }
+
+  test.each(['h_min', 'c_min', 'actual_min'])('rejects non-numeric %s values', field => {
+    testDb.close();
+    const result = runWithTestDb({ role: 'DEV', agent: 'TEST', [field]: 'not-a-number' });
     expect(result.status).toBe(1);
-    expect(result.stderr).toMatch(/delta_h_min must be >= 0/);
-    expect(result.stderr).toMatch(/estimate - actual/);
+    expect(result.stderr).toMatch(new RegExp(`"${field}" must be a finite number`));
   });
 
-  test('negative delta_c_min is accepted — overrun is valid calibration signal', () => {
-    // Protocol: negative delta_c_min means the agent ran over the C estimate.
-    // Discarding it destroys calibration signal, so it is allowed. (Contrast: delta_h_min
-    // is still rejected when negative — Yegor's H cap is a human discipline boundary.)
-    const result = run({ role: 'DEV', agent: 'TEST', delta_c_min: -3, ticket: 'bad' });
-    expect(result.stderr).not.toMatch(/delta_c_min must be/);
+  test.each(['h_min', 'c_min', 'actual_min'])('rejects negative %s values', field => {
+    testDb.close();
+    const result = runWithTestDb({ role: 'DEV', agent: 'TEST', [field]: -1 });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(new RegExp(`"${field}" must be >= 0`));
   });
 
-  test('zero delta_h_min passes validation (fails later on invalid ticket)', () => {
-    // Probe: a bad `ticket` value causes a known later validation error,
-    // confirming the delta check did not block.
-    const result = run({ role: 'DEV', agent: 'TEST', delta_h_min: 0, ticket: 'bad' });
-    expect(result.stderr).not.toMatch(/delta_h_min must be/);
-    expect(result.stderr).toMatch(/ticket/);
+  test('derives delta_h_min and delta_c_min from the validated source metrics', () => {
+    testDb.close();
+    const result = runWithTestDb({
+      role: 'DEV',
+      agent: 'TEST',
+      title: 'Derived delta row',
+      h_min: 18,
+      c_min: 12,
+      actual_min: 15,
+      delta_h_min: 999,
+      delta_c_min: -999,
+    });
+    expect(result.status).toBe(0);
+
+    testDb = new Database(testDbPath);
+    const row = testDb.prepare('SELECT * FROM velocity ORDER BY id DESC LIMIT 1').get();
+    expect(row.h_min).toBe(18);
+    expect(row.c_min).toBe(12);
+    expect(row.actual_min).toBe(15);
+    expect(row.delta_h_min).toBe(3);
+    expect(row.delta_c_min).toBe(-3);
   });
 
-  test('zero delta_c_min passes validation (fails later on invalid ticket)', () => {
-    const result = run({ role: 'DEV', agent: 'TEST', delta_c_min: 0, ticket: 'bad' });
-    expect(result.stderr).not.toMatch(/delta_c_min must be/);
-    expect(result.stderr).toMatch(/ticket/);
-  });
+  test('keeps deltas NULL when the source metrics are incomplete', () => {
+    testDb.close();
+    const result = runWithTestDb({ role: 'DEV', agent: 'TEST', title: 'Incomplete row', h_min: 18 });
+    expect(result.status).toBe(0);
 
-  test('positive delta values pass validation (fails later on invalid ticket)', () => {
-    const result = run({ role: 'DEV', agent: 'TEST', delta_h_min: 10, delta_c_min: 5, ticket: 'bad' });
-    expect(result.stderr).not.toMatch(/delta_h_min must be/);
-    expect(result.stderr).not.toMatch(/delta_c_min must be/);
-    expect(result.stderr).toMatch(/ticket/);
-  });
-
-  test('null/omitted delta fields are allowed (pass validation)', () => {
-    // null deltas are valid (row logged without actuals yet)
-    const result = run({ role: 'DEV', agent: 'TEST', ticket: 'bad' });
-    expect(result.stderr).not.toMatch(/delta_h_min must be/);
-    expect(result.stderr).not.toMatch(/delta_c_min must be/);
+    testDb = new Database(testDbPath);
+    const row = testDb.prepare('SELECT * FROM velocity ORDER BY id DESC LIMIT 1').get();
+    expect(row.h_min).toBe(18);
+    expect(row.c_min).toBeNull();
+    expect(row.actual_min).toBeNull();
+    expect(row.delta_h_min).toBeNull();
+    expect(row.delta_c_min).toBeNull();
   });
 });
 

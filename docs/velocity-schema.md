@@ -41,11 +41,11 @@ rm ~/.lccjs/velocity.db        # also rm velocity.db-shm / velocity.db-wal if pr
 | `ticket` | INTEGER | YES | GitHub issue number (`gh issue view N`) |
 | `title` | TEXT | YES | Issue title — short label for readability |
 | `role` | TEXT | YES | Work type — see valid values below |
-| `h_min` | REAL | YES | Yegor human-effort estimate in minutes (≤60 hard cap; governs decomposition, not forecasting) |
-| `c_min` | REAL | YES | Claude wall-clock prediction set *before* starting work (for calibration) |
-| `actual_min` | REAL | YES | Elapsed work time in minutes (`finished − started`). **Valid only when the work performed matches the ticket's stated scope** — if out-of-scope work was absorbed (FM-1/FM-2/FM-3 per `docs/research/601-scope-discipline.md`), annotate the row as invalid in `notes` rather than leaving a misleading value (do not delete the row). NULL when the span includes multi-hour idle gaps (multi-turn sessions) — see notes. |
-| `delta_h_min` | REAL | YES | `h_min − actual_min` (positive = under human budget) |
-| `delta_c_min` | REAL | YES | `c_min − actual_min`. Positive = Claude over-estimated (finished early). Negative = Claude under-estimated (ran over). |
+| `h_min` | REAL | YES | Yegor human-effort estimate in minutes (numeric, non-negative, ≤60 hard cap; governs decomposition, not forecasting) |
+| `c_min` | REAL | YES | Claude wall-clock prediction set *before* starting work (numeric, non-negative; for calibration) |
+| `actual_min` | REAL | YES | Elapsed work time in minutes (`finished − started`, numeric, non-negative). **Valid only when the work performed matches the ticket's stated scope** — if out-of-scope work was absorbed (FM-1/FM-2/FM-3 per `docs/research/601-scope-discipline.md`), annotate the row as invalid in `notes` rather than leaving a misleading value (do not delete the row). NULL when the span includes multi-hour idle gaps (multi-turn sessions) — see notes. |
+| `delta_h_min` | REAL | YES | Derived by `scripts/velocity-log.js` as `h_min − actual_min` (signed: positive = under human budget, negative = over) |
+| `delta_c_min` | REAL | YES | Derived by `scripts/velocity-log.js` as `c_min − actual_min` (signed: positive = Claude over-estimated / finished early, negative = under-estimated / ran over) |
 | `started_iso` | TEXT | YES | ISO 8601 timestamp captured *before* `gh issue view` (wall-clock start) |
 | `finished_iso` | TEXT | YES | ISO 8601 timestamp captured *before* the closing commit |
 | `closed_commit` | TEXT | YES | Always NULL at close time — rebase rewrites the SHA. Derive on demand: `git log --grep "Closes #N" -1 --format=%h` |
@@ -117,6 +117,10 @@ wrong when it may have been accurate for the in-scope work alone. When this occu
 `"actual_min invalid — absorbed FM-1 fix for #N, ~10 min untracked"`) so the
 corruption is visible in the data rather than silent. See
 `docs/research/601-scope-discipline.md` for the full FM taxonomy.
+
+The logger derives `delta_h_min` and `delta_c_min` from the validated source
+metrics on write so the stored deltas cannot drift from `h_min`, `c_min`, or
+`actual_min`. If any source metric is NULL, the corresponding delta is also NULL.
 
 ## Related files
 
