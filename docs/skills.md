@@ -113,7 +113,7 @@ Apply Bug Driven Development: frame every piece of work as a complaint with shap
 **Invoke when:** filing, reviewing, or closing issues. The complaint is best expressed as a failing/disabled test that proves the bug. Only the reporter closes a ticket.
 
 **Notes from practice:**
-- The "deferred work → ticket immediately" rule (Rule 10, RULES.md) propagated widely across agents within days of being codified (#490). Strong adoption.
+- The "deferred work → ticket immediately" rule (`scarlet-lynx`, RULES.md) propagated widely across agents within days of being codified (#490). Strong adoption.
 - Less consistently applied to pure docs/WRITER tickets where the "repro" framing is awkward. Agents sometimes write feature-request framing for doc tickets. No major harm, but worth noting.
 
 ### `yegor-microtasks`

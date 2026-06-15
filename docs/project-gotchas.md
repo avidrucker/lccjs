@@ -48,7 +48,7 @@ asserts the bytes are intact.
 dark — serialization/encoding bugs slip straight through. Read-back through the real
 surface is the only thing that catches them.
 
-*(Was `RULES.md` Rule 11 — relocated #1059, origin #548.)*
+*(Was `RULES.md` rule `golden-walrus` — relocated #1059, origin #548.)*
 
 ---
 
@@ -62,7 +62,7 @@ each input line back through `writeOutput`, producing extra output that C progra
 emit — causing false parity failures on any demo that reads stdin. Piped stdin takes the
 non-simulated path and both sides behave identically.
 
-*(Was `RULES.md` Rule 19 — relocated #1059, origin #760.)*
+*(Was `RULES.md` rule `lilac-civet` — relocated #1059, origin #760.)*
 
 ---
 
@@ -74,7 +74,7 @@ failure, signalling the annotation can be removed). Use `test.skip` only for tes
 are fundamentally incompatible by design (e.g. platform-specific behavior that can never
 match). **Never** use `test.skip` to silence a test for a fixable bug.
 
-*(Was `RULES.md` Rule 20 — relocated #1059, origin #761.)*
+*(Was `RULES.md` rule `ochre-quokka` — relocated #1059, origin #761.)*
 
 ---
 
@@ -89,7 +89,7 @@ See `tests/new/grammar.unit.spec.js` (label edge-case tests from #850 are the co
 example). **Known gap:** the formatter's label regex (`/^([A-Za-z_]\w*)\s*:(.*)/s` in
 `src/utils/formatter.js`) does not cover `@`- or `$`-prefixed labels — tracked in #798.
 
-*(Was `RULES.md` Rule 21 — relocated #1059, origin #850/#870.)*
+*(Was `RULES.md` rule `violet-marmot` — relocated #1059, origin #850/#870.)*
 
 ---
 

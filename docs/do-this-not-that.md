@@ -72,7 +72,7 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 - **Do:** scan your draft closing comment for sentences describing work not done → file a ticket for each → replace the prose with `Deferred: #N`.
 - **Don't:** write "out of scope: X would need Y" in the closing comment and stop there.
-- **Why:** closing comment prose is invisible to agents and `puzzle:status`. The tracker is the only shared memory that survives context compaction, worktree teardown, and agent rotation. Prose in a comment is silently dropped work (Rule 10, `RULES.md`).
+- **Why:** closing comment prose is invisible to agents and `puzzle:status`. The tracker is the only shared memory that survives context compaction, worktree teardown, and agent rotation. Prose in a comment is silently dropped work (`scarlet-lynx`, `RULES.md`).
 
 ---
 
