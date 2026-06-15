@@ -212,7 +212,7 @@ Recommended sequence: **`diag` → `opts` → (H1a → H1b) → `cpu` → `io`/`
 
 ## Proposed sub-puzzle decomposition (for ARC to confirm/replace)
 
-Replace `@todo #255:45m/DEV` with per-group markers once architect decides:
+Replace the `#255` placeholder marker with per-group markers once architect decides:
 
 1. **`diag` grouping** — move `traceMode, debugMode, …` into `this.diag.*`; update 5 `lcc.js` write lines + 1 test read. `~45m/DEV`. No `iinterpreter` impact.
 2. **`opts` grouping** — move `options, generateStats, inputFileName, sourceMap` into `this.opts.*`; update 4 `lcc.js` write lines + 2 test writes. `~30m/DEV`.

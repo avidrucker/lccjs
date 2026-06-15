@@ -32,7 +32,7 @@ Output shape:
       "issue": 255,
       "file": "src/core/interpreter.js",
       "line": 47,
-      "text": "// @todo #255:45m/DEV …",
+      "text": "// <puzzle marker line> …",
       "status": "BLOCKED",
       "stale": false,
       "detail": "open but labeled `blocked` — not grabbable yet"

@@ -47,7 +47,9 @@ const SEXT_PARITY_TABLE = [
 const { isTestMode, fatalExit, cliErrorExit } = require('../utils/cliExit');
 
 class Interpreter {
-  // @todo #255:45m/DEV decomplect: group these ~50 flat fields into cohesive sub-objects (this.cpu = regs+flags+pc, this.io = buffers, this.diag = trace/debug/breakpoint) so machine-state, run-options, and diagnostics stop sharing one namespace. See #246 H4 + docs/research/codebase-quality-hotspots.md
+  // NOTE: grouping these ~50 flat fields into cohesive sub-objects (cpu/io/diag/opts/acct) was
+  // scoped as #255 but closed as over-scoped (~225m, cross-cutting — see the #388 contract at
+  // docs/research/interpreter-state-grouping-contract.md). Re-strategy is tracked by #1352.
   constructor(options = {}) {
     /**
      * Memory (16-bit unsigned integers)
