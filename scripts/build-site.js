@@ -999,6 +999,18 @@ runBtn.addEventListener('click', () => {
         ...completionKeymap,
       ]),
       lcc(),
+      // While a non-empty selection exists, suppress the active-line highlight so it
+      // can't mask the selection layer beneath it (the active-line bg sits at z-index 0,
+      // above the z-index -2 selection layer, so an opaque per-theme active-line color
+      // would hide a partial/mid-line selection — #1355, a regression from #1347).
+      // VS Code does the same: the current-line highlight yields to the selection.
+      // Toggle a class the CSS rule below keys off of (no extra bundle exports needed).
+      EditorView.updateListener.of((u) => {
+        if (u.selectionSet || u.docChanged || u.focusChanged) {
+          const hasSelection = u.state.selection.ranges.some((r) => !r.empty);
+          u.view.dom.classList.toggle('cm-has-selection', hasSelection);
+        }
+      }),
       // Per-theme highlight from the inlined precomputed table (#1283).
       highlightCompartment.of(syntaxHighlighting(lccHighlightStyle(sel.value))),
       // Per-theme background + selection + active-line chrome (#1142, #1283, #1339, #1347)
@@ -1013,6 +1025,11 @@ runBtn.addEventListener('click', () => {
         '.cm-content': { color: 'var(--fg)', caretColor: 'var(--fg)' },
         '.cm-gutters': { background: 'var(--border)', borderRight: '1px solid var(--muted)', color: 'var(--muted)' },
         '.cm-activeLineGutter': { background: 'rgba(128,128,128,0.1)' },
+        // When a selection is active, drop the active-line (and its gutter) highlight so
+        // the selection shows uninterrupted on the cursor's line (#1355). Higher
+        // specificity than the per-theme .cm-activeLine rule in chromeTheme(), so it wins.
+        '&.cm-has-selection .cm-activeLine': { backgroundColor: 'transparent' },
+        '&.cm-has-selection .cm-activeLineGutter': { background: 'transparent' },
         '&.cm-focused': { outline: 'none' },
       }),
     ],
