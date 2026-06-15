@@ -22,26 +22,37 @@ describe('formatFlagDiagnostics (#1373)', () => {
   });
 
   test('a single unimplemented flag', () => {
-    expect(formatFlagDiagnostics({ unknown: [], unimplemented: ['-f'] }))
-      .toEqual(['Flag {-f} has not yet been implemented.']);
+    expect(formatFlagDiagnostics({ unknown: [], unimplemented: ['-z'] }))
+      .toEqual(['Flag {-z} has not yet been implemented.']);
   });
 
   test('multiple unimplemented flags use the plural form', () => {
-    expect(formatFlagDiagnostics({ unknown: [], unimplemented: ['-f', '-g'] }))
-      .toEqual(['Flags {-f, -g} have not yet been implemented.']);
+    expect(formatFlagDiagnostics({ unknown: [], unimplemented: ['-y', '-z'] }))
+      .toEqual(['Flags {-y, -z} have not yet been implemented.']);
   });
 
   test('both buckets non-empty: unknown line first, then unimplemented', () => {
-    expect(formatFlagDiagnostics({ unknown: ['-q', '--banana'], unimplemented: ['-f'] }))
+    expect(formatFlagDiagnostics({ unknown: ['-q', '--banana'], unimplemented: ['-z'] }))
       .toEqual([
         'Flags {-q, --banana} are not known LCCjs flags.',
-        'Flag {-f} has not yet been implemented.',
+        'Flag {-z} has not yet been implemented.',
       ]);
   });
 
   test('neither bucket: no lines', () => {
     expect(formatFlagDiagnostics({ unknown: [], unimplemented: [] })).toEqual([]);
     expect(formatFlagDiagnostics()).toEqual([]);
+  });
+
+  test('a flag with a documented LCCjs deviation gets its own message (#1371)', () => {
+    expect(formatFlagDiagnostics({ deviated: ['-f'] }))
+      .toEqual([
+        'Flag {-f} has no effect: LCCjs never truncates .lst/.bst listing lines (a deliberate difference from LCC).',
+      ]);
+  });
+
+  test('an unrecognized deviated flag is ignored (no message)', () => {
+    expect(formatFlagDiagnostics({ deviated: ['-nope'] })).toEqual([]);
   });
 });
 
@@ -64,19 +75,19 @@ describe('lcc.js parseArguments — flag diagnostics (#1373)', () => {
     expect(lcc.args).toContain('foo.a'); // parsing continued past the bad flag
   });
 
-  test('the unimplemented -f flag warns and parsing continues', () => {
+  test('the -f deviation flag warns (no effect) and parsing continues', () => {
     const lcc = new LCC();
     expect(() => lcc.parseArguments(['-f', 'foo.a'])).not.toThrow();
-    expect(stderr()).toContain('Flag {-f} has not yet been implemented.');
+    expect(stderr()).toContain('Flag {-f} has no effect: LCCjs never truncates');
     expect(lcc.args).toContain('foo.a');
   });
 
-  test('both an unknown and an unimplemented flag: two warning lines', () => {
+  test('both an unknown flag and the -f deviation: two warning lines', () => {
     const lcc = new LCC();
     lcc.parseArguments(['-q', '--banana', '-f', 'foo.a']);
     const out = stderr();
     expect(out).toContain('Flags {-q, --banana} are not known LCCjs flags.');
-    expect(out).toContain('Flag {-f} has not yet been implemented.');
+    expect(out).toContain('Flag {-f} has no effect: LCCjs never truncates');
   });
 
   test('a clean invocation emits no flag warnings', () => {
@@ -105,9 +116,9 @@ describe('ilcc.js parseArguments — flag diagnostics (#1373)', () => {
     expect(ilcc.args).toContain('foo.a');
   });
 
-  test('the unimplemented -f flag warns and parsing continues', () => {
+  test('the -f deviation flag warns (no effect) and parsing continues', () => {
     const ilcc = new ILCC();
     expect(() => ilcc.parseArguments(['-f', 'foo.a'])).not.toThrow();
-    expect(stderr()).toContain('Flag {-f} has not yet been implemented.');
+    expect(stderr()).toContain('Flag {-f} has no effect: LCCjs never truncates');
   });
 });

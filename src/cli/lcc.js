@@ -358,9 +358,11 @@ class LCC {
 
   parseArguments(args) {
     // Collected during the loop, reported once at the end as non-blocking
-    // warnings (#1373): unknown flags and known-but-unimplemented flags.
+    // warnings (#1373): unknown flags, not-yet-implemented flags, and known
+    // LCCjs deviations (#1371).
     const unknownFlags = [];
     const unimplementedFlags = [];
+    const deviatedFlags = [];
     let i = 0;
     while (i < args.length) {
       let arg = args[i];
@@ -377,10 +379,11 @@ class LCC {
             this.options.regDisplay = true;
             break;
           case '-f':
-            // Known flag, but currently has no effect (#1371) — report it as
-            // not-yet-implemented. Remove from this list when -f is wired up.
+            // Known flag, but a deliberate no-op in LCCjs: LCCjs never truncates
+            // listing lines (unlike LCC), so "full list" is always on. Reported
+            // as a documented deviation, not "unimplemented". (#1371)
             this.options.fullLineDisplay = true;
-            unimplementedFlags.push('-f');
+            deviatedFlags.push('-f');
             break;
           case '-x':
             this.options.hexOutput = true;
@@ -466,8 +469,8 @@ class LCC {
       i++;
     }
 
-    // Report unknown / unimplemented flags as non-blocking warnings (#1373).
-    for (const line of formatFlagDiagnostics({ unknown: unknownFlags, unimplemented: unimplementedFlags })) {
+    // Report unknown / unimplemented / deviated flags as non-blocking warnings.
+    for (const line of formatFlagDiagnostics({ unknown: unknownFlags, unimplemented: unimplementedFlags, deviated: deviatedFlags })) {
       process.stderr.write(line + '\n');
     }
   }

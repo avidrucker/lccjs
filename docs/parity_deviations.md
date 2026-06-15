@@ -4,6 +4,11 @@ Centralized record of every known behavioral difference between LCC.js and the
 cuh63 6.3 `lcc` binary (the reference oracle). Each entry states the deviation,
 its rationale, and points back to the source location.
 
+> **Terminology:** "OG LCC", "the oracle", and "OG Oracle" all mean the same thing
+> — the **original, source-of-truth LCC implementation** (Prof. Dos Reis's `cuh63`
+> `lcc` binary) that LCC.js mirrors. This vocabulary is for contributors only;
+> **user-facing CLI messages say plain "LCC"** so end users need none of it.
+
 Three categories are used:
 
 - **OG BUG** — OG LCC is wrong (per spec or by inspection); LCC.js is intentionally correct.
@@ -463,6 +468,17 @@ byte-for-byte column parity. A deliberate readability choice, not a parity
 commitment — surfaced as the owner decision in the #145 spike and resolved in
 favor of full lines.
 
+**The `-f` flag connection (#1371):** OG LCC's `-f` ("full list files — lines in
+`.lst`/`.bst` not truncated", `lcc.txt:150`) *disables* OG's truncation — i.e. it
+makes OG behave the way LCC.js *already always does*. So in LCC.js, `-f` is a
+**deliberate no-op**: the listing is full regardless. Rather than silently accept a
+flag that does nothing, the `lcc`/`ilcc` CLI parsers emit a one-line, non-blocking
+warning when `-f` is passed:
+`Flag {-f} has no effect: LCCjs never truncates .lst/.bst listing lines (a deliberate
+difference from LCC).` The user-facing text says **"LCC"** (not "oracle"/"OG") so it
+needs no internal vocabulary. Source: `src/utils/flagDiagnostics.js` (`FLAG_DEVIATIONS`),
+wired in `src/cli/lcc.js` and `src/interactive/ilcc.js` `parseArguments`.
+
 **Source:** `src/utils/genStats.js:73` (code-bearing rows) and `:82` (comment-only
 rows) append `entry.sourceLine` with no width clamp.
 
@@ -900,3 +916,4 @@ _None pending._
 | 2026-06-05 | LCC.js BUG §25 re-added (#852) | `din` newline-consumption parity: lccjs consumes the trailing `\n` after reading a decimal; OG LCC leaves it in stdin. Double-`ain` workaround in `simpleCalc.a` broken under lccjs (works under OG LCC). Classified LCC.js BUG. Research doc: `docs/research/ain-din-newline-parity-852.md`. |
 | 2026-06-05 | §25 LCC.js BUG fixed (#857) | `readLineFromStdin()` simulated path now leaves `\n` in `inputBuffer` after reading a non-empty line (conditional `slice`); empty-line reads consume the `\n` to avoid infinite retry. TTY path prepends `\n` to `inputBuffer` instead of discarding it. `simpleCalc.a` double-`ain` program now produces `Result: 8` as expected. §25 removed from "LCC.js BUG" section. |
 | 2026-06-06 | BY DESIGN §26 and §27 added (#934) | `.hex` oracle parity characterization complete. §26: empty/comment-only/whitespace-only `.hex` → oracle exits 1 ("Cannot open executable file"); lccjs exits 0 silently (BY DESIGN, mirrors §9). §27: malformed line diagnostics → oracle prints "Fewer/More than four hex digits" / "Bad hex number"; lccjs is silent on exit 1 (BY DESIGN — `fatalExit` discards message text). Evidence: `docs/research/hex-oracle-parity-934.md`. |
+| 2026-06-15 | §11 augmented; header terminology note (#1371) | Confirmed §11 by probing the oracle (`-f` off → 67-col truncation; `-f` on / lccjs → full 166-col line). Documented the `-f`-flag connection: OG's `-f` disables the §11 truncation, which lccjs never does, so `-f` is a deliberate no-op in lccjs. `lcc`/`ilcc` now emit a non-blocking warning when `-f` is passed (`src/utils/flagDiagnostics.js` `FLAG_DEVIATIONS`). Added a header terminology note (OG/oracle/"OG Oracle" = original source-of-truth LCC; user-facing CLI messages say plain "LCC"). |

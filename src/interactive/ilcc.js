@@ -122,9 +122,11 @@ class ILCC {
   }
 
   parseArguments(args) {
-    // Collected during the loop, reported once as non-blocking warnings (#1373).
+    // Collected during the loop, reported once as non-blocking warnings
+    // (#1373): unknown, not-yet-implemented, and known LCCjs deviations (#1371).
     const unknownFlags = [];
     const unimplementedFlags = [];
+    const deviatedFlags = [];
     let i = 0;
     while (i < args.length) {
       const arg = args[i];
@@ -140,9 +142,10 @@ class ILCC {
             this.options.regDisplay = true;
             break;
           case '-f':
-            // Known but currently no effect (#1371) — report as unimplemented.
+            // Deliberate no-op in LCCjs (never truncates listing lines, unlike
+            // LCC) — reported as a documented deviation, not "unimplemented". (#1371)
             this.options.fullLineDisplay = true;
-            unimplementedFlags.push('-f');
+            deviatedFlags.push('-f');
             break;
           case '-x':
             this.options.hexOutput = true;
@@ -187,8 +190,8 @@ class ILCC {
       i++;
     }
 
-    // Report unknown / unimplemented flags as non-blocking warnings (#1373).
-    for (const line of formatFlagDiagnostics({ unknown: unknownFlags, unimplemented: unimplementedFlags })) {
+    // Report unknown / unimplemented / deviated flags as non-blocking warnings.
+    for (const line of formatFlagDiagnostics({ unknown: unknownFlags, unimplemented: unimplementedFlags, deviated: deviatedFlags })) {
       process.stderr.write(line + '\n');
     }
   }
