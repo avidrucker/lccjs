@@ -166,8 +166,26 @@ class ILCC {
             this.printHelp();
             fatalExit('Printing help message after -h flag used.', 0);
             break;
+          case '--max-steps': {
+            // Instruction cap — consistent name with lcc.js (#1350).
+            i++;
+            if (i >= args.length) {
+              cliErrorExit('Missing value after --max-steps', 1);
+            }
+            const cap = parseInt(args[i], 10);
+            if (isNaN(cap)) {
+              cliErrorExit(`Invalid --max-steps value: ${args[i]}`, 1);
+            }
+            this.options.instructionCap = cap;
+            break;
+          }
           default:
-            if (arg.startsWith('-i')) {
+            if (arg.startsWith('-ms')) {
+              // -ms<N> short form of --max-steps (instruction cap, #1350).
+              const cap = parseInt(arg.substr(3), 10);
+              if (!isNaN(cap)) this.options.instructionCap = cap;
+            } else if (arg.startsWith('-i')) {
+              // -i<N> is the Charlie-inherited alias for the instruction cap.
               this.options.instructionCap = parseInt(arg.substr(2), 10);
             } else if (arg.startsWith('-l')) {
               this.options.loadPoint = parseInt(arg.substr(2), 16);
@@ -209,7 +227,8 @@ class ILCC {
     console.log('   -c   colorblind mode (alternate ANSI palette)');
     console.log('   -d   debug mode');
     console.log('   -h   show this help');
-    console.log('   -i<N>  instruction cap before automatic halt (default 500000)');
+    console.log('   --max-steps N, -ms<N>  instruction cap before automatic halt (default 500000)');
+    console.log('   -i<N>  alias for the instruction cap (Charlie-inherited; note: on lcc, -i means "enter interactive")');
     console.log('   -l<hex>  load point (hex address, e.g. -l0010)');
     console.log('   -o <file>  output executable name');
     console.log('Supported input extensions: .a, .bin, .hex (assembled first), .e (direct)');

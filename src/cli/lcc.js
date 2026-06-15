@@ -323,7 +323,7 @@ class LCC {
 
   printHelp() {
     console.log('Usage: lcc.js <infile>');
-    console.log('Optional args: -d -m -r -t -f -x -i -e -c -v -nostats --max-steps N -l<hex loadpt> -o <outfile> -h');
+    console.log('Optional args: -d -m -r -t -f -x -i -e -c -v -nostats --max-steps N (-ms<N>) -l<hex loadpt> -o <outfile> -h');
     console.log('   -d:   debug, -m mem display at end, -r: reg display at end');
     console.log('   -f:   full line display, -x: 4 digit hout, -h: help');
     console.log('   -i:   interactive stepping debugger mode (.a and .e files only)');
@@ -334,7 +334,7 @@ class LCC {
     console.log('   -v / --verbose: verbose output (assembler, interpreter, and linker)');
     console.log('   --explain: append a student-friendly explanation to known errors');
     console.log('   -nostats: suppress .lst/.bst report generation');
-    console.log('   --max-steps N: set execution step cap (default 500000; use -1 for unlimited)');
+    console.log('   --max-steps N (or -ms<N>): set execution step cap (default 500000; use -1 for unlimited)');
     console.log('   --test <spec>: run an assignment spec (input->expected_output cases);');
     console.log('         spec may be JSON or the fenced literal-block format (auto-detected by content);');
     console.log('         prints PASS/FAIL per case; exits 0 all-pass, 1 any-fail, 2 spec error');
@@ -443,7 +443,11 @@ class LCC {
             break;
           }
           default:
-            if (arg.startsWith('-l')) {
+            if (arg.startsWith('-ms')) {
+              // -ms<N> short form of --max-steps (instruction cap, #1350).
+              const cap = parseInt(arg.substr(3), 10);
+              if (!isNaN(cap)) this.options.maxSteps = cap;
+            } else if (arg.startsWith('-l')) {
               // Load point
               this.options.loadPoint = parseInt(arg.substr(2), 16);
             } else if (arg === '-o') {
