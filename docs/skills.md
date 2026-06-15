@@ -85,6 +85,15 @@ Pre-close checklist that catches findings that should be filed as tickets before
 - The underlying checklist (C-1/C-2/C-3 failure modes from `docs/research/orchestration-failure-modes.md`) is sound and has been manually applied, but agents do not consistently invoke the skill itself before closing.
 - Gap: `next-best-action` is documented in `claude_workflow.md` but not wired as a mandatory close step in RULES.md. The checklist produces the most value on RESEARCH and ARCHITECT closes, where findings are most likely to disappear without follow-on tickets. See #886/#887 for context.
 
+### `tdd`
+Use a red-green-refactor loop for test-driven feature or bug work, emphasizing observable behavior through public interfaces.
+
+**Invoke when:** a ticket explicitly asks for tests, integration coverage, or a TDD workflow. In lccjs, pair it with `puzzle-velocity` because the issue/worktree/close protocol still owns claim and velocity discipline.
+
+**Notes from practice:**
+- First recorded use: #1368, adding browser-facing sandbox error coverage. The useful pattern was one public behavior at a time: preserve the browser API diagnostic, then verify the real sandbox editor/run/output path with Playwright.
+- Keep it subordinate to local workflow rules. The skill's generic "confirm with user" planning step should not interrupt a ticket where the user has explicitly authorized full implementation and close.
+
 ---
 
 ## Workflow / PM — Yegor family

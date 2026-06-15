@@ -38,6 +38,14 @@ describe('browser API', () => {
       expect(typeof result.errors).toBe('string');
       expect(result.errors.length).toBeGreaterThan(0);
     });
+
+    test('returns the formatted assembler diagnostic for invalid source', () => {
+      const result = assemble('  notanopcode r0\n  halt\n');
+      expect(result.ok).toBe(false);
+      expect(result.errors).toContain('Error on line 1 of input.a:');
+      expect(result.errors).toContain('notanopcode r0');
+      expect(result.errors).toContain('Invalid operation');
+    });
   });
 
   describe('run()', () => {
@@ -52,6 +60,19 @@ describe('browser API', () => {
       const bad = Buffer.from([0x41, 0x00]);
       const result = run(bad);
       expect(result.exitCode).toBe(1);
+    });
+
+    test('returns stderr on runtime exceptions', () => {
+      const { binary } = assemble(`
+        mov r0, 5
+        mov r1, 0
+        div r0, r1
+        halt
+      `);
+      const result = run(binary);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain('Floating point exception');
     });
   });
 

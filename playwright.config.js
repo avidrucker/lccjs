@@ -1,4 +1,4 @@
-const { defineConfig } = require('@playwright/test');
+const { defineConfig } = require('playwright/test');
 
 module.exports = defineConfig({
   // Spin up a static HTTP server for docs/site/ before tests run.
@@ -13,6 +13,7 @@ module.exports = defineConfig({
     baseURL: 'http://localhost:5556',
   },
   testDir: 'tests/browser',
+  testMatch: '**/*.e2e.spec.js',
   // Keep browser tests out of the primary `npm test` suite (which uses Jest).
   // Gate: tests skip themselves when lcc.bundle.js is absent.
 });

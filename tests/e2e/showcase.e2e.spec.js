@@ -17,7 +17,7 @@
 
 'use strict';
 
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('playwright/test');
 const path = require('path');
 const fs   = require('fs');
 
@@ -61,6 +61,142 @@ const PROMPT_DIN_DOUT = [
   'prompt: .string "Enter: "',
 ].join('\n');
 
+const SAFE_PAD = '        add r0, r0, 0';
+
+const COMMON_ASSEMBLY_ERRORS = [
+  {
+    name: 'invalid mnemonic',
+    src: '        notanopcode r0\n        halt',
+    sourceLine: 'notanopcode r0',
+    message: 'Invalid operation',
+  },
+  {
+    name: 'bad register',
+    src: '        add r8, r0, r1\n        halt',
+    sourceLine: 'add r8, r0, r1',
+    message: 'Bad register',
+  },
+  {
+    name: 'missing operand',
+    src: '        add r0, r1\n        halt',
+    sourceLine: 'add r0, r1',
+    message: 'Missing operand',
+  },
+  {
+    name: 'undefined branch label',
+    src: '        br missing\n        halt',
+    sourceLine: 'br missing',
+    message: 'Undefined label',
+  },
+  {
+    name: 'duplicate label',
+    src: 'loop:   halt\nloop:   halt',
+    sourceLine: 'loop:   halt',
+    message: 'Duplicate label',
+  },
+  {
+    name: 'numeric label',
+    src: '1bad:   halt',
+    sourceLine: '1bad:   halt',
+    message: 'Bad label',
+  },
+  {
+    name: 'imm5 out of range',
+    src: '        add r0, r0, 16\n        halt',
+    sourceLine: 'add r0, r0, 16',
+    message: 'imm5 out of range',
+  },
+  {
+    name: 'mvi immediate out of range',
+    src: '        mvi r0, 256\n        halt',
+    sourceLine: 'mvi r0, 256',
+    message: 'mvi immediate out of range',
+  },
+  {
+    name: 'offset6 out of range',
+    src: '        ldr r0, r1, 32\n        halt',
+    sourceLine: 'ldr r0, r1, 32',
+    message: 'offset6 out of range',
+  },
+  {
+    name: 'pcoffset9 out of range',
+    src: ['        br far', ...Array(260).fill(SAFE_PAD), 'far:    halt'].join('\n'),
+    sourceLine: 'br far',
+    message: 'pcoffset9 out of range',
+  },
+  {
+    name: 'pcoffset11 out of range',
+    src: ['        bl far', ...Array(1100).fill(SAFE_PAD), 'far:    halt'].join('\n'),
+    sourceLine: 'bl far',
+    message: 'pcoffset11 out of range',
+  },
+  {
+    name: 'unknown string escape',
+    src: 'msg:    .string "bad\\q"\n        halt',
+    sourceLine: 'msg:    .string "bad\\q"',
+    message: 'Unknown escape sequence: \\q',
+  },
+  {
+    name: 'missing string quote',
+    src: 'msg:    .string "unterminated\n        halt',
+    sourceLine: 'msg:    .string "unterminated',
+    message: 'Missing terminating quote',
+  },
+  {
+    name: 'invalid character literal',
+    src: "        mvi r0, 'ab'\n        halt",
+    sourceLine: "mvi r0, 'ab'",
+    message: 'Bad number',
+  },
+  {
+    name: 'invalid directive',
+    src: '        .bad 1\n        halt',
+    sourceLine: '.bad 1',
+    message: 'Invalid operation',
+  },
+  {
+    name: 'nonnumeric .blkw count',
+    src: '        .blkw nope\n        halt',
+    sourceLine: '.blkw nope',
+    message: 'Bad number',
+  },
+  {
+    name: 'negative .blkw count',
+    src: '        .blkw -1\n        halt',
+    sourceLine: '.blkw -1',
+    message: 'Bad number',
+  },
+  {
+    name: 'nonnumeric .org',
+    src: '        .org nope\n        halt',
+    sourceLine: '.org nope',
+    message: 'Invalid number for .org directive',
+  },
+  {
+    name: 'out-of-range .org',
+    src: '        .org 70000\n        halt',
+    sourceLine: '.org 70000',
+    message: 'Bad number',
+  },
+  {
+    name: 'backward .org',
+    src: '        .org 10\n        .org 5\n        halt',
+    sourceLine: '.org 5',
+    message: 'Backward address on .org',
+  },
+];
+
+const INFINITE_LOOP = [
+  'loop:   br loop',
+].join('\n');
+
+const DIVIDE_BY_ZERO = [
+  '        mov r0, 5',
+  '        mov r1, 0',
+  '        div r0, r1',
+  '        halt',
+].join('\n');
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -87,6 +223,12 @@ async function waitForOutput(page) {
     const t = el.textContent;
     return t !== 'Running…' && t !== '(click Run to execute)';
   }, { timeout: 15_000 });
+}
+
+async function outputIsError(page) {
+  return page.locator('#exec-output').evaluate(
+    el => el.classList.contains('lcc-error'),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -131,9 +273,7 @@ test.describe('Sandbox E2E', () => {
     await waitForOutput(page);
 
     const text  = await page.locator('#exec-output').textContent();
-    const isErr = await page.locator('#exec-output').evaluate(
-      el => el.classList.contains('lcc-error'),
-    );
+    const isErr = await outputIsError(page);
 
     expect(text).toContain('Hello, World!');
     expect(isErr).toBe(false);
@@ -149,12 +289,33 @@ test.describe('Sandbox E2E', () => {
     await waitForOutput(page);
 
     const text  = await page.locator('#exec-output').textContent();
-    const isErr = await page.locator('#exec-output').evaluate(
-      el => el.classList.contains('lcc-error'),
-    );
+    const isErr = await outputIsError(page);
 
     expect(text).toMatch(/assembly error/i);
     expect(isErr).toBe(true);
+  });
+
+  test('T4b — common assembly errors: 20 diagnostics are surfaced with source context', async ({ page }) => {
+    await page.goto('/sandbox/');
+    await waitForEditor(page);
+
+    for (const c of COMMON_ASSEMBLY_ERRORS) {
+      await test.step(c.name, async () => {
+        await setSource(page, c.src);
+        await page.fill('#stdin-input', '');
+        await page.click('#run-btn');
+        await waitForOutput(page);
+
+        const text  = await page.locator('#exec-output').textContent();
+        const isErr = await outputIsError(page);
+
+        expect(isErr).toBe(true);
+        expect(text).toContain('Assembly error:');
+        expect(text).toContain('Error on line');
+        expect(text).toContain(c.sourceLine);
+        expect(text).toContain(c.message);
+      });
+    }
   });
 
   // T5 — stdin pre-supply: pre-supplied lines are consumed by din without
@@ -169,9 +330,7 @@ test.describe('Sandbox E2E', () => {
     await waitForOutput(page);
 
     const text  = await page.locator('#exec-output').textContent();
-    const isErr = await page.locator('#exec-output').evaluate(
-      el => el.classList.contains('lcc-error'),
-    );
+    const isErr = await outputIsError(page);
 
     expect(text).toContain('42');
     expect(isErr).toBe(false);
@@ -209,14 +368,47 @@ test.describe('Sandbox E2E', () => {
     await page.waitForSelector('#stdin-prompt', { state: 'hidden', timeout: 10_000 });
 
     const text  = await page.locator('#exec-output').textContent();
-    const isErr = await page.locator('#exec-output').evaluate(
-      el => el.classList.contains('lcc-error'),
-    );
+    const isErr = await outputIsError(page);
 
     expect(isErr).toBe(false);
     expect(text).toContain('Enter: ');
     expect(text).toContain('42');
     // Key assertion: separator \n must be present — "Enter: \n", not "Enter: 42".
     expect(text).toMatch(/Enter: \n/);
+  });
+
+  test('T7 — runner failure: possible infinite loop is surfaced as an error', async ({ page }) => {
+    await page.goto('/sandbox/');
+    await waitForEditor(page);
+
+    await setSource(page, INFINITE_LOOP);
+    await page.click('#run-btn');
+    await waitForOutput(page);
+
+    const text   = await page.locator('#exec-output').textContent();
+    const status = await page.locator('#playground-status').textContent();
+    const isErr  = await outputIsError(page);
+
+    expect(isErr).toBe(true);
+    expect(text).toContain('truncated');
+    expect(status).toContain('Program did not halt');
+  });
+
+  test('T8 — runner failure: runtime exception is surfaced as an error', async ({ page }) => {
+    await page.goto('/sandbox/');
+    await waitForEditor(page);
+
+    await setSource(page, DIVIDE_BY_ZERO);
+    await page.click('#run-btn');
+    await waitForOutput(page);
+
+    const text   = await page.locator('#exec-output').textContent();
+    const status = await page.locator('#playground-status').textContent();
+    const isErr  = await outputIsError(page);
+
+    expect(isErr).toBe(true);
+    expect(text).toContain('Runtime error:');
+    expect(text).toContain('Floating point exception');
+    expect(status).toContain('exited with code 1');
   });
 });

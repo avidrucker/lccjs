@@ -1,4 +1,4 @@
-const { defineConfig } = require('@playwright/test');
+const { defineConfig } = require('playwright/test');
 
 // Playwright config for the showcase/playground e2e suite (tests/e2e/).
 // Distinct from tests/browser/ (BANANA's read-only test run).

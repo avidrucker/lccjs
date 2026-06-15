@@ -912,6 +912,9 @@ runBtn.addEventListener('click', () => {
           runStatus.textContent = 'Program did not halt — possible infinite loop';
           execOut.classList.add('lcc-error');
         } else if (result.exitCode && result.exitCode !== 0) {
+          execOut.classList.add('lcc-error');
+          execOut.textContent = ((result.stdout || '') ? result.stdout + '\\n' : '') +
+            'Runtime error:\\n' + (result.stderr || ('exit code ' + result.exitCode));
           runStatus.textContent = 'exited with code ' + result.exitCode;
         }
       }
@@ -943,6 +946,12 @@ runBtn.addEventListener('click', () => {
     } else if (status === 'assembly-error') {
       execOut.classList.add('lcc-error');
       execOut.textContent = 'Assembly error:\\n' + message;
+      worker.terminate();
+      finishRun();
+    } else if (status === 'runtime-error') {
+      execOut.classList.add('lcc-error');
+      execOut.textContent = ((out || '') ? out + '\\n' : '') + 'Runtime error:\\n' + (message || 'runtime error');
+      runStatus.textContent = 'exited with code 1';
       worker.terminate();
       finishRun();
     } else {

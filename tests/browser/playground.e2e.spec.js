@@ -1,7 +1,7 @@
 // Playground end-to-end tests — requires Playwright + a built bundle.
 //
 // Install once:
-//   npm install --save-dev @playwright/test
+//   npm install
 //   npx playwright install chromium
 //
 // Run:
@@ -10,7 +10,7 @@
 // Gate: all tests are skipped when lcc.bundle.js has not been built yet,
 // matching the oracle-test pattern (gate on LCC_ORACLE env var).
 
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('playwright/test');
 const path = require('path');
 const fs   = require('fs');
 
@@ -30,13 +30,18 @@ const HELLO_WORLD = [
 
 const BAD_MNEMONIC = 'notanopcode r0, r1\nhalt';
 
-const DIN_DOUT = 'din r0\ndout r0\nnl\nhalt';
+const DIN_DOUT = [
+  '        din  r0',
+  '        dout r0',
+  '        nl',
+  '        halt',
+].join('\n');
 
 const DIN_STDIN_VALUE = '42';               // arbitrary stdin for din tests
-const DIN_PROMPT_OUTPUT = 'Enter: 42\n42\n'; // prompt + din echo + dout + nl
+const DIN_PROMPT_OUTPUT = 'Enter: \n42\n42\n'; // prompt + separator + din echo + dout + nl
 
 // Program with a prompt (no trailing newline) before din — verifies displayWithSeparator
-// shows pre-pause and post-resume output without injecting a spurious newline.
+// separates pre-pause and post-resume output.
 const DIN_PROMPT = [
   '        lea  r0, prompt',
   '        sout r0',
@@ -118,7 +123,7 @@ test.describe('Sandbox E2E', () => {
     await waitForOutput(page);
 
     const text = await page.locator('#exec-output').textContent();
-    // "Enter: " (no trailing newline) followed immediately by din echo + dout + nl
+    // "Enter: " (no trailing newline) gets a separator before din echo + dout + nl.
     expect(text).toBe(DIN_PROMPT_OUTPUT);
 
     const cls = await page.locator('#exec-output').getAttribute('class');

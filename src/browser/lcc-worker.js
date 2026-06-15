@@ -12,6 +12,7 @@
 //   { status: 'halted',            output: string }
 //   { status: 'max-steps-reached', output: string }
 //   { status: 'assembly-error',    message: string }
+//   { status: 'runtime-error',     output: string, message: string }
 //   { status: 'error',             message: string }
 //   { status: 'waiting-for-input', partialOutput: string, trapType: string }
 
@@ -34,6 +35,9 @@ function handleResult(result) {
   } else if (result && result.maxStepsReached) {
     resumeFn = null;
     self.postMessage({ status: 'max-steps-reached', output: result.stdout });
+  } else if (result && result.exitCode && result.exitCode !== 0) {
+    resumeFn = null;
+    self.postMessage({ status: 'runtime-error', output: result.stdout || '', message: result.stderr || 'runtime error' });
   } else {
     resumeFn = null;
     self.postMessage({ status: 'halted', output: (result && result.stdout) || '', preResumeLen: (result && result.preResumeOutputLength) || 0 });
