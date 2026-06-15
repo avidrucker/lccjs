@@ -172,7 +172,7 @@ The assembler recognizes a small fixed set of extensions, each with distinct beh
 - `.lst` — listing report (hex word format).
 - `.bst` — binary listing report (binary word format).
 
-**Source:** `src/core/assembler.js:319-356, 360, 399`
+**Source:** `assembler.js` — `parseBinFile()`, `parseHexFile()`; grep `path.extname`, `assemblerPlus.js`
 **See also:** [parseBinFile], [parseHexFile], [.bst / .lst report]
 
 #### `.bst` / `.lst` report
@@ -187,7 +187,7 @@ Content varies by entrypoint:
 
 The only difference between `.lst` and `.bst` is the machine-code column encoding: `.lst` uses 4 hex digits per word; `.bst` uses 16 binary digits in 4-bit groups (e.g. `0001 1111 0000 0001`). Both are generated in one pass — `generateBSTLSTContent` is called twice with `isBST` as the sole toggle.
 
-**Source:** `src/core/assembler.js:582-589`, `src/utils/genStats.js:65-67`
+**Source:** `assembler.js` — `buildReportArtifacts()`; `genStats.js` — `generateBSTLSTContent()`
 **See also:** [listing], [.e / .o file format], [interpreter `main` CLI orchestration](interpreter.md#main-cli-orchestration)
 
 #### `.e` / `.o` file format
@@ -204,70 +204,70 @@ header entries (sorted by addr)  ← any combination of 'S' 'G' 'E' 'e' 'V' 'A'
 
 Per-marker details below. The same layout is used for `.e` (when [isObjectModule] is false) and `.o` (when it is true) — the file extension is the only thing that differs.
 
-**Source:** `src/core/assembler.js:447-532`
+**Source:** `assembler.js` — `buildOutputFileChunks()`, `toOutputBuffer()`, `writeOutputFile()`
 **See also:** [interpreter loadExecutableBuffer](interpreter.md#executable-loading-executebuffer--loadexecutablebuffer--loadexecutablefile), [parseObjectModuleBuffer (linker)](linker.md#parseobjectmodulebuffer)
 
 #### `'o'` intro header byte
 
 The literal byte `0x6f` ("o") at offset 0. Both the linker and the interpreter use it as a quick sanity check before attempting any further parsing — anything else triggers `"is not in lcc format"` / `"not a linkable file"`.
 
-**Source:** `src/core/assembler.js:448, 528`
+**Source:** `assembler.js` — `buildOutputFileChunks()`, grep `Buffer.from('o'`
 **See also:** [.e / .o file format]
 
 #### Second intro header byte
 
 An optional second byte after `'o'`, passed through `[buildOutputFileChunks]`'s `secondIntroHeader` argument. Lets extensions add their own marker without re-defining the rest of the format. LCC+ uses `'p'` here; vanilla LCC does not write one.
 
-**Source:** `src/core/assembler.js:447-455`
+**Source:** `assembler.js` — `buildOutputFileChunks()`, grep `secondIntroHeader`
 **See also:** [.e / .o file format]
 
 #### `'S'` start address record
 
 Emitted when `[startLabel]` and `[startAddress]` are both set. Three bytes: `'S' <UInt16LE address>`. The interpreter and linker each consume this to determine the program's entry point. At most one `'S'` per linked output — the linker raises `[Multiple-entry-points error]` if it sees two.
 
-**Source:** `src/core/assembler.js:462-464, 488-494`
+**Source:** `assembler.js` — `buildOutputFileChunks()`, grep `type: 'S'`
 **See also:** [startLabel / startAddress], [.e / .o file format]
 
 #### `'G'` global record
 
 Emitted for every label in `[globalLabels]`. Variable-length: `'G' <UInt16LE address> <label string> 0x00`. Lets the linker build its global-symbol table.
 
-**Source:** `src/core/assembler.js:466-470, 495-505`
+**Source:** `assembler.js` — `buildOutputFileChunks()`, grep `type: 'G'`
 **See also:** [globalLabels], [GTable (linker)](linker.md#gtable)
 
 #### `'E'` / `'e'` / `'V'` external reference records
 
 One header entry per `[externalReferences]` array element. The type byte distinguishes the fix-up encoding (see [externalReferences entry types]). Layout matches `'G'`: `<type> <UInt16LE address> <label string> 0x00`. The linker reads the type byte to decide which mask + arithmetic to apply during fix-up.
 
-**Source:** `src/core/assembler.js:472-475, 495-505`
+**Source:** `assembler.js` — `buildOutputFileChunks()`, grep `Collect external references`
 **See also:** [externalReferences entry types], [ETable / eTable / VTable (linker)](linker.md#etable--etable--vtable)
 
 #### `'A'` adjustment record
 
 Three bytes: `'A' <UInt16LE address>`. Tells the linker "the word at `address` is a label-arithmetic value that needs the module-start offset added on relocation." Emitted for each entry in `[adjustmentEntries]` plus once per `'V'` (the linker also wants to know the V-fix-up site is relocatable).
 
-**Source:** `src/core/assembler.js:477-480, 507-513`
+**Source:** `assembler.js` — `buildOutputFileChunks()`, grep `type: 'A'`
 **See also:** [adjustmentEntries], [ATable (linker)](linker.md#atable)
 
 #### `'C'` code-section marker
 
 The single byte that separates the header block from the code block. Encountering `'C'` while reading the header tells the consumer "no more typed entries — what follows is `programSize` × UInt16LE machine words". Written unconditionally by `[buildOutputFileChunks]`.
 
-**Source:** `src/core/assembler.js:522`
+**Source:** `assembler.js` — `buildOutputFileChunks()`, grep `Buffer.from('C'`
 **See also:** [.e / .o file format]
 
 #### UInt16LE word encoding
 
 Every 16-bit address and every machine code word in the `.e` / `.o` file uses little-endian byte order. Matches both `Buffer.readUInt16LE`/`writeUInt16LE` on the consumer side and the LCC tradition of treating word addresses as base-2¹⁶.
 
-**Source:** `src/core/assembler.js:491, 501, 510, 527`
+**Source:** `assembler.js` — `buildOutputFileChunks()`, grep `writeUInt16LE`
 **See also:** [.e / .o file format]
 
 #### Null-terminated label strings
 
 In every label-bearing header entry (`'G'` / `'E'` / `'e'` / `'V'`), the label name follows the address as ASCII bytes and is terminated by a single `0x00`. The consumer reads until null to recover the label string. Empty labels are not allowed (no directive that emits these entries accepts an empty operand).
 
-**Source:** `src/core/assembler.js:499-503`
+**Source:** `assembler.js` — `buildOutputFileChunks()`, grep `writeUInt8(0,`
 **See also:** [`'G'` global record], [`'E'` / `'e'` / `'V'` external reference records]
 
 #### `AssemblerError`
