@@ -11,7 +11,7 @@ Use this skill when the user explicitly asks for `/fruit-agent-orchestrate` or w
 
 1. Gather the current queue and worktree state.
 2. Split issues into actionable, blocked, iceboxed, and human-routing groups.
-3. Rank actionable work by severity, then Yegor priority, then issue number.
+3. Rank actionable work by ICE score (`stats/ice-scores.csv`), then severity, then issue number.
 4. Assign actionable tickets to fruit-agent lanes without overlapping code areas.
 5. Render the final broadcast in scannable sections with one paragraph per agent.
 
@@ -34,7 +34,7 @@ Use the smallest set of live state needed to make the broadcast accurate:
 - any sequencing or dependency markers that affect assignment
 - existing human-routing labels such as `humans-only`, `decision`, and `human-decision-required`
 
-Prefer reusable project helpers where possible. `puzzle-triage` owns the severity/Yegor ranking logic; `guide-human-decision` owns human-routing tickets. Reuse those mental models instead of re-deriving them from scratch.
+Prefer reusable project helpers where possible. `puzzle-triage` owns the ranking logic — it ranks by **ICE score** (`stats/ice-scores.csv`, Impact × Confidence × Ease) then severity; reuse that order here. `guide-human-decision` owns human-routing tickets. Reuse those mental models instead of re-deriving them from scratch. (Full composition of `puzzle-triage` — so this skill inherits ICE automatically rather than re-stating it — is tracked in #1047.)
 
 ## Routing Rules
 
