@@ -161,23 +161,27 @@ function runStep(name) {
   });
 }
 
-// Map a set of changed absolute paths to the minimal steps needed. Adapted from
-// the #1027 plan for the post-#1075 layout: the hand-maintained CDN language
-// support lives at src/lang-lcc/lang-lcc.cdn.js (#1176) and is COPIED into
-// docs/site by build:site, so a change to it needs build:site, not "reload only".
-// Other files under src/lang-lcc/ are the Lezer grammar/parser — editing those
-// does NOT auto-propagate into the CDN file (manual port), so they only warn.
+// Map a set of changed absolute paths to the minimal steps needed. The editor
+// language now ships in the browser bundle, so source changes under src/browser/
+// or src/lang-lcc/ must rebuild both the bundle and the site. That keeps
+// `npm run dev:site` aligned with the deployed playground instead of leaving the
+// language/editor bundle stale until a manual rebuild.
 function classifyChanges(paths) {
   const srcBrowser = path.join(ROOT, 'src', 'browser') + path.sep;
   const srcLang    = path.join(ROOT, 'src', 'lang-lcc') + path.sep;
   const buildSite  = path.join(ROOT, 'scripts', 'build-site.js');
-  const cdnLang    = path.join(ROOT, 'src', 'lang-lcc', 'lang-lcc.cdn.js');
-  const plan = { browser: false, site: false, langReminder: false };
+  const buildBrowser = path.join(ROOT, 'src', 'browser', 'editor.js');
+  const plan = { browser: false, site: false };
   for (const p of paths) {
-    if (p.startsWith(srcBrowser))   { plan.browser = true; plan.site = true; }
-    else if (p === buildSite)       { plan.site = true; }
-    else if (p === cdnLang)         { plan.site = true; }
-    else if (p.startsWith(srcLang)) { plan.langReminder = true; }
+    if (p.startsWith(srcBrowser) || p.startsWith(srcLang)) {
+      plan.browser = true;
+      plan.site = true;
+    } else if (p === buildSite) {
+      plan.site = true;
+    } else if (p === buildBrowser) {
+      plan.browser = true;
+      plan.site = true;
+    }
   }
   return plan;
 }
@@ -196,11 +200,6 @@ function flushChanges() {
   pending.clear();
   const plan = classifyChanges(paths);
   if (!plan.browser && !plan.site) {
-    if (plan.langReminder) {
-      console.log('dev:site — src/lang-lcc/ grammar changed, but the browser parser ' +
-        '(src/lang-lcc/lang-lcc.cdn.js) is a MANUAL port today (#1075). Re-port by ' +
-        'hand, then save lang-lcc.cdn.js to rebuild + reload.');
-    }
     return;
   }
   building = true;
@@ -213,7 +212,7 @@ function startWatchers() {
   const targets = [
     path.join(ROOT, 'scripts', 'build-site.js'),
     path.join(ROOT, 'src', 'browser'),
-    path.join(ROOT, 'src', 'lang-lcc'),   // includes the hand-maintained lang-lcc.cdn.js (#1176)
+    path.join(ROOT, 'src', 'lang-lcc'),
   ];
   for (const t of targets) {
     if (!fs.existsSync(t)) {
@@ -284,7 +283,7 @@ server.listen(opts.port, () => {
   if (opts.dev) {
     startWatchers();
     console.log('  dev mode: watching scripts/build-site.js, src/browser/, ' +
-      'src/lang-lcc/ (incl. lang-lcc.cdn.js) → auto-rebuild + live-reload.');
+      'src/lang-lcc/ → auto-rebuild + live-reload.');
     console.log('  NOTE: dev injects a reload <script>; run the pre-deploy ' +
       'checklist against plain `npm run serve:site` (no --dev).');
   }
