@@ -252,13 +252,31 @@ class InterpreterPlus extends Interpreter {
   // toolchain contract (lcc.js): print "Runtime Error: <msg>" and exit 1, so a
   // runtime fault in an .ap is surfaced as reliably as in a plain .a/.e run.
   // (#1031 — capture; #1032 — restore the terminal before printing.)
+  // Verbose branch mirrors core Interpreter.raiseRuntimeError() (#1078, req 4 of #1011).
   handleRuntimeError(error) {
     this.running = false;
     // Restore screen-manipulated state first (show cursor, leave raw mode, drop
     // to a fresh line) so the message isn't clobbered by a hidden cursor or a
     // cleared/repositioned screen the program left behind (#1032).
     restoreTerminal(this.screenManipulated);
+
     const message = `Runtime Error: ${error && error.message ? error.message : error}`;
+
+    // Verbose enrichment: mirror core Interpreter.raiseRuntimeError() verbose output.
+    // Shows PC, register dump, and source line from sourceMap if available.
+    if (this.verboseModeOn) {
+      const pc = `PC=0x${(this.pc || 0).toString(16).padStart(4, '0')}`;
+      const regs = this.r
+        ? this.r.map((v, i) => `r${i}=0x${(v || 0).toString(16).padStart(4, '0')}`).join(' ')
+        : '';
+      const mapEntry = this.sourceMap && this.sourceMap.addressToLine &&
+        this.sourceMap.addressToLine.get(this.pc);
+      const srcLine = mapEntry
+        ? ` | line ${mapEntry.lineNumber}: ${mapEntry.sourceLine.trim()}`
+        : '';
+      console.error(`[interpreter] ${pc} ${regs}${srcLine}`);
+    }
+
     console.error(message);
     // The inherited runtime errors (DIV_BY_ZERO, UNKNOWN_OPCODE, EOF_ON_STDIN, …)
     // carry an explainKey; render its `--explain` block before exiting so .ap

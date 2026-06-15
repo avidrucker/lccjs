@@ -101,6 +101,21 @@ class AssemblerPlus extends Assembler {
       fatalExit('Errors encountered during Pass 2', 1);
     }
 
+    // Build sourceMap: address → {lineNumber, sourceLine} for every code-producing line.
+    // Used by InterpreterPlus for verbose runtime-error context (#1078).
+    this.sourceMap = {
+      addressToLine: new Map(),
+      allLines: this.sourceLines.slice(),
+    };
+    for (const entry of this.listing) {
+      if (entry.codeWords && entry.codeWords.length > 0) {
+        this.sourceMap.addressToLine.set(entry.locCtr, {
+          lineNumber: entry.lineNum,
+          sourceLine: entry.sourceLine,
+        });
+      }
+    }
+
     // e.g. handle startLabel, etc. if needed
     if (this.startLabel !== null) {
       if (this.symbolTable.hasOwnProperty(this.startLabel)) {

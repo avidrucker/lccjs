@@ -74,6 +74,8 @@ class LCCPlus {
         interpreter.generateStats = false;
         interpreter.verboseModeOn = verbose;
         interpreter.explainModeOn = explain;
+        // Pass sourceMap from assembler for verbose runtime-error context (#1078)
+        interpreter.sourceMap = assembler.sourceMap;
         for (const ext of extensions) interpreter.registerExtension(ext);
         interpreter.main([epFile]);
 
