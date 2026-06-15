@@ -563,107 +563,35 @@ class IInterpreter extends Interpreter {
 
     let lastStep = 1;
 
+    // Dispatch is data-driven from COMMAND_REGISTRY (#1342): the first entry
+    // whose match() accepts `cmd` handles it and returns an `effect` describing
+    // the loop-state side-effects. This is the single source of truth that
+    // displayHelp() is also generated from, so the two cannot drift, and the
+    // collision guard prevents two commands claiming the same key.
     while (true) {
       process.stdout.write('Input: ');
       const { inputLine } = this._readCommand();
       const cmd = inputLine.trim();
 
-      if (cmd === 'q') break;
-
-      if (cmd === 'h') {
-        process.stdout.write(this.displayHelp());
-        newlineCount = 0; // help text scrolled; don't try to clear it on the next render
-        continue;
+      let handled = false;
+      for (const entry of COMMAND_REGISTRY) {
+        const m = matchCommand(cmd, entry);
+        if (!m.matched) continue;
+        const effect = entry.run(this, m.arg, lastStep) || {};
+        if (effect.break) return;                          // q
+        if (effect.output) process.stdout.write(effect.output);
+        if (effect.resetNewline) newlineCount = 0;
+        if (effect.incNewline) newlineCount++;
+        if (effect.setLastStep !== undefined) lastStep = effect.setLastStep;
+        if (effect.render) render();
+        handled = true;
+        break;
       }
 
-      if (cmd === '0') {
-        render();
-        continue;
+      if (!handled) {
+        process.stdout.write(`Unknown command: ${cmd}. Enter 'h' for help.\n`);
+        newlineCount++;
       }
-
-      if (cmd.startsWith('a')) {
-        const { address, error } = this.resolveMemAddress(cmd.slice(1).trim());
-        if (error) {
-          process.stdout.write(error + '\n');
-          newlineCount++;
-          continue;
-        }
-        if (address !== null) this.memDisplayBase = address;
-        render();
-        continue;
-      }
-
-      if (cmd.startsWith('m')) {
-        const n = parseInt(cmd.slice(1));
-        if (!isNaN(n) && n >= 0) this.memDisplayRows = n;
-        render();
-        continue;
-      }
-
-      if (cmd.startsWith('s') && cmd.length > 1) {
-        this.stackAnchor = cmd.slice(1);
-        render();
-        continue;
-      }
-
-      if (cmd.startsWith('c')) {
-        const arg = cmd.slice(1);
-        if (arg === '') {
-          this.codeContextRows = 0;
-        } else {
-          const n = parseInt(arg, 10);
-          if (!isNaN(n) && n >= 0) {
-            this.codeContextRows = n;
-          } else {
-            process.stdout.write('Error: c{N} expects a non-negative integer (e.g. c5, c0).\n');
-            newlineCount++;
-            continue;
-          }
-        }
-        render();
-        continue;
-      }
-
-      if (cmd.startsWith('l')) {
-        const result = this.handlePaneLayout(cmd.slice(1));
-        if (result.error) {
-          process.stdout.write(`Error: ${result.error}\n`);
-          newlineCount++;
-        } else {
-          this.paneLayout = result.paneLayout;
-          render();
-        }
-        continue;
-      }
-
-      // Numeric step command (may be negative)
-      const n = parseInt(cmd, 10);
-      if (!isNaN(n)) {
-        if (n !== 0) lastStep = n;
-        if (n > 0 && !this.running) {
-          process.stdout.write('Program has halted. Step back with -N first.\n');
-          newlineCount++;
-          continue;
-        }
-        this.handleSteps(n);
-        render();
-        continue;
-      }
-
-      // Empty input: repeat last step count
-      if (cmd === '') {
-        if (lastStep > 0 && !this.running) {
-          process.stdout.write('Program has halted. Step back with -N first.\n');
-          newlineCount++;
-          continue;
-        }
-        this.handleSteps(lastStep);
-        render();
-        continue;
-      }
-
-      process.stdout.write(`Unknown command: ${cmd}. Enter 'h' for help.\n`);
-      newlineCount++;
     }
   }
 
@@ -696,25 +624,188 @@ class IInterpreter extends Interpreter {
     return { address: null, error: msg };
   }
 
-  // displayHelp() — return the interactive mode help text.
+  // displayHelp() — return the interactive mode help text, GENERATED from
+  // COMMAND_REGISTRY so it can never drift from the dispatch (#1342).
   displayHelp() {
-    return [
-      'ilcc interactive commands:',
-      '  {N}         step forward N instructions',
-      '  {-N}        step backward N instructions',
-      '  0           re-display without stepping',
-      '  <enter>     repeat last step count',
-      '  a{hex|label} set memory base address  (e.g. a0010, amyData)',
-      '  m{N}        set memory row count     (e.g. m4)',
-      '  c{N}        set code context rows    (e.g. c5, c0=hide)',
-      '  s{anchor}   set stack anchor         (e.g. ssp, sfff2)',
-      '  l{layout}   set pane layout          (e.g. lro/mc, lr/c/mo)',
-      '              panes: r=registers  c=code  m=memory  o=output',
-      '              use / to separate columns  (up to 3)',
-      '  h           show this help',
-      '  q           quit',
-    ].join('\n') + '\n';
+    // Rendered in a reader-friendly order (steps first), decoupled from dispatch
+    // precedence. The parity guard (command-registry.spec.js) fails if a command
+    // is omitted here, so this list cannot silently drift from the registry.
+    const HELP_ORDER = ['{N}', '0', '<enter>', 'a', 'm', 'c', 's', 'l', 'h', 'q'];
+    const ordered = COMMAND_REGISTRY
+      .filter((e) => e.helpLabel)
+      .slice()
+      .sort((a, b) => HELP_ORDER.indexOf(a.key) - HELP_ORDER.indexOf(b.key));
+    const lines = ['ilcc interactive commands:'];
+    for (const entry of ordered) {
+      lines.push(`  ${entry.helpLabel.padEnd(11)} ${entry.help}`);
+      if (entry.helpExtra) lines.push(...entry.helpExtra);
+    }
+    return lines.join('\n') + '\n';
   }
 }
+
+// ── Interactive command registry (#1342) ────────────────────────────────────
+// Single source of truth for the ilcc `-i` TUI command surface; drives both the
+// runInteractive() dispatch and the generated displayHelp(). Mirrors the
+// assembler's `_instructionTable` idiom. Provenance per
+// docs/debugger-command-registry.md (CH = Charlie's interactive_lccjs, which
+// lccjs's ILCC is derived from). `test` points to the proving spec file or a
+// `pending(#child)` marker (coverage guard, #1343).
+//
+// Entry: { key, match: 'exact'|'prefix'|'numeric'|'empty', minLen?, aliases?,
+//          helpLabel, help, helpExtra?, provenance, test,
+//          run(interp, arg, lastStep) -> effect }
+// effect: { render?, output?, incNewline?, resetNewline?, setLastStep?, break? }
+const COMMAND_REGISTRY = [
+  {
+    key: 'q', match: 'exact', helpLabel: 'q', help: 'quit',
+    provenance: 'CH', test: 'interactive.unit.spec.js',
+    run: () => ({ break: true }),
+  },
+  {
+    key: 'h', match: 'exact', helpLabel: 'h', help: 'show this help',
+    provenance: 'CH', test: 'interactive.unit.spec.js',
+    run: (interp) => ({ output: interp.displayHelp(), resetNewline: true }),
+  },
+  {
+    key: '0', match: 'exact', helpLabel: '0', help: 're-display without stepping',
+    provenance: 'CH', test: 'interactive.unit.spec.js',
+    run: () => ({ render: true }),
+  },
+  {
+    key: 'a', match: 'prefix', helpLabel: 'a{hex|label}',
+    help: 'set memory base address  (e.g. a0010, amyData)',
+    provenance: 'CH', test: 'interactive.unit.spec.js',
+    run: (interp, arg) => {
+      const { address, error } = interp.resolveMemAddress(arg.trim());
+      if (error) return { output: error + '\n', incNewline: true };
+      if (address !== null) interp.memDisplayBase = address;
+      return { render: true };
+    },
+  },
+  {
+    key: 'm', match: 'prefix', helpLabel: 'm{N}',
+    help: 'set memory row count     (e.g. m4)',
+    provenance: 'CH', test: 'interactive.unit.spec.js',
+    run: (interp, arg) => {
+      const n = parseInt(arg);
+      if (!isNaN(n) && n >= 0) interp.memDisplayRows = n;
+      return { render: true };
+    },
+  },
+  {
+    key: 's', match: 'prefix', minLen: 2, helpLabel: 's{anchor}',
+    help: 'set stack anchor         (e.g. ssp, sfff2)',
+    provenance: 'CH', test: 'interactive.unit.spec.js',
+    run: (interp, arg) => { interp.stackAnchor = arg; return { render: true }; },
+  },
+  {
+    key: 'c', match: 'prefix', helpLabel: 'c{N}',
+    help: 'set code context rows    (e.g. c5, c0=hide)',
+    provenance: 'CH', test: 'pending(#1343)',
+    run: (interp, arg) => {
+      if (arg === '') {
+        interp.codeContextRows = 0;
+      } else {
+        const n = parseInt(arg, 10);
+        if (!isNaN(n) && n >= 0) {
+          interp.codeContextRows = n;
+        } else {
+          return {
+            output: 'Error: c{N} expects a non-negative integer (e.g. c5, c0).\n',
+            incNewline: true,
+          };
+        }
+      }
+      return { render: true };
+    },
+  },
+  {
+    key: 'l', match: 'prefix', helpLabel: 'l{layout}',
+    help: 'set pane layout          (e.g. lro/mc, lr/c/mo)',
+    helpExtra: [
+      '              panes: r=registers  c=code  m=memory  o=output',
+      '              use / to separate columns  (up to 3)',
+    ],
+    provenance: 'CH', test: 'pending(#1343)',
+    run: (interp, arg) => {
+      const result = interp.handlePaneLayout(arg);
+      if (result.error) return { output: `Error: ${result.error}\n`, incNewline: true };
+      interp.paneLayout = result.paneLayout;
+      return { render: true };
+    },
+  },
+  {
+    key: '{N}', match: 'numeric', helpLabel: '{N}', help: 'step forward N instructions',
+    helpExtra: ['  {-N}        step backward N instructions'],
+    provenance: 'CH', test: 'interactive.unit.spec.js',
+    run: (interp, cmd) => {
+      const n = parseInt(cmd, 10);
+      const setLastStep = n !== 0 ? n : undefined;
+      if (n > 0 && !interp.running) {
+        return {
+          output: 'Program has halted. Step back with -N first.\n',
+          incNewline: true, setLastStep,
+        };
+      }
+      interp.handleSteps(n);
+      return { render: true, setLastStep };
+    },
+  },
+  {
+    key: '<enter>', match: 'empty', helpLabel: '<enter>', help: 'repeat last step count',
+    provenance: 'CH', test: 'pending(#1343)',
+    run: (interp, _arg, lastStep) => {
+      if (lastStep > 0 && !interp.running) {
+        return { output: 'Program has halted. Step back with -N first.\n', incNewline: true };
+      }
+      interp.handleSteps(lastStep);
+      return { render: true };
+    },
+  },
+];
+
+// matchCommand(cmd, entry) — does `cmd` match this entry, and what is its arg?
+// Entries are tried in array order, so this also encodes dispatch precedence
+// (exact/prefix before numeric; '0' before the numeric step so it stays exact).
+function matchCommand(cmd, entry) {
+  switch (entry.match) {
+    case 'exact':
+      return cmd === entry.key ? { matched: true, arg: '' } : { matched: false };
+    case 'empty':
+      return cmd === '' ? { matched: true, arg: '' } : { matched: false };
+    case 'numeric':
+      return !Number.isNaN(parseInt(cmd, 10)) ? { matched: true, arg: cmd } : { matched: false };
+    case 'prefix': {
+      const minLen = entry.minLen || 1;
+      if (cmd.startsWith(entry.key) && cmd.length >= minLen) {
+        return { matched: true, arg: cmd.slice(entry.key.length) };
+      }
+      return { matched: false };
+    }
+    default:
+      return { matched: false };
+  }
+}
+
+// Collision guard (#1342): no two entries (or aliases) may claim the same key.
+// Runs at module load so a double-booking is a hard error, not a silent shadow.
+function validateCommandRegistry(registry) {
+  const seen = new Set();
+  for (const entry of registry) {
+    for (const k of [entry.key, ...(entry.aliases || [])]) {
+      if (seen.has(k)) {
+        throw new Error(`ilcc COMMAND_REGISTRY: duplicate command key '${k}'`);
+      }
+      seen.add(k);
+    }
+  }
+  return registry;
+}
+validateCommandRegistry(COMMAND_REGISTRY);
+
+IInterpreter.COMMAND_REGISTRY = COMMAND_REGISTRY;
+IInterpreter.matchCommand = matchCommand;
+IInterpreter.validateCommandRegistry = validateCommandRegistry;
 
 module.exports = IInterpreter;
