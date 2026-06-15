@@ -280,9 +280,10 @@ Per the ticket's "Deliverable" — implementation puzzles are filed as children,
   behavioral rows currently typed `OTHER`/`TOOL_DENIED` (§5) to the new families + `failure_mode`,
   and **normalize the malformed `context` values** (rows 67 `[object Object]`, 121 bare-string) to
   valid JSON so the §6 metrics stop aborting.
-- **Deferred (not filed; would be premature per `yegor-microtasks`):** promoting the remaining
-  memory-only levers (`PREMATURE_ACTION`, `INSUFFICIENT_SEARCH`, `IGNORED_CONTRADICTING_SIGNAL`)
-  to durable rules — a natural follow-on to #1317, to be filed when picked up.
+- **#1394 — lever-promotion follow-on:** promote the remaining memory-only levers
+  (`PREMATURE_ACTION`, `INSUFFICIENT_SEARCH`, `IGNORED_CONTRADICTING_SIGNAL`) to durable rules in
+  `RULES.md` / `do-this-not-that.md` — mirrors #1317. (Filed at maintainer request after the
+  initial close; the §4 promotion-loop finding makes these the next levers owed a durable surface.)
 
 ---
 
