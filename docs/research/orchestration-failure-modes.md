@@ -74,6 +74,16 @@ Thirteen failure modes identified across the seed list and evidence sweep. Organ
 
 **Status:** Guard implemented (#227) — refuses unless `gh` is unavailable (offline-first, proceed on null). Racing concurrently is still possible within the guard's API-call window.
 
+#### B-4 — Double-booking a live-claimed ticket
+
+**Description:** `/fruit-agent-orchestrate` emits an assignment for a ticket that is *currently* claimed and live in another agent's worktree, because the orchestrator has no hard CLAIMED-exclusion gate. It gathers "local worktrees and claimed branches" only as soft prose and re-derives the queue from a raw `gh issue list` dump that has no notion of live ownership — so a claimed ticket can still be assigned to a second agent.
+
+**Concrete example:** f-a-o assigned #1322 to INCABERRY while it was live in `dragonfruit/issue-1322-…`; `npm run claim -- 1322 --as incaberry` was correctly rejected by the claim guard, but the broadcast should never have included #1322 (#1335).
+
+**Root cause:** f-a-o does not consume `npm run puzzle:status -- --json`, which already reports each issue's `AVAILABLE | CLAIMED | IN-PROGRESS | LOCKED | …` status. The authoritative live-ownership signal exists; the orchestrator just doesn't gate on it.
+
+**Status:** Open. Fix tracked by **#1046** (consume `puzzle:status --json`; CLAIMED rows then drop out of the assignable pool for free), gated on the **#630** decision (skip-silently vs surface-as-in-flight). Characterized in `docs/research/1335-fao-double-book-claimed.md`; the redesign prescribing the fix is #1008 (R1).
+
 ---
 
 ### Category C: Process gap / no-ticket-filed failures
