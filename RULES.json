@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "generated": "2026-06-07",
-  "ruleset_sha": "6396a7",
+  "ruleset_sha": "ff3c96",
   "note": "RULES.json is the single source of truth (Option B, ruling #845). RULES.md is a generated, committed render artifact — do not hand-edit it; run `npm run rules:render` (#1185). Each rule has a stable animal-color `id` (the citation target, assigned once and never reused or renumbered), a `legacy_id` (its former R0NN, so old citations still resolve), an integer `version` rendered as a `-NNN` display suffix, and `text_sha` = sha256(text)[:6] which drives the version bump and serves as the drift check. Top-level `ruleset_sha` versions the whole ordered set. Supersedes the #1061 same-PR sync convention.",
   "preamble": "# RULES\n\nThese are the rules that bind **every agent on every task**, regardless of what kind of\nwork it is. They are re-read constantly, so this file is kept lean on purpose.\n\n**Inclusion criterion — what belongs here:** a rule earns a spot in `RULES.md` only if\nviolating it on a *random* task is both plausible and harmful. That means universal\n**safety** (don't destroy the repo or the database, don't leak PII) and universal\n**workflow integrity** (worktree, velocity, scope, close protocol) — disciplines that\napply no matter whether the task is code, docs, research, or PM.\n\n**What does NOT belong here:** task-type-specific technical guidance — assembly encoding\nquirks, test-harness conventions, fixture formats, toolchain-invocation footguns. Those\nare real and still binding *when the relevant work is in front of you*, but they waste\ntokens on the ~99% of tasks that never touch them. They live in\n[`docs/pitfalls.md`](./docs/pitfalls.md) (assembly/ISA/fixtures) and\n[`docs/project-gotchas.md`](./docs/project-gotchas.md) (test-harness/toolchain). See the\nrelocation note at the bottom.\n\n---",
   "footer": "---\n\n## Numbering & relocation note (2026-06-06, #1059)\n\nThis file was trimmed from 22 rules to 15 universally-binding ones; #1117 then added a\n16th (display 16 / stable `R021`, the pre-close error self-audit). Seven\ntask-type-specific rules were **relocated, not deleted** — they remain binding when the\nrelevant work is in front of you:\n\n| Former rule | Topic | New home |\n|---|---|---|\n| 11 | Write-path bug → read-back regression test | [`docs/project-gotchas.md`](./docs/project-gotchas.md) |\n| 13 | Wrap toolchain invocations in `scripts/lccrun.sh` | [`docs/pitfalls.md`](./docs/pitfalls.md) §6 |\n| 17 | `.hex`/`.bin` fixtures use raw 16-bit words | [`docs/pitfalls.md`](./docs/pitfalls.md) §2 |\n| 18 | One mnemonic per source line | [`docs/pitfalls.md`](./docs/pitfalls.md) §2 |\n| 19 | Cross-runtime stdout tests via `spawnSync({input})` | [`docs/project-gotchas.md`](./docs/project-gotchas.md) |\n| 20 | `test.failing` vs `test.skip` | [`docs/project-gotchas.md`](./docs/project-gotchas.md) |\n| 21 | Cross-module validation parity | [`docs/project-gotchas.md`](./docs/project-gotchas.md) |\n\n**Stable IDs:** `RULES.json` assigns each rule a stable two-word **animal-color stem**\n`id` (e.g. `copper-civet`), assigned once and never reused or renumbered (see\n`docs/research/842-rules-json-spike.md` and the #845 ruling). **Cite rules by their\nanimal-color stem** when you need a reference that survives future edits — never by\ndisplay number (these shift on a trim) nor by the `-NNN` version suffix (that re-breaks\non the next text edit). The former `R0NN` code is retained on each rule as `legacy_id`\nso older citations still resolve. Note that the surviving rules’ display numbers above\nshifted (former 12→11, 14→12, 15→13, 16→14, 22→15); rules 1–10 are unchanged. Older\n\"Rule N\" / `R0NN` citations in dated `docs/learnings/` TIL entries refer to the\npre-migration numbering and are left as historical record.",
@@ -323,6 +323,42 @@
       "added": "2026-06-13",
       "added_issue": 1228,
       "comment": "Epics/trackers are pure umbrellas (the #1217 'dumb tracker' model); the children carry the work and the velocity. Ratified as-is in #1228.",
+      "status": "active"
+    },
+    {
+      "id": "slate-jackal",
+      "legacy_id": "R027",
+      "version": 1,
+      "category": "workflow",
+      "text": "I will claim a ticket and read the available evidence (`docs/logs/`, prior `docs/research/`) before forming or publishing findings; I will not act before gathering the evidence the task depends on.",
+      "text_sha": "e55ed0",
+      "added": "2026-06-15",
+      "added_issue": 1394,
+      "comment": "PREMATURE_ACTION lever, promoted from the `feedback_claim_and_evidence_before_findings` memory per the #1160 behavioral-error taxonomy §4 (the promotion-loop gap, #1007). Acting before reading the available evidence produced inaccurate findings (errors rows 59, 203).",
+      "status": "active"
+    },
+    {
+      "id": "onyx-quokka",
+      "legacy_id": "R028",
+      "version": 1,
+      "category": "workflow",
+      "text": "Before filing an issue I will search existing issues with `--state all`, not just open; closed-completed work is invisible to an open-only search and produces duplicate tickets.",
+      "text_sha": "2b85f6",
+      "added": "2026-06-15",
+      "added_issue": 1394,
+      "comment": "INSUFFICIENT_SEARCH lever, promoted from the `feedback-search-closed-issues-before-filing` memory per the #1160 taxonomy §4. An open-only dup-search filed #1146-48 as duplicates of completed #1137-39 (errors row 67).",
+      "status": "active"
+    },
+    {
+      "id": "scarlet-narwhal",
+      "legacy_id": "R029",
+      "version": 1,
+      "category": "workflow",
+      "text": "When live state or a signal contradicts the request, I will stop and reconcile the discrepancy before proceeding, rather than trusting the request over the observed state.",
+      "text_sha": "8eeb8a",
+      "added": "2026-06-15",
+      "added_issue": 1394,
+      "comment": "IGNORED_CONTRADICTING_SIGNAL lever, promoted per the #1160 taxonomy §4. Trusting a stale request over live state recurred (errors rows 2, 67); the live deploy / closed-state was the tell that was disregarded.",
       "status": "active"
     }
   ]

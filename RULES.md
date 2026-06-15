@@ -41,6 +41,9 @@ relocation note at the bottom.
 17. I will not claim a ticket whose active work I estimate at over 60 minutes without first decomposing it into child tickets each estimated at 60 minutes or less; the parent then becomes an umbrella tracker, worked only through its children and earning no velocity row of its own. Exception: a human may explicitly approve taking it whole, noted in the ticket.
 18. I will not file implementation tickets for, or claim, a large or fuzzy ticket (no clear code site or scope) without first gating it behind a `spike`-labeled session of 60 minutes or less that produces scope, code sites, and ROI. Exception: a human may explicitly approve proceeding without a spike, noted in the ticket.
 19. I will never claim or work an epic/tracker issue as a unit of work; only its bounded child tickets are claimed and worked, and the epic stays open until its children resolve. It earns no velocity row of its own.
+20. I will claim a ticket and read the available evidence (`docs/logs/`, prior `docs/research/`) before forming or publishing findings; I will not act before gathering the evidence the task depends on.
+21. Before filing an issue I will search existing issues with `--state all`, not just open; closed-completed work is invisible to an open-only search and produces duplicate tickets.
+22. When live state or a signal contradicts the request, I will stop and reconcile the discrepancy before proceeding, rather than trusting the request over the observed state.
 
 ---
 

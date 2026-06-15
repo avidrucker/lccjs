@@ -109,6 +109,30 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Verify before acting
+
+> The three levers below are the RULES.md rules `slate-jackal` (R027), `onyx-quokka` (R028), and `scarlet-narwhal` (R029), promoted from feedback memories per the [behavioral-error taxonomy](./research/1160-behavioral-error-taxonomy.md) §4. They are the modes with *no structural net* — no permission classifier or guard fires — so the discipline is the only thing that catches them.
+
+**Read the available evidence before forming or publishing a finding (`slate-jackal`)**
+
+- **Do:** claim the ticket, then read what already exists — `docs/logs/` work logs, prior `docs/research/` passes, the issue's own comments — *before* investigating, concluding, or filing. Gather the evidence the task depends on first.
+- **Don't:** start a full investigation and publish findings before reading the evidence already on disk, or act before claiming.
+- **Why:** acting before reading produced inaccurate findings — a stale-HEAD timing bug mischaracterised as "confabulation," a review artifact reported missing when the log showed it existed (errors row 59); and editing a file before verifying its version-control home (row 203). The evidence was there to be read; the haste is the error.
+
+**Dup-search with `--state all`, not just open, before filing (`onyx-quokka`)**
+
+- **Do:** `gh issue list --state all --search "<keywords>"` (or `--state all` on a list) before filing — closed-completed work counts as a duplicate too.
+- **Don't:** check only open issues; an open-only scan treats same-day-completed work as if it never happened.
+- **Why:** an open-only dup-search filed #1146-48 as duplicates of already-**completed** #1137-39, all closed the same day (errors row 67). The live deploy already reflected the finished work — which is also the next lever's tell.
+
+**When live state contradicts the request, stop and reconcile before proceeding (`scarlet-narwhal`)**
+
+- **Do:** when what you observe (issue state, deployed behavior, file contents) disagrees with what the request assumes, halt and reconcile the discrepancy — the request may be stale.
+- **Don't:** trust the request's framing over the observed state and proceed as if the contradiction weren't there.
+- **Why:** trusting a checklist/issue-body over live `gh` state reported already-closed issues as open/deferred (errors row 2); the completed-work deploy contradicted the file-3-dupes request (row 67). The contradicting signal was visible and disregarded both times.
+
+---
+
 ## Ticket scoping & closure
 
 **Split a workstream's research, decision, and implementation into separate tickets — put `human-required` on the *decision*, not the research**
