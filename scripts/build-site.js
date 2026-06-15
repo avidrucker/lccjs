@@ -139,7 +139,18 @@ const LCC_HIGHLIGHT_SCOPES = [
   ['entity.name.label.lcc', 'entity.name', 'variable'],
 ];
 
-// → { [themeId]: { bg, styles: [ {color, fontStyle?, fontWeight?, textDecoration?}, … ] } }
+// Force an alpha channel onto a #rgb / #rrggbb / #rrggbbaa color, returning
+// #rrggbbaa. Used to synthesize a translucent overlay from a theme's fg when the
+// theme ships no workbench color map (#1347).
+function withAlpha(hex, alphaHex) {
+  if (!hex) return null;
+  let h = String(hex).trim().replace(/^#/, '');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  if (h.length >= 6) return '#' + h.slice(0, 6) + alphaHex;
+  return hex;
+}
+
+// → { [themeId]: { bg, fg, selBg, activeLine, styles: [ {color, …}, … ] } }
 function buildEditorThemeStyles(hl, themeIds) {
   const out = {};
   for (const id of themeIds) {
@@ -147,8 +158,19 @@ function buildEditorThemeStyles(hl, themeIds) {
     try { themeObj = hl.getTheme(id); } catch (err) { themeObj = null; }
     if (!themeObj) console.warn(`build:site — getTheme("${id}") failed; editor highlight will fall back`);
     const fg = (themeObj && themeObj.fg) || '#c9d1d9';
+    // Palette-derived editor chrome (#1347): prefer the theme author's OWN
+    // workbench colors (editor.selectionBackground / editor.lineHighlightBackground)
+    // so selection + active-line harmonize with each theme. The custom retro themes
+    // ship no `colors` map, so fall back to a translucent overlay built from fg —
+    // a soft 20%-alpha selection and a barely-there 8%-alpha active line.
+    const colors = (themeObj && themeObj.colors) || {};
     out[id] = {
       bg: resolveThemeBackground(themeObj),
+      fg,
+      selBg: colors['editor.selectionBackground'] || withAlpha(fg, '33'),
+      activeLine: colors['editor.lineHighlightBackground']
+                || colors['editor.lineHighlightBorder']
+                || withAlpha(fg, '14'),
       styles: LCC_HIGHLIGHT_SCOPES.map(scopes => resolveTokenStyle(themeObj, scopes, fg)),
     };
   }
@@ -745,6 +767,31 @@ function lccHighlightStyle(themeId) {
   return HighlightStyle.define(LCC_TAG_LIST.map((tag, i) => Object.assign({ tag }, styles[i] || {})));
 }
 
+// Per-theme editor "chrome": background, text-selection color, and active-line
+// highlight — all derived from the theme's own palette (#1347). selBg/activeLine
+// come from each theme author's editor.selectionBackground /
+// editor.lineHighlightBackground (precomputed into LCC_THEME_STYLES), replacing
+// CM's fixed light-mode defaults (bright lavender selection + strong blue active
+// line) that ignored the theme. The focused-selection selector mirrors CM's own
+// high-specificity rule so our color wins. Background lives on .cm-scroller, not
+// .cm-content, so the z-index -2 selection layer stays visible (#1339).
+function chromeTheme(themeId) {
+  const e = LCC_THEME_STYLES[themeId] || {};
+  const bg = e.bg || 'var(--border)';
+  const spec = {
+    '.cm-scroller': { background: bg },
+    '.cm-gutters':  { background: bg },
+  };
+  if (e.selBg) {
+    spec['.cm-selectionBackground'] = { background: e.selBg };
+    spec['&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground'] = { background: e.selBg };
+  }
+  if (e.activeLine) {
+    spec['.cm-activeLine'] = { backgroundColor: e.activeLine };
+  }
+  return EditorView.theme(spec);
+}
+
 // Editor will be initialized inside the async IIFE after Shiki loads,
 // so it starts with the correct theme and avoids flicker.
 // Test hook reference — set after editor creation in the async IIFE.
@@ -927,7 +974,6 @@ runBtn.addEventListener('click', () => {
   var placeholder = document.getElementById('editor-placeholder');
   if (placeholder) placeholder.remove();
 
-  const initialBg = (LCC_THEME_STYLES[sel.value] || {}).bg || 'var(--border)';
   editor = new EditorView({
     doc: ${starterCodeJson},
     extensions: [
@@ -955,19 +1001,15 @@ runBtn.addEventListener('click', () => {
       lcc(),
       // Per-theme highlight from the inlined precomputed table (#1283).
       highlightCompartment.of(syntaxHighlighting(lccHighlightStyle(sel.value))),
-      // Per-theme editor background (#1142, #1283)
-      backgroundCompartment.of(
-        // Background goes on .cm-scroller, NOT .cm-content: drawSelection() paints the
-        // selection in .cm-selectionLayer at z-index -1, behind .cm-content (z-index 0).
-        // An opaque .cm-content background hides the multi-line selection (#1339).
-        EditorView.theme({ '.cm-scroller': { background: initialBg }, '.cm-gutters': { background: initialBg } })
-      ),
+      // Per-theme background + selection + active-line chrome (#1142, #1283, #1339, #1347)
+      backgroundCompartment.of(chromeTheme(sel.value)),
       autocompletion({ override: [lccCompletionSource] }),
       EditorView.theme({
         '&': { height: '100%', fontSize: '.85rem' },
-        '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--mono-font)', background: 'var(--border)' },
-        // Background lives on .cm-scroller (above); keep only text/caret color on .cm-content
-        // so the z-index -1 selection layer stays visible behind it (#1339).
+        // Background/selection/active-line live in chromeTheme() (per-theme compartment).
+        '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--mono-font)' },
+        // Keep only text/caret color on .cm-content so the z-index -2 selection layer
+        // stays visible behind it (#1339).
         '.cm-content': { color: 'var(--fg)', caretColor: 'var(--fg)' },
         '.cm-gutters': { background: 'var(--border)', borderRight: '1px solid var(--muted)', color: 'var(--muted)' },
         '.cm-activeLineGutter': { background: 'rgba(128,128,128,0.1)' },
@@ -983,15 +1025,10 @@ runBtn.addEventListener('click', () => {
     editor.dispatch({
       effects: highlightCompartment.reconfigure(syntaxHighlighting(lccHighlightStyle(theme))),
     });
-    const bg = (LCC_THEME_STYLES[theme] || {}).bg;
-    if (bg) {
-      editor.dispatch({
-        effects: backgroundCompartment.reconfigure(
-          // .cm-scroller, not .cm-content — keep the selection layer visible (#1339).
-          EditorView.theme({ '.cm-scroller': { background: bg }, '.cm-gutters': { background: bg } })
-        ),
-      });
-    }
+    // Swap background + selection + active-line in one reconfigure (#1339, #1347).
+    editor.dispatch({
+      effects: backgroundCompartment.reconfigure(chromeTheme(theme)),
+    });
   }
 
   // Light/dark toggle button
