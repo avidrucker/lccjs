@@ -148,6 +148,9 @@ function runCase(testCase, index, programDir, programBase) {
       write: (m) => {
         stdout += m;
       },
+      // An autograder pipes input non-interactively: capture only the program's
+      // own output, not the interpreter's simulated-input echo (#1328).
+      echoInput: false,
     });
 
     const execResult = interpreter.executeBuffer(assembled.outputBytes, {

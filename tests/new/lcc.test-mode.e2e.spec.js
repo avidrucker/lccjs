@@ -40,7 +40,7 @@ describe('lcc --test e2e', () => {
           {
             name: 'pass case',
             input: 'hello world\n',
-            expected_output: 'hello world\nhello world',
+            expected_output: 'hello world',
           },
         ],
       });
@@ -79,7 +79,7 @@ describe('lcc --test e2e', () => {
       expect(res.stdout).toContain('FAIL  diff case  (output mismatch)');
       expect(res.stdout).toContain('first diff at line 1:');
       expect(res.stdout).toContain('expected: "goodbye"');
-      expect(res.stdout).toContain('actual:   "hello world\\nhello world"');
+      expect(res.stdout).toContain('actual:   "hello world"');
       expect(res.stdout).toContain('0 passed, 1 failed');
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
@@ -123,7 +123,7 @@ describe('lcc --test e2e', () => {
           {
             name: 'exit mismatch',
             input: 'hello world\n',
-            expected_output: 'hello world\nhello world',
+            expected_output: 'hello world',
             exit_code: 1,
           },
         ],

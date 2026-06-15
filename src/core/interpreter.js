@@ -107,6 +107,15 @@ class Interpreter {
     this._write = options.write ?? (m => (typeof process !== 'undefined' && process.stdout) ? process.stdout.write(m) : undefined);
 
     /**
+     * Echo simulated (inputBuffer) input back to stdout, mirroring a terminal
+     * session where typed characters appear on screen (2024 behavior, relied on
+     * by the oracle/e2e corpus). Default ON. The test-runner (#1328) sets this
+     * false so a non-TTY autograder run captures only the program's own output,
+     * not its echoed input. Real-stdin reads (fs.readSync) never echo regardless.
+     */
+    this.echoInput = options.echoInput !== false;
+
+    /**
      * Input buffer for SIN (if needed)
      */
     this.inputBuffer = '';
@@ -1377,9 +1386,11 @@ class Interpreter {
         inputLine = this.inputBuffer;
         this.inputBuffer = '';
       }
-      // Echo the simulated input back to output and stdout
+      // Echo the simulated input back to output and stdout (gated by echoInput;
+      // the test-runner disables it so an autograder captures only the program's
+      // own output, not its echoed input, #1328).
       ///// this.writeOutput(inputLine + '\n');
-      this.writeOutput(inputLine);
+      if (this.echoInput) this.writeOutput(inputLine);
       return { inputLine, isSimulated: true };
     } else if (this._pauseOnInput) {
       // Back up PC so the TRAP instruction re-executes after resume().
@@ -1439,8 +1450,8 @@ class Interpreter {
     if (this.inputBuffer && this.inputBuffer.length > 0) {
       let ainChar = this.inputBuffer.charAt(0);
       this.inputBuffer = this.inputBuffer.slice(1);
-      // Echo the simulated input back to output and stdout
-      this.writeOutput(ainChar + newline);
+      // Echo the simulated input back to output and stdout (gated by echoInput, #1328)
+      if (this.echoInput) this.writeOutput(ainChar + newline);
       return { char: ainChar, isSimulated: true };
     } else if (this._pauseOnInput) {
       this.pc--;
@@ -1496,9 +1507,10 @@ class Interpreter {
     // Null-terminate the string
     this.storeMem(address, 0);
 
-    // add newline here if input is simulated
+    // add newline here if input is simulated (the echoed "Enter"); gated by
+    // echoInput so the test-runner's autograder captures only program output (#1328)
     if (isSimulated) {
-      this.writeOutput(newline);
+      if (this.echoInput) this.writeOutput(newline);
     } else //// else, add input to the output buffer w/ newline delimeter
     {
       this.output += input + newline;
