@@ -19,3 +19,35 @@ test('build-site.js uses lang: lcc not lang: source.lcc in codeToHtml calls', ()
   expect(src).not.toMatch(/lang:\s*['"]source\.lcc['"]/);
   expect(src).toMatch(/lang:\s*['"]lcc['"]/);
 });
+
+// #1334 — the docs sections (Guides/Research/Learnings/Glossary/Parity) used to
+// force light mode regardless of the site theme toggle. Two causes in
+// build-site.js, both asserted here against the generator (the surface that ships):
+//
+//   1. Docs pages were generated with a hardcoded `bodyClass: 'light'`. The CSS
+//      defines the theme vars on BOTH `html.X` and `body.X`, so a baked
+//      `body.light` redefined `--bg`/`--fg`/... on the body element and shadowed
+//      the correct `html.dark` vars that the pre-paint head script sets — the
+//      page rendered light no matter what. The fix bakes no theme class on docs
+//      pages so the pre-paint <html> class drives them (and avoids a FOUC).
+//
+//   2. The shared on-load JS only synced the theme via `apply()` when a
+//      `#theme-select` dropdown existed. Docs pages have a `#theme-toggle` button
+//      but no dropdown, so `<body>`'s class was never reconciled on load. The fix
+//      mirrors `document.documentElement.className` onto `document.body` for the
+//      no-dropdown case.
+describe('docs pages honor the active theme, not forced light (#1334)', () => {
+  const src = fs.readFileSync(
+    path.join(__dirname, '../../scripts/build-site.js'), 'utf8'
+  );
+
+  test('no page is generated with a hardcoded light body class', () => {
+    expect(src).not.toMatch(/bodyClass:\s*['"]light['"]/);
+  });
+
+  test('on load the body theme class is mirrored from <html> (covers the no-dropdown docs pages)', () => {
+    expect(src).toMatch(
+      /document\.body\.className\s*=\s*document\.documentElement\.className/
+    );
+  });
+});

@@ -339,10 +339,19 @@ const JS = `
       apply(isDark(current) ? LIGHT_ID : DARK_ID);
     });
   }
-  // Apply saved theme on load (head script set body class; this syncs the dropdown)
+  // Apply saved theme on load. The head script already set the correct theme on
+  // <html> pre-paint. Landing has a #theme-select dropdown that drives apply();
+  // docs pages have a #theme-toggle but NO dropdown (#1334), so there sel is
+  // null -- mirror the <html> class onto <body> (otherwise it stays on its baked
+  // class) and initialise the toggle icon directly.
   var saved = localStorage.getItem('lcc-theme');
-  if (saved && sel) { sel.value = saved; }
-  if (sel) { apply(sel.value); }
+  if (sel) {
+    if (saved) { sel.value = saved; }
+    apply(sel.value);
+  } else {
+    document.body.className = document.documentElement.className;
+    updateToggleIcon(saved || (document.documentElement.className.indexOf('dark') === 0 ? DARK_ID : LIGHT_ID));
+  }
 }());
 `;
 
@@ -520,7 +529,7 @@ ${lccplusSections}
 
       const pageHtml = makePage({
         title: `${slug} — LCC Docs`,
-        bodyClass: 'light',
+        bodyClass: '', // #1334: bake no theme class — the pre-paint <html> class drives the theme (a baked body.* var block would shadow it and force light)
         nav: buildNav('../../', section.id, true),
         content: `${backNav}\n  <div class="prose">\n${htmlBody}\n  </div>`,
         footer: `  <footer>
@@ -547,7 +556,7 @@ ${listItems}
 
     const indexHtml = makePage({
       title: `${section.label} — LCC Docs`,
-      bodyClass: 'light',
+      bodyClass: '', // #1334: bake no theme class — the pre-paint <html> class drives the theme (a baked body.* var block would shadow it and force light)
       nav: buildNav('../../', section.id, true),
       content: indexContent,
       footer: `  <footer>
