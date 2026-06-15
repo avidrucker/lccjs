@@ -24,6 +24,21 @@ Feature: Interpreter runtime errors
     Then the run fails
     And the error output contains "Floating point exception"
 
+  # Mirrors the div0 scenario for the rem opcode (audit P2, #1377 / tracker #1180).
+  # rem-by-zero hits the same guard but a different code path (EOP_REM); pinning it
+  # ensures the zero-divisor abort never falls through to a silent `0` result.
+  Scenario: taking the remainder by zero raises a floating point exception
+    Given a source file "rem0.a" containing:
+      """
+          mov r0, 5
+          mov r1, 0
+          rem r0, r1
+          halt
+      """
+    When I run lcc on "rem0.a"
+    Then the run fails
+    And the error output contains "Floating point exception"
+
   Scenario: an out-of-range trap vector is rejected
     Given a source file "badtrap.a" containing:
       """

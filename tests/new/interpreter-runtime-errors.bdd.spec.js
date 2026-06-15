@@ -80,6 +80,13 @@ defineFeature(feature, (test) => {
     andErrContains(and);
   });
 
+  test('taking the remainder by zero raises a floating point exception', ({ given, when, then, and }) => {
+    givenSource(given);
+    whenRun(when);
+    thenRunFails(then);
+    andErrContains(and);
+  });
+
   test('an out-of-range trap vector is rejected', ({ given, when, then, and }) => {
     givenSource(given);
     whenRun(when);
