@@ -702,7 +702,7 @@ const COMMAND_REGISTRY = [
   {
     key: 'c', match: 'prefix', helpLabel: 'c{N}',
     help: 'set code context rows    (e.g. c5, c0=hide)',
-    provenance: 'CH', test: 'pending(#1343)',
+    provenance: 'CH', test: 'interactive.unit.spec.js',
     run: (interp, arg) => {
       if (arg === '') {
         interp.codeContextRows = 0;
@@ -727,7 +727,7 @@ const COMMAND_REGISTRY = [
       '              panes: r=registers  c=code  m=memory  o=output',
       '              use / to separate columns  (up to 3)',
     ],
-    provenance: 'CH', test: 'pending(#1343)',
+    provenance: 'CH', test: 'interactive.unit.spec.js',
     run: (interp, arg) => {
       const result = interp.handlePaneLayout(arg);
       if (result.error) return { output: `Error: ${result.error}\n`, incNewline: true };
@@ -754,7 +754,7 @@ const COMMAND_REGISTRY = [
   },
   {
     key: '<enter>', match: 'empty', helpLabel: '<enter>', help: 'repeat last step count',
-    provenance: 'CH', test: 'pending(#1343)',
+    provenance: 'CH', test: 'interactive.unit.spec.js',
     run: (interp, _arg, lastStep) => {
       if (lastStep > 0 && !interp.running) {
         return { output: 'Program has halted. Step back with -N first.\n', incNewline: true };

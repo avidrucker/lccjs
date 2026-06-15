@@ -545,6 +545,45 @@ describe('IInterpreter.runInteractive() — prompt loop (OB-044)', () => {
     expect(interp.currentIteration).toBe(0);
   });
 
+  // ── coverage for the #1343 pending(#1343) registry entries: c{N}, l{layout},
+  //    <enter> (flips their COMMAND_REGISTRY test pointers from pending). #1365
+  test('code command c{N} updates codeContextRows', () => {
+    const interp = runWithInput(MIN_EXE, 'c3\nq\n');
+    expect(interp.codeContextRows).toBe(3); // default is 5
+  });
+
+  test('code command c0 hides the code pane (codeContextRows = 0)', () => {
+    const interp = runWithInput(MIN_EXE, 'c0\nq\n');
+    expect(interp.codeContextRows).toBe(0);
+  });
+
+  test('code command c{non-numeric} errors and leaves codeContextRows unchanged', () => {
+    const interp = runWithInput(MIN_EXE, 'cx\nq\n');
+    const allOutput = stdoutSpy.mock.calls.map((c) => c[0]).join('');
+    expect(allOutput).toContain('c{N} expects a non-negative integer');
+    expect(interp.codeContextRows).toBe(5); // unchanged default
+  });
+
+  test('layout command l{layout} updates paneLayout columns', () => {
+    const interp = runWithInput(MIN_EXE, 'lr/c/mo\nq\n');
+    expect(interp.paneLayout.column0).toBe('r');
+    expect(interp.paneLayout.column1).toBe('c');
+    expect(interp.paneLayout.column2).toBe('mo');
+  });
+
+  test('layout command l{invalid} errors and leaves paneLayout unchanged', () => {
+    const interp = runWithInput(MIN_EXE, 'lz\nq\n');
+    const allOutput = stdoutSpy.mock.calls.map((c) => c[0]).join('');
+    expect(allOutput).toContain('not a valid pane identifier');
+    expect(interp.paneLayout.column0).toBe('ro'); // unchanged default
+  });
+
+  test('<enter> (empty input) repeats the last step count', () => {
+    const once = runWithInput(MIN_EXE, '2\nq\n');           // step 2, no repeat
+    const twice = runWithInput(MIN_EXE, '2\n\nq\n');        // step 2, then Enter repeats 2
+    expect(twice.currentIteration).toBeGreaterThan(once.currentIteration);
+  });
+
   test('output pane shows registers on each render', () => {
     runWithInput(MIN_EXE, 'q\n');
     const allOutput = stdoutSpy.mock.calls.map((c) => c[0]).join('');
