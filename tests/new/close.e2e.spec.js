@@ -498,6 +498,56 @@ function makeRepoWithCsvConflict(issue) {
   return { tmpDir, mainPath, wtPath };
 }
 
+// Build a repo where the closing commit is identical to a concurrent main commit
+// except for the close keyword in the message. When close.js rebases, the worktree
+// commit drops out as empty, so the tool must not report the concurrent SHA as the
+// closing commit.
+function makeRepoWithEmptyCsvClose(issue) {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-close-emptycsv-'));
+  const remotePath = path.join(tmpDir, 'remote.git');
+  const mainPath = path.join(tmpDir, 'main');
+  const csvRel = 'docs/puzzle-velocity.csv';
+  const csvBase = ['# AUTO-GENERATED base', 'id,ticket,title,role', '1,1,base,DEV', ''].join('\n');
+  const csvHead = ['# AUTO-GENERATED base', 'id,ticket,title,role', '1,1,base,DEV', '2,9022,shared row,DEV', ''].join('\n');
+
+  fs.mkdirSync(remotePath);
+  sh(tmpDir, `git init --bare "${remotePath}"`);
+  sh(remotePath, 'git symbolic-ref HEAD refs/heads/main');
+  fs.mkdirSync(mainPath);
+  sh(tmpDir, `git clone "${remotePath}" main`);
+  sh(mainPath, 'git config user.email "test@example.com"');
+  sh(mainPath, 'git config user.name "Test"');
+  sh(mainPath, 'git config commit.gpgsign false');
+
+  fs.mkdirSync(path.join(mainPath, 'docs'), { recursive: true });
+  fs.writeFileSync(path.join(mainPath, csvRel), csvBase);
+  sh(mainPath, `git add ${csvRel}`);
+  sh(mainPath, 'git commit -m "base csv"');
+  const br = sh(mainPath, 'git rev-parse --abbrev-ref HEAD').trim();
+  if (br !== 'main') sh(mainPath, 'git checkout -b main');
+  sh(mainPath, 'git push -u origin main');
+
+  const wtPath = path.join(mainPath, '.claude', 'worktrees', `dragonfruit-issue-${issue}`);
+  const wtBranch = `dragonfruit/issue-${issue}-test`;
+  fs.mkdirSync(path.dirname(wtPath), { recursive: true });
+  sh(mainPath, `git worktree add "${wtPath}" -b "${wtBranch}"`);
+  sh(wtPath, 'git config user.email "test@example.com"');
+  sh(wtPath, 'git config user.name "Test"');
+  sh(wtPath, 'git config commit.gpgsign false');
+
+  fs.writeFileSync(path.join(wtPath, csvRel), csvHead);
+  sh(wtPath, `git add ${csvRel}`);
+  sh(wtPath, `git commit -m "fix: thing\n\nCloses #${issue}"`);
+
+  // Concurrent agent lands the same CSV contents without the close keyword.
+  fs.writeFileSync(path.join(mainPath, csvRel), csvHead);
+  sh(mainPath, `git add ${csvRel}`);
+  sh(mainPath, 'git commit -m "fix: concurrent csv landing"');
+  sh(mainPath, 'git push origin main');
+
+  return { tmpDir, mainPath, wtPath };
+}
+
 describe('close.js e2e — velocity CSV conflict auto-resolve (#1344, regression of #503)', () => {
   test('re-export targets the WORKTREE CSV so the landed commit has no conflict markers', () => {
     const Database = require('better-sqlite3');
@@ -535,6 +585,29 @@ describe('close.js e2e — velocity CSV conflict auto-resolve (#1344, regression
       expect(landed).not.toMatch(/<<<<<<<|=======|>>>>>>>/);   // no conflict markers
       expect(landed).toMatch(/AUTO-GENERATED/);                 // it's the DB re-export
       expect(landed).toMatch(/9021/);                           // seeded row is present (hermetic)
+    } finally {
+      rmrf(tmpDir);
+    }
+  }, 30_000);
+});
+
+describe('close.js e2e — empty close after CSV-only replay (#1361)', () => {
+  test('does not report the concurrent SHA as the closing commit when the close commit drops out as empty', () => {
+    const { tmpDir, mainPath, wtPath } = makeRepoWithEmptyCsvClose('9022');
+    try {
+      const { ok, out } = shCapture(
+        wtPath,
+        `node "${CLOSE_JS}" 9022 --no-verify-issue --skip-velocity-check --skip-marker-check`
+      );
+      expect(ok).toBe(true);
+      expect(out).toMatch(/close commit .*went empty after CSV re-export/i);
+      expect(out).toMatch(/empty_close=1/);
+      expect(out).toMatch(/tip=/);
+      expect(out).not.toMatch(/commit .*confirmed on origin\/main\./i);
+
+      sh(mainPath, 'git fetch origin main');
+      const log = sh(mainPath, 'git log origin/main --format=%B');
+      expect(log).not.toMatch(/Closes #9022/);
     } finally {
       rmrf(tmpDir);
     }

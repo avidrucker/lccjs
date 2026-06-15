@@ -801,7 +801,7 @@ function tryLand() {
   return classifyPushError(push.out);
 }
 
-function report({ issue, branch, wtPath, sha, kept, dry }) {
+function report({ issue, branch, wtPath, closingSha, landedSha, emptyClose, kept, dry }) {
   const short = wtPath ? wtPath.replace(process.env.HOME || '\0', '~') : '(unknown)';
   const bar = '─'.repeat(58);
   console.log(bar);
@@ -809,13 +809,28 @@ function report({ issue, branch, wtPath, sha, kept, dry }) {
   console.log(bar);
   console.log(`  branch    ${branch || '(detached)'}`);
   console.log(`  worktree  ${short}`);
-  if (sha) console.log(`  commit    ${sha.slice(0, 12)}  (on origin/main)`);
+  if (closingSha) {
+    console.log(`  commit    ${closingSha.slice(0, 12)}  (on origin/main)`);
+    if (landedSha && landedSha !== closingSha) {
+      console.log(`  tip       ${landedSha.slice(0, 12)}  (post-rebase HEAD)`);
+    }
+  } else if (landedSha) {
+    console.log(`  tip       ${landedSha.slice(0, 12)}  (close commit went empty after CSV re-export)`);
+  }
   console.log(bar);
-  console.log(`CLOSE ${dry ? 'DRYRUN' : 'OK'} issue=${issue} branch=${branch || ''} sha=${sha || ''}${kept ? ' kept=1' : ''}`);
+  const tipField = landedSha && landedSha !== closingSha ? ` tip=${landedSha}` : '';
+  console.log(`CLOSE ${dry ? 'DRYRUN' : 'OK'} issue=${issue} branch=${branch || ''} sha=${closingSha || ''}${tipField}${emptyClose ? ' empty_close=1' : ''}${kept ? ' kept=1' : ''}`);
 }
 
-function logCommentPrompt(issue, sha) {
-  const s = sha ? sha.slice(0, 12) : '(sha)';
+function logCommentPrompt(issue, closingSha, landedSha, emptyClose) {
+  if (emptyClose && landedSha) {
+    log(
+      `Post your closing comment:\n` +
+      `  gh issue comment ${issue} --body "Closed after CSV re-export; origin/main tip ${landedSha.slice(0, 12)} already carried the row. <your summary here>"`
+    );
+    return;
+  }
+  const s = closingSha ? closingSha.slice(0, 12) : '(sha)';
   log(`Post your closing comment:\n  gh issue comment ${issue} --body "Closed in ${s}. <your summary here>"`);
 }
 
@@ -868,8 +883,17 @@ function main() {
         deleteClaimRef(issue); // #1039: same claim-ref cleanup on the already-landed recovery path
         scanParentTrackers(issue, opts.updateTrackers);
         if (opts.keep) {
-          report({ issue, branch, wtPath, sha: alreadyLandedSha, kept: true, dry: false });
-          logCommentPrompt(issue, alreadyLandedSha);
+          report({
+            issue,
+            branch,
+            wtPath,
+            closingSha: alreadyLandedSha,
+            landedSha: alreadyLandedSha,
+            emptyClose: false,
+            kept: true,
+            dry: false,
+          });
+          logCommentPrompt(issue, alreadyLandedSha, alreadyLandedSha, false);
           return;
         }
         process.chdir(root);
@@ -880,9 +904,18 @@ function main() {
           log(`warn: ff pull of main skipped (${pullResult.out.trim().split('\n')[0].slice(0, 80)}). ` +
               `Sync manually: git -C "${root}" pull --ff-only origin main`);
         }
-        report({ issue, branch, wtPath, sha: alreadyLandedSha, kept: false, dry: false });
+        report({
+          issue,
+          branch,
+          wtPath,
+          closingSha: alreadyLandedSha,
+          landedSha: alreadyLandedSha,
+          emptyClose: false,
+          kept: false,
+          dry: false,
+        });
         log(`Shell re-root: cd "${root}"`);
-        logCommentPrompt(issue, alreadyLandedSha);
+        logCommentPrompt(issue, alreadyLandedSha, alreadyLandedSha, false);
         spawn('bash', ['-c',
           `git worktree remove "${wtPath}" && git branch -D ${branch} && git worktree prune` +
           " || echo '[close] warning: deferred teardown may have failed — check: git worktree list' >&2"
@@ -932,7 +965,7 @@ function main() {
 
   if (opts.dryRun) {
     log(`would loop fetch/rebase/push (max ${opts.max}), verify ${sha && sha.slice(0, 12)} on origin/main, then ${opts.keep ? 'KEEP' : 'remove'} the worktree.`);
-    report({ issue, branch, wtPath, sha: null, kept: opts.keep, dry: true });
+    report({ issue, branch, wtPath, closingSha: null, landedSha: null, emptyClose: false, kept: opts.keep, dry: true });
     return;
   }
 
@@ -959,6 +992,8 @@ function main() {
   // the SHA captured above. The gate must check the SHA that actually landed
   // on origin/main, not the pre-rebase value. (#354)
   const landedSha = headSha();
+  const closingCommitOnMainSha = findClosingCommitOnMain(issue);
+  const emptyClose = !closingCommitOnMainSha && Boolean(closingCommitSha) && Boolean(landedSha) && closingCommitSha !== landedSha;
 
   // --- the gate: verify on origin/main before ANY teardown.
   sh('git fetch origin main', true);
@@ -967,7 +1002,16 @@ function main() {
         'origin/main — refusing to remove the worktree. Investigate before ' +
         'cleaning up; your work is intact.');
   }
-  log(`commit ${landedSha.slice(0, 12)} confirmed on origin/main.`);
+  if (closingCommitOnMainSha) {
+    log(`commit ${closingCommitOnMainSha.slice(0, 12)} confirmed on origin/main.`);
+    if (landedSha && landedSha !== closingCommitOnMainSha) {
+      log(`tip ${landedSha.slice(0, 12)} is the post-rebase HEAD.`);
+    }
+  } else if (emptyClose) {
+    log(`close commit ${closingCommitSha.slice(0, 12)} went empty after CSV re-export; origin/main tip ${landedSha.slice(0, 12)} already carries the row.`);
+  } else {
+    log(`commit ${landedSha.slice(0, 12)} confirmed on origin/main.`);
+  }
 
   // Delete the cross-clone claim ref (#1039) now that the close is committed —
   // BEFORE the --keep early-return and independent of the detached teardown, so a
@@ -980,7 +1024,10 @@ function main() {
     const st = sh(`gh issue view ${issue} --json state -q .state`, true);
     if (st && st.trim().toUpperCase() === 'OPEN') {
       log(`#${issue} still shows OPEN — closing it explicitly.`);
-      sh(`gh issue close ${issue} -c "Closed via npm run close (commit ${landedSha.slice(0, 12)} on main)."`, true);
+      const closeComment = emptyClose
+        ? `Closed via npm run close after CSV re-export; the close commit went empty after rebase.`
+        : `Closed via npm run close (commit ${landedSha.slice(0, 12)} on main).`;
+      sh(`gh issue close ${issue} -c "${closeComment}"`, true);
     } else if (st) {
       log(`#${issue} is ${st.trim()}.`);
     }
@@ -991,8 +1038,17 @@ function main() {
   scanParentTrackers(issue, opts.updateTrackers);
 
   if (opts.keep) {
-    report({ issue, branch, wtPath, sha: landedSha, kept: true, dry: false });
-    logCommentPrompt(issue, landedSha);
+    report({
+      issue,
+      branch,
+      wtPath,
+      closingSha: emptyClose ? null : closingCommitOnMainSha,
+      landedSha,
+      emptyClose,
+      kept: true,
+      dry: false,
+    });
+    logCommentPrompt(issue, closingCommitOnMainSha || landedSha, landedSha, emptyClose);
     return;
   }
 
@@ -1008,9 +1064,18 @@ function main() {
         `Sync manually: git -C "${root}" pull --ff-only origin main`);
   }
 
-  report({ issue, branch, wtPath, sha: landedSha, kept: false, dry: false });
+  report({
+    issue,
+    branch,
+    wtPath,
+    closingSha: emptyClose ? null : closingCommitOnMainSha,
+    landedSha,
+    emptyClose,
+    kept: false,
+    dry: false,
+  });
   log(`Shell re-root: cd "${root}"`);
-  logCommentPrompt(issue, landedSha);
+  logCommentPrompt(issue, closingCommitOnMainSha || landedSha, landedSha, emptyClose);
 
   // Defer the filesystem teardown to a detached subprocess so that npm and
   // any shell it spawns for post-run lifecycle checks can exit while the
