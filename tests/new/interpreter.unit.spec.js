@@ -604,6 +604,80 @@ describe('Interpreter Unit Tests', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // -d debugger: c (change value) + integer n step-count (#1349)
+  // The `h` help advertised both, but neither was implemented — they fell
+  // through to a single step. The real Oracle implements both (probe #1348);
+  // lccjs must match, WITH input validation so a bare `c` does not crash (the
+  // Oracle segfaults on bare `c`; lccjs prints "Missing operand" instead).
+  // ---------------------------------------------------------------------------
+
+  describe('-d debugger: c change-value + integer n step-count (#1349)', () => {
+    // demoA: mvi r0, 5 / dout / nl / halt   (addrs 0..3)
+    const demoA = Buffer.from([0x6f, 0x43, 0x05, 0xd0, 0x02, 0xf0, 0x01, 0xf0, 0x00, 0xf0]);
+
+    function captureStdout(fn) {
+      const parts = [];
+      process.stdout.write.mockImplementation((msg) => parts.push(msg));
+      try { fn(); } finally { process.stdout.write.mockImplementation(() => {}); }
+      return parts.join('');
+    }
+
+    function newDebugInterp(inputBuffer) {
+      const interp = new Interpreter();
+      interp.debugMode = true;
+      interp.allowRuntimeDebugging = false;
+      interp.inputBuffer = inputBuffer;
+      return interp;
+    }
+
+    // Note: in the core debugger, `q` lets the *current* instruction execute
+    // before stopping (step() has no running-guard after debug()). demoA's first
+    // instruction is `mvi r0, 5`, so we assert on registers/memory it does NOT
+    // touch (r1, r3, mem[0x20]) to isolate the `c` effect.
+
+    test('c r1 <hex> sets register r1 (unaffected by the mvi r0,5 that q executes)', () => {
+      const interp = newDebugInterp('c r1 a\nq\n');
+      captureStdout(() => interp.executeBuffer(demoA, { inputFileName: 'demoA.e' }));
+      expect(interp.r[1]).toBe(0x0a);
+    });
+
+    test('c <hexaddr> <hex> sets a memory word', () => {
+      const interp = newDebugInterp('c 20 ab\nq\n');
+      captureStdout(() => interp.executeBuffer(demoA, { inputFileName: 'demoA.e' }));
+      expect(interp.mem[0x20]).toBe(0xab);
+    });
+
+    test('bare c (no operands) prints Missing operand and does not crash', () => {
+      const interp = newDebugInterp('c\nq\n');
+      const out = captureStdout(() => interp.executeBuffer(demoA, { inputFileName: 'demoA.e' }));
+      expect(out).toContain('Missing operand');
+    });
+
+    test('c with a location but no value prints Missing operand', () => {
+      const interp = newDebugInterp('c r3\nq\n');
+      const out = captureStdout(() => interp.executeBuffer(demoA, { inputFileName: 'demoA.e' }));
+      expect(out).toContain('Missing operand');
+      expect(interp.r[3]).toBe(0); // c r3 (no value) leaves r3 unchanged
+    });
+
+    test('integer n runs n instructions before re-prompting (suppresses the mid-batch prompt)', () => {
+      // mvi r0,7 / add r0,r0,r0 / halt — distinct mnemonics so the prompt reveals
+      // where execution paused. `2` should auto-run mvi+add (no `add>>>` prompt)
+      // and re-prompt at halt (`halt>>>`). Buggy single-step pauses at `add>>>`.
+      const source = '  mvi r0, 7\n  add r0, r0, r0\n  halt\n';
+      const assembler = new Assembler();
+      const assembly = assembler.assembleSource(source, { inputFileName: 'p.a' });
+      const interp = new Interpreter();
+      interp.debugMode = true;
+      interp.allowRuntimeDebugging = false;
+      interp.inputBuffer = '2\nq\n';
+      const out = captureStdout(() => interp.executeBuffer(assembly.outputBytes, { inputFileName: 'p.e' }));
+      expect(out).toContain('halt>>>');     // 2nd prompt is at the 3rd instruction
+      expect(out).not.toContain('add>>>');  // the add was auto-run, never prompted
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // -t flag: per-step trace output (#77)
   // ---------------------------------------------------------------------------
 
