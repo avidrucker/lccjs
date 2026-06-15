@@ -637,7 +637,7 @@ html.dark #run-btn { background:#238636; }
 #stop-btn { background:#c0392b;color:#fff;border:none;border-radius:4px;padding:.4rem 1.1rem;font-size:.9rem;cursor:pointer;font-weight:600;display:none; }
 #stop-btn:hover { opacity:.85; }
 .run-bar { display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem; }
-#exec-output { min-height:300px;border-radius:6px;padding:1.1rem 1.25rem;overflow:auto;font-size:.85rem;line-height:1.6;font-family:var(--mono-font);background:var(--border);color:var(--fg);white-space:pre-wrap;word-break:break-word;margin:0; }
+#exec-output { min-height:300px;border-radius:6px;padding:1.1rem 1.25rem;overflow:auto;font-size:.85rem;line-height:1.6;font-family:var(--mono-font);background:var(--surface-bg,var(--border));color:var(--surface-fg,var(--fg));white-space:pre-wrap;word-break:break-word;margin:0; }
 #exec-output.lcc-error { color:#cf222e; }
 html.dark #exec-output.lcc-error { color:#ff7b72; }
 .panel-label { font-size:.8rem;color:var(--muted);margin-bottom:.4rem; }
@@ -1064,7 +1064,25 @@ runBtn.addEventListener('click', () => {
     editor.dispatch({
       effects: backgroundCompartment.reconfigure(chromeTheme(theme)),
     });
+    applySurfaceTheme(theme);
   }
+
+  // Drive the non-CodeMirror surfaces (output pane #exec-output, stdin textarea,
+  // stdin prompt) from the SAME per-theme palette the editor's chromeTheme() uses
+  // (#1333). Previously these read the page light/dark vars (var(--border)/var(--fg)),
+  // so on e.g. Monokai the editor showed Monokai's background but the terminal did
+  // not. Setting --surface-bg/--surface-fg from LCC_THEME_STYLES[theme] makes them
+  // track the code theme. The CSS falls back to var(--border)/var(--fg) until this
+  // runs, and the .lcc-error color rule (higher specificity) still wins for errors.
+  function applySurfaceTheme(theme) {
+    var e = LCC_THEME_STYLES[theme] || {};
+    var root = document.documentElement.style;
+    if (e.bg) { root.setProperty('--surface-bg', e.bg); } else { root.removeProperty('--surface-bg'); }
+    if (e.fg) { root.setProperty('--surface-fg', e.fg); } else { root.removeProperty('--surface-fg'); }
+  }
+  // Init surfaces on load (covers the path where the toggle-button block below
+  // does not run, e.g. no #theme-toggle in the nav).
+  applySurfaceTheme(sel.value);
 
   // Light/dark toggle button
   var toggleBtn = document.getElementById('theme-toggle');
@@ -1122,15 +1140,15 @@ ${playgroundThemeOptions}
       <p class="panel-label">LCC Assembly</p>
       <div id="editor" style="width:100%;height:280px;border:1px solid var(--muted);border-radius:6px;overflow:hidden;"><pre id="editor-placeholder" style="margin:0;padding:4px 6px 4px 30px;height:100%;box-sizing:border-box;overflow:hidden;background:var(--border);color:var(--fg);font-family:var(--mono-font);font-size:.85rem;line-height:1.4;white-space:pre;">${starterCodeHtml}</pre></div>
       <p class="panel-label" style="margin-top:.75rem;">stdin <span style="font-style:italic;">(pre-supply lines, or leave blank — an interactive prompt appears when the program waits for input)</span></p>
-      <textarea id="stdin-input" spellcheck="false" style="width:100%;height:80px;background:var(--border);color:var(--fg);border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
+      <textarea id="stdin-input" spellcheck="false" style="width:100%;height:80px;background:var(--surface-bg,var(--border));color:var(--surface-fg,var(--fg));border:1px solid var(--muted);border-radius:6px;padding:.75rem;font-family:var(--mono-font);font-size:.85rem;line-height:1.6;resize:vertical;tab-size:4;"></textarea>
     </div>
     <div>
       <p class="panel-label">Output</p>
       <pre id="exec-output">(click Run to execute)</pre>
-      <div id="stdin-prompt" style="display:none;margin-top:.5rem;padding:.65rem .9rem;background:var(--border);border-radius:6px;border:1px solid var(--muted);">
-        <p id="stdin-prompt-label" style="font-size:.8rem;color:var(--fg);margin-bottom:.45rem;font-family:var(--mono-font);"></p>
+      <div id="stdin-prompt" style="display:none;margin-top:.5rem;padding:.65rem .9rem;background:var(--surface-bg,var(--border));border-radius:6px;border:1px solid var(--muted);">
+        <p id="stdin-prompt-label" style="font-size:.8rem;color:var(--surface-fg,var(--fg));margin-bottom:.45rem;font-family:var(--mono-font);"></p>
         <div style="display:flex;gap:.5rem;align-items:center;">
-          <input id="stdin-prompt-input" type="text" spellcheck="false" autocomplete="off" style="flex:1;background:var(--bg);color:var(--fg);border:1px solid var(--muted);border-radius:4px;padding:.35rem .6rem;font-family:var(--mono-font);font-size:.85rem;" />
+          <input id="stdin-prompt-input" type="text" spellcheck="false" autocomplete="off" style="flex:1;background:var(--surface-bg,var(--bg));color:var(--surface-fg,var(--fg));border:1px solid var(--muted);border-radius:4px;padding:.35rem .6rem;font-family:var(--mono-font);font-size:.85rem;" />
           <button id="stdin-prompt-submit">Submit</button>
         </div>
       </div>

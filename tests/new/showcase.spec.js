@@ -51,3 +51,27 @@ describe('docs pages honor the active theme, not forced light (#1334)', () => {
     );
   });
 });
+
+// #1333 — the sandbox input/output SURFACES (output pane #exec-output, stdin
+// textarea #stdin-input, the stdin prompt) drew their background/foreground from
+// the page light/dark vars (var(--border)/var(--fg)), NOT the active code theme's
+// palette. So on e.g. Monokai the editor showed Monokai's background but the
+// surfaces showed a generic github-dark background — the editor and the terminal
+// disagreed. The fix drives the surfaces from a --surface-bg/--surface-fg pair
+// that JS sets from the SAME precomputed LCC_THEME_STYLES[theme] palette the
+// editor's chromeTheme() consumes, so all surfaces track the code theme.
+describe('sandbox surfaces follow the code-theme palette, not page light/dark (#1333)', () => {
+  const src = fs.readFileSync(
+    path.join(__dirname, '../../scripts/build-site.js'), 'utf8'
+  );
+
+  test('surfaces reference the per-theme --surface-bg/--surface-fg vars', () => {
+    expect(src).toMatch(/--surface-bg/);
+    expect(src).toMatch(/--surface-fg/);
+  });
+
+  test('applySurfaceTheme drives --surface-* from the LCC_THEME_STYLES palette', () => {
+    expect(src).toMatch(/applySurfaceTheme/);
+    expect(src).toMatch(/setProperty\(\s*['"]--surface-bg['"]/);
+  });
+});
