@@ -32,6 +32,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 | Doc | Date | Agent | Themes |
 |---|---|---|---|
 | [TIL 2026-06-14 — INCABERRY](./today-i-learned-2026-06-14-incaberry.md) | 2026-06-14 | INCABERRY | Claim warnings can be successful yet still point at stale worktree/claim-ref cleanup debt; `git worktree add` needs write access to refs and can fail under a read-only sandbox. |
+| [TIL 2026-06-14 — INCABERRY (session 2)](./today-i-learned-2026-06-14-incaberry-2.md) | 2026-06-14 | INCABERRY | CLI BDD tests can need an in-process driver seam when sandboxed `spawnSync` returns EPERM; TTY-sensitive extras like `clear`, `cursor`, and `resetc` are easier to prove with in-process TTY guards and spies. |
 | [TIL 2026-06-14 CHERRY](./today-i-learned-2026-06-14-cherry.md) | 2026-06-14 | CHERRY | Review a ticket against the shipped sibling code it claims parity with; reproduce a worktree test red on current `main` before debugging it (stale-base #1215); a test's inline issue-reference is a hint not an attribution (#940≠#1215); split a user-facing convention into its own ticket and record the ruling (#1240 content-sniff). |
 | [TIL 2026-06-07 JACKFRUIT](./today-i-learned-2026-06-07-jackfruit.md) | 2026-06-07 | JACKFRUIT | Fruit roster sync, CodeMirror per-theme bg compartments, Pages doc curation audit. |
 | [oracle-e2e `.bst` redundancy](./2026-05-25-lcc-oracle-e2e-bst-redundancy.md) | 2026-05-25 | — | A redundant `.bst` golden in the `lcc.oracle.e2e` suite: the bug, the fix, and general golden-hygiene lessons. |
