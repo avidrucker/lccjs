@@ -609,119 +609,119 @@ All four go through `[abortAssembly]`, so they CLI-exit (or throw under `throwOn
 
 Hand-written single-pass tokenizer. Walks each character, splitting on whitespace and `,` while honouring two special states: inside a quoted string (the delimiter char is part of the token; only the matching close delimiter ends it) and after a backslash inside a string (the next char is consumed verbatim regardless of what it is). The trailing colon on a label token is kept attached — `label:` becomes one token, not two. Returns an array of opaque string tokens; semantic interpretation happens in `[handleDirective]` / `[handleInstruction]`.
 
-**Source:** `src/core/assembler.js:916-971`
+**Source:** `assembler.js` — `tokenizeLine()`
 **See also:** [Tokenization splitting rules], [parseString], [handleDirective], [handleInstruction]
 
 #### Tokenization splitting rules
 
 Tokens are split on either whitespace **or** `,` (so `add r0,r1,r2` and `add r0 r1 r2` produce identical token arrays). `:` is *not* a split character: it remains attached to the preceding token, so `label:` is one token. `+` and `-` are not split characters either — `label+5` is one token (resolved later by `[parseLabelWithOffset]`), `label + 5` is three (resolved by the per-mnemonic three-operand fallback).
 
-**Source:** `src/core/assembler.js:925-948`
+**Source:** `assembler.js` — `tokenizeLine()`, grep `char === ',' && !inString`
 **See also:** [tokenizeLine], [parseLabelWithOffset]
 
 #### String delimiters (`"` and `'`)
 
 Both single and double quotes start a string literal in the tokenizer. The opening delimiter is recorded so the matching close delimiter is the only one that ends the literal — `"don't"` is one token containing an apostrophe. The delimiter chars are **preserved in the token**; downstream `[parseString]` strips them when interpreting content.
 
-**Source:** `src/core/assembler.js:925-927, 958-962`
+**Source:** `assembler.js` — `tokenizeLine()`, grep `stringDelimiter = char`
 **See also:** [tokenizeLine], [parseString], [isStringLiteral]
 
 #### String escape sequences
 
 `[parseString]` handles a small fixed set inside string content: `\n`, `\t`, `\r`, `\\`, `\"`. Anything else (e.g. `\f`, `\b`, `\0`) triggers `"Unknown escape sequence: \X"` — non-fatal, raised through `[error]` rather than `[abortAssembly]`. A backslash at end-of-string content triggers `"Missing terminating quote"`.
 
-**Source:** `src/core/assembler.js:981-1015`
+**Source:** `assembler.js` — `parseString()` (escape switch)
 **See also:** [parseString], [Tokenization splitting rules]
 
 #### `parseString`
 
 The post-tokenize string interpreter. Strips the surrounding delimiter chars and walks the content character-by-character, expanding escape sequences. Distinct from `[tokenizeLine]`'s string handling: the tokenizer only finds the bounds of the string literal, leaving escape expansion to this method. Called from `.string` / `.stringz` / `.asciz` directive handlers.
 
-**Source:** `src/core/assembler.js:981-1015`
+**Source:** `assembler.js` — `parseString()`
 **See also:** [String escape sequences], [.string / .stringz / .asciz]
 
 #### `isStringLiteral`
 
 Quick regex check (`/^"(.*)"$/.test(s) || /^'(.*)'$/.test(s)`) that tests whether a token is a quoted string literal. Used by `.string`-family directives before they try to call `[parseString]`; failure raises `"Missing terminating quote"`.
 
-**Source:** `src/core/assembler.js:977-979`
+**Source:** `assembler.js` — `isStringLiteral()`
 **See also:** [parseString], [.string / .stringz / .asciz]
 
 #### `handleDirective`
 
 The directive dispatcher. Switches on the mnemonic (already lowercased) and routes each `.` directive to its inline implementation. Synonym groups (`.org` / `.orig`, `.blkw` / `.space` / `.zero`, etc.) share a `case`. Unknown directives raise `"Invalid operation"` — same wording as the equivalent instruction-level failure.
 
-**Source:** `src/core/assembler.js:1017-1226`
+**Source:** `assembler.js` — `handleDirective()`
 **See also:** [handleInstruction], [performPass]
 
 #### `.start`
 
 Records the entry-point label into `[startLabel]`. The address (`[startAddress]`) is resolved after pass 2, since the operand may forward-reference a label that hasn't been seen yet. One operand; must pass `[isValidLabel]`.
 
-**Source:** `src/core/assembler.js:1020-1032`
+**Source:** `assembler.js` — `handleDirective()`, grep `case '.start'`
 **See also:** [startLabel], [startAddress], ['S' start address record]
 
 #### `.org` / `.orig`
 
 Synonym pair: set `[locCtr]` forward to a fixed address. Operand is a numeric literal in range `0..0xFFFF`; below or above triggers `"Bad number"`; lower than current `locCtr` triggers `"Backward address on .org"` (LCC.js convention — forward-only). In pass 1, `locCtr` is just bumped; in pass 2, the gap is filled with zero words via `[writeMachineWord]` so the listing reflects the empty range.
 
-**Source:** `src/core/assembler.js:1033-1063`
+**Source:** `assembler.js` — `handleDirective()`, grep `case '.org'`
 **See also:** [locCtr], [programSize], [writeMachineWord]
 
 #### `.globl` / `.global`
 
 Synonym pair: export a label so the linker sees it. Adds the label to `[globalLabels]`, records its address in `[symbolTable]` (if not already there), and trips `[isObjectModule]` so the output extension switches to `.o`. One operand; must be a valid label.
 
-**Source:** `src/core/assembler.js:1064-1085`
+**Source:** `assembler.js` — `handleDirective()`, grep `case '.globl'`
 **See also:** [globalLabels], [isObjectModule], ['G' global record]
 
 #### `.extern`
 
 Import an external label. Adds the label to `[externLabels]` and trips `[isObjectModule]`. Note: does **not** add the label to `[symbolTable]` — `.extern` labels are placeholders the linker will resolve, not local definitions.
 
-**Source:** `src/core/assembler.js:1086-1099`
+**Source:** `assembler.js` — `handleDirective()`, grep `case '.extern'`
 **See also:** [externLabels], [externalReferences], [isObjectModule]
 
 #### `.blkw` / `.space` / `.zero`
 
 Three-way synonym group: reserve N zero-initialized words. N must be in range `1..(65536 - locCtr)` — both ends of the range are checked. Custom LCC.js behaviour: the negativity / zero check is not present in the original LCC as of 12/2024. In pass 2, writes N zero words via `[writeMachineWord]`; in pass 1, just bumps `[locCtr]`.
 
-**Source:** `src/core/assembler.js:1100-1125`
+**Source:** `assembler.js` — `handleDirective()`, grep `case '.blkw'`
 **See also:** [writeMachineWord], [locCtr]
 
 #### `.fill` / `.word`
 
 Synonym pair: emit one 16-bit word. Operand can be a literal number, a single-token label expression (`label`, `label+N`, `label-N` — handled by `[parseLabelWithOffset]`), or a three-token expression (`label + N`, joined manually). The known parsing gap is `label +N` (two tokens with whitespace before `+`) — the `+N` is silently dropped. Local-symbol label-arithmetic expressions also push an `'A'` adjustment entry via `[handleAdjustmentEntry]`. Offset range is `-32768..65535`; the emitted value is masked with `0xFFFF` before write.
 
-**Source:** `src/core/assembler.js:1126-1183`
+**Source:** `assembler.js` — `handleDirective()`, grep `case '.fill'`
 **See also:** [parseLabelWithOffset], [evaluateOperand], [adjustmentEntries]
 
 #### `.stringz` / `.asciz` / `.string`
 
 Three-way synonym group: emit a null-terminated string. The operand must be a quoted string literal (single or double quotes); fails `[isStringLiteral]` triggers `"Missing terminating quote"`, missing the opening quote triggers `"String constant missing leading quote"`. Each character is emitted as a **full 16-bit word** (not a byte), reflecting LCC's word-addressable memory model; the null terminator is also a 16-bit word.
 
-**Source:** `src/core/assembler.js:1184-1221`
+**Source:** `assembler.js` — `handleDirective()`, grep `case '.stringz'`
 **See also:** [parseString], [Word-per-character convention]
 
 #### Word-per-character convention
 
 LCC's memory is word-addressable, not byte-addressable: each address holds one 16-bit word. `.string` follows this — every character in a string literal becomes one full 16-bit word with the ASCII codepoint in the low 8 bits. So `.string "AB"` allocates three words (A, B, null), not two bytes plus null. Consumers (SOUT in the interpreter) read until they hit a zero word, not a zero byte.
 
-**Source:** `src/core/assembler.js:1212-1219`
+**Source:** `assembler.js` — `handleDirective()`, grep `strContent.length + 1`
 **See also:** [.stringz / .asciz / .string], [SOUT (interpreter)](interpreter.md#executetrap-trap-dispatch-table)
 
 #### `handleInstruction`
 
 The instruction dispatcher. In pass 1, simply bumps `[locCtr]` by 1 (LCC is **strictly one 16-bit word per instruction**) — no encoding happens. In pass 2, switches on the mnemonic (lowercased) and calls one of the per-instruction `assemble*` encoders (`[assembleADD]`, `[assembleBR]`, etc.) defined in section (d). Final step is to call `[writeMachineWord]` with the returned word. Unknown mnemonics raise `"Invalid operation"`.
 
-**Source:** `src/core/assembler.js:1228-1397`
+**Source:** `assembler.js` — `handleInstruction()`
 **See also:** [Pass 1 — symbol table build], [Pass 2 — code emission], [writeMachineWord]
 
 #### One-instruction-equals-one-word
 
 A foundational LCC invariant: every instruction encodes to exactly one 16-bit machine word, no exceptions. There are no multi-word instructions, no instruction prefixes, no variable-length encodings. This is why pass 1 can compute every label address without knowing what mnemonic each line will resolve to — bumping `[locCtr]` by 1 per non-directive line is always correct.
 
-**Source:** `src/core/assembler.js:1229-1232`
+**Source:** `assembler.js` — `handleInstruction()`, grep `writeMachineWord`
 **See also:** [Pass 1 — symbol table build], [handleInstruction]
 
 #### Instruction mnemonic categories
@@ -738,14 +738,14 @@ For navigation: the dispatched mnemonics fall into seven natural groups:
 
 Each group is documented in detail in section (d).
 
-**Source:** `src/core/assembler.js:1237-1396`
+**Source:** `assembler.js` — `_buildCoreTable()`, grep `operandShape`
 **See also:** Section (d) per-instruction encoders
 
 #### Trap dispatch in `handleInstruction`
 
 The trap-vector mnemonics (`halt`, `nl`, `dout`, etc.) are handled inline in `[handleInstruction]` rather than dispatched to a separate encoder — most just call `[assembleTrap]` with their literal vector byte. Two exceptions: `halt` is encoded as raw `OP_TRAP` (vector 0x00 + zero `sr` field), and `nl` is special-cased to literal `0xF001` (bypasses `[assembleTrap]` entirely, even though it would produce the same result via vector 0x01).
 
-**Source:** `src/core/assembler.js:1343-1388`
+**Source:** `assembler.js` — `handleInstruction()`, `assembleTrap()`; grep `_instructionTable[mnemonic`
 **See also:** [assembleTrap]
 
 #### Trap vector table
@@ -772,35 +772,35 @@ The trap vectors hardcoded in `[handleInstruction]`'s switch — every LCC trap 
 
 The same table is consumed on the interpreter side — see [executeTRAP](interpreter.md#executetrap-trap-dispatch-table).
 
-**Source:** `src/core/assembler.js:1343-1388`
+**Source:** `assembler.js` — `_buildCoreTable()` (trap encoders); `constants.js` — `TRAP_NL`…`TRAP_*` (trap vectors)
 **See also:** [executeTRAP (interpreter)](interpreter.md#executetrap-trap-dispatch-table)
 
 #### `"Invalid operation"`
 
 The default-case error wording for both `[handleDirective]` and `[handleInstruction]`. Fired when a mnemonic doesn't match any known directive or instruction. Same wording for both deliberately — from the user's perspective, "I typed `.foob`" and "I typed `xxor`" are the same shape of error.
 
-**Source:** `src/core/assembler.js:1222-1224, 1388-1389`
+**Source:** `assembler.js` — `handleInstruction()`, grep `Invalid operation`
 **See also:** [handleDirective], [handleInstruction]
 
 #### `writeMachineWord`
 
 The single-word emit primitive. Only does anything in pass 2: appends `word & 0xFFFF` to `[outputBuffer]` and also pushes the same word into `[currentListingEntry]`'s `codeWords` array. The mask guarantees the buffer always contains 16-bit values regardless of what arithmetic the caller did.
 
-**Source:** `src/core/assembler.js:1399-1406`
+**Source:** `assembler.js` — `writeMachineWord()`
 **See also:** [outputBuffer], [currentListingEntry], [Listing entry — assembly path shape]
 
 #### `isOperator`
 
 One-liner: `op === '+' || op === '-'`. Used by `[handleDirective]`'s `.word` and `.fill` cases to distinguish whether the second token is a `+`/`-` joining a label with a literal offset (three-token form: `label + N`), vs an actual operand.
 
-**Source:** `src/core/assembler.js:2046-2048`
+**Source:** `assembler.js` — `isOperator()`
 **See also:** [.fill / .word], [parseLabelWithOffset]
 
 #### `parseLabelWithOffset`
 
 Regex-based parser for the single-token label-arithmetic form: `label`, `label+N`, `label-N`, or `label - N` (whitespace permitted between sign and digits). Returns `{label, offset}` if the input matches the pattern, otherwise `null`. Used by `.word` / `.fill` / load / store directives to recognize when an operand combines a symbolic name with a literal offset.
 
-**Source:** `src/core/assembler.js:2050-2083`
+**Source:** `assembler.js` — `parseLabelWithOffset()`
 **See also:** [.fill / .word], [evaluateOperand], [Tokenization splitting rules]
 
 ### (d) Instruction encoding & per-mnemonic encoders
