@@ -66,7 +66,9 @@ Capture `occurred_iso` with `date '+%Y-%m-%dT%H:%M:%S%z'` at the moment of failu
 | `SKILL_FAIL` | Skill invocation errored or produced unexpected output |
 | `NETWORK_FAIL` | Timeout or connectivity error on web fetch / API call |
 | `VALIDATION_FAIL` | Schema validation error (velocity:log field check, etc.) |
-| `OTHER` | Fallback for errors that resist quick categorization. Use when no existing code fits and picking the right one would take more than a few seconds — log promptly with `OTHER` rather than delaying to find the perfect type. `error_type` may be corrected retroactively via a DB UPDATE once the right code is known. |
+| `COMPLIANCE_FAIL` | A required discipline / protocol step was not followed — skipped pre-close self-audit, missing worktree / velocity row, didn't use `npm run close`, wrong convention. Set `context.behavioral = true` + a `failure_mode` (#1118). |
+| `BEHAVIORAL_FAIL` | A non-ideal action or claim the agent chose — unrequested action / scope overstep, fabricated content, confidently-wrong claim. Set `context.behavioral = true` + a `failure_mode` (#1118). |
+| `OTHER` | Fallback for errors that resist quick categorization. Use when no existing code fits and picking the right one would take more than a few seconds — log promptly with `OTHER` rather than delaying to find the perfect type. `error_type` may be corrected retroactively via a DB UPDATE once the right code is known. Behavioral / process errors now have the two dedicated codes above — prefer those. |
 
 ### `context` JSON shapes by type
 
@@ -139,7 +141,7 @@ Logging "at the moment of failure" is the ideal, but it is easy to forget: you s
    - `error self-audit: N row(s) logged (#ids …)`
    - `error self-audit: no loggable errors this session`
 
-The explicit statement is the point: it turns silence into a checkable acknowledgement, so a clean session and a forgotten log stop looking identical. The `next-best-action` pre-close checklist carries this as a question; #1118 adds a `COMPLIANCE_FAIL` type so a *forgotten-then-caught* episode is itself recordable — when the audit catches a miss, log both the original error row(s) and (once #1118 lands) one `COMPLIANCE_FAIL` row.
+The explicit statement is the point: it turns silence into a checkable acknowledgement, so a clean session and a forgotten log stop looking identical. The `next-best-action` pre-close checklist carries this as a question; the `COMPLIANCE_FAIL` type (#1118) makes a *forgotten-then-caught* episode itself recordable — when the audit catches a miss, log both the original error row(s) and one `COMPLIANCE_FAIL` row (with `context.behavioral = true`).
 
 ## Querying logged errors
 

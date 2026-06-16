@@ -57,3 +57,24 @@ describe('error-log — message is required (#1022)', () => {
     expect(r.stderr).toMatch(/Missing required field: "occurred_iso"/);
   });
 });
+
+describe('error-log — error_type vocabulary (#1118)', () => {
+  test('unknown error_type → exit 1 naming the offending value', () => {
+    const r = run({ occurred_iso: ISO, message: 'x', error_type: 'NOPE_FAIL' });
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/unknown error_type "NOPE_FAIL"/);
+  });
+
+  // Probe pattern: a valid error_type must pass the type check, so the row fails
+  // LATER on a known-bad ticket (validated before the DB opens) — proving the new
+  // code was accepted, without writing to ~/.lccjs/lccjs.db.
+  test.each(['COMPLIANCE_FAIL', 'BEHAVIORAL_FAIL'])(
+    '%s is accepted by the error_type validator',
+    (errorType) => {
+      const r = run({ occurred_iso: ISO, message: 'x', error_type: errorType, ticket: 'bad' });
+      expect(r.stderr).not.toMatch(/unknown error_type/);
+      expect(r.stderr).toMatch(/"ticket" must be a positive integer/);
+      expect(r.status).toBe(1);
+    },
+  );
+});

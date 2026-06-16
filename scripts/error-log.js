@@ -24,7 +24,11 @@ const { DB_PATH } = require('./db-path');
 const VALID_ERROR_TYPES = new Set([
   'TOOL_DENIED', 'HOOK_BLOCK', 'CLAIM_FAIL', 'BASH_FAIL', 'GIT_FAIL',
   'GIT_STATE', 'GH_FAIL', 'GH_INFO', 'DB_FAIL', 'FILE_FAIL', 'EDIT_PRECOND',
-  'SKILL_FAIL', 'NETWORK_FAIL', 'VALIDATION_FAIL', 'OTHER',
+  'SKILL_FAIL', 'NETWORK_FAIL', 'VALIDATION_FAIL',
+  // Behavioral / process non-compliance (#1118). See docs/errors-schema.md and
+  // docs/research/1160-behavioral-error-taxonomy.md — carry context.behavioral + failure_mode.
+  'COMPLIANCE_FAIL', 'BEHAVIORAL_FAIL',
+  'OTHER',
 ]);
 
 const CANONICAL_MODEL = /^[a-z]+-\d+\.\d+$/;
