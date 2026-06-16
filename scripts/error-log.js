@@ -73,6 +73,26 @@ if (input.ticket != null && (!Number.isInteger(input.ticket) || input.ticket <= 
 // --- Insert ---
 const toStr = v => (v == null || v === '') ? null : String(v);
 
+// `context` must end up as valid JSON in the column, otherwise json_extract()
+// aggregate queries silently abort on the first malformed row ("stepping,
+// malformed JSON") and break the behavioral-error metrics. Two historical
+// foot-guns this guards against (#1386, taxonomy §3):
+//   - an object passed in stringifies to "[object Object]" via String() (rows 67, 68)
+//   - a bare non-JSON string passes through unchanged (row 121)
+// So: serialize objects/arrays to JSON, and require any string to parse as JSON.
+function normalizeContext(ctx) {
+  if (ctx == null || ctx === '') return null;
+  if (typeof ctx === 'object') return JSON.stringify(ctx);
+  const s = String(ctx);
+  try {
+    JSON.parse(s);
+  } catch (e) {
+    die(`"context" must be valid JSON (pass an object, or a JSON string) — ` +
+        `got ${JSON.stringify(s.slice(0, 60))}: ${e.message}`);
+  }
+  return s;
+}
+
 const rowData = {
   occurred_iso: input.occurred_iso,
   agent:        toStr(input.agent),
@@ -81,7 +101,7 @@ const rowData = {
   repo:         toStr(input.repo) ?? 'lccjs',
   error_type:   toStr(input.error_type),
   message:      toStr(input.message),
-  context:      toStr(input.context),
+  context:      normalizeContext(input.context),
   notes:        toStr(input.notes),
 };
 

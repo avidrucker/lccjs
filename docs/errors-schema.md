@@ -177,7 +177,9 @@ The `error:log` command validates `error_type` against the vocabulary and `model
 > [taxonomy](research/1160-behavioral-error-taxonomy.md) §2. `caught_by` is one of
 > `permission-classifier` | `guard` | `human` | `self` (drives the near-miss-vs-slipped-through metric).
 > `COMPLIANCE_FAIL` rows may add `discipline` / `missed` / `corrected`; this is **JSON in `context`** —
-> no new SQL column (a `json_valid(context)` check on `error:log` is tracked separately by #1386).
+> no new SQL column. `error:log` enforces that `context` is valid JSON (#1386): pass an object
+> (it is serialized) or a JSON string; a bare non-JSON string is rejected. This prevents the
+> `[object Object]` / bare-string rows that used to make `json_extract()` aggregates abort.
 
 ---
 

@@ -8,10 +8,10 @@ const ISO = '2026-06-06T12:00:00-1000';
 
 // error-log.js validates argv synchronously and die()s BEFORE opening the DB,
 // so these rejection tests never touch ~/.lccjs/lccjs.db.
-function run(input) {
+function run(input, extraEnv = {}) {
   return spawnSync(process.execPath, [SCRIPT, JSON.stringify(input)], {
     encoding: 'utf8',
-    env: { ...process.env },
+    env: { ...process.env, ...extraEnv },
   });
 }
 
@@ -77,4 +77,77 @@ describe('error-log — error_type vocabulary (#1118)', () => {
       expect(r.status).toBe(1);
     },
   );
+});
+
+describe('error-log — context must be valid JSON (#1386)', () => {
+  const os = require('os');
+  const fs = require('fs');
+  const Database = require('better-sqlite3');
+
+  // Mirror of the real errors table (docs/errors-schema.md).
+  const CREATE_TABLE = `
+    CREATE TABLE IF NOT EXISTS errors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      occurred_iso TEXT NOT NULL, agent TEXT, model TEXT, ticket INTEGER,
+      repo TEXT DEFAULT 'lccjs', error_type TEXT, message TEXT, context TEXT, notes TEXT
+    )
+  `;
+
+  let testDbPath;
+  let testDb;
+
+  beforeEach(() => {
+    const suffix = `${process.pid}-${Math.floor(Math.random() * 1e9)}`;
+    testDbPath = path.join(os.tmpdir(), `errlog-ctx-${suffix}.db`);
+    testDb = new Database(testDbPath);
+    testDb.exec(CREATE_TABLE);
+  });
+
+  afterEach(() => {
+    try { testDb.close(); } catch (_) {}
+    for (const p of [testDbPath, testDbPath + '-shm', testDbPath + '-wal']) {
+      try { fs.unlinkSync(p); } catch (_) {}
+    }
+  });
+
+  function runWithTestDb(input) {
+    return run(input, { LCCJS_DB: testDbPath });
+  }
+
+  function lastContext() {
+    return testDb.prepare('SELECT context FROM errors ORDER BY id DESC LIMIT 1').get();
+  }
+
+  test('a bare non-JSON string context is rejected before any DB write', () => {
+    // Validation die()s before the DB opens, so no row is inserted. This is the
+    // row-121 footgun (a bare "behavioral=true; ..." string) the guard closes.
+    testDb.close();
+    const r = runWithTestDb({
+      occurred_iso: ISO, message: 'x', context: 'behavioral=true; not json',
+    });
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/"context" must be valid JSON/);
+  });
+
+  test('an object context is serialized to valid JSON, not "[object Object]"', () => {
+    // The row-67/68 footgun: an object used to stringify to "[object Object]"
+    // via String(), aborting later json_extract() aggregates.
+    const r = runWithTestDb({
+      occurred_iso: ISO, message: 'x', error_type: 'BEHAVIORAL_FAIL',
+      context: { behavioral: true, failure_mode: 'SCOPE_OVERSTEP' },
+    });
+    expect(r.status).toBe(0);
+    const row = lastContext();
+    expect(row.context).not.toBe('[object Object]');
+    expect(() => JSON.parse(row.context)).not.toThrow();
+    expect(JSON.parse(row.context)).toEqual({ behavioral: true, failure_mode: 'SCOPE_OVERSTEP' });
+  });
+
+  test('a valid JSON-string context is stored verbatim', () => {
+    const r = runWithTestDb({
+      occurred_iso: ISO, message: 'x', context: '{"cmd":"git push","exit_code":1}',
+    });
+    expect(r.status).toBe(0);
+    expect(lastContext().context).toBe('{"cmd":"git push","exit_code":1}');
+  });
 });
