@@ -32,6 +32,7 @@
     "dev:site": "node scripts/serve-site.js --dev",
     "test:e2e": "playwright test --config playwright.e2e.config.js",
     "test:potato-tokens": "node scripts/potato-token-test.js",
+    "test:potato-inputs": "node scripts/potato-input-test.js",
     "report": "node scripts/report.js",
     "ice:score": "node scripts/ice-score.js",
     "rules:render": "node scripts/rules-render.js"
