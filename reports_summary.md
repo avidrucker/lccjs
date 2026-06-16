@@ -29,6 +29,7 @@ Last updated: 2026-06-05 (#264 — row #4 scope expanded to all error types; rep
 | 19 | `ret`/`jmp r0` non-TTY oracle flood | oracle enters step-trace loop, floods stdout indefinitely (never exits); LCC.js detects loop and exits cleanly | Medium | No report (BY DESIGN — #385 closed) |
 | 21 | `.o` assemble exit code | `lcc` exits **1** on successful `.o` assemble ("needs linking") | Medium | Report **send-ready** · pending human email (#508) |
 | 24 | `bl`/`call`/`jsr` numeric token | oracle `Undefined label` vs LCC.js `Bad label` (diagnostic wording only; both exit 1) | Low | No report (BY DESIGN — #510 closed) |
+| 28 | `-d` debugger bare `c` | a bare `c` (no operands) **segfaults** the oracle (exit 139); `c r0`/`c r0 5` are fine | Low | Report **drafted** (`cuh63-debugger-bare-c-segfault-bug-report.md`, #1353) · pending human send · umbrella #1406 |
 
 \* "Low" severity but a genuine defect; classified low because the trigger is a
 malformed/edge-case program rather than valid everyday source.

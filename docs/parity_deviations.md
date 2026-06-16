@@ -366,6 +366,31 @@ line 1735.
 
 ---
 
+### 28. `-d` debugger `c` command: oracle segfaults on a bare `c`; LCC.js validates (#1353)
+
+In the interactive debugger, a bare `c` (the change-value command) with **no operands**
+crashes the oracle with **SIGSEGV** (exit 139). Well-formed `c <loc> <val>` works, and
+`c <loc>` (value omitted) prints a clean `Missing operand` — so the crash is specific to
+the zero-operand case (a missing-operand guard absent on one path).
+
+| Input at the `{mnemonic}>>>` prompt | Oracle | LCC.js (`-d` `debug()`) |
+|---|---|---|
+| `c r0 5` | sets r0 = 0x5 ✓ | sets r0 = 0x5 ✓ |
+| `c r0` (no value) | `Missing operand` | `Missing operand` |
+| **`c`** (no operands) | **SIGSEGV (exit 139)** | `Missing operand` (validated) |
+
+LCC.js's `debug()` change-value handler validates both forms and never crashes (#1349).
+Classified **OG BUG** — a robustness defect in the upstream binary. Drafted upstream
+report: `docs/cuh63-debugger-bare-c-segfault-bug-report.md` (tracked by #1353, umbrella
+#1406). Evidence: oracle probe #1348.
+
+**Source (LCC.js side):** `src/core/interpreter.js` `debug()` — `c` handler prints
+`Missing operand` for bare/valueless `c`.
+
+**GitHub issue:** [#1353](https://github.com/avidrucker/lccjs/issues/1353)
+
+---
+
 ## BY DESIGN — Intentional, documented divergences
 
 ### 7. Source line length limit: LCC.js enforces 300 chars (researched, #244)
@@ -917,3 +942,4 @@ _None pending._
 | 2026-06-05 | §25 LCC.js BUG fixed (#857) | `readLineFromStdin()` simulated path now leaves `\n` in `inputBuffer` after reading a non-empty line (conditional `slice`); empty-line reads consume the `\n` to avoid infinite retry. TTY path prepends `\n` to `inputBuffer` instead of discarding it. `simpleCalc.a` double-`ain` program now produces `Result: 8` as expected. §25 removed from "LCC.js BUG" section. |
 | 2026-06-06 | BY DESIGN §26 and §27 added (#934) | `.hex` oracle parity characterization complete. §26: empty/comment-only/whitespace-only `.hex` → oracle exits 1 ("Cannot open executable file"); lccjs exits 0 silently (BY DESIGN, mirrors §9). §27: malformed line diagnostics → oracle prints "Fewer/More than four hex digits" / "Bad hex number"; lccjs is silent on exit 1 (BY DESIGN — `fatalExit` discards message text). Evidence: `docs/research/hex-oracle-parity-934.md`. |
 | 2026-06-15 | §11 augmented; header terminology note (#1371) | Confirmed §11 by probing the oracle (`-f` off → 67-col truncation; `-f` on / lccjs → full 166-col line). Documented the `-f`-flag connection: OG's `-f` disables the §11 truncation, which lccjs never does, so `-f` is a deliberate no-op in lccjs. `lcc`/`ilcc` now emit a non-blocking warning when `-f` is passed (`src/utils/flagDiagnostics.js` `FLAG_DEVIATIONS`). Added a header terminology note (OG/oracle/"OG Oracle" = original source-of-truth LCC; user-facing CLI messages say plain "LCC"). |
+| 2026-06-15 | OG BUG §28 added (#1353) | `-d` debugger `c` command: a bare `c` (no operands) segfaults the oracle (exit 139); `c r0` (value omitted) prints `Missing operand` and `c r0 5` works, so the crash is the zero-operand case. LCC.js validates and never crashes (#1349). Drafted upstream report `docs/cuh63-debugger-bare-c-segfault-bug-report.md`; reports_summary row #28; umbrella #1406. Evidence: probe #1348. |
