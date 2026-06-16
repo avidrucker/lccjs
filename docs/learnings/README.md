@@ -31,6 +31,7 @@ the skills) — the TIL is where it's first noticed, not where it's enforced.
 
 | Doc | Date | Agent | Themes |
 |---|---|---|---|
+| [TIL 2026-06-15 — APPLE (session 2)](./today-i-learned-2026-06-15-apple-2.md) | 2026-06-15 | APPLE | An external audit finding is a hypothesis (3 of 4 P2 notes refuted → became tests/docs); a prescribed fix can break an invisible contract (oracle parity, #1397); the orthogonality trap — tooling that captures a behavior under review is coupled to that review, not orthogonal (#1402/#159); untracked files don't carry into worktrees and collide at close (#1403); read-before-write caught a same-day TIL clobber. |
 | [TIL 2026-06-14 — HONEYDEW](./today-i-learned-2026-06-14-honeydew.md) | 2026-06-14 | HONEYDEW | `npm run close` may delete the worktree before the final comment lands; every distinct failed retry should get its own error row. |
 | [TIL 2026-06-14 — INCABERRY](./today-i-learned-2026-06-14-incaberry.md) | 2026-06-14 | INCABERRY | Claim warnings can be successful yet still point at stale worktree/claim-ref cleanup debt; `git worktree add` needs write access to refs and can fail under a read-only sandbox. |
 | [TIL 2026-06-14 — INCABERRY (session 2)](./today-i-learned-2026-06-14-incaberry-2.md) | 2026-06-14 | INCABERRY | CLI BDD tests can need an in-process driver seam when sandboxed `spawnSync` returns EPERM; TTY-sensitive extras like `clear`, `cursor`, and `resetc` are easier to prove with in-process TTY guards and spies. |
