@@ -70,7 +70,6 @@ const THEMES = [
   { id: 'retro-console-light',  label: 'Retro Console Light',  dark: false },
 ];
 const DEFAULT_THEME = 'github-dark';
-const DOCS_CODE_THEME = 'github-light';
 
 // ── Editor syntax-highlight precompute (#1283) ───────────────────────────────
 // The playground editor colors its Lezer tokens from each Shiki theme's TextMate
@@ -401,11 +400,20 @@ ${footer}${script ? `\n  <script>${script}</script>` : ''}
   const hl = await createHighlighter({ themes: [retroDarkTheme, retroLightTheme, zenburnTheme, ...themeIds], langs: [grammar] });
 
   // Shiki-highlight ```lcc fenced blocks in docs .md files processed by marked.
+  // Emit one highlighted variant per theme as hidden .theme-panel elements (like
+  // the landing page's renderSnippet); the shared apply() toggles them by the
+  // active theme, so a docs code block follows the selected theme instead of being
+  // baked in a single light theme (#1388). Default-visible panel = DEFAULT_THEME.
   marked.use({
     renderer: {
       code(token) {
         if (token.lang === 'lcc') {
-          return hl.codeToHtml(token.text, { lang: 'lcc', theme: DOCS_CODE_THEME });
+          const panels = THEMES.map(({ id }) => {
+            const html   = hl.codeToHtml(token.text, { lang: 'lcc', theme: id });
+            const hidden = id !== DEFAULT_THEME ? ' hidden' : '';
+            return `<div class="theme-panel" data-theme="${id}"${hidden}>${html}</div>`;
+          }).join('');
+          return `<div class="code-theme-panels">${panels}</div>`;
         }
         return false;
       },

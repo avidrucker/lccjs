@@ -92,3 +92,25 @@ describe('sandbox surfaces follow the code-theme palette, not page light/dark (#
     expect(src).toMatch(/setProperty\(\s*['"]--surface-bg['"]/);
   });
 });
+
+// #1388 — docs-prose fenced ```lcc code blocks were baked at build time with a
+// single light Shiki theme (DOCS_CODE_THEME = 'github-light'), so once docs pages
+// became theme-aware (#1334) and got the theme dropdown (#1379), those blocks
+// rendered as white "islands" on a dark page. The fix bakes one Shiki variant per
+// theme as hidden .theme-panel elements (like the landing page's renderSnippet),
+// which the shared apply() already toggles by the active theme — so a docs code
+// block now matches the selected theme's palette. Browser-verified against the
+// built page.
+describe('docs-prose code blocks follow the active theme, no light island (#1388)', () => {
+  const src = fs.readFileSync(
+    path.join(__dirname, '../../scripts/build-site.js'), 'utf8'
+  );
+
+  test('the single-theme DOCS_CODE_THEME bake is gone', () => {
+    expect(src).not.toMatch(/DOCS_CODE_THEME/);
+  });
+
+  test('the lcc fenced-block renderer emits per-theme .theme-panel variants', () => {
+    expect(src).toMatch(/token\.lang === 'lcc'[\s\S]*?theme-panel/);
+  });
+});
