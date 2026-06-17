@@ -238,7 +238,7 @@ class Assembler {
       'st':    { encoder: (ops) => this.assembleST(ops),   operandShape: 'sr, label' },
       'ldr':   { encoder: (ops) => this.assembleLDR(ops),  operandShape: 'dr, baser, offset6' },
       'str':   { encoder: (ops) => this.assembleSTR(ops),  operandShape: 'sr, baser, offset6' },
-      'lea':   { encoder: (ops) => this.assembleLea(ops),  operandShape: 'dr, label' },
+      'lea':   { encoder: (ops) => this.assembleLEA(ops),  operandShape: 'dr, label' },
       'cea':   { encoder: (ops) => this.assembleCEA(ops),  operandShape: 'dr, imm5' },
       // Control flow
       'call':  { encoder: (ops) => this.assembleBL(ops),   operandShape: 'label' },
@@ -1769,7 +1769,7 @@ class Assembler {
     return macword;
   }
 
-  assembleLea(operands) {
+  assembleLEA(operands) {
     let dr = this.getRegister(operands[0]);
 
     if (dr === null) {

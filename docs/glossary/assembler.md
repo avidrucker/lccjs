@@ -844,7 +844,7 @@ Range checks: `imm5` / `imm9` / `offset6` / `pcoffset9` / `pcoffset11` go throug
 
 The pcoffset fields all use the same formula: `pcoffsetN = address - locCtr - 1`. The `-1` accounts for the fact that the LCC interpreter has already advanced PC past the instruction word being executed by the time the offset is applied, so the effective branch target is "this instruction + 1 + offset". Out-of-range offsets are caught at assembly time with `"pcoffsetN out of range"` errors.
 
-**Source:** `assembler.js` — `assembleBR()`, `assembleLD()`, `assembleST()`, `assembleLea()`, `assembleBL()`; grep `address - this.locCtr - 1`
+**Source:** `assembler.js` — `assembleBR()`, `assembleLD()`, `assembleST()`, `assembleLEA()`, `assembleBL()`; grep `address - this.locCtr - 1`
 **See also:** [pcoffset9 in interpreter executeBR](interpreter.md#executebr), [Immediate field widths and ranges]
 
 #### Extended-opcode group (`OP_EXT = 0xA000`)
@@ -962,7 +962,7 @@ Three-register logic and sign-extend. OR: eopcode A. XOR: eopcode B. SEXT: eopco
 
 PC-relative memory access trio. Same operand shape as `[.fill / .word]`: `<reg>, <expr>` where `<expr>` is `label`, `label+N`, `label - N`, or a literal. The encoder resolves the address via `[evaluateOperand]`, computes `pcoffset9 = address - locCtr - 1`, and packs it into the low 9 bits with the appropriate opcode. `assembleLD` honors `[externLabels]` (emits an `'e'` external reference); `assembleST` and `assembleLEA` do not — see [External-label fixup asymmetries].
 
-**Source:** `assembler.js` — `assembleLD()`, `assembleST()`, `assembleLea()`
+**Source:** `assembler.js` — `assembleLD()`, `assembleST()`, `assembleLEA()`
 **See also:** [PC-relative target arithmetic], [External-label fixup asymmetries]
 
 #### `assembleBL`
