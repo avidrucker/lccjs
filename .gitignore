@@ -28,6 +28,7 @@ plusdemos_tests/*.ep
 cit118demos/
 lccjs.zip
 .env
+SECRETS.txt
 coverage/
 puzzles.xml
 scratch.md
