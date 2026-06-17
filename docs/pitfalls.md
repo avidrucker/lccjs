@@ -290,6 +290,8 @@ the two you're most likely to hit:
 
 **Wrap every toolchain invocation in `scripts/lccrun.sh`.** Any shell invocation of `lcc.js`, `assembler.js`, `interpreter.js`, `linker.js`, or the oracle binary (`$LCC_ORACLE`) must go through `scripts/lccrun.sh [secs]`. Bare invocations block **indefinitely** when `name.nnn` is absent and stdin is not a TTY — `lccrun.sh` adds a timeout and kills a hung process. (Was `RULES.md` rule `maroon-civet` — relocated #1059, origin #376.)
 
+**New terminal stdout must mirror into the `.lst` Output section — or be debug-gated.** The oracle-parity golden suites diff the `.e`/`.lst`/`.bst` artifacts, and the `.lst` carries the runtime `====== Output` section, so program-output regressions *are* caught. But anything lccjs writes to the **terminal only** — a stray `console.log`, an extra banner — that is **not** also captured into the `.lst` Output section is **invisible to golden parity**: it can diverge from the oracle (which never emits it) while every golden suite still passes. A stdout-capture assertion was deliberately *not* built into the suites (high-cost/low-yield — #1055 verdict); this convention is the belt-and-suspenders instead. So: route new program output through the same surface the `.lst` records, or gate purely-diagnostic output behind a debug flag. (Origin: #1055 SPIKE item #4; narrow residual of the #931 failure class.)
+
 ## See also
 
 - [docs/lcc-isa.md](./lcc-isa.md) — instruction set, field widths, branch codes.

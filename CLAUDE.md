@@ -63,7 +63,7 @@ Maturity varies: `assembler.js` and `interpreter.js` have real pure seams; `link
 A central activity here is differential testing against the **original LCC binary** ("the oracle", Prof. Dos Reis's `cuh` package). `*.oracle.e2e.spec.js` suites run both and diff the output.
 
 - Requires `.env` with `LCC_ORACLE=/abs/path/to/cuh63/lcc` (copy `.env.example`; `.env` is gitignored). Full setup in `docs/oracle-setup.md`.
-- Oracle suites **auto-skip** when `LCC_ORACLE` is unset, so plain `npm test` works without the binary.
+- The oracle suites compare JS output against **committed golden caches** and do **not** skip when `LCC_ORACLE` is unset — a golden-present run passes identically with or without the binary (#692 golden-cache migration; verified #1055). A suite only skips a case when its golden files are **missing or mismatched** outside refresh mode. The binary is consulted **only** under `GOLDEN_AUTO_UPDATE=1` (golden refresh), so plain `npm test` works without it.
 - Golden caches are NOT auto-refreshed: run with `GOLDEN_AUTO_UPDATE=1` only when oracle output legitimately changed, so unexpected drift is caught otherwise.
 - Intentional, documented divergences from oracle behavior live in `docs/parity_deviations.md` — consult it before "fixing" a parity mismatch; it may be deliberate.
 

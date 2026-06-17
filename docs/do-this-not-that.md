@@ -317,6 +317,16 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Terminal stdout & golden parity
+
+**Mirror new lccjs terminal stdout into the `.lst` Output section, or debug-gate it**
+
+- **Do:** route new program output through the same surface the `.lst` `====== Output` section records (the assertion surface the golden suites diff), or gate purely-diagnostic output behind a debug flag.
+- **Don't:** add a bare `console.log` / extra banner that writes to the terminal only, without it also landing in the `.lst` Output section.
+- **Why:** the oracle-parity golden suites diff `.e`/`.lst`/`.bst` only. Terminal-only output the oracle never emits is **invisible to golden parity** — it can silently break oracle compatibility while every suite still passes. A stdout-capture assertion was deliberately *not* built into the suites (high-cost/low-yield — #1055 verdict); this convention is the belt-and-suspenders. (Narrow residual of the #931 failure class; origin #1055 item #4.)
+
+---
+
 ## Velocity logging
 
 **Log a velocity row for every puzzle — including PM, RESEARCH, and SPIKE tasks that change no files**
