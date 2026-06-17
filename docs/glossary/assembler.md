@@ -1193,6 +1193,8 @@ Regex check: `^0x[0-9A-Fa-f]+$`. Distinguished from `parseNumber`'s hex path in 
 **Source:** `assembler.js` — `isValidHexNumber()`
 **See also:** [parseNumber], [isNumLiteral]
 
+### (f) Error reporting & module entry
+
 #### `failAssembly`
 
 The "compatible-with-multi-error" failure path. Calls `[error]` to log the failure (which itself may abort if `[REPORT_MULTI_ERRORS]` is false), and then explicitly calls `[abortAssembly]` if `REPORT_MULTI_ERRORS` is true. The double-handling exists so the codebase can be flipped to multi-error mode in the future without touching every callsite — they just call `failAssembly` and the global flag chooses the behaviour.
