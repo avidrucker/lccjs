@@ -133,6 +133,32 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Probe the real CLI before asserting
+
+**Probe the actual CLI output before asserting on it or filing a "bug"**
+
+- **Do:** run the real `lcc`/`lccplus` command on a crafted input and read the actual exit code + stdout/stderr *first*, then write the assertion (or decide whether there's a bug at all).
+- **Don't:** assert on — or file a bug against — expected CLI behavior inferred from reading the source or the in-memory seam.
+- **Why:** running the CLI empirically first caught that the undefined-external link **exits 0** by OG-LCC parity (#1258 — nearly asserted a non-zero exit *and* nearly filed a spurious bug); that `spawnSync` drives the interactive `-i` debugger deterministically (#1259 — the "trickiest" case turned out fine); and that the `--explain` panel is ANSI-coloured (the assertion needs to strip it). The crafted-input probe is cheap; a spurious bug report is not.
+
+**A unit-green seam is not proof the behavior reaches the user — verify end-to-end**
+
+- **Do:** after the pure seam's unit test passes, exercise the behavior through the user-facing surface (e.g. `lcc badfile.e --explain`) and confirm it actually renders.
+- **Don't:** treat a passing unit test on the pure seam as proof the user sees the behavior.
+- **Why:** the `--explain` content passed its unit tests but never rendered via `lcc badfile.e --explain` — the CLI's own signature check short-circuited and a `catch` dropped the explain key (#1245/#1247). The seam was green the whole time; only end-to-end exercise surfaced the gap.
+
+---
+
+## Verify a decision's load-bearing premise
+
+**Before ratifying or extending a prior recommendation, verify the premise it rests on**
+
+- **Do:** when a decision builds on an earlier spike or recommendation, re-check its load-bearing premise yourself — especially "the system can't do X" claims. One grep can flip the decision.
+- **Don't:** inherit a prior recommendation's premise unchecked and stack the next decision on top of it.
+- **Why:** in #845 the #842 spike recommended Option C (JSON-as-companion) on the premise "the Claude Code harness can't load JSON, so RULES.md must stay authoritative." A quick grep showed RULES.md is **not** harness-auto-loaded either (no `@`-import anywhere) — the premise was false, and the recommendation flipped to Option B once checked. (TIL #1191 / #845)
+
+---
+
 ## Ticket scoping & closure
 
 **Split a workstream's research, decision, and implementation into separate tickets — put `human-required` on the *decision*, not the research**
