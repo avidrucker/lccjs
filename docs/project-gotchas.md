@@ -165,4 +165,41 @@ rather than changed.)*
 
 ---
 
+## 10. Backticks / `${` inside `build-site.js` embedded scripts close the template literal early
+
+`scripts/build-site.js` embeds whole browser scripts as JavaScript **template-literal
+constants** — `HEAD_SCRIPT` (`:282`), `JS` (`:303`), and the sandbox `playgroundScript`
+(`:617`). Everything between those backticks is *inside* a template literal, including any
+comments and string contents you add while editing.
+
+**Symptom:** a stray backtick `` ` `` or unescaped `${` *anywhere* in that span — even inside
+a `//` comment — terminates the literal at that character. The rest of the intended script
+becomes stray JS, and you get a `SyntaxError: Unexpected identifier` (or similar) that only
+surfaces at `npm run build`, far from the edit and with a misleading location.
+
+```js
+const JS = `
+  // Wrong — the backtick-quoted token closes the JS literal here:
+  // toggle the `sel` class on the active tab
+  ...
+`;
+
+const JS = `
+  // Right — plain quotes (or none) in comments inside embedded scripts:
+  // toggle the 'sel' class on the active tab
+  ...
+`;
+```
+
+**Rule:** when editing these embedded browser scripts, do not use backticks or unescaped
+`${` inside comments or strings within the literal. Use plain quotes in comments; escape a
+genuinely needed `` \` `` / `\${`. This is distinct from §2 (which is about *extracting* a
+template literal's raw source); here the hazard is *authoring* inside one.
+
+*(Origin: #1334 — a backtick-quoted token in an added comment closed the literal and broke
+`npm run build`; self-resolved, error row logged. Referenced from the 2026-06-15 BANANA TIL.
+Documented per #1409.)*
+
+---
+
 *(More entries to be added as they surface.)*
