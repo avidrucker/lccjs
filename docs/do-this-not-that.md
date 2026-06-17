@@ -149,6 +149,16 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Check current main before chasing a worktree test red
+
+**When a test reds inside a worktree, reproduce it on current `main` before debugging or filing**
+
+- **Do:** treat a worktree red as suspect until confirmed. A worktree cut from an old base carries that base's (possibly already-fixed) test files, so the FIRST diagnostic is `git fetch origin main` then check whether the failure still reproduces on current main — run the same test at `origin/main`, or do a `git merge-base HEAD origin/main` / rebase check — before you debug it or file a "failing test" bug.
+- **Don't:** start debugging (or file a regression) against a worktree red without first ruling out that current main already fixed it.
+- **Why:** during #1114 a pre-#1215 worktree base still carried the hard-failing model-backfill test that current main had already fixed; debugging or filing against it would have chased an already-closed problem. A stale base manifests as a phantom red. (TIL 2026-06-14 / RULES.md #548)
+
+---
+
 ## Verify a decision's load-bearing premise
 
 **Before ratifying or extending a prior recommendation, verify the premise it rests on**
