@@ -328,14 +328,14 @@ The user-facing message printed when either pass ends with `[errorFlag]` set. Co
 
 #### CLI orchestration (`main`)
 
-The CLI entry point. Reads the input file, calls `[assembleSource]`, then calls `[writeOutputFile]`. When `[isObjectModule]` is true, it also reads the user name via `[nameHandler]` and writes the `.lst` / `.bst` report files via `[writeReportFiles]`. Honours the pre-set `inputFileName` so `lcc.js` can drive the assembler without re-parsing CLI args.
+The CLI entry point. Reads the input file, calls `[assembleSource]`, then calls `[writeOutputFile]`. When `[isObjectModule]` is true, it builds the `.lst` / `.bst` reports from the pre-set `[userName]` (wired in by `lcc.js`) via `[buildReportArtifacts]` and writes them with `writeReportFiles`. Honours the pre-set `inputFileName` so `lcc.js` can drive the assembler without re-parsing CLI args.
 
 **Source:** `assembler.js` — `main()`
 **See also:** [assembleSource], [writeOutputFile], [buildReportArtifacts]
 
-#### `"Assembling X"` / `"Starting assembly pass 1/2"`
+#### `"Starting assembly pass 1/2"`
 
-Status output lines printed to stdout during the run. `"Assembling <file>"` appears for `.bin` and `.hex` inputs (LCC.js-custom — the oracle does not print this); `"Starting assembly pass 1"` and `"Starting assembly pass 2"` appear for `.a` assembly. Used by integration tests as a coarse progress signal.
+Status output lines printed during the run. `"Starting assembly pass 1"` and `"Starting assembly pass 2"` are emitted for `.a` assembly (via `emitProgress`, preserved for oracle-parity). Used by integration tests as a coarse progress signal. (The earlier LCC.js-custom `"Assembling <file>"` line for `.bin` / `.hex` inputs no longer exists.)
 
 **Source:** `assembler.js` — `assembleSource()`, grep `Starting assembly pass`
 **See also:** [main], [performPass]
@@ -347,9 +347,9 @@ Object-module-only status output. Printed by `[main]` when `[isObjectModule]` is
 **Source:** `assembler.js` — `main()`, grep `needs linking`, `lst file =`
 **See also:** [main], [.bst / .lst report]
 
-#### `userName` (from `nameHandler`)
+#### `userName`
 
-Identity string from `~/name.nnn` (created on first run by `nameHandler.createNameFile`). Inserted at the top of every `.lst` / `.bst` report (right after the `LCC.js Assemble/Link/Interpret/Debug Ver` line). Read lazily — only when reports are about to be written.
+Caller-supplied identity string, inserted at the top of every `.lst` / `.bst` report (right after the `LCC.js Assemble/Link/Interpret/Debug Ver` line). The assembler does not resolve identity itself — `createAssemblyResult({ userName })` threads the value into `buildReportArtifacts(userName, …)` and stashes it on `this.userName` so `[main]`'s object-module report can consume it after `assembleSource()` returns. Read only when reports are built. The actual `name.nnn` lookup lives upstream in the CLI orchestrator (`lcc.js`, via `nameHandler`), which pre-sets `assembler.userName` before calling `main()`.
 
 **Source:** `assembler.js` — `userName` (param); `createAssemblyResult()`, `buildReportArtifacts()`; grep `userName`
 **See also:** [main], [.bst / .lst report]
