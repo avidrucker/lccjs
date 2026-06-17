@@ -88,7 +88,7 @@ Per-call switch on `[assembleSource]` that controls failure semantics: when `tru
 The label → `locCtr` map populated in pass 1. Consumed in pass 2 by every operand-resolution path (`[evaluateOperand]`, label-arithmetic, `.start` resolution). Local definitions only — external labels are tracked separately in `[externLabels]`.
 
 **Source:** `assembler.js` — `symbolTable` (field)
-**See also:** [labels], [evaluateOperand], [GTable (linker)](linker.md#gtable)
+**See also:** [labels], [evaluateOperand], [globalSymbolTable (linker)](linker.md#globalsymboltable)
 
 #### `labels`
 
@@ -129,14 +129,14 @@ Three single-letter type tags that distinguish how the linker should patch the r
 The capitalisation matches the type byte that appears in the `.o` file header. Selected at emit time via the `usageType` argument to `[evaluateOperand]`.
 
 **Source:** `assembler.js` — `handleExternalReference()`, `evaluateOperand()`; grep `type: usageType`
-**See also:** [externalReferences], [ETable / eTable / VTable (linker)](linker.md#etable--etable--vtable)
+**See also:** [externalReferences], [externalReferenceTable11 / externalReferenceTable9 / virtualAddressTable (linker)](linker.md#externalreferencetable11--externalreferencetable9--virtualaddresstable)
 
 #### `adjustmentEntries`
 
 Array of addresses that need linker-side relocation when the containing module is concatenated onto another module. A word becomes an adjustment entry whenever `.word label+N` (or a similar label-arithmetic form) references a **local** symbol — the offset survives concatenation but the base must be shifted. Serialized as `'A'` header entries.
 
 **Source:** `assembler.js` — `adjustmentEntries` (field)
-**See also:** [`'A'` adjustment record], [ATable (linker)](linker.md#atable)
+**See also:** [`'A'` adjustment record], [addressAdjustmentTable (linker)](linker.md#addressadjustmenttable)
 
 #### `sourceLines`
 
@@ -233,21 +233,21 @@ Emitted when `[startLabel]` and `[startAddress]` are both set. Three bytes: `'S'
 Emitted for every label in `[globalLabels]`. Variable-length: `'G' <UInt16LE address> <label string> 0x00`. Lets the linker build its global-symbol table.
 
 **Source:** `assembler.js` — `buildOutputFileChunks()`, grep `type: 'G'`
-**See also:** [globalLabels], [GTable (linker)](linker.md#gtable)
+**See also:** [globalLabels], [globalSymbolTable (linker)](linker.md#globalsymboltable)
 
 #### `'E'` / `'e'` / `'V'` external reference records
 
 One header entry per `[externalReferences]` array element. The type byte distinguishes the fix-up encoding (see [externalReferences entry types]). Layout matches `'G'`: `<type> <UInt16LE address> <label string> 0x00`. The linker reads the type byte to decide which mask + arithmetic to apply during fix-up.
 
 **Source:** `assembler.js` — `buildOutputFileChunks()`, grep `Collect external references`
-**See also:** [externalReferences entry types], [ETable / eTable / VTable (linker)](linker.md#etable--etable--vtable)
+**See also:** [externalReferences entry types], [externalReferenceTable11 / externalReferenceTable9 / virtualAddressTable (linker)](linker.md#externalreferencetable11--externalreferencetable9--virtualaddresstable)
 
 #### `'A'` adjustment record
 
 Three bytes: `'A' <UInt16LE address>`. Tells the linker "the word at `address` is a label-arithmetic value that needs the module-start offset added on relocation." Emitted for each entry in `[adjustmentEntries]` plus once per `'V'` (the linker also wants to know the V-fix-up site is relocatable).
 
 **Source:** `assembler.js` — `buildOutputFileChunks()`, grep `type: 'A'`
-**See also:** [adjustmentEntries], [ATable (linker)](linker.md#atable)
+**See also:** [adjustmentEntries], [addressAdjustmentTable (linker)](linker.md#addressadjustmenttable)
 
 #### `'C'` code-section marker
 

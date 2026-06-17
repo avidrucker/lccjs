@@ -10,57 +10,62 @@ and the other module glossaries.
 
 ## Definitions
 
-### Machine Code Array (`mca`)
+### `machineCode`
+*(formerly `mca` — "machine code array")*
 
-The linker's growing buffer of machine words concatenated from every linked object module. When `mca` is finally serialized in `[createExecutable]`, it becomes the code section after the `'C'` marker of the output `.e` file. Distinct from the assembler's `outputBuffer`: `mca` aggregates words across multiple input modules; `outputBuffer` is single-module-scoped.
+The linker's growing buffer of machine words concatenated from every linked object module. When `machineCode` is finally serialized in `[createExecutable]`, it becomes the code section after the `'C'` marker of the output `.e` file. Distinct from the assembler's `outputBuffer`: `machineCode` aggregates words across multiple input modules; `outputBuffer` is single-module-scoped.
 
-**Source:** `src/core/linker.js:25, 42, 254-256`
-**See also:** [mcaIndex], [createExecutable]
+**Source:** `linker.js` — `machineCode` (field, `resetState()`); appended in `processModule()`, serialized in `createExecutable()`
+**See also:** [moduleCurrentAddress], [createExecutable]
 
-### `mcaIndex`
+### `moduleCurrentAddress`
+*(formerly `mcaIndex`)*
 
-The next-write position in `[Machine Code Array (mca)]`. It does double duty: when a new object module is being registered, `mcaIndex` is *also* the "module-start base" added to every header entry's `address` (since the module's local addresses now sit at `mcaIndex .. mcaIndex + module.code.length`). For `'A'` entries it is captured separately as [`moduleStart`] so the fix-up phase can apply the same shift after other modules have been appended.
+The next-write position in `[machineCode]`. It does double duty: when a new object module is being registered, `moduleCurrentAddress` is *also* the "module-start base" added to every header entry's `address` (since the module's local addresses now sit at `moduleCurrentAddress .. moduleCurrentAddress + module.code.length`). For `'A'` entries it is captured separately as [`moduleStart`] so the fix-up phase can apply the same shift after other modules have been appended.
 
-**Source:** `src/core/linker.js:26, 215, 222, 226, 232, 238, 245, 255`
-**See also:** [Machine Code Array (mca)], [processModule], [moduleStart]
+**Source:** `linker.js` — `moduleCurrentAddress` (field, `resetState()`); advanced in `processModule()`
+**See also:** [machineCode], [processModule], [moduleStart]
 
-### `GTable`
+### `globalSymbolTable`
+*(formerly `GTable`)*
 
-Global symbol table for the *whole link*, mapping a label string to its final `[Machine Code Array (mca)]` address. Populated as each module's `'G'` entries are registered by `[processModule]`; consulted by every external-reference fix-up to resolve a placeholder offset/value into a concrete address. Duplicate labels across modules → `[Multiple-globals error]`.
+Global symbol table for the *whole link*, mapping a label string to its final `[machineCode]` address. Populated as each module's `'G'` entries are registered by `[processModule]`; consulted by every external-reference fix-up to resolve a placeholder offset/value into a concrete address. Duplicate labels across modules → `[Multiple-globals error]`.
 
-**Source:** `src/core/linker.js:27, 218-223, 262, 272, 282`
+**Source:** `linker.js` — `globalSymbolTable` (field, `resetState()`); populated in `processModule()`, read in `adjustExternalReferences()`
 **See also:** [processModule], [adjustExternalReferences]
 
-### `ETable` / `eTable` / `VTable`
+### `externalReferenceTable11` / `externalReferenceTable9` / `virtualAddressTable`
+*(formerly `ETable` / `eTable` / `VTable`)*
 
-The three external-reference tables — one per fix-up encoding. Each entry is `{address, label}` where `address` is the (already-relocated) word position in `[Machine Code Array (mca)]` containing a placeholder, and `label` is the symbol to resolve via `[GTable]`. The capitalisation tracks the header-entry type byte the assembler emitted:
+The three external-reference tables — one per fix-up encoding. Each entry is `{address, label}` where `address` is the (already-relocated) word position in `[machineCode]` containing a placeholder, and `label` is the symbol to resolve via `[globalSymbolTable]`. Each table corresponds to the header-entry **marker byte** the assembler emitted (the capitalisation of the old short names mirrored these bytes):
 
-- `ETable` (uppercase `E`) — 11-bit pc-offset placeholder for `bl` (range ±1024)
-- `eTable` (lowercase `e`) — 9-bit pc-offset placeholder for `ld` / `st` / `lea` / `br` (range ±256)
-- `VTable` (uppercase `V`) — full 16-bit value placeholder for `.word label`
+- `'E'` marker → `externalReferenceTable11` — 11-bit pc-offset placeholder for `bl` (range ±1024)
+- `'e'` marker → `externalReferenceTable9` — 9-bit pc-offset placeholder for `ld` / `st` / `lea` / `br` (range ±256)
+- `'V'` marker → `virtualAddressTable` — full 16-bit value placeholder for `.word label`
 
-The naming mirrors the on-disk header marker bytes — see [.e / .o file format](assembler.md#e--o-file-format) for the byte-layout the assembler produces.
+See [.e / .o file format](assembler.md#e--o-file-format) for the byte-layout the assembler produces.
 
-**Source:** `src/core/linker.js:28-30, 224-241, 259-287`
-**See also:** [GTable], [adjustExternalReferences]
+**Source:** `linker.js` — `externalReferenceTable11`, `externalReferenceTable9`, `virtualAddressTable` (fields, `resetState()`); populated in `processModule()`, resolved in `adjustExternalReferences()`
+**See also:** [globalSymbolTable], [adjustExternalReferences]
 
-### `ATable`
+### `addressAdjustmentTable`
+*(formerly `ATable`)*
 
-Adjustment / local-reference entries. Each entry is `{address, moduleStart}` where `address` is the relocated word position holding a value to shift, and [`moduleStart`] is the offset the value's source module landed at when it was appended to `[Machine Code Array (mca)]`. Unlike the three external tables, `ATable` performs no symbol lookup — `[adjustLocalReferences]` just adds `moduleStart` to `mca[address]`.
+Adjustment / local-reference entries (the `'A'` marker table). Each entry is `{address, moduleStart}` where `address` is the relocated word position holding a value to shift, and [`moduleStart`] is the offset the value's source module landed at when it was appended to `[machineCode]`. Unlike the three external tables, `addressAdjustmentTable` performs no symbol lookup — `[adjustLocalReferences]` just adds `moduleStart` to `machineCode[address]`.
 
-**Source:** `src/core/linker.js:31, 242-246, 290-293`
+**Source:** `linker.js` — `addressAdjustmentTable` (field, `resetState()`); populated in `processModule()`, applied in `adjustLocalReferences()`
 **See also:** [processModule], [adjustLocalReferences], [moduleStart]
 
 ### `moduleStart`
 
-A per-`'A'`-entry copy of `[mcaIndex]` taken at the moment the entry's module was being registered. Carried alongside the entry's address so `[adjustLocalReferences]` can apply the right offset once the link is complete — even though the live `mcaIndex` has moved on as later modules are concatenated.
+A per-`'A'`-entry copy of `[moduleCurrentAddress]` taken at the moment the entry's module was being registered. Carried alongside the entry's address so `[adjustLocalReferences]` can apply the right offset once the link is complete — even though the live `moduleCurrentAddress` has moved on as later modules are concatenated.
 
-**Source:** `src/core/linker.js:245-246, 291-293`
-**See also:** [ATable], [adjustLocalReferences]
+**Source:** `linker.js` — `moduleStart` (property of `addressAdjustmentTable` entries, set in `processModule()`); applied in `adjustLocalReferences()`
+**See also:** [addressAdjustmentTable], [adjustLocalReferences]
 
 ### `start` / `gotStart`
 
-`start` holds the entry-point address — the final `[Machine Code Array (mca)]` location the runtime should set PC to. `gotStart` is a one-shot latch: false until the first `'S'` header entry is seen; thereafter true, so any *second* `'S'` raises `[Multiple-entry-points error]`. The pair guarantees an LCC link has at most one entry point even when multiple modules each contribute their own `.start` directive.
+`start` holds the entry-point address — the final `[machineCode]` location the runtime should set PC to. `gotStart` is a one-shot latch: false until the first `'S'` header entry is seen; thereafter true, so any *second* `'S'` raises `[Multiple-entry-points error]`. The pair guarantees an LCC link has at most one entry point even when multiple modules each contribute their own `.start` directive.
 
 **Source:** `linker.js` — `start`, `gotStart` (fields, `resetState()`); set in `processModule()`
 **See also:** [processModule]
@@ -88,41 +93,41 @@ Filesystem wrapper around `[parseObjectModuleBuffer]`. Reads the named file with
 
 ### `link`
 
-The top-level link pipeline: `resetState` → for each filename `[readObjectModule]` (with status print `"Linking <f>"`) → for each parsed module `[processModule]` → `[adjustExternalReferences]` → `[adjustLocalReferences]` → `[createExecutable]`. The order is significant: every `[GTable]` entry must be populated by `processModule` before external fix-ups look them up, and all `[Machine Code Array (mca)]` content must be in place before the executable is serialized.
+The top-level link pipeline: `resetState` → for each filename `[readObjectModule]` (with status print `"Linking <f>"`) → for each parsed module `[processModule]` → `[adjustExternalReferences]` → `[adjustLocalReferences]` → `[createExecutable]`. The order is significant: every `[globalSymbolTable]` entry must be populated by `processModule` before external fix-ups look them up, and all `[machineCode]` content must be in place before the executable is serialized.
 
 **Source:** `linker.js` — `link()`
 **See also:** [processModule], [adjustExternalReferences], [adjustLocalReferences], [createExecutable]
 
 ### `processModule`
 
-Registers one parsed module's headers into the appropriate per-link table, then appends its `code` words to `[Machine Code Array (mca)]`. Every header entry's `address` is rewritten to `header.address + mcaIndex` *before* it is stored, so all subsequent fix-up logic sees absolute `mca` positions rather than module-local offsets. For `'A'` entries, `[mcaIndex]` is *also* captured separately as `[moduleStart]` for the fix-up phase. Code words are written at `mca[mcaIndex++]` in order — module concatenation happens here.
+Registers one parsed module's headers into the appropriate per-link table, then appends its `code` words to `[machineCode]`. Every header entry's `address` is rewritten to `header.address + moduleCurrentAddress` *before* it is stored, so all subsequent fix-up logic sees absolute `machineCode` positions rather than module-local offsets. For `'A'` entries, `[moduleCurrentAddress]` is *also* captured separately as `[moduleStart]` for the fix-up phase. Code words are written at `machineCode[moduleCurrentAddress++]` in order — module concatenation happens here.
 
 **Source:** `linker.js` — `processModule()`
-**See also:** [mca][Machine Code Array (mca)], [mcaIndex], [GTable], [ETable / eTable / VTable], [ATable]
+**See also:** [machineCode], [moduleCurrentAddress], [globalSymbolTable], [externalReferenceTable11 / externalReferenceTable9 / virtualAddressTable], [addressAdjustmentTable]
 
 ### `adjustExternalReferences`
 
-Resolves every `[ETable / eTable / VTable]` entry against `[GTable]`. For each ref, computes the final value the placeholder word should hold:
+Resolves every `[externalReferenceTable11 / externalReferenceTable9 / virtualAddressTable]` entry against `[globalSymbolTable]`. For each ref, computes the final value the placeholder word should hold:
 
-- `ETable` — rewrites the low 11 bits with the resolved pc-offset (preserves the top 5 bits — opcode + `b11` — via `& 0xf800`).
-- `eTable` — rewrites the low 9 bits (preserves the top 7 via `& 0xfe00`).
-- `VTable` — adds the resolved global address directly to the word (no masking; the assembler emitted `0` as the placeholder).
+- `externalReferenceTable11` — rewrites the low 11 bits with the resolved pc-offset (preserves the top 5 bits — opcode + `b11` — via `& 0xf800`).
+- `externalReferenceTable9` — rewrites the low 9 bits (preserves the top 7 via `& 0xfe00`).
+- `virtualAddressTable` — adds the resolved global address directly to the word (no masking; the assembler emitted `0` as the placeholder).
 
-A missing global at this point is fatal: `[Undefined-external-reference error]`. The same pc-offset formula `(current + Gaddr - ref.address - 1)` is used for both `ETable` and `eTable` — only the mask width differs.
+A missing global at this point is fatal: `[Undefined-external-reference error]`. The same pc-offset formula `(current + Gaddr - ref.address - 1)` is used for both `externalReferenceTable11` and `externalReferenceTable9` — only the mask width differs.
 
 **Source:** `linker.js` — `adjustExternalReferences()`
-**See also:** [ETable / eTable / VTable], [GTable]
+**See also:** [externalReferenceTable11 / externalReferenceTable9 / virtualAddressTable], [globalSymbolTable]
 
 ### `adjustLocalReferences`
 
-The last fix-up phase: walks `[ATable]` and adds each entry's `[moduleStart]` to `mca[ref.address]`. This corrects label-arithmetic words (`.word label+N`-style values emitted by the assembler relative to the module's own load base) — after module concatenation those base addresses have shifted, so the stored value needs the same shift applied.
+The last fix-up phase: walks `[addressAdjustmentTable]` and adds each entry's `[moduleStart]` to `machineCode[ref.address]`. This corrects label-arithmetic words (`.word label+N`-style values emitted by the assembler relative to the module's own load base) — after module concatenation those base addresses have shifted, so the stored value needs the same shift applied.
 
 **Source:** `linker.js` — `adjustLocalReferences()`
-**See also:** [ATable], [moduleStart]
+**See also:** [addressAdjustmentTable], [moduleStart]
 
 ### `createExecutable`
 
-Serializes the final linked state to disk as a standard `.e` file: `'o'` signature → `'S'` entry (if `[gotStart]`) → all `[GTable]` entries → `'A'` entries derived from `[VTable]` (so the runtime sees a fix-up site for each full-value reference) → original `[ATable]` entries → `'C'` code marker → `[Machine Code Array (mca)]` as little-endian 16-bit words. The output of this method has the *same byte layout* as a fresh assembler-produced `.e` — there is nothing linker-specific about the file format itself.
+Serializes the final linked state to disk as a standard `.e` file: `'o'` signature → `'S'` entry (if `[gotStart]`) → all `[globalSymbolTable]` entries → `'A'` entries derived from `[virtualAddressTable]` (so the runtime sees a fix-up site for each full-value reference) → original `[addressAdjustmentTable]` entries → `'C'` code marker → `[machineCode]` as little-endian 16-bit words. The output of this method has the *same byte layout* as a fresh assembler-produced `.e` — there is nothing linker-specific about the file format itself.
 
 **Source:** `linker.js` — `createExecutable()`
 **See also:** [.e / .o file format](assembler.md#e--o-file-format)
@@ -160,14 +165,14 @@ Internal helper: prints `message` to stderr, then throws a fresh `[LinkerError]`
 `"More than one global declaration for <label>"` — raised when a label appears in a `'G'` header entry across more than one linked module. The link tools require exactly one `.global` declaration per label for the whole link.
 
 **Source:** `linker.js` — `processModule()`, grep `More than one global declaration`
-**See also:** [GTable], [processModule]
+**See also:** [globalSymbolTable], [processModule]
 
 ### Undefined-external-reference error
 
 `"<label> is an undefined external reference"` — raised when a label declared as `.extern` in one module is not declared as `.global` in any other linked module. Caught at fix-up time, not parse time — the linker can't tell which `.extern`s are bogus until it knows the full set of globals.
 
 **Source:** `linker.js` — `adjustExternalReferences()`, `_undefinedExternalRefMsg()`; grep `undefined external reference`
-**See also:** [adjustExternalReferences], [GTable]
+**See also:** [adjustExternalReferences], [globalSymbolTable]
 
 ### Parse-format errors
 
