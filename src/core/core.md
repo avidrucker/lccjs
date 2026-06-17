@@ -22,6 +22,30 @@ Current responsibilities:
 - generate `.e` or `.o` output
 - support in-memory assembly through `assembleSource(...)`
 
+#### `assembleSource()` per-call config contract
+
+Per-run configuration must be passed as `assembleSource(source, options)` **options**, not
+pre-set on the instance. The relevant fields are:
+
+- `inputFileName`, `outputFileName`
+- `listingLoadPoint` — the `-l<hex>` display offset (#1238)
+- `verboseModeOn`, `explainModeOn`, `userName` (#1277)
+- `onProgress` — the pass-banner sink (#1397)
+
+**Why setting them on the instance first is silently wiped:** `assembleSource()` calls
+`resetAssemblyState()` as its first step, which clears every per-run field. The seam then
+re-applies the caller-provided values from `options` *after* the reset. So a field assigned
+to the instance before the call is cleared before the passes run; an omitted option means
+"this run has none" (default off / `0` / `null`), never a value inherited from a prior
+assembly on the same instance. The CLI path (`main()`) threads these through the options for
+exactly this reason.
+
+The instance fields still exist and are read during/after assembly — e.g.
+`formatAssemblerError` reads `this.explainModeOn`, and `main()`'s object-module report
+consumes `this.userName` after `assembleSource()` returns — but it is the option, applied
+after the reset, that puts the right value there. Single point of truth for the field list:
+`resetAssemblyState()` (#1423).
+
 ### `interpreter.js`
 
 Responsible for executing `.e` executables on the simulated LCC machine.
