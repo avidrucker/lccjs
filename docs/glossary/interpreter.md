@@ -273,12 +273,12 @@ CLI-only output blocks printed *after* `run()` returns, gated by per-call option
 
 ### Error model
 
-Two typed errors plus two helpers, mapping cleanly to "you shouldn't be loading that file" vs "execution went sideways":
+Two typed errors plus one helper, mapping cleanly to "you shouldn't be loading that file" vs "execution went sideways":
 
 - `InvalidExecutableFormatError` — header / signature parse failure (`loadExecutableBuffer`)
 - `InterpreterRuntimeError` — runtime conditions (unknown opcode / trap, divide-by-zero, infinite-loop, software breakpoint)
-- `error(message)` — set `running = false`, write `message` to stderr; non-fatal stop-and-continue path
-- `raiseRuntimeError(error)` — set `running = false` and throw; catch site (`main`) decides whether to CLI-exit
+- `raiseRuntimeError(error)` — the throw path: set `running = false`, normalize a non-`Error` to `InterpreterRuntimeError`, print PC/register diagnostics in verbose mode, then throw; catch site (`main`) decides whether to CLI-exit
+- bare `this.running = false` — the non-fatal stop path: several sites end the run in place without throwing (step-limit reached with no debugger available, debugger `q`/quit, normal HALT). There is no longer an `error()` helper; the stop path is just clearing the flag
 
 CLI catch shape: `Runtime Error: <msg>` wraps any thrown `InterpreterRuntimeError`; `"is not in lcc format"` is allowed to pass through verbatim because the user-facing wording is meaningful.
 
@@ -301,9 +301,9 @@ Sibling-file naming helper: maps `inputFileName + (isBST ? '.bst' : '.lst')` to 
 **Source:** `interpreter.js` — `constructBSTLSTFileName()`
 **See also:** [`.lst` / `.bst` report](assembler.md#bst--lst)
 
-### `userName` (via `nameHandler`)
+### `userName`
 
-User identity string read from `name.nnn` by `nameHandler.createNameFile(inputFileName)`. Inserted at the top of every `.lst` / `.bst` report (right after the `LCC.js Assemble/Link/Interpret/Debug Ver` line). Triggered lazily — only when `generateStats` is true and reports are about to be written.
+Caller-supplied user-identity string, inserted at the top of every `.lst` / `.bst` report (right after the `LCC.js Assemble/Link/Interpret/Debug Ver` line). The interpreter does not resolve identity itself — `createExecutionResult({ userName })` threads the value into `buildReportArtifacts(userName, …)`, and it is consumed only when reports are built (`buildReports` true; `createExecutionResult` throws if a report is requested without it). The actual `name.nnn` lookup lives upstream in the CLI orchestrator (`lcc.js`, via `nameHandler`); the interpreter only consumes the resolved value.
 
 **Source:** `interpreter.js` — `userName` (param); `createExecutionResult()`, `buildReportArtifacts()`; grep `userName`
 **See also:** [main]
