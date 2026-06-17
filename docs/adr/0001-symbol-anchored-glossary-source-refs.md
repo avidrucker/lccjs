@@ -57,7 +57,8 @@ A glossary `Source:` reference cites **only stable symbols**:
 - The glossary `README.md` **entry convention is updated** in this same change to specify
   the symbol-anchored form (and `stats-analysis.md`, which cites notebooks, is unaffected).
 - A **lightweight automated check** that every cited symbol still grep-matches its file is
-  desirable but **deferred** to a follow-up ticket; until then, accuracy rests on the
-  grep-ability of symbols and review.
+  desirable; **delivered in #1362** as `scripts/check-glossary-symbols.js`
+  (`npm run glossary:check`) plus `tests/new/glossary-source-refs.spec.js`, which fails the
+  suite if any cited symbol or `grep` landmark no longer resolves in its source file(s).
 - Navigation costs a `grep` instead of a direct line jump — accepted as the price of a
   reference that stays correct.

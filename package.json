@@ -27,6 +27,7 @@
     "lccrun": "bash scripts/lccrun.sh",
     "build": "npm run build:browser && npm run build:site",
     "build:site": "node scripts/build-site.js",
+    "glossary:check": "node scripts/check-glossary-symbols.js",
     "build:browser": "webpack --config webpack.browser.config.js",
     "serve:site": "node scripts/serve-site.js",
     "dev:site": "node scripts/serve-site.js --dev",
