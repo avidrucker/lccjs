@@ -391,6 +391,36 @@ report: `docs/cuh63-debugger-bare-c-segfault-bug-report.md` (tracked by #1353, u
 
 ---
 
+### 30. Linker `.o` unterminated label: oracle segfaults; LCC.js rejects with `LinkerError` (#1384)
+
+In `Linker.parseObjectModuleBuffer`, a `G`/`E`/`e`/`V` header entry's label is read byte-by-byte
+until a NUL terminator. If the buffer ends **before** the NUL (a truncated or hand-crafted `.o`),
+the oracle reads past the buffer and crashes with **SIGSEGV** (exit 139). With the terminator
+present the oracle parses the header and rejects gracefully — so the crash is specific to the
+missing NUL.
+
+| Input (`.o` bytes) | Oracle | LCC.js |
+|---|---|---|
+| `o G <addr> "var1" 00 C <code…>` (well-formed) | links → `.e` ✓ | links → `.e` ✓ |
+| **`o G <addr> "var1"`** (label, **no NUL**) | **SIGSEGV (exit 139)** | `Unterminated label in G entry` (`LinkerError`) |
+
+Before #1384, LCC.js silently accepted the partial label as well-formed. It now throws a typed
+`LinkerError` (`explainKey: BAD_OBJECT_HEADER`) — the graceful analog of the oracle's refusal,
+never reproducing the crash. Classified **OG BUG** — an upstream robustness defect. Evidence:
+oracle probe (this session).
+
+**Source (LCC.js side):** `src/core/linker.js` `parseObjectModuleBuffer()` — the `G`/`E`/`e`/`V`
+label loop now tracks NUL termination and rejects an unterminated label. Test:
+`tests/new/linker.unit.spec.js`.
+
+> A *separate*, distinct divergence surfaced from the same probe — a header-only module (valid
+> NUL-terminated label, but no `C`/code) is accepted by LCC.js yet rejected by the oracle as
+> `not a linkable module`. That is tracked independently as #1422, not by #1384.
+
+**GitHub issue:** [#1384](https://github.com/avidrucker/lccjs/issues/1384)
+
+---
+
 ## BY DESIGN — Intentional, documented divergences
 
 ### 7. Source line length limit: LCC.js enforces 300 chars (researched, #244)

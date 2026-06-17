@@ -142,6 +142,34 @@ describe('Linker Unit Tests', () => {
       expect(module.headers).toEqual([{ type: 'S', address: 2 }]);
       expect(module.code).toEqual([]);
     });
+
+    // #1384: the label field of a G/E/e/V entry is read until a NUL byte. If the buffer
+    // ends before the NUL, the loop used to exit silently and accept the partial label as
+    // well-formed. Verified against the oracle: it segfaults on this exact input (no NUL =
+    // read past the buffer), so tolerating it was a genuine divergence, not a deliberate one.
+    test('throws BAD_OBJECT_HEADER on a G entry whose label has no NUL terminator (#1384)', () => {
+      const linker = new Linker();
+      // 'o', 'G', addr 0x0002, then "var1" with NO trailing NUL — buffer ends mid-label.
+      const unterminated = Buffer.from([0x6f, 0x47, 0x02, 0x00, 0x76, 0x61, 0x72, 0x31]);
+
+      expect(() => linker.parseObjectModuleBuffer(unterminated, 'badLabel.o'))
+        .toThrow(/Unterminated label in G entry/);
+      try {
+        linker.parseObjectModuleBuffer(unterminated, 'badLabel.o');
+      } catch (err) {
+        expect(err).toBeInstanceOf(LinkerError);
+        expect(err.explainKey).toBe('BAD_OBJECT_HEADER');
+      }
+    });
+
+    test('accepts a G entry whose label is properly NUL-terminated (lower boundary, #1384)', () => {
+      const linker = new Linker();
+      // 'o', 'G', addr 0x0002, "var1", 0x00 — the same bytes but WITH the terminator.
+      const terminated = Buffer.from([0x6f, 0x47, 0x02, 0x00, 0x76, 0x61, 0x72, 0x31, 0x00]);
+
+      const module = linker.parseObjectModuleBuffer(terminated, 'goodLabel.o');
+      expect(module.headers).toEqual([{ type: 'G', address: 2, label: 'var1' }]);
+    });
   });
 
   test('processModule() should throw LinkerError on duplicate global symbols', () => {

@@ -116,10 +116,18 @@ class Linker {
           const address = buffer.readUInt16LE(offset);
           offset += 2;
           let label = '';
+          let labelTerminated = false;
           while (offset < buffer.length) {
             const charCode = buffer[offset++];
-            if (charCode === 0) break;
+            if (charCode === 0) { labelTerminated = true; break; }
             label += String.fromCharCode(charCode);
+          }
+          // The label must end with a NUL terminator. If the buffer runs out first the
+          // module is malformed: accepting the partial label silently was a real divergence
+          // (the oracle segfaults reading past the buffer on this exact input — see #1384),
+          // so reject it gracefully like the sibling address-field guards above.
+          if (!labelTerminated) {
+            throw new LinkerError(`Unterminated label in ${entryType} entry`, { explainKey: 'BAD_OBJECT_HEADER' });
           }
           module.headers.push({ type: entryType, address, label });
           break;
