@@ -60,7 +60,9 @@ lccjs via `spawnSync` with `{ input: stdinString }` — **not** via `lcc.inputBu
 **Why:** `inputBuffer` triggers "simulated" mode in `readLineFromStdin()`, which echoes
 each input line back through `writeOutput`, producing extra output that C programs never
 emit — causing false parity failures on any demo that reads stdin. Piped stdin takes the
-non-simulated path and both sides behave identically.
+non-simulated path and avoids that false echo. It is still subject to documented
+runtime-parity deviations such as `din`/`hin` EOF handling and `sin` after a retained
+line-input newline (#1415; see `docs/parity_deviations.md` §29).
 
 *(Was `RULES.md` rule `lilac-civet` — relocated #1059, origin #760.)*
 

@@ -985,6 +985,30 @@ describe('Interpreter Unit Tests', () => {
       expect(result.registers[2]).toBe(3);
     });
 
+    test('sin after hin skips the retained newline and reads the next line (#1415)', () => {
+      const assembler = new Assembler();
+      const source = [
+        '  hin r1',
+        '  lea r0, buffer',
+        '  sin r0',
+        '  halt',
+        'buffer: .blkw 20',
+      ].join('\n');
+      const assembly = assembler.assembleSource(source, { inputFileName: 'test1415.a' });
+      const interpreter = new Interpreter();
+
+      const result = interpreter.executeBuffer(assembly.outputBytes, {
+        inputFileName: 'test1415.e',
+        inputBuffer: 'ff\nhello\n',
+      });
+
+      const bufferAddress = assembly.symbolTable.buffer;
+      expect(result.registers[1]).toBe(0xff);
+      expect(String.fromCharCode(result.mem[bufferAddress])).toBe('h');
+      expect(String.fromCharCode(result.mem[bufferAddress + 4])).toBe('o');
+      expect(result.mem[bufferAddress + 5]).toBe(0);
+    });
+
     test('simpleCalc double-ain pattern produces correct result', () => {
       const assembler = new Assembler();
       const fs2 = require('fs');

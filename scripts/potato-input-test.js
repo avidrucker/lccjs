@@ -219,7 +219,8 @@ function main() {
     if (mismatches.length) {
       console.log(
         '\nNote: parity uses EXACT stdout+stderr+exit comparison; banner/format ' +
-        'differences show as DIFF. Triage against docs/parity_deviations.md.'
+        'differences show as DIFF. Triage against docs/parity_deviations.md. ' +
+        'For known input-rejection EOF and hin/din→sin newline differences, see §29.'
       );
     }
   } else {

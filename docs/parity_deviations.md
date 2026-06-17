@@ -906,6 +906,58 @@ separate decision from parity. No production code changes are made here.
 
 ---
 
+### 29. Input-rejection EOF and `sin` after line-input newline handling (#1415)
+
+`scripts/potato-input-test.js` uncovered two interpreter-input differences while
+substituting `potato` into each prompt of `tests/fixtures/benchmark_isa.a`.
+
+#### Invalid `din` / `hin` followed by EOF
+
+When `din` or `hin` receives an invalid token and stdin is then exhausted:
+
+| | Oracle (cuh63 6.3) | LCC.js |
+|---|---|---|
+| `din` input `potato` then EOF | re-prompts forever; killed by `lccrun.sh` timeout 124 | emits `Invalid dec constant. Re-enter:` then exits 1 with `Runtime Error: din: unexpected EOF on stdin` |
+| `hin` input `potato` then EOF | re-prompts forever; killed by `lccrun.sh` timeout 124 | emits `Invalid hex constant. Re-enter:` then exits 1 with `Runtime Error: hin: unexpected EOF on stdin` |
+
+**Why BY DESIGN:** the oracle behavior is interactive-only blocking. In non-TTY
+automation it is indistinguishable from a hang and must be killed externally.
+LCC.js treats EOF as a real runtime error so CI, tests, and scripts fail fast
+with a diagnostic. This is consistent with the existing `sin`/`ain` EOF guards
+and avoids the debug-flood style automation hazard documented in §19.
+
+#### `sin` immediately after `din` / `hin`
+
+The original #1415 finding described this as a `sin` echo divergence because the
+benchmark output changed from `Enter a string: potato` in LCC.js to
+`Enter a string: ` in the oracle. A smaller reduction shows the root cause is
+the newline retained after the preceding line-input trap:
+
+| Program shape | Oracle (cuh63 6.3) | LCC.js |
+|---|---|---|
+| `sin; sout` with piped `potato\n` and no prior line-input trap | stores and prints `potato` | stores and prints `potato` |
+| `hin; sin; sout` with piped `ff\npotato\n` | `sin` consumes the leftover newline as an empty string; `sout` prints blank | `executeSIN()` skips the retained newline, then stores and prints `potato` |
+
+**Why BY DESIGN:** LCC.js already preserves the oracle's newline-after-`din` /
+`hin` behavior for `ain` parity (§25 history, #857), but `executeSIN()` skips one
+leading retained newline before reading a string. That preserves the practical
+batch-input contract fixed in #914: consecutive string-style reads, or a string
+read after a numeric line read, consume the next logical input line rather than
+silently storing an empty string. Reverting to the oracle behavior would make
+valid piped programs fragile and would break the supported `sin` stdin scenario
+covered by the interpreter trap tests.
+
+**Source:** `src/core/interpreter.js` — `readLineFromStdin()`, `executeSIN()`, and
+the `DIN`/`HIN` trap handlers.
+
+**Evidence:** `scripts/potato-input-test.js`; regression coverage in
+`tests/new/interpreter.unit.spec.js` (`sin after hin skips the retained newline
+and reads the next line`).
+
+**GitHub issue:** [#1415](https://github.com/avidrucker/lccjs/issues/1415)
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -943,3 +995,4 @@ _None pending._
 | 2026-06-06 | BY DESIGN §26 and §27 added (#934) | `.hex` oracle parity characterization complete. §26: empty/comment-only/whitespace-only `.hex` → oracle exits 1 ("Cannot open executable file"); lccjs exits 0 silently (BY DESIGN, mirrors §9). §27: malformed line diagnostics → oracle prints "Fewer/More than four hex digits" / "Bad hex number"; lccjs is silent on exit 1 (BY DESIGN — `fatalExit` discards message text). Evidence: `docs/research/hex-oracle-parity-934.md`. |
 | 2026-06-15 | §11 augmented; header terminology note (#1371) | Confirmed §11 by probing the oracle (`-f` off → 67-col truncation; `-f` on / lccjs → full 166-col line). Documented the `-f`-flag connection: OG's `-f` disables the §11 truncation, which lccjs never does, so `-f` is a deliberate no-op in lccjs. `lcc`/`ilcc` now emit a non-blocking warning when `-f` is passed (`src/utils/flagDiagnostics.js` `FLAG_DEVIATIONS`). Added a header terminology note (OG/oracle/"OG Oracle" = original source-of-truth LCC; user-facing CLI messages say plain "LCC"). |
 | 2026-06-15 | OG BUG §28 added (#1353) | `-d` debugger `c` command: a bare `c` (no operands) segfaults the oracle (exit 139); `c r0` (value omitted) prints `Missing operand` and `c r0 5` works, so the crash is the zero-operand case. LCC.js validates and never crashes (#1349). Drafted upstream report `docs/cuh63-debugger-bare-c-segfault-bug-report.md`; reports_summary row #28; umbrella #1406. Evidence: probe #1348. |
+| 2026-06-16 | BY DESIGN §29 added (#1415) | `potato-input-test` input-rejection findings triaged. LCC.js keeps fail-fast EOF errors for invalid `din`/`hin` instead of matching the oracle's indefinite re-prompt hang. The `sin` finding was reduced from "echo" to newline handling after a prior `din`/`hin`: LCC.js intentionally skips the retained newline so `sin` reads the next logical input line; the oracle stores an empty string. Regression coverage added for `hin` followed by `sin`. |
