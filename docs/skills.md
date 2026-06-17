@@ -2,6 +2,10 @@
 
 This doc lists every Claude Code skill used in this project, what it does, and when to invoke it. Skills live globally at `~/.claude/skills/`.
 
+> **Cross-provider skills:** to move a skill between Claude Code, Codex, and other
+> providers, see [`skill-portability.md`](./skill-portability.md) (the shared
+> `agentskills.io` core + per-provider deltas).
+
 ---
 
 ## Project-specific
