@@ -4,7 +4,9 @@ This doc lists every Claude Code skill used in this project, what it does, and w
 
 > **Cross-provider skills:** to move a skill between Claude Code, Codex, and other
 > providers, see [`skill-portability.md`](./skill-portability.md) (the shared
-> `agentskills.io` core + per-provider deltas).
+> `agentskills.io` core + per-provider deltas). For where skills should *live* across
+> repos and provider folders without drifting, see
+> [`skill-organization.md`](./skill-organization.md).
 
 ---
 
