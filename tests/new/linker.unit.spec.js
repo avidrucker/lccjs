@@ -353,7 +353,7 @@ describe('Linker Unit Tests', () => {
       expect(linker.machineCode[3]).toBe(7);
     });
 
-    test('empty ATable is a no-op', () => {
+    test('empty addressAdjustmentTable is a no-op', () => {
       const linker = new Linker();
       linker.machineCode = [11, 22, 33];
       linker.addressAdjustmentTable = [];
@@ -376,7 +376,7 @@ describe('Linker Unit Tests', () => {
       return { headers, code };
     };
 
-    test('GTable global addresses reflect code concatenation (sizes 10/20/15)', () => {
+    test('globalSymbolTable global addresses reflect code concatenation (sizes 10/20/15)', () => {
       const linker = new Linker();
       linker.processModule(mod([{ type: 'G', address: 0, label: 'foo' }], 10));
       linker.processModule(mod([{ type: 'G', address: 5, label: 'bar' }], 20));
@@ -491,15 +491,15 @@ describe('Linker Unit Tests', () => {
         0x6f,                               // 'o' signature
         0x53, 0x02, 0x00,                   // 'S' + start=2 (uint16 LE)
         0x47, 0x00, 0x00, 0x6d, 0x61, 0x69, 0x6e, 0x00, // 'G' + addr=0 + "main" + NUL
-        0x41, 0x07, 0x00,                   // VTable 'A' + addr=7
-        0x41, 0x09, 0x00,                   // ATable 'A' + addr=9
+        0x41, 0x07, 0x00,                   // virtualAddressTable 'A' + addr=7
+        0x41, 0x09, 0x00,                   // addressAdjustmentTable 'A' + addr=9
         0x43,                               // 'C' terminator
         0x34, 0x12, 0x78, 0x56,             // code: 0x1234, 0x5678 little-endian
       ]);
       expect(Buffer.compare(state.files['out.e'], expected)).toBe(0);
     });
 
-    test('VTable A-entries precede ATable A-entries, and no S entry is written without a start', () => {
+    test('virtualAddressTable A-entries precede addressAdjustmentTable A-entries, and no S entry is written without a start', () => {
       const linker = new Linker();
       linker.outputFileName = 'out.e';
       linker.gotStart = false;              // no start → no 'S' entry
@@ -513,8 +513,8 @@ describe('Linker Unit Tests', () => {
       const out = state.files['out.e'];
       const expected = Buffer.from([
         0x6f,             // 'o'
-        0x41, 0x11, 0x00, // VTable 'A' @ 0x11  ← before ATable
-        0x41, 0x22, 0x00, // ATable 'A' @ 0x22
+        0x41, 0x11, 0x00, // virtualAddressTable 'A' @ 0x11  ← before addressAdjustmentTable
+        0x41, 0x22, 0x00, // addressAdjustmentTable 'A' @ 0x22
         0x43,             // 'C'
       ]);
       expect(Buffer.compare(out, expected)).toBe(0);
