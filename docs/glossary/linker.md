@@ -62,42 +62,42 @@ A per-`'A'`-entry copy of `[mcaIndex]` taken at the moment the entry's module wa
 
 `start` holds the entry-point address — the final `[Machine Code Array (mca)]` location the runtime should set PC to. `gotStart` is a one-shot latch: false until the first `'S'` header entry is seen; thereafter true, so any *second* `'S'` raises `[Multiple-entry-points error]`. The pair guarantees an LCC link has at most one entry point even when multiple modules each contribute their own `.start` directive.
 
-**Source:** `src/core/linker.js:32-33, 211-216`
+**Source:** `linker.js` — `start`, `gotStart` (fields, `resetState()`); set in `processModule()`
 **See also:** [processModule]
 
 ### `objectModules`
 
 The list of parsed modules accumulated by `[readObjectModule]`. Each entry has the shape `{headers, code}` returned by `[parseObjectModuleBuffer]`. The list is consumed in input order by `[link]`, which feeds each one to `[processModule]` — so module concatenation order matches the CLI argument order exactly.
 
-**Source:** `src/core/linker.js:34, 160, 189`
+**Source:** `linker.js` — `objectModules` (field, `resetState()`); pushed by `readObjectModule()`, consumed by `link()`
 **See also:** [readObjectModule], [link]
 
 ### `parseObjectModuleBuffer`
 
 Pure-seam parser for an `.o` file. Input: a `Buffer` of bytes; output: `{headers: [{type, address, [label]}], code: [<UInt16LE>...]}`. Validates the `'o'` intro byte, reads header entries until `'C'`, then reads the rest as little-endian 16-bit words. Any parse failure throws `[LinkerError]`, so the same buffer-driven parser is reusable by tests and in-process wrappers without going through `[readObjectModule]`'s filesystem path.
 
-**Source:** `src/core/linker.js:84-153`
+**Source:** `linker.js` — `parseObjectModuleBuffer()`
 **See also:** [readObjectModule], [LinkerError], [.e / .o file format](assembler.md#e--o-file-format)
 
 ### `readObjectModule`
 
 Filesystem wrapper around `[parseObjectModuleBuffer]`. Reads the named file with `fs.readFileSync`, hands the buffer to the pure seam, and pushes the resulting parsed module into `[objectModules]`. If a `[LinkerError]` escapes the parser, it is logged to stderr via `[error]` and re-thrown — test-mode callers see a typed exception without losing the stderr trail.
 
-**Source:** `src/core/linker.js:156-167`
+**Source:** `linker.js` — `readObjectModule()`
 **See also:** [parseObjectModuleBuffer], [objectModules], [error]
 
 ### `link`
 
 The top-level link pipeline: `resetState` → for each filename `[readObjectModule]` (with status print `"Linking <f>"`) → for each parsed module `[processModule]` → `[adjustExternalReferences]` → `[adjustLocalReferences]` → `[createExecutable]`. The order is significant: every `[GTable]` entry must be populated by `processModule` before external fix-ups look them up, and all `[Machine Code Array (mca)]` content must be in place before the executable is serialized.
 
-**Source:** `src/core/linker.js:169-202`
+**Source:** `linker.js` — `link()`
 **See also:** [processModule], [adjustExternalReferences], [adjustLocalReferences], [createExecutable]
 
 ### `processModule`
 
 Registers one parsed module's headers into the appropriate per-link table, then appends its `code` words to `[Machine Code Array (mca)]`. Every header entry's `address` is rewritten to `header.address + mcaIndex` *before* it is stored, so all subsequent fix-up logic sees absolute `mca` positions rather than module-local offsets. For `'A'` entries, `[mcaIndex]` is *also* captured separately as `[moduleStart]` for the fix-up phase. Code words are written at `mca[mcaIndex++]` in order — module concatenation happens here.
 
-**Source:** `src/core/linker.js:204-257`
+**Source:** `linker.js` — `processModule()`
 **See also:** [mca][Machine Code Array (mca)], [mcaIndex], [GTable], [ETable / eTable / VTable], [ATable]
 
 ### `adjustExternalReferences`
@@ -110,63 +110,63 @@ Resolves every `[ETable / eTable / VTable]` entry against `[GTable]`. For each r
 
 A missing global at this point is fatal: `[Undefined-external-reference error]`. The same pc-offset formula `(current + Gaddr - ref.address - 1)` is used for both `ETable` and `eTable` — only the mask width differs.
 
-**Source:** `src/core/linker.js:259-288`
+**Source:** `linker.js` — `adjustExternalReferences()`
 **See also:** [ETable / eTable / VTable], [GTable]
 
 ### `adjustLocalReferences`
 
 The last fix-up phase: walks `[ATable]` and adds each entry's `[moduleStart]` to `mca[ref.address]`. This corrects label-arithmetic words (`.word label+N`-style values emitted by the assembler relative to the module's own load base) — after module concatenation those base addresses have shifted, so the stored value needs the same shift applied.
 
-**Source:** `src/core/linker.js:290-294`
+**Source:** `linker.js` — `adjustLocalReferences()`
 **See also:** [ATable], [moduleStart]
 
 ### `createExecutable`
 
 Serializes the final linked state to disk as a standard `.e` file: `'o'` signature → `'S'` entry (if `[gotStart]`) → all `[GTable]` entries → `'A'` entries derived from `[VTable]` (so the runtime sees a fix-up site for each full-value reference) → original `[ATable]` entries → `'C'` code marker → `[Machine Code Array (mca)]` as little-endian 16-bit words. The output of this method has the *same byte layout* as a fresh assembler-produced `.e` — there is nothing linker-specific about the file format itself.
 
-**Source:** `src/core/linker.js:296-352`
+**Source:** `linker.js` — `createExecutable()`
 **See also:** [.e / .o file format](assembler.md#e--o-file-format)
 
 ### Default output name (`linktest.e` vs `link.e`)
 
 When `linker.js` is invoked standalone with no `-o` flag, the output defaults to `linktest.e` in the current working directory — matching the oracle's standalone `linker` binary. The oracle's `lcc` binary defaults to `link.e` instead; `lcc.js` always passes an explicit `outputFileName` so this fallback only ever applies to direct `linker.js` invocations. Both oracle tools use the CWD rather than the directory of the first input `.o`; using the latter was considered but rejected to preserve oracle parity.
 
-**Source:** `src/core/linker.js:172-180`
+**Source:** `linker.js` — `link()`, grep `linktest.e`
 **See also:** `core-behavior-matrix.md` § "Linker output location and default name"
 
 ### `LinkerError`
 
 The typed error class for every linker parse / link failure. Wrapping link failures in a dedicated type lets test callers `catch` linker failures specifically without conflating them with arbitrary `Error`s, and lets future in-process wrappers route linker failures through their own handling without bouncing through `process.exit`.
 
-**Source:** `src/core/linker.js:6` (import); `src/utils/errors.js` (definition)
+**Source:** `linker.js` — import; `errors.js` — `LinkerError` (class)
 **See also:** [error]
 
 ### `error` (linker)
 
 Internal helper: prints `message` to stderr, then throws a fresh `[LinkerError]` with the same message. The double behaviour (log + throw) means a single `error('…')` call satisfies both the operator-feedback path (stderr) and the typed-exception path (catchable in tests / `[link]` callers) without the caller having to duplicate either.
 
-**Source:** `src/core/linker.js:354-357`
+**Source:** `linker.js` — `error()`
 **See also:** [LinkerError]
 
 ### Multiple-entry-points error
 
 `"Multiple entry points"` — raised when a second `'S'` (start address) header entry is encountered across all linked modules. Implies the user is linking together two modules that both contain a `.start` directive; only one entry point is valid per `.e`.
 
-**Source:** `src/core/linker.js:212-213`
+**Source:** `linker.js` — `processModule()`, grep `Multiple entry points`
 **See also:** [start / gotStart], [processModule]
 
 ### Multiple-globals error
 
 `"More than one global declaration for <label>"` — raised when a label appears in a `'G'` header entry across more than one linked module. The link tools require exactly one `.global` declaration per label for the whole link.
 
-**Source:** `src/core/linker.js:219-220`
+**Source:** `linker.js` — `processModule()`, grep `More than one global declaration`
 **See also:** [GTable], [processModule]
 
 ### Undefined-external-reference error
 
 `"<label> is an undefined external reference"` — raised when a label declared as `.extern` in one module is not declared as `.global` in any other linked module. Caught at fix-up time, not parse time — the linker can't tell which `.extern`s are bogus until it knows the full set of globals.
 
-**Source:** `src/core/linker.js:262-263, 272-273, 282-283`
+**Source:** `linker.js` — `adjustExternalReferences()`, `_undefinedExternalRefMsg()`; grep `undefined external reference`
 **See also:** [adjustExternalReferences], [GTable]
 
 ### Parse-format errors
@@ -180,7 +180,7 @@ A small family of typed-error wordings from `[parseObjectModuleBuffer]` and `[re
 
 All are thrown as `[LinkerError]`s so callers can branch on parse-vs-link failure cleanly.
 
-**Source:** `src/core/linker.js:88, 107, 119, 134, 142, 249`
+**Source:** `linker.js` — `parseObjectModuleBuffer()`, `processModule()`; grep `not a linkable file`, `Unknown header entry`
 **See also:** [parseObjectModuleBuffer], [LinkerError]
 
 ### CLI errors
@@ -193,5 +193,5 @@ A small family of `cliErrorExit`-routed messages for direct `linker.js` invocati
 
 Unlike `[LinkerError]`, these go straight to `process.exit(1)` (or `throw` in test mode) — they reflect operator misuse rather than link-time failures.
 
-**Source:** `src/core/linker.js:56-82`
+**Source:** `linker.js` — `main()`; grep `Usage: node linker.js`
 **See also:** [link]
