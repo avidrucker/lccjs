@@ -30,6 +30,7 @@ Last updated: 2026-06-05 (#264 — row #4 scope expanded to all error types; rep
 | 21 | `.o` assemble exit code | `lcc` exits **1** on successful `.o` assemble ("needs linking") | Medium | Report **send-ready** · pending human email (#508) |
 | 24 | `bl`/`call`/`jsr` numeric token | oracle `Undefined label` vs LCC.js `Bad label` (diagnostic wording only; both exit 1) | Low | No report (BY DESIGN — #510 closed) |
 | 28 | `-d` debugger bare `c` | a bare `c` (no operands) **segfaults** the oracle (exit 139); `c r0`/`c r0 5` are fine | Low | Report **drafted** (`cuh63-debugger-bare-c-segfault-bug-report.md`, #1353) · pending human send · umbrella #1406 |
+| 30 | linker `.o` unterminated label | a `G`/`E`/`e`/`V` label with no NUL terminator makes the linker read past the buffer and **segfault** (exit 139); a terminated label is rejected gracefully | Low | Report **drafted** (`cuh63-linker-unterminated-label-segfault-bug-report.md`, #1428) · pending human send · umbrella #1406 |
 
 \* "Low" severity but a genuine defect; classified low because the trigger is a
 malformed/edge-case program rather than valid everyday source.
@@ -111,6 +112,23 @@ written yet. **NEW**: surfaced by this pass, not yet in any ledger.
 - **Report:** [`docs/cuh63-line-length-silent-split-bug-report.md`](./docs/cuh63-line-length-silent-split-bug-report.md)
 - **Status:** confirmed OG bug (`docs/parity_deviations.md` OG BUG #13); report
   **drafted, not sent** (#260). Sending is the human's call.
+
+### 30. Linker `.o` unterminated label → oracle segfault (no NUL terminator)
+- **Symptom:** the linker reads a `G`/`E`/`e`/`V` header entry's label byte-by-byte
+  until a `0x00` terminator. If the module buffer ends **before** the terminator (a
+  truncated / hand-crafted `.o`), it reads past the end of the buffer and **segfaults
+  (SIGSEGV, exit 139)**, with no diagnostic and no output.
+- **Isolation:** a label that *is* NUL-terminated but has no code section is rejected
+  cleanly (`is not a linkable module`, exit 1) — so the crash is specific to the missing
+  terminator, not the truncation in general.
+- **Minimal reproducer:** an 8-byte `.o` `6f 47 02 00 76 61 72 31` = `'o'` + `G`(addr
+  0x0002) + `"var1"` with no trailing NUL (truncate a normal `.o`: `head -c 8 prog.o`).
+- **Evidence:** oracle probe under #1384 (same probe that drove the LCC.js-side guard).
+  LCC.js rejects the same input with a typed `LinkerError` (`Unterminated label in <T>
+  entry`); `docs/parity_deviations.md` OG BUG #30.
+- **Report:** [`docs/cuh63-linker-unterminated-label-segfault-bug-report.md`](./docs/cuh63-linker-unterminated-label-segfault-bug-report.md)
+- **Status:** confirmed OG bug (`docs/parity_deviations.md` OG BUG #30); report
+  **drafted, not sent** (#1428, umbrella #1406). Sending is the human's call.
 
 ---
 
