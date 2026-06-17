@@ -485,6 +485,7 @@ inside a token like `AT_TODO`). Rules:
 - **phantom marker** — a `@todo` or `@inprogress` marker whose backing GitHub issue is already closed. Shows as `STALE` in `npm run puzzle:status`. Must be deleted from source; leaving it inflates the open-puzzle count and misleads other agents.
 - **fruit identity** — the per-session agent name (APPLE, BANANA, CHERRY, …) used as the worktree branch prefix and the `agent` column in the velocity log. Assigned by the human orchestrator via `--as <fruit>` on `npm run claim`; never auto-named (#386).
 - **`closed_commit`** — the git SHA of the closing commit. Left empty in the velocity row because `git rebase` rewrites the SHA before push, orphaning any pre-push capture. Recover post-push: `git log --grep "Closes #N" -1 --format=%h`.
+- **claim ref** — `refs/claims/issue-N`, a server-side advisory lock staked on the remote at claim and deleted at close, so two agents in *separate clones* can't claim the same issue. A session that dies before closing strands it; `npm run claim` then warns with a `git push origin :refs/claims/issue-N` sweep command. When (and when not) to run that sweep — and the live-lock hazard if you sweep an actively-worked issue — is in [`docs/claim-ref-housekeeping.md`](./claim-ref-housekeeping.md).
 
 ---
 
