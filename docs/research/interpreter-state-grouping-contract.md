@@ -1,5 +1,13 @@
 # Interpreter State Grouping — API Contract Research (#388)
 
+> **⚠ PLAN SUPERSEDED (2026-06-16, #1352).** The 5-bucket *plan* and ordering below
+> (`diag → opts → cpu → io/acct`) are retired. The #1352 spike ruled **DEFER the whole effort and
+> permanently DROP the `cpu`/`io`/`acct` standalone regroup** — the engine-state fields collide
+> with #252 (observer lift-out) and #1346 (table-driven dispatch) and get their natural home from
+> that composition work instead. See `docs/research/interpreter-state-grouping-decision-1352.md`.
+> The *measurements* in this doc (blast radius, field inventory, external surface) remain valid and
+> are cited by the decision; only the proposed ticket plan is dead.
+
 **Date:** 2026-06-01  
 **Role:** RESEARCH → ARC decision pending  
 **Parent:** #255 (H4 decomplect), #246 (hotspots)
