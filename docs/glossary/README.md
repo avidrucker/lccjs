@@ -40,6 +40,61 @@ recorded in [ADR&nbsp;0001](../adr/0001-symbol-anchored-glossary-source-refs.md)
 Cross-links use plain-text `[term-name]` refs within a file. Cross-file
 references use the standard `[term](other-file.md#anchor)` markdown form.
 
+### `Source:` shapes
+
+Not every entry maps to one named function. These are the documented shapes a `Source:`
+line can take (rendered form shown; in the file each symbol is backticked). They were
+settled across the #1354 re-anchoring chunks and refine ADR 0001:
+
+| Shape | Example `Source:` line |
+|---|---|
+| Named method / function | `assembler.js` — `getRegister()`, `_instructionTable` |
+| Field / `const` | `interpreter.js` — `mem` (field), `MAX_MEMORY` (const) |
+| Multi-symbol group | `interpreter.js` — `storeMem()`, `loadMem()` (memory access) — enumerate the real members |
+| Field cluster | `interpreter.js` — fields: `n`, `z`, `c`, `v` (flags) — enumerate every field inline with a `fields:` prefix |
+| Block within a method | `assembler.js` — `evaluateOperand()`, grep `operand[0] === '*'` |
+| Cross-cutting param / concept | `assembler.js` — `evaluateOperand()`, `handleExternalReference()`; grep `usageType` for call sites |
+| Top-level (no enclosing symbol) | `assembler.js` — module footer; grep `module.exports = Assembler` |
+| Cross-file entry | cite each file's symbols, e.g. `interpreter.js` — `step()`; `utils/errors.js` — `LccError` |
+
+A symbol that is genuinely hard to anchor (no enclosing name, no distinctive landmark) is a
+signal the *code* wants decomposing — cite the file plus nearest landmark and file that as
+the code's ticket, not the glossary's (ADR 0001).
+
+### Renamed symbols — anchor stability
+
+When a cited symbol has been **renamed in the code** (e.g. the linker's #879 rename
+`mca` → `machineCode`), the entry's **header carries the current symbol** and a
+**transitional `(formerly …)` alias goes on its own italic line directly under the header**:
+
+```markdown
+### `machineCode`
+*(formerly `mca` — "machine code array")*
+```
+
+This keeps the heading anchor (`#machinecode`) tracking the live code while preserving the
+old name so readers arriving from older docs, source comments, or git history can still find
+the entry. (#1418)
+
+### Marker-byte preservation
+
+Where a symbol's identity is tied to an on-disk **marker byte** in the `.e` / `.o` format,
+state that mapping explicitly in the entry so the mnemonic survives a rename. linker.md's
+external-reference tables, for instance, spell out `'E'` → `externalReferenceTable11`,
+`'e'` → `externalReferenceTable9`, `'V'` → `virtualAddressTable`, `'A'` →
+`addressAdjustmentTable`. The old short names' capitalisation used to encode these bytes, so
+the #879 rename would have dropped the cue without the explicit note. (#1418)
+
+### Enforcement — `npm run glossary:check`
+
+`npm run glossary:check` (`scripts/check-glossary-symbols.js`, #1362) is the rot-detector for
+ADR 0001: for every `**Source:**` line in the three core-module glossaries it verifies that
+each cited backticked symbol and `grep` landmark still grep-matches the file(s) it names,
+exiting non-zero on any unresolved token. It is **lenient by design** — wildcards / ranges
+(`TRAP_*`), char-literals, and free-form expressions are skipped so it stays green-by-default
+and trustworthy. `stats-analysis.md` (cites notebooks) and this `README.md` (its one Source
+line is a `<file>.js` template) are intentionally out of scope.
+
 ---
 
 ## Process & methodology terms (yegor-pm)
