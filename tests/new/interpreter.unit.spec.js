@@ -2,6 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const Assembler = require('../../src/core/assembler');
 const Interpreter = require('../../src/core/interpreter');
+const {
+  OPCODE_ADD, OPCODE_LD, OPCODE_ST, OPCODE_BL, OPCODE_AND,
+  OPCODE_LDR, OPCODE_STR, OPCODE_CMP, OPCODE_NOT, OPCODE_SUB,
+  OPCODE_JMP, OPCODE_MVI, OPCODE_LEA, OPCODE_TRAP,
+} = require('../../src/core/constants');
 const { InvalidExecutableFormatError, InterpreterRuntimeError } = require('../../src/utils/errors');
 
 describe('Interpreter Unit Tests', () => {
@@ -846,6 +851,26 @@ describe('Interpreter Unit Tests', () => {
       const interp = new Interpreter();
       const word = 0xA00D; // OP_EXT | eopcode 0xD
       expect(interp.hexToMnemonic(word)).toBe('SEXT');
+    });
+  });
+
+  describe('hexToMnemonic — shared opcode constants', () => {
+    test('uses the imported opcode constants for the top-nibble mnemonic table', () => {
+      const interp = new Interpreter();
+      expect(interp.hexToMnemonic(OPCODE_ADD)).toBe('ADD');
+      expect(interp.hexToMnemonic(OPCODE_LD)).toBe('LD');
+      expect(interp.hexToMnemonic(OPCODE_ST)).toBe('ST');
+      expect(interp.hexToMnemonic(OPCODE_BL)).toBe('BL');
+      expect(interp.hexToMnemonic(OPCODE_AND)).toBe('AND');
+      expect(interp.hexToMnemonic(OPCODE_LDR)).toBe('LDR');
+      expect(interp.hexToMnemonic(OPCODE_STR)).toBe('STR');
+      expect(interp.hexToMnemonic(OPCODE_CMP)).toBe('CMP');
+      expect(interp.hexToMnemonic(OPCODE_NOT)).toBe('NOT');
+      expect(interp.hexToMnemonic(OPCODE_SUB)).toBe('SUB');
+      expect(interp.hexToMnemonic(OPCODE_JMP)).toBe('JMP/RET');
+      expect(interp.hexToMnemonic(OPCODE_MVI)).toBe('MVI');
+      expect(interp.hexToMnemonic(OPCODE_LEA)).toBe('LEA');
+      expect(interp.hexToMnemonic(OPCODE_TRAP | 0x02)).toBe('DOUT');
     });
   });
 

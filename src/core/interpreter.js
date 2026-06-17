@@ -14,6 +14,9 @@ const {
 const { h4 } = require('./debug/format');
 const { diffRegisters } = require('./debug/stateDelta');
 const {
+  OPCODE_BR, OPCODE_ADD, OPCODE_LD, OPCODE_ST, OPCODE_BL, OPCODE_AND,
+  OPCODE_LDR, OPCODE_STR, OPCODE_CMP, OPCODE_NOT, OPCODE_EXT, OPCODE_SUB,
+  OPCODE_JMP, OPCODE_MVI, OPCODE_LEA, OPCODE_TRAP,
   EOP_PUSH, EOP_POP, EOP_SRL, EOP_SRA, EOP_SLL, EOP_ROL, EOP_ROR,
   EOP_MUL, EOP_DIV, EOP_REM, EOP_OR, EOP_XOR, EOP_MVR, EOP_SEXT,
 } = require('./constants');
@@ -21,6 +24,25 @@ const {
 const newline = (typeof process !== 'undefined' && process.platform === 'win32') ? '\r\n' : '\n';
 
 const MAX_MEMORY = 65536; // 2^16
+
+const OPCODE_MNEMONICS = {
+  [OPCODE_BR]: 'BR',
+  [OPCODE_ADD]: 'ADD',
+  [OPCODE_LD]: 'LD',
+  [OPCODE_ST]: 'ST',
+  [OPCODE_BL]: 'BL',
+  [OPCODE_AND]: 'AND',
+  [OPCODE_LDR]: 'LDR',
+  [OPCODE_STR]: 'STR',
+  [OPCODE_CMP]: 'CMP',
+  [OPCODE_NOT]: 'NOT',
+  [OPCODE_EXT]: 'CASE10',
+  [OPCODE_SUB]: 'SUB',
+  [OPCODE_JMP]: 'JMP/RET',
+  [OPCODE_MVI]: 'MVI',
+  [OPCODE_LEA]: 'LEA',
+  [OPCODE_TRAP]: 'TRAP',
+};
 
 // Oracle LCC treats field selectors 0..15 for `sext` as named field modes,
 // not as raw bit-width values. Selectors larger than 0x0f still behave like
@@ -872,25 +894,15 @@ class Interpreter {
 
   // convert source hex to matching mnemonic
   hexToMnemonic(hex) {
-    const mnemonics = {
-      0x0000: 'BR',
-      0x1000: 'ADD',
-      0x2000: 'LD',
-      0x3000: 'ST',
-      0x4000: 'BL',
-      0x5000: 'AND',
-      0x6000: 'LDR',
-      0x7000: 'STR',
-      0x8000: 'CMP',
-      0x9000: 'NOT',
-      0xA000: 'CASE10',
-      0xB000: 'SUB',
-      0xC000: 'JMP/RET',
-      0xD000: 'MVI',
-      0xE000: 'LEA',
-      0xF000: 'TRAP'
-    };
-    let mnemonic = mnemonics[hex & 0xF000] || `Unknown(${hex.toString(16)})`;
+    let mnemonic;
+    if (hex === OPCODE_BR) {
+      mnemonic = OPCODE_MNEMONICS[OPCODE_BR];
+    } else {
+      const opcode = hex & 0xF000;
+      mnemonic = Object.prototype.hasOwnProperty.call(OPCODE_MNEMONICS, opcode)
+        ? OPCODE_MNEMONICS[opcode]
+        : `Unknown(${hex.toString(16)})`;
+    }
     if (mnemonic === 'CASE10') {
       // Handle the extended opcode separately
       const extendedMnemonics = {
