@@ -571,4 +571,37 @@ describe('Assembler Unit Tests', () => {
       expect(errCall[0]).not.toContain('Did you mean');
     });
   });
+
+  describe('constructor ↔ resetAssemblyState() field-list parity (#1423)', () => {
+    // The constructor and resetAssemblyState() must initialize the SAME per-run
+    // field set. When they drift (a field set in one but not the other), a reused
+    // Assembler leaks the prior run's value — the bug class behind #1238
+    // (listingLoadPoint) and #1277 (verbose/explain/userName). These fields are
+    // genuinely constant / built once and are intentionally NOT reset:
+    const CONST_FIELDS = new Set(['_instructionTable', 'defaultLoadPoint']);
+
+    test('a reused, reset Assembler is indistinguishable from a fresh one (no state leak)', () => {
+      const fresh = new Assembler();
+
+      const reused = new Assembler();
+      // Simulate a prior run: clobber every per-run field with a sentinel.
+      for (const key of Object.keys(reused)) {
+        if (CONST_FIELDS.has(key)) continue;
+        reused[key] = '__LEAK__';
+      }
+      reused.resetAssemblyState();
+
+      // (a) Own-key sets match — no field is initialized in only one of the two
+      //     sites (catches e.g. userName living only in resetAssemblyState()).
+      expect(Object.keys(reused).sort()).toEqual(Object.keys(fresh).sort());
+
+      // (b) Every per-run field is restored to its fresh-construct default — a
+      //     field omitted from resetAssemblyState() keeps the '__LEAK__' sentinel
+      //     and fails here (catches the #1238 / #1277 leak class structurally).
+      for (const key of Object.keys(fresh)) {
+        if (CONST_FIELDS.has(key)) continue;
+        expect(reused[key]).toEqual(fresh[key]);
+      }
+    });
+  });
 });

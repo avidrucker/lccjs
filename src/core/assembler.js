@@ -48,149 +48,22 @@ const REPORT_MULTI_ERRORS = false;
 class Assembler {
   constructor() {
     /**
-     * Symbol table: symbol to address mapping
-     */
-    this.symbolTable = {}; 
-
-    /**
-     * Location counter
-     */
-    this.locCtr = 0;
-
-    /**
-     * Line number
-     */
-    this.lineNum = 0;
-
-    /**
-     * Array of source code lines
-     */
-    this.sourceLines = []; 
-
-    /**
-     * Error flag
-     */
-    this.errorFlag = false; 
-
-    /**
-     * Current pass (1 or 2)
-     */
-    this.pass = 1; 
-
-    /**
-     * Set of labels to detect duplicates
-     */
-    this.labels = new Set(); 
-
-    /**
-     * Collect errors
-     */
-    this.errors = [];
-
-    /**
-     * When true, error() includes the source line in the diagnostic.
-     * Set via the -v/--verbose CLI flag.
-     */
-    this.verboseModeOn = false;
-
-    /**
-     * When true, error() appends a student-friendly `explain:` block for any
-     * diagnostic that carries an explainKey (#1096). Set via the --explain CLI
-     * flag. Independent of verbose; the two compose.
-     */
-    this.explainModeOn = false;
-
-    /**
-     * Buffer to hold machine code words
-     */
-    this.outputBuffer = [];
-
-    /**
-     * Input file name
-     */
-    this.inputFileName = ''; 
-
-    /**
-     * Output file name
-     */
-    this.outputFileName = ''; 
-
-    /**
-     * Output file handle
-     */
-    this.outFile = null; 
-
-    /**
-     * This will store information about each line, including the location counter (locCtr), machine code words, and the source code line.
-     */
-    this.listing = []; 
-
-    /**
-     * Load point
-     * defaultLoadPoint: the internal default for loadPoint (always 0; all reset
-     *   sites use this so there is a single place to change it if ever needed).
-     * loadPoint: tracks the current assembly-time locCtr start (normally 0;
-     *   set to locCtr at pass-1 start; used in programSize = locCtr - loadPoint).
-     * listingLoadPoint: the -l<hex> CLI value (display-only); added to locCtr
-     *   when rendering listing addresses so they match the intended memory layout.
-     *   Does NOT affect encoded machine code or the .e file.
+     * Genuinely constant / built-once configuration. These are NOT per-run
+     * state, so resetAssemblyState() deliberately leaves them untouched.
+     *
+     * defaultLoadPoint: the fixed default for loadPoint (always 0; reset reads
+     *   it, so it must be assigned BEFORE the resetAssemblyState() call below).
+     * _instructionTable: the core mnemonic dispatch table, built once.
      */
     this.defaultLoadPoint = 0;
-    this.loadPoint = this.defaultLoadPoint;
-    this.listingLoadPoint = 0;
-
-    /**
-     * Program size
-     */
-    this.programSize = 0;
-
-    /**
-     * Label specified in .start directive
-     */
-    this.startLabel = null;     
-
-    /**
-     * Resolved address of the start label
-     */
-    this.startAddress = null;   
-
-    /**
-     * Flag to indicate if the code is to be made into a .o object file
-     */
-    this.isObjectModule = false; 
-
-    /**
-     * Set of global labels to be exported
-     */
-    this.globalLabels = new Set(); 
-
-    /**
-     * Set of external labels to be imported
-     */
-    this.externLabels = new Set(); 
-
-    /**
-     * Array to store external references
-     */
-    this.externalReferences = []; 
-
-    /**
-     * Array to store adjustment entries
-     */
-    this.adjustmentEntries = [];
-
-    /**
-     * Whether reusable assembly paths should throw typed errors instead of exiting
-     */
-    this.throwOnAssemblyError = false;
-
-    /**
-     * sourceMap: { addressToLine: Map<number, {lineNumber, sourceLine}>, allLines: string[] }
-     * Built after pass 2 for .a files; null for .bin/.hex/object modules.
-     */
-    this.sourceMap = null;
-
     this._instructionTable = this._buildCoreTable();
+
+    // Every per-run field is initialized in ONE place — resetAssemblyState() —
+    // so the constructor and the reset path cannot drift apart and leak a prior
+    // run's value into a reused instance. That dual-list drift was the root
+    // cause of #1238 (listingLoadPoint) and #1277 (verbose/explain/userName);
+    // see #1423. The field-by-field docs live on resetAssemblyState().
+    this.resetAssemblyState();
   }
 
   _buildCoreTable() {
@@ -291,6 +164,13 @@ class Assembler {
     this.labels = new Set();
     this.errors = [];
     this.outputBuffer = [];
+    // File naming is per-run input (set by lcc.js / the assembleSource options).
+    // Cleared here so a reused instance does not carry a prior run's names; the
+    // assembleSource() destructuring captures the option defaults BEFORE calling
+    // this reset, so the re-supplied values survive. Previously these were only
+    // initialized in the constructor — the asymmetry #1423 closed.
+    this.inputFileName = '';
+    this.outputFileName = '';
     this.outFile = null;
     this.listing = [];
     this.loadPoint = this.defaultLoadPoint;
