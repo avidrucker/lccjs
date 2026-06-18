@@ -88,11 +88,19 @@ class Linker {
       code: [],
     };
 
+    // A linkable module must contain a `C` code marker separating the header
+    // section from the code section. Without it the oracle rejects the input as
+    // "not a linkable module"; an empty code section *after* `C` is fine (both
+    // tools accept it). Track whether the marker was seen so a header-only
+    // module is rejected to match the oracle. #1422.
+    let sawCodeMarker = false;
+
     // Process headers
     while (offset < buffer.length) {
       const entryType = String.fromCharCode(buffer[offset++]);
 
       if (entryType === 'C') {
+        sawCodeMarker = true;
         break;
       }
 
@@ -144,6 +152,10 @@ class Linker {
         default:
           throw new LinkerError(`Unknown header entry ${entryType} in file ${filename}`, { explainKey: 'BAD_OBJECT_HEADER' });
       }
+    }
+
+    if (!sawCodeMarker) {
+      throw new LinkerError(`${filename} is not a linkable module`, { explainKey: 'BAD_OBJECT_HEADER' });
     }
 
     while (offset + 1 < buffer.length) {

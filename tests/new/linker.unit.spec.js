@@ -135,8 +135,9 @@ describe('Linker Unit Tests', () => {
 
     test('accepts an S entry when exactly 2 bytes remain for the address (lower boundary)', () => {
       const linker = new Linker();
-      // 'o', 'S', 0x02 0x00 — exactly 2 bytes: the case the audit feared was over-rejected.
-      const exact = Buffer.from([0x6f, 0x53, 0x02, 0x00]);
+      // 'o', 'S', 0x02 0x00, 'C' — exactly 2 bytes for the address; the trailing 'C' marks it a
+      // linkable module (required since #1422). The boundary under test is the S address field.
+      const exact = Buffer.from([0x6f, 0x53, 0x02, 0x00, 0x43]);
 
       const module = linker.parseObjectModuleBuffer(exact, 'exactS.o');
       expect(module.headers).toEqual([{ type: 'S', address: 2 }]);
@@ -164,11 +165,41 @@ describe('Linker Unit Tests', () => {
 
     test('accepts a G entry whose label is properly NUL-terminated (lower boundary, #1384)', () => {
       const linker = new Linker();
-      // 'o', 'G', addr 0x0002, "var1", 0x00 — the same bytes but WITH the terminator.
-      const terminated = Buffer.from([0x6f, 0x47, 0x02, 0x00, 0x76, 0x61, 0x72, 0x31, 0x00]);
+      // 'o', 'G', addr 0x0002, "var1", 0x00, 'C' — NUL-terminated label plus a 'C' code marker
+      // (required since #1422; the boundary under test is the label terminator, not the marker).
+      const terminated = Buffer.from([0x6f, 0x47, 0x02, 0x00, 0x76, 0x61, 0x72, 0x31, 0x00, 0x43]);
 
       const module = linker.parseObjectModuleBuffer(terminated, 'goodLabel.o');
       expect(module.headers).toEqual([{ type: 'G', address: 2, label: 'var1' }]);
+    });
+
+    // #1422: a module with valid headers but NO 'C' code marker was accepted (the header loop
+    // exited on end-of-buffer and produced empty code). Verified against the oracle: it rejects
+    // such input as "not a linkable module" (exit 1). An empty code section *after* 'C' is fine —
+    // the oracle accepts it — so the guard keys on the marker's presence, not on non-empty code.
+    test('throws BAD_OBJECT_HEADER on a header-only module with no C marker (#1422)', () => {
+      const linker = new Linker();
+      // 'o', 'G', addr 0x0002, "var1", 0x00 — well-formed header, but no 'C' and no code.
+      const headerOnly = Buffer.from([0x6f, 0x47, 0x02, 0x00, 0x76, 0x61, 0x72, 0x31, 0x00]);
+
+      expect(() => linker.parseObjectModuleBuffer(headerOnly, 'termNoCode.o'))
+        .toThrow(/is not a linkable module/);
+      try {
+        linker.parseObjectModuleBuffer(headerOnly, 'termNoCode.o');
+      } catch (err) {
+        expect(err).toBeInstanceOf(LinkerError);
+        expect(err.explainKey).toBe('BAD_OBJECT_HEADER');
+      }
+    });
+
+    test('accepts a module with a C marker but an empty code section (#1422 parity)', () => {
+      const linker = new Linker();
+      // same header + 'C' with no code words after it — the oracle accepts this (exit 0).
+      const emptyCode = Buffer.from([0x6f, 0x47, 0x02, 0x00, 0x76, 0x61, 0x72, 0x31, 0x00, 0x43]);
+
+      const module = linker.parseObjectModuleBuffer(emptyCode, 'emptyCode.o');
+      expect(module.headers).toEqual([{ type: 'G', address: 2, label: 'var1' }]);
+      expect(module.code).toEqual([]);
     });
   });
 
