@@ -16,6 +16,18 @@ module.exports = {
   // <main>/.claude/worktrees/*, while a run from inside a worktree has
   // rootDir = that worktree and is NOT self-excluded (its own tests still run).
   // A bare '/.claude/worktrees/' would wrongly skip every worktree-local run.
-  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.claude/worktrees/', '<rootDir>/.claire/worktrees/'],
+  // Playwright-owned specs require('playwright/test'), whose test.describe() has an
+  // intentional throwIfRunningInsideJest guard — they throw at load under the jest
+  // runner by design (incompatible runners). They run via `npm run test:browser`
+  // (playwright test tests/browser/) and `npm run test:e2e`. Excluded here so the
+  // no-path `test:all` (bare jest) stays clean. NOTE: the boundary is by DIRECTORY,
+  // not content — keep Playwright specs in tests/browser/ or tests/e2e/; a Playwright
+  // spec dropped into tests/new/ would slip past this ignore (#1434).
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '<rootDir>/.claude/worktrees/', '<rootDir>/.claire/worktrees/',
+    '<rootDir>/tests/browser/',
+    '<rootDir>/tests/e2e/',
+  ],
   modulePathIgnorePatterns: ['<rootDir>/.claude/worktrees/', '<rootDir>/.claire/worktrees/'],
 };
