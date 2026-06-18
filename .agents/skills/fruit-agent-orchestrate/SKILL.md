@@ -56,6 +56,8 @@ Tickets labeled `humans-only`, `decision`, or `human-decision-required` do not b
 
 Keep actionable tickets in non-overlapping lanes. Use `area:*` labels when they exist, and avoid assigning two fruit agents to the same code area in the same broadcast.
 
+**Same-file collision is a hard refusal, not a coordination problem (#1438).** The `area:*` lane gate is necessary but not sufficient — two tickets can share neither area-subtheme yet still edit the same file (e.g. a behavior fix and its tests both landing in `scripts/claim.js`). Before finalizing, infer each candidate's likely file target(s) from its type/scope, title, and any paths named in the body; when in doubt, assume overlap. If two candidates plausibly touch the **same file**, do **not** co-schedule them this round: assign the higher-priority ticket and **hold** the other under a `## ⏸ Held — same-file collision` section (one line each, e.g. `⏸ #1196 held — collides with #1111 on scripts/claim.js`). **Never** resolve a same-file overlap by telling the agents to coordinate — assignment paragraphs must not contain "coordinate", "land his/her fix first", "if you both end up in", or any phrasing that makes one agent's safety depend on another's actions or timing. Each emitted assignment must be executable in isolation with zero cross-agent negotiation. (Full file-target precision wants the `puzzle:status --json` seam #1046; until then, refuse-on-plausible-overlap is the contract.)
+
 ### 4. Keep Sequencing Explicit
 
 If a ticket must wait on another ticket, surface that dependency in the assignment text. Do not hide sequencing constraints in prose elsewhere.
@@ -75,6 +77,7 @@ Render the broadcast with clear sections:
 
 - `## Ranked work`
 - `## 🧑 Requires human routing`
+- `## ⏸ Held — same-file collision` (omit if empty; see Routing Rule 3)
 - one assignment paragraph per named fruit agent
 
 Keep the tone factual and actionable. The user should be able to copy the paragraph into the next agent handoff without editing.
