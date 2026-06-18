@@ -1,4 +1,9 @@
-node_modules/
+# No trailing slash: `node_modules/` matches only a directory, so a worktree's
+# `node_modules` SYMLINK (agents `ln -s <main>/node_modules` to run builds/tests)
+# slipped past it — showing as `?? node_modules`, getting staged by `git add -A`,
+# and failing `npm run close`'s clean-tree gate. Bare `node_modules` ignores the
+# symlink too (#1111).
+node_modules
 test/a1test*
 test/a2test*
 test/*.e
