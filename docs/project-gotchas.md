@@ -204,4 +204,16 @@ Documented per #1409.)*
 
 ---
 
+## 11. Worktree & multi-agent concurrency footguns live in `do-this-not-that.md`
+
+This is the natural-sounding home for "what can go wrong with worktrees / parallel agents?",
+but the worktree and concurrency footguns are **not** here — they live in
+[`do-this-not-that.md` → Worktree and multi-agent concurrency footguns (index)](./do-this-not-that.md#worktree-and-multi-agent-concurrency-footguns-index),
+which links every canonical entry (the worktree-write trap, teardown `getcwd` errors, the
+`npm run close` exit-1-after-`CLOSE OK` non-failure, claim discipline, parallel-agent
+assignment, and the protocol/hard-rule homes in `claude_workflow.md` and `RULES.md`). Look
+there. This pointer exists so the obvious-but-wrong lookup lands in the right place. (#1179)
+
+---
+
 *(More entries to be added as they surface.)*

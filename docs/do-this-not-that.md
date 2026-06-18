@@ -6,6 +6,27 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 
 ---
 
+## Worktree and multi-agent concurrency footguns (index)
+
+New here and asking "what can go wrong with worktrees / parallel agents?" — start here. This is a **landing index**: the canonical do/don't text lives in the entries it links, so there is nothing to drift. (The natural-but-wrong lookup, [`project-gotchas.md`](./project-gotchas.md), redirects here too.)
+
+**In this doc:**
+- [Worktree discipline](#worktree-discipline) — verify the issue is open before claiming, check `Blocked by:`, the required `--as <fruit>` flag, `git status` on main before claiming, the **worktree-write trap**, `npm run close` instead of a hand-push, `git -C` to inspect (never a bare `cd`), teardown `getcwd` errors + `git worktree prune`, and acting on stale-worktree warnings.
+- [Parallel agent assignment](#parallel-agent-assignment) — how concurrent agents avoid stepping on each other.
+- [Check current main before chasing a worktree test red](#check-current-main-before-chasing-a-worktree-test-red) — a stale worktree base manifests as a phantom red.
+- [Non-interactive rebase](#non-interactive-rebase) — interactive `-i` rebases hang in a headless agent.
+- [Adding an npm dep in a worktree](#adding-an-npm-dep-in-a-worktree) — never `--ignore-scripts` (also [`project-gotchas.md` §7](./project-gotchas.md)).
+
+**The protocol & the hard rules (canonical homes — not duplicated here):**
+- [`claude_workflow.md`](./claude_workflow.md) — the full per-puzzle protocol: claim mechanics, the close sequence, the pre-close error self-audit.
+- [`RULES.md`](../RULES.md) — the hard rules: worktree-per-task, one-commit close, and the rest.
+
+**Two footguns that are easy to re-learn:**
+1. **The worktree-write trap** (#1169) — calling Write/Edit/Patch with a **main-checkout absolute path** while working a claimed worktree strands the new file *untracked on `main`*; the only symptom is a later `git add … did not match any files` in the worktree. Write to the worktree's own path instead. Full entry under [Worktree discipline](#worktree-discipline). (Hit FIG #1130, INCABERRY #1162, ELDERBERRY #1167 in one day.)
+2. **`npm run close` exiting 1 after `CLOSE OK` is success** — a `getcwd` / `could not get current working directory` error printed *after* the `CLOSE OK` line is cosmetic: the close already completed and the worktree's cwd vanished from under the shell. Do **not** re-run close on that basis — verify `CLOSE OK` in stdout and move on. To avoid the error entirely, run `node scripts/close.js N --branch <branch>` from the main repo root instead of `npm run close N` from inside the worktree. Canonical: [`claude_workflow.md`](./claude_workflow.md) close sequence. (Distinct from the *manual* remove-from-inside case under [Worktree discipline](#worktree-discipline).)
+
+---
+
 ## File enumeration
 
 **Prefer `git ls-files` over `find` for project-internal file enumeration**
