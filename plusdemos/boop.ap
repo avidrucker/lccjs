@@ -1,0 +1,10 @@
+; boop.ap: demonstrates the LCC+ `boop` trap.
+; `boop` takes no operands and writes the literal string "boop\n" to stdout — a
+; tiny, visible counterpart to the (invisible) BEL emitted by beep/ding.
+; Run:  node src/plus/lccplus.js plusdemos/boop.ap
+        .lccplus
+        lea r0, msg
+        sout r0
+        boop            ; writes the literal string "boop\n" to stdout
+        halt
+msg:    .string "boop.ap: the next line is written by the boop trap -> "
