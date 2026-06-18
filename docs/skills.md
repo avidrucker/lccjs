@@ -68,7 +68,7 @@ Triage all open issues and produce copy-pasteable plain-paragraph work assignmen
 - Successfully orchestrated 7 concurrent agents on 2026-06-04 with no merge conflicts when cluster-separation rules were followed.
 - Filters out tickets labeled `humans-only`, `decision`, or `human-decision-required` before assignment (fixed #888). These appear in a separate `## 🧑 Requires human routing` section in the output so the human is aware; no agent is assigned. The `guide-human-decision` skill handles them when a human explicitly routes one.
 - Area-aware lane assignment added in #961: Step 5 now groups actionable issues by `area:*` label before assigning agents, so no two agents are assigned to the same code area. Issues without an `area:*` label are treated as wildcards and distributed to the lightest-loaded agents; each agent's assignment paragraph names their area lane explicitly.
-- Repo-local Codex port now lives at `.agents/skills/fruit-agent-orchestrate/SKILL.md` (#1307).
+- Codex port lives in the `codex-config` repo → `~/.codex/skills/fruit-agent-orchestrate/` (#1439). It used to be committed in-repo at `.agents/skills/` (#1307), but the installed Codex never loaded that path — see [`skill-organization.md`](./skill-organization.md).
 - STUB sections in the output are intentional — the orchestrator identifies gaps it cannot fill.
 
 ### `guide-human-decision`

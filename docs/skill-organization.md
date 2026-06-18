@@ -5,8 +5,9 @@ multiply across providers (Claude Code, Codex, …) and repos. The companion doc
 [`skill-portability.md`](./skill-portability.md) covers how to *translate* a skill
 between providers; this doc covers *layout and single-source-of-truth*.
 
-> **Last checked:** 2026-06-16, for the lccjs repo. The baseline below is what this
-> repo and the local machine actually do today; the recommendation is the target.
+> **Last checked:** 2026-06-17, for the lccjs repo. As of #1439 the target below is
+> implemented: lccjs ships **no** repo-local skills; each skill lives in one
+> per-runtime source-of-truth repo, symlinked into that runtime's discovery path.
 
 ---
 
@@ -19,53 +20,59 @@ between providers; this doc covers *layout and single-source-of-truth*.
    **user-global**, shared across every project.
 2. **One skill, many providers.** The same logical skill often has to be visible to
    more than one provider, each of which reads a *different* directory
-   (`.claude/skills/` vs `.agents/skills/`, `~/.claude/skills/` vs `~/.agents/skills/`
-   — see the [portability spokes](./skill-portability.md)). Storing a separate copy
-   per provider is where drift starts.
+   (`~/.claude/skills/` for Claude, `~/.codex/skills/` for Codex, `~/.hermes/skills/`
+   for Hermes — see the [portability spokes](./skill-portability.md)). Storing a
+   separate copy per provider is where drift starts.
 
 ---
 
-## The lccjs baseline (what we do today)
+## The lccjs baseline (current state)
 
-Accurate as of 2026-06-16:
+As of **#1439**, lccjs ships **no repo-local skills**. Every skill lives in exactly
+one per-runtime source-of-truth repo, symlinked into that runtime's real discovery
+path:
 
-- **Project-specific workflow skills are committed in-repo, in the *Codex* layout.**
-  lccjs tracks eight skills under **`.agents/skills/`** — `fruit-agent-orchestrate`,
-  `guide-human-decision`, `issue-review`, `log-error`, `next-best-action`,
-  `puzzle-triage`, `puzzle-velocity`, `write-til-doc` — each lccjs-specific (they
-  encode this repo's tickets, scripts, and conventions). This is correct placement:
-  project skills versioned with the project. (`#1307` records the first such port.)
-- **There is no in-repo `.claude/skills/`.** So the ticket-era shorthand "lccjs ships
-  zero project-level skills, all skills are user-global" is **not accurate** — the
-  project *does* ship project skills; they live in the Codex dir, not the Claude dir.
-- **Claude Code sees skills via a user-global symlink assembly.** `~/.claude/skills/`
-  is not a folder of real skill files — it is a set of **symlinks** pointing at the
-  real sources (a versioned `claude-config` skills repo, the user-global
-  `~/.agents/skills/`, and a few other skill repos). When Claude Code runs in lccjs,
-  the skills it offers come from that user-global assembly, **not** from the repo's
-  `.agents/skills/`.
+| Runtime | Discovery path | Central source-of-truth repo |
+|---|---|---|
+| Claude Code | `~/.claude/skills/` (symlink assembly) | `claude-config` |
+| Codex (OpenAI CLI) | `~/.codex/skills/` (auto-discovered) | `codex-config` |
+| Hermes (nemotron) | `~/.hermes/skills/` (recursive scan) | `hermes-config` |
 
-### The drift this creates
+Each `~/.<runtime>/skills/<name>` is a **symlink** to the one on-disk copy in the
+matching `*-config` repo, so editing the source updates the runtime in place. The
+dotfiles `claude-skills` / `codex-skills` / `hermes` sections clone the repos and run
+their installers.
 
-Because Claude reads the user-global assembly and Codex reads the repo's
-`.agents/skills/`, a project skill that must serve **both** providers ends up with
-**two copies**: a Codex-format copy committed in `.agents/skills/`, and a
-Claude-format copy in the user-global `claude-config` source that `~/.claude/skills/`
-links to. Two copies of one logical skill = two things to keep in step. This has
-already bitten: `log-error` exists as both a tracked Codex copy and an untracked
-Claude copy that can drift apart (`#1315`).
+> **Codex discovery correction (#1439).** Earlier revisions of this doc said Codex
+> reads `.agents/skills/`. The installed Codex CLI (v0.139.0) does **not** — verified
+> that `.agents/skills` occurs **0×** in the binary and that `codex debug prompt-input`
+> lists skills only from `~/.codex/skills`. The lccjs `.agents/skills/` "Codex ports"
+> were therefore **vestigial** (nothing loaded them); #1439 relocated them to
+> `codex-config` → `~/.codex/skills/` and removed `.agents/skills/` from the repo.
+
+### History (what we used to do, and why it changed)
+
+Until #1439, lccjs committed eight "Codex ports" under `.agents/skills/` (`#1307`
+recorded the first), on the theory that Codex discovered them there. That created a
+per-runtime **drift surface**: the same logical skill maintained as separate copies
+in `.agents/skills/`, the `claude-config` source, and `hermes-config`. It bit
+repeatedly — `log-error` drifted between its tracked Codex copy and an untracked
+Claude copy (`#1315`); see also `#1316`, `#1425`, `#1438`. The fix was to stop
+committing skills in the project repo entirely and make each runtime's `*-config`
+repo the single source for that runtime's port.
 
 ---
 
-## Recommendation: single source of truth + sync
+## Principle: one source of truth per runtime + links
 
-**Yes, the baseline should change** — not the *placement* (in-repo for project skills
-is right), but the *duplication*. Keep **one source of truth per skill** and make
-every provider directory a **link** to it, never a hand-maintained second copy.
+The implemented model keeps **one authored copy per runtime per skill** and makes every
+runtime's discovery directory a **link** to it, never a hand-maintained second copy.
 
-1. **One authored copy per skill.** For a project skill, that copy is committed in the
-   repo (today: `.agents/skills/<name>/`). For a user-global skill, it is one entry in
-   the versioned skills repo (`claude-config`). Never two editable copies.
+1. **One authored copy per runtime.** Each runtime's port lives once, in that runtime's
+   `*-config` repo (`claude-config` / `codex-config` / `hermes-config`). Never two
+   editable copies of the same port. (Distinct *ports* per runtime are an accepted cost
+   while the formats differ; collapsing to a single shared source + per-runtime
+   generator is a possible future step.)
 2. **Provider dirs are links, not copies.** Surface the one source into each provider's
    directory with a **symlink** (the mechanism `~/.claude/skills/` already uses) or a
    scripted **sync** step, so editing the source updates every provider at once. A
@@ -79,22 +86,26 @@ every provider directory a **link** to it, never a hand-maintained second copy.
    has detached from its source.
 4. **Naming for discoverability.** Use the **same `<name>`** for a skill across every
    provider directory so it is greppable and obviously "the same skill" everywhere
-   (`puzzle-velocity` in `.agents/skills/`, `~/.claude/skills/`, and the source repo —
+   (`puzzle-velocity` in `~/.claude/skills/`, `~/.codex/skills/`, and each source repo —
    not `puzzle-velocity` here and `velocity-tracker` there). The directory name is the
    identity; keep it stable across the move.
 
-### Target layout (lccjs)
+### Layout (achieved, #1439)
 
 ```
-lccjs/.agents/skills/<name>/SKILL.md   ← source of truth for PROJECT skills (committed)
-~/.claude/skills/<name>  → symlink →    one source (claude-config repo, ~/.agents/skills, or a repo)
-~/.agents/skills/<name>/                user-global source for cross-project skills
+~/Documents/claude-config/skills/<name>/SKILL.md   ← Claude source of truth
+~/Documents/codex-config/skills/<name>/SKILL.md    ← Codex source of truth
+~/Documents/hermes-config/skills/<name>/SKILL.md   ← Hermes source of truth
+~/.claude/skills/<name>  → symlink → claude-config/skills/<name>
+~/.codex/skills/<name>   → symlink → codex-config/skills/<name>
+~/.hermes/skills/<name>  → symlink → hermes-config/skills/<name>
+lccjs/                   — ships NO skills (no .agents/skills, no .claude/skills)
 ```
 
-No in-repo `.claude/skills/` is needed: Claude Code already gets project skills through
-the user-global assembly. The work is to ensure each project skill has **one** editable
-source and that the Claude-visible entry is a **link** to it, eliminating the
-`log-error`-style double copy.
+`yegor-pm` and the yegor-* family come from their own upstream (`yegor-pm-skills`),
+symlinked into `~/.claude/skills/`. Project-coupling (a skill that hardcodes lccjs
+paths like `npm run claim` or `~/.lccjs/lccjs.db`) is being addressed separately by
+making such skills read a per-repo config so they work in any repo.
 
 ---
 

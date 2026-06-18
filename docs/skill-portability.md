@@ -78,14 +78,22 @@ Upstream: <https://docs.claude.com/en/docs/claude-code/skills>
 
 ## Spoke: Codex
 
-**Skill directories** (nearest-first, current dir up to repo root, then user/admin/system):
+**Skill directories** — ⚠ the installed Codex CLI (verified v0.139.0) differs from the
+published spec. The binary auto-discovers **`$CODEX_HOME/skills`** (default
+**`~/.codex/skills`**) and a repo-local **`.codex/skills`**; `.agents/skills` appears
+**0×** in the binary. `codex debug prompt-input` confirms skills load only from
+`~/.codex/skills`. Use those paths in practice:
 
-| Scope | Location |
-|---|---|
-| Repo-local | `.agents/skills` (from cwd up to repo root) |
-| User | `~/.agents/skills` |
-| Admin | `/etc/codex/skills` |
-| System | Bundled OpenAI skills |
+| Scope | Location (installed CLI) | Published-spec path |
+|---|---|---|
+| User | `~/.codex/skills` (`$CODEX_HOME/skills`, auto-discovered) | `~/.agents/skills` |
+| Repo-local | `.codex/skills` (workdir) | `.agents/skills` |
+| Selectors | `skills.config` entries in `~/.codex/config.toml` | — |
+| Plugins | marketplace plugins bundle skills | — |
+| System | bundled `.system/` built-ins | Bundled OpenAI skills |
+
+The local source-of-truth repo for these is **`codex-config`**, symlinked into
+`~/.codex/skills/` by its `install.sh` (see [`skill-organization.md`](./skill-organization.md)).
 
 **Invocation:** `$<name>`, or `/skills` in the CLI/IDE surfaces; plus implicit
 invocation when the request matches the `description`.
@@ -123,7 +131,8 @@ frontmatter names below are non-exhaustive — re-check the spokes above.
 
 ### Claude Code → Codex
 
-1. Place the skill under `.agents/skills/<name>/SKILL.md` (or another Codex scope).
+1. Place the skill under `~/.codex/skills/<name>/SKILL.md` (installed-CLI path; in
+   lccjs's setup, author it in the `codex-config` repo, which symlinks there).
 2. Ensure both `name` and `description` are present (Codex requires `name`).
 3. Rewrite Claude invocation references `/<name>` → `$<name>` where the prose is
    Codex-facing.
@@ -153,8 +162,8 @@ the hub above is what they share.
 
 | Area | Codex | Claude Code |
 |---|---|---|
-| Repo path | `.agents/skills` | `.claude/skills` |
-| User path | `~/.agents/skills` | `~/.claude/skills` |
+| Repo path | `.codex/skills` (installed CLI; spec says `.agents/skills`) | `.claude/skills` |
+| User path | `~/.codex/skills` (installed CLI; spec says `~/.agents/skills`) | `~/.claude/skills` |
 | Explicit invocation | `$<name>`, `/skills`, plugin `@` surfaces | `/<name>` |
 | Required frontmatter | `name`, `description` | `description` is the key selector; command name can come from the directory |
 | Progressive disclosure | Documented initial skill-list budget, then full `SKILL.md` on selection | Similar lazy-loading, plus Claude-specific skill controls |
