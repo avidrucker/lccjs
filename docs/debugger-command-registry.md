@@ -12,7 +12,7 @@ to match these rulings; the coverage tracker (#1343) closes the "proving test?" 
 
 ## lccjs has TWO debuggers (mutually exclusive)
 
-`src/cli/lcc.js:83` short-circuits to interactive before the batch path, so these never run together:
+The `-i` check in `src/cli/lcc.js` (`main`) short-circuits to interactive before the batch path, so these never run together:
 
 | Surface | Entered by | Code | Command language | Lineage |
 |---|---|---|---|---|

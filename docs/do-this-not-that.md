@@ -386,3 +386,13 @@ Evergreen agent-facing preferences for common tool and command choices in this r
 - **Do:** after adding encoder + executor entry, grep for `0x001F` / `0x000F` / `ir &` patterns in the disassembler and listing printer; confirm masks are consistent.
 - **Don't:** assume the disassembler is updated when only the encoder and executor are touched.
 - **Why:** a narrower mask in the disassembler won't crash — it silently maps the new instruction onto a recycled name. Any eopcode ≥ 16 decoded with a 4-bit mask (`0x000F`) lands in wrong territory with no error.
+
+---
+
+## Citing code from living docs
+
+**Reference source by file + symbol name, never by `file.js:NNN` line number**
+
+- **Do:** `` `checkVelocityTicketMatch()` in `close.js` `` or `` `src/core/assembler.js` (`assembleBL`) ``.
+- **Don't:** `` `scripts/close.js:784` `` — the line number drifts the moment anyone edits above it.
+- **Why:** line numbers rot silently as code moves; a reader who jumps to the cited line lands on unrelated code and nothing flags it. A symbol name is greppable, survives line moves, and is self-checking. (This applies to *living/normative* docs only — dated snapshots like TILs and research spikes are point-in-time records and keep their original refs.) (#1446)

@@ -49,7 +49,7 @@ signed-integer validator and works correctly.
 with the signed range `[-32, 31]` regardless of whether commas were used.
 Result: all valid offsets (positive, zero, negative) encode correctly.
 
-**Source:** `src/core/assembler.js:1797–1818` (`assembleLDR`, `assembleSTR`)
+**Source:** `src/core/assembler.js` (`assembleLDR`, `assembleSTR`)
 
 **Reference:** `public_experiments/ldr_str_no_comma_neg_offset_silent_miscompile/`
 and `docs/cuh63-ldr-str-silent-miscompile-bug-report.md`; the `jmp`/`blr`/`jsrr`
@@ -78,7 +78,7 @@ values in the −256..+255 window assemble correctly; values outside that window
 produce a `mov immediate value out of range` error (the OB-001 silent-wrap bug
 was fixed in #31, closed).
 
-**Source:** `src/core/assembler.js:1915` (`assembleMOV`, `mov` → `mvi` path)
+**Source:** `src/core/assembler.js` (`assembleMOV`, `mov` → `mvi` path)
 
 **GitHub issue:** [#40 OB-008](https://github.com/avidrucker/lccjs/issues/40)
 
@@ -344,7 +344,7 @@ treated as a label reference.
 **LCC.js behavior:** `assembleBL` calls `isValidLabel(label)` before anything else.
 `isValidLabel` requires the token to match `/^[A-Za-z_$@][A-Za-z0-9_$@]*$/` — a
 token starting with a digit fails immediately with `Bad label`
-(`src/core/assembler.js:1735–1736`). The error fires in Pass 1, before any
+(`assembleBL` in `src/core/assembler.js`). The error fires in Pass 1, before any
 symbol-table lookup.
 
 **Why OG BUG:** accepting a numeric token as a syntactically valid label name is
@@ -357,7 +357,7 @@ diagnosis than `Undefined label` for this case.
 other syntactically invalid tokens (e.g. `bl 0x10`, `bl -1`) is not investigated
 here.
 
-**Source:** `src/core/assembler.js:1732` (`assembleBL`) — `isValidLabel` gate at
+**Source:** `src/core/assembler.js` (`assembleBL`) — `isValidLabel` gate at
 line 1735.
 
 **Evidence:** `docs/research/adversarial_hypotheses.md` H-016; probe run #502.
@@ -494,8 +494,8 @@ sub-divergences remain — (a) exit code `0` vs `1` (flip the code at
 `assembler.js:368`), and (b) LCC.js emits no header-only listings. Both are
 currently intentional no-ops; neither is tracked as a bug.
 
-**Source:** `src/core/assembler.js:367–369` (`abortAssembly('Empty file', 0)`),
-`src/core/assembler.js:47–53` (`fatalExit` drops the message at code 0)
+**Source:** `src/core/assembler.js` (`assembleSource` → `abortAssembly('Empty file', 0)`),
+`src/utils/cliExit.js` (`fatalExit` drops the message at code 0)
 
 **Repro:** `node src/cli/lcc.js empty.a` on a 0-byte or whitespace-only `.a`;
 oracle `lcc empty1.a` for comparison.
@@ -534,8 +534,8 @@ difference from LCC).` The user-facing text says **"LCC"** (not "oracle"/"OG") s
 needs no internal vocabulary. Source: `src/utils/flagDiagnostics.js` (`FLAG_DEVIATIONS`),
 wired in `src/cli/lcc.js` and `src/interactive/ilcc.js` `parseArguments`.
 
-**Source:** `src/utils/genStats.js:73` (code-bearing rows) and `:82` (comment-only
-rows) append `entry.sourceLine` with no width clamp.
+**Source:** `src/utils/genStats.js` (`generateBSTLSTContent` — both the code-bearing
+and comment-only row paths) appends `entry.sourceLine` with no width clamp.
 
 **Reference:** `docs/research/debugger-oracle-parity.md` (deviation **E**) and the
 probe `experiments/debugger-report-parity-probe.sh`.
@@ -855,7 +855,7 @@ The error-channel and blank-artifact differences are covered by existing deviati
 multiple directive contexts. `Invalid number for .org directive` is more informative: it
 identifies the affected directive, reducing user confusion. LCC.js-stricter-is-safer applies.
 
-**Source:** `src/core/assembler.js:1109` (`failAssembly('Invalid number for .org directive', 1)`).
+**Source:** `src/core/assembler.js` (`handleDirective` → `failAssembly('Invalid number for .org directive', 1)`).
 
 **GitHub issue:** [#500](https://github.com/avidrucker/lccjs/issues/500) (probe evidence)
 
@@ -888,7 +888,7 @@ LCC.js treats a zero-word `.hex` input as a clean no-op rather than an error. Th
 `assembler.js:880` explicitly calls this "custom LCC.js behavior in 12/2024". If strict parity
 is ever required, flip to exit 1 at the `abortAssembly('Empty file', 0)` call in `parseHexFile`.
 
-**Source:** `src/core/assembler.js:883` (`abortAssembly('Empty file', 0)` in `parseHexFile`).
+**Source:** `src/core/assembler.js` (`abortAssembly('Empty file', 0)` in `parseHexFile`).
 
 **Evidence:** `docs/research/hex-oracle-parity-934.md` Cases 5–7.
 
@@ -928,7 +928,7 @@ parser. The messages are present in the code and surfaced in tests; they are jus
 forwarded to stdout/stderr in CLI mode. Changing to `cliErrorExit` would print them but is a
 separate decision from parity. No production code changes are made here.
 
-**Source:** `src/core/assembler.js:860–863` (`abortAssembly` calls in `parseHexFile`).
+**Source:** `src/core/assembler.js` (`abortAssembly` calls in `parseHexFile`).
 
 **Evidence:** `docs/research/hex-oracle-parity-934.md` Cases 2–4.
 
