@@ -14,6 +14,7 @@ New here and asking "what can go wrong with worktrees / parallel agents?" — st
 - [Worktree discipline](#worktree-discipline) — verify the issue is open before claiming, check `Blocked by:`, the required `--as <fruit>` flag, `git status` on main before claiming, the **worktree-write trap**, `npm run close` instead of a hand-push, `git -C` to inspect (never a bare `cd`), teardown `getcwd` errors + `git worktree prune`, and acting on stale-worktree warnings.
 - [Parallel agent assignment](#parallel-agent-assignment) — how concurrent agents avoid stepping on each other.
 - [Check current main before chasing a worktree test red](#check-current-main-before-chasing-a-worktree-test-red) — a stale worktree base manifests as a phantom red.
+- [Scope-audit with the merge-base (three-dot) diff, not tip-to-tip](#scope-audit-with-the-merge-base-three-dot-diff-not-tip-to-tip) — a two-dot tip-to-tip diff shows another agent's post-claim commits as phantom changes.
 - [Non-interactive rebase](#non-interactive-rebase) — interactive `-i` rebases hang in a headless agent.
 - [Adding an npm dep in a worktree](#adding-an-npm-dep-in-a-worktree) — never `--ignore-scripts` (also [`project-gotchas.md` §7](./project-gotchas.md)).
 
@@ -177,6 +178,16 @@ New here and asking "what can go wrong with worktrees / parallel agents?" — st
 - **Do:** treat a worktree red as suspect until confirmed. A worktree cut from an old base carries that base's (possibly already-fixed) test files, so the FIRST diagnostic is `git fetch origin main` then check whether the failure still reproduces on current main — run the same test at `origin/main`, or do a `git merge-base HEAD origin/main` / rebase check — before you debug it or file a "failing test" bug.
 - **Don't:** start debugging (or file a regression) against a worktree red without first ruling out that current main already fixed it.
 - **Why:** during #1114 a pre-#1215 worktree base still carried the hard-failing model-backfill test that current main had already fixed; debugging or filing against it would have chased an already-closed problem. A stale base manifests as a phantom red. (TIL 2026-06-14 / RULES.md #548)
+
+---
+
+## Scope-audit with the merge-base (three-dot) diff, not tip-to-tip
+
+**When auditing a worktree's scope before close, use the merge-base (three-dot) diff so another agent's post-claim commits don't masquerade as your changes**
+
+- **Do:** audit scope with the merge-base (three-dot) diff `git diff --stat origin/main...HEAD` (equivalently `git diff $(git merge-base origin/main HEAD)..HEAD`) — it shows only the changes HEAD made since the common ancestor, which is exactly what `npm run close` reports internally (`git diff --stat merge-base..HEAD`). Run `git fetch origin main` first so the base ref isn't stale.
+- **Don't:** audit scope with the two-dot tip-to-tip diff `git diff --stat origin/main..HEAD`. If `origin/main` diverged after you claimed (another agent landed commits), the two-dot form also shows *their* changes — as reversed hunks — making your own clean scope look like it touched files you never opened.
+- **Why:** closing #1218/#1219 (FIG, 2026-06-16), a two-dot diff listed 5 files never touched (a `scripts/check-glossary-symbols.js` deletion, `package.json`, an ADR, a spec, this file) — all `origin/main`'s own post-claim divergence (`2e85f56`, `a4b38b8`), not the branch's work. The three-dot diff showed only the real scope. (TIL 2026-06-16 FIG)
 
 ---
 
