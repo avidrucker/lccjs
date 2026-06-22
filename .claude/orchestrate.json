@@ -1,0 +1,16 @@
+{
+  "host": "github",
+  "languages": ["javascript"],
+  "mode": "fleet",
+  "issueLimit": 50,
+  "pmtools": { "home": "~/code/pmtools", "port": "js" },
+  "enrichment": {
+    "statusCommand": "npm run puzzle:status",
+    "claimCommand": "npm run claim",
+    "preflightCommand": "npm run preflight"
+  },
+  "advisory": {
+    "clusterFile": "puzzle-clusters.csv",
+    "sequencingDocRef": "docs/learnings/today-i-learned-2026-06-05-dragonfruit.md"
+  }
+}

@@ -44,6 +44,7 @@ docs/velocity-report.md
 refactor-plan-wave-2.md
 .claude/*
 !.claude/settings.json
+!.claude/orchestrate.json
 .claire/
 # Symlink assembly point into the external hermes-config SSOT repo
 # (~/Documents/hermes-config). Local-only; not part of the lccjs tree. (#1372)
