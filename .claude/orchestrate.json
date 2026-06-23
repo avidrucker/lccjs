@@ -7,7 +7,8 @@
   "enrichment": {
     "statusCommand": "npm run puzzle:status",
     "claimCommand": "npm run claim",
-    "preflightCommand": "npm run preflight"
+    "preflightCommand": "npm run preflight",
+    "closeCommand": "npm run close"
   },
   "advisory": {
     "clusterFile": "puzzle-clusters.csv",
