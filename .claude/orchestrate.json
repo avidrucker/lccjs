@@ -12,5 +12,10 @@
   "advisory": {
     "clusterFile": "puzzle-clusters.csv",
     "sequencingDocRef": "docs/learnings/today-i-learned-2026-06-05-dragonfruit.md"
+  },
+  "storage": {
+    "dbPath": "~/.lccjs/lccjs.db",
+    "velocity": { "enabled": true, "csvMirror": "docs/puzzle-velocity.csv", "logCommand": "npm run velocity:log" },
+    "errors": { "enabled": true, "csvMirror": "docs/errors.csv", "logCommand": "npm run error:log" }
   }
 }
