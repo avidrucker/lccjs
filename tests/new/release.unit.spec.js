@@ -84,6 +84,15 @@ describe('release.js findWorktreeForIssue()', () => {
   test('returns null when no worktree matches the issue', () => {
     expect(findWorktreeForIssue(rows, 12345)).toBeNull();
   });
+  test('resolves the new self-describing scheme (#1460/#1464): br-/wt- forms', () => {
+    const r = [
+      { path: '/repo', branch: 'main' },
+      { path: '/r/.claude/worktrees/wt-apple-lccjs-js-issue-1464', branch: 'br-apple/lccjs-js-issue-1464' },
+    ];
+    expect(findWorktreeForIssue(r, 1464)).toBe(r[1]);
+    // boundary still holds against the longer new form
+    expect(findWorktreeForIssue(r, 146)).toBeNull();
+  });
 });
 
 describe('release.js mainRoot()', () => {

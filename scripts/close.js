@@ -42,6 +42,7 @@
 const { execSync, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const naming = require('./worktree-naming');
 
 const DEFAULT_MAX_RETRIES = 5;
 
@@ -511,7 +512,7 @@ function checkVelocityTicketMatch(issue) {
   // claim fruit ≠ the terminal name — #361 false-positive root cause).
   const envAgent = process.env.CLAUDE_AGENT_NAME || null;
   const branch = currentBranch() || '';
-  const branchAgent = branch.split('/')[0] || null;
+  const branchAgent = (branch.split('/')[0] || '').replace(/^br-/, '') || null;
   const closingAgent = envAgent || branchAgent;
   const allRows = extractRowsFromCsvDiff(diff);
   const mismatched = computeVelocityMismatch(allRows, issue, closingAgent);
@@ -857,7 +858,10 @@ function main() {
   // the worktree), so npm's CWD survives teardown. Chdir into the worktree
   // here so all subsequent git operations run in the right context. (#379)
   const root = mainRoot();
-  const wtPath = path.join(root, '.claude', 'worktrees', branch.split('/')[0] + '-issue-' + issue);
+  // Reconstruct the worktree dir from the branch, br-/wt- tolerant (#1460/#1464):
+  // a new `br-` branch maps to the `wt-…` dir; a legacy branch to `<agent>-issue-<N>`.
+  const wtPath = path.join(root, '.claude', 'worktrees',
+    naming.worktreeDirForBranch(branch) || (branch.split('/')[0].replace(/^br-/, '') + '-issue-' + issue));
   if (opts.branch) {
     try {
       process.chdir(wtPath);

@@ -41,6 +41,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const naming = require('./worktree-naming');
 
 // Lowest-index-first. Common, unambiguous, easy to say aloud over a call.
 const FRUITS = [
@@ -97,7 +98,7 @@ function listWorktreeBranches() {
   for (const line of out.split('\n')) {
     if (line.startsWith('branch ')) {
       const branch = line.slice('branch '.length).replace('refs/heads/', '');
-      const fruit = branch.includes('/') ? branch.split('/')[0] : null;
+      const fruit = branch.includes('/') ? branch.split('/')[0].replace(/^br-/, '') : null;
       branches.push({ branch, fruit });
     }
   }
@@ -216,8 +217,9 @@ function normalizeIdentity(s) {
 // Kept pure (no git I/O) so it's directly unit-testable.
 function inferFruitFromBranch(branch) {
   if (!branch) return null;
-  const m = branch.match(/^([a-z]+)\/issue-\d+/);
-  return m ? m[1] : null;
+  // br-/<project>-<lang> tolerant via the shared scheme (#1460/#1464); returns the
+  // agent for legacy `<fruit>/issue-N` and new `br-<fruit>/<proj>-<lang>-issue-N`.
+  return naming.agentFromBranch(branch);
 }
 
 function currentBranch() {

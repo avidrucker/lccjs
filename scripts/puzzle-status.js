@@ -98,7 +98,9 @@ function findWorktrees() {
       cur.branch = line.slice('branch '.length).replace('refs/heads/', '');
       // Agent identity = the fruit prefix of a `<fruit>/issue-N-…` branch (see
       // docs/design-agent-worktree-identity.md). Absent on legacy/flat branches.
-      if (cur.branch.includes('/')) cur.agent = cur.branch.split('/')[0];
+      // br-prefix tolerant (#1460/#1464): strip the optional `br-` so the agent is
+      // the bare fruit for both `<fruit>/issue-N` and `br-<fruit>/<proj>-<lang>-issue-N`.
+      if (cur.branch.includes('/')) cur.agent = cur.branch.split('/')[0].replace(/^br-/, '');
     }
   }
   // issue N is claimed by a worktree whose branch or path mentions issue-N.
