@@ -72,7 +72,7 @@ A central activity here is differential testing against the **original LCC binar
 This repo runs a **Puzzle-Driven Development** discipline with multiple agents working concurrently. Before doing any puzzle work, **read [`docs/claude_workflow.md`](./docs/claude_workflow.md)** — it owns the full protocol (the per-puzzle phases, worktree claim mechanics, the close sequence, tool-failure discipline, and the PDD-scan `at_todo` trap). The skill inventory at **[`docs/skills.md`](./docs/skills.md)** lists every Claude Code skill used in this project, what it does, and when to invoke it. The essentials for orientation:
 
 - **Worktree-per-task is the expected default**, even for small/docs edits — multiple agents touch this repo at once. Run `git worktree list` first to avoid clobbering, and close trunk-based via `git push origin HEAD:main`.
-- `npm run claim` stakes a worktree under a per-session agent identity; `npm run puzzle:status` shows what's safe to grab; `npm run puzzles` runs the `pdd` scan.
+- `npm run claim` stakes a worktree under a per-session agent identity; `npm run puzzle:status` shows what's safe to grab; `npm run puzzles` runs the `pdd` scan. To **abandon** a claim without closing the issue (work deferred / mis-scoped), `npm run release <N>` tears down the worktree + claim ref and leaves the issue OPEN (refuses to discard unpushed commits or a dirty tree without `--force`).
 - **Correcting an issue description:** redline, don't rewrite — `~~strikethrough~~` the error in place, add a `SEE COMMENTS FOR CORRECTIONS` banner, and post the fix as a comment. The `yegor-tickets` skill owns the convention; see `docs/claude_workflow.md` "While continuing" (#300).
 
 ## Git identity

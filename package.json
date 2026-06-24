@@ -15,6 +15,7 @@
     "preflight": "node scripts/preflight.js",
     "claim": "bash scripts/claim.sh",
     "close": "exec node scripts/close.js",
+    "release": "exec node scripts/release.js",
     "setup": "bash scripts/setup-hooks.sh",
     "velocity:seed": "node scripts/velocity-seed.js",
     "velocity:log": "node scripts/velocity-log.js",
