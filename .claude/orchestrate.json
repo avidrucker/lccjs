@@ -6,7 +6,7 @@
   "pmtools": { "home": "~/code/pmtools", "port": "js" },
   "enrichment": {
     "statusCommand": "npm run puzzle:status",
-    "claimCommand": "npm run claim",
+    "claimCommand": "pmtools claim --lane-check --copy-env",
     "preflightCommand": "npm run preflight",
     "closeCommand": "npm run close"
   },
