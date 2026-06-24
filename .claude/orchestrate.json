@@ -7,7 +7,7 @@
   "enrichment": {
     "statusCommand": "npm run puzzle:status",
     "claimCommand": "pmtools claim --lane-check --copy-env",
-    "preflightCommand": "npm run preflight",
+    "preflightCommand": "pmtools preflight",
     "closeCommand": "npm run close"
   },
   "advisory": {
