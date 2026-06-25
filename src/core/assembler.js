@@ -1919,6 +1919,15 @@ class Assembler {
     return match;
   }
 
+  // True if the operand looks like an attempted character literal that is not
+  // well-formed — i.e. it contains a single quote but isCharLiteral() rejects
+  // it (e.g. the '' / ' fragments left when the tokenizer splits a bare-quote
+  // literal like '''). Lets evaluateOperand emit 'malformed character literal'
+  // instead of the misleading 'Bad label'. lccjs parity deviation (#1482).
+  looksLikeMalformedCharLiteral(operand) {
+    return typeof operand === 'string' && operand.includes("'") && !this.isCharLiteral(operand);
+  }
+
   parseCharLiteral(str) {
     // Remove the single quotes
     let charContent = str.slice(1, -1);
@@ -1950,10 +1959,14 @@ class Assembler {
       }
     } else {
       // Multi-character literal with no leading escape (e.g. 'ab', '/;', '//',
-      // '/n'): OG LCC uses the FIRST character and silently ignores the rest
-      // (verified vs cuh63 oracle: 'ab'->97, '/;'->47). Match that here. A
-      // flag-gated warning for the dropped characters is deferred to #1476.
-      return charContent.charCodeAt(0);
+      // '/n', '/\'). OG LCC silently uses the FIRST character and ignores the
+      // rest ('ab'->97, '/;'->47). lccjs deliberately rejects it so a learner
+      // sees the typo instead of a silent truncation — a documented parity
+      // deviation. The OG first-char-wins value returns under the deferred
+      // --oracle-compat mode (#1481). See docs/parity_deviations.md (#1482).
+      this.error(`Character literal must contain exactly one character: '${charContent}'`,
+        null, 'MULTICHAR_CHAR_LITERAL');
+      return null;
     }
   }
 
@@ -2142,6 +2155,11 @@ class Assembler {
           // inspect to see if it was an invalid label
           if(operand[0] === '0' && operand[1] === 'x' && !this.isValidHexNumber(operand)) {
             this.failAssembly(`Bad number`, 1);
+          } else if (this.looksLikeMalformedCharLiteral(operand)) {
+            // e.g. the '' / ' fragments the tokenizer leaves when a bare-quote
+            // literal like ''' is split. Give a clear message rather than the
+            // misleading 'Bad label'. lccjs parity deviation (#1482).
+            this.failAssembly(`malformed character literal`, 1, null, 'MALFORMED_CHAR_LITERAL');
           } else if (!this.isValidLabel(operand)) {
             this.failAssembly(`Bad label`, 1);
           } else {

@@ -596,6 +596,14 @@ the oracle's silent backslash-drop — a typo like `"\march"` becomes a clear
 diagnostic instead of silently assembling as `march`. This is the same
 stricter-than-oracle posture as deviation #7 (line length).
 
+**Char literals too (#1482):** the same posture applies to unknown escapes inside
+a **character** literal. `'\;'`, `'\/'`, `'\,'`, etc. → LCC.js emits
+`Invalid escape sequence: \X` and exits 1. The oracle instead drops the backslash
+and uses the next char (`'\/'`→47, `'\.'`→46, `'\a'`→97) — *except* when that char
+is a comment/separator (`;`, `,`, space), which its line tokenizer strips first,
+leaving `'\` → `0` (so `'\;'`→0). LCC.js's uniform fail-loud is both safer and
+free of that separator entanglement. Source: `parseCharLiteral` default branch.
+
 **Note — #157 headline is non-reproducible:** the issue claimed LCC.js rejects a
 `\n` escape with `Missing terminating quote`. It does not; `\n` (and the whole
 supported set) assembles correctly, shipped demos rely on it, and the error for an
@@ -988,6 +996,40 @@ and reads the next line`).
 
 ---
 
+### 31. Character literals: LCC.js requires exactly one character; OG LCC silently takes the first (#1482)
+
+A character literal in LCC.js must contain **exactly one character** (or one valid
+escape). OG LCC accepts arbitrarily long char literals and silently uses the
+**first character**, ignoring the rest.
+
+| `.word <lit>` | cuh63 6.3 | LCC.js |
+|---|---|---|
+| `'a'` `';'` `'/'` `'\n'` `'\\'` | value ✓ | same value ✓ (parity) |
+| `'ab'` | `97` (`'a'`, rest dropped) ✗ | `Character literal must contain exactly one character: 'ab'`, exit 1 ✓ |
+| `'/;'` `'//'` `'/n'` `'/\'` | `47` (first char) ✗ | same error ✓ |
+| `'''` (bare quote) | `39` (quote-as-char) | `malformed character literal`, exit 1 |
+
+**Why BY DESIGN:** silent first-char truncation turns a learner's typo (e.g. a
+two-character paste, or a missing `\` escape) into a subtle wrong value rather than
+a visible error. Failing loud is the same stricter-than-oracle posture as
+deviations #7 (line length) and #15 (unknown escapes). The misleading `Bad label`
+that `'''` previously produced (the tokenizer splits it into `''` + a stray `'`)
+is replaced by `malformed character literal` via `looksLikeMalformedCharLiteral()`.
+
+**`--oracle-compat` (deferred, #1481):** the OG first-character-wins value will be
+available under the planned bug-for-bug compatibility mode. Default stays strict.
+
+**Source:** `src/core/assembler.js` — `parseCharLiteral()` (multi-char branch,
+`explainKey: MULTICHAR_CHAR_LITERAL`) and `evaluateOperand()` →
+`looksLikeMalformedCharLiteral()` (`explainKey: MALFORMED_CHAR_LITERAL`). Tests:
+`tests/new/assembler.unit.spec.js` (describe "char literals — strict-by-default
+diagnostics (#1482)"). Verification harness: `scratch/char-parity.*`.
+
+**GitHub issue:** [#1482](https://github.com/avidrucker/lccjs/issues/1482). Supersedes
+the first-char-wins default shipped in #1475; decisions in #1476/#1479.
+
+---
+
 ## Pending parity investigations (stubs)
 
 _None pending._
@@ -1026,3 +1068,4 @@ _None pending._
 | 2026-06-15 | §11 augmented; header terminology note (#1371) | Confirmed §11 by probing the oracle (`-f` off → 67-col truncation; `-f` on / lccjs → full 166-col line). Documented the `-f`-flag connection: OG's `-f` disables the §11 truncation, which lccjs never does, so `-f` is a deliberate no-op in lccjs. `lcc`/`ilcc` now emit a non-blocking warning when `-f` is passed (`src/utils/flagDiagnostics.js` `FLAG_DEVIATIONS`). Added a header terminology note (OG/oracle/"OG Oracle" = original source-of-truth LCC; user-facing CLI messages say plain "LCC"). |
 | 2026-06-15 | OG BUG §28 added (#1353) | `-d` debugger `c` command: a bare `c` (no operands) segfaults the oracle (exit 139); `c r0` (value omitted) prints `Missing operand` and `c r0 5` works, so the crash is the zero-operand case. LCC.js validates and never crashes (#1349). Drafted upstream report `docs/cuh63-debugger-bare-c-segfault-bug-report.md`; reports_summary row #28; umbrella #1406. Evidence: probe #1348. |
 | 2026-06-16 | BY DESIGN §29 added (#1415) | `potato-input-test` input-rejection findings triaged. LCC.js keeps fail-fast EOF errors for invalid `din`/`hin` instead of matching the oracle's indefinite re-prompt hang. The `sin` finding was reduced from "echo" to newline handling after a prior `din`/`hin`: LCC.js intentionally skips the retained newline so `sin` reads the next logical input line; the oracle stores an empty string. Regression coverage added for `hin` followed by `sin`. |
+| 2026-06-25 | §15 augmented; BY DESIGN §31 added (#1482) | Char literals: multi-character literals (`'ab'`, `'/;'`, `'/\'`) now error with `Character literal must contain exactly one character` instead of silently taking the first char (reverses the first-char-wins default shipped in #1475); `'''` now reports `malformed character literal` instead of the misleading `Bad label`. Unknown escapes inside char literals (`'\;'`, `'\/'`) fold into §15's fail-loud posture. OG first-char-wins value deferred to the `--oracle-compat` mode (#1481). Decisions in #1476/#1479. |

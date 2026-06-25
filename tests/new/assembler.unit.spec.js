@@ -323,48 +323,56 @@ describe('Assembler Unit Tests', () => {
     expect(s).toEqual(['a'.charCodeAt(0), 'b'.charCodeAt(0), 0]);
   });
 
-  // --- char literals: parity with OG LCC (#1475) ---
-  // OG LCC accepts multi-character char literals and uses the FIRST character,
-  // silently ignoring the rest ('ab'->97, '/;'->47). lccjs previously rejected
-  // any literal longer than one char. Single chars and valid escapes already
-  // matched. Verified vs cuh63 oracle in scratch/char-parity.* .
+  // --- char literals: strict-by-default diagnostics (#1482) ---
+  // OG LCC accepts multi-character char literals and silently uses the FIRST
+  // character ('ab'->97). lccjs deliberately diverges: a char literal must hold
+  // exactly one character, so a learner sees a clear error instead of silent
+  // truncation. The OG first-char-wins behavior returns under the deferred
+  // --oracle-compat mode (#1481). Single chars and valid escapes stay at parity.
+  // Verified vs cuh63 oracle in scratch/char-parity.* .
 
-  describe('char literals — first-character-wins parity (#1475)', () => {
-    const charValue = (lit) => {
+  describe('char literals — strict-by-default diagnostics (#1482)', () => {
+    const assemble = (lit) => {
       const a = new Assembler();
       a.assembleSource(`        .start main\nmain:   halt\nc:      .word ${lit}\n`, { inputFileName: 'c.a' });
-      expect(a.errorFlag).toBe(false);
-      return a.outputBuffer[a.outputBuffer.length - 1];
+      return a;
     };
+    const lastWord = (a) => a.outputBuffer[a.outputBuffer.length - 1];
 
+    // Single char + valid escapes — still evaluate to their value (parity).
     test.each([
-      ["';'", ';'.charCodeAt(0)],   // 59 — single char (already parity)
-      ["'-'", '-'.charCodeAt(0)],   // 45 — single char; '-' prints fine in both
-      ["'/'", '/'.charCodeAt(0)],   // 47 — single char ('/' is not an escape)
-      ["'\\n'", 10],                  // valid escape (already parity)
-      ["'\\r'", 13],                  // valid escape (already parity)
-      ["'\\\\'", 92],                 // escaped backslash (already parity)
-      ["'/n'", '/'.charCodeAt(0)],  // 47 — multi-char, first wins (NEW)
-      ["'//'", '/'.charCodeAt(0)],  // 47 — multi-char, first wins (NEW)
-      ["'ab'", 'a'.charCodeAt(0)],  // 97 — multi-char, first wins (NEW)
-      ["'/;'", '/'.charCodeAt(0)],  // 47 — multi-char, first wins (NEW)
-    ])('.word %s evaluates to %i (matches oracle)', (lit, expected) => {
-      expect(charValue(lit)).toBe(expected);
+      ["';'", ';'.charCodeAt(0)],   // 59
+      ["'-'", '-'.charCodeAt(0)],   // 45 — '-' assembles fine in both
+      ["'/'", '/'.charCodeAt(0)],   // 47 — '/' is not an escape
+      ["'\\n'", 10],                  // valid escape
+      ["'\\r'", 13],                  // valid escape
+      ["'\\\\'", 92],                 // escaped backslash
+    ])('.word %s evaluates to %i (parity with oracle)', (lit, expected) => {
+      const a = assemble(lit);
+      expect(a.errorFlag).toBe(false);
+      expect(lastWord(a)).toBe(expected);
     });
 
-    test("isCharLiteral() accepts multi-character literals", () => {
+    // Multi-character literals — now a hard error by default (was first-char in
+    // #1475). The dropped-character value is only available under #1481.
+    test.each(["'ab'", "'/;'", "'/n'", "'//'", "'/\\'"])(
+      '.word %s is rejected with an "exactly one character" error', (lit) => {
+        expect(() => assemble(lit)).toThrow(/exactly one character/);
+      });
+
+    test("''' reports 'malformed character literal', not the misleading 'Bad label'", () => {
+      expect(() => assemble("'''")).toThrow(/malformed character literal/);
+    });
+
+    test("isCharLiteral() still accepts multi-character literals (so parse gives the clear error)", () => {
       const a = new Assembler();
       expect(a.isCharLiteral("'ab'")).toBe(true);
-      expect(a.isCharLiteral("'/;'")).toBe(true);
       expect(a.isCharLiteral("';'")).toBe(true);
     });
 
-    test("an unknown escape like '\\;' still fails loud (parity deviation #15; see #1476)", () => {
+    test("an unknown escape like '\\;' still fails loud (parity deviation #15)", () => {
       // OG LCC yields NUL (0) for an unknown escape; lccjs deliberately rejects.
-      const a = new Assembler();
-      expect(() => {
-        a.assembleSource("        .start main\nmain:   halt\nc:      .word '\\;'\n", { inputFileName: 'c.a' });
-      }).toThrow(AssemblerError);
+      expect(() => assemble("'\\;'")).toThrow(/Invalid escape sequence/);
     });
   });
 
