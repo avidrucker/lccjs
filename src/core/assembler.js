@@ -1993,13 +1993,16 @@ class Assembler {
     // evaluateOperand (throws 'Undefined label').
     // Undefined external symbols (used but never defined in any linked module)
     // is a linker-level concern, not detectable here.
-    if (!this.externalReferences.some(ref => ref.label === label && ref.type === usageType)) {
-      this.externalReferences.push({
-        label: label,
-        type: usageType,
-        address: this.locCtr // Store the current location counter
-      });
-    }
+    // #1474: record EVERY reference site — do NOT dedupe by (label, type). The
+    // original LCC object format emits one relocation entry per use-site; the old
+    // `.some(...)` guard kept only the first, so a symbol referenced more than
+    // once left all later sites unrelocated — a silent no-op for `bl` and a wrong
+    // (unrelocated) address for `ld`/`st`. The linker already patches every entry.
+    this.externalReferences.push({
+      label: label,
+      type: usageType,
+      address: this.locCtr // location counter of THIS use-site
+    });
   }
 
   /**

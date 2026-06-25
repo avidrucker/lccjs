@@ -45,3 +45,53 @@ val:        .word 42
     When I assemble and link the modules
     Then the error output reports "undefined external reference"
     And no executable "link.e" is produced
+
+  # #1474: the assembler used to dedupe external references by (label, type), so
+  # only the FIRST reference site was relocated; later ones silently became no-ops
+  # (functions) or read unrelocated addresses (data). The oracle relocates every
+  # site. "BB" / "4242" are discriminating: the bug yields "B" / "42<garbage>".
+  Scenario: An external function called more than once relocates every call
+    Given a module "caller.a" containing:
+      """
+          .extern beep
+          .start main
+main:       bl beep
+            bl beep
+            halt
+      """
+    And a module "lib.a" containing:
+      """
+          .global beep
+beep:       push lr
+            push fp
+            mov fp, sp
+            mov r0, 66
+            aout r0
+            mov sp, fp
+            pop fp
+            pop lr
+            ret
+      """
+    When I assemble and link the modules
+    And I run the linked executable
+    Then the output contains "BB"
+
+  Scenario: An external data symbol read more than once relocates every reference
+    Given a module "reader.a" containing:
+      """
+          .extern val
+          .start main
+main:       ld r0, val
+            dout r0
+            ld r0, val
+            dout r0
+            halt
+      """
+    And a module "data.a" containing:
+      """
+          .global val
+val:        .word 42
+      """
+    When I assemble and link the modules
+    And I run the linked executable
+    Then the output contains "4242"

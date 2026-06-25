@@ -103,4 +103,20 @@ defineFeature(feature, (test) => {
     thenErrorReports(then);
     andNoExecutable(and);
   });
+
+  test('An external function called more than once relocates every call', ({ given, and, when, then }) => {
+    givenModule(given);
+    givenModule(and); // second "And a module ..."
+    whenAssembleLink(when);
+    andRunLinked(and);
+    thenOutputContains(then);
+  });
+
+  test('An external data symbol read more than once relocates every reference', ({ given, and, when, then }) => {
+    givenModule(given);
+    givenModule(and);
+    whenAssembleLink(when);
+    andRunLinked(and);
+    thenOutputContains(then);
+  });
 });
