@@ -5,7 +5,7 @@
   "issueLimit": 50,
   "pmtools": { "home": "~/code/pmtools", "port": "js" },
   "enrichment": {
-    "statusCommand": "npm run puzzle:status",
+    "statusCommand": "pmtools status",
     "claimCommand": "pmtools claim --lane-check --copy-env",
     "preflightCommand": "pmtools preflight",
     "closeCommand": "npm run close"
