@@ -1,0 +1,11 @@
+# compiled C reference binaries (rebuild with: gcc -O2 -o <name> <name>.c)
+donut_ref
+donut_frame
+donut_A
+donut_B
+donut_frame_16bit
+# scratch / intermediate capture frames (frame_simple.txt is the committed golden)
+frame_raw.txt
+frame_ref23.txt
+frame_16bit.txt
+frame_B.txt
