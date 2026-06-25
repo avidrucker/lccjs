@@ -1911,7 +1911,11 @@ class Assembler {
   }
 
   isCharLiteral(str) {
-    const match = /^'(?:\\.|[^\\])'$/.test(str);
+    // A char literal is a single quote, at least one content unit (an escape
+    // pair `\.` or a non-backslash, non-quote char), then a closing quote.
+    // Multi-character content is accepted so OG LCC's first-char-wins semantics
+    // can apply (e.g. 'ab', '/;', '//'); see parseCharLiteral (#1475).
+    const match = /^'(?:\\.|[^\\']).*'$/.test(str);
     return match;
   }
 
@@ -1938,12 +1942,18 @@ class Assembler {
         case '\\"':
           return '"'.charCodeAt(0);
         default:
+          // Unknown escape (e.g. '\;'): lccjs fails loud rather than matching
+          // the oracle's silent NUL, a deliberate divergence (parity deviation
+          // #15). Whether to soften this is a documented human decision (#1476).
           this.error(`Invalid escape sequence: ${charContent}`);
           return null;
       }
     } else {
-      this.error(`Invalid character literal: '${charContent}'`);
-      return null;
+      // Multi-character literal with no leading escape (e.g. 'ab', '/;', '//',
+      // '/n'): OG LCC uses the FIRST character and silently ignores the rest
+      // (verified vs cuh63 oracle: 'ab'->97, '/;'->47). Match that here. A
+      // flag-gated warning for the dropped characters is deferred to #1476.
+      return charContent.charCodeAt(0);
     }
   }
 
