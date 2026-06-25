@@ -1,0 +1,193 @@
+; render.a — render_pixel for the base-LCC donut (#1471, child of #1468)
+;
+;   char render_pixel(int16 vxi14, int16 vyi14, int16 vzi14)
+;
+; Ray-marches one screen cell and returns its glyph (a ramp char, or ' '), a
+; direct transcription of donut_frame.c's innermost per-pixel logic. Calls the
+; verified helpers length_cordic (#1469) twice and mul_q14 (#1470) thrice per
+; march step — plain `bl`, relying on the multi-reference relocation fix (#1474).
+;
+; Library module: exports render_pixel, no .start. Frozen single-frame constants
+; (from `donut_gen consts`) and the per-pixel mutable state live here as globals.
+;
+; Calling convention:  fp+2 = vxi14   fp+3 = vyi14   fp+4 = vzi14 ;  returns r0.
+; All per-pixel state is in globals (single-threaded, non-reentrant): px/py/pz/t/d
+; and the lighting cells lx/ly/lz (the latter passed to length_cordic by address).
+
+        .extern length_cordic
+        .extern mul_q14
+        .global render_pixel
+
+; ---- frozen single-frame constants (donut_gen consts) ----
+p0x:    .word 0
+p0y:    .word 904
+p0z:    .word -905
+r1i:    .word 256
+r2i:    .word 512
+lx0:    .word 0
+ly0:    .word 0
+lz0:    .word -5792
+k2048:  .word 2048
+k512:   .word 512
+; glyph ramp ".,-~:;!*=#$@" as ASCII codes (one word per char). NOT .string: a
+; literal ';' inside a string is swallowed by comment-stripping (lccjs #1473).
+ramp:   .word 46                    ; '.'
+        .word 44                    ; ','
+        .word 45                    ; '-'
+        .word 126                   ; '~'
+        .word 58                    ; ':'
+        .word 59                    ; ';'
+        .word 33                    ; '!'
+        .word 42                    ; '*'
+        .word 61                    ; '='
+        .word 35                    ; '#'
+        .word 36                    ; '$'
+        .word 64                    ; '@'
+
+; ---- per-pixel mutable state ----
+pxg:    .word 0
+pyg:    .word 0
+pzg:    .word 0
+tg:     .word 0
+dg:     .word 0
+lxg:    .word 0
+lyg:    .word 0
+lzg:    .word 0
+
+render_pixel:
+        push lr
+        push fp
+        mov  fp, sp
+
+        ; t = 512
+        ld   r0, k512
+        st   r0, tg
+        ; px = p0x + (vx >> 5)
+        ldr  r0, fp, 2
+        sra  r0, 5
+        ld   r1, p0x
+        add  r0, r0, r1
+        st   r0, pxg
+        ; py = p0y + (vy >> 5)
+        ldr  r0, fp, 3
+        sra  r0, 5
+        ld   r1, p0y
+        add  r0, r0, r1
+        st   r0, pyg
+        ; pz = p0z + (vz >> 5)
+        ldr  r0, fp, 4
+        sra  r0, 5
+        ld   r1, p0z
+        add  r0, r0, r1
+        st   r0, pzg
+
+@march:
+        ; lx = lx0; ly = ly0; lz = lz0
+        ld   r0, lx0
+        st   r0, lxg
+        ld   r0, ly0
+        st   r0, lyg
+        ld   r0, lz0
+        st   r0, lzg
+
+        ; t0 = length_cordic(px, py, &lx, ly)    args r->l: ly, &lx, py, px
+        ld   r0, lyg
+        push r0
+        lea  r0, lxg
+        push r0
+        ld   r0, pyg
+        push r0
+        ld   r0, pxg
+        push r0
+        bl   length_cordic
+        add  sp, sp, 4
+        ; t1 = t0 - r2i   (keep in r2 across the next call setup)
+        ld   r1, r2i
+        sub  r2, r0, r1
+
+        ; t2 = length_cordic(pz, t1, &lz, lx)    args r->l: lx(updated), &lz, t1, pz
+        ld   r0, lxg
+        push r0
+        lea  r0, lzg
+        push r0
+        push r2
+        ld   r0, pzg
+        push r0
+        bl   length_cordic
+        add  sp, sp, 4
+        ; d = t2 - r1i
+        ld   r1, r1i
+        sub  r0, r0, r1
+        st   r0, dg
+
+        ; t += d
+        ld   r1, tg
+        add  r1, r1, r0
+        st   r1, tg
+        ; if (t > 2048) return ' '
+        ld   r2, k2048
+        cmp  r1, r2
+        brgt @blank
+        ; if (d < 2) return glyph
+        ld   r0, dg
+        cmp  r0, 2
+        brlt @glyph
+
+        ; px += mul_q14(d, vx)
+        ldr  r0, fp, 2
+        push r0
+        ld   r0, dg
+        push r0
+        bl   mul_q14
+        add  sp, sp, 2
+        ld   r1, pxg
+        add  r1, r1, r0
+        st   r1, pxg
+        ; py += mul_q14(d, vy)
+        ldr  r0, fp, 3
+        push r0
+        ld   r0, dg
+        push r0
+        bl   mul_q14
+        add  sp, sp, 2
+        ld   r1, pyg
+        add  r1, r1, r0
+        st   r1, pyg
+        ; pz += mul_q14(d, vz)
+        ldr  r0, fp, 4
+        push r0
+        ld   r0, dg
+        push r0
+        bl   mul_q14
+        add  sp, sp, 2
+        ld   r1, pzg
+        add  r1, r1, r0
+        st   r1, pzg
+
+        br   @march
+
+@blank:
+        mov  r0, 32                 ; ' '
+        br   @done
+@glyph:
+        ; N = lz >> 9 ; clamp to [0,11]  (C: N>0 ? (N<12?N:11) : 0)
+        ld   r0, lzg
+        sra  r0, 9
+        cmp  r0, 0
+        brlt @idx0                  ; N < 0  -> 0
+        brz  @idx0                  ; N == 0 -> 0
+        cmp  r0, 12
+        brlt @haveidx               ; 0 < N < 12 -> N
+        mov  r0, 11                 ; N >= 12 -> 11
+        br   @haveidx
+@idx0:
+        mov  r0, 0
+@haveidx:
+        lea  r1, ramp
+        add  r1, r1, r0
+        ldr  r0, r1, 0              ; ramp[N]
+@done:
+        mov  sp, fp
+        pop  fp
+        pop  lr
+        ret

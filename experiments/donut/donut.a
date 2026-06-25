@@ -1,0 +1,126 @@
+; donut.a — render driver for the base-LCC donut (#1471, child of #1468)
+;
+; The main loop nest: walks the 23-row x 79-col screen, computes each cell's view
+; vector (vxi14/vyi14/vzi14), calls render_pixel (render.a) for its glyph, and
+; emits the frame. A direct transcription of donut_frame.c's main() for the single
+; frozen frame. Output must match experiments/donut/frame_simple.txt byte-for-byte.
+;
+; Links with cordic.a + mul.a + render.a:
+;   lcc.js cordic.a ; lcc.js mul.a ; lcc.js render.a ; lcc.js donut.a   (-> .o each)
+;   lcc.js cordic.o mul.o render.o donut.o -o donut.e
+;   interpreter donut.e -ms-1     (~8-10M instructions; the 500k cap must be lifted)
+;
+; All loop state is in globals (render_pixel clobbers r0-r4). Frozen constants are
+; from `donut_gen consts`. For this frame xincY=xincZ=0, so vyi14/vzi14 are constant
+; across a row; they are still updated each column to mirror the C faithfully.
+
+        .extern render_pixel
+        .start main
+
+; ---- frozen loop constants (donut_gen consts) ----
+vxinit:  .word -15360
+xincX:   .word 384
+xincY:   .word 0
+xincZ:   .word 0
+yincC:   .word 541
+yincS:   .word 541
+xsAsB:   .word 0
+xcAsB:   .word 0
+sAcB:    .word 11583
+cAcB:    .word 11583
+ycAinit: .word -6514
+ysAinit: .word -6514
+
+; ---- loop state ----
+ycAg:    .word 0
+ysAg:    .word 0
+vxg:     .word 0
+vyg:     .word 0
+vzg:     .word 0
+ig:      .word 0
+jg:      .word 0
+
+main:    push lr
+         push fp
+         mov  fp, sp
+
+         ld   r0, ycAinit
+         st   r0, ycAg
+         ld   r0, ysAinit
+         st   r0, ysAg
+         mov  r0, 23           ; 23 rows
+         st   r0, jg
+
+@rowloop:
+         ; vxi14 = vxinit
+         ld   r0, vxinit
+         st   r0, vxg
+         ; vyi14 = ycA - xsAsB - sAcB
+         ld   r0, ycAg
+         ld   r1, xsAsB
+         sub  r0, r0, r1
+         ld   r1, sAcB
+         sub  r0, r0, r1
+         st   r0, vyg
+         ; vzi14 = ysA + xcAsB + cAcB
+         ld   r0, ysAg
+         ld   r1, xcAsB
+         add  r0, r0, r1
+         ld   r1, cAcB
+         add  r0, r0, r1
+         st   r0, vzg
+         mov  r0, 79           ; 79 columns
+         st   r0, ig
+
+@colloop:
+         ; render_pixel(vxi14, vyi14, vzi14)  -> glyph in r0   (push vz, vy, vx)
+         ld   r0, vzg
+         push r0
+         ld   r0, vyg
+         push r0
+         ld   r0, vxg
+         push r0
+         bl   render_pixel
+         add  sp, sp, 3
+         aout r0               ; emit glyph
+         ; vxi14 += xincX ; vyi14 -= xincY ; vzi14 += xincZ
+         ld   r0, vxg
+         ld   r1, xincX
+         add  r0, r0, r1
+         st   r0, vxg
+         ld   r0, vyg
+         ld   r1, xincY
+         sub  r0, r0, r1
+         st   r0, vyg
+         ld   r0, vzg
+         ld   r1, xincZ
+         add  r0, r0, r1
+         st   r0, vzg
+         ; i-- ; loop while i > 0
+         ld   r0, ig
+         sub  r0, r0, 1
+         st   r0, ig
+         cmp  r0, 0
+         brp  @colloop
+
+         nl                    ; end of row
+         ; ycA += yincC ; ysA += yincS
+         ld   r0, ycAg
+         ld   r1, yincC
+         add  r0, r0, r1
+         st   r0, ycAg
+         ld   r0, ysAg
+         ld   r1, yincS
+         add  r0, r0, r1
+         st   r0, ysAg
+         ; j-- ; loop while j > 0
+         ld   r0, jg
+         sub  r0, r0, 1
+         st   r0, jg
+         cmp  r0, 0
+         brp  @rowloop
+
+         mov  sp, fp
+         pop  fp
+         pop  lr
+         halt

@@ -1,0 +1,92 @@
+; render_test.a — TDD harness for render_pixel (#1471)
+;
+; Separate, linkable test module. Feeds render_pixel the 13 (vx,vy,vz) vectors
+; from `donut_gen scan` (one representative pixel per distinct glyph, full ramp
+; coverage) and prints each returned glyph on its own line; diff against
+; render_golden.txt (`donut_gen scanglyph`).
+;   node src/cli/lcc.js cordic.a mul.a render.a render_test.a -o render_test.e
+;
+; TOGGLING: drop a row from vtab (and ntests / the golden) to skip a glyph.
+
+        .extern render_pixel
+        .start main
+
+; per-iteration loop state (globals — render_pixel clobbers r0-r4)
+vptr:   .word 0
+kk:     .word 0
+
+main:   push lr
+        push fp
+        mov  fp, sp
+
+        lea  r0, vtab
+        st   r0, vptr
+        mov  r0, 13
+        st   r0, kk
+@loop:
+        ld   r0, kk
+        brz  @done
+        ld   r1, vptr
+        ldr  r2, r1, 0      ; vx
+        ldr  r3, r1, 1      ; vy
+        ldr  r4, r1, 2      ; vz
+        push r4             ; push vz, vy, vx  (render_pixel(vx,vy,vz))
+        push r3
+        push r2
+        bl   render_pixel
+        add  sp, sp, 3
+        aout r0             ; glyph
+        nl
+        ld   r1, vptr       ; advance to next row
+        add  r1, r1, 3
+        st   r1, vptr
+        ld   r0, kk
+        sub  r0, r0, 1
+        st   r0, kk
+        br   @loop
+@done:
+        mov  sp, fp
+        pop  fp
+        pop  lr
+        halt
+
+; ---- test vectors: 13 rows of (vx, vy, vz), from donut_gen scan ----
+vtab:   .word -15360
+        .word -18097
+        .word 5069          ; ' '
+        .word -1920
+        .word -12687
+        .word 10479         ; '.'
+        .word -384
+        .word -13228
+        .word 9938          ; ','
+        .word -1536
+        .word -13228
+        .word 9938          ; '-'
+        .word -1920
+        .word -13228
+        .word 9938          ; '~'
+        .word -768
+        .word -13769
+        .word 9397          ; ':'
+        .word -1536
+        .word -13769
+        .word 9397          ; ';'
+        .word -2304
+        .word -13769
+        .word 9397          ; '!'
+        .word -1536
+        .word -14310
+        .word 8856          ; '*'
+        .word -2688
+        .word -14310
+        .word 8856          ; '='
+        .word -1536
+        .word -14851
+        .word 8315          ; '#'
+        .word -3456
+        .word -14851
+        .word 8315          ; '$'
+        .word -3840
+        .word -15392
+        .word 7774          ; '@'
