@@ -364,6 +364,19 @@ describe('Assembler Unit Tests', () => {
       expect(() => assemble("'''")).toThrow(/malformed character literal/);
     });
 
+    test("the empty char literal '' is rejected as malformed (oracle yields 39; see #1483)", () => {
+      expect(() => assemble("''")).toThrow(/malformed character literal/);
+    });
+
+    test('the empty string .string "" assembles to a lone NUL terminator (parity, #1483)', () => {
+      const a = new Assembler();
+      a.assembleSource('        .start main\nmain:   lea r0, s\n        halt\ns:      .string ""\n',
+        { inputFileName: 'es.a' });
+      expect(a.errorFlag).toBe(false);
+      // s: is the empty string payload — just the null terminator.
+      expect(a.outputBuffer[a.outputBuffer.length - 1]).toBe(0);
+    });
+
     test("isCharLiteral() still accepts multi-character literals (so parse gives the clear error)", () => {
       const a = new Assembler();
       expect(a.isCharLiteral("'ab'")).toBe(true);

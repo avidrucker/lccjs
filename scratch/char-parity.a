@@ -1,0 +1,49 @@
+; char-parity.a — char-literal PARITY cases for OG LCC vs lccjs.
+; Each char literal is stored as a single .word, then printed on its own line.
+; Assemble + run in BOTH tools and diff the output — they must be byte-identical.
+;
+;   node ../src/cli/lcc.js char-parity.a        # lccjs (run from scratch/)
+;   $LCC_ORACLE char-parity.a                     # OG LCC (needs name.nnn here)
+;
+; This file holds ONLY the literals that match in both tools after #1482
+; (strict-by-default char literals):
+;   ';'=59(;)  '-'=45(-)  '/'=47(/)  '\n'=10(LF)  '\r'=13(CR)  '\\'=92(\)
+;
+; The DIVERGENT literals are intentionally NOT here, because lccjs now fails
+; loud on them BY DESIGN (parity_deviations.md §15 + §31) while OG LCC accepts
+; them. Run char-parity-probe.js to see all cases (incl. these) side by side:
+;   'ab' '/;' '/n' '//' '/\'  -> lccjs: "must contain exactly one character"
+;                                 oracle: first char (97/47/47/47/47)
+;   '''                        -> lccjs: "malformed character literal"; oracle 39
+;   ''  (empty char)           -> lccjs: "malformed character literal"; oracle 39
+;   '\;' '\/'                  -> lccjs: "Invalid escape sequence"; oracle 0 / 47
+; The OG values return under the deferred --oracle-compat mode (#1481).
+; .string "" (empty string) is PARITY: both tools emit just the \0 terminator.
+
+        .start main
+main:   ld r0, cSemi
+        aout r0
+        nl
+        ld r0, cDash
+        aout r0
+        nl
+        ld r0, cSlash
+        aout r0
+        nl
+        ld r0, cNL
+        aout r0
+        nl
+        ld r0, cCR
+        aout r0
+        nl
+        ld r0, cBackslash
+        aout r0
+        nl
+        halt
+
+cSemi:       .word ';'
+cDash:       .word '-'
+cSlash:      .word '/'
+cNL:         .word '\n'
+cCR:         .word '\r'
+cBackslash:  .word '\\'

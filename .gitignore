@@ -27,7 +27,14 @@ demos/ptest.a
 demos/ptest.o
 .vscode/*
 test/*.bin
-scratch/
+# scratch/ source test files (.a/.js) are tracked; ignore only generated
+# build artifacts and the per-user author file (#1483).
+scratch/*.e
+scratch/*.lst
+scratch/*.bst
+scratch/*.o
+scratch/*.ep
+scratch/name.nnn
 plusdemos/*.ep
 plusdemos_tests/*.ep
 cit118demos/

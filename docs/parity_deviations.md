@@ -1008,6 +1008,10 @@ escape). OG LCC accepts arbitrarily long char literals and silently uses the
 | `'ab'` | `97` (`'a'`, rest dropped) ✗ | `Character literal must contain exactly one character: 'ab'`, exit 1 ✓ |
 | `'/;'` `'//'` `'/n'` `'/\'` | `47` (first char) ✗ | same error ✓ |
 | `'''` (bare quote) | `39` (quote-as-char) | `malformed character literal`, exit 1 |
+| `''` (empty char) | `39` (same as `'''`) | `malformed character literal`, exit 1 |
+
+The empty **string** `.string ""` is **parity**: both tools assemble it and emit
+only the `\0` terminator (#1483).
 
 **Why BY DESIGN:** silent first-char truncation turns a learner's typo (e.g. a
 two-character paste, or a missing `\` escape) into a subtle wrong value rather than
@@ -1069,3 +1073,4 @@ _None pending._
 | 2026-06-15 | OG BUG §28 added (#1353) | `-d` debugger `c` command: a bare `c` (no operands) segfaults the oracle (exit 139); `c r0` (value omitted) prints `Missing operand` and `c r0 5` works, so the crash is the zero-operand case. LCC.js validates and never crashes (#1349). Drafted upstream report `docs/cuh63-debugger-bare-c-segfault-bug-report.md`; reports_summary row #28; umbrella #1406. Evidence: probe #1348. |
 | 2026-06-16 | BY DESIGN §29 added (#1415) | `potato-input-test` input-rejection findings triaged. LCC.js keeps fail-fast EOF errors for invalid `din`/`hin` instead of matching the oracle's indefinite re-prompt hang. The `sin` finding was reduced from "echo" to newline handling after a prior `din`/`hin`: LCC.js intentionally skips the retained newline so `sin` reads the next logical input line; the oracle stores an empty string. Regression coverage added for `hin` followed by `sin`. |
 | 2026-06-25 | §15 augmented; BY DESIGN §31 added (#1482) | Char literals: multi-character literals (`'ab'`, `'/;'`, `'/\'`) now error with `Character literal must contain exactly one character` instead of silently taking the first char (reverses the first-char-wins default shipped in #1475); `'''` now reports `malformed character literal` instead of the misleading `Bad label`. Unknown escapes inside char literals (`'\;'`, `'\/'`) fold into §15's fail-loud posture. OG first-char-wins value deferred to the `--oracle-compat` mode (#1481). Decisions in #1476/#1479. |
+| 2026-06-25 | §31 empty cases added (#1483) | Empty char `''` joins the §31 family — oracle yields `39` (same as `'''`); lccjs rejects as `malformed character literal`. Empty string `.string ""` is parity (both emit a lone `\0`). The char-parity verification harness (`scratch/char-parity.a`, `scratch/char-parity-probe.js`) is now committed (un-ignored `scratch/`; build artifacts + `name.nnn` stay ignored). |
