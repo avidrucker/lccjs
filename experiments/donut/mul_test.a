@@ -1,0 +1,152 @@
+; mul_test.a — TDD harness for mul_q14 (#1470)
+;
+; Separate, linkable test module. Drives mul_q14 over the golden vectors from
+; gen_mul_vectors.c and prints one result per line; diff against mul_golden.txt.
+;   node src/cli/lcc.js mul.a mul_test.a -o mul_test.e
+;   node src/core/interpreter.js mul_test.e        (wrap both in scripts/lccrun.sh)
+;
+; TOGGLING: each vector is its own "=== TEST k ===" block; comment one out to skip
+; it (and drop its line from mul_golden.txt).
+
+        .extern mul_q14
+        .start main
+
+; ---- run(d, v): print mul_q14(d, v) ----   args: fp+2=d  fp+3=v
+run:    push lr
+        push fp
+        mov  fp, sp
+        ldr  r0, fp, 3       ; v          (push args right-to-left)
+        push r0
+        ldr  r0, fp, 2       ; d
+        push r0
+        bl   mul_q14
+        add  sp, sp, 2
+        dout r0
+        nl
+        mov  sp, fp
+        pop  fp
+        pop  lr
+        ret
+
+main:   push lr
+        push fp
+        mov  fp, sp
+
+; === TEST 0:    2  16971 ->    2 ===
+        ld   r0, k16971
+        push r0
+        mov  r0, 2
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 1:  672  16971 ->  696 ===
+        ld   r0, k16971
+        push r0
+        ld   r0, k672
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 2:  672 -18097 -> -743 ===
+        ld   r0, kn18097
+        push r0
+        ld   r0, k672
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 3:  100 -18097 -> -111 ===
+        ld   r0, kn18097
+        push r0
+        mov  r0, 100
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 4:    2     -1 ->   -1 ===  (rounding toward -inf)
+        mov  r0, -1
+        push r0
+        mov  r0, 2
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 5:  672     -1 ->   -1 ===
+        mov  r0, -1
+        push r0
+        ld   r0, k672
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 6:    2      0 ->    0 ===
+        mov  r0, 0
+        push r0
+        mov  r0, 2
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 7:  672      1 ->    0 ===
+        mov  r0, 1
+        push r0
+        ld   r0, k672
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 8:  500   8192 ->  250 ===
+        ld   r0, k8192
+        push r0
+        ld   r0, k500
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 9:  672  16384 ->  672 ===
+        ld   r0, k16384
+        push r0
+        ld   r0, k672
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 10:   3  -5000 ->   -1 ===
+        ld   r0, kn5000
+        push r0
+        mov  r0, 3
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 11:   1 -18097 ->   -2 ===
+        ld   r0, kn18097
+        push r0
+        mov  r0, 1
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+; === TEST 12:  42  -8192 ->  -21 ===
+        ld   r0, kn8192
+        push r0
+        mov  r0, 42
+        push r0
+        bl   run
+        add  sp, sp, 2
+
+        mov  sp, fp
+        pop  fp
+        pop  lr
+        halt
+
+; ---- constant pool (values outside mov's [-256,255]) ----
+k672:    .word 672
+k500:    .word 500
+k16971:  .word 16971
+kn18097: .word -18097
+k8192:   .word 8192
+k16384:  .word 16384
+kn5000:  .word -5000
+kn8192:  .word -8192

@@ -1,0 +1,102 @@
+; mul.a — mul_q14 helper for the base-LCC donut (#1470, child of #1468)
+;
+;   int16 mul_q14(int16 d, int16 v)   ->   (int16)((d * v) >> 14)
+;
+; Computes the donut's inner-loop fixed-point step  px += d*vxi14 >> 14  exactly,
+; matching C's arithmetic (floor) shift. The 24-bit product (measured max |d*v| =
+; 11,234,802 over a frame) does NOT fit in 16 bits and LCC `mul` keeps only the
+; low 16, so the product is built as a 16-bit DOUBLE WORD (hi:lo) and shifted.
+;
+; Method (d is always > 0 in the donut — measured range [2,672]; v is signed):
+;   1. uv = |v|, remember sign.
+;   2. unsigned 16x16->32 multiply d*uv into (hi:lo) via MSB-first shift-add,
+;      using the carry flag (add sets nzcv) to ripple lo's carry into hi.
+;   3. if v < 0, negate the WHOLE (hi:lo) two's-complement double word — this is
+;      what makes the >>14 a true arithmetic (toward -inf) shift, matching C.
+;      (Computing |result| then negating would round toward zero: off by one on
+;      negatives, e.g. (2,-1) -> C says -1, magnitude-negate says 0.)
+;   4. result = (hi << 2) + (lo >> 14, logical).   [14 is 2 below the word size,
+;      so no general 32-bit variable shift is ever needed.]
+;
+; Library module: exports mul_q14, no .start. Link with a driver, e.g.:
+;   node src/cli/lcc.js mul.a mul_test.a -o mul_test.e
+;
+; Calling convention:  fp+2 = d   fp+3 = v ;  returns r0.
+; Registers: r1=d(shifted away)  r2=uv  r3=hi  r4=lo  r0=scratch
+; Locals:    fp-1 = sign flag    fp-2 = loop counter
+
+        .global mul_q14
+
+mul_q14:
+        push lr
+        push fp
+        mov  fp, sp
+        sub  sp, sp, 2          ; locals: fp-1 (sign), fp-2 (loop count)
+
+        ldr  r1, fp, 2          ; r1 = d   (assumed > 0)
+        ldr  r2, fp, 3          ; r2 = v   (signed)
+
+        ; ---- sign of v; uv = |v| ----
+        mov  r0, 0              ; sign = 0
+        cmp  r2, 0
+        brn  @vneg
+        br   @vsign_done
+@vneg:
+        mov  r0, 1              ; sign = 1
+        not  r2, r2
+        add  r2, r2, 1          ; r2 = |v|
+@vsign_done:
+        str  r0, fp, -1         ; save sign
+
+        ; ---- unsigned multiply d * uv  ->  (hi=r3 : lo=r4) ----
+        mov  r3, 0              ; hi = 0
+        mov  r4, 0              ; lo = 0
+        mov  r0, 16
+        str  r0, fp, -2         ; loop count = 16 bits of d
+@mulloop:
+        ; (hi:lo) <<= 1
+        mov  r0, r4
+        srl  r0, 15            ; r0 = old lo top bit
+        sll  r4, 1            ; lo <<= 1
+        sll  r3, 1            ; hi <<= 1
+        add  r3, r3, r0       ; hi |= old lo top bit
+        ; test d's MSB (sll sets c = bit shifted out)
+        sll  r1, 1
+        brc  @addv
+        br   @after_add
+@addv:
+        add  r4, r4, r2       ; lo += uv  (c = carry out)
+        brc  @hi_inc
+        br   @after_add
+@hi_inc:
+        add  r3, r3, 1        ; carry into hi
+@after_add:
+        ldr  r0, fp, -2
+        sub  r0, r0, 1
+        str  r0, fp, -2
+        cmp  r0, 0
+        brp  @mulloop         ; loop while count > 0
+
+        ; ---- apply sign: if v<0, negate the (hi:lo) double word ----
+        ldr  r0, fp, -1
+        cmp  r0, 0
+        brz  @recon
+        not  r3, r3
+        not  r4, r4
+        add  r4, r4, 1        ; lo = ~lo + 1  (c = carry)
+        brc  @neg_hi
+        br   @recon
+@neg_hi:
+        add  r3, r3, 1        ; hi = ~hi + carry
+@recon:
+        ; ---- result = (hi << 2) + (lo >> 14, logical) ----
+        mov  r0, r3
+        sll  r0, 2           ; hi << 2
+        mov  r1, r4
+        srl  r1, 14          ; lo >> 14 (top 2 bits)
+        add  r0, r0, r1      ; r0 = (d*v) >> 14
+
+        mov  sp, fp
+        pop  fp
+        pop  lr
+        ret
