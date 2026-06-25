@@ -835,6 +835,28 @@ function logCommentPrompt(issue, closingSha, landedSha, emptyClose) {
   log(`Post your closing comment:\n  gh issue comment ${issue} --body "Closed in ${s}. <your summary here>"`);
 }
 
+// Pre-flight branch guard: confirm `branch` is a worktree branch for issue #N,
+// tolerant of BOTH the legacy `<agent>/issue-<N>` form and the new self-describing
+// `br-<agent>/<project>-<lang>-issue-<N>[-<theme>]` form (#1460/#1464). Returns
+// null when OK, else a human-facing error message. Delegating to the canonical,
+// anchored `naming.parseBranch` (instead of the old raw `/\/issue-\d+/` regex)
+// both accepts the new names and rejects slug-embedded `-issue-M` masquerades:
+// the parsed issue is the real leading token, not one buried in the theme slug
+// (#1477; cf. pmtools#50).
+function branchGuardError(branch, issue) {
+  const parsed = naming.parseBranch(branch);
+  if (!parsed) {
+    return `current branch "${branch || '?'}" is not a worktree branch ` +
+      '(expected `<agent>/issue-<N>` or `br-<agent>/<project>-<lang>-issue-<N>`). ' +
+      'Run this from inside the puzzle\'s worktree, not the main checkout.';
+  }
+  if (parsed.issue !== Number(issue)) {
+    return `branch "${branch}" does not match issue #${issue} ` +
+      `(branch is for issue #${parsed.issue}). Wrong worktree?`;
+  }
+  return null;
+}
+
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.issue || !/^\d+$/.test(opts.issue)) {
@@ -846,13 +868,8 @@ function main() {
   // --branch lets the caller pass the branch when invoking from the main
   // checkout (where HEAD is not the puzzle branch). (#379)
   const branch = opts.branch || currentBranch();
-  if (!branch || !/\/issue-\d+/.test(branch)) {
-    die(`current branch "${branch || '?'}" is not a <fruit>/issue-<N> worktree branch. ` +
-        'Run this from inside the puzzle\'s worktree, not the main checkout.');
-  }
-  if (!new RegExp(`/issue-${issue}\\b`).test(branch)) {
-    die(`branch "${branch}" does not match issue #${issue}. Wrong worktree?`);
-  }
+  const guardErr = branchGuardError(branch, issue);
+  if (guardErr) die(guardErr);
 
   // When --branch is supplied, the caller invoked from the main checkout (not
   // the worktree), so npm's CWD survives teardown. Chdir into the worktree
@@ -1107,4 +1124,5 @@ module.exports = {
   logCommentPrompt,
   findParentTrackers,
   scopeAuditDiffCommand,
+  branchGuardError,
 };

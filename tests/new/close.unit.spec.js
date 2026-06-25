@@ -13,6 +13,7 @@ const {
   bodyClosesIssue,
   findParentTrackers,
   scopeAuditDiffCommand,
+  branchGuardError,
 } = require('../../scripts/close');
 
 describe('close.js classifyPushError()', () => {
@@ -1159,5 +1160,54 @@ describe('close.js scopeAuditDiffCommand() — merge-base over tip (#1145)', () 
   test('null/undefined merge-base → fall back (never throws)', () => {
     expect(scopeAuditDiffCommand(null)).toBe('git diff --stat origin/main');
     expect(scopeAuditDiffCommand(undefined)).toBe('git diff --stat origin/main');
+  });
+});
+
+// The pre-flight branch guards (#1477): the close.js:849/:853 raw regexes only
+// matched legacy `<fruit>/issue-<N>` and missed the new self-describing
+// `br-<agent>/<project>-<lang>-issue-<N>` form (#1460/#1464), so `npm run close`
+// died on a pmtools-claimed worktree. branchGuardError() delegates to the
+// canonical, anchored worktree-naming parse, so both forms pass and slug-embedded
+// `-issue-M` masquerades are rejected.
+describe('close.js branchGuardError() — pre-flight branch guards (#1477)', () => {
+  test('legacy <fruit>/issue-N for the matching issue → null (ok)', () => {
+    expect(branchGuardError('banana/issue-1477', '1477')).toBeNull();
+  });
+
+  test('legacy with a theme slug → null (ok)', () => {
+    expect(branchGuardError('banana/issue-1477-fix-the-guards', '1477')).toBeNull();
+  });
+
+  test('new br-<agent>/<project>-<lang>-issue-N → null (the #1477 regression case)', () => {
+    expect(branchGuardError('br-banana/lccjs-js-issue-1477', '1477')).toBeNull();
+  });
+
+  test('new form with a theme slug → null', () => {
+    expect(branchGuardError('br-banana/lccjs-js-issue-1477-foo', '1477')).toBeNull();
+  });
+
+  test('accepts the issue as a number too (matches main() opts.issue string usage)', () => {
+    expect(branchGuardError('br-banana/lccjs-js-issue-1477', 1477)).toBeNull();
+  });
+
+  test('wrong issue number → error message (not null)', () => {
+    const err = branchGuardError('banana/issue-1477', '999');
+    expect(err).toMatch(/does not match issue #999/);
+  });
+
+  test('slug-embedded -issue-M masquerade resolves to the REAL leading issue, not the slug (cf. pmtools#50)', () => {
+    // The real issue is 999; 1477 only appears in the theme slug. Closing #1477
+    // from this branch must be rejected (the old :853 /issue-1477\b/ regex would
+    // have wrongly accepted it).
+    expect(branchGuardError('banana/issue-999-rework-issue-1477-guard', '1477'))
+      .toMatch(/does not match issue #1477/);
+    // ...and closing #999 from it is fine.
+    expect(branchGuardError('banana/issue-999-rework-issue-1477-guard', '999')).toBeNull();
+  });
+
+  test('non-worktree branches and empties → error (not a worktree branch)', () => {
+    for (const b of ['main', 'banana/session', '', null, undefined]) {
+      expect(branchGuardError(b, '1477')).toMatch(/not a worktree branch/);
+    }
   });
 });
