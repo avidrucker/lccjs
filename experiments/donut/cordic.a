@@ -1,0 +1,339 @@
+; cordic.a — length_cordic helper for the base-LCC donut (#1469, child of #1468)
+;
+;   int16 length_cordic(int16 x, int16 y, int16 *x2ptr, int16 y2)
+;
+; Returns |x,y| (CORDIC magnitude, 8 iterations) in r0, and rotates the lighting
+; pair (x2,y2) along for the ride, writing the rotated x2 back through *x2ptr.
+; Direct transcription of cordic16() in gen_cordic_vectors.c (== donut_frame.c's
+; length_cordic, proven 16-bit-safe in donut_B_cordic16.c).
+;
+; This is a LIBRARY module: it exports length_cordic and has no .start. Link it
+; with a driver (e.g. cordic_test.a) via:
+;     node src/cli/lcc.js cordic.a cordic_test.a -o cordic_test.e
+;
+; Calling convention (args nearest fp first):
+;     fp+2 = x     fp+3 = y     fp+4 = x2ptr (address)     fp+5 = y2
+; Returns: r0 = magnitude;  *x2ptr := rotated x2.
+;
+; Registers held across the unrolled loop:
+;     r1 = x    r2 = y    r3 = x2    r4 = y2    r0 = scratch
+;     fp-1 = temp slot (old x as t, then old x2 as t2, within one iteration)
+;
+; The 8 CORDIC iterations are UNROLLED (#1469): sra takes a *constant* shift
+; count, so the per-iteration ">> i" cannot be one variable-count shift. Each
+; block shifts by its literal i; i=0 is an identity shift, so no sra is emitted.
+
+        .global length_cordic
+
+length_cordic:
+        push lr
+        push fp
+        mov  fp, sp
+        sub  sp, sp, 1        ; one local: fp-1 (temp t / t2)
+
+        ldr  r1, fp, 2        ; r1 = x
+        ldr  r2, fp, 3        ; r2 = y
+        ldr  r0, fp, 4        ; r0 = x2ptr
+        ldr  r3, r0, 0        ; r3 = x2 = *x2ptr
+        ldr  r4, fp, 5        ; r4 = y2
+
+        ; if (x < 0) { x = -x; x2 = -x2; }   -- start in right half-plane
+        cmp  r1, 0
+        brn  @neg
+        br   @afterneg
+@neg:
+        not  r1, r1
+        add  r1, r1, 1       ; x = -x
+        not  r3, r3
+        add  r3, r3, 1       ; x2 = -x2
+@afterneg:
+
+        ; ===== iteration i=0  (shift by 0 = identity) =====
+        cmp  r2, 0
+        brn  @yneg0
+        str  r1, fp, -1      ; t = old x
+        add  r1, r1, r2      ; x  += y
+        ldr  r0, fp, -1
+        sub  r2, r2, r0      ; y  -= t
+        str  r3, fp, -1      ; t2 = old x2
+        add  r3, r3, r4      ; x2 += y2
+        ldr  r0, fp, -1
+        sub  r4, r4, r0      ; y2 -= t2
+        br   @end0
+@yneg0:
+        str  r1, fp, -1
+        sub  r1, r1, r2      ; x  -= y
+        ldr  r0, fp, -1
+        add  r2, r2, r0      ; y  += t
+        str  r3, fp, -1
+        sub  r3, r3, r4      ; x2 -= y2
+        ldr  r0, fp, -1
+        add  r4, r4, r0      ; y2 += t2
+@end0:
+
+        ; ===== iteration i=1 =====
+        cmp  r2, 0
+        brn  @yneg1
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 1
+        add  r1, r1, r0      ; x  += y>>1
+        ldr  r0, fp, -1
+        sra  r0, 1
+        sub  r2, r2, r0      ; y  -= t>>1
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 1
+        add  r3, r3, r0      ; x2 += y2>>1
+        ldr  r0, fp, -1
+        sra  r0, 1
+        sub  r4, r4, r0      ; y2 -= t2>>1
+        br   @end1
+@yneg1:
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 1
+        sub  r1, r1, r0      ; x  -= y>>1
+        ldr  r0, fp, -1
+        sra  r0, 1
+        add  r2, r2, r0      ; y  += t>>1
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 1
+        sub  r3, r3, r0      ; x2 -= y2>>1
+        ldr  r0, fp, -1
+        sra  r0, 1
+        add  r4, r4, r0      ; y2 += t2>>1
+@end1:
+
+        ; ===== iteration i=2 =====
+        cmp  r2, 0
+        brn  @yneg2
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 2
+        add  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 2
+        sub  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 2
+        add  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 2
+        sub  r4, r4, r0
+        br   @end2
+@yneg2:
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 2
+        sub  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 2
+        add  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 2
+        sub  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 2
+        add  r4, r4, r0
+@end2:
+
+        ; ===== iteration i=3 =====
+        cmp  r2, 0
+        brn  @yneg3
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 3
+        add  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 3
+        sub  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 3
+        add  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 3
+        sub  r4, r4, r0
+        br   @end3
+@yneg3:
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 3
+        sub  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 3
+        add  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 3
+        sub  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 3
+        add  r4, r4, r0
+@end3:
+
+        ; ===== iteration i=4 =====
+        cmp  r2, 0
+        brn  @yneg4
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 4
+        add  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 4
+        sub  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 4
+        add  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 4
+        sub  r4, r4, r0
+        br   @end4
+@yneg4:
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 4
+        sub  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 4
+        add  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 4
+        sub  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 4
+        add  r4, r4, r0
+@end4:
+
+        ; ===== iteration i=5 =====
+        cmp  r2, 0
+        brn  @yneg5
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 5
+        add  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 5
+        sub  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 5
+        add  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 5
+        sub  r4, r4, r0
+        br   @end5
+@yneg5:
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 5
+        sub  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 5
+        add  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 5
+        sub  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 5
+        add  r4, r4, r0
+@end5:
+
+        ; ===== iteration i=6 =====
+        cmp  r2, 0
+        brn  @yneg6
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 6
+        add  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 6
+        sub  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 6
+        add  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 6
+        sub  r4, r4, r0
+        br   @end6
+@yneg6:
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 6
+        sub  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 6
+        add  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 6
+        sub  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 6
+        add  r4, r4, r0
+@end6:
+
+        ; ===== iteration i=7 =====
+        cmp  r2, 0
+        brn  @yneg7
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 7
+        add  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 7
+        sub  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 7
+        add  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 7
+        sub  r4, r4, r0
+        br   @end7
+@yneg7:
+        str  r1, fp, -1
+        mov  r0, r2
+        sra  r0, 7
+        sub  r1, r1, r0
+        ldr  r0, fp, -1
+        sra  r0, 7
+        add  r2, r2, r0
+        str  r3, fp, -1
+        mov  r0, r4
+        sra  r0, 7
+        sub  r3, r3, r0
+        ldr  r0, fp, -1
+        sra  r0, 7
+        add  r4, r4, r0
+@end7:
+
+        ; ----- final CORDIC-gain correction (×0.625 ≈ 1/0.607) -----
+        ; *x2ptr = (x2>>1) + (x2>>3);   x2 in r3, x dead-for-x2 but still needed below
+        mov  r2, r3
+        sra  r2, 1           ; x2>>1
+        mov  r4, r3
+        sra  r4, 3           ; x2>>3
+        add  r2, r2, r4      ; x2out = (x2>>1)+(x2>>3)
+        ldr  r0, fp, 4       ; r0 = x2ptr
+        str  r2, r0, 0       ; *x2ptr = x2out
+
+        ; return (x>>1) + (x>>3);   x in r1
+        mov  r2, r1
+        sra  r2, 1           ; x>>1
+        mov  r4, r1
+        sra  r4, 3           ; x>>3
+        add  r0, r2, r4      ; r0 = magnitude (return value)
+
+        mov  sp, fp
+        pop  fp
+        pop  lr
+        ret

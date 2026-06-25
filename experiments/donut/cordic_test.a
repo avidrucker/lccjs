@@ -1,0 +1,171 @@
+; cordic_test.a — TDD harness for length_cordic (#1469)
+;
+; A SEPARATE test module (per the issue's "tests in their own modules" steer):
+; it links against the cordic.a library and drives length_cordic over the golden
+; vectors from gen_cordic_vectors.c. For each vector it prints "<mag> <x2out>";
+; diff the run output against experiments/donut/cordic_golden.txt.
+;
+; Build + run (assemble both, link, interpret):
+;     node src/cli/lcc.js cordic.a cordic_test.a -o cordic_test.e
+;     node src/core/interpreter.js cordic_test.e
+;   (wrap both in scripts/lccrun.sh)
+;
+; TOGGLING VALIDATION: each vector is its own clearly-marked block in main
+; (";=== TEST k ===" … "bl run"). Comment out a block to skip just that vector
+; — the others still run. This is the on/off switch for per-vector validation.
+
+        .extern length_cordic
+        .start main
+
+; scratch cell used to pass x2 by reference: holds x2-in before the call,
+; x2-out after it.
+x2cell: .word 0
+
+; ---- run(x, y, x2, y2): call length_cordic, print "mag x2out" ----
+;   args: fp+2=x  fp+3=y  fp+4=x2  fp+5=y2
+run:    push lr
+        push fp
+        mov  fp, sp
+
+        ldr  r0, fp, 4       ; x2 (input)
+        st   r0, x2cell      ; x2cell = x2
+
+        ldr  r0, fp, 5       ; y2          (push args right-to-left)
+        push r0
+        lea  r0, x2cell      ; &x2cell
+        push r0
+        ldr  r0, fp, 3       ; y
+        push r0
+        ldr  r0, fp, 2       ; x
+        push r0
+        bl   length_cordic
+        add  sp, sp, 4       ; pop the 4 args
+
+        dout r0              ; magnitude (return value)
+        mov  r0, 32
+        aout r0              ; space
+        ld   r0, x2cell      ; x2out (written back by length_cordic)
+        dout r0
+        nl
+
+        mov  sp, fp
+        pop  fp
+        pop  lr
+        ret
+
+; ---- main: drive the 8 golden vectors ----
+main:   push lr
+        push fp
+        mov  fp, sp
+
+; === TEST 0:  1000  200   50  -30   ->  1048 43 ===
+        mov  r0, -30
+        push r0
+        mov  r0, 50
+        push r0
+        mov  r0, 200
+        push r0
+        ld   r0, k1000
+        push r0
+        bl   run
+        add  sp, sp, 4
+
+; === TEST 1: -1000  200   50  -30   ->  1048 -59 ===
+        mov  r0, -30
+        push r0
+        mov  r0, 50
+        push r0
+        mov  r0, 200
+        push r0
+        ld   r0, kn1000
+        push r0
+        bl   run
+        add  sp, sp, 4
+
+; === TEST 2:   300 -700 -100   80   ->   783 -117 ===
+        mov  r0, 80
+        push r0
+        mov  r0, -100
+        push r0
+        ld   r0, kn700
+        push r0
+        ld   r0, k300
+        push r0
+        bl   run
+        add  sp, sp, 4
+
+; === TEST 3:  2000 1500    0  400   ->  2573 243 ===
+        ld   r0, k400
+        push r0
+        mov  r0, 0
+        push r0
+        ld   r0, k1500
+        push r0
+        ld   r0, k2000
+        push r0
+        bl   run
+        add  sp, sp, 4
+
+; === TEST 4:   256    0  100  100   ->   263 102 ===
+        mov  r0, 100
+        push r0
+        mov  r0, 100
+        push r0
+        mov  r0, 0
+        push r0
+        ld   r0, k256
+        push r0
+        bl   run
+        add  sp, sp, 4
+
+; === TEST 5:     0  256  100  100   ->   265 103 ===
+        mov  r0, 100
+        push r0
+        mov  r0, 100
+        push r0
+        ld   r0, k256
+        push r0
+        mov  r0, 0
+        push r0
+        bl   run
+        add  sp, sp, 4
+
+; === TEST 6:   -50  -40   10   20   ->    67 -22 ===
+        mov  r0, 20
+        push r0
+        mov  r0, 10
+        push r0
+        mov  r0, -40
+        push r0
+        mov  r0, -50
+        push r0
+        bl   run
+        add  sp, sp, 4
+
+; === TEST 7:  1500 -900 -120   64   ->  1801 -140 ===
+        mov  r0, 64
+        push r0
+        mov  r0, -120
+        push r0
+        ld   r0, kn900
+        push r0
+        ld   r0, k1500
+        push r0
+        bl   run
+        add  sp, sp, 4
+
+        mov  sp, fp
+        pop  fp
+        pop  lr
+        halt
+
+; ---- constant pool (values outside mov's 9-bit [-256,255] range) ----
+k1000:  .word 1000
+kn1000: .word -1000
+k300:   .word 300
+kn700:  .word -700
+k2000:  .word 2000
+k1500:  .word 1500
+k400:   .word 400
+k256:   .word 256
+kn900:  .word -900
