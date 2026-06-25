@@ -290,6 +290,39 @@ describe('Assembler Unit Tests', () => {
     expect(assembler.outputBuffer[3]).toBe('b'.charCodeAt(0));
   });
 
+  test('assembleSource() should treat a literal ; inside a .string as data, not a comment (#1473)', () => {
+    // Comment-stripping must be string-aware: the oracle assembles `.string "a;b"`
+    // and prints `a;b`. lccjs previously split on the first ';' before tokenizing,
+    // mistaking the in-string ';' for a comment and losing the closing quote.
+    const source = '        .start main\nmain:   lea r0, s\n        sout\n        halt\ns:      .string "a;b"\n';
+
+    const assembler = new Assembler();
+
+    expect(() => {
+      assembler.assembleSource(source, { inputFileName: 'semicolonString.a' });
+    }).not.toThrow();
+
+    expect(assembler.errorFlag).toBe(false);
+    // s: is the .string payload — 'a', ';', 'b', then the null terminator.
+    const s = assembler.outputBuffer.slice(-4);
+    expect(s).toEqual(['a'.charCodeAt(0), ';'.charCodeAt(0), 'b'.charCodeAt(0), 0]);
+  });
+
+  test('assembleSource() should still strip a real ; comment that follows a .string literal (#1473)', () => {
+    // A ';' OUTSIDE the quotes is a genuine comment and must be removed.
+    const source = '        .start main\nmain:   lea r0, s\n        halt\ns:      .string "ab"   ; trailing comment\n';
+
+    const assembler = new Assembler();
+
+    expect(() => {
+      assembler.assembleSource(source, { inputFileName: 'stringWithComment.a' });
+    }).not.toThrow();
+
+    expect(assembler.errorFlag).toBe(false);
+    const s = assembler.outputBuffer.slice(-3);
+    expect(s).toEqual(['a'.charCodeAt(0), 'b'.charCodeAt(0), 0]);
+  });
+
   test('assembleSource() should reject multiple labels on the same line under the current LCC.js contract', () => {
     const source = fs.readFileSync(path.join(__dirname, '../fixtures/assembler-unit/multipleLabels.a'), 'utf8');
 

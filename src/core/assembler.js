@@ -667,18 +667,21 @@ class Assembler {
       };
       this.currentListingEntry = listingEntry;
 
-      // Extract the comment substring (everything after ';'), if any
+      // Extract the comment substring (everything after the comment ';'), if any.
+      // Skip any ';' that falls inside a string/char literal so `.string "a;b"`
+      // keeps its semicolon as data, matching the oracle (#1473).
       let comment = '';
-      let semicolonIndex = line.indexOf(';');
+      let semicolonIndex = this.findCommentIndex(line);
       if (semicolonIndex !== -1) {
         // everything after ';'
         comment = line.substring(semicolonIndex + 1).trim();
+        // Remove the comment and trim whitespace
+        line = line.substring(0, semicolonIndex).trim();
+      } else {
+        line = line.trim();
       }
       // Store the comment in the listing entry
       listingEntry.comment = comment;
-      
-      // Remove comments and trim whitespace
-      line = line.split(';')[0].trim();
       if (line === '') {
         // Empty line after removing comments
         if (this.pass === 2) {
@@ -915,6 +918,33 @@ class Assembler {
     this.startAddress = 0;     // or your choice
     this.startLabel = null;    // No .start directive in raw bin files
   } 
+
+  // Return the index of the line-comment ';' that is NOT inside a string or
+  // char literal, or -1 if the line has no comment. Mirrors tokenizeLine's
+  // string/escape tracking so comment-stripping and tokenizing agree (#1473).
+  findCommentIndex(line) {
+    let inString = false;
+    let stringDelimiter = '';
+    let escape = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (!inString) {
+        if (char === '"' || char === "'") {
+          inString = true;
+          stringDelimiter = char;
+        } else if (char === ';') {
+          return i;
+        }
+      } else if (escape) {
+        escape = false;
+      } else if (char === '\\') {
+        escape = true;
+      } else if (char === stringDelimiter) {
+        inString = false;
+      }
+    }
+    return -1;
+  }
 
   tokenizeLine(line) {
     let tokens = [];
