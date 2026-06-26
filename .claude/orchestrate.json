@@ -16,7 +16,7 @@
   },
   "storage": {
     "dbPath": "~/.lccjs/lccjs.db",
-    "velocity": { "enabled": true, "csvMirror": "docs/puzzle-velocity.csv", "logCommand": "npm run velocity:log" },
-    "errors": { "enabled": true, "csvMirror": "docs/errors.csv", "logCommand": "npm run error:log" }
+    "velocity": { "enabled": true, "csvMirror": "docs/puzzle-velocity.csv", "logCommand": "pmtools velocity log" },
+    "errors": { "enabled": true, "csvMirror": "docs/errors.csv", "logCommand": "pmtools error log" }
   }
 }
