@@ -8,11 +8,18 @@
     "statusCommand": "pmtools status",
     "claimCommand": "pmtools claim --lane-check --copy-env",
     "preflightCommand": "pmtools preflight",
-    "closeCommand": "npm run close"
+    "closeCommand": "pmtools close"
   },
   "advisory": {
     "clusterFile": "puzzle-clusters.csv",
     "sequencingDocRef": "docs/learnings/today-i-learned-2026-06-05-dragonfruit.md"
+  },
+  "close": {
+    "autoResolve": {
+      "unionFiles": ["docs/puzzle-clusters.csv"],
+      "markdownIndexes": ["docs/learnings/README.md"]
+    },
+    "updateParentTrackers": true
   },
   "storage": {
     "dbPath": "~/.lccjs/lccjs.db",
