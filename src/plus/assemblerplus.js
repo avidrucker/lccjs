@@ -9,9 +9,17 @@ const { OPCODE_EXT: OP_EXT } = require('../core/constants');
 const {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
   TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC,
-  TRAP_BEEP, TRAP_DING, TRAP_BOOP, TRAP_WHO,
+  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG, TRAP_WHO,
   EOP_RAND,
 } = require('./constants');
+
+const SOUND_ALIAS_SLOTS = {
+  ding: 0,
+  deep: 1,
+  bop: 2,
+  doink: 3,
+  beep: 4,
+};
 
 class AssemblerPlus extends Assembler {
   constructor() {
@@ -26,9 +34,12 @@ class AssemblerPlus extends Assembler {
     t['rand']   = { encoder: (ops) => this.assembleRAND(ops),              operandShape: 'dr, sr' };
     t['millis'] = { encoder: (ops) => this.assembleTrap(ops, TRAP_MILLIS), operandShape: '[sr]' };
     t['resetc'] = { encoder: (ops) => this.assembleTrap(ops, TRAP_RESETC), operandShape: '[sr]' };
-    t['beep']   = { encoder: (_ops) => this.assembleTrap([], TRAP_BEEP),  operandShape: '(none)' };
-    t['ding']   = { encoder: (_ops) => this.assembleTrap([], TRAP_DING),  operandShape: '(none)' };
-    t['boop']   = { encoder: (_ops) => this.assembleTrap([], TRAP_BOOP),  operandShape: '(none)' };
+    t['sound']  = { encoder: (ops) => this.assembleSound(ops),            operandShape: 'sr' };
+    t['ding']   = { encoder: (_ops) => this.assembleSoundAlias('ding'),   operandShape: '(none)' };
+    t['deep']   = { encoder: (_ops) => this.assembleSoundAlias('deep'),   operandShape: '(none)' };
+    t['bop']    = { encoder: (_ops) => this.assembleSoundAlias('bop'),    operandShape: '(none)' };
+    t['doink']  = { encoder: (_ops) => this.assembleSoundAlias('doink'),  operandShape: '(none)' };
+    t['beep']   = { encoder: (_ops) => this.assembleSoundAlias('beep'),   operandShape: '(none)' };
     t['who']    = { encoder: (_ops) => this.assembleTrap([], TRAP_WHO),   operandShape: '(none)' };
     t['whodis'] = { encoder: (_ops) => this.assembleTrap([], TRAP_WHO),   operandShape: '(none)' };
   }
@@ -148,6 +159,37 @@ class AssemblerPlus extends Assembler {
     };
     let macword = OP_EXT | (dr << 9) | (sr1 << 6) | EOP_RAND;
     return macword;
+  }
+
+  assembleSound(operands) {
+    if (operands.length !== 1) {
+      this.error('Missing sound operand');
+      return null;
+    }
+    const operand = operands[0];
+    if (this.isRegister(operand)) {
+      const sr = this.getRegister(operand);
+      return this.assembleTrap([`r${sr}`], TRAP_SOUND);
+    }
+
+    const slot = Number(operand);
+    if (!Number.isInteger(slot)) {
+      this.error('sound operand must be a register or slot number');
+      return null;
+    }
+    return this.assembleSoundLiteral(slot);
+  }
+
+  assembleSoundAlias(alias) {
+    return this.assembleSoundLiteral(SOUND_ALIAS_SLOTS[alias]);
+  }
+
+  assembleSoundLiteral(slot) {
+    if (slot < 0 || slot > 4) {
+      this.error('sound slot out of range');
+      return null;
+    }
+    return this.assembleTrap([`r${slot}`], TRAP_SOUND) | TRAP_SOUND_LITERAL_FLAG;
   }
 
   // Extend the core valid-directive pool with .lccplus so the verbose

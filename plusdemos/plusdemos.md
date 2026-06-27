@@ -61,20 +61,25 @@ The LCC+js demos showcase the capabilities of the LCC+js toolchain as a real-tim
     - **Description:** A one-shot single-round Rock-Paper-Scissors game. The player presses `1`/`2`/`3` to choose Rock/Paper/Scissors; the computer's choice is sampled uniformly via `rand 1, 3` (seeded with `millis` at startup); the program prints both choices and the winner, then offers a `y`/`n` play-again prompt.
     - **Highlights:** The simplest "vs computer" demo — exercises the LCC+ RNG (`millis` + `srand` + `rand`) for the AI move, `nbain` polling for blocking single-key input, and `clear` for the per-round redraw. Win detection uses the `(player - computer) mod 3` trick: tie if 0, player wins if 1, computer wins if 2.
 
-12. **`beep` Trap Showcase** (`beep.ap`)
+12. **`sound` Trap Showcase** (`sound.ap`)
 
-    - **Description:** Prints a one-line banner, then invokes the no-operand `beep` trap, which emits a single ASCII BEL byte (`\x07`) to stdout — the terminal bell.
-    - **Highlights:** The smallest possible LCC+ trap demo. The BEL byte is invisible in captured output; pipe through `od -c` to confirm the `\a` / `007`.
+    - **Description:** Plays the five configured LCC+ sound slots with literal `sound 0` through `sound 4`, then shows register-driven playback with `sound r1` after loading `r1` with `4`.
+    - **Highlights:** Demonstrates the single sound-producing trap and its slot mapping: `0` ding, `1` deep, `2` bop, `3` doink, `4` beep. Each slot checks `.env` first, then built-in desktop-sound defaults, then ASCII BEL.
 
-13. **`ding` Trap Showcase** (`ding.ap`)
+13. **`beep` Alias Showcase** (`beep.ap`)
 
-    - **Description:** Identical in spirit to `beep.ap`, but invokes the `ding` trap. `ding` is currently an alias of `beep` (also emits BEL), so this demo proves the alias assembles and runs through its own mnemonic.
-    - **Highlights:** Illustrates that LCC+ aliases resolve at assemble time — `beep` and `ding` encode to the same trap, so no interpreter branching is needed (the docs note the two may diverge in a future release).
+    - **Description:** Prints a one-line banner, then invokes `beep`, the no-operand alias for `sound 4`.
+    - **Highlights:** Shows the source-compatible alias for the fifth sound slot.
 
-14. **`boop` Trap Showcase** (`boop.ap`)
+14. **`ding` Alias Showcase** (`ding.ap`)
 
-    - **Description:** Prints a banner, then invokes the `boop` trap, which writes the literal string `"boop\n"` to stdout — a tiny, *visible* counterpart to the (invisible) BEL emitted by `beep`/`ding`.
-    - **Highlights:** The simplest trap whose effect is directly observable in plain output, with no `od -c` needed.
+    - **Description:** Prints a one-line banner, then invokes `ding`, the no-operand alias for `sound 0`.
+    - **Highlights:** Confirms the named alias path for the first sound slot.
+
+15. **`bop` Alias Showcase** (`boop.ap`)
+
+    - **Description:** Prints a banner, then invokes `bop`, the no-operand alias for `sound 2`.
+    - **Highlights:** Keeps the historical `boop.ap` demo file while demonstrating the new `bop` alias.
 
 ---
 

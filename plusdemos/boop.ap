@@ -1,10 +1,11 @@
 ; boop.ap: demonstrates the LCC+ `boop` trap.
-; `boop` takes no operands and writes the literal string "boop\n" to stdout — a
-; tiny, visible counterpart to the (invisible) BEL emitted by beep/ding.
+; `bop` is the LCC+ sound alias; `boop` was retired in favor of five configured
+; sound slots. This demo uses `bop`, which aliases to `sound 2`.
 ; Run:  node src/plus/lccplus.js plusdemos/boop.ap
         .lccplus
         lea r0, msg
         sout r0
-        boop            ; writes the literal string "boop\n" to stdout
+        nl
+        bop             ; alias for sound 2
         halt
-msg:    .string "boop.ap: the next line is written by the boop trap -> "
+msg:    .string "boop.ap: playing the bop sound slot..."

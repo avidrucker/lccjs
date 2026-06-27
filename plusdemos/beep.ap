@@ -1,12 +1,11 @@
 ; beep.ap: demonstrates the LCC+ `beep` trap.
-; `beep` takes no operands and emits a single ASCII BEL byte (\x07) to stdout,
-; which most terminals render as an audible/visual bell. The BEL byte itself is
-; invisible in captured output — pipe through `od -c` to see the \a / 007.
+; `beep` is an alias for `sound 4`: it plays the configured beep sound file,
+; then falls back to a desktop default, then ASCII BEL (\x07).
 ; Run:  node src/plus/lccplus.js plusdemos/beep.ap
         .lccplus
         lea r0, msg
         sout r0
         nl
-        beep            ; emit ASCII BEL (\x07) — the terminal bell
+        beep            ; alias for sound 4
         halt
-msg:    .string "beep.ap: ringing the terminal bell (BEL)..."
+msg:    .string "beep.ap: playing the beep sound slot..."

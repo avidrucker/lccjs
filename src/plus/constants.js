@@ -9,10 +9,9 @@ const TRAP_CURSOR = 0x00FC;
 const TRAP_SRAND  = 0x00FD;
 const TRAP_MILLIS = 0x00FE;
 const TRAP_RESETC = 0x00FF;
-const TRAP_BEEP   = 0x00F8;
-const TRAP_DING   = 0x00F7;
-const TRAP_BOOP   = 0x00F6;
+const TRAP_SOUND  = 0x00F8;
 const TRAP_WHO    = 0x00F5;
+const TRAP_SOUND_LITERAL_FLAG = 0x0100;
 
 // LCC+ extended sub-opcode — reuses the EOP slot above EOP_SEXT (0x0D)
 const EOP_RAND = 0x0E;
@@ -20,6 +19,6 @@ const EOP_RAND = 0x0E;
 module.exports = {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
   TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC,
-  TRAP_BEEP, TRAP_DING, TRAP_BOOP, TRAP_WHO,
+  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG, TRAP_WHO,
   EOP_RAND,
 };

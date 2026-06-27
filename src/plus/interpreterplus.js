@@ -4,6 +4,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 // const ansiEscapes = require('ansi-escapes');
 const Interpreter = require('../core/interpreter.js');
 const { InvalidExecutableFormatError } = require('../utils/errors');
@@ -16,13 +17,88 @@ const { TRAP_HALT, TRAP_BP } = require('../core/constants');
 const {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
   TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC,
-  TRAP_BEEP, TRAP_DING, TRAP_BOOP, TRAP_WHO,
+  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG, TRAP_WHO,
   EOP_RAND,
 } = require('./constants');
 
 // Number of interpreter steps executed per setImmediate tick in runAsync().
 // Tuned for reasonable UI responsiveness in .ap games; adjust if lag is observed.
 const ASYNC_BATCH_SIZE = 500;
+
+const SOUND_SLOTS = [
+  {
+    name: 'ding',
+    envVar: 'LCCPLUS_SOUND_DING',
+    defaults: ['/usr/share/sounds/freedesktop/stereo/complete.oga'],
+  },
+  {
+    name: 'deep',
+    envVar: 'LCCPLUS_SOUND_DEEP',
+    defaults: ['/usr/share/sounds/freedesktop/stereo/dialog-warning.oga'],
+  },
+  {
+    name: 'bop',
+    envVar: 'LCCPLUS_SOUND_BOP',
+    defaults: ['/usr/share/sounds/freedesktop/stereo/message-new-instant.oga'],
+  },
+  {
+    name: 'doink',
+    envVar: 'LCCPLUS_SOUND_DOINK',
+    defaults: ['/usr/share/sounds/freedesktop/stereo/bell.oga'],
+  },
+  {
+    name: 'beep',
+    envVar: 'LCCPLUS_SOUND_BEEP',
+    defaults: ['/usr/share/sounds/LinuxMint/stereo/system-ready.ogg'],
+  },
+];
+
+const SOUND_PLAYERS = [
+  { command: 'paplay', args: (filePath) => [filePath] },
+  { command: 'canberra-gtk-play', args: (filePath) => ['--file', filePath] },
+  { command: 'ffplay', args: (filePath) => ['-nodisp', '-autoexit', '-loglevel', 'quiet', filePath] },
+  { command: 'aplay', args: (filePath) => [filePath] },
+];
+
+let dotenvLoaded = false;
+
+function loadDotenvOnce() {
+  if (dotenvLoaded) return;
+  dotenvLoaded = true;
+  try {
+    require('dotenv').config({ path: path.resolve(process.cwd(), '.env'), quiet: true });
+  } catch (_) {
+    // dotenv is a local convenience; sound fallbacks still work without it.
+  }
+}
+
+function firstExistingSoundPath(slot) {
+  const envPath = process.env[slot.envVar];
+  const candidates = envPath ? [envPath, ...slot.defaults] : slot.defaults;
+  return candidates.find((candidate) => {
+    try {
+      return fs.existsSync(candidate);
+    } catch (_) {
+      return false;
+    }
+  });
+}
+
+function playSoundFile(filePath) {
+  for (const player of SOUND_PLAYERS) {
+    const result = spawnSync(player.command, player.args(filePath), {
+      stdio: 'ignore',
+      timeout: 5000,
+    });
+    if (!result.error && result.status === 0) {
+      return true;
+    }
+    if (result.error && result.error.code !== 'ENOENT') {
+      continue;
+    }
+  }
+  return false;
+}
 
 function resetProcessStdin() {
   // setRawMode is TTY-only; off a TTY there is no raw mode to leave and no
@@ -65,6 +141,7 @@ function fatalExit(message, code = 1) {
 class InterpreterPlus extends Interpreter {
   constructor() {
     super();
+    loadDotenvOnce();
     this.keyQueue = []; // For non-blocking input
     this.nonBlockingInput = true; // Default to non-blocking
     this.seed = 0; // Seed for random number generator
@@ -411,14 +488,8 @@ class InterpreterPlus extends Interpreter {
       case TRAP_RESETC: // resetc
         this.executeResetCursor();
         break;
-      case TRAP_BEEP: // beep
-        this.executeBeep();
-        break;
-      case TRAP_DING: // ding
-        this.executeDing();
-        break;
-      case TRAP_BOOP: // boop
-        this.executeBoop();
+      case TRAP_SOUND: // sound r0..r4
+        this.executeSound();
         break;
       case TRAP_WHO: // who / whodis
         this.executeWho();
@@ -538,17 +609,23 @@ class InterpreterPlus extends Interpreter {
     this.screenManipulated = true; // cursor moved — restore before an error print (#1032)
   }
 
-  executeBeep() {
+  executeSound() {
+    const slotIndex = (this.ir & TRAP_SOUND_LITERAL_FLAG) ? this.sr : this.r[this.sr];
+    const slot = SOUND_SLOTS[slotIndex];
+    if (!slot) {
+      process.stdout.write('\x07');
+      return;
+    }
+
+    const filePath = firstExistingSoundPath(slot);
+    if (filePath && this.playSoundFile(filePath)) {
+      return;
+    }
     process.stdout.write('\x07');
   }
 
-  executeDing() {
-    process.stdout.write('\x07');
-  }
-
-
-  executeBoop() {
-    process.stdout.write('boop\n');
+  playSoundFile(filePath) {
+    return playSoundFile(filePath);
   }
 
   executeWho() {
@@ -569,3 +646,4 @@ if (require.main === module) {
 }
 
 module.exports = InterpreterPlus;
+module.exports.SOUND_SLOTS = SOUND_SLOTS;

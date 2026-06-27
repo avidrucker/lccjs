@@ -3,9 +3,9 @@
 /**
  * @file interpreterplus.extension-traps.unit.spec.js
  *
- * Unit tests for the five LCC+ extension trap handlers that have no dedicated
+ * Unit tests for the LCC+ extension trap handlers that have no dedicated
  * coverage: sleep (TRAP_SLEEP), nbain (TRAP_NBAIN), cursor (TRAP_CURSOR),
- * millis (TRAP_MILLIS), resetc (TRAP_RESETC).
+ * millis (TRAP_MILLIS), resetc (TRAP_RESETC), sound (TRAP_SOUND), who.
  *
  * Test strategy: instantiate InterpreterPlus, set dr/sr and r[] directly (the
  * same approach used in interpreterplus.unit.spec.js for rand/srand), then call
@@ -13,8 +13,15 @@
  * async game loop — startNonBlockingLoop is mocked wherever sleep would invoke it.
  */
 
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const InterpreterPlus = require('../../src/plus/interpreterplus');
-const { TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR, TRAP_MILLIS, TRAP_RESETC, TRAP_BEEP, TRAP_DING, TRAP_BOOP, TRAP_WHO } = require('../../src/plus/constants');
+const { SOUND_SLOTS } = InterpreterPlus;
+const {
+  TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR, TRAP_MILLIS, TRAP_RESETC,
+  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG, TRAP_WHO,
+} = require('../../src/plus/constants');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -330,89 +337,96 @@ describe(`InterpreterPlus — executeResetCursor / resetc (TRAP_RESETC = 0x${TRA
 });
 
 // ---------------------------------------------------------------------------
-// beep (TRAP_BEEP = 0xF8)
+// sound (TRAP_SOUND = 0xF8)
 // ---------------------------------------------------------------------------
 
-describe(`InterpreterPlus — executeBeep / beep (TRAP_BEEP = 0x${TRAP_BEEP.toString(16).toUpperCase()})`, () => {
+describe(`InterpreterPlus — executeSound / sound (TRAP_SOUND = 0x${TRAP_SOUND.toString(16).toUpperCase()})`, () => {
+  const originalEnv = { ...process.env };
+  const originalPath = process.env.PATH;
+  const originalDefaults = SOUND_SLOTS.map((slot) => slot.defaults.slice());
   let writeSpy;
+
   beforeEach(() => {
+    for (const slot of SOUND_SLOTS) {
+      delete process.env[slot.envVar];
+      slot.defaults = [];
+    }
+    process.env.PATH = '/tmp/lccjs-no-sound-player';
     writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
   });
-  afterEach(() => writeSpy.mockRestore());
 
-  test('writes ASCII BEL to stdout', () => {
+  afterEach(() => {
+    writeSpy.mockRestore();
+    for (const slot of SOUND_SLOTS) {
+      delete process.env[slot.envVar];
+    }
+    Object.assign(process.env, originalEnv);
+    process.env.PATH = originalPath;
+    SOUND_SLOTS.forEach((slot, index) => {
+      slot.defaults = originalDefaults[index].slice();
+    });
+  });
+
+  test.each([
+    [0, 'ding'],
+    [1, 'deep'],
+    [2, 'bop'],
+    [3, 'doink'],
+    [4, 'beep'],
+  ])('literal slot %i (%s) falls back to ASCII BEL when no file is configured', (slotIndex) => {
     const ip = makeIp();
-    ip.executeBeep();
+    ip.ir = TRAP_SOUND_LITERAL_FLAG;
+    ip.sr = slotIndex;
+
+    ip.executeSound();
+
     expect(writeSpy).toHaveBeenCalledWith('\x07');
     expect(writeSpy).toHaveBeenCalledTimes(1);
   });
 
-  test('takes no register operand — does not read dr or sr', () => {
+  test('register form reads the slot number from the register value', () => {
     const ip = makeIp();
-    ip.r.fill(0xFFFF);
-    ip.dr = 3;
-    ip.sr = 5;
-    ip.executeBeep();
-    expect(ip.r[3]).toBe(0xFFFF);
-    expect(ip.r[5]).toBe(0xFFFF);
-  });
-});
+    ip.ir = 0;
+    ip.sr = 2;
+    ip.r[2] = 4;
 
-// ---------------------------------------------------------------------------
-// ding (TRAP_DING = 0xF7)
-// ---------------------------------------------------------------------------
+    ip.executeSound();
 
-describe(`InterpreterPlus — executeDing / ding (TRAP_DING = 0x${TRAP_DING.toString(16).toUpperCase()})`, () => {
-  let writeSpy;
-  beforeEach(() => {
-    writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
-  });
-  afterEach(() => writeSpy.mockRestore());
-
-  test('writes ASCII BEL to stdout', () => {
-    const ip = makeIp();
-    ip.executeDing();
     expect(writeSpy).toHaveBeenCalledWith('\x07');
     expect(writeSpy).toHaveBeenCalledTimes(1);
   });
 
-  test('takes no register operand — does not read dr or sr', () => {
-    const ip = makeIp();
-    ip.r.fill(0xFFFF);
-    ip.dr = 2;
-    ip.sr = 4;
-    ip.executeDing();
-    expect(ip.r[2]).toBe(0xFFFF);
-    expect(ip.r[4]).toBe(0xFFFF);
+  test('env-configured sound path is sent to the first available player', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-sound-'));
+    try {
+      const fakeSound = path.join(tmpDir, 'ding.oga');
+      fs.writeFileSync(fakeSound, 'not-real-audio');
+
+      process.env.LCCPLUS_SOUND_DING = fakeSound;
+
+      const ip = makeIp();
+      ip.playSoundFile = jest.fn().mockReturnValue(true);
+      ip.ir = TRAP_SOUND_LITERAL_FLAG;
+      ip.sr = 0;
+      ip.executeSound();
+
+      expect(ip.playSoundFile).toHaveBeenCalledWith(fakeSound);
+      expect(writeSpy).not.toHaveBeenCalled();
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
-});
 
-// ---------------------------------------------------------------------------
-// boop (TRAP_BOOP = 0xF6)
-// ---------------------------------------------------------------------------
-
-describe(`InterpreterPlus — executeBoop / boop (TRAP_BOOP = 0x${TRAP_BOOP.toString(16).toUpperCase()})`, () => {
-  let writeSpy;
-  beforeEach(() => {
-    writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
-  });
-  afterEach(() => writeSpy.mockRestore());
-
-  test('writes "boop\\n" to stdout', () => {
+  test('unknown sound slots are non-fatal and fall back to BEL', () => {
     const ip = makeIp();
-    ip.executeBoop();
-    expect(writeSpy).toHaveBeenCalledWith('boop\n');
+    ip.ir = 0;
+    ip.sr = 7;
+    ip.r[7] = 9;
+
+    ip.executeSound();
+
+    expect(writeSpy).toHaveBeenCalledWith('\x07');
     expect(writeSpy).toHaveBeenCalledTimes(1);
-  });
-
-  test('takes no register operand — does not read dr or sr', () => {
-    const ip = makeIp();
-    ip.r.fill(0xFFFF);
-    ip.dr = 1;
-    ip.sr = 6;
-    ip.executeBoop();
-    expect(ip.r[1]).toBe(0xFFFF);
-    expect(ip.r[6]).toBe(0xFFFF);
   });
 });
 
