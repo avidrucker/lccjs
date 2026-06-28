@@ -2,13 +2,15 @@
 
 These WAV files are project-owned default sounds for the LCC+ `sound` trap slots:
 
-| Slot | Alias | File |
-|---:|---|---|
-| 0 | `ding` | `ding.wav` |
-| 1 | `deep` | `deep.wav` |
-| 2 | `bop` | `bop.wav` |
-| 3 | `doink` | `doink.wav` |
-| 4 | `beep` | `beep.wav` |
+| Slot | Alias      | File            |
+|-----:|------------|-----------------|
+|    0 | `ding`     | `ding.wav`      |
+|    1 | `doink`    | `doink.wav`     |
+|    2 | `beep`     | `beep.wav`      |
+|    3 | `ping`     | `ping.wav`      |
+|    4 | `popsound` | `popsound.wav`  |
+|    5 | `softbeep` | `softbeep.wav`  |
+|    6 | `bop`      | `bop.wav`       |
 
 ## Provenance
 

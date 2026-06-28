@@ -374,10 +374,12 @@ describe(`InterpreterPlus — executeSound / sound (TRAP_SOUND = 0x${TRAP_SOUND.
 
   test.each([
     [0, 'ding'],
-    [1, 'deep'],
-    [2, 'bop'],
-    [3, 'doink'],
-    [4, 'beep'],
+    [1, 'doink'],
+    [2, 'beep'],
+    [3, 'ping'],
+    [4, 'popsound'],
+    [5, 'softbeep'],
+    [6, 'bop'],
   ])('literal slot %i (%s) falls back to ASCII BEL when no file is configured', (slotIndex) => {
     const ip = makeIp();
     ip.ir = TRAP_SOUND_LITERAL_FLAG;

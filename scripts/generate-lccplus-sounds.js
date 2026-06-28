@@ -10,10 +10,12 @@ const OUT_DIR = path.resolve(__dirname, '..', 'assets', 'sounds', 'lccplus');
 
 const SOUNDS = [
   { file: 'ding.wav', frequencies: [880, 1320], durationMs: 180 },
-  { file: 'deep.wav', frequencies: [196, 147], durationMs: 260 },
-  { file: 'bop.wav', frequencies: [392], durationMs: 120 },
   { file: 'doink.wav', frequencies: [330, 247], durationMs: 190 },
   { file: 'beep.wav', frequencies: [1047], durationMs: 140 },
+  { file: 'ping.wav', frequencies: [660, 880], durationMs: 160 },
+  { file: 'popsound.wav', frequencies: [523, 784], durationMs: 130 },
+  { file: 'softbeep.wav', frequencies: [440, 330], durationMs: 200 },
+  { file: 'bop.wav', frequencies: [392], durationMs: 120 },
 ];
 
 function writeAscii(buffer, offset, text) {

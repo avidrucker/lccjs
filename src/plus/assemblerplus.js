@@ -15,10 +15,12 @@ const {
 
 const SOUND_ALIAS_SLOTS = {
   ding: 0,
-  deep: 1,
-  bop: 2,
-  doink: 3,
-  beep: 4,
+  doink: 1,
+  beep: 2,
+  ping: 3,
+  popsound: 4,
+  softbeep: 5,
+  bop: 6,
 };
 
 class AssemblerPlus extends Assembler {
@@ -35,11 +37,13 @@ class AssemblerPlus extends Assembler {
     t['millis'] = { encoder: (ops) => this.assembleTrap(ops, TRAP_MILLIS), operandShape: '[sr]' };
     t['resetc'] = { encoder: (ops) => this.assembleTrap(ops, TRAP_RESETC), operandShape: '[sr]' };
     t['sound']  = { encoder: (ops) => this.assembleSound(ops),            operandShape: 'sr' };
-    t['ding']   = { encoder: (_ops) => this.assembleSoundAlias('ding'),   operandShape: '(none)' };
-    t['deep']   = { encoder: (_ops) => this.assembleSoundAlias('deep'),   operandShape: '(none)' };
-    t['bop']    = { encoder: (_ops) => this.assembleSoundAlias('bop'),    operandShape: '(none)' };
-    t['doink']  = { encoder: (_ops) => this.assembleSoundAlias('doink'),  operandShape: '(none)' };
-    t['beep']   = { encoder: (_ops) => this.assembleSoundAlias('beep'),   operandShape: '(none)' };
+    t['ding']     = { encoder: (_ops) => this.assembleSoundAlias('ding'),     operandShape: '(none)' };
+    t['doink']    = { encoder: (_ops) => this.assembleSoundAlias('doink'),    operandShape: '(none)' };
+    t['beep']     = { encoder: (_ops) => this.assembleSoundAlias('beep'),     operandShape: '(none)' };
+    t['ping']     = { encoder: (_ops) => this.assembleSoundAlias('ping'),     operandShape: '(none)' };
+    t['popsound'] = { encoder: (_ops) => this.assembleSoundAlias('popsound'), operandShape: '(none)' };
+    t['softbeep'] = { encoder: (_ops) => this.assembleSoundAlias('softbeep'), operandShape: '(none)' };
+    t['bop']      = { encoder: (_ops) => this.assembleSoundAlias('bop'),      operandShape: '(none)' };
     t['who']    = { encoder: (_ops) => this.assembleTrap([], TRAP_WHO),   operandShape: '(none)' };
     t['whodis'] = { encoder: (_ops) => this.assembleTrap([], TRAP_WHO),   operandShape: '(none)' };
   }
@@ -185,7 +189,7 @@ class AssemblerPlus extends Assembler {
   }
 
   assembleSoundLiteral(slot) {
-    if (slot < 0 || slot > 4) {
+    if (slot < 0 || slot > 6) {
       this.error('sound slot out of range');
       return null;
     }

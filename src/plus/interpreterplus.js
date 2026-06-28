@@ -26,24 +26,17 @@ const {
 const ASYNC_BATCH_SIZE = 500;
 const BUNDLED_SOUND_DIR = path.resolve(__dirname, '../../assets/sounds/lccplus');
 
+// Sound slot table — index = sound code used by the `sound` trap.
+// Override any slot via its LCCPLUS_SOUND_* env var (absolute path to a
+// .wav/.oga/.ogg file). When SOUND_FILES_FROM_SYSTEM=1, the osDefaults
+// paths are tried before the bundled fallback; otherwise only the bundled
+// WAV is used. See docs/lccplus-isa.md § Sounds.
 const SOUND_SLOTS = [
   {
     name: 'ding',
     envVar: 'LCCPLUS_SOUND_DING',
     bundled: path.join(BUNDLED_SOUND_DIR, 'ding.wav'),
     osDefaults: ['/usr/share/sounds/freedesktop/stereo/complete.oga'],
-  },
-  {
-    name: 'deep',
-    envVar: 'LCCPLUS_SOUND_DEEP',
-    bundled: path.join(BUNDLED_SOUND_DIR, 'deep.wav'),
-    osDefaults: ['/usr/share/sounds/freedesktop/stereo/dialog-warning.oga'],
-  },
-  {
-    name: 'bop',
-    envVar: 'LCCPLUS_SOUND_BOP',
-    bundled: path.join(BUNDLED_SOUND_DIR, 'bop.wav'),
-    osDefaults: ['/usr/share/sounds/freedesktop/stereo/message-new-instant.oga'],
   },
   {
     name: 'doink',
@@ -55,7 +48,31 @@ const SOUND_SLOTS = [
     name: 'beep',
     envVar: 'LCCPLUS_SOUND_BEEP',
     bundled: path.join(BUNDLED_SOUND_DIR, 'beep.wav'),
+    osDefaults: ['/usr/share/sounds/freedesktop/stereo/phone-outgoing-calling.oga'],
+  },
+  {
+    name: 'ping',
+    envVar: 'LCCPLUS_SOUND_PING',
+    bundled: path.join(BUNDLED_SOUND_DIR, 'ping.wav'),
     osDefaults: ['/usr/share/sounds/LinuxMint/stereo/system-ready.ogg'],
+  },
+  {
+    name: 'popsound',
+    envVar: 'LCCPLUS_SOUND_POPSOUND',
+    bundled: path.join(BUNDLED_SOUND_DIR, 'popsound.wav'),
+    osDefaults: ['/usr/share/sounds/freedesktop/stereo/dialog-information.oga'],
+  },
+  {
+    name: 'softbeep',
+    envVar: 'LCCPLUS_SOUND_SOFTBEEP',
+    bundled: path.join(BUNDLED_SOUND_DIR, 'softbeep.wav'),
+    osDefaults: ['/usr/share/sounds/freedesktop/stereo/dialog-warning.oga'],
+  },
+  {
+    name: 'bop',
+    envVar: 'LCCPLUS_SOUND_BOP',
+    bundled: path.join(BUNDLED_SOUND_DIR, 'bop.wav'),
+    osDefaults: ['/usr/share/sounds/freedesktop/stereo/message.oga'],
   },
 ];
 
