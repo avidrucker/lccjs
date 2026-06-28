@@ -1,0 +1,45 @@
+; sounds.ap: demonstrates LCC+ literal and register-driven sound slots.
+; Literal form: sound 0..sound 4.
+; Register form: sound rN reads the slot number from the value stored in rN.
+; Aliases: ding -> sound 0, deep -> sound 1, bop -> sound 2,
+; doink -> sound 3, beep -> sound 4.
+; A 1-second sleep is inserted between each sound so the sequence
+; is audible when run on a real terminal.
+; Run:  node src/plus/lccplus.js plusdemos/sounds.ap
+        .lccplus
+        lea r0, msg0
+        sout r0
+        nl
+        sound 0
+        ld r1, sleepLen
+        sleep r1
+        lea r0, msg1
+        sout r0
+        nl
+        sound 1
+        ld r1, sleepLen
+        sleep r1
+        lea r0, msg2
+        sout r0
+        nl
+        sound 2
+        ld r1, sleepLen
+        sleep r1
+        lea r0, msg3
+        sout r0
+        nl
+        sound 3
+        ld r1, sleepLen
+        sleep r1
+        lea r0, msg4
+        sout r0
+        nl
+        mov r1, 4
+        sound r1
+        halt
+msg0:   .string "sounds.ap: ding slot"
+msg1:   .string "sounds.ap: deep slot"
+msg2:   .string "sounds.ap: bop slot"
+msg3:   .string "sounds.ap: doink slot"
+msg4:   .string "sounds.ap: beep slot via register value"
+sleepLen: .word 1000
