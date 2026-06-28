@@ -1,7 +1,6 @@
-; boop.ap: demonstrates the LCC+ `boop` trap.
-; `bop` is the LCC+ sound alias; `boop` was retired in favor of five configured
-; sound slots. This demo uses `bop`, which aliases to `sound 2`.
-; Run:  node src/plus/lccplus.js plusdemos/boop.ap
+; boop.ap: demonstrates the LCC+ `bop` sound alias.
+; `bop` aliases to sound slot 6.
+; Run:  SOUND_FILES_FROM_SYSTEM=1 node src/plus/lccplus.js plusdemos/boop.ap
         .lccplus
         lea r0, msg
         sout r0

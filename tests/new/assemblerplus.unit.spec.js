@@ -101,7 +101,7 @@ describe('assemblerplus — first coverage (#197)', () => {
       expect(a.assembleSound([registerName])).toBe(soundRegisterWord(registerIndex));
     });
 
-    test.each([0, 1, 2, 3, 4])('sound %i encodes a literal sound slot', (slot) => {
+    test.each([0, 1, 2, 3, 4, 5, 6])('sound %i encodes a literal sound slot', (slot) => {
       const a = new AssemblerPlus();
       a.pass = 2; a.lineNum = 1; a.sourceLines = [`sound ${slot}`];
 
@@ -110,10 +110,12 @@ describe('assemblerplus — first coverage (#197)', () => {
 
     test.each([
       ['ding', 0],
-      ['deep', 1],
-      ['bop', 2],
-      ['doink', 3],
-      ['beep', 4],
+      ['doink', 1],
+      ['beep', 2],
+      ['ping', 3],
+      ['popsound', 4],
+      ['softbeep', 5],
+      ['bop', 6],
     ])('%s aliases assemble to sound r%i', (alias, slot) => {
       const a = new AssemblerPlus();
       a.pass = 2; a.lineNum = 1; a.sourceLines = [alias];
@@ -121,11 +123,11 @@ describe('assemblerplus — first coverage (#197)', () => {
       expect(a._instructionTable[alias].encoder([])).toBe(soundLiteralWord(slot));
     });
 
-    test('sound 5 is rejected because only five literal sound slots exist', () => {
+    test('sound 7 is rejected because only seven literal sound slots exist', () => {
       const a = new AssemblerPlus();
-      a.pass = 2; a.lineNum = 1; a.sourceLines = ['sound 5'];
+      a.pass = 2; a.lineNum = 1; a.sourceLines = ['sound 7'];
 
-      expect(() => a.assembleSound(['5'])).toThrow(/sound slot out of range/);
+      expect(() => a.assembleSound(['7'])).toThrow(/sound slot out of range/);
     });
   });
 

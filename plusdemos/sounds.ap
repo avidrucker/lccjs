@@ -1,11 +1,11 @@
 ; sounds.ap: demonstrates LCC+ literal and register-driven sound slots.
-; Literal form: sound 0..sound 4.
+; Literal form: sound 0..sound 6.
 ; Register form: sound rN reads the slot number from the value stored in rN.
-; Aliases: ding -> sound 0, deep -> sound 1, bop -> sound 2,
-; doink -> sound 3, beep -> sound 4.
+; Aliases: ding -> 0, doink -> 1, beep -> 2, ping -> 3,
+; popsound -> 4, softbeep -> 5, bop -> 6.
 ; A 1-second sleep is inserted between each sound so the sequence
 ; is audible when run on a real terminal.
-; Run:  node src/plus/lccplus.js plusdemos/sounds.ap
+; Run:  SOUND_FILES_FROM_SYSTEM=1 node src/plus/lccplus.js plusdemos/sounds.ap
         .lccplus
         lea r0, msg0
         sout r0
@@ -34,12 +34,26 @@
         lea r0, msg4
         sout r0
         nl
-        mov r1, 4
+        sound 4
+        ld r1, sleepLen
+        sleep r1
+        lea r0, msg5
+        sout r0
+        nl
+        sound 5
+        ld r1, sleepLen
+        sleep r1
+        lea r0, msg6
+        sout r0
+        nl
+        mov r1, 6
         sound r1
         halt
-msg0:   .string "sounds.ap: ding slot"
-msg1:   .string "sounds.ap: deep slot"
-msg2:   .string "sounds.ap: bop slot"
-msg3:   .string "sounds.ap: doink slot"
-msg4:   .string "sounds.ap: beep slot via register value"
+msg0:   .string "sounds.ap: ding (0)"
+msg1:   .string "sounds.ap: doink (1)"
+msg2:   .string "sounds.ap: beep (2)"
+msg3:   .string "sounds.ap: ping (3)"
+msg4:   .string "sounds.ap: popsound (4)"
+msg5:   .string "sounds.ap: softbeep (5)"
+msg6:   .string "sounds.ap: bop (6, via register)"
 sleepLen: .word 1000

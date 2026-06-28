@@ -51,6 +51,82 @@ allow "press any key to resume" functionality.
 
 ---
 
+## Sounds
+
+The LCC+ `sound` trap plays one of 7 sound effects. The trap's source
+register selects a **sound code** (0–6); the interpreter resolves each code
+to an audio file and plays it through the first available player
+(`paplay`, `canberra-gtk-play`, `ffplay`, `aplay`). If no file can be found
+or played, it falls back to ASCII BEL (`\x07`).
+
+### Default sound table
+
+| Code | Mnemonic    | Default system path | Description |
+|------|-------------|---------------------|-------------|
+| 0    | ding        | `/usr/share/sounds/freedesktop/stereo/complete.oga` | Completion chime — bright two-note "done" |
+| 1    | doink       | `/usr/share/sounds/freedesktop/stereo/bell.oga` | Bell hit — classic "boink/doink" |
+| 2    | beep        | `/usr/share/sounds/freedesktop/stereo/phone-outgoing-calling.oga` | Phone outgoing call tone — electronic beep |
+| 3    | ping        | `/usr/share/sounds/LinuxMint/stereo/system-ready.ogg` | System ready — short ascending "ping" |
+| 4    | popsound    | `/usr/share/sounds/freedesktop/stereo/dialog-information.oga` | Notification pop — gentle chime |
+| 5    | softbeep    | `/usr/share/sounds/freedesktop/stereo/dialog-warning.oga` | Soft alert — lower two-note warning |
+| 6    | bop         | `/usr/share/sounds/freedesktop/stereo/message.oga` | Message arrival — playful "bop" |
+
+### Order matters
+
+Sound codes are positional — code N maps to SOUND_SLOTS[N] in the interpreter.
+Do not reorder entries without updating every `.ap`/`.ep` that references sounds
+by literal code (e.g. `sound 0` for ding, `sound 6` for bop).
+
+### Bundled fallbacks
+
+Each slot ships a bundled WAV in `assets/sounds/lccplus/` as a last-resort
+fallback, so sounds work even with no system sound theme installed.
+
+### Overriding sounds
+
+#### Per-slot environment variables
+
+Set any `LCCPLUS_SOUND_<NAME>` to an absolute path to override that slot's
+audio file. The env var takes priority over both system defaults and bundled
+WAVs.
+
+```bash
+# Play a custom .wav for the "ding" slot (code 0)
+LCCPLUS_SOUND_DING=/home/avi/my-ding.wav node src/plus/lccplus.js mygame.ap
+```
+
+Available overrides:
+
+| Slot       | Env var                   |
+|------------|---------------------------|
+| ding       | `LCCPLUS_SOUND_DING`      |
+| doink      | `LCCPLUS_SOUND_DOINK`     |
+| beep       | `LCCPLUS_SOUND_BEEP`      |
+| ping       | `LCCPLUS_SOUND_PING`      |
+| popsound   | `LCCPLUS_SOUND_POPSOUND`  |
+| softbeep   | `LCCPLUS_SOUND_SOFTBEEP`  |
+| bop        | `LCCPLUS_SOUND_BOP`       |
+
+#### Use system sounds
+
+By default the interpreter only plays bundled WAVs (no system dependency).
+Set `SOUND_FILES_FROM_SYSTEM=1` to also try the `osDefaults` system paths
+before falling back to the bundled WAV:
+
+```bash
+SOUND_FILES_FROM_SYSTEM=1 node src/plus/lccplus.js mygame.ap
+```
+
+Resolution order with `SOUND_FILES_FROM_SYSTEM=1`:
+1. `LCCPLUS_SOUND_<NAME>` env var (if set)
+2. Each path in the slot's `osDefaults` array (first existing wins)
+3. Bundled WAV (`assets/sounds/lccplus/<name>.wav`)
+4. ASCII BEL fallback (`\x07`)
+
+Without `SOUND_FILES_FROM_SYSTEM=1`, only steps 1 → 3 → 4 apply.
+
+---
+
 ## New Assembler Directives
 
 | Directive | Description |
