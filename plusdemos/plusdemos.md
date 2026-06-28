@@ -64,7 +64,7 @@ The LCC+js demos showcase the capabilities of the LCC+js toolchain as a real-tim
 12. **`sound` Trap Showcase** (`sound.ap`)
 
     - **Description:** Plays the five configured LCC+ sound slots with literal `sound 0` through `sound 4`, then shows register-driven playback with `sound r1` after loading `r1` with `4`.
-    - **Highlights:** Demonstrates the single sound-producing trap and its slot mapping: `0` ding, `1` deep, `2` bop, `3` doink, `4` beep. Each slot checks `.env` first, then built-in desktop-sound defaults, then ASCII BEL.
+    - **Highlights:** Demonstrates the single sound-producing trap and its slot mapping: `0` ding, `1` deep, `2` bop, `3` doink, `4` beep. By default each slot uses bundled project WAV defaults; set `SOUND_FILES_FROM_SYSTEM=1` to prefer `.env`/OS filesystem sounds before falling back to the bundled WAVs and then ASCII BEL.
 
 13. **`beep` Alias Showcase** (`beep.ap`)
 

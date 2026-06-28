@@ -24,32 +24,38 @@ const {
 // Number of interpreter steps executed per setImmediate tick in runAsync().
 // Tuned for reasonable UI responsiveness in .ap games; adjust if lag is observed.
 const ASYNC_BATCH_SIZE = 500;
+const BUNDLED_SOUND_DIR = path.resolve(__dirname, '../../assets/sounds/lccplus');
 
 const SOUND_SLOTS = [
   {
     name: 'ding',
     envVar: 'LCCPLUS_SOUND_DING',
-    defaults: ['/usr/share/sounds/freedesktop/stereo/complete.oga'],
+    bundled: path.join(BUNDLED_SOUND_DIR, 'ding.wav'),
+    osDefaults: ['/usr/share/sounds/freedesktop/stereo/complete.oga'],
   },
   {
     name: 'deep',
     envVar: 'LCCPLUS_SOUND_DEEP',
-    defaults: ['/usr/share/sounds/freedesktop/stereo/dialog-warning.oga'],
+    bundled: path.join(BUNDLED_SOUND_DIR, 'deep.wav'),
+    osDefaults: ['/usr/share/sounds/freedesktop/stereo/dialog-warning.oga'],
   },
   {
     name: 'bop',
     envVar: 'LCCPLUS_SOUND_BOP',
-    defaults: ['/usr/share/sounds/freedesktop/stereo/message-new-instant.oga'],
+    bundled: path.join(BUNDLED_SOUND_DIR, 'bop.wav'),
+    osDefaults: ['/usr/share/sounds/freedesktop/stereo/message-new-instant.oga'],
   },
   {
     name: 'doink',
     envVar: 'LCCPLUS_SOUND_DOINK',
-    defaults: ['/usr/share/sounds/freedesktop/stereo/bell.oga'],
+    bundled: path.join(BUNDLED_SOUND_DIR, 'doink.wav'),
+    osDefaults: ['/usr/share/sounds/freedesktop/stereo/bell.oga'],
   },
   {
     name: 'beep',
     envVar: 'LCCPLUS_SOUND_BEEP',
-    defaults: ['/usr/share/sounds/LinuxMint/stereo/system-ready.ogg'],
+    bundled: path.join(BUNDLED_SOUND_DIR, 'beep.wav'),
+    osDefaults: ['/usr/share/sounds/LinuxMint/stereo/system-ready.ogg'],
   },
 ];
 
@@ -61,6 +67,7 @@ const SOUND_PLAYERS = [
 ];
 
 let dotenvLoaded = false;
+const TRUE_ENV_VALUES = new Set(['1', 'true', 'yes', 'on']);
 
 function loadDotenvOnce() {
   if (dotenvLoaded) return;
@@ -72,9 +79,17 @@ function loadDotenvOnce() {
   }
 }
 
+function soundFilesFromSystem() {
+  const value = process.env.SOUND_FILES_FROM_SYSTEM;
+  if (value == null) return false;
+  return TRUE_ENV_VALUES.has(String(value).trim().toLowerCase());
+}
+
 function firstExistingSoundPath(slot) {
   const envPath = process.env[slot.envVar];
-  const candidates = envPath ? [envPath, ...slot.defaults] : slot.defaults;
+  const candidates = (soundFilesFromSystem()
+    ? [envPath, ...(slot.osDefaults || []), slot.bundled]
+    : [slot.bundled]).filter(Boolean);
   return candidates.find((candidate) => {
     try {
       return fs.existsSync(candidate);

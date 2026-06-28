@@ -343,13 +343,16 @@ describe(`InterpreterPlus — executeResetCursor / resetc (TRAP_RESETC = 0x${TRA
 describe(`InterpreterPlus — executeSound / sound (TRAP_SOUND = 0x${TRAP_SOUND.toString(16).toUpperCase()})`, () => {
   const originalEnv = { ...process.env };
   const originalPath = process.env.PATH;
-  const originalDefaults = SOUND_SLOTS.map((slot) => slot.defaults.slice());
+  const originalBundled = SOUND_SLOTS.map((slot) => slot.bundled);
+  const originalOsDefaults = SOUND_SLOTS.map((slot) => slot.osDefaults.slice());
   let writeSpy;
 
   beforeEach(() => {
+    delete process.env.SOUND_FILES_FROM_SYSTEM;
     for (const slot of SOUND_SLOTS) {
       delete process.env[slot.envVar];
-      slot.defaults = [];
+      slot.bundled = null;
+      slot.osDefaults = [];
     }
     process.env.PATH = '/tmp/lccjs-no-sound-player';
     writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
@@ -357,13 +360,15 @@ describe(`InterpreterPlus — executeSound / sound (TRAP_SOUND = 0x${TRAP_SOUND.
 
   afterEach(() => {
     writeSpy.mockRestore();
+    delete process.env.SOUND_FILES_FROM_SYSTEM;
     for (const slot of SOUND_SLOTS) {
       delete process.env[slot.envVar];
     }
     Object.assign(process.env, originalEnv);
     process.env.PATH = originalPath;
     SOUND_SLOTS.forEach((slot, index) => {
-      slot.defaults = originalDefaults[index].slice();
+      slot.bundled = originalBundled[index];
+      slot.osDefaults = originalOsDefaults[index].slice();
     });
   });
 
@@ -396,12 +401,13 @@ describe(`InterpreterPlus — executeSound / sound (TRAP_SOUND = 0x${TRAP_SOUND.
     expect(writeSpy).toHaveBeenCalledTimes(1);
   });
 
-  test('env-configured sound path is sent to the first available player', () => {
+  test('env-configured sound path is used when SOUND_FILES_FROM_SYSTEM=1', () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-sound-'));
     try {
       const fakeSound = path.join(tmpDir, 'ding.oga');
       fs.writeFileSync(fakeSound, 'not-real-audio');
 
+      process.env.SOUND_FILES_FROM_SYSTEM = '1';
       process.env.LCCPLUS_SOUND_DING = fakeSound;
 
       const ip = makeIp();
@@ -414,6 +420,65 @@ describe(`InterpreterPlus — executeSound / sound (TRAP_SOUND = 0x${TRAP_SOUND.
       expect(writeSpy).not.toHaveBeenCalled();
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  test('bundled project sound is used by default even when an env sound path exists', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lccjs-sound-'));
+    try {
+      const fakeSound = path.join(tmpDir, 'ding.oga');
+      fs.writeFileSync(fakeSound, 'not-real-audio');
+      process.env.LCCPLUS_SOUND_DING = fakeSound;
+
+      const ip = makeIp();
+      ip.playSoundFile = jest.fn().mockReturnValue(true);
+      ip.ir = TRAP_SOUND_LITERAL_FLAG;
+      ip.sr = 0;
+      SOUND_SLOTS[0].bundled = originalBundled[0];
+
+      ip.executeSound();
+
+      expect(ip.playSoundFile).toHaveBeenCalledWith(originalBundled[0]);
+      expect(writeSpy).not.toHaveBeenCalled();
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  test('SOUND_FILES_FROM_SYSTEM=0 forces bundled project sound', () => {
+    const ip = makeIp();
+    ip.playSoundFile = jest.fn().mockReturnValue(true);
+    ip.ir = TRAP_SOUND_LITERAL_FLAG;
+    ip.sr = 0;
+    process.env.SOUND_FILES_FROM_SYSTEM = '0';
+    SOUND_SLOTS[0].bundled = originalBundled[0];
+
+    ip.executeSound();
+
+    expect(ip.playSoundFile).toHaveBeenCalledWith(originalBundled[0]);
+    expect(writeSpy).not.toHaveBeenCalled();
+  });
+
+  test('system mode falls back to bundled sound when local files are absent', () => {
+    const ip = makeIp();
+    ip.playSoundFile = jest.fn().mockReturnValue(true);
+    ip.ir = TRAP_SOUND_LITERAL_FLAG;
+    ip.sr = 0;
+    process.env.SOUND_FILES_FROM_SYSTEM = 'true';
+    process.env.LCCPLUS_SOUND_DING = '/tmp/lccjs-missing-custom-ding.wav';
+    SOUND_SLOTS[0].bundled = originalBundled[0];
+
+    ip.executeSound();
+
+    expect(ip.playSoundFile).toHaveBeenCalledWith(originalBundled[0]);
+    expect(writeSpy).not.toHaveBeenCalled();
+  });
+
+  test('bundled project sounds exist and are WAV files', () => {
+    for (const filePath of originalBundled) {
+      const header = fs.readFileSync(filePath).subarray(0, 12).toString('ascii');
+      expect(header.slice(0, 4)).toBe('RIFF');
+      expect(header.slice(8, 12)).toBe('WAVE');
     }
   });
 
