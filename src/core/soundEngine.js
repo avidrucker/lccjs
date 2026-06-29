@@ -121,6 +121,26 @@ function playSoundFile(filePath) {
   return false;
 }
 
+// Play the sound for `slotIndex`, or emit ASCII BEL (\x07) as a fallback when the
+// slot is unknown or no audio player succeeds — the shared play-or-BEL decision both
+// core LCC (--sounds-on, #1504) and LCC+ consume (ADR 1502 §Q4). `playFn` is
+// injectable (default the synchronous spawnSync `playSoundFile`) so InterpreterPlus
+// can route through its stubbable instance method (#1503 test seam) while core uses
+// the default. Returns { played }. Synchronous — no async loop required (§Q2).
+function playSlot(slotIndex, playFn = playSoundFile) {
+  const slot = SOUND_SLOTS[slotIndex];
+  if (!slot) {
+    process.stdout.write('\x07');
+    return { played: false };
+  }
+  const filePath = firstExistingSoundPath(slot);
+  if (filePath && playFn(filePath)) {
+    return { played: true };
+  }
+  process.stdout.write('\x07');
+  return { played: false };
+}
+
 module.exports = {
   BUNDLED_SOUND_DIR,
   SOUND_SLOTS,
@@ -129,4 +149,5 @@ module.exports = {
   soundFilesFromSystem,
   firstExistingSoundPath,
   playSoundFile,
+  playSlot,
 };

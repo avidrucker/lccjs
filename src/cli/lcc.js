@@ -333,6 +333,7 @@ class LCC {
     console.log('         (-m/-r are post-run batch dumps; interactive mode has no batch path)');
     console.log('   -v / --verbose: verbose output (assembler, interpreter, and linker)');
     console.log('   --explain: append a student-friendly explanation to known errors');
+    console.log('   --sounds-on: enable LCC+ sound mnemonics (ding/doink/beep/...) in core LCC (BEL fallback if no audio player)');
     console.log('   -nostats: suppress .lst/.bst report generation');
     console.log('   --max-steps N (or -ms<N>): set execution step cap (default 500000; use -1 for unlimited)');
     console.log('   --test <spec>: run an assignment spec (input->expected_output cases);');
@@ -416,6 +417,11 @@ class LCC {
             // (No short alias: -x is already taken by hex output.)
             this.options.explain = true;
             setExplainMode(true);
+            break;
+          case '--sounds-on':
+            // Enable the LCC+ sound trap (0xF8) in core LCC (#1504). OFF by
+            // default so core behavior + oracle-parity output are unchanged.
+            this.options.soundsOn = true;
             break;
           case '--test': {
             // Assignment test-runner surface (#1092, parent #1044). Consumes the
@@ -535,6 +541,9 @@ class LCC {
 
     // Wire -t flag: enable per-step trace output and attach sourceMap when available
     interpreter.traceMode = !!this.options.trace;
+
+    // Wire --sounds-on flag (#1504): enable the gated sound trap in core LCC
+    interpreter.soundsOn = !!this.options.soundsOn;
 
     // Wire --max-steps N flag
     if (this.options.maxSteps !== undefined) {

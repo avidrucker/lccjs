@@ -19,7 +19,10 @@ const {
   OPCODE_JMP, OPCODE_MVI, OPCODE_LEA, OPCODE_TRAP,
   EOP_PUSH, EOP_POP, EOP_SRL, EOP_SRA, EOP_SLL, EOP_ROL, EOP_ROR,
   EOP_MUL, EOP_DIV, EOP_REM, EOP_OR, EOP_XOR, EOP_MVR, EOP_SEXT,
+  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG,
 } = require('./constants');
+// Sound subsystem shared with LCC+ (#1503); core uses it only when --sounds-on is set (#1504).
+const soundEngine = require('./soundEngine');
 
 const newline = (typeof process !== 'undefined' && process.platform === 'win32') ? '\r\n' : '\n';
 
@@ -155,6 +158,14 @@ class Interpreter {
      * Options from lcc.js
      */
     this.options = {};
+
+    /**
+     * --sounds-on (#1504): enables the LCC+ sound trap (0xF8) in core LCC,
+     * delegating to the shared SoundEngine. OFF by default — when false, 0xF8
+     * stays an unknown core trap (behavior byte-identical to before this flag).
+     * lcc.js also sets this directly after construction.
+     */
+    this.soundsOn = !!options.soundsOn;
 
     /**
      * For program statistics
@@ -1846,12 +1857,26 @@ class Interpreter {
       case 14: // bp
         this.handleSoftwareBreakpoint();
         break;
+      case TRAP_SOUND: // sound (0xF8) — gated behind --sounds-on (#1504); LCC+ has it natively
+        if (this.soundsOn) {
+          this.executeSound();
+          break;
+        }
+        // falls through: with --sounds-on off, 0xF8 stays an unknown core trap
       default:
         // `Unknown TRAP vector: ${this.trapvec}`
         console.error(`Error on line 0 of ${this.inputFileName}`);
         console.error();
         this.raiseRuntimeError(new InterpreterRuntimeError('Trap vector out of range', { explainKey: 'TRAP_VECTOR_RANGE' })); // : ${this.trapvec}
     }
+  }
+
+  // sound (TRAP_SOUND, gated on --sounds-on) — decode the slot index (literal form
+  // reads sr directly; register form reads r[sr]) and delegate to the shared
+  // SoundEngine, which plays the slot or emits ASCII BEL as a fallback (#1504).
+  executeSound() {
+    const slotIndex = (this.ir & TRAP_SOUND_LITERAL_FLAG) ? this.sr : this.r[this.sr];
+    soundEngine.playSlot(slotIndex);
   }
 
   toSigned16(value) {

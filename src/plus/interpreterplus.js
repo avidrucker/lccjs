@@ -28,8 +28,8 @@ const ASYNC_BATCH_SIZE = 500;
 // for back-compat with InterpreterPlus.SOUND_SLOTS consumers.
 const {
   SOUND_SLOTS,
-  firstExistingSoundPath,
   playSoundFile,
+  playSlot,
   loadDotenvOnce,
 } = require('../core/soundEngine');
 
@@ -544,17 +544,9 @@ class InterpreterPlus extends Interpreter {
 
   executeSound() {
     const slotIndex = (this.ir & TRAP_SOUND_LITERAL_FLAG) ? this.sr : this.r[this.sr];
-    const slot = SOUND_SLOTS[slotIndex];
-    if (!slot) {
-      process.stdout.write('\x07');
-      return;
-    }
-
-    const filePath = firstExistingSoundPath(slot);
-    if (filePath && this.playSoundFile(filePath)) {
-      return;
-    }
-    process.stdout.write('\x07');
+    // Delegate the slot-resolve / play / BEL decision to the shared engine (#1504),
+    // injecting this.playSoundFile so the instance seam (stubbable in tests) is kept.
+    playSlot(slotIndex, (filePath) => this.playSoundFile(filePath));
   }
 
   playSoundFile(filePath) {
