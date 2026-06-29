@@ -1395,3 +1395,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 1420,1499,Update sound mnemonics + add sounds section to LCC+ ISA doc,DEV,,,,,,2026-06-27T15:30:00-10:00,2026-06-27T16:30:00-10:00,,,jackfruit,nemotron-3-ultra,lccjs
 1421,1487,research(workflow): document lccjs end-to-end ticket lifecycle and prove byte-parity with pmtools,WRITER,12,8,4,8,4,2026-06-28T09:41:00-1000,2026-06-28T09:45:41-1000,,,APPLE,opus-4.8,lccjs
 1422,1502,SPIKE: decide the core-LCC sound architecture for --sounds-on,RESEARCH,60,35,22,38,13,2026-06-28T09:41:00-1000,2026-06-28T10:03:23-1000,,,APPLE,opus-4.8,lccjs
+1423,1503,refactor(sound): extract a shared SoundEngine from interpreterplus.js,DEV,45,30,25,20,5,2026-06-29T04:40:00-1000,2026-06-29T05:05:34-1000,,,APPLE,opus-4.8,lccjs

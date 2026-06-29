@@ -35,6 +35,13 @@ const TRAP_R     = 0x0C;
 const TRAP_S     = 0x0D;
 const TRAP_BP    = 0x0E;
 
+// Sound trap — a high-vector (0xF8) trap that is LCC+'s by origin but becomes a
+// gated CORE feature under `--sounds-on` (#1503, ADR docs/research/1502-sounds-in-core-lcc.md).
+// Defined here (the neutral constants module) so core can import it without
+// depending on src/plus; src/plus/constants.js re-exports it for back-compat.
+const TRAP_SOUND = 0x00F8;
+const TRAP_SOUND_LITERAL_FLAG = 0x0100;
+
 // Extended sub-opcodes — bits 4–0 of an EXT word (eopcode field)
 const EOP_PUSH = 0x00;
 const EOP_POP  = 0x01;
@@ -57,6 +64,7 @@ module.exports = {
   OPCODE_JMP, OPCODE_MVI, OPCODE_LEA, OPCODE_TRAP,
   TRAP_HALT, TRAP_NL, TRAP_DOUT, TRAP_UDOUT, TRAP_HOUT, TRAP_AOUT, TRAP_SOUT,
   TRAP_DIN, TRAP_HIN, TRAP_AIN, TRAP_SIN, TRAP_M, TRAP_R, TRAP_S, TRAP_BP,
+  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG,
   EOP_PUSH, EOP_POP, EOP_SRL, EOP_SRA, EOP_SLL, EOP_ROL, EOP_ROR,
   EOP_MUL, EOP_DIV, EOP_REM, EOP_OR, EOP_XOR, EOP_MVR, EOP_SEXT,
 };
