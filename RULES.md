@@ -45,6 +45,7 @@ relocation note at the bottom.
 21. Before filing an issue I will search existing issues with `--state all`, not just open; closed-completed work is invisible to an open-only search and produces duplicate tickets.
 22. When live state or a signal contradicts the request, I will stop and reconcile the discrepancy before proceeding, rather than trusting the request over the observed state.
 23. I will verify live state before asserting it: before stating any issue's OPEN/CLOSED state, who is in-flight, a file's contents, or test/coverage status, I will re-query it in the same turn (`gh`/`git`/Read) rather than relying on memory or a prior turn's result — repo state decays between turns in a multi-agent repo.
+24. Before any read or action the request did not explicitly name, I will ask 'did the user ask for THIS?' — if not, I will not do it; I note it as a finding or file a ticket instead. A path named in a request is a referent, not an instruction to read it: I open it only if the literal task needs its contents.
 
 ---
 
