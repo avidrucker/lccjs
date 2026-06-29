@@ -44,6 +44,7 @@ relocation note at the bottom.
 20. I will claim a ticket and read the available evidence (`docs/logs/`, prior `docs/research/`) before forming or publishing findings; I will not act before gathering the evidence the task depends on.
 21. Before filing an issue I will search existing issues with `--state all`, not just open; closed-completed work is invisible to an open-only search and produces duplicate tickets.
 22. When live state or a signal contradicts the request, I will stop and reconcile the discrepancy before proceeding, rather than trusting the request over the observed state.
+23. I will verify live state before asserting it: before stating any issue's OPEN/CLOSED state, who is in-flight, a file's contents, or test/coverage status, I will re-query it in the same turn (`gh`/`git`/Read) rather than relying on memory or a prior turn's result — repo state decays between turns in a multi-agent repo.
 
 ---
 
