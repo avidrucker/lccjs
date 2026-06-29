@@ -61,25 +61,25 @@ The LCC+js demos showcase the capabilities of the LCC+js toolchain as a real-tim
     - **Description:** A one-shot single-round Rock-Paper-Scissors game. The player presses `1`/`2`/`3` to choose Rock/Paper/Scissors; the computer's choice is sampled uniformly via `rand 1, 3` (seeded with `millis` at startup); the program prints both choices and the winner, then offers a `y`/`n` play-again prompt.
     - **Highlights:** The simplest "vs computer" demo — exercises the LCC+ RNG (`millis` + `srand` + `rand`) for the AI move, `nbain` polling for blocking single-key input, and `clear` for the per-round redraw. Win detection uses the `(player - computer) mod 3` trick: tie if 0, player wins if 1, computer wins if 2.
 
-12. **`sound` Trap Showcase** (`sound.ap`)
+12. **`sound` Trap Showcase** (`sounds.ap`)
 
-    - **Description:** Plays the five configured LCC+ sound slots with literal `sound 0` through `sound 4`, then shows register-driven playback with `sound r1` after loading `r1` with `4`.
-    - **Highlights:** Demonstrates the single sound-producing trap and its slot mapping: `0` ding, `1` deep, `2` bop, `3` doink, `4` beep. By default each slot uses bundled project WAV defaults; set `SOUND_FILES_FROM_SYSTEM=1` to prefer `.env`/OS filesystem sounds before falling back to the bundled WAVs and then ASCII BEL.
+    - **Description:** Plays all seven configured LCC+ sound slots with literal `sound 0` through `sound 6` (with a 1-second `sleep` between each), then shows register-driven playback with `sound r1` after loading `r1` with `6`.
+    - **Highlights:** Demonstrates the single sound-producing trap and its slot mapping: `0` ding, `1` doink, `2` beep, `3` ping, `4` popsound, `5` softbeep, `6` bop. By default each slot uses bundled project WAV defaults; set `SOUND_FILES_FROM_SYSTEM=1` to prefer `.env`/OS filesystem sounds before falling back to the bundled WAVs and then ASCII BEL.
 
 13. **`beep` Alias Showcase** (`beep.ap`)
 
-    - **Description:** Prints a one-line banner, then invokes `beep`, the no-operand alias for `sound 4`.
-    - **Highlights:** Shows the source-compatible alias for the fifth sound slot.
+    - **Description:** Prints a one-line banner, then invokes `beep`, the no-operand alias for `sound 2`.
+    - **Highlights:** Shows the source-compatible alias for the beep sound slot (slot `2`).
 
 14. **`ding` Alias Showcase** (`ding.ap`)
 
     - **Description:** Prints a one-line banner, then invokes `ding`, the no-operand alias for `sound 0`.
     - **Highlights:** Confirms the named alias path for the first sound slot.
 
-15. **`bop` Alias Showcase** (`boop.ap`)
+15. **`boop` Trap Showcase** (`boop.ap`)
 
-    - **Description:** Prints a banner, then invokes `bop`, the no-operand alias for `sound 2`.
-    - **Highlights:** Keeps the historical `boop.ap` demo file while demonstrating the new `bop` alias.
+    - **Description:** Prints a banner, then invokes `boop`, the no-operand logging/testing trap that writes `Boop!\n` to stdout.
+    - **Highlights:** `boop` is a text trap (its message is customizable via the `LCCPLUS_BOOP_MESSAGE` env var), **distinct from `bop`** — the sound-slot-`6` alias, which is exercised in `sounds.ap`.
 
 ---
 

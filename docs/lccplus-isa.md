@@ -38,8 +38,7 @@ core traps can grow upward from `0x0E` without collision.
 | srand  | 0x00FD | none | Seeds RNG using value in `sr` |
 | millis | 0x00FE | none | Puts current system time milliseconds (0–999) into `dr` |
 | resetc | 0x00FF | none | Resets cursor position to top-left of screen |
-| beep   | 0x00F8 | none | Emits ASCII BEL (`\x07`) to stdout |
-| ding   | 0x00F7 | none | Emits ASCII BEL (`\x07`) to stdout (alias of `beep`; may diverge in a future release) |
+| sound  | 0x00F8 | none | Plays the sound slot selected by `sr` (0–6); falls back to ASCII BEL (`\x07`) when no audio file/player is available. The no-operand sound-slot aliases (`ding`, `doink`, `beep`, `ping`, `popsound`, `softbeep`, `bop`) encode to this trap — see [§ Sounds](#sounds) |
 | boop   | 0x00F6 | none | Writes a fixed message (default `"Boop!\n"`) to stdout — a logging/testing trap, distinct from the `bop` sound alias. Override the text with the `LCCPLUS_BOOP_MESSAGE` env var (a trailing newline is appended; empty/unset → default) |
 | who    | 0x00F5 | none | Reads `name.nnn` from cwd and writes contents to stdout (no trailing newline); silent empty string if absent |
 | whodis | 0x00F5 | none | Alias for `who`; identical encoding and behavior |
@@ -47,7 +46,7 @@ core traps can grow upward from `0x0E` without collision.
 **Note on `bp`:** Trap vector `0x000E` is supported as in LCC, but enhanced in LCC+ to
 allow "press any key to resume" functionality.
 
-> **These are the complete set of LCC+ trap additions (12 mnemonics across 11 distinct vectors; `ding`/`whodis` are aliases).** The occupied range is `0xF5`–`0xFF`. There is no `fprintf`, `printf`, `sprintf`, `scanf`, `puts`, or any other C-library-style trap. Any trap mnemonic not listed above or in [lcc-isa.md](./lcc-isa.md) does not exist.
+> **These are the complete set of LCC+ trap additions (11 mnemonics across 10 distinct vectors; `whodis` aliases `who`).** The no-operand sound-slot mnemonics (`ding`, `doink`, `beep`, `ping`, `popsound`, `softbeep`, `bop`) are aliases that encode to the `sound` trap and are documented in [§ Sounds](#sounds). The occupied range is `0xF5`–`0xFF` (`0xF7` is currently unused). There is no `fprintf`, `printf`, `sprintf`, `scanf`, `puts`, or any other C-library-style trap. Any trap mnemonic not listed above or in [lcc-isa.md](./lcc-isa.md) does not exist.
 
 ---
 

@@ -1,11 +1,11 @@
 ; beep.ap: demonstrates the LCC+ `beep` trap.
-; `beep` is an alias for `sound 4`: it plays the configured beep sound file,
+; `beep` is an alias for `sound 2`: it plays the configured beep sound file,
 ; then falls back to a desktop default, then ASCII BEL (\x07).
 ; Run:  node src/plus/lccplus.js plusdemos/beep.ap
         .lccplus
         lea r0, msg
         sout r0
         nl
-        beep            ; alias for sound 4
+        beep            ; alias for sound 2
         halt
 msg:    .string "beep.ap: playing the beep sound slot..."
