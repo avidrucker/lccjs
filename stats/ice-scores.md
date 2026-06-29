@@ -1,6 +1,6 @@
 # ICE Scores — lccjs open issues
 
-**Generated:** 2026-06-15   **Issues scored:** 135
+**Generated:** 2026-06-29   **Issues scored:** 136
 
 
 
@@ -83,91 +83,92 @@ Use: `npm run ice:score -- --set-tier elevated --issue N`
 | 45 | #1296 | docs: document assembleSource() per-call config contract in core.md (listingLoadPoint/verbose/explain/userName) | 0.5 | 0.8 | 7 | 2.8000 | Y |
 | 46 | #1029 | decision: close the 'logged lesson → durable rule' promotion loop for non-TIL sources | 1 | 0.5 | 5 | 2.5000 | Y |
 | 47 | #1074 | chore(skills): add nemotron-3-ultra to log-error model examples | 0.25 | 1 | 10 | 2.5000 | Y |
-| 48 | #867 | HUMAN: send sra-shift-by-zero summary to Prof. Dos Reis for ISA ruling | 1 | 0.8 | 3 | 2.4000 | Y |
-| 49 | #868 | HUMAN: get Charlie's perspective on sra r0, 0 shift-by-zero validity | 1 | 0.8 | 3 | 2.4000 | Y |
-| 50 | #450 | No in-browser LCC highlighting on github.com without a separate install | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 51 | #517 | ARCHITECT: follow-up decisions for #512 shift-count masking fix — four open questions | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 52 | #518 | ARC: validate ct=0 shift decision and implication for #512 range-check lower bound | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 53 | #681 | REVIEW: human review of ROADMAP.md rewrite — verify accuracy and decide next steps | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 54 | #872 | DEV: interpreter state grouping — diag bucket, internal-only (phase 1 of #255) | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 55 | #967 | research: investigate puzzle-cluster.csv — existence, references, and necessity | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 56 | #968 | decision: agent scratch-file cleanup vs Bash rm/heredoc permission denials (preserve #434 guardrail) | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 57 | #1002 | decision: flag agent "this is busywork" judgements for human review — don't silently drop declined work | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 58 | #1033 | chore(db): retire the velocity.db migration shim + VELOCITY_DB alias once environments are migrated | 0.5 | 0.8 | 5 | 2.0000 | N |
-| 59 | #1035 | feat(close): remind to claim a fresh worktree for the next task after re-root | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 60 | #1046 | feat(skills): fruit-agent-orchestrate should consume puzzle:status --json instead of raw dump + per-issue loop | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 61 | #1047 | refactor(skills): fruit-agent-orchestrate Step 3 should compose puzzle-triage, not re-embed it | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 62 | #1058 | test: confirm label-area.yml auto-applies area:uncategorized on a real opened issue (#1012 follow-up) | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 63 | #1078 | feat(plus): verbose-context enrichment for LCC+ runtime-error display (req 4 of #1011) | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 64 | #1087 | DEV: ilcc reverse step — truncate Output pane (programOutput) on backward step (Gap C) | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 65 | #1089 | DEV: ilcc — 'sb'/'b' alias for {-N} + help line documenting reverse execution & the determinism boundary | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 66 | #1111 | chore(claim): node_modules symlink in worktrees slips past .gitignore and blocks npm run close | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 67 | #1115 | close.js scope audit shows phantom deletions when branch base is behind origin/main | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 68 | #1118 | process: add COMPLIANCE_FAIL/BEHAVIORAL_FAIL error_type — record when a discipline (e.g. error logging itself) is missed | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 69 | #1126 | chore(skills): authoring-hygiene sweep on the 8 ported Hermes skills (config abstraction, scaffolding, related_skills) | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 70 | #1135 | PM: triage relabel — reconcile area:/type/severity on the #1043 ilcc reverse-step family | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 71 | #1186 | docs: migrate rule citations to stable animal-color IDs (Rule N / R0NN → name) | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 72 | #1195 | refactor+test(error-log): apply #1184 notice-not-prevent to the model gate & cover the untested branches | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 73 | #1196 | test(claim): main() orchestration is untested (~34% line coverage) — add integration coverage or a pure plan seam | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 74 | #1200 | feat(skills): fruit-agent-orchestrate — assignment paragraphs must be self-contained & boilerplate-free (per-agent legibility) | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 75 | #1201 | docs(skills): author an assignment-criteria rubric for fruit-agent-orchestrate Step 5b | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 76 | #1217 | PM: create EPIC tracker issues for each major current feature (feature-level roadmap view) | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 77 | #1226 | REVIEW: audit #1222 for missed Claude/Hermes leftovers | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 78 | #1234 | process: detect closes missing the `error self-audit:` line — the #1117 audit artifact is unenforced | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 79 | #1235 | bug(skills): Hermes next-best-action draft dropped Q6 (Error self-audit) from source | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 80 | #1246 | feat(ci): label-area.yml should infer the lane from issue content, not default to area:uncategorized | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 81 | #1306 |  | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 82 | #1308 | UX: sync Sandbox terminal theme with page theme and make Run button primary green | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 83 | #1315 | fix(process): log-error skill is duplicated & drifted — untracked ~/.claude Claude copy vs tracked lccjs Codex copy | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 84 | #1337 | REVIEW: quality control pass on stats/week-03-analysis.ipynb | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 85 | #1339 | BUG: multi-line selection in sandbox CodeMirror editor renders wrong (only one line highlights at a time) | 0.5 | 0.8 | 5 | 2.0000 | Y |
-| 86 | #625 | decision: claim.js — which labels should block agent claims (M1, #610)? | 0.5 | 0.5 | 7 | 1.7500 | Y |
-| 87 | #626 | decision: fruit-agent-orchestrate — filter unactionable labels before assignment (M2, #610) | 0.5 | 0.5 | 7 | 1.7500 | Y |
-| 88 | #630 | decision: fruit-agent-orchestrate — detect and skip in-flight agents before assignment (M6, #610) | 0.5 | 0.5 | 7 | 1.7500 | Y |
-| 89 | #633 | decision: close.js — auto-post closing comment skeleton after confirmed push (M10, #610) | 0.5 | 0.5 | 7 | 1.7500 | Y |
-| 90 | #636 | decision: adopt 10-entry TIL harvest cadence from #207 recommendations (M13, #610) | 0.5 | 0.5 | 7 | 1.7500 | Y |
-| 91 | #829 | decision: define orchestrator-session fruit identity convention for npm run claim | 0.5 | 0.5 | 7 | 1.7500 | Y |
-| 92 | #841 | decision: how to leverage artifact-quality-criteria.md (skill ingredient, review checklist, or automated gate?) | 0.5 | 0.5 | 7 | 1.7500 | Y |
-| 93 | #40 | [OB-008] Track upstream: cuh63 6.3 mov rejects negatives that its mvi accepts | 1 | 0.5 | 3 | 1.5000 | Y |
-| 94 | #1065 | feat(skills): convert 9 Claude skills to Hermes format | 1 | 0.5 | 3 | 1.5000 | Y |
-| 95 | #1160 | research(process): catalog 'behavioral errors' — undesirable agent actions distinct from technical tool failures | 1 | 0.5 | 3 | 1.5000 | Y |
-| 96 | #1000 | SPIKE: can puzzle:status flag tracker issues that have CLOSED children still shown as unchecked? | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 97 | #1030 | decision: adopt or reject STALE_READ error_type — resolve the #904 half-state | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 98 | #1077 | test(skills): verify next-best-action Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 99 | #1079 | test(skills): verify guide-human-decision Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 100 | #1080 | test(skills): verify log-error Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 101 | #1081 | test(skills): verify write-til-doc Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 102 | #1082 | test(skills): verify yegor-pm Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 103 | #1083 | test(skills): verify puzzle-velocity Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 104 | #1084 | test(skills): verify puzzle-triage Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 105 | #1113 | process: decide Hermes↔lccjs telemetry policy — close the velocity/error-logging gap (Rule 5 vs Hermes exemption) | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 106 | #1152 | feat(skills): author a Hermes agent operating checklist for nemotron-3-ultra agents | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 107 | #1156 | test(skills): exercise the Claude-authored Hermes write-til-doc skill in the Hermes runtime | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 108 | #1157 | feat(skills): convert the Claude write-til-doc skill into a Hermes skill (Claude-authored) | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 109 | #1202 | decision: promote any of TIL #1197's four rule-lines to RULES.json (or route to docs)? | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 110 | #1210 | WRITER: skill portability + organization across providers (agentskills.io hub; Claude/Codex/Hermes) | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 111 | #1218 | WRITER: skill portability hub doc (agentskills.io; Claude Code and Codex spokes) | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 112 | #1219 | WRITER: skill organization strategy across providers and repos | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 113 | #1220 | SPIKE: confirm Hermes skill paths, invocation, and extension model | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 114 | #1285 | process: consider a RULES.md rule — verify a ticket's prescribed fix mechanism before implementing | 0.5 | 0.5 | 5 | 1.2500 | Y |
-| 115 | #252 | Decomplect (H1b): lift trace + register-diff display out of interpreter step() into an observer | 0.5 | 0.8 | 3 | 1.2000 | Y |
-| 116 | #255 | Decomplect (H4): group interpreter constructor state into cpu/io/diag sub-objects | 0.5 | 0.8 | 3 | 1.2000 | Y |
-| 117 | #428 | Tracker: Tier 3 — N2 trap constants, M4 commit informativeness, DDD linker/lcc.js naming, Q20, N3 | 0.5 | 0.8 | 3 | 1.2000 | Y |
-| 118 | #429 | Tracker: Tier 4 — interpreter decomplect (H1/H4), mnemonic-table ROI, experiment designs | 0.5 | 0.8 | 3 | 1.2000 | Y |
-| 119 | #430 | Tracker: Tier 5 — aspirational research (ISA design, educational, DDD domain objects, M8) | 0.5 | 0.8 | 3 | 1.2000 | Y |
-| 120 | #838 | TRACKER: GitHub repo activity visualization for lccjs | 0.5 | 0.8 | 3 | 1.2000 | N |
-| 121 | #873 | ARC/DEV: breaking public-API regroup of interpreter state (1b — future) | 0.5 | 0.8 | 3 | 1.2000 | Y |
-| 122 | #1129 | DEV: ilcc reverse step — replay program input via per-step consumed-input log (corrected Gap B) | 0.5 | 0.8 | 3 | 1.2000 | Y |
-| 123 | #1319 | docs(process): add scope-overrun pre-action-gate rule to RULES.json (after #1185) | 0.5 | 0.8 | 3 | 1.2000 | Y |
-| 124 | #159 | Act on Prof Dos Reis's reply re: `sext` semantics (follow-up to #150) | 0.5 | 0.5 | 3 | 0.7500 | Y |
-| 125 | #810 | RESEARCH: assess efficacy and utility of fruit-agent-orchestrate improvement proposals (2026-06-05) | 0.5 | 0.5 | 3 | 0.7500 | Y |
-| 126 | #980 | SPIKE: try statechart skill for #134 ilcc debugger statechart work — does it add value? | 0.5 | 0.5 | 3 | 0.7500 | Y |
-| 127 | #1048 | feat(skills): fruit-agent-orchestrate — delegate Steps 3-5 reasoning to a subagent (conditional) | 0.5 | 0.5 | 3 | 0.7500 | Y |
-| 128 | #1144 | research(process): assess whether #1117's pre-close error self-audit reduced error-logging under-reporting | 0.5 | 0.5 | 3 | 0.7500 | N |
-| 129 | #1155 | research(process): assess the Claude-authored Hermes write-til-doc port (quality, outcomes, vs nemotron) | 0.5 | 0.5 | 3 | 0.7500 | Y |
-| 130 | #1213 | enhancement(process): a system to RECOMMEND (not enforce) work sequencing across ticket clusters | 0.5 | 0.5 | 3 | 0.7500 | N |
-| 131 | #1221 | research(process): target ratio of feature progress vs process improvement — measure current, propose a budget so process doesn't starve product | 0.5 | 0.5 | 3 | 0.7500 | Y |
-| 132 | #1255 | SPIKE: evaluate Tony Kay's escapement — statechart-driven LLM agent framework — for regulating lccjs's multi-agent workflow | 0.5 | 0.5 | 3 | 0.7500 | Y |
-| 133 | #1291 | external: version-control & fix stale velocity.db path in untracked Claude Code skill copies (~/.claude/skills) | 0.5 | 0.5 | 3 | 0.7500 | Y |
-| 134 | #1292 | external: stale velocity.db path in Hermes log-error skill copy (~/.hermes) — no owned repo yet | 0.5 | 0.5 | 3 | 0.7500 | Y |
-| 135 | #1305 | RESEARCH: evaluate ASCII-friendly + accessibly-renderable diagram formats (Mermaid, D2, m2, etc.) | 0.5 | 0.5 | 3 | 0.7500 | Y |
+| 48 | #1509 | RESEARCH: profile a1k0n bit-ops donut render cost at R1=R2=4 vs R1=R2=8 → findings doc in experiments/donut/ | 0.5 | 1 | 5 | 2.5000 | Y |
+| 49 | #867 | HUMAN: send sra-shift-by-zero summary to Prof. Dos Reis for ISA ruling | 1 | 0.8 | 3 | 2.4000 | Y |
+| 50 | #868 | HUMAN: get Charlie's perspective on sra r0, 0 shift-by-zero validity | 1 | 0.8 | 3 | 2.4000 | Y |
+| 51 | #450 | No in-browser LCC highlighting on github.com without a separate install | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 52 | #517 | ARCHITECT: follow-up decisions for #512 shift-count masking fix — four open questions | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 53 | #518 | ARC: validate ct=0 shift decision and implication for #512 range-check lower bound | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 54 | #681 | REVIEW: human review of ROADMAP.md rewrite — verify accuracy and decide next steps | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 55 | #872 | DEV: interpreter state grouping — diag bucket, internal-only (phase 1 of #255) | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 56 | #967 | research: investigate puzzle-cluster.csv — existence, references, and necessity | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 57 | #968 | decision: agent scratch-file cleanup vs Bash rm/heredoc permission denials (preserve #434 guardrail) | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 58 | #1002 | decision: flag agent "this is busywork" judgements for human review — don't silently drop declined work | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 59 | #1033 | chore(db): retire the velocity.db migration shim + VELOCITY_DB alias once environments are migrated | 0.5 | 0.8 | 5 | 2.0000 | N |
+| 60 | #1035 | feat(close): remind to claim a fresh worktree for the next task after re-root | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 61 | #1046 | feat(skills): fruit-agent-orchestrate should consume puzzle:status --json instead of raw dump + per-issue loop | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 62 | #1047 | refactor(skills): fruit-agent-orchestrate Step 3 should compose puzzle-triage, not re-embed it | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 63 | #1058 | test: confirm label-area.yml auto-applies area:uncategorized on a real opened issue (#1012 follow-up) | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 64 | #1078 | feat(plus): verbose-context enrichment for LCC+ runtime-error display (req 4 of #1011) | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 65 | #1087 | DEV: ilcc reverse step — truncate Output pane (programOutput) on backward step (Gap C) | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 66 | #1089 | DEV: ilcc — 'sb'/'b' alias for {-N} + help line documenting reverse execution & the determinism boundary | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 67 | #1111 | chore(claim): node_modules symlink in worktrees slips past .gitignore and blocks npm run close | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 68 | #1115 | close.js scope audit shows phantom deletions when branch base is behind origin/main | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 69 | #1118 | process: add COMPLIANCE_FAIL/BEHAVIORAL_FAIL error_type — record when a discipline (e.g. error logging itself) is missed | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 70 | #1126 | chore(skills): authoring-hygiene sweep on the 8 ported Hermes skills (config abstraction, scaffolding, related_skills) | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 71 | #1135 | PM: triage relabel — reconcile area:/type/severity on the #1043 ilcc reverse-step family | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 72 | #1186 | docs: migrate rule citations to stable animal-color IDs (Rule N / R0NN → name) | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 73 | #1195 | refactor+test(error-log): apply #1184 notice-not-prevent to the model gate & cover the untested branches | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 74 | #1196 | test(claim): main() orchestration is untested (~34% line coverage) — add integration coverage or a pure plan seam | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 75 | #1200 | feat(skills): fruit-agent-orchestrate — assignment paragraphs must be self-contained & boilerplate-free (per-agent legibility) | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 76 | #1201 | docs(skills): author an assignment-criteria rubric for fruit-agent-orchestrate Step 5b | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 77 | #1217 | PM: create EPIC tracker issues for each major current feature (feature-level roadmap view) | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 78 | #1226 | REVIEW: audit #1222 for missed Claude/Hermes leftovers | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 79 | #1234 | process: detect closes missing the `error self-audit:` line — the #1117 audit artifact is unenforced | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 80 | #1235 | bug(skills): Hermes next-best-action draft dropped Q6 (Error self-audit) from source | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 81 | #1246 | feat(ci): label-area.yml should infer the lane from issue content, not default to area:uncategorized | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 82 | #1306 |  | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 83 | #1308 | UX: sync Sandbox terminal theme with page theme and make Run button primary green | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 84 | #1315 | fix(process): log-error skill is duplicated & drifted — untracked ~/.claude Claude copy vs tracked lccjs Codex copy | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 85 | #1337 | REVIEW: quality control pass on stats/week-03-analysis.ipynb | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 86 | #1339 | BUG: multi-line selection in sandbox CodeMirror editor renders wrong (only one line highlights at a time) | 0.5 | 0.8 | 5 | 2.0000 | Y |
+| 87 | #625 | decision: claim.js — which labels should block agent claims (M1, #610)? | 0.5 | 0.5 | 7 | 1.7500 | Y |
+| 88 | #626 | decision: fruit-agent-orchestrate — filter unactionable labels before assignment (M2, #610) | 0.5 | 0.5 | 7 | 1.7500 | Y |
+| 89 | #630 | decision: fruit-agent-orchestrate — detect and skip in-flight agents before assignment (M6, #610) | 0.5 | 0.5 | 7 | 1.7500 | Y |
+| 90 | #633 | decision: close.js — auto-post closing comment skeleton after confirmed push (M10, #610) | 0.5 | 0.5 | 7 | 1.7500 | Y |
+| 91 | #636 | decision: adopt 10-entry TIL harvest cadence from #207 recommendations (M13, #610) | 0.5 | 0.5 | 7 | 1.7500 | Y |
+| 92 | #829 | decision: define orchestrator-session fruit identity convention for npm run claim | 0.5 | 0.5 | 7 | 1.7500 | Y |
+| 93 | #841 | decision: how to leverage artifact-quality-criteria.md (skill ingredient, review checklist, or automated gate?) | 0.5 | 0.5 | 7 | 1.7500 | Y |
+| 94 | #40 | [OB-008] Track upstream: cuh63 6.3 mov rejects negatives that its mvi accepts | 1 | 0.5 | 3 | 1.5000 | Y |
+| 95 | #1065 | feat(skills): convert 9 Claude skills to Hermes format | 1 | 0.5 | 3 | 1.5000 | Y |
+| 96 | #1160 | research(process): catalog 'behavioral errors' — undesirable agent actions distinct from technical tool failures | 1 | 0.5 | 3 | 1.5000 | Y |
+| 97 | #1000 | SPIKE: can puzzle:status flag tracker issues that have CLOSED children still shown as unchecked? | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 98 | #1030 | decision: adopt or reject STALE_READ error_type — resolve the #904 half-state | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 99 | #1077 | test(skills): verify next-best-action Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 100 | #1079 | test(skills): verify guide-human-decision Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 101 | #1080 | test(skills): verify log-error Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 102 | #1081 | test(skills): verify write-til-doc Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 103 | #1082 | test(skills): verify yegor-pm Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 104 | #1083 | test(skills): verify puzzle-velocity Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 105 | #1084 | test(skills): verify puzzle-triage Hermes skill end-to-end | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 106 | #1113 | process: decide Hermes↔lccjs telemetry policy — close the velocity/error-logging gap (Rule 5 vs Hermes exemption) | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 107 | #1152 | feat(skills): author a Hermes agent operating checklist for nemotron-3-ultra agents | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 108 | #1156 | test(skills): exercise the Claude-authored Hermes write-til-doc skill in the Hermes runtime | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 109 | #1157 | feat(skills): convert the Claude write-til-doc skill into a Hermes skill (Claude-authored) | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 110 | #1202 | decision: promote any of TIL #1197's four rule-lines to RULES.json (or route to docs)? | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 111 | #1210 | WRITER: skill portability + organization across providers (agentskills.io hub; Claude/Codex/Hermes) | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 112 | #1218 | WRITER: skill portability hub doc (agentskills.io; Claude Code and Codex spokes) | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 113 | #1219 | WRITER: skill organization strategy across providers and repos | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 114 | #1220 | SPIKE: confirm Hermes skill paths, invocation, and extension model | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 115 | #1285 | process: consider a RULES.md rule — verify a ticket's prescribed fix mechanism before implementing | 0.5 | 0.5 | 5 | 1.2500 | Y |
+| 116 | #252 | Decomplect (H1b): lift trace + register-diff display out of interpreter step() into an observer | 0.5 | 0.8 | 3 | 1.2000 | Y |
+| 117 | #255 | Decomplect (H4): group interpreter constructor state into cpu/io/diag sub-objects | 0.5 | 0.8 | 3 | 1.2000 | Y |
+| 118 | #428 | Tracker: Tier 3 — N2 trap constants, M4 commit informativeness, DDD linker/lcc.js naming, Q20, N3 | 0.5 | 0.8 | 3 | 1.2000 | Y |
+| 119 | #429 | Tracker: Tier 4 — interpreter decomplect (H1/H4), mnemonic-table ROI, experiment designs | 0.5 | 0.8 | 3 | 1.2000 | Y |
+| 120 | #430 | Tracker: Tier 5 — aspirational research (ISA design, educational, DDD domain objects, M8) | 0.5 | 0.8 | 3 | 1.2000 | Y |
+| 121 | #838 | TRACKER: GitHub repo activity visualization for lccjs | 0.5 | 0.8 | 3 | 1.2000 | N |
+| 122 | #873 | ARC/DEV: breaking public-API regroup of interpreter state (1b — future) | 0.5 | 0.8 | 3 | 1.2000 | Y |
+| 123 | #1129 | DEV: ilcc reverse step — replay program input via per-step consumed-input log (corrected Gap B) | 0.5 | 0.8 | 3 | 1.2000 | Y |
+| 124 | #1319 | docs(process): add scope-overrun pre-action-gate rule to RULES.json (after #1185) | 0.5 | 0.8 | 3 | 1.2000 | Y |
+| 125 | #159 | Act on Prof Dos Reis's reply re: `sext` semantics (follow-up to #150) | 0.5 | 0.5 | 3 | 0.7500 | Y |
+| 126 | #810 | RESEARCH: assess efficacy and utility of fruit-agent-orchestrate improvement proposals (2026-06-05) | 0.5 | 0.5 | 3 | 0.7500 | Y |
+| 127 | #980 | SPIKE: try statechart skill for #134 ilcc debugger statechart work — does it add value? | 0.5 | 0.5 | 3 | 0.7500 | Y |
+| 128 | #1048 | feat(skills): fruit-agent-orchestrate — delegate Steps 3-5 reasoning to a subagent (conditional) | 0.5 | 0.5 | 3 | 0.7500 | Y |
+| 129 | #1144 | research(process): assess whether #1117's pre-close error self-audit reduced error-logging under-reporting | 0.5 | 0.5 | 3 | 0.7500 | N |
+| 130 | #1155 | research(process): assess the Claude-authored Hermes write-til-doc port (quality, outcomes, vs nemotron) | 0.5 | 0.5 | 3 | 0.7500 | Y |
+| 131 | #1213 | enhancement(process): a system to RECOMMEND (not enforce) work sequencing across ticket clusters | 0.5 | 0.5 | 3 | 0.7500 | N |
+| 132 | #1221 | research(process): target ratio of feature progress vs process improvement — measure current, propose a budget so process doesn't starve product | 0.5 | 0.5 | 3 | 0.7500 | Y |
+| 133 | #1255 | SPIKE: evaluate Tony Kay's escapement — statechart-driven LLM agent framework — for regulating lccjs's multi-agent workflow | 0.5 | 0.5 | 3 | 0.7500 | Y |
+| 134 | #1291 | external: version-control & fix stale velocity.db path in untracked Claude Code skill copies (~/.claude/skills) | 0.5 | 0.5 | 3 | 0.7500 | Y |
+| 135 | #1292 | external: stale velocity.db path in Hermes log-error skill copy (~/.hermes) — no owned repo yet | 0.5 | 0.5 | 3 | 0.7500 | Y |
+| 136 | #1305 | RESEARCH: evaluate ASCII-friendly + accessibly-renderable diagram formats (Mermaid, D2, m2, etc.) | 0.5 | 0.5 | 3 | 0.7500 | Y |
