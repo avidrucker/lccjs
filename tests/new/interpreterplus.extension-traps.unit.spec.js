@@ -556,12 +556,20 @@ describe(`InterpreterPlus — executeWho / who+whodis (TRAP_WHO = 0x${TRAP_WHO.t
 
 describe(`InterpreterPlus — executeBoop / boop (TRAP_BOOP = 0x${TRAP_BOOP.toString(16).toUpperCase()})`, () => {
   let writeSpy;
+  let savedBoopEnv;
   beforeEach(() => {
     writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+    // Isolate from any LCCPLUS_BOOP_MESSAGE in the ambient env / loaded .env (#1511).
+    savedBoopEnv = process.env.LCCPLUS_BOOP_MESSAGE;
+    delete process.env.LCCPLUS_BOOP_MESSAGE;
   });
-  afterEach(() => writeSpy.mockRestore());
+  afterEach(() => {
+    writeSpy.mockRestore();
+    if (savedBoopEnv === undefined) delete process.env.LCCPLUS_BOOP_MESSAGE;
+    else process.env.LCCPLUS_BOOP_MESSAGE = savedBoopEnv;
+  });
 
-  test('writes exactly "Boop!\\n" to stdout in a single write', () => {
+  test('default (LCCPLUS_BOOP_MESSAGE unset): writes exactly "Boop!\\n" in a single write', () => {
     const ip = makeIp();
     ip.executeBoop();
     expect(writeSpy).toHaveBeenCalledWith('Boop!\n');
@@ -584,10 +592,32 @@ describe(`InterpreterPlus — executeBoop / boop (TRAP_BOOP = 0x${TRAP_BOOP.toSt
     expect(ip.r[5]).toBe(0xFFFF);
   });
 
-  test('message comes from bopMessage() — the future `.env` customization seam', () => {
+  test('message comes from bopMessage() — executeBoop delegates to the seam', () => {
     const ip = makeIp();
     ip.bopMessage = () => 'CUSTOM\n';
     ip.executeBoop();
     expect(writeSpy).toHaveBeenCalledWith('CUSTOM\n');
+  });
+
+  test('LCCPLUS_BOOP_MESSAGE override: writes the custom text plus a trailing newline', () => {
+    process.env.LCCPLUS_BOOP_MESSAGE = 'Beep';
+    const ip = makeIp();
+    ip.executeBoop();
+    expect(writeSpy).toHaveBeenCalledWith('Beep\n');
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('LCCPLUS_BOOP_MESSAGE with spaces/punctuation is preserved verbatim (+ newline)', () => {
+    process.env.LCCPLUS_BOOP_MESSAGE = 'boop received, ok!';
+    const ip = makeIp();
+    ip.executeBoop();
+    expect(writeSpy).toHaveBeenCalledWith('boop received, ok!\n');
+  });
+
+  test('empty LCCPLUS_BOOP_MESSAGE falls back to the default "Boop!\\n"', () => {
+    process.env.LCCPLUS_BOOP_MESSAGE = '';
+    const ip = makeIp();
+    ip.executeBoop();
+    expect(writeSpy).toHaveBeenCalledWith('Boop!\n');
   });
 });

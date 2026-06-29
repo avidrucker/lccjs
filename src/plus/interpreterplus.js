@@ -565,16 +565,24 @@ class InterpreterPlus extends Interpreter {
     }
   }
 
-  // boop — a no-operand logging/testing trap that writes a fixed message to
-  // stdout (distinct from `bop`, the sound-slot-6 alias). The message is read
-  // through bopMessage() so a future feature can make it `.env`-configurable
-  // (e.g. LCCPLUS_BOOP_MESSAGE) without touching the trap dispatch (#1490).
+  // boop — a no-operand logging/testing trap that writes a message to stdout
+  // (distinct from `bop`, the sound-slot-6 alias). The message is resolved
+  // through bopMessage() (#1490 seam), which honors LCCPLUS_BOOP_MESSAGE (#1511).
   executeBoop() {
     process.stdout.write(this.bopMessage());
   }
 
+  // Resolve the boop message. Users may override the text via the
+  // LCCPLUS_BOOP_MESSAGE env var (consistent with the LCCPLUS_SOUND_* family),
+  // resolved through the same dotenv load the sound subsystem uses. The trap
+  // appends a single trailing newline, so the env value is just the text
+  // (LCCPLUS_BOOP_MESSAGE=Beep -> "Beep\n"). An unset or empty value falls back
+  // to the default "Boop!". (#1511)
   bopMessage() {
-    return 'Boop!\n';
+    loadDotenvOnce();
+    const custom = process.env.LCCPLUS_BOOP_MESSAGE;
+    if (custom == null || custom === '') return 'Boop!\n';
+    return `${custom}\n`;
   }
 }
 
