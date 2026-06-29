@@ -1,8 +1,16 @@
 # Render driver scoping (#1471)
 
-Scoping pass for `demos/donut.a` — the 23×79 ray-march driver that wires
+Scoping pass for `experiments/donut/donut.a` — the 23×79 ray-march driver that wires
 `length_cordic` (#1469) and `mul_q14` (#1470) into the single golden frame
 `frame_simple.txt`. Done before writing the driver, per request.
+
+> **Outcome (#1471 landed):** the **modular** shape (see the fork below) was chosen.
+> The driver lives at `experiments/donut/donut.a` and links `cordic.a + mul.a +
+> render.a` → `donut.e` (build + run + diff via `experiments/donut/run_donut.sh`);
+> the golden frame is pinned byte-for-byte by
+> `tests/new/donut.golden-frame.e2e.spec.js` (#1472). The single-self-contained
+> option was not taken. (This doc predates the implementation and originally
+> referenced a `demos/`-style path that was never created.)
 
 ## Headline: register pressure is NOT the hard part
 
@@ -55,12 +63,12 @@ through r0–r4. r5/r6/r7 stay untouched (fp/sp/lr).
 ## Estimated size & the module question
 
 Driver alone ≈ 300–450 lines. Combined with the helpers inlined into one
-self-contained `demos/donut.a` ≈ 550–650 lines — still under the 1000-line
-refactor threshold. Two viable shapes (see ticket discussion / fork):
-- **Modular:** `donut.a` driver `.extern`s the helpers; link `cordic.o + mul.o
-  + donut.o`. Reuses the already-tested modules verbatim.
-- **Single self-contained `demos/donut.a`:** helpers inlined, runs with one
-  `lcc.js demos/donut.a` — idiomatic for `demos/`.
+self-contained file ≈ 550–650 lines — still under the 1000-line refactor
+threshold. Two viable shapes (see ticket discussion / fork):
+- **Modular (chosen):** `donut.a` driver `.extern`s the helpers; link `cordic.o +
+  mul.o + render.o + donut.o` → `donut.e`. Reuses the already-tested modules verbatim.
+- **Single self-contained file:** helpers inlined, runs with one `lcc.js <driver>.a`.
+  Not taken (the modular shape above shipped).
 
 ## Suggested implementation order (TDD, golden = frame_simple.txt)
 1. Precompute block → dump the ~24 globals, sanity-check a few vs C.

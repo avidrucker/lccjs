@@ -1400,3 +1400,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 1425,1505,"TIL 2026-06-29 APPLE — needs-work to tracker, code disproves the fear, seam-preserving refactor, deterministic tests",WRITER,15,10,5,10,5,2026-06-29T06:39:15-1000,2026-06-29T06:42:14-1000,,,APPLE,opus-4.8,lccjs
 1426,1508,docs(donut): RENDER_SCOPING.md cites nonexistent demos/donut.a path,PM,5,3,3,2,0,2026-06-29T07:33:44-1000,2026-06-29T07:33:44-1000,,,APPLE,opus-4.8,lccjs
 1427,1472,testing: golden-frame e2e test pinning donut output to frame_simple.txt,TEST,30,20,20,10,0,2026-06-29T08:00:00-1000,2026-06-29T08:19:38-1000,,,APPLE,opus-4.8,lccjs
+1428,1508,docs(donut): fix RENDER_SCOPING.md phantom demos/donut.a path,WRITER,8,5,6,2,-1,2026-06-29T08:25:00-1000,2026-06-29T08:24:06-1000,,,APPLE,opus-4.8,lccjs
