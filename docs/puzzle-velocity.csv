@@ -1397,3 +1397,4 @@ id,ticket,title,role,h_min,c_min,actual_min,delta_h_min,delta_c_min,started_iso,
 1422,1502,SPIKE: decide the core-LCC sound architecture for --sounds-on,RESEARCH,60,35,22,38,13,2026-06-28T09:41:00-1000,2026-06-28T10:03:23-1000,,,APPLE,opus-4.8,lccjs
 1423,1503,refactor(sound): extract a shared SoundEngine from interpreterplus.js,DEV,45,30,25,20,5,2026-06-29T04:40:00-1000,2026-06-29T05:05:34-1000,,,APPLE,opus-4.8,lccjs
 1424,1504,feat(interpreter): add --sounds-on flag to enable sound mnemonics in core LCC,DEV,45,30,17,28,13,2026-06-29T05:05:00-1000,2026-06-29T05:22:05-1000,,,APPLE,opus-4.8,lccjs
+1425,1505,"TIL 2026-06-29 APPLE — needs-work to tracker, code disproves the fear, seam-preserving refactor, deterministic tests",WRITER,15,10,5,10,5,2026-06-29T06:39:15-1000,2026-06-29T06:42:14-1000,,,APPLE,opus-4.8,lccjs
