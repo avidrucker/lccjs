@@ -15,6 +15,7 @@ See [`docs/velocity-schema.md`](../docs/velocity-schema.md) for the full schema.
 | `enrich.py` | Reads `~/.lccjs/lccjs.db`, adds three enrichment layers, writes `puzzle-velocity-enriched.csv` atomically |
 | `puzzle-velocity-enriched.csv` | Generated dataset the notebook reads — **local-only, gitignored** (re-generate with `enrich.py` before running notebooks; see #286) |
 | `week-NN-analysis.ipynb` | **Active series** — one weekly-cadence pass (NN = whole weeks since data logging began 2026-05-28). Committed **with** embedded outputs/plots → renders on GitHub |
+| [`EXEC-SUMMARY.md`](./EXEC-SUMMARY.md) | **Plain-language headline** of the latest weekly notebook — the 3–5 takeaways for someone who just wants "what does the data say right now?" Refresh it when a new `week-NN` lands (#1520) |
 | `archive/day-01..day-11-analysis.ipynb` | **Archived daily era** (2026-05-28 → 2026-06-08). The original ~daily passes; kept as historical record. `day-01` is the seed notebook, `day-02` adds the over-time axis, `day-03` adds the 3-day calibration trend + per-agent cut, etc. (day-08 never existed) |
 | `requirements.txt` | Python deps (prefer the shared venv below) |
 
@@ -87,6 +88,8 @@ adds three derived layers — this answers the "how can we enrich the data?" bra
   fragmentation (the notes flag that `actual_min` is summed hands-on, not wall-clock).
 
 ## Headline findings (as of the committed run)
+
+> **For the current headline summary, see [`EXEC-SUMMARY.md`](./EXEC-SUMMARY.md)** (refreshed per weekly notebook). The findings below are from an earlier committed run and may lag the latest week.
 
 - **Systematic over-padding:** median C-ratio ≈ **2.5x** (mean ≈ 3.0x) — calibrated
   estimates run ~2–3x the actual hands-on time, consistently, across all roles.
