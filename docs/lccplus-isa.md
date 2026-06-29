@@ -40,7 +40,7 @@ core traps can grow upward from `0x0E` without collision.
 | resetc | 0x00FF | none | Resets cursor position to top-left of screen |
 | beep   | 0x00F8 | none | Emits ASCII BEL (`\x07`) to stdout |
 | ding   | 0x00F7 | none | Emits ASCII BEL (`\x07`) to stdout (alias of `beep`; may diverge in a future release) |
-| boop   | 0x00F6 | none | Writes the literal string `"boop\n"` to stdout |
+| boop   | 0x00F6 | none | Writes the fixed string `"Boop!\n"` to stdout — a logging/testing trap, distinct from the `bop` sound alias |
 | who    | 0x00F5 | none | Reads `name.nnn` from cwd and writes contents to stdout (no trailing newline); silent empty string if absent |
 | whodis | 0x00F5 | none | Alias for `who`; identical encoding and behavior |
 

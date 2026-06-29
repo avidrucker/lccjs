@@ -1,10 +1,11 @@
-; boop.ap: demonstrates the LCC+ `bop` sound alias.
-; `bop` aliases to sound slot 6.
-; Run:  SOUND_FILES_FROM_SYSTEM=1 node src/plus/lccplus.js plusdemos/boop.ap
+; boop.ap: demonstrates the LCC+ `boop` logging/testing trap.
+; `boop` takes no operands and writes the fixed string "Boop!\n" to stdout.
+; It is distinct from `bop`, the sound-slot-6 alias (see sounds.ap).
+; Run:  node src/plus/lccplus.js plusdemos/boop.ap
         .lccplus
         lea r0, msg
         sout r0
         nl
-        bop             ; alias for sound 2
+        boop            ; writes "Boop!\n" to stdout
         halt
-msg:    .string "boop.ap: playing the bop sound slot..."
+msg:    .string "boop.ap: invoking the boop trap..."

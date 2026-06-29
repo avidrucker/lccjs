@@ -20,7 +20,7 @@ const InterpreterPlus = require('../../src/plus/interpreterplus');
 const { SOUND_SLOTS } = InterpreterPlus;
 const {
   TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR, TRAP_MILLIS, TRAP_RESETC,
-  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG, TRAP_WHO,
+  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG, TRAP_WHO, TRAP_BOOP,
 } = require('../../src/plus/constants');
 
 // ---------------------------------------------------------------------------
@@ -547,5 +547,47 @@ describe(`InterpreterPlus — executeWho / who+whodis (TRAP_WHO = 0x${TRAP_WHO.t
     ip.executeWho();
     expect(ip.r[0]).toBe(0xFFFF);
     expect(ip.r[7]).toBe(0xFFFF);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// boop (TRAP_BOOP = 0xF6) — logging/testing trap, distinct from `bop` (sound)
+// ---------------------------------------------------------------------------
+
+describe(`InterpreterPlus — executeBoop / boop (TRAP_BOOP = 0x${TRAP_BOOP.toString(16).toUpperCase()})`, () => {
+  let writeSpy;
+  beforeEach(() => {
+    writeSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+  });
+  afterEach(() => writeSpy.mockRestore());
+
+  test('writes exactly "Boop!\\n" to stdout in a single write', () => {
+    const ip = makeIp();
+    ip.executeBoop();
+    expect(writeSpy).toHaveBeenCalledWith('Boop!\n');
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not emit ASCII BEL — boop is a text trap, not a sound', () => {
+    const ip = makeIp();
+    ip.executeBoop();
+    expect(writeSpy).not.toHaveBeenCalledWith('\x07');
+  });
+
+  test('takes no register operand — does not read dr or sr', () => {
+    const ip = makeIp();
+    ip.r.fill(0xFFFF);
+    ip.dr = 3;
+    ip.sr = 5;
+    ip.executeBoop();
+    expect(ip.r[3]).toBe(0xFFFF);
+    expect(ip.r[5]).toBe(0xFFFF);
+  });
+
+  test('message comes from bopMessage() — the future `.env` customization seam', () => {
+    const ip = makeIp();
+    ip.bopMessage = () => 'CUSTOM\n';
+    ip.executeBoop();
+    expect(writeSpy).toHaveBeenCalledWith('CUSTOM\n');
   });
 });

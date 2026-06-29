@@ -16,7 +16,7 @@ const { TRAP_HALT, TRAP_BP } = require('../core/constants');
 const {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
   TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC,
-  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG, TRAP_WHO,
+  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG, TRAP_WHO, TRAP_BOOP,
   EOP_RAND,
 } = require('./constants');
 
@@ -427,6 +427,9 @@ class InterpreterPlus extends Interpreter {
       case TRAP_WHO: // who / whodis
         this.executeWho();
         break;
+      case TRAP_BOOP: // boop
+        this.executeBoop();
+        break;
       default:
         // If it's not a known LCC+ trap, call parent's method
         super.executeTRAP();
@@ -560,6 +563,18 @@ class InterpreterPlus extends Interpreter {
     } catch (_) {
       // name.nnn absent
     }
+  }
+
+  // boop — a no-operand logging/testing trap that writes a fixed message to
+  // stdout (distinct from `bop`, the sound-slot-6 alias). The message is read
+  // through bopMessage() so a future feature can make it `.env`-configurable
+  // (e.g. LCCPLUS_BOOP_MESSAGE) without touching the trap dispatch (#1490).
+  executeBoop() {
+    process.stdout.write(this.bopMessage());
+  }
+
+  bopMessage() {
+    return 'Boop!\n';
   }
 }
 

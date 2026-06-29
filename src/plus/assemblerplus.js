@@ -9,7 +9,7 @@ const { OPCODE_EXT: OP_EXT } = require('../core/constants');
 const {
   TRAP_CLEAR, TRAP_SLEEP, TRAP_NBAIN, TRAP_CURSOR,
   TRAP_SRAND, TRAP_MILLIS, TRAP_RESETC,
-  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG, TRAP_WHO,
+  TRAP_SOUND, TRAP_SOUND_LITERAL_FLAG, TRAP_WHO, TRAP_BOOP,
   EOP_RAND,
 } = require('./constants');
 
@@ -46,6 +46,7 @@ class AssemblerPlus extends Assembler {
     t['bop']      = { encoder: (_ops) => this.assembleSoundAlias('bop'),      operandShape: '(none)' };
     t['who']    = { encoder: (_ops) => this.assembleTrap([], TRAP_WHO),   operandShape: '(none)' };
     t['whodis'] = { encoder: (_ops) => this.assembleTrap([], TRAP_WHO),   operandShape: '(none)' };
+    t['boop']   = { encoder: (_ops) => this.assembleTrap([], TRAP_BOOP),  operandShape: '(none)' };
   }
 
   // Register an external extension module's mnemonics into _instructionTable.
