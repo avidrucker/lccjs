@@ -413,6 +413,22 @@ clean session and a forgotten log no longer look identical in the record. (Cross
 `next-best-action` skill carries this as a checklist question; #1118 adds a `COMPLIANCE_FAIL`
 `error_type` so a *forgotten-then-caught* episode is itself recordable.)
 
+**Post-hoc detector (#1234).** The audit line is a *self*-report, so it can still be skipped. To
+catch that, `npm run audit:closes` scans recent closed issues and flags any whose comments lack a
+**timely** `error self-audit:` line — distinguishing `missing` (a `Closed in <sha>` puzzle-close with
+no audit line) from `late` (the line was backfilled well after close, the #1169 case). Detection and
+reporting only — no auto-fix and no gate in `close.js` (which structurally can't run it):
+
+```bash
+npm run audit:closes                 # last 30 closed, list violations, exit 0
+npm run audit:closes -- --all        # show ok / n-a too
+npm run audit:closes -- --grace-min 30 --strict   # tighten the "timely" window; exit 1 on any violation (CI)
+```
+
+It keys "puzzle close" on the `Closed in <sha>` comment, so duplicates / wontfix closes (no such
+comment) are `no-close-comment` and not flagged unless `--include-silent`. The pure classifier is
+unit-tested (`tests/new/audit-closes.unit.spec.js`); the `gh` fetch is the impure wrapper.
+
 ---
 
 ## PDD scan coverage & the `at_todo` placeholder

@@ -286,7 +286,7 @@
       "text_sha": "d9b8c9",
       "added": "2026-06-06",
       "added_issue": 1117,
-      "comment": "Error logging was being silently under-reported: agents self-correct a misfire and never log it (the #1108 repro — 3 errors went unlogged until a human asked, then backfilled as rows 49-51). close.js cannot see the transcript, but the agent can, so the audit lives with the agent, not the script. The explicit outcome statement converts silence into a checkable acknowledgement. Mechanism chosen in #1117 (Option D — agent transcript self-audit) over a close.js acknowledgement gate; preserves the manual-judgement decision in the log-error skill (no auto-logging).",
+      "comment": "Error logging was being silently under-reported: agents self-correct a misfire and never log it (the #1108 repro — 3 errors went unlogged until a human asked, then backfilled as rows 49-51). close.js cannot see the transcript, but the agent can, so the audit lives with the agent, not the script. The explicit outcome statement converts silence into a checkable acknowledgement. Mechanism chosen in #1117 (Option D — agent transcript self-audit) over a close.js acknowledgement gate; preserves the manual-judgement decision in the log-error skill (no auto-logging). Post-hoc detector (#1234): `npm run audit:closes` scans recent closed issues and flags any whose comments lack a timely `error self-audit:` line (status `missing` = puzzle-close with no line; `late` = backfilled after close, the #1169 case). Detection only — no auto-fix, no close.js gate.",
       "status": "active"
     },
     {
