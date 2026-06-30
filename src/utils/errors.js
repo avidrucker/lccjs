@@ -17,6 +17,11 @@ class LccError extends Error {
     if (options && options.explainKey) {
       this.explainKey = options.explainKey;
     }
+    // `options.id` (optional, #1562) is a unique error ID surfaced inline under
+    // --show-err-id at the display seam (cliErrorExit). Independent of explainKey.
+    if (options && options.id) {
+      this.id = options.id;
+    }
   }
 }
 

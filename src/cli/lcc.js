@@ -18,7 +18,7 @@ const { formatFlagDiagnostics } = require('../utils/flagDiagnostics');
 
 const newline = process.platform === 'win32' ? '\r\n' : '\n';
 
-const { fatalExit, cliErrorExit, cliWrappedErrorExit, setExplainMode } = require('../utils/cliExit');
+const { fatalExit, cliErrorExit, cliWrappedErrorExit, setExplainMode, setShowErrId } = require('../utils/cliExit');
 
 class LCC {
   constructor() {
@@ -424,6 +424,7 @@ class LCC {
             // of --explain (IDs stay hidden under bare --explain), combinable
             // with it. Off by default so the plain stream's oracle parity holds.
             this.options.showErrId = true;
+            setShowErrId(true); // also surface ids on the interpreter/linker cliExit path (#1562)
             break;
           case '--sounds-on':
             // Enable the LCC+ sound trap (0xF8) in core LCC (#1504). OFF by

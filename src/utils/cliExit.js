@@ -26,6 +26,23 @@ function setExplainMode(on) {
   explainModeOn = !!on;
 }
 
+// --show-err-id mode (#1562). Off by default; the CLI driver flips it on when
+// `--show-err-id` is parsed. When on, cliErrorExit renders a unique error ID inline as
+// `Error [int-NNN]: <message>`. Gated so default (and oracle-parity) output is unchanged.
+let showErrIdOn = false;
+function setShowErrId(on) {
+  showErrIdOn = !!on;
+}
+
+// withErrorId(message, id) — compose the inline-id form `Error [id]: <core>`, folding a
+// leading "Runtime Error: " (the interpreter's parity-locked runtime lead-in) so the id is
+// not doubled. Returns the message unchanged when the flag is off or no id resolves.
+function withErrorId(message, id) {
+  if (!showErrIdOn || !id) return message;
+  const core = String(message).replace(/^Runtime Error: /, '');
+  return `Error [${id}]: ${core}`;
+}
+
 // Prints the `explain:` block for a key when explain mode is on and an entry
 // exists. No-op otherwise — keeps the non-explain path unchanged.
 function maybeExplain(explainKey) {
@@ -42,16 +59,23 @@ function fatalExit(message, code = 1) {
   }
 }
 
-function cliErrorExit(message, code = 1, explainKey = null) {
-  console.error(message);
+function cliErrorExit(message, code = 1, explainKey = null, id = null) {
+  console.error(withErrorId(message, id));
   maybeExplain(explainKey);
-  fatalExit(message, code);
+  fatalExit(message, code); // throw/exit text stays the ORIGINAL message (parity, #1562)
 }
 
 function cliWrappedErrorExit(prefix, error, code = 1) {
-  console.error(prefix, error.message);
+  const id = error && error.id;
+  if (showErrIdOn && id) {
+    // Under --show-err-id, converge on the consistent `Error [id]: <message>` form
+    // (the "<prefix> running <file>:" wrapper is dropped in favor of the citable id). (#1562)
+    console.error(withErrorId(error.message, id));
+  } else {
+    console.error(prefix, error.message); // default — byte-identical
+  }
   maybeExplain(error && error.explainKey);
-  fatalExit(`${prefix} ${error.message}`, code);
+  fatalExit(`${prefix} ${error.message}`, code); // throw/exit text unchanged (parity)
 }
 
 module.exports = {
@@ -61,4 +85,6 @@ module.exports = {
   cliWrappedErrorExit,
   setExplainMode,
   maybeExplain,
+  setShowErrId,
+  withErrorId,
 };

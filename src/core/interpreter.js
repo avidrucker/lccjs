@@ -562,7 +562,9 @@ class Interpreter {
         // `${this.inputFileName} is not a valid LCC executable file: missing 'o' signature`
         cliErrorExit(`${this.inputFileName} is not in lcc format`, 1);
       }
-      cliErrorExit(`Runtime Error: ${error.message}`, 1);
+      // Forward the typed error's explainKey (so --explain works for runtime errors too,
+      // additive) and its id (surfaced inline under --show-err-id). Default text unchanged. (#1562)
+      cliErrorExit(`Runtime Error: ${error.message}`, 1, error && error.explainKey, error && error.id);
     }
 
     // Generate .lst and .bst files if required
@@ -624,7 +626,7 @@ class Interpreter {
     } catch (error) {
       // Forward any explain key the typed error carries (e.g. BAD_EXE_HEADER on a
       // truncated/corrupt header) so `--explain` renders the block here (#1247/#1245).
-      cliErrorExit(error.message, 1, error && error.explainKey);
+      cliErrorExit(error.message, 1, error && error.explainKey, error && error.id);
     }
 
     this.initialMem = this.mem.slice(); // Makes a copy of the memory array
@@ -1327,7 +1329,7 @@ class Interpreter {
         break;
       case EOP_DIV: // DIV
         if (this.r[this.sr1] === 0) {
-          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO' }));
+          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO', id: 'int-001' })); // #1562 reference id; full backfill #1554
         }
         // Signed 16-bit division, truncating toward zero (C semantics; oracle parity #1237).
         // Registers are Uint16Array, so operate on the signed view then mask back.
@@ -1336,7 +1338,7 @@ class Interpreter {
         break;
       case EOP_REM: // REM
         if (this.r[this.sr1] === 0) {
-          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO' }));
+          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO', id: 'int-001' })); // #1562 reference id; full backfill #1554
         }
         // Signed 16-bit remainder; result takes the sign of the dividend (C semantics; oracle parity #1237).
         this.r[this.dr] = (this.toSigned16(this.r[this.dr]) % this.toSigned16(this.r[this.sr1])) & 0xFFFF;
