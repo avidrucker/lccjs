@@ -76,7 +76,38 @@ function scanInterpreterErrorIds(filePath) {
   return { usedIds, unidentifiedThrows };
 }
 
-module.exports = { scanAssemblerErrorIds, scanInterpreterErrorIds, ALLOW_SET, INT_THROW_ALLOW };
+// scanLinkerErrorIds(filePath) — coverage guard for the linker (#1555). Like the interpreter,
+// ids ride inline on `new LinkerError(...)` / `this.error(...)`. Allow-list the funnel's bare
+// re-throw and the catch forwarder (which threads `error.id`, not a literal).
+const LNK_THROW_ALLOW = [
+  /^message\)/,         // `new LinkerError(message)` — the error() funnel's own re-throw
+  /^error\.message,/,   // `this.error(error.message, …, error.id)` — catch forwards the typed error's id
+];
+
+function scanLinkerErrorIds(filePath) {
+  const src = (filePath
+    ? fs.readFileSync(filePath, 'utf8')
+    : fs.readFileSync(path.join(__dirname, '..', 'src', 'core', 'linker.js'), 'utf8'))
+    .split('\n').filter((line) => !/^\s*\/\//.test(line)).join('\n');
+
+  const usedIds = new Set([...src.matchAll(/\blnk-\d{3}\b/g)].map((m) => m[0]));
+
+  const unidentified = [];
+  const re = /(?:new LinkerError|this\.error)\(([^\n]*)/g;
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    const tail = m[1];
+    if (/lnk-\d{3}/.test(tail)) continue;
+    if (LNK_THROW_ALLOW.some((r) => r.test(tail.trim()))) continue;
+    unidentified.push(tail.slice(0, 60));
+  }
+  return { usedIds, unidentified };
+}
+
+module.exports = {
+  scanAssemblerErrorIds, scanInterpreterErrorIds, scanLinkerErrorIds,
+  ALLOW_SET, INT_THROW_ALLOW, LNK_THROW_ALLOW,
+};
 
 // CLI: `node scripts/check-error-ids.js` — print the unresolved set (for local debugging).
 if (require.main === module) {

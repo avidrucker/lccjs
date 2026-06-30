@@ -669,3 +669,39 @@ describe('Linker Unit Tests', () => {
     });
   });
 });
+
+describe('Linker error() — --show-err-id inline ids (#1555)', () => {
+  let errSpy;
+  beforeEach(() => { errSpy = jest.spyOn(console, 'error').mockImplementation(() => {}); });
+  afterEach(() => { errSpy.mockRestore(); });
+  const printed = () => errSpy.mock.calls.map((c) => c.join(' ')).join('\n');
+
+  test('under showErrIdOn + id, error() prints "Error [lnk-NNN]: <message>"', () => {
+    const linker = new Linker();
+    linker.showErrIdOn = true;
+    expect(() => linker.error('Invalid S entry', 'BAD_OBJECT_HEADER', 'lnk-002')).toThrow(LinkerError);
+    expect(printed()).toContain('Error [lnk-002]: Invalid S entry');
+  });
+
+  test('off by default: output is the plain message (parity)', () => {
+    const linker = new Linker();
+    expect(() => linker.error('Invalid S entry', 'BAD_OBJECT_HEADER', 'lnk-002')).toThrow(LinkerError);
+    expect(printed()).toBe('Invalid S entry');
+    expect(printed()).not.toContain('[lnk-');
+  });
+
+  test('showErrIdOn but no id → plain message (no empty bracket)', () => {
+    const linker = new Linker();
+    linker.showErrIdOn = true;
+    expect(() => linker.error('Multiple entry points', 'MULTIPLE_ENTRY')).toThrow(LinkerError);
+    expect(printed()).toBe('Multiple entry points');
+  });
+
+  test('showErrIdOn drops the verbose [linker] prefix in favor of the id form', () => {
+    const linker = new Linker();
+    linker.showErrIdOn = true;
+    linker.verboseModeOn = true;
+    expect(() => linker.error('Invalid S entry', 'BAD_OBJECT_HEADER', 'lnk-002')).toThrow(LinkerError);
+    expect(printed()).toBe('Error [lnk-002]: Invalid S entry'); // not "[linker] ..."
+  });
+});

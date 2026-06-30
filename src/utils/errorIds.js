@@ -87,6 +87,26 @@ const INT_ERROR_IDS = Object.freeze({
   'is not a valid LCC executable file':       { id: 'int-016', explainKey: 'NOT_LCC_FORMAT' },
 });
 
+// LNK_ERROR_IDS (#1555) — the linker's error-ID registry. Like the interpreter (#1554) and
+// unlike the assembler, the linker has ~11 discrete error sites with messages that don't
+// normalize (front-interpolated filenames/labels, mid-interpolated `Invalid ${entryType}
+// entry`) AND a collision — `Invalid ${entryType} entry` renders `Invalid S entry`, which
+// also exists as a literal. So ids ride INLINE on the `LinkerError` throw / `this.error`
+// call; this table is the canonical record + validation + coverage cross-check. Append-only.
+const LNK_ERROR_IDS = Object.freeze({
+  'not a linkable file':                 { id: 'lnk-001', explainKey: 'NOT_LINKABLE' },
+  'Invalid S entry':                     { id: 'lnk-002', explainKey: 'BAD_OBJECT_HEADER' },
+  'Invalid {entryType} entry':           { id: 'lnk-003', explainKey: 'BAD_OBJECT_HEADER' },
+  'Unterminated label in entry':         { id: 'lnk-004', explainKey: 'BAD_OBJECT_HEADER' },
+  'Invalid A entry':                     { id: 'lnk-005', explainKey: 'BAD_OBJECT_HEADER' },
+  'Unknown header entry in file':        { id: 'lnk-006', explainKey: 'BAD_OBJECT_HEADER' },
+  'is not a linkable module':            { id: 'lnk-007', explainKey: 'BAD_OBJECT_HEADER' },
+  'Multiple entry points':               { id: 'lnk-008', explainKey: 'MULTIPLE_ENTRY' },
+  'More than one global declaration':    { id: 'lnk-009', explainKey: 'MULTIPLE_GLOBAL' },
+  'Invalid header entry':                { id: 'lnk-010', explainKey: null },
+  'undefined external reference':        { id: 'lnk-011', explainKey: 'UNDEFINED_EXTERN' },
+});
+
 // lookupErrorId(message) — the registry id for a (possibly rendered) message, or null.
 function lookupErrorId(message) {
   if (!message) return null;
@@ -114,5 +134,6 @@ function validateErrorIds(reg) {
 
 validateErrorIds(ASM_ERROR_IDS); // fires at require()
 validateErrorIds(INT_ERROR_IDS);
+validateErrorIds(LNK_ERROR_IDS);
 
-module.exports = { ASM_ERROR_IDS, INT_ERROR_IDS, lookupErrorId, normalize, validateErrorIds };
+module.exports = { ASM_ERROR_IDS, INT_ERROR_IDS, LNK_ERROR_IDS, lookupErrorId, normalize, validateErrorIds };

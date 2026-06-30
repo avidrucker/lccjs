@@ -11,8 +11,8 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const { ASM_ERROR_IDS, INT_ERROR_IDS, lookupErrorId, normalize, validateErrorIds } = require('../../src/utils/errorIds');
-const { scanAssemblerErrorIds, scanInterpreterErrorIds } = require('../../scripts/check-error-ids');
+const { ASM_ERROR_IDS, INT_ERROR_IDS, LNK_ERROR_IDS, lookupErrorId, normalize, validateErrorIds } = require('../../src/utils/errorIds');
+const { scanAssemblerErrorIds, scanInterpreterErrorIds, scanLinkerErrorIds } = require('../../scripts/check-error-ids');
 
 describe('errorIds registry — lookup + normalization (#1553)', () => {
   test('a plain message resolves to its id', () => {
@@ -119,5 +119,36 @@ describe('errorIds — interpreter registry INT_ERROR_IDS (#1554)', () => {
     } finally {
       fs.unlinkSync(tmp);
     }
+  });
+});
+
+describe('errorIds — linker registry LNK_ERROR_IDS (#1555)', () => {
+  test('the LNK registry is well-formed (lnk-NNN, unique, valid under validateErrorIds)', () => {
+    expect(() => validateErrorIds(LNK_ERROR_IDS)).not.toThrow();
+    const ids = Object.values(LNK_ERROR_IDS).map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    ids.forEach((id) => expect(id).toMatch(/^lnk-\d{3}$/));
+    // BAD_OBJECT_HEADER spans 6 distinct messages → 6 distinct ids (max granularity)
+    const boh = Object.values(LNK_ERROR_IDS).filter((e) => e.explainKey === 'BAD_OBJECT_HEADER');
+    expect(boh.length).toBe(6);
+  });
+
+  test('coverage: source lnk- ids and the LNK registry match exactly (bidirectional)', () => {
+    const { usedIds } = scanLinkerErrorIds();
+    const tableIds = new Set(Object.values(LNK_ERROR_IDS).map((e) => e.id));
+    expect([...usedIds].sort()).toEqual([...tableIds].sort());
+    expect(usedIds.size).toBeGreaterThan(8);
+  });
+
+  test('coverage: every diagnostic LinkerError/this.error site carries an id (none un-identified)', () => {
+    const { unidentified } = scanLinkerErrorIds();
+    expect(unidentified).toEqual([]);
+  });
+
+  test('all-module id-prefix integrity: asm-/int-/lnk- are disjoint and each table is self-consistent', () => {
+    const all = [...Object.values(ASM_ERROR_IDS), ...Object.values(INT_ERROR_IDS), ...Object.values(LNK_ERROR_IDS)]
+      .map((e) => e.id);
+    expect(new Set(all).size).toBe(all.length); // globally unique across modules
+    expect(all.every((id) => /^(asm|int|lnk)-\d{3}$/.test(id))).toBe(true);
   });
 });

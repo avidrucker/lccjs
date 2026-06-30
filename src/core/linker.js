@@ -17,6 +17,7 @@ class Linker {
     // verboseModeOn is a configuration property (not per-link state) — it must
     // survive resetState() calls so callers can set it once before link().
     this.verboseModeOn = false;
+    this.showErrIdOn = false; // #1555: inline error IDs via --show-err-id
     // silent (also a configuration property) suppresses error()'s console
     // output so the pure seam linkObjectModules() can throw LinkerError without
     // printing. The CLI wrapper path (link/main) leaves it false and keeps the
@@ -80,7 +81,7 @@ class Linker {
     let offset = 0;
 
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      throw new LinkerError(`${filename} not a linkable file`, { explainKey: 'NOT_LINKABLE' });
+      throw new LinkerError(`${filename} not a linkable file`, { explainKey: 'NOT_LINKABLE', id: 'lnk-001' });
     }
 
     const module = {
@@ -107,7 +108,7 @@ class Linker {
       switch (entryType) {
         case 'S': {
           if (offset + 1 >= buffer.length) {
-            throw new LinkerError('Invalid S entry', { explainKey: 'BAD_OBJECT_HEADER' });
+            throw new LinkerError('Invalid S entry', { explainKey: 'BAD_OBJECT_HEADER', id: 'lnk-002' });
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -119,7 +120,7 @@ class Linker {
         case 'e':
         case 'V': {
           if (offset + 1 >= buffer.length) {
-            throw new LinkerError(`Invalid ${entryType} entry`, { explainKey: 'BAD_OBJECT_HEADER' });
+            throw new LinkerError(`Invalid ${entryType} entry`, { explainKey: 'BAD_OBJECT_HEADER', id: 'lnk-003' });
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -135,14 +136,14 @@ class Linker {
           // (the oracle segfaults reading past the buffer on this exact input — see #1384),
           // so reject it gracefully like the sibling address-field guards above.
           if (!labelTerminated) {
-            throw new LinkerError(`Unterminated label in ${entryType} entry`, { explainKey: 'BAD_OBJECT_HEADER' });
+            throw new LinkerError(`Unterminated label in ${entryType} entry`, { explainKey: 'BAD_OBJECT_HEADER', id: 'lnk-004' });
           }
           module.headers.push({ type: entryType, address, label });
           break;
         }
         case 'A': {
           if (offset + 1 >= buffer.length) {
-            throw new LinkerError('Invalid A entry', { explainKey: 'BAD_OBJECT_HEADER' });
+            throw new LinkerError('Invalid A entry', { explainKey: 'BAD_OBJECT_HEADER', id: 'lnk-005' });
           }
           const address = buffer.readUInt16LE(offset);
           offset += 2;
@@ -150,12 +151,12 @@ class Linker {
           break;
         }
         default:
-          throw new LinkerError(`Unknown header entry ${entryType} in file ${filename}`, { explainKey: 'BAD_OBJECT_HEADER' });
+          throw new LinkerError(`Unknown header entry ${entryType} in file ${filename}`, { explainKey: 'BAD_OBJECT_HEADER', id: 'lnk-006' });
       }
     }
 
     if (!sawCodeMarker) {
-      throw new LinkerError(`${filename} is not a linkable module`, { explainKey: 'BAD_OBJECT_HEADER' });
+      throw new LinkerError(`${filename} is not a linkable module`, { explainKey: 'BAD_OBJECT_HEADER', id: 'lnk-007' });
     }
 
     while (offset + 1 < buffer.length) {
@@ -175,7 +176,7 @@ class Linker {
       this.objectModules.push(module);
     } catch (error) {
       if (error instanceof LinkerError) {
-        this.error(error.message, error.explainKey); // log (with any explain key) then re-throw
+        this.error(error.message, error.explainKey, error.id); // log (with any explain key) then re-throw
       }
       throw error;
     }
@@ -225,14 +226,14 @@ class Linker {
       switch (header.type) {
         case 'S':
           if (this.gotStart) {
-            this.error('Multiple entry points', 'MULTIPLE_ENTRY');
+            this.error('Multiple entry points', 'MULTIPLE_ENTRY', 'lnk-008');
           }
           this.start = header.address + this.moduleCurrentAddress;
           this.gotStart = true;
           break;
         case 'G':
           if (this.globalSymbolTable.hasOwnProperty(header.label)) {
-            this.error(`More than one global declaration for ${header.label}`, 'MULTIPLE_GLOBAL');
+            this.error(`More than one global declaration for ${header.label}`, 'MULTIPLE_GLOBAL', 'lnk-009');
           }
           this.globalSymbolTable[header.label] = header.address + this.moduleCurrentAddress;
           break;
@@ -261,7 +262,7 @@ class Linker {
           });
           break;
         default:
-          this.error(`Invalid header entry: ${header.type}`);
+          this.error(`Invalid header entry: ${header.type}`, null, 'lnk-010');
       }
     }
 
@@ -284,7 +285,7 @@ class Linker {
     // Adjust externalReferenceTable11 (11-bit addresses)
     for (let ref of this.externalReferenceTable11) {
       if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
-        this.error(this._undefinedExternalRefMsg(ref.label), 'UNDEFINED_EXTERN');
+        this.error(this._undefinedExternalRefMsg(ref.label), 'UNDEFINED_EXTERN', 'lnk-011');
       }
       let Gaddr = this.globalSymbolTable[ref.label];
       let offset = ((this.machineCode[ref.address] + Gaddr - ref.address - 1) & 0x7ff);
@@ -294,7 +295,7 @@ class Linker {
     // Adjust externalReferenceTable9 (9-bit addresses)
     for (let ref of this.externalReferenceTable9) {
       if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
-        this.error(this._undefinedExternalRefMsg(ref.label), 'UNDEFINED_EXTERN');
+        this.error(this._undefinedExternalRefMsg(ref.label), 'UNDEFINED_EXTERN', 'lnk-011');
       }
       let Gaddr = this.globalSymbolTable[ref.label];
       let offset = ((this.machineCode[ref.address] + Gaddr - ref.address - 1) & 0x1ff);
@@ -304,7 +305,7 @@ class Linker {
     // Adjust virtualAddressTable (full addresses)
     for (let ref of this.virtualAddressTable) {
       if (!this.globalSymbolTable.hasOwnProperty(ref.label)) {
-        this.error(this._undefinedExternalRefMsg(ref.label), 'UNDEFINED_EXTERN');
+        this.error(this._undefinedExternalRefMsg(ref.label), 'UNDEFINED_EXTERN', 'lnk-011');
       }
       let Gaddr = this.globalSymbolTable[ref.label];
       this.machineCode[ref.address] += Gaddr;
@@ -425,12 +426,17 @@ class Linker {
 
   // `explainKey` (optional, #1098) selects a --explain catalog entry printed
   // after the error line when explain mode is on; default output is unchanged.
-  error(message, explainKey = null) {
+  error(message, explainKey = null, id = null) {
     // The pure seam sets `silent` so it can throw without writing to the
     // console; the CLI wrapper leaves it false and keeps the existing output.
     if (!this.silent) {
-      const prefix = this.verboseModeOn ? '[linker] ' : '';
-      console.error(`${prefix}${message}`);
+      // Under --show-err-id (#1555), surface the inline id as `Error [lnk-NNN]: <msg>`
+      // (the verbose `[linker]` prefix is dropped in favor of the citable id, mirroring
+      // int-). Off by default ⇒ output is byte-identical.
+      const line = (this.showErrIdOn && id)
+        ? `Error [${id}]: ${message}`
+        : `${this.verboseModeOn ? '[linker] ' : ''}${message}`;
+      console.error(line);
       maybeExplain(explainKey);
     }
     throw new LinkerError(message);
