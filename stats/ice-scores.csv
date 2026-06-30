@@ -2,170 +2,183 @@
 issue,title,type,I,C,E,ice_score,ice_rank,tier,yegor_priority,actionable,provisional,labels,notes,updated_iso
 1456,tracker: migrate lccjs PM commands onto the central pmtools harness,,2,0.8,5,8,1,critical,,Y,0,pm;area:process;priority:critical;tracker,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
 1487,research(workflow): document lccjs' end-to-end ticket lifecycle and prove byte-parity with pmtools's (independently verified),,1,1,10,10,2,,,Y,0,research;parity;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-956,feat: replace RICE with ICE scoring + override tiers + scoring script,feature,2,0.8,5,8,3,,6,Y,0,enhancement;severity:medium,,2026-06-15T04:30:49.335Z
-1335,RESEARCH: fruit-agent-orchestrate missed live worktree claims and double-booked #1322,,2,0.8,5,8,4,,,Y,1,bug;severity:high;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1360,"PROPOSAL: codify ""verify the common interaction path, not just the scriptable one"" as a verification rule",,1,0.8,10,8,5,,,Y,0,severity:low;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1486,"process: promote 'verify live state, not memory' to RULES.json (recurring learnings theme)",,1,1,7,7,6,,,Y,0,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-938,TRACKER: apply issue-review-skill to open issues — quality/accessibility/actionability pass,,1,0.8,7,5.6,7,,,Y,1,documentation;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-948,,research,1,0.8,7,5.6,8,,3,Y,0,,,2026-06-15T04:30:49.335Z
-1426,SPIKE: confirm Hermes skill model (dirs/invocation/frontmatter; agentskills.io conformance) → write Hermes spoke,,1,0.8,7,5.6,9,,,Y,0,documentation;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1484,build(velocity): untrack docs/puzzle-velocity.csv + gitignore CSV mirrors (R2 lccjs-side; mirrors pmtools#68),,1,0.8,7,5.6,10,,,Y,0,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1443,DEV: base-owned interpreter trap/eopcode registry + convert core switches to table lookups,,1,1,5,5,11,,,Y,0,refactor;severity:low;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1440,TRACKER: generalize lccjs-coupled skills to be config-driven (work in any repo),,2,0.8,3,4.8,12,,,Y,0,enhancement;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-587,Potato Token Testing suite — benchmark .a + two fuzz scripts,,1,0.8,5,4,13,,,Y,1,testing;proposal;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-590,"DEV: Potato input testing — per-stdin-prompt fuzzer, reverse order, oracle parity (on-demand)",,1,0.8,5,4,14,,,Y,1,testing;proposal;parity;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-677,TRACKER: browser playground on GitHub Pages — textarea assembly execution,,1,0.8,5,4,15,,,N,1,deferred;area:web,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-707,PM: track web front-end feature parity — LCCjs browser vs web_ilcc dashboard,,1,0.8,5,4,16,,,N,1,deferred;area:web,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-890,TRACKER: skill-inventory improvements from #886 audit — A through H,,1,0.8,5,4,17,,,Y,1,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-891,"TRACKER: add ""did you mean?"" suggestions to verbose error messages — full coverage",,1,0.8,5,4,18,,,Y,1,enhancement;scope;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1088,DEV: ilcc — 'g' run-to-end + minimal breakpoints (bp {addr|label}),,1,0.8,5,4,19,,,Y,0,area:toolchain,,2026-06-15T04:34:55.138Z
-1105,research(process): audit agent HONEYDEW's Hermes skill-port work (#1066–#1073) [TRACKER],,1,0.8,5,4,20,,,Y,1,pm;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1133,"bug: velocity-log numeric metrics are defined/validated inconsistently — unclear sign conventions, no validation on h/c/actual, doc vs code mismatch on delta_h_min",,1,0.8,5,4,21,,,Y,0,bug;area:process,,2026-06-15T04:34:55.138Z
-1177,process: stop source edits + builds on the shared main checkout (clean-gate + worktree discipline),,1,0.8,5,4,22,,,Y,0,enhancement;area:process,,2026-06-15T04:34:55.138Z
-1180,process(pm): triage claude-bugs-audit-2026-06-06.md findings into actionable investigation tickets,,1,0.8,5,4,23,,,Y,0,research;pm;area:process,,2026-06-15T04:34:55.138Z
-1189,,,1,0.8,5,4,24,,,Y,0,,,2026-06-15T04:34:55.138Z
-1211,TRACKER: fruit-agent-orchestrate improvement cluster — sequencing + efficacy gate for #810,,1,0.8,5,4,25,,,Y,1,pm;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1320,TRACKER: ICE scoring is built but orphaned — re-adopt for triage/orchestration prioritization,,1,0.8,5,4,26,,,Y,1,pm;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1322,process(ice): keep ICE scores current — score new tickets at file time or via periodic sweep,,1,0.8,5,4,27,,,Y,0,enhancement;severity:low;area:process,,2026-06-15T04:34:55.138Z
-1323,feat(skills): wire ice_score into puzzle-triage ranking (and fruit-agent-orchestrate),,1,0.8,5,4,28,,,Y,0,enhancement;severity:low;blocked;area:process,,2026-06-15T04:34:55.138Z
-1332,feat(skills): convert fruit-agent-orchestrate to Hermes skill format,,1,0.8,5,4,29,,,Y,1,area:toolchain;runtime:hermes,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1333,BUG: sandbox page theme colors do not fully follow code theme,,1,0.8,5,4,30,,,Y,1,area:uncategorized,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1334,BUG: docs pages ignore the current theme toggle and force light mode,,1,0.8,5,4,31,,,Y,1,area:uncategorized,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1336,REVIEW #1094 — docs(test-runner): teacher/student usage guide for lcc --test,,1,0.8,5,4,32,,,Y,1,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1411,data(process): normalize the 50 pre-existing non-behavioral malformed context rows in errors DB,,1,0.8,5,4,33,,,Y,0,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1420,feat(skills): fruit-agent-orchestrate should route runtime-locked tickets (runtime:hermes) to matching-runtime agents + support a Claude/Codex/Hermes roster,,1,0.8,5,4,34,,,Y,0,enhancement;severity:low;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1444,DEV: port LCC+ trap/eopcode handlers onto the base registry; delete InterpreterPlus dispatch overrides,,1,0.8,5,4,35,,,Y,0,refactor;severity:low;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1461,TRACKER: adopt br-/wt- self-describing worktree/branch naming scheme (#1460),,1,0.8,5,4,36,,,Y,0,enhancement;area:process;tracker,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1465,feat(claim): flip claim/close construction to br-/wt- self-describing names + source project/lang from config,,1,0.8,5,4,37,,,Y,0,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1479,"Char-literal error messages: '''→""Bad label"" is misleading; '\/' divergence + oracle unknown-escape rule (findings, do not close)",,1,0.8,5,4,38,,,Y,0,bug;parity;human-decision-required;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1500,Make themes dropdown available on all GitHub Pages docs pages with persistent selection,,1,0.8,5,4,39,,,Y,0,enhancement;area:web,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1506,DEV: validate and revise LCC+ sound mnemonic mappings,,1,0.8,5,4,40,,,Y,0,enhancement;severity:medium;area:lcc-non-core,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1507,WRITER: add Buy Me a Coffee support badge to README,,0.5,0.8,10,4,41,,,Y,0,enhancement;severity:low;area:education,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1512,.env usage is unaudited — no private-vs-public-safe classification of config vars,,1,0.8,5,4,42,,,Y,0,research;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1050,docs(workflow): clarify ad-hoc/unclaimed time-consuming work still gets a velocity row,,0.5,1,7,3.5,43,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-1056,chore(docs): commit the deep-code-review brainstorm + annotate it as triaged via #931,,0.5,1,7,3.5,44,,,Y,0,documentation;area:toolchain,,2026-06-15T04:34:55.138Z
-1057,chore(docs): commit improving-data-analysis-research.md + annotate its lineage (origin + follow-ups #981/#982/#983),,0.5,1,7,3.5,45,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-1063,docs(oracle-parity): correct stale 'auto-skip' claim + add stdout-mirroring convention,,0.5,1,7,3.5,46,,,Y,0,documentation;severity:low;area:toolchain,,2026-06-15T04:34:55.138Z
-1192,docs: add 'verify the load-bearing premise before ratifying a superseding decision' to do-this-not-that.md,,0.5,1,7,3.5,47,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-1242,docs(do-this-not-that): add 'check current main before chasing a worktree test red' diagnostic,,0.5,1,7,3.5,48,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-1311,docs(do-this-not-that): probe the real CLI before asserting; verify end-to-end,,0.5,1,7,3.5,49,,,Y,0,documentation;severity:low;area:process,,2026-06-15T04:34:55.138Z
-1316,"next-best-action skill frontmatter still says ""run before every close"" — contradicts the #1279 approval gate",,0.5,1,7,3.5,50,,,Y,0,documentation;severity:low;area:process,,2026-06-15T04:34:55.138Z
-507,PM: send long-line silent-split report to Prof. Dos Reis (OG BUG #13),,0.5,0.8,7,2.8,51,,,N,1,documentation;severity:low;humans-only;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-741,orientation.md Mermaid diagrams lack a readability/quality/accessibility review,,0.5,0.8,7,2.8,52,,,Y,1,documentation;severity:low;human-required;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-757,demo-034 restructuring for testability may have dropped its .global/linker-startup teaching intent,,0.5,0.8,7,2.8,53,,,Y,1,documentation;severity:low;human-decision-required;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1049,docs(workflow): add proportional consent threshold for ad-hoc investigation,,0.5,0.8,7,2.8,54,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-1062,claude_workflow.md Protocol A's final 'npm run close B' hits the same branch-gate as #1052,,0.5,0.8,7,2.8,55,,,Y,0,documentation;severity:low;area:process,,2026-06-15T04:34:55.138Z
-1094,docs(test-runner): teacher/student usage guide for lcc --test,,0.5,0.8,7,2.8,56,,,Y,0,documentation;area:toolchain,,2026-06-15T04:34:55.138Z
-1166,refactor(skills): suffix Hermes-specific skills with -hermes for disambiguation,,0.5,0.8,7,2.8,57,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1179,docs: single discoverable index for worktree & multi-agent concurrency footguns,,0.5,0.8,7,2.8,58,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
-1265,REVIEW: apply issue-review-skill to #1238 (resetAssemblyState listingLoadPoint leak),,0.5,0.8,7,2.8,59,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-1266,REVIEW: apply issue-review-skill to #1102 (--explain forwarding in LCC+ driver),,0.5,0.8,7,2.8,60,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1271,Hermes-only tickets have no runtime label — Claude Code agents can claim+stall on them (add runtime:hermes),,0.5,0.8,7,2.8,61,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
-1276,REVIEW #1093 — test(test-runner): e2e suite for --test mode,,0.5,0.8,7,2.8,62,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1296,docs: document assembleSource() per-call config contract in core.md (listingLoadPoint/verbose/explain/userName),,0.5,0.8,7,2.8,63,,,Y,0,documentation;area:uncategorized,,2026-06-15T04:34:55.138Z
-1405,"DEV/decision: optional friendly alias for reverse-step {-N} (non-b, non-s) — or decide none",,0.5,0.8,7,2.8,64,,,Y,0,enhancement;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1445,"DEV: unit tests for trap/eopcode registry guards (double-book, override, out-of-band)",,0.5,0.8,7,2.8,65,,,Y,0,refactor;severity:low;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1493,RESEARCH: decide whether LCC+ sound should use literal slots or register operands,,0.5,0.8,7,2.8,66,,,Y,0,enhancement;area:lcc-non-core,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1510,LCC+ docs and tickets misrepresent `boop`: conflated with the `bop` sound alias and documented with wrong output string,,0.5,0.8,7,2.8,67,,,Y,0,cleanup;severity:low;area:lcc-non-core,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1029,decision: close the 'logged lesson → durable rule' promotion loop for non-TIL sources,,1,0.5,5,2.5,68,,,Y,0,severity:medium;decision;area:process,,2026-06-15T04:34:55.138Z
-1074,chore(skills): add nemotron-3-ultra to log-error model examples,,0.25,1,10,2.5,69,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
-1509,RESEARCH: profile a1k0n bit-ops donut render cost at R1=R2=4 vs R1=R2=8 → findings doc in experiments/donut/,,0.5,1,5,2.5,70,,,Y,0,severity:low;research;area:education,,2026-06-29T19:14:58.742Z
-867,HUMAN: send sra-shift-by-zero summary to Prof. Dos Reis for ISA ruling,,1,0.8,3,2.4,71,,,Y,1,research;decision;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-868,"HUMAN: get Charlie's perspective on sra r0, 0 shift-by-zero validity",,1,0.8,3,2.4,72,,,Y,1,research;decision;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1406,Tracker: report outstanding OG Oracle (cuh63 6.3) bugs/glitches to Prof. Dos Reis,,1,0.8,3,2.4,73,,,Y,0,bug;documentation;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1447,ARC/HUMAN: @ItBeCharlie sign-off on 4 design questions for table-driven interpreter dispatch (#1346),,1,0.8,3,2.4,74,,,Y,0,severity:low;decision;human-decision-required;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1466,tracker: PM-transition no-regression gate — cross-confirm pmtools guardrails + live differential check before each switch,,1,0.8,3,2.4,75,,,Y,0,area:process;tracker,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1480,"Unique, stable error IDs for every diagnostic, surfaced under the verbose/explain flag",,1,0.8,3,2.4,76,,,Y,0,enhancement;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1481,Add --oracle-compat: opt-in 100% OG-LCC feature-parity (bug-for-bug) mode,,1,0.8,3,2.4,77,,,N,0,enhancement;parity;deferred;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-450,No in-browser LCC highlighting on github.com without a separate install,,0.5,0.8,5,2,78,,,Y,1,enhancement;severity:low;proposal;area:web,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-517,ARCHITECT: follow-up decisions for #512 shift-count masking fix — four open questions,,0.5,0.8,5,2,79,,,Y,1,enhancement;severity:low;human-decision-required;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-518,ARC: validate ct=0 shift decision and implication for #512 range-check lower bound,,0.5,0.8,5,2,80,,,Y,1,severity:low;decision;human-decision-required;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-681,REVIEW: human review of ROADMAP.md rewrite — verify accuracy and decide next steps,,0.5,0.8,5,2,81,,,Y,1,severity:low;human-required;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-872,"DEV: interpreter state grouping — diag bucket, internal-only (phase 1 of #255)",,0.5,0.8,5,2,82,,,Y,0,enhancement;severity:low;blocked;area:architecture,,2026-06-15T04:34:55.138Z
-967,"research: investigate puzzle-cluster.csv — existence, references, and necessity",,0.5,0.8,5,2,83,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-968,decision: agent scratch-file cleanup vs Bash rm/heredoc permission denials (preserve #434 guardrail),,0.5,0.8,5,2,84,,,Y,1,severity:low;decision;human-decision-required;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1002,"decision: flag agent ""this is busywork"" judgements for human review — don't silently drop declined work",,0.5,0.8,5,2,85,,,Y,1,severity:low;decision;human-decision-required;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1033,chore(db): retire the velocity.db migration shim + VELOCITY_DB alias once environments are migrated,,0.5,0.8,5,2,86,,,N,0,cleanup;severity:low;deferred;area:process,,2026-06-15T04:34:55.138Z
-1035,feat(close): remind to claim a fresh worktree for the next task after re-root,,0.5,0.8,5,2,87,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1046,feat(skills): fruit-agent-orchestrate should consume puzzle:status --json instead of raw dump + per-issue loop,,0.5,0.8,5,2,88,,,Y,0,enhancement;area:process,,2026-06-15T04:34:55.138Z
-1047,"refactor(skills): fruit-agent-orchestrate Step 3 should compose puzzle-triage, not re-embed it",,0.5,0.8,5,2,89,,,Y,0,enhancement;area:process,,2026-06-15T04:34:55.138Z
-1058,test: confirm label-area.yml auto-applies area:uncategorized on a real opened issue (#1012 follow-up),,0.5,0.8,5,2,90,,,Y,1,testing;severity:low;human-required;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1078,feat(plus): verbose-context enrichment for LCC+ runtime-error display (req 4 of #1011),,0.5,0.8,5,2,91,,,Y,0,enhancement;severity:low;area:lcc-non-core,,2026-06-15T04:34:55.138Z
-1087,DEV: ilcc reverse step — truncate Output pane (programOutput) on backward step (Gap C),,0.5,0.8,5,2,92,,,Y,0,area:toolchain,,2026-06-15T04:34:55.138Z
-1089,DEV: ilcc — 'sb'/'b' alias for {-N} + help line documenting reverse execution & the determinism boundary,,0.5,0.8,5,2,93,,,Y,0,area:toolchain,,2026-06-15T04:34:55.138Z
-1111,chore(claim): node_modules symlink in worktrees slips past .gitignore and blocks npm run close,,0.5,0.8,5,2,94,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
-1115,close.js scope audit shows phantom deletions when branch base is behind origin/main,,0.5,0.8,5,2,95,,,Y,0,bug;severity:low;area:process,,2026-06-15T04:34:55.138Z
-1118,process: add COMPLIANCE_FAIL/BEHAVIORAL_FAIL error_type — record when a discipline (e.g. error logging itself) is missed,,0.5,0.8,5,2,96,,,Y,0,pm;area:process,,2026-06-15T04:34:55.138Z
-1126,"chore(skills): authoring-hygiene sweep on the 8 ported Hermes skills (config abstraction, scaffolding, related_skills)",,0.5,0.8,5,2,97,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
-1135,PM: triage relabel — reconcile area:/type/severity on the #1043 ilcc reverse-step family,,0.5,0.8,5,2,98,,,Y,0,decision;pm;area:process,,2026-06-15T04:34:55.138Z
-1186,docs: migrate rule citations to stable animal-color IDs (Rule N / R0NN → name),,0.5,0.8,5,2,99,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-1195,refactor+test(error-log): apply #1184 notice-not-prevent to the model gate & cover the untested branches,,0.5,0.8,5,2,100,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
-1196,test(claim): main() orchestration is untested (~34% line coverage) — add integration coverage or a pure plan seam,,0.5,0.8,5,2,101,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
-1200,feat(skills): fruit-agent-orchestrate — assignment paragraphs must be self-contained & boilerplate-free (per-agent legibility),,0.5,0.8,5,2,102,,,Y,0,enhancement;severity:low;area:process,,2026-06-15T04:34:55.138Z
-1201,docs(skills): author an assignment-criteria rubric for fruit-agent-orchestrate Step 5b,,0.5,0.8,5,2,103,,,Y,0,documentation;severity:low;area:process,,2026-06-15T04:34:55.138Z
-1217,PM: create EPIC tracker issues for each major current feature (feature-level roadmap view),,0.5,0.8,5,2,104,,,Y,1,severity:low;pm;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1226,REVIEW: audit #1222 for missed Claude/Hermes leftovers,,0.5,0.8,5,2,105,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1234,process: detect closes missing the `error self-audit:` line — the #1117 audit artifact is unenforced,,0.5,0.8,5,2,106,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
-1235,bug(skills): Hermes next-best-action draft dropped Q6 (Error self-audit) from source,,0.5,0.8,5,2,107,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1246,"feat(ci): label-area.yml should infer the lane from issue content, not default to area:uncategorized",,0.5,0.8,5,2,108,,,Y,0,enhancement;area:process,,2026-06-15T04:34:55.138Z
-1306,,,0.5,0.8,5,2,109,,,Y,0,,,2026-06-15T04:34:55.138Z
-1308,UX: sync Sandbox terminal theme with page theme and make Run button primary green,,0.5,0.8,5,2,110,,,Y,0,severity:low;ux;area:web,,2026-06-15T04:34:55.138Z
-1315,fix(process): log-error skill is duplicated & drifted — untracked ~/.claude Claude copy vs tracked lccjs Codex copy,,0.5,0.8,5,2,111,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-1337,REVIEW: quality control pass on stats/week-03-analysis.ipynb,,0.5,0.8,5,2,112,,,Y,1,severity:low;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1339,BUG: multi-line selection in sandbox CodeMirror editor renders wrong (only one line highlights at a time),,0.5,0.8,5,2,113,,,Y,1,severity:low;area:uncategorized,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-1427,research(process): backtest inferArea() label accuracy against a 20+ labeled-issue corpus,,0.5,0.8,5,2,114,,,Y,0,severity:low;research;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1448,process: auto-mode classifier doesn't treat a ticket's acceptance criteria as authorization for external writes (spike → file DEV puzzles),,0.5,0.8,5,2,115,,,Y,0,severity:low;research;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1449,RESEARCH: does extracting a pure planClaim() seam from claim.js main() add value? (#1196 option b),,0.5,0.8,5,2,116,,,Y,0,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-1492,DEV: make LCC+ sound-like mnemonics register-flexible across the ISA,,0.5,0.8,5,2,117,,,Y,0,enhancement;area:lcc-non-core,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-625,"decision: claim.js — which labels should block agent claims (M1, #610)?",,0.5,0.5,7,1.75,118,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
-626,"decision: fruit-agent-orchestrate — filter unactionable labels before assignment (M2, #610)",,0.5,0.5,7,1.75,119,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
-630,"decision: fruit-agent-orchestrate — detect and skip in-flight agents before assignment (M6, #610)",,0.5,0.5,7,1.75,120,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
-633,"decision: close.js — auto-post closing comment skeleton after confirmed push (M10, #610)",,0.5,0.5,7,1.75,121,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
-636,"decision: adopt 10-entry TIL harvest cadence from #207 recommendations (M13, #610)",,0.5,0.5,7,1.75,122,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
-829,decision: define orchestrator-session fruit identity convention for npm run claim,,0.5,0.5,7,1.75,123,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
-841,"decision: how to leverage artifact-quality-criteria.md (skill ingredient, review checklist, or automated gate?)",,0.5,0.5,7,1.75,124,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
-1378,"fix(interpreter): add defensive break/return after div/rem zero-divisor guard (hardening, child of #1180)",,0.5,0.5,7,1.75,125,,,Y,0,severity:low;blocked;human-decision-required;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-40,[OB-008] Track upstream: cuh63 6.3 mov rejects negatives that its mvi accepts,,1,0.5,3,1.5,126,,,Y,0,documentation;severity:medium;blocked;decision;waiting-on-external;area:toolchain,,2026-06-15T04:34:55.138Z
-1065,feat(skills): convert 9 Claude skills to Hermes format,,1,0.5,3,1.5,127,,,Y,0,area:toolchain,,2026-06-15T04:34:55.138Z
-1160,research(process): catalog 'behavioral errors' — undesirable agent actions distinct from technical tool failures,,1,0.5,3,1.5,128,,,Y,0,research;area:process,,2026-06-15T04:34:55.138Z
-1000,SPIKE: can puzzle:status flag tracker issues that have CLOSED children still shown as unchecked?,,0.5,0.5,5,1.25,129,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1030,decision: adopt or reject STALE_READ error_type — resolve the #904 half-state,,0.5,0.5,5,1.25,130,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
-1077,test(skills): verify next-best-action Hermes skill end-to-end,,0.5,0.5,5,1.25,131,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1079,test(skills): verify guide-human-decision Hermes skill end-to-end,,0.5,0.5,5,1.25,132,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1080,test(skills): verify log-error Hermes skill end-to-end,,0.5,0.5,5,1.25,133,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1081,test(skills): verify write-til-doc Hermes skill end-to-end,,0.5,0.5,5,1.25,134,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1082,test(skills): verify yegor-pm Hermes skill end-to-end,,0.5,0.5,5,1.25,135,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1083,test(skills): verify puzzle-velocity Hermes skill end-to-end,,0.5,0.5,5,1.25,136,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1084,test(skills): verify puzzle-triage Hermes skill end-to-end,,0.5,0.5,5,1.25,137,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1113,process: decide Hermes↔lccjs telemetry policy — close the velocity/error-logging gap (Rule 5 vs Hermes exemption),,0.5,0.5,5,1.25,138,,,Y,0,pm;area:process,,2026-06-15T04:34:55.138Z
-1152,feat(skills): author a Hermes agent operating checklist for nemotron-3-ultra agents,,0.5,0.5,5,1.25,139,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1156,test(skills): exercise the Claude-authored Hermes write-til-doc skill in the Hermes runtime,,0.5,0.5,5,1.25,140,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1157,feat(skills): convert the Claude write-til-doc skill into a Hermes skill (Claude-authored),,0.5,0.5,5,1.25,141,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1202,decision: promote any of TIL #1197's four rule-lines to RULES.json (or route to docs)?,,0.5,0.5,5,1.25,142,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
-1210,WRITER: skill portability + organization across providers (agentskills.io hub; Claude/Codex/Hermes),,0.5,0.5,5,1.25,143,,,Y,0,documentation;severity:low;area:process,,2026-06-15T04:34:55.138Z
-1218,WRITER: skill portability hub doc (agentskills.io; Claude Code and Codex spokes),,0.5,0.5,5,1.25,144,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-1219,WRITER: skill organization strategy across providers and repos,,0.5,0.5,5,1.25,145,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-1220,"SPIKE: confirm Hermes skill paths, invocation, and extension model",,0.5,0.5,5,1.25,146,,,Y,0,research;area:process,,2026-06-15T04:34:55.138Z
-1285,process: consider a RULES.md rule — verify a ticket's prescribed fix mechanism before implementing,,0.5,0.5,5,1.25,147,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
-1402,chore(interpreter): add a committed oracle-probe generator for SEXT_PARITY_TABLE (provenance/reproducibility; child of #1180),,0.5,0.5,5,1.25,148,,,Y,0,severity:low;blocked;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
-252,Decomplect (H1b): lift trace + register-diff display out of interpreter step() into an observer,,0.5,0.8,3,1.2,149,,,Y,0,enhancement;severity:low;blocked;area:architecture,,2026-06-15T04:34:55.138Z
-255,Decomplect (H4): group interpreter constructor state into cpu/io/diag sub-objects,,0.5,0.8,3,1.2,150,,,Y,0,enhancement;severity:low;blocked;area:architecture,,2026-06-15T04:34:55.138Z
-428,"Tracker: Tier 3 — N2 trap constants, M4 commit informativeness, DDD linker/lcc.js naming, Q20, N3",,0.5,0.8,3,1.2,151,,,Y,1,severity:low;research;blocked;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-429,"Tracker: Tier 4 — interpreter decomplect (H1/H4), mnemonic-table ROI, experiment designs",,0.5,0.8,3,1.2,152,,,Y,1,severity:low;research;blocked;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-430,"Tracker: Tier 5 — aspirational research (ISA design, educational, DDD domain objects, M8)",,0.5,0.8,3,1.2,153,,,Y,1,severity:low;research;blocked;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-838,TRACKER: GitHub repo activity visualization for lccjs,,0.5,0.8,3,1.2,154,,,N,1,severity:low;research;deferred;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
-873,ARC/DEV: breaking public-API regroup of interpreter state (1b — future),,0.5,0.8,3,1.2,155,,,Y,0,enhancement;severity:low;blocked;area:architecture,,2026-06-15T04:34:55.138Z
-1129,DEV: ilcc reverse step — replay program input via per-step consumed-input log (corrected Gap B),,0.5,0.8,3,1.2,156,,,Y,0,blocked;area:toolchain,,2026-06-15T04:34:55.138Z
-1319,docs(process): add scope-overrun pre-action-gate rule to RULES.json (after #1185),,0.5,0.8,3,1.2,157,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
-159,Act on Prof Dos Reis's reply re: `sext` semantics (follow-up to #150),,0.5,0.5,3,0.75,158,,,Y,0,severity:low;research;blocked;decision;waiting-on-external;area:toolchain,,2026-06-15T04:34:55.138Z
-810,RESEARCH: assess efficacy and utility of fruit-agent-orchestrate improvement proposals (2026-06-05),,0.5,0.5,3,0.75,159,,,Y,0,severity:low;research;blocked;area:process,,2026-06-15T04:34:55.138Z
-980,SPIKE: try statechart skill for #134 ilcc debugger statechart work — does it add value?,,0.5,0.5,3,0.75,160,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
-1048,feat(skills): fruit-agent-orchestrate — delegate Steps 3-5 reasoning to a subagent (conditional),,0.5,0.5,3,0.75,161,,,Y,0,enhancement;area:process,,2026-06-15T04:34:55.138Z
-1144,research(process): assess whether #1117's pre-close error self-audit reduced error-logging under-reporting,,0.5,0.5,3,0.75,162,,,N,0,deferred;pm;area:process,,2026-06-15T04:34:55.138Z
-1155,"research(process): assess the Claude-authored Hermes write-til-doc port (quality, outcomes, vs nemotron)",,0.5,0.5,3,0.75,163,,,Y,0,research;area:process,,2026-06-15T04:34:55.138Z
-1213,enhancement(process): a system to RECOMMEND (not enforce) work sequencing across ticket clusters,,0.5,0.5,3,0.75,164,,,N,0,enhancement;severity:low;deferred;area:process,,2026-06-15T04:34:55.138Z
-1221,"research(process): target ratio of feature progress vs process improvement — measure current, propose a budget so process doesn't starve product",,0.5,0.5,3,0.75,165,,,Y,0,severity:low;research;area:process,,2026-06-15T04:34:55.138Z
-1255,SPIKE: evaluate Tony Kay's escapement — statechart-driven LLM agent framework — for regulating lccjs's multi-agent workflow,,0.5,0.5,3,0.75,166,,,Y,0,severity:low;experiment;spike;area:process,,2026-06-15T04:34:55.138Z
-1291,external: version-control & fix stale velocity.db path in untracked Claude Code skill copies (~/.claude/skills),,0.5,0.5,3,0.75,167,,,Y,0,bug;severity:low;blocked;area:process;external,,2026-06-15T04:34:55.138Z
-1292,external: stale velocity.db path in Hermes log-error skill copy (~/.hermes) — no owned repo yet,,0.5,0.5,3,0.75,168,,,Y,0,bug;severity:low;blocked;area:process;external,,2026-06-15T04:34:55.138Z
-1305,"RESEARCH: evaluate ASCII-friendly + accessibly-renderable diagram formats (Mermaid, D2, m2, etc.)",,0.5,0.5,3,0.75,169,,,Y,0,documentation;severity:low;research;area:process,,2026-06-15T04:34:55.138Z
+1513,"research(process): tickets requiring a DIFFERENT agent to verify/close create a stuck ""mid-way"" state — diagnose (A) framing, (B) interpretation, or (C) other",,2,1,5,10,3,,,Y,0,research;area:process,,2026-06-30T05:08:47.270Z
+1521,"SPIKE: extract the rules mint/maintain/render system into a standalone, config-driven tool (usable across projects)",,2,1,5,10,4,,,Y,0,research;area:process,,2026-06-30T05:08:47.270Z
+1526,SPIKE/ARC: portable ICE-scoring across projects (pmtools ice + ice-triage skill + storage.ice config),,2,1,5,10,5,,,Y,0,research;area:process,,2026-06-30T05:08:47.270Z
+956,feat: replace RICE with ICE scoring + override tiers + scoring script,feature,2,0.8,5,8,6,,6,Y,0,enhancement;severity:medium,,2026-06-15T04:30:49.335Z
+1335,RESEARCH: fruit-agent-orchestrate missed live worktree claims and double-booked #1322,,2,0.8,5,8,7,,,Y,1,bug;severity:high;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1360,"PROPOSAL: codify ""verify the common interaction path, not just the scriptable one"" as a verification rule",,1,0.8,10,8,8,,,Y,0,severity:low;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1486,"process: promote 'verify live state, not memory' to RULES.json (recurring learnings theme)",,1,1,7,7,9,,,Y,0,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+938,TRACKER: apply issue-review-skill to open issues — quality/accessibility/actionability pass,,1,0.8,7,5.6,10,,,Y,1,documentation;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+948,,research,1,0.8,7,5.6,11,,3,Y,0,,,2026-06-15T04:30:49.335Z
+1426,SPIKE: confirm Hermes skill model (dirs/invocation/frontmatter; agentskills.io conformance) → write Hermes spoke,,1,0.8,7,5.6,12,,,Y,0,documentation;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1484,build(velocity): untrack docs/puzzle-velocity.csv + gitignore CSV mirrors (R2 lccjs-side; mirrors pmtools#68),,1,0.8,7,5.6,13,,,Y,0,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1554,DEV: backfill interpreter error sites with int-NNN IDs,,1,0.8,7,5.6,14,,,Y,0,enhancement;area:toolchain,,2026-06-30T05:08:47.270Z
+1555,DEV: backfill linker error sites with lnk-NNN IDs,,1,0.8,7,5.6,15,,,Y,0,enhancement;area:toolchain,,2026-06-30T05:08:47.270Z
+1443,DEV: base-owned interpreter trap/eopcode registry + convert core switches to table lookups,,1,1,5,5,16,,,Y,0,refactor;severity:low;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1518,research(process): independently verify lccjs↔pmtools lifecycle parity (lccjs spec ↔ pmtools#92) + lockstep-close both,,1,1,5,5,17,,,Y,0,research;parity;area:process,,2026-06-30T05:08:47.270Z
+1523,"stats/CLAUDE.md doesn't warn about weekly-notebook refresh footguns (date CEILING, nbconvert exit-0, scale-breakage)",,0.5,1,10,5,18,,,Y,0,cleanup;area:process,,2026-06-30T05:08:47.270Z
+1527,feat(skills): author the 'ice-triage' skill — config-driven review→recommend→ICE-score loop (modes: unscored/label/explicit),,1,1,5,5,19,,,Y,0,enhancement;area:process,,2026-06-30T05:08:47.270Z
+1528,feat(config): add storage.ice to orchestrate.json + migrate lccjs ice:score → pmtools ice + seed pycats,,1,1,5,5,20,,,Y,0,enhancement;area:process,,2026-06-30T05:08:47.270Z
+1535,fruit-agent-orchestrate wildcard pool emits direct claims for uncategorized tickets — contradicts RULES no-uncategorized-claim rule (#1534),,1,1,5,5,21,,,Y,0,enhancement;area:process,,2026-06-30T05:08:47.270Z
+1553,DEV: backfill all assembler error sites with asm-NNN IDs,,1,1,5,5,22,,,Y,0,enhancement;area:toolchain,,2026-06-30T05:08:47.270Z
+1440,TRACKER: generalize lccjs-coupled skills to be config-driven (work in any repo),,2,0.8,3,4.8,23,,,Y,0,enhancement;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+587,Potato Token Testing suite — benchmark .a + two fuzz scripts,,1,0.8,5,4,24,,,Y,1,testing;proposal;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+590,"DEV: Potato input testing — per-stdin-prompt fuzzer, reverse order, oracle parity (on-demand)",,1,0.8,5,4,25,,,Y,1,testing;proposal;parity;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+677,TRACKER: browser playground on GitHub Pages — textarea assembly execution,,1,0.8,5,4,26,,,N,1,deferred;area:web,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+707,PM: track web front-end feature parity — LCCjs browser vs web_ilcc dashboard,,1,0.8,5,4,27,,,N,1,deferred;area:web,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+890,TRACKER: skill-inventory improvements from #886 audit — A through H,,1,0.8,5,4,28,,,Y,1,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+891,"TRACKER: add ""did you mean?"" suggestions to verbose error messages — full coverage",,1,0.8,5,4,29,,,Y,1,enhancement;scope;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1088,DEV: ilcc — 'g' run-to-end + minimal breakpoints (bp {addr|label}),,1,0.8,5,4,30,,,Y,0,area:toolchain,,2026-06-15T04:34:55.138Z
+1105,research(process): audit agent HONEYDEW's Hermes skill-port work (#1066–#1073) [TRACKER],,1,0.8,5,4,31,,,Y,1,pm;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1133,"bug: velocity-log numeric metrics are defined/validated inconsistently — unclear sign conventions, no validation on h/c/actual, doc vs code mismatch on delta_h_min",,1,0.8,5,4,32,,,Y,0,bug;area:process,,2026-06-15T04:34:55.138Z
+1177,process: stop source edits + builds on the shared main checkout (clean-gate + worktree discipline),,1,0.8,5,4,33,,,Y,0,enhancement;area:process,,2026-06-15T04:34:55.138Z
+1180,process(pm): triage claude-bugs-audit-2026-06-06.md findings into actionable investigation tickets,,1,0.8,5,4,34,,,Y,0,research;pm;area:process,,2026-06-15T04:34:55.138Z
+1189,,,1,0.8,5,4,35,,,Y,0,,,2026-06-15T04:34:55.138Z
+1211,TRACKER: fruit-agent-orchestrate improvement cluster — sequencing + efficacy gate for #810,,1,0.8,5,4,36,,,Y,1,pm;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1320,TRACKER: ICE scoring is built but orphaned — re-adopt for triage/orchestration prioritization,,1,0.8,5,4,37,,,Y,1,pm;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1322,process(ice): keep ICE scores current — score new tickets at file time or via periodic sweep,,1,0.8,5,4,38,,,Y,0,enhancement;severity:low;area:process,,2026-06-15T04:34:55.138Z
+1323,feat(skills): wire ice_score into puzzle-triage ranking (and fruit-agent-orchestrate),,1,0.8,5,4,39,,,Y,0,enhancement;severity:low;blocked;area:process,,2026-06-15T04:34:55.138Z
+1332,feat(skills): convert fruit-agent-orchestrate to Hermes skill format,,1,0.8,5,4,40,,,Y,1,area:toolchain;runtime:hermes,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1333,BUG: sandbox page theme colors do not fully follow code theme,,1,0.8,5,4,41,,,Y,1,area:uncategorized,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1334,BUG: docs pages ignore the current theme toggle and force light mode,,1,0.8,5,4,42,,,Y,1,area:uncategorized,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1336,REVIEW #1094 — docs(test-runner): teacher/student usage guide for lcc --test,,1,0.8,5,4,43,,,Y,1,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1411,data(process): normalize the 50 pre-existing non-behavioral malformed context rows in errors DB,,1,0.8,5,4,44,,,Y,0,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1420,feat(skills): fruit-agent-orchestrate should route runtime-locked tickets (runtime:hermes) to matching-runtime agents + support a Claude/Codex/Hermes roster,,1,0.8,5,4,45,,,Y,0,enhancement;severity:low;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1444,DEV: port LCC+ trap/eopcode handlers onto the base registry; delete InterpreterPlus dispatch overrides,,1,0.8,5,4,46,,,Y,0,refactor;severity:low;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1461,TRACKER: adopt br-/wt- self-describing worktree/branch naming scheme (#1460),,1,0.8,5,4,47,,,Y,0,enhancement;area:process;tracker,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1465,feat(claim): flip claim/close construction to br-/wt- self-describing names + source project/lang from config,,1,0.8,5,4,48,,,Y,0,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1479,"Char-literal error messages: '''→""Bad label"" is misleading; '\/' divergence + oracle unknown-escape rule (findings, do not close)",,1,0.8,5,4,49,,,Y,0,bug;parity;human-decision-required;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1500,Make themes dropdown available on all GitHub Pages docs pages with persistent selection,,1,0.8,5,4,50,,,Y,0,enhancement;area:web,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1506,DEV: validate and revise LCC+ sound mnemonic mappings,,1,0.8,5,4,51,,,Y,0,enhancement;severity:medium;area:lcc-non-core,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1507,WRITER: add Buy Me a Coffee support badge to README,,0.5,0.8,10,4,52,,,Y,0,enhancement;severity:low;area:education,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1512,.env usage is unaudited — no private-vs-public-safe classification of config vars,,1,0.8,5,4,53,,,Y,0,research;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1556,DOCS: error-ID catalog + stability policy & prefix registry,,1,0.8,5,4,54,,,Y,0,documentation;area:toolchain,,2026-06-30T05:08:47.270Z
+1050,docs(workflow): clarify ad-hoc/unclaimed time-consuming work still gets a velocity row,,0.5,1,7,3.5,55,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+1056,chore(docs): commit the deep-code-review brainstorm + annotate it as triaged via #931,,0.5,1,7,3.5,56,,,Y,0,documentation;area:toolchain,,2026-06-15T04:34:55.138Z
+1057,chore(docs): commit improving-data-analysis-research.md + annotate its lineage (origin + follow-ups #981/#982/#983),,0.5,1,7,3.5,57,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+1063,docs(oracle-parity): correct stale 'auto-skip' claim + add stdout-mirroring convention,,0.5,1,7,3.5,58,,,Y,0,documentation;severity:low;area:toolchain,,2026-06-15T04:34:55.138Z
+1192,docs: add 'verify the load-bearing premise before ratifying a superseding decision' to do-this-not-that.md,,0.5,1,7,3.5,59,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+1242,docs(do-this-not-that): add 'check current main before chasing a worktree test red' diagnostic,,0.5,1,7,3.5,60,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+1311,docs(do-this-not-that): probe the real CLI before asserting; verify end-to-end,,0.5,1,7,3.5,61,,,Y,0,documentation;severity:low;area:process,,2026-06-15T04:34:55.138Z
+1316,"next-best-action skill frontmatter still says ""run before every close"" — contradicts the #1279 approval gate",,0.5,1,7,3.5,62,,,Y,0,documentation;severity:low;area:process,,2026-06-15T04:34:55.138Z
+1557,LCC+ sound docs: frame NUM (immediate) vs rN (register) as the operand pair; prefer aliases for fixed sounds; fix stale 0–4 slot count,,0.5,1,7,3.5,63,,,Y,0,documentation;area:lcc-non-core,,2026-06-30T05:08:47.270Z
+507,PM: send long-line silent-split report to Prof. Dos Reis (OG BUG #13),,0.5,0.8,7,2.8,64,,,N,1,documentation;severity:low;humans-only;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+741,orientation.md Mermaid diagrams lack a readability/quality/accessibility review,,0.5,0.8,7,2.8,65,,,Y,1,documentation;severity:low;human-required;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+757,demo-034 restructuring for testability may have dropped its .global/linker-startup teaching intent,,0.5,0.8,7,2.8,66,,,Y,1,documentation;severity:low;human-decision-required;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1049,docs(workflow): add proportional consent threshold for ad-hoc investigation,,0.5,0.8,7,2.8,67,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+1062,claude_workflow.md Protocol A's final 'npm run close B' hits the same branch-gate as #1052,,0.5,0.8,7,2.8,68,,,Y,0,documentation;severity:low;area:process,,2026-06-15T04:34:55.138Z
+1094,docs(test-runner): teacher/student usage guide for lcc --test,,0.5,0.8,7,2.8,69,,,Y,0,documentation;area:toolchain,,2026-06-15T04:34:55.138Z
+1166,refactor(skills): suffix Hermes-specific skills with -hermes for disambiguation,,0.5,0.8,7,2.8,70,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1179,docs: single discoverable index for worktree & multi-agent concurrency footguns,,0.5,0.8,7,2.8,71,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
+1265,REVIEW: apply issue-review-skill to #1238 (resetAssemblyState listingLoadPoint leak),,0.5,0.8,7,2.8,72,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+1266,REVIEW: apply issue-review-skill to #1102 (--explain forwarding in LCC+ driver),,0.5,0.8,7,2.8,73,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1271,Hermes-only tickets have no runtime label — Claude Code agents can claim+stall on them (add runtime:hermes),,0.5,0.8,7,2.8,74,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
+1276,REVIEW #1093 — test(test-runner): e2e suite for --test mode,,0.5,0.8,7,2.8,75,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1296,docs: document assembleSource() per-call config contract in core.md (listingLoadPoint/verbose/explain/userName),,0.5,0.8,7,2.8,76,,,Y,0,documentation;area:uncategorized,,2026-06-15T04:34:55.138Z
+1405,"DEV/decision: optional friendly alias for reverse-step {-N} (non-b, non-s) — or decide none",,0.5,0.8,7,2.8,77,,,Y,0,enhancement;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1445,"DEV: unit tests for trap/eopcode registry guards (double-book, override, out-of-band)",,0.5,0.8,7,2.8,78,,,Y,0,refactor;severity:low;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1493,RESEARCH: decide whether LCC+ sound should use literal slots or register operands,,0.5,0.8,7,2.8,79,,,Y,0,enhancement;area:lcc-non-core,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1510,LCC+ docs and tickets misrepresent `boop`: conflated with the `bop` sound alias and documented with wrong output string,,0.5,0.8,7,2.8,80,,,Y,0,cleanup;severity:low;area:lcc-non-core,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1029,decision: close the 'logged lesson → durable rule' promotion loop for non-TIL sources,,1,0.5,5,2.5,81,,,Y,0,severity:medium;decision;area:process,,2026-06-15T04:34:55.138Z
+1074,chore(skills): add nemotron-3-ultra to log-error model examples,,0.25,1,10,2.5,82,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
+1509,RESEARCH: profile a1k0n bit-ops donut render cost at R1=R2=4 vs R1=R2=8 → findings doc in experiments/donut/,,0.5,1,5,2.5,83,,,Y,0,severity:low;research;area:education,,2026-06-29T19:14:58.742Z
+867,HUMAN: send sra-shift-by-zero summary to Prof. Dos Reis for ISA ruling,,1,0.8,3,2.4,84,,,Y,1,research;decision;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+868,"HUMAN: get Charlie's perspective on sra r0, 0 shift-by-zero validity",,1,0.8,3,2.4,85,,,Y,1,research;decision;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1406,Tracker: report outstanding OG Oracle (cuh63 6.3) bugs/glitches to Prof. Dos Reis,,1,0.8,3,2.4,86,,,Y,0,bug;documentation;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1447,ARC/HUMAN: @ItBeCharlie sign-off on 4 design questions for table-driven interpreter dispatch (#1346),,1,0.8,3,2.4,87,,,Y,0,severity:low;decision;human-decision-required;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1466,tracker: PM-transition no-regression gate — cross-confirm pmtools guardrails + live differential check before each switch,,1,0.8,3,2.4,88,,,Y,0,area:process;tracker,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1480,"Unique, stable error IDs for every diagnostic, surfaced under the verbose/explain flag",,1,0.8,3,2.4,89,,,Y,0,enhancement;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1481,Add --oracle-compat: opt-in 100% OG-LCC feature-parity (bug-for-bug) mode,,1,0.8,3,2.4,90,,,N,0,enhancement;parity;deferred;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+450,No in-browser LCC highlighting on github.com without a separate install,,0.5,0.8,5,2,91,,,Y,1,enhancement;severity:low;proposal;area:web,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+517,ARCHITECT: follow-up decisions for #512 shift-count masking fix — four open questions,,0.5,0.8,5,2,92,,,Y,1,enhancement;severity:low;human-decision-required;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+518,ARC: validate ct=0 shift decision and implication for #512 range-check lower bound,,0.5,0.8,5,2,93,,,Y,1,severity:low;decision;human-decision-required;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+681,REVIEW: human review of ROADMAP.md rewrite — verify accuracy and decide next steps,,0.5,0.8,5,2,94,,,Y,1,severity:low;human-required;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+872,"DEV: interpreter state grouping — diag bucket, internal-only (phase 1 of #255)",,0.5,0.8,5,2,95,,,Y,0,enhancement;severity:low;blocked;area:architecture,,2026-06-15T04:34:55.138Z
+967,"research: investigate puzzle-cluster.csv — existence, references, and necessity",,0.5,0.8,5,2,96,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+968,decision: agent scratch-file cleanup vs Bash rm/heredoc permission denials (preserve #434 guardrail),,0.5,0.8,5,2,97,,,Y,1,severity:low;decision;human-decision-required;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1002,"decision: flag agent ""this is busywork"" judgements for human review — don't silently drop declined work",,0.5,0.8,5,2,98,,,Y,1,severity:low;decision;human-decision-required;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1033,chore(db): retire the velocity.db migration shim + VELOCITY_DB alias once environments are migrated,,0.5,0.8,5,2,99,,,N,0,cleanup;severity:low;deferred;area:process,,2026-06-15T04:34:55.138Z
+1035,feat(close): remind to claim a fresh worktree for the next task after re-root,,0.5,0.8,5,2,100,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1046,feat(skills): fruit-agent-orchestrate should consume puzzle:status --json instead of raw dump + per-issue loop,,0.5,0.8,5,2,101,,,Y,0,enhancement;area:process,,2026-06-15T04:34:55.138Z
+1047,"refactor(skills): fruit-agent-orchestrate Step 3 should compose puzzle-triage, not re-embed it",,0.5,0.8,5,2,102,,,Y,0,enhancement;area:process,,2026-06-15T04:34:55.138Z
+1058,test: confirm label-area.yml auto-applies area:uncategorized on a real opened issue (#1012 follow-up),,0.5,0.8,5,2,103,,,Y,1,testing;severity:low;human-required;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1078,feat(plus): verbose-context enrichment for LCC+ runtime-error display (req 4 of #1011),,0.5,0.8,5,2,104,,,Y,0,enhancement;severity:low;area:lcc-non-core,,2026-06-15T04:34:55.138Z
+1087,DEV: ilcc reverse step — truncate Output pane (programOutput) on backward step (Gap C),,0.5,0.8,5,2,105,,,Y,0,area:toolchain,,2026-06-15T04:34:55.138Z
+1089,DEV: ilcc — 'sb'/'b' alias for {-N} + help line documenting reverse execution & the determinism boundary,,0.5,0.8,5,2,106,,,Y,0,area:toolchain,,2026-06-15T04:34:55.138Z
+1111,chore(claim): node_modules symlink in worktrees slips past .gitignore and blocks npm run close,,0.5,0.8,5,2,107,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
+1115,close.js scope audit shows phantom deletions when branch base is behind origin/main,,0.5,0.8,5,2,108,,,Y,0,bug;severity:low;area:process,,2026-06-15T04:34:55.138Z
+1118,process: add COMPLIANCE_FAIL/BEHAVIORAL_FAIL error_type — record when a discipline (e.g. error logging itself) is missed,,0.5,0.8,5,2,109,,,Y,0,pm;area:process,,2026-06-15T04:34:55.138Z
+1126,"chore(skills): authoring-hygiene sweep on the 8 ported Hermes skills (config abstraction, scaffolding, related_skills)",,0.5,0.8,5,2,110,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
+1135,PM: triage relabel — reconcile area:/type/severity on the #1043 ilcc reverse-step family,,0.5,0.8,5,2,111,,,Y,0,decision;pm;area:process,,2026-06-15T04:34:55.138Z
+1186,docs: migrate rule citations to stable animal-color IDs (Rule N / R0NN → name),,0.5,0.8,5,2,112,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+1195,refactor+test(error-log): apply #1184 notice-not-prevent to the model gate & cover the untested branches,,0.5,0.8,5,2,113,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
+1196,test(claim): main() orchestration is untested (~34% line coverage) — add integration coverage or a pure plan seam,,0.5,0.8,5,2,114,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
+1200,feat(skills): fruit-agent-orchestrate — assignment paragraphs must be self-contained & boilerplate-free (per-agent legibility),,0.5,0.8,5,2,115,,,Y,0,enhancement;severity:low;area:process,,2026-06-15T04:34:55.138Z
+1201,docs(skills): author an assignment-criteria rubric for fruit-agent-orchestrate Step 5b,,0.5,0.8,5,2,116,,,Y,0,documentation;severity:low;area:process,,2026-06-15T04:34:55.138Z
+1217,PM: create EPIC tracker issues for each major current feature (feature-level roadmap view),,0.5,0.8,5,2,117,,,Y,1,severity:low;pm;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1226,REVIEW: audit #1222 for missed Claude/Hermes leftovers,,0.5,0.8,5,2,118,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1234,process: detect closes missing the `error self-audit:` line — the #1117 audit artifact is unenforced,,0.5,0.8,5,2,119,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
+1235,bug(skills): Hermes next-best-action draft dropped Q6 (Error self-audit) from source,,0.5,0.8,5,2,120,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1246,"feat(ci): label-area.yml should infer the lane from issue content, not default to area:uncategorized",,0.5,0.8,5,2,121,,,Y,0,enhancement;area:process,,2026-06-15T04:34:55.138Z
+1306,,,0.5,0.8,5,2,122,,,Y,0,,,2026-06-15T04:34:55.138Z
+1308,UX: sync Sandbox terminal theme with page theme and make Run button primary green,,0.5,0.8,5,2,123,,,Y,0,severity:low;ux;area:web,,2026-06-15T04:34:55.138Z
+1315,fix(process): log-error skill is duplicated & drifted — untracked ~/.claude Claude copy vs tracked lccjs Codex copy,,0.5,0.8,5,2,124,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+1337,REVIEW: quality control pass on stats/week-03-analysis.ipynb,,0.5,0.8,5,2,125,,,Y,1,severity:low;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1339,BUG: multi-line selection in sandbox CodeMirror editor renders wrong (only one line highlights at a time),,0.5,0.8,5,2,126,,,Y,1,severity:low;area:uncategorized,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+1427,research(process): backtest inferArea() label accuracy against a 20+ labeled-issue corpus,,0.5,0.8,5,2,127,,,Y,0,severity:low;research;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1448,process: auto-mode classifier doesn't treat a ticket's acceptance criteria as authorization for external writes (spike → file DEV puzzles),,0.5,0.8,5,2,128,,,Y,0,severity:low;research;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1449,RESEARCH: does extracting a pure planClaim() seam from claim.js main() add value? (#1196 option b),,0.5,0.8,5,2,129,,,Y,0,area:process,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+1492,DEV: make LCC+ sound-like mnemonics register-flexible across the ISA,,0.5,0.8,5,2,130,,,Y,0,enhancement;area:lcc-non-core,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+625,"decision: claim.js — which labels should block agent claims (M1, #610)?",,0.5,0.5,7,1.75,131,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
+626,"decision: fruit-agent-orchestrate — filter unactionable labels before assignment (M2, #610)",,0.5,0.5,7,1.75,132,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
+630,"decision: fruit-agent-orchestrate — detect and skip in-flight agents before assignment (M6, #610)",,0.5,0.5,7,1.75,133,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
+633,"decision: close.js — auto-post closing comment skeleton after confirmed push (M10, #610)",,0.5,0.5,7,1.75,134,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
+636,"decision: adopt 10-entry TIL harvest cadence from #207 recommendations (M13, #610)",,0.5,0.5,7,1.75,135,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
+829,decision: define orchestrator-session fruit identity convention for npm run claim,,0.5,0.5,7,1.75,136,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
+841,"decision: how to leverage artifact-quality-criteria.md (skill ingredient, review checklist, or automated gate?)",,0.5,0.5,7,1.75,137,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
+1378,"fix(interpreter): add defensive break/return after div/rem zero-divisor guard (hardening, child of #1180)",,0.5,0.5,7,1.75,138,,,Y,0,severity:low;blocked;human-decision-required;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+40,[OB-008] Track upstream: cuh63 6.3 mov rejects negatives that its mvi accepts,,1,0.5,3,1.5,139,,,Y,0,documentation;severity:medium;blocked;decision;waiting-on-external;area:toolchain,,2026-06-15T04:34:55.138Z
+1065,feat(skills): convert 9 Claude skills to Hermes format,,1,0.5,3,1.5,140,,,Y,0,area:toolchain,,2026-06-15T04:34:55.138Z
+1160,research(process): catalog 'behavioral errors' — undesirable agent actions distinct from technical tool failures,,1,0.5,3,1.5,141,,,Y,0,research;area:process,,2026-06-15T04:34:55.138Z
+1000,SPIKE: can puzzle:status flag tracker issues that have CLOSED children still shown as unchecked?,,0.5,0.5,5,1.25,142,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1030,decision: adopt or reject STALE_READ error_type — resolve the #904 half-state,,0.5,0.5,5,1.25,143,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
+1077,test(skills): verify next-best-action Hermes skill end-to-end,,0.5,0.5,5,1.25,144,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1079,test(skills): verify guide-human-decision Hermes skill end-to-end,,0.5,0.5,5,1.25,145,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1080,test(skills): verify log-error Hermes skill end-to-end,,0.5,0.5,5,1.25,146,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1081,test(skills): verify write-til-doc Hermes skill end-to-end,,0.5,0.5,5,1.25,147,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1082,test(skills): verify yegor-pm Hermes skill end-to-end,,0.5,0.5,5,1.25,148,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1083,test(skills): verify puzzle-velocity Hermes skill end-to-end,,0.5,0.5,5,1.25,149,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1084,test(skills): verify puzzle-triage Hermes skill end-to-end,,0.5,0.5,5,1.25,150,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1113,process: decide Hermes↔lccjs telemetry policy — close the velocity/error-logging gap (Rule 5 vs Hermes exemption),,0.5,0.5,5,1.25,151,,,Y,0,pm;area:process,,2026-06-15T04:34:55.138Z
+1152,feat(skills): author a Hermes agent operating checklist for nemotron-3-ultra agents,,0.5,0.5,5,1.25,152,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1156,test(skills): exercise the Claude-authored Hermes write-til-doc skill in the Hermes runtime,,0.5,0.5,5,1.25,153,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1157,feat(skills): convert the Claude write-til-doc skill into a Hermes skill (Claude-authored),,0.5,0.5,5,1.25,154,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1202,decision: promote any of TIL #1197's four rule-lines to RULES.json (or route to docs)?,,0.5,0.5,5,1.25,155,,,Y,0,severity:low;decision;area:process,,2026-06-15T04:34:55.138Z
+1210,WRITER: skill portability + organization across providers (agentskills.io hub; Claude/Codex/Hermes),,0.5,0.5,5,1.25,156,,,Y,0,documentation;severity:low;area:process,,2026-06-15T04:34:55.138Z
+1218,WRITER: skill portability hub doc (agentskills.io; Claude Code and Codex spokes),,0.5,0.5,5,1.25,157,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+1219,WRITER: skill organization strategy across providers and repos,,0.5,0.5,5,1.25,158,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+1220,"SPIKE: confirm Hermes skill paths, invocation, and extension model",,0.5,0.5,5,1.25,159,,,Y,0,research;area:process,,2026-06-15T04:34:55.138Z
+1285,process: consider a RULES.md rule — verify a ticket's prescribed fix mechanism before implementing,,0.5,0.5,5,1.25,160,,,Y,0,severity:low;area:process,,2026-06-15T04:34:55.138Z
+1402,chore(interpreter): add a committed oracle-probe generator for SEXT_PARITY_TABLE (provenance/reproducibility; child of #1180),,0.5,0.5,5,1.25,161,,,Y,0,severity:low;blocked;area:toolchain,auto-swept from labels (provisional — review I/C/E),2026-06-29T22:17:15.016Z
+252,Decomplect (H1b): lift trace + register-diff display out of interpreter step() into an observer,,0.5,0.8,3,1.2,162,,,Y,0,enhancement;severity:low;blocked;area:architecture,,2026-06-15T04:34:55.138Z
+255,Decomplect (H4): group interpreter constructor state into cpu/io/diag sub-objects,,0.5,0.8,3,1.2,163,,,Y,0,enhancement;severity:low;blocked;area:architecture,,2026-06-15T04:34:55.138Z
+428,"Tracker: Tier 3 — N2 trap constants, M4 commit informativeness, DDD linker/lcc.js naming, Q20, N3",,0.5,0.8,3,1.2,164,,,Y,1,severity:low;research;blocked;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+429,"Tracker: Tier 4 — interpreter decomplect (H1/H4), mnemonic-table ROI, experiment designs",,0.5,0.8,3,1.2,165,,,Y,1,severity:low;research;blocked;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+430,"Tracker: Tier 5 — aspirational research (ISA design, educational, DDD domain objects, M8)",,0.5,0.8,3,1.2,166,,,Y,1,severity:low;research;blocked;area:architecture,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+838,TRACKER: GitHub repo activity visualization for lccjs,,0.5,0.8,3,1.2,167,,,N,1,severity:low;research;deferred;area:process,auto-swept from labels (provisional — review I/C/E),2026-06-15T15:41:07.669Z
+873,ARC/DEV: breaking public-API regroup of interpreter state (1b — future),,0.5,0.8,3,1.2,168,,,Y,0,enhancement;severity:low;blocked;area:architecture,,2026-06-15T04:34:55.138Z
+1129,DEV: ilcc reverse step — replay program input via per-step consumed-input log (corrected Gap B),,0.5,0.8,3,1.2,169,,,Y,0,blocked;area:toolchain,,2026-06-15T04:34:55.138Z
+1319,docs(process): add scope-overrun pre-action-gate rule to RULES.json (after #1185),,0.5,0.8,3,1.2,170,,,Y,0,documentation;area:process,,2026-06-15T04:34:55.138Z
+159,Act on Prof Dos Reis's reply re: `sext` semantics (follow-up to #150),,0.5,0.5,3,0.75,171,,,Y,0,severity:low;research;blocked;decision;waiting-on-external;area:toolchain,,2026-06-15T04:34:55.138Z
+810,RESEARCH: assess efficacy and utility of fruit-agent-orchestrate improvement proposals (2026-06-05),,0.5,0.5,3,0.75,172,,,Y,0,severity:low;research;blocked;area:process,,2026-06-15T04:34:55.138Z
+980,SPIKE: try statechart skill for #134 ilcc debugger statechart work — does it add value?,,0.5,0.5,3,0.75,173,,,Y,0,area:process,,2026-06-15T04:34:55.138Z
+1048,feat(skills): fruit-agent-orchestrate — delegate Steps 3-5 reasoning to a subagent (conditional),,0.5,0.5,3,0.75,174,,,Y,0,enhancement;area:process,,2026-06-15T04:34:55.138Z
+1144,research(process): assess whether #1117's pre-close error self-audit reduced error-logging under-reporting,,0.5,0.5,3,0.75,175,,,N,0,deferred;pm;area:process,,2026-06-15T04:34:55.138Z
+1155,"research(process): assess the Claude-authored Hermes write-til-doc port (quality, outcomes, vs nemotron)",,0.5,0.5,3,0.75,176,,,Y,0,research;area:process,,2026-06-15T04:34:55.138Z
+1213,enhancement(process): a system to RECOMMEND (not enforce) work sequencing across ticket clusters,,0.5,0.5,3,0.75,177,,,N,0,enhancement;severity:low;deferred;area:process,,2026-06-15T04:34:55.138Z
+1221,"research(process): target ratio of feature progress vs process improvement — measure current, propose a budget so process doesn't starve product",,0.5,0.5,3,0.75,178,,,Y,0,severity:low;research;area:process,,2026-06-15T04:34:55.138Z
+1255,SPIKE: evaluate Tony Kay's escapement — statechart-driven LLM agent framework — for regulating lccjs's multi-agent workflow,,0.5,0.5,3,0.75,179,,,Y,0,severity:low;experiment;spike;area:process,,2026-06-15T04:34:55.138Z
+1291,external: version-control & fix stale velocity.db path in untracked Claude Code skill copies (~/.claude/skills),,0.5,0.5,3,0.75,180,,,Y,0,bug;severity:low;blocked;area:process;external,,2026-06-15T04:34:55.138Z
+1292,external: stale velocity.db path in Hermes log-error skill copy (~/.hermes) — no owned repo yet,,0.5,0.5,3,0.75,181,,,Y,0,bug;severity:low;blocked;area:process;external,,2026-06-15T04:34:55.138Z
+1305,"RESEARCH: evaluate ASCII-friendly + accessibly-renderable diagram formats (Mermaid, D2, m2, etc.)",,0.5,0.5,3,0.75,182,,,Y,0,documentation;severity:low;research;area:process,,2026-06-15T04:34:55.138Z
