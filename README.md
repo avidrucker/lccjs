@@ -4,6 +4,8 @@
 
 LCC.js is a JavaScript implementation of the LCC toolchain — the assembler, linker, and interpreter for a simple 16-bit educational ISA. It supports both file-oriented CLI usage and in-memory programmatic usage, with a growing test suite and oracle-driven parity work against the original LCC.
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support%20lccjs-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/avidrucker)
+
 ## Contents
 
 - [Quick Start](#quick-start)
