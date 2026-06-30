@@ -1221,7 +1221,9 @@ Error on line <lineNum> of <inputFileName>:
 
 The middle indented line echoes the literal source the assembler was processing when the failure occurred (from `[currentLine]`), so the user sees the exact text they wrote — not a tokenized or normalized version. Matches the original LCC's wording byte-for-byte so golden tests can be reused.
 
-**Source:** `assembler.js` — `formatAssemblerError()`, grep `Error on line ${this.lineNum} of`
+Under `--show-err-id` (`showErrIdOn`, #1552) a unique per-site ID is inserted after `Error`, e.g. `Error [asm-002] on line N of file:`. The ID is off by default — independent of `--explain` — so the default stream stays byte-for-byte identical.
+
+**Source:** `assembler.js` — `formatAssemblerError()`, grep `on line ${this.lineNum} of`
 **See also:** [error], [currentLine / currentListingEntry]
 
 #### Module export + CLI auto-instantiation

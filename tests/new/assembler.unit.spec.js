@@ -671,6 +671,107 @@ describe('Assembler Unit Tests', () => {
     });
   });
 
+  // ── --show-err-id inline error IDs (#1552, mechanism per #1480 ruling) ───────
+  // A unique per-site `id` (format <prefix>-NNN, e.g. asm-014) is surfaced inline
+  // after "Error" ONLY when showErrIdOn is set — independent of explainModeOn,
+  // off by default so the plain stream stays byte-identical (oracle parity).
+  describe('formatAssemblerError() and --show-err-id (#1552)', () => {
+    function asmAt() {
+      const asm = new Assembler();
+      asm.lineNum = 6;
+      asm.inputFileName = 'foo.a';
+      asm.currentLine = "c:      .word '''";
+      return asm;
+    }
+
+    test('showErrIdOn=true surfaces the id inline after "Error" (compact)', () => {
+      const asm = asmAt();
+      asm.showErrIdOn = true;
+      const msg = asm.formatAssemblerError('malformed character literal', null, 'BAD_LABEL', 'asm-014');
+      expect(msg).toContain('Error [asm-014] on line 6 of foo.a:');
+    });
+
+    test('showErrIdOn=true in verbose mode: id sits after "Error", keeps [assembler] prefix', () => {
+      const asm = asmAt();
+      asm.showErrIdOn = true;
+      asm.verboseModeOn = true;
+      const msg = asm.formatAssemblerError('malformed character literal', null, 'BAD_LABEL', 'asm-014');
+      expect(msg).toContain('[assembler] Error [asm-014] on line 6 of foo.a:');
+    });
+
+    test('default (showErrIdOn=false) is byte-identical to passing no id — even with an id present', () => {
+      const withId = asmAt();          // showErrIdOn defaults false
+      const baseline = asmAt();
+      expect(withId.formatAssemblerError('malformed character literal', null, 'BAD_LABEL', 'asm-014'))
+        .toBe(baseline.formatAssemblerError('malformed character literal', null, 'BAD_LABEL'));
+    });
+
+    test('IDs are independent of --explain: explainModeOn alone never surfaces an id', () => {
+      const asm = asmAt();
+      asm.explainModeOn = true;        // but showErrIdOn stays false
+      const msg = asm.formatAssemblerError('Bad label', null, 'BAD_LABEL', 'asm-001');
+      expect(msg).not.toContain('[asm-001]');
+    });
+
+    test('showErrIdOn=true with no id does not insert an empty bracket', () => {
+      const asm = asmAt();
+      asm.showErrIdOn = true;
+      const msg = asm.formatAssemblerError('Bad label', null, 'BAD_LABEL'); // id omitted
+      expect(msg).not.toContain('[');
+      expect(msg).toMatch(/^Error on line 6 of foo\.a:/);
+    });
+
+    test('combined --show-err-id + --explain: inline id AND the explanation block', () => {
+      const asm = asmAt();
+      asm.showErrIdOn = true;
+      asm.explainModeOn = true;
+      const msg = asm.formatAssemblerError('Bad label', null, 'BAD_LABEL', 'asm-001');
+      expect(msg).toContain('Error [asm-001] on line 6 of foo.a:');
+      // the BAD_LABEL explanation block is appended (non-empty extra lines after the message)
+      expect(msg.split('\n').length).toBeGreaterThan(3);
+    });
+
+    test('showErrIdOn defaults to false on a fresh Assembler', () => {
+      expect(new Assembler().showErrIdOn).toBe(false);
+    });
+
+    test('error() threads the id through to the printed diagnostic under --show-err-id', () => {
+      const asm = asmAt();
+      asm.showErrIdOn = true;
+      console.error.mockClear();
+      // REPORT_MULTI_ERRORS is off → error() calls abortAssembly which throws; catch it.
+      try { asm.error('malformed character literal', null, 'BAD_LABEL', 'asm-014'); } catch (_) { /* abort */ }
+      const printed = console.error.mock.calls.map((c) => c[0]).join('\n');
+      expect(printed).toContain('Error [asm-014] on line 6 of foo.a:');
+    });
+
+    // assembleSource() resets the instance internally (#1238/#1277); the flag set
+    // by lcc.js before main() must be threaded through as an option to survive
+    // that reset. These pin that survival end-to-end through a real assembly.
+    const DUP_SRC = '        .start main\nmain:   mov r0, 1\nmain:   halt\n';
+
+    test('assembleSource threads showErrIdOn through its internal reset → wired site id appears', () => {
+      const asm = new Assembler();
+      console.error.mockClear();
+      try {
+        asm.assembleSource(DUP_SRC, { inputFileName: 'dup.a', showErrIdOn: true, throwOnAssemblyError: false });
+      } catch (_) { /* abort path still prints first */ }
+      const printed = console.error.mock.calls.map((c) => c[0]).join('\n');
+      expect(printed).toContain('[asm-002]'); // DUPLICATE_LABEL site, survived the reset
+    });
+
+    test('assembleSource without showErrIdOn prints the error but no id (default parity)', () => {
+      const asm = new Assembler();
+      console.error.mockClear();
+      try {
+        asm.assembleSource(DUP_SRC, { inputFileName: 'dup.a', throwOnAssemblyError: false });
+      } catch (_) { /* abort */ }
+      const printed = console.error.mock.calls.map((c) => c[0]).join('\n');
+      expect(printed).toContain('Duplicate label');
+      expect(printed).not.toContain('[asm-');
+    });
+  });
+
   describe('constructor ↔ resetAssemblyState() field-list parity (#1423)', () => {
     // The constructor and resetAssemblyState() must initialize the SAME per-run
     // field set. When they drift (a field set in one but not the other), a reused

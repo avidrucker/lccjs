@@ -52,3 +52,26 @@ describe('flag parse wiring: -d / -o (#1396)', () => {
     });
   });
 });
+
+describe('flag parse wiring: --show-err-id (#1552)', () => {
+  beforeEach(() => {
+    jest.spyOn(process.stderr, 'write').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    process.stderr.write.mockRestore();
+    console.error.mockRestore();
+  });
+
+  test('--show-err-id sets options.showErrId', () => {
+    const lcc = new LCC();
+    lcc.parseArguments(['--show-err-id', 'prog.a']);
+    expect(lcc.options.showErrId).toBe(true);
+  });
+
+  test('absent by default (no flag → falsy)', () => {
+    const lcc = new LCC();
+    lcc.parseArguments(['prog.a']);
+    expect(!!lcc.options.showErrId).toBe(false);
+  });
+});

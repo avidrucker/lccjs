@@ -333,6 +333,7 @@ class LCC {
     console.log('         (-m/-r are post-run batch dumps; interactive mode has no batch path)');
     console.log('   -v / --verbose: verbose output (assembler, interpreter, and linker)');
     console.log('   --explain: append a student-friendly explanation to known errors');
+    console.log('   --show-err-id: show a unique, citable error ID (e.g. asm-014) inline; off by default, combinable with --explain');
     console.log('   --sounds-on: enable LCC+ sound mnemonics (ding/doink/beep/...) in core LCC (BEL fallback if no audio player)');
     console.log('   -nostats: suppress .lst/.bst report generation');
     console.log('   --max-steps N (or -ms<N>): set execution step cap (default 500000; use -1 for unlimited)');
@@ -418,6 +419,12 @@ class LCC {
             this.options.explain = true;
             setExplainMode(true);
             break;
+          case '--show-err-id':
+            // Opt-in inline error IDs (#1552, mechanism per #1480). Independent
+            // of --explain (IDs stay hidden under bare --explain), combinable
+            // with it. Off by default so the plain stream's oracle parity holds.
+            this.options.showErrId = true;
+            break;
           case '--sounds-on':
             // Enable the LCC+ sound trap (0xF8) in core LCC (#1504). OFF by
             // default so core behavior + oracle-parity output are unchanged.
@@ -500,6 +507,9 @@ class LCC {
 
     // Wire --explain flag (#1096)
     assembler.explainModeOn = !!this.options.explain;
+
+    // Wire --show-err-id flag (#1552)
+    assembler.showErrIdOn = !!this.options.showErrId;
 
     // Set input and output file names
     assembler.inputFileName = this.inputFileName;

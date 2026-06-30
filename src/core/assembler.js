@@ -188,6 +188,7 @@ class Assembler {
     // (#1277, identical shape to the #1238 listingLoadPoint fix)
     this.verboseModeOn = false;
     this.explainModeOn = false;
+    this.showErrIdOn = false;   // #1552: inline error IDs via --show-err-id
     this.userName = null;
     this.programSize = 0;
     this.startLabel = null;
@@ -281,6 +282,7 @@ class Assembler {
       listingLoadPoint = 0,
       verboseModeOn = false,
       explainModeOn = false,
+      showErrIdOn = false,
       throwOnAssemblyError = true,
       buildReports = false,
       userName,
@@ -307,6 +309,7 @@ class Assembler {
     // this.userName after assembleSource() returns. (#1277)
     this.verboseModeOn = verboseModeOn;
     this.explainModeOn = explainModeOn;
+    this.showErrIdOn = showErrIdOn;
     this.userName = userName ?? null;
     // Per-call progress sink; re-applied after the reset like the other caller
     // config. Omitted → null → emitProgress() is a no-op (seam stays silent). (#1397)
@@ -567,6 +570,7 @@ class Assembler {
       // reset re-applies rather than wipes them. (#1277)
       verboseModeOn: this.verboseModeOn,
       explainModeOn: this.explainModeOn,
+      showErrIdOn: this.showErrIdOn,   // #1552 — same survive-the-reset thread
       userName: this.userName,
       throwOnAssemblyError: false,
       // CLI path prints the pass banners to stdout, matching the oracle's
@@ -713,11 +717,11 @@ class Assembler {
           label = label.slice(0, -1); 
         }
         if (!this.isValidLabel(label)) {
-          this.error('Bad label', null, 'BAD_LABEL'); // `Invalid label format: ${label}`
+          this.error('Bad label', null, 'BAD_LABEL', 'asm-001'); // `Invalid label format: ${label}`
         }
         if (this.pass === 1) {
           if (this.labels.has(label)) {
-            this.error('Duplicate label', null, 'DUPLICATE_LABEL'); // `Duplicate label: ${label}`
+            this.error('Duplicate label', null, 'DUPLICATE_LABEL', 'asm-002'); // `Duplicate label: ${label}`
           } else {
             this.symbolTable[label] = this.locCtr;
             this.labels.add(label);
@@ -751,7 +755,7 @@ class Assembler {
       }
 
       if (this.locCtr > 65536) {
-        this.error('Program too big', null, 'PROGRAM_TOO_BIG');
+        this.error('Program too big', null, 'PROGRAM_TOO_BIG', 'asm-003');
         return;
       }
 
@@ -2223,20 +2227,23 @@ class Assembler {
   // and never replaces — a verbose suggestClosest "Did you mean?" suffix already
   // baked into `message`. When explain mode is off (or the key is null) the
   // returned string is byte-for-byte the pre-#1096 format.
-  formatAssemblerError(message, verboseContext = null, explainKey = null) {
+  formatAssemblerError(message, verboseContext = null, explainKey = null, id = null) {
     const explainBlock = this.explainModeOn ? formatExplanation(explainKey) : null;
     const explainClause = explainBlock ? `\n${explainBlock}` : '';
+    // Inline error ID (#1552): shown only under --show-err-id, independent of
+    // --explain. Off by default ⇒ the `Error ` prefix is byte-identical to before.
+    const idClause = (this.showErrIdOn && id) ? `[${id}] ` : '';
     if (this.verboseModeOn) {
       const typeClause = verboseContext
         ? `\nfound: ${verboseContext.found}, expected: ${verboseContext.expected}`
         : '';
-      return `[assembler] Error on line ${this.lineNum} of ${this.inputFileName}:\n    ${this.currentLine}\n${message}${typeClause}${explainClause}`;
+      return `[assembler] Error ${idClause}on line ${this.lineNum} of ${this.inputFileName}:\n    ${this.currentLine}\n${message}${typeClause}${explainClause}`;
     }
-    return `Error on line ${this.lineNum} of ${this.inputFileName}:\n${this.currentLine}\n${message}${explainClause}`;
+    return `Error ${idClause}on line ${this.lineNum} of ${this.inputFileName}:\n${this.currentLine}\n${message}${explainClause}`;
   }
 
-  error(message, verboseContext = null, explainKey = null) {
-    const errorMsg = this.formatAssemblerError(message, verboseContext, explainKey);
+  error(message, verboseContext = null, explainKey = null, id = null) {
+    const errorMsg = this.formatAssemblerError(message, verboseContext, explainKey, id);
     console.error(errorMsg);
     this.errors.push(errorMsg);
     this.errorFlag = true;
