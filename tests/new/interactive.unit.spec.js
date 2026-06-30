@@ -613,6 +613,64 @@ describe('IInterpreter.runInteractive() — prompt loop (OB-044)', () => {
     expect(allOutput).toContain('r0:');
     expect(allOutput).toContain('NZCV:');
   });
+
+  // ── Reverse-step alias landscape — characterization baseline (#1530) ──────
+  // Pins the CURRENT command-surface behavior of the friendly-alias candidates
+  // discussed in #1405 (the alias yes/no + key decision). These tests are GREEN
+  // against the current build: they document today's reality, they do not demand
+  // new behavior. When #1405's decision later registers an alias, the relevant
+  // assertion here is the regression that flips — proving the change took effect
+  // and didn't disturb the `s{anchor}` / breakpoint neighbors.
+  describe('reverse-step alias landscape — characterization baseline (#1530)', () => {
+    const lastUnknown = () =>
+      stdoutSpy.mock.calls.map((c) => c[0]).join('').includes('Unknown command');
+
+    test('{-N} is the only current invocation of reverse-step — `-1` is recognized', () => {
+      runWithInput(MIN_EXE, '-1\nq\n');
+      // Recognized (no "Unknown command"); behavior itself is covered by the
+      // handleSteps() suite and the `1\n-1\n` round-trip test above.
+      expect(lastUnknown()).toBe(false);
+    });
+
+    test('candidate alias `back` is unrecognized today (no friendly alias exists)', () => {
+      runWithInput(MIN_EXE, 'back\nq\n');
+      expect(lastUnknown()).toBe(true);
+    });
+
+    test('candidate alias `<` is unrecognized today (no friendly alias exists)', () => {
+      runWithInput(MIN_EXE, '<\nq\n');
+      expect(lastUnknown()).toBe(true);
+    });
+
+    test('`sb` is NOT a free alias — it is swallowed by the s{anchor} prefix (sets stackAnchor="b")', () => {
+      // This is exactly why #1405 rules out `sb`: the `s` prefix command (minLen 2)
+      // matches `sb` first and treats `b` as the stack anchor.
+      const interp = runWithInput(MIN_EXE, 'sb\nq\n');
+      expect(lastUnknown()).toBe(false);
+      expect(interp.stackAnchor).toBe('b');
+    });
+
+    test('`b` is reserved for the OG breakpoint (#1341 §3.6) and currently unimplemented — typing it is unknown', () => {
+      // Breakpoints are open work (#1088); until then `b` is not a live command,
+      // which is also why it cannot be repurposed as the reverse-step alias.
+      runWithInput(MIN_EXE, 'b\nq\n');
+      expect(lastUnknown()).toBe(true);
+    });
+
+    test('COMMAND_REGISTRY registers no reverse-step word alias (key or aliases)', () => {
+      const tokens = new Set();
+      for (const entry of IInterpreter.COMMAND_REGISTRY) {
+        tokens.add(entry.key);
+        for (const a of entry.aliases || []) tokens.add(a);
+      }
+      expect(tokens.has('back')).toBe(false);
+      expect(tokens.has('<')).toBe(false);
+      // The reverse-step entry itself (the numeric `{N}` command) carries no alias yet.
+      const stepEntry = IInterpreter.COMMAND_REGISTRY.find((e) => e.key === '{N}');
+      expect(stepEntry).toBeDefined();
+      expect(stepEntry.aliases || []).toEqual([]);
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
