@@ -713,10 +713,12 @@ describe('Assembler Unit Tests', () => {
       expect(msg).not.toContain('[asm-001]');
     });
 
-    test('showErrIdOn=true with no id does not insert an empty bracket', () => {
+    test('showErrIdOn=true with neither an explicit id nor a registry hit inserts no bracket', () => {
+      // (#1553) uses a message that is NOT in the registry, so neither the explicit-id nor
+      // the message-fallback path fires — proving no empty `[] ` is emitted.
       const asm = asmAt();
       asm.showErrIdOn = true;
-      const msg = asm.formatAssemblerError('Bad label', null, 'BAD_LABEL'); // id omitted
+      const msg = asm.formatAssemblerError('an unregistered message', null, null);
       expect(msg).not.toContain('[');
       expect(msg).toMatch(/^Error on line 6 of foo\.a:/);
     });
@@ -769,6 +771,81 @@ describe('Assembler Unit Tests', () => {
       const printed = console.error.mock.calls.map((c) => c[0]).join('\n');
       expect(printed).toContain('Duplicate label');
       expect(printed).not.toContain('[asm-');
+    });
+  });
+
+  // ── registry-resolved ids (#1553) ───────────────────────────────────────────
+  // formatAssemblerError resolves `id || lookupErrorId(message)`, so failAssembly-routed
+  // conditions (no explicit id) surface their registry id under --show-err-id, while an
+  // explicit id still wins and the plain stream stays byte-identical when off.
+  describe('formatAssemblerError() registry-resolved ids (#1553)', () => {
+    function asm1553() {
+      const a = new Assembler();
+      a.lineNum = 3; a.inputFileName = 'x.a'; a.currentLine = '  add r0';
+      return a;
+    }
+
+    test('a message with no explicit id resolves its id from the registry', () => {
+      const a = asm1553(); a.showErrIdOn = true;
+      const msg = a.formatAssemblerError('Missing register', null, 'REGISTER'); // no 4th arg
+      expect(msg).toContain('Error [asm-005] on line 3 of x.a:');
+    });
+
+    test('an interpolated message resolves via normalization', () => {
+      const a = asm1553(); a.showErrIdOn = true;
+      const msg = a.formatAssemblerError('Invalid mnemonic: zork', null, null);
+      expect(msg).toContain('Error [asm-023] on line');
+    });
+
+    test('an explicit id still wins over the registry (override precedence)', () => {
+      const a = asm1553(); a.showErrIdOn = true;
+      const msg = a.formatAssemblerError('Missing register', null, 'REGISTER', 'asm-999');
+      expect(msg).toContain('[asm-999]');
+    });
+
+    test('registry resolution is gated behind showErrIdOn (off → no id, parity)', () => {
+      const a = asm1553(); // showErrIdOn defaults false
+      const msg = a.formatAssemblerError('Missing register', null, 'REGISTER');
+      expect(msg).not.toContain('[asm-');
+      expect(msg).toMatch(/^Error on line 3 of x\.a:/);
+    });
+
+    test('an unregistered message yields no id (graceful)', () => {
+      const a = asm1553(); a.showErrIdOn = true;
+      const msg = a.formatAssemblerError('totally unregistered message', null, null);
+      expect(msg).not.toContain('[asm-');
+    });
+
+    test("the migrated 'Bad label' id (asm-001) now resolves from a failAssembly path too", () => {
+      // #1552 wired asm-001 inline only at the one this.error site; under the registry it
+      // resolves by message, so a failAssembly('Bad label', …) emission gets it too.
+      const a = asm1553(); a.showErrIdOn = true;
+      const msg = a.formatAssemblerError('Bad label', null, 'BAD_LABEL'); // no inline id
+      expect(msg).toContain('Error [asm-001] on line');
+    });
+
+    // End-to-end through real assembly (assembleSource resets internally; showErrIdOn must
+    // survive and the registry must resolve from the actual emitted message).
+    test('end-to-end: Duplicate label surfaces asm-002 via the registry under --show-err-id', () => {
+      const a = new Assembler();
+      console.error.mockClear();
+      try {
+        a.assembleSource('        .start main\nmain:   mov r0, 1\nmain:   halt\n',
+          { inputFileName: 'dup.a', showErrIdOn: true, throwOnAssemblyError: false });
+      } catch (_) { /* abort */ }
+      const printed = console.error.mock.calls.map((c) => c[0]).join('\n');
+      expect(printed).toContain('Error [asm-002] on line');
+    });
+
+    test('end-to-end: an imm5 out-of-range surfaces asm-027 (evaluateImmediate path)', () => {
+      const a = new Assembler();
+      console.error.mockClear();
+      try {
+        a.assembleSource('        .start main\nmain:   add r0, r1, 99\n',
+          { inputFileName: 'i.a', showErrIdOn: true, throwOnAssemblyError: false });
+      } catch (_) { /* abort */ }
+      const printed = console.error.mock.calls.map((c) => c[0]).join('\n');
+      expect(printed).toContain('[asm-027]');
     });
   });
 

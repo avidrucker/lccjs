@@ -32,6 +32,7 @@ const {
 const { fatalExit, cliErrorExit } = require('../utils/cliExit');
 const { suggestClosest } = require('../utils/suggest');
 const { formatExplanation } = require('../utils/explanations');
+const { lookupErrorId } = require('../utils/errorIds');
 
 /**
  * Set to false to match original LCC behavior of reporting only
@@ -717,11 +718,11 @@ class Assembler {
           label = label.slice(0, -1); 
         }
         if (!this.isValidLabel(label)) {
-          this.error('Bad label', null, 'BAD_LABEL', 'asm-001'); // `Invalid label format: ${label}`
+          this.error('Bad label', null, 'BAD_LABEL'); // `Invalid label format: ${label}` — id asm-001 via registry (#1553)
         }
         if (this.pass === 1) {
           if (this.labels.has(label)) {
-            this.error('Duplicate label', null, 'DUPLICATE_LABEL', 'asm-002'); // `Duplicate label: ${label}`
+            this.error('Duplicate label', null, 'DUPLICATE_LABEL'); // `Duplicate label: ${label}` — id asm-002 via registry (#1553)
           } else {
             this.symbolTable[label] = this.locCtr;
             this.labels.add(label);
@@ -755,7 +756,7 @@ class Assembler {
       }
 
       if (this.locCtr > 65536) {
-        this.error('Program too big', null, 'PROGRAM_TOO_BIG', 'asm-003');
+        this.error('Program too big', null, 'PROGRAM_TOO_BIG'); // id asm-003 via registry (#1553)
         return;
       }
 
@@ -2230,9 +2231,12 @@ class Assembler {
   formatAssemblerError(message, verboseContext = null, explainKey = null, id = null) {
     const explainBlock = this.explainModeOn ? formatExplanation(explainKey) : null;
     const explainClause = explainBlock ? `\n${explainBlock}` : '';
-    // Inline error ID (#1552): shown only under --show-err-id, independent of
-    // --explain. Off by default ⇒ the `Error ` prefix is byte-identical to before.
-    const idClause = (this.showErrIdOn && id) ? `[${id}] ` : '';
+    // Inline error ID (#1552/#1553): shown only under --show-err-id, independent of
+    // --explain. The id is an explicit per-site override OR, failing that, resolved from
+    // the central registry by message (#1553) — so failAssembly sites (no `id` param) get
+    // ids too. Off by default ⇒ the `Error ` prefix is byte-identical to before.
+    const resolvedId = id || lookupErrorId(message);
+    const idClause = (this.showErrIdOn && resolvedId) ? `[${resolvedId}] ` : '';
     if (this.verboseModeOn) {
       const typeClause = verboseContext
         ? `\nfound: ${verboseContext.found}, expected: ${verboseContext.expected}`
