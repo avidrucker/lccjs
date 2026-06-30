@@ -788,6 +788,13 @@ const COMMAND_REGISTRY = [
 // Entries are tried in array order, so this also encodes dispatch precedence
 // (exact/prefix before numeric; '0' before the numeric step so it stays exact).
 function matchCommand(cmd, entry) {
+  // Exact aliases (#1531): an entry may carry `aliases: [...]` — extra tokens that
+  // dispatch to the same `run` as the primary key. The collision guard already
+  // reserves them; honor them here so they actually route (exact match, no arg),
+  // regardless of the entry's primary match mode.
+  if (entry.aliases && entry.aliases.includes(cmd)) {
+    return { matched: true, arg: '' };
+  }
   switch (entry.match) {
     case 'exact':
       return cmd === entry.key ? { matched: true, arg: '' } : { matched: false };

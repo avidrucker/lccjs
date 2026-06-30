@@ -90,4 +90,40 @@ describe('ilcc COMMAND_REGISTRY (#1342)', () => {
     expect(find('ssp').key).toBe('s');       // s{anchor}
     expect(find('zzz')).toBeUndefined();     // unknown command
   });
+
+  // ── alias dispatch (#1531) ─────────────────────────────────────────────────
+  // The collision guard (a) already reserves and protects entry.aliases, but
+  // matchCommand historically never consulted them — so an aliased key dispatched
+  // to nothing. These pin the now-honored contract: an exact alias routes to its
+  // entry's run, with no over-matching and the guard still rejecting clashes.
+  test('matchCommand: an exact alias token routes to its entry (arg empty)', () => {
+    const entry = { key: 'q', match: 'exact', aliases: ['quit'], run: () => ({}) };
+    const m = matchCommand('quit', entry);
+    expect(m.matched).toBe(true);
+    expect(m.arg).toBe('');
+  });
+
+  test('matchCommand: alias match is exact — a superstring of the alias does not match', () => {
+    const entry = { key: 'q', match: 'exact', aliases: ['quit'], run: () => ({}) };
+    expect(matchCommand('quitx', entry).matched).toBe(false);
+    expect(matchCommand('qui', entry).matched).toBe(false);
+  });
+
+  test('matchCommand: an aliased entry dispatches end-to-end through registry precedence', () => {
+    const reg = [
+      { key: 'z', match: 'exact', aliases: ['zap'], run: () => ({ tag: 'Z' }) },
+      { key: '{N}', match: 'numeric', run: () => ({ tag: 'N' }) },
+    ];
+    const hit = reg.find((e) => matchCommand('zap', e).matched);
+    expect(hit).toBeDefined();
+    expect(hit.run().tag).toBe('Z'); // routes to the aliased entry's run, not the numeric step
+  });
+
+  test('collision guard still rejects an alias that double-books another key', () => {
+    const clash = [
+      { key: 'a', match: 'exact', run: () => ({}) },
+      { key: 'b', match: 'exact', aliases: ['a'], run: () => ({}) },
+    ];
+    expect(() => validateCommandRegistry(clash)).toThrow(/duplicate command key 'a'/);
+  });
 });
