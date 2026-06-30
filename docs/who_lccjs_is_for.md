@@ -9,6 +9,55 @@ material that matters most for you.
 > New here and not sure where you fit? The **Learner → Self-taught** path is the
 > safest default: install, run a demo, work the tutorial.
 
+---
+
+## Primary audience & decision tie-breaker
+
+> **For maintainers and AI agents, not first-time readers.** Everything else in this
+> doc helps a *reader* find their starting point. This section says whose interests win
+> when a **design decision is genuinely contested** and the requirements alone don't
+> settle it — the written north-star the `yegor-personas` REQ/PO voice can appeal to
+> ("requirements are the boss," but this says *who the boss is*).
+
+When a call is contested — two reasonable designs, no requirement that decides — optimize
+for these audiences **in priority order**:
+
+1. **The self-taught Learner first.** No instructor, grader, or syllabus — just them and
+   the machine. They carry the least surrounding context and the highest risk of mistaking
+   a tool quirk for their own bug, so ambiguity and friction cost them the most.
+2. **The Teacher / course student second.** Coursework built on LCC.js (typically Prof. Dos
+   Reis's textbook) must keep transferring; a change that breaks a classroom's mental model
+   or its parity with the original LCC is expensive even when it delights a tinkerer.
+3. **The Hobbyist / contributor last.** Power-user ergonomics and toolchain elegance still
+   matter — but never at the expense of the two audiences above.
+
+This is the *decision* ranking only; it does **not** change where any reader should start
+(see the wayfinding table just below, and the maturity tiers from #1517).
+
+### Tie-breaker heuristics — cite one verbatim to settle a fork
+
+1. **Prefer discoverability over terseness.** A learner can't use what they can't find.
+   When a feature can be made more guessable — a readable name, a visible default, a
+   helpful error message — at the cost of a few keystrokes for an expert, choose
+   discoverability.
+2. **Prefer parity with OG LCC over novel ergonomics for *existing* behavior.** Coursework
+   transfer depends on it; record any deliberate divergence in
+   [`parity_deviations.md`](./parity_deviations.md). New conveniences should be **additive**
+   (offered *alongside* the parity-preserving form), not a replacement that diverges.
+3. **Prefer inspectable/explicit over clever.** The project's whole pitch is that every step
+   is visible — the `.lst`/`.bst` listings, the `ilcc` stepping debugger. Favor a design a
+   learner can read and predict over compact magic.
+
+**How to apply it (worked example, #1405):** the fork is whether reverse-step `{-N}` should
+gain a friendly word like `back`. A discoverable alias serves the self-taught Learner
+(audience 1, heuristic 1); offering it *alongside* the terse form keeps power users happy and
+breaks no parity (heuristic 2). So the anchor weighs toward providing the alias rather than
+withholding it for terseness — the contributor's preference (audience 3) does not outrank the
+learner's. (The final ruling on #1405 is still the human decision recorded there; this is the
+lens to weigh it through, not a substitute for it.)
+
+---
+
 | You are a… | Go to |
 |---|---|
 | Student or self-teacher learning LCC assembly from scratch | [Learner](#learner) |
