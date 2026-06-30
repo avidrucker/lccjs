@@ -35,7 +35,7 @@ Motivated by: #726 (FIG blocked by auto-classifier on a routine closing comment)
 
 **Solo agents** (single agent assigned to a ticket):
 - May post when required or permitted (above).
-- Must not open new issues without PM authorization **unless** the active workflow explicitly names issue-filing as a step — e.g., the "surface findings" rule in `claude_workflow.md` "While continuing", or the `yegor-bdd` spike → puzzle pipeline.
+- Must not open new issues without PM authorization **unless** the active workflow explicitly names issue-filing as a step — e.g., the "surface findings" rule in `claude_workflow.md` "While continuing", or the `yegor-bdd` spike → puzzle pipeline. **A ticket's own acceptance criteria prescribing child-filing is *not* this exception** — proactively ask for an explicit human go-ahead first (see "Acceptance criteria are not authorization", #1448).
 
 **Orchestrator agents** (directing sub-agents across a multi-phase workflow):
 - May explicitly authorize sub-agents to comment or open issues as part of a defined workflow phase.
@@ -56,3 +56,31 @@ The project `.claude/settings.json` pre-authorizes `gh issue comment *` — rout
 The correct default split:
 - Comment on existing issue → pre-authorized (low-risk, routine)
 - Open a new issue → requires intentional authorization (permanent record, public)
+
+### Acceptance criteria are not authorization (#1448)
+
+A ticket whose **acceptance criteria** prescribe filing child / DEV / follow-up
+tickets (e.g. a spike whose acceptance reads *"file the DEV puzzles for each
+sub-item"*) does **not** thereby authorize `gh issue create`. The auto-mode
+classifier does not read a ticket's acceptance criteria as a grant — and, by
+deliberate project choice, it **should not**: issue creation stays approval-gated
+on purpose (see "Do not add `gh issue create *`" above; same classifier behavior
+as #623 for comments and #1181 for `AskUserQuestion` options).
+
+So when a solo agent reaches a prescribed filing step, the acceptance criteria
+make the filing **in scope** but do not replace the human grant. The agent must:
+
+1. **Proactively ask the human for an explicit, free-text go-ahead** before
+   creating the issue — state what it intends to file and why. (A prior
+   `AskUserQuestion` answer does **not** count as authorization in the
+   classifier's eyes, #1181 — the go-ahead must be the human's own free-text
+   words.)
+2. Only then run `gh issue create`.
+
+This recurring prompt is the **intended deliberate checkpoint**, not an
+annoyance to engineer away — the owner has chosen to keep issue creation
+approval-gated rather than allowlist it. The "active workflow explicitly names
+issue-filing as a step" exception under *Solo vs orchestrator contexts* above is
+the narrow case where an **orchestrator** has documented a filing phase (the
+authorization is the documented phase, granted by the human running the
+orchestrator) — a solo agent's reading of its **own** ticket's AC is not that.
