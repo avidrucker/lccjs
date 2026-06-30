@@ -61,6 +61,32 @@ function normalize(message) {
     .trim();
 }
 
+// INT_ERROR_IDS (#1554) — the interpreter's error-ID registry. Unlike the assembler (~104
+// no-id `failAssembly` sites resolved by message), the interpreter throws ~16 DISCRETE typed
+// errors (InterpreterRuntimeError/InvalidExecutableFormatError) whose messages contain mid-
+// string ": " (e.g. "sin: unexpected EOF on stdin") and front-interpolated filenames that
+// DON'T normalize cleanly — so ids are carried inline on the typed error (`{ id }`, surfaced
+// by the cliExit seam #1562) and this table is the canonical record + the source of the
+// load-time validation + the coverage-guard cross-check. Append-only.
+const INT_ERROR_IDS = Object.freeze({
+  'Floating point exception':                 { id: 'int-001', explainKey: 'DIV_BY_ZERO' },
+  'Unknown opcode':                           { id: 'int-002', explainKey: 'UNKNOWN_OPCODE' },
+  'Unknown extended opcode':                  { id: 'int-003', explainKey: 'UNKNOWN_OPCODE' },
+  'sin: unexpected EOF on stdin':             { id: 'int-004', explainKey: 'EOF_ON_STDIN' },
+  'din: unexpected EOF on stdin':             { id: 'int-005', explainKey: 'EOF_ON_STDIN' },
+  'hin: unexpected EOF on stdin':             { id: 'int-006', explainKey: 'EOF_ON_STDIN' },
+  'ain: unexpected EOF on stdin':             { id: 'int-007', explainKey: 'EOF_ON_STDIN' },
+  'Trap vector out of range':                 { id: 'int-008', explainKey: 'TRAP_VECTOR_RANGE' },
+  'software breakpoint':                      { id: 'int-009', explainKey: null },
+  'is not in lcc format':                     { id: 'int-010', explainKey: 'NOT_LCC_FORMAT' },
+  'Invalid file signature':                   { id: 'int-011', explainKey: 'NOT_LCC_FORMAT' },
+  'Incomplete start address in header':       { id: 'int-012', explainKey: 'BAD_EXE_HEADER' },
+  'Incomplete G entry in header':             { id: 'int-013', explainKey: 'BAD_EXE_HEADER' },
+  'Incomplete A entry in header':             { id: 'int-014', explainKey: 'BAD_EXE_HEADER' },
+  'Unknown header entry':                     { id: 'int-015', explainKey: 'BAD_EXE_HEADER' },
+  'is not a valid LCC executable file':       { id: 'int-016', explainKey: 'NOT_LCC_FORMAT' },
+});
+
 // lookupErrorId(message) — the registry id for a (possibly rendered) message, or null.
 function lookupErrorId(message) {
   if (!message) return null;
@@ -75,8 +101,8 @@ function validateErrorIds(reg) {
   const seen = new Set();
   for (const [key, entry] of Object.entries(reg)) {
     const id = entry && entry.id;
-    if (typeof id !== 'string' || !/^asm-\d{3}$/.test(id)) {
-      throw new Error(`errorIds: malformed id '${id}' for '${key}' (expected asm-NNN)`);
+    if (typeof id !== 'string' || !/^(?:asm|int|lnk)-\d{3}$/.test(id)) {
+      throw new Error(`errorIds: malformed id '${id}' for '${key}' (expected <prefix>-NNN)`);
     }
     if (seen.has(id)) {
       throw new Error(`errorIds: duplicate id '${id}'`);
@@ -87,5 +113,6 @@ function validateErrorIds(reg) {
 }
 
 validateErrorIds(ASM_ERROR_IDS); // fires at require()
+validateErrorIds(INT_ERROR_IDS);
 
-module.exports = { ASM_ERROR_IDS, lookupErrorId, normalize, validateErrorIds };
+module.exports = { ASM_ERROR_IDS, INT_ERROR_IDS, lookupErrorId, normalize, validateErrorIds };

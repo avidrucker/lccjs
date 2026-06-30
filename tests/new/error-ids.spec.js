@@ -11,8 +11,8 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const { ASM_ERROR_IDS, lookupErrorId, normalize, validateErrorIds } = require('../../src/utils/errorIds');
-const { scanAssemblerErrorIds } = require('../../scripts/check-error-ids');
+const { ASM_ERROR_IDS, INT_ERROR_IDS, lookupErrorId, normalize, validateErrorIds } = require('../../src/utils/errorIds');
+const { scanAssemblerErrorIds, scanInterpreterErrorIds } = require('../../scripts/check-error-ids');
 
 describe('errorIds registry — lookup + normalization (#1553)', () => {
   test('a plain message resolves to its id', () => {
@@ -83,6 +83,39 @@ describe('errorIds registry — coverage guard against assembler.js (#1553)', ()
       const { unresolved } = scanAssemblerErrorIds(tmp);
       expect(unresolved).toHaveLength(1);
       expect(unresolved[0].key).toBe('a brand new unregistered condition');
+    } finally {
+      fs.unlinkSync(tmp);
+    }
+  });
+});
+
+describe('errorIds — interpreter registry INT_ERROR_IDS (#1554)', () => {
+  test('the INT registry is well-formed (int-NNN, unique, valid under validateErrorIds)', () => {
+    expect(() => validateErrorIds(INT_ERROR_IDS)).not.toThrow();
+    const ids = Object.values(INT_ERROR_IDS).map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    ids.forEach((id) => expect(id).toMatch(/^int-\d{3}$/));
+    expect(ids).toContain('int-001'); // div-by-zero reference (migrated from #1562)
+  });
+
+  test('coverage: source int- ids and the INT registry match exactly (bidirectional)', () => {
+    const { usedIds } = scanInterpreterErrorIds();
+    const tableIds = new Set(Object.values(INT_ERROR_IDS).map((e) => e.id));
+    expect([...usedIds].sort()).toEqual([...tableIds].sort()); // no orphans, no dead entries
+    expect(usedIds.size).toBeGreaterThan(10); // sanity floor
+  });
+
+  test('coverage: every diagnostic typed-error throw carries an id (none un-identified)', () => {
+    const { unidentifiedThrows } = scanInterpreterErrorIds();
+    expect(unidentifiedThrows).toEqual([]);
+  });
+
+  test('coverage scan has teeth — an id-less diagnostic throw is flagged', () => {
+    const tmp = path.join(os.tmpdir(), `int-coverage-teeth-${process.pid}.js`);
+    fs.writeFileSync(tmp, "this.raiseRuntimeError(new InterpreterRuntimeError('some new runtime fault'));\n");
+    try {
+      const { unidentifiedThrows } = scanInterpreterErrorIds(tmp);
+      expect(unidentifiedThrows).toHaveLength(1);
     } finally {
       fs.unlinkSync(tmp);
     }

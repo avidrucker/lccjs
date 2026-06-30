@@ -356,7 +356,7 @@ class Interpreter {
 
     // Check file signature
     if (buffer[0] !== 'o'.charCodeAt(0)) {
-      throw new InvalidExecutableFormatError(`${this.inputFileName} is not in lcc format`, { explainKey: 'NOT_LCC_FORMAT' });
+      throw new InvalidExecutableFormatError(`${this.inputFileName} is not in lcc format`, { explainKey: 'NOT_LCC_FORMAT', id: 'int-010' });
     }
 
     // Load the executable into memory
@@ -614,7 +614,7 @@ class Interpreter {
     // Carry the NOT_LCC_FORMAT explain key so `--explain` surfaces the "what
     // makes a file runnable" guidance here (the wording is unchanged; #1247/#1245).
     if (!foundO || !foundC) {
-      cliErrorExit(`${fileName} is not a valid LCC executable file`, 1, 'NOT_LCC_FORMAT');
+      cliErrorExit(`${fileName} is not a valid LCC executable file`, 1, 'NOT_LCC_FORMAT', 'int-016');
     }
 
     // this prints out when called by lcc.js
@@ -638,7 +638,7 @@ class Interpreter {
 
     // Read file signature
     if (buffer[offset++] !== 'o'.charCodeAt(0)) {
-      this.raiseRuntimeError(new InvalidExecutableFormatError('Invalid file signature: missing "o"', { explainKey: 'NOT_LCC_FORMAT' }));
+      this.raiseRuntimeError(new InvalidExecutableFormatError('Invalid file signature: missing "o"', { explainKey: 'NOT_LCC_FORMAT', id: 'int-011' }));
     }
 
     // Do not store the 'o' signature in headerLines
@@ -656,7 +656,7 @@ class Interpreter {
       } else if (entryChar === 'S') {
         // Start address entry: read two bytes as little endian
         if (offset + 1 >= buffer.length) {
-          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete start address in header', { explainKey: 'BAD_EXE_HEADER' }));
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete start address in header', { explainKey: 'BAD_EXE_HEADER', id: 'int-012' }));
         }
         startAddress = buffer.readUInt16LE(offset);
         offset += 2;
@@ -664,7 +664,7 @@ class Interpreter {
       } else if (entryChar === 'G') {
         // Skip 'G' entry: Read address and label
         if (offset + 1 >= buffer.length) {
-          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete G entry in header', { explainKey: 'BAD_EXE_HEADER' }));
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete G entry in header', { explainKey: 'BAD_EXE_HEADER', id: 'int-013' }));
         }
         const address = buffer.readUInt16LE(offset);
         offset += 2;
@@ -678,14 +678,14 @@ class Interpreter {
       } else if (entryChar === 'A') {
         // Skip 'A' entry: Read address
         if (offset + 1 >= buffer.length) {
-          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete A entry in header', { explainKey: 'BAD_EXE_HEADER' }));
+          this.raiseRuntimeError(new InvalidExecutableFormatError('Incomplete A entry in header', { explainKey: 'BAD_EXE_HEADER', id: 'int-014' }));
         }
         const address = buffer.readUInt16LE(offset);
         offset += 2;
         this.headerLines.push(`A ${address.toString(16).padStart(4, '0')}`);
       } else {
         // Skip unknown entries or handle as needed
-        this.raiseRuntimeError(new InvalidExecutableFormatError(`Unknown header entry: '${entryChar}'`, { explainKey: 'BAD_EXE_HEADER' }));
+        this.raiseRuntimeError(new InvalidExecutableFormatError(`Unknown header entry: '${entryChar}'`, { explainKey: 'BAD_EXE_HEADER', id: 'int-015' }));
       }
     }
 
@@ -849,7 +849,7 @@ class Interpreter {
         // Unreachable: opcode is (ir >> 12) & 0xF, and all 16 values (0-15) have a
         // case above. Kept as a defensive guard; the reachable UNKNOWN_OPCODE path
         // is the extended-opcode default in executeCase10() (#1245 decision A).
-        this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown opcode: ${this.opcode}`, { explainKey: 'UNKNOWN_OPCODE' }));
+        this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown opcode: ${this.opcode}`, { explainKey: 'UNKNOWN_OPCODE', id: 'int-002' }));
     }
 
     // if any registers changed or flags were set, print them out
@@ -1329,7 +1329,7 @@ class Interpreter {
         break;
       case EOP_DIV: // DIV
         if (this.r[this.sr1] === 0) {
-          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO', id: 'int-001' })); // #1562 reference id; full backfill #1554
+          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO', id: 'int-001' })); // int-001 (registry; #1562/#1554)
         }
         // Signed 16-bit division, truncating toward zero (C semantics; oracle parity #1237).
         // Registers are Uint16Array, so operate on the signed view then mask back.
@@ -1338,7 +1338,7 @@ class Interpreter {
         break;
       case EOP_REM: // REM
         if (this.r[this.sr1] === 0) {
-          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO', id: 'int-001' })); // #1562 reference id; full backfill #1554
+          this.raiseRuntimeError(new InterpreterRuntimeError('Floating point exception', { explainKey: 'DIV_BY_ZERO', id: 'int-001' })); // int-001 (registry; #1562/#1554)
         }
         // Signed 16-bit remainder; result takes the sign of the dividend (C semantics; oracle parity #1237).
         this.r[this.dr] = (this.toSigned16(this.r[this.dr]) % this.toSigned16(this.r[this.sr1])) & 0xFFFF;
@@ -1362,7 +1362,7 @@ class Interpreter {
       default:
         // Oracle (cuh63 6.3): silently exits (undefined behavior) for unknown eocodes.
         // LCC.js intentionally throws to surface invalid binaries rather than silently ignoring.
-        this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown extended opcode: ${this.eopcode}`, { explainKey: 'UNKNOWN_OPCODE' }));
+        this.raiseRuntimeError(new InterpreterRuntimeError(`Unknown extended opcode: ${this.eopcode}`, { explainKey: 'UNKNOWN_OPCODE', id: 'int-003' }));
     }
   }
 
@@ -1615,7 +1615,7 @@ class Interpreter {
     let { inputLine: input, isSimulated, isEOF } = this.readLineFromStdin();
 
     if (isEOF) {
-      this.raiseRuntimeError(new InterpreterRuntimeError('sin: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN' }));
+      this.raiseRuntimeError(new InterpreterRuntimeError('sin: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN', id: 'int-004' }));
     }
 
     for (let i = 0; i < input.length; i++) {
@@ -1691,7 +1691,7 @@ class Interpreter {
     const breakpointMessage = `software breakpoint${newline}`;
 
     if (!this.allowRuntimeDebugging) {
-      this.raiseRuntimeError(new InterpreterRuntimeError('software breakpoint'));
+      this.raiseRuntimeError(new InterpreterRuntimeError('software breakpoint', { id: 'int-009' }));
       return;
     }
 
@@ -1781,7 +1781,7 @@ class Interpreter {
           let { inputLine: dinInput, isSimulated, isEOF } = this.readLineFromStdin();
 
           if (isEOF) {
-            this.raiseRuntimeError(new InterpreterRuntimeError('din: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN' }));
+            this.raiseRuntimeError(new InterpreterRuntimeError('din: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN', id: 'int-005' }));
           }
           if (dinInput.trim() === '') {
             continue;
@@ -1811,7 +1811,7 @@ class Interpreter {
           let { inputLine: hinInput, isSimulated, isEOF: hinEOF } = this.readLineFromStdin();
 
           if (hinEOF) {
-            this.raiseRuntimeError(new InterpreterRuntimeError('hin: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN' }));
+            this.raiseRuntimeError(new InterpreterRuntimeError('hin: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN', id: 'int-006' }));
           }
           if (hinInput.trim() === '') {
             continue;
@@ -1838,7 +1838,7 @@ class Interpreter {
       case 9: // AIN
         let { char: ainChar, isSimulated, isEOF: ainEOF } = this.readCharFromStdin();
         if (ainEOF) {
-          this.raiseRuntimeError(new InterpreterRuntimeError('ain: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN' }));
+          this.raiseRuntimeError(new InterpreterRuntimeError('ain: unexpected EOF on stdin', { explainKey: 'EOF_ON_STDIN', id: 'int-007' }));
         }
         this.r[this.dr] = ainChar.charCodeAt(0);
         // No need to echo input here; already handled in readCharFromStdin()
@@ -1869,7 +1869,7 @@ class Interpreter {
         // `Unknown TRAP vector: ${this.trapvec}`
         console.error(`Error on line 0 of ${this.inputFileName}`);
         console.error();
-        this.raiseRuntimeError(new InterpreterRuntimeError('Trap vector out of range', { explainKey: 'TRAP_VECTOR_RANGE' })); // : ${this.trapvec}
+        this.raiseRuntimeError(new InterpreterRuntimeError('Trap vector out of range', { explainKey: 'TRAP_VECTOR_RANGE', id: 'int-008' })); // : ${this.trapvec}
     }
   }
 

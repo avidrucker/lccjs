@@ -47,7 +47,36 @@ function scanAssemblerErrorIds(filePath) {
   return { unresolved, count };
 }
 
-module.exports = { scanAssemblerErrorIds, ALLOW_SET };
+// scanInterpreterErrorIds(filePath) — coverage guard for the interpreter (#1554). The
+// interpreter carries ids INLINE on its typed-error throws (and one diagnostic cliErrorExit),
+// so this collects the `int-NNN` literals actually used in source AND flags any diagnostic
+// typed-error throw that lacks an id (minus the allow-list of non-diagnostic throws).
+const INT_THROW_ALLOW = [
+  /userName is required/,  // internal/programmer invariant, not a user diagnostic
+  /String\(error\)/,       // raiseRuntimeError's generic re-wrap of a non-Error
+];
+
+function scanInterpreterErrorIds(filePath) {
+  const src = (filePath
+    ? fs.readFileSync(filePath, 'utf8')
+    : fs.readFileSync(path.join(__dirname, '..', 'src', 'core', 'interpreter.js'), 'utf8'))
+    .split('\n').filter((line) => !/^\s*\/\//.test(line)).join('\n');
+
+  const usedIds = new Set([...src.matchAll(/\bint-\d{3}\b/g)].map((m) => m[0]));
+
+  const unidentifiedThrows = [];
+  const throwRe = /new (?:InterpreterRuntimeError|InvalidExecutableFormatError)\(([^\n]*)/g;
+  let m;
+  while ((m = throwRe.exec(src)) !== null) {
+    const tail = m[1];
+    if (/int-\d{3}/.test(tail)) continue;                 // carries an id
+    if (INT_THROW_ALLOW.some((re) => re.test(tail))) continue; // intentionally id-less
+    unidentifiedThrows.push(tail.slice(0, 60));
+  }
+  return { usedIds, unidentifiedThrows };
+}
+
+module.exports = { scanAssemblerErrorIds, scanInterpreterErrorIds, ALLOW_SET, INT_THROW_ALLOW };
 
 // CLI: `node scripts/check-error-ids.js` — print the unresolved set (for local debugging).
 if (require.main === module) {
