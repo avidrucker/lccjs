@@ -33,6 +33,24 @@ Each entry follows a fixed shape so the doc stays scannable:
 - **Example:** #1146 (syntax-highlighting flicker) was filed without checking history; it was a duplicate of the already-shipped-and-closed #1137. The work existed; the new ticket was noise.
 - **Why it helps:** closed issues are the cheapest source of "already solved" and "tried, rejected, here's why." Skipping the search burns a claim cycle re-deriving a decision, or files a duplicate that an orchestrator then has to reconcile.
 
+### Pattern: Match the mechanism to the module's structure (don't copy a sibling verbatim)
+
+- **What:** before reusing a sibling module's implementation approach, check whether the *property that made it work* holds in the new module; if not, pick the mechanism that fits the new structure.
+- **Example:** the `--show-err-id` error-ID epic (#1480) was built three times. The assembler resolves an ID by **message-lookup in a registry** because it has ~100 error sites but only ~30 *clean, distinct* messages (#1553). The interpreter (#1554) and linker (#1555) are the opposite shape — ~11–16 *discrete* typed-error throws with messages that don't normalize (mid-string `"sin: …"`, front-interpolated filenames) and a real collision (`Invalid ${entryType} entry` renders `"Invalid S entry"`, which also exists as a literal). So those two carry the ID **inline** on the throw, with the registry demoted to record + validation + coverage. Copying the assembler's lookup into them would have been ambiguous and fragile.
+- **Why it helps:** "reuse the pattern" silently assumes the pattern's fitness condition transfers. Site-count and message-shape — not the feature — decide the mechanism. Naming the fitness condition out loud (here: *many sites + clean wording*) tells you instantly whether the sibling's approach applies.
+
+### Pattern: Split a prerequisite mechanism out of a backfill
+
+- **What:** when a "backfill" ticket secretly requires building infrastructure a sibling module already had, lift that infrastructure into its own prerequisite ticket instead of smuggling it into the backfill.
+- **Example:** #1553 (assembler backfill) was *just* a registry because #1552 had already built the `formatAssemblerError` seam + `--show-err-id` flag. The interpreter had no such seam (errors printed through shared `cliExit` with a parity-locked `Runtime Error:` wrapper), so "the interpreter backfill" actually contained a mechanism — split into #1562 (build the seam) → #1554 (the registry on top), mirroring the assembler's own #1552/#1553 split.
+- **Why it helps:** asymmetry between modules ("the assembler already had X") is a decomposition signal. A backfill bundling a mechanism is two tickets; splitting keeps each one ≤60 min, reviewable, and independently verifiable.
+
+### Pattern: Bidirectional coverage guard for source↔table sync
+
+- **What:** any source-of-truth table that source code must stay in sync with gets a static-scan test asserting *both* directions (every source use resolves to a table entry, and every table entry is used) plus a planted-failure "teeth" check — shipped in the same change as the table.
+- **Example:** each error-ID registry (#1553/#1554/#1555) got a `scripts/check-error-ids.js` scanner the spec drives; `murphy-jutsu` named "silent message-drift" as the top risk and this guard is its direct mitigation. The assembler scan even caught a false positive — a commented-out `// this.error(…)` line — until the scanner was made comment-aware.
+- **Why it helps:** a registry without a guard rots silently (a reworded message, a typo'd id, a dead row). The bidirectional + teeth guard turns drift into a red CI run, which is the thing that actually delivers the "low rot" a registry promises.
+
 ---
 
 ## Anti-patterns (bit us)
