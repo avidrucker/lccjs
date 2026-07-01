@@ -48,6 +48,34 @@ allow "press any key to resume" functionality.
 
 > **These are the complete set of LCC+ trap additions (11 mnemonics across 10 distinct vectors; `whodis` aliases `who`).** The no-operand sound-slot mnemonics (`ding`, `doink`, `beep`, `ping`, `popsound`, `softbeep`, `bop`) are aliases that encode to the `sound` trap and are documented in [§ Sounds](#sounds). The occupied range is `0xF5`–`0xFF` (`0xF7` is currently unused). There is no `fprintf`, `printf`, `sprintf`, `scanf`, `puts`, or any other C-library-style trap. Any trap mnemonic not listed above or in [lcc-isa.md](./lcc-isa.md) does not exist.
 
+### Register operands are caller-chosen
+
+LCC+ mnemonics follow the base-ISA convention — `nbain` is the canonical model:
+**every mnemonic that takes a register operand accepts whichever register the
+caller names; none hard-codes a fixed register.** Choose a register your program
+already has free. Omitting the operand defaults to `r0`.
+
+```asm
+sleep r1        ; sleep the millisecond count held in r1
+sleep r5        ; the same instruction with r5 instead — equally valid
+sleep           ; operand omitted → defaults to r0
+```
+
+The named register lands in the trap's operand field at assemble time, and the
+interpreter reads/writes that same field at run time — so the choice is entirely
+the caller's. Concretely:
+
+| Mnemonic(s) | Register operand |
+|-------------|------------------|
+| `sleep`, `cursor`, `srand`, `nbain`, `millis` | one caller-chosen register (default `r0` if omitted) |
+| `rand` | two caller-chosen registers (`rand dr, sr`) |
+| `sound` | one caller-chosen register (`sound rN`) **or** an immediate slot (`sound NUM` / an alias) — see [§ Sounds](#sounds) |
+| `clear`, `resetc` | none — screen/cursor operations that use no register |
+| `ding`…`bop`, `who`, `whodis`, `boop` | none — fixed slot or fixed action, no operand |
+
+The register form is dynamic (the value is read at run time); reserve fixed
+immediates and aliases for values known when you write the code.
+
 ---
 
 ## Sounds
