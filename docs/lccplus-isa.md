@@ -38,7 +38,7 @@ core traps can grow upward from `0x0E` without collision.
 | srand  | 0x00FD | none | Seeds RNG using value in `sr` |
 | millis | 0x00FE | none | Puts current system time milliseconds (0–999) into `dr` |
 | resetc | 0x00FF | none | Resets cursor position to top-left of screen |
-| sound  | 0x00F8 | none | Plays the sound slot selected by `sr` (0–6); falls back to ASCII BEL (`\x07`) when no audio file/player is available. The no-operand sound-slot aliases (`ding`, `doink`, `beep`, `ping`, `popsound`, `softbeep`, `bop`) encode to this trap — see [§ Sounds](#sounds) |
+| sound  | 0x00F8 | none | Plays a sound slot (0–6). Takes one operand in either the immediate form `sound NUM` (fixed slot, baked in at assemble time) or the register form `sound rN` (slot = runtime value of `rN`) — see [§ Sounds](#sounds). Falls back to ASCII BEL (`\x07`) when no audio file/player is available. The no-operand sound-slot aliases (`ding`, `doink`, `beep`, `ping`, `popsound`, `softbeep`, `bop`) encode to this trap |
 | boop   | 0x00F6 | none | Writes a fixed message (default `"Boop!\n"`) to stdout — a logging/testing trap, distinct from the `bop` sound alias. Override the text with the `LCCPLUS_BOOP_MESSAGE` env var (a trailing newline is appended; empty/unset → default) |
 | who    | 0x00F5 | none | Reads `name.nnn` from cwd and writes contents to stdout (no trailing newline); silent empty string if absent |
 | whodis | 0x00F5 | none | Alias for `who`; identical encoding and behavior |
@@ -52,11 +52,35 @@ allow "press any key to resume" functionality.
 
 ## Sounds
 
-The LCC+ `sound` trap plays one of 7 sound effects. The trap's source
-register selects a **sound code** (0–6); the interpreter resolves each code
-to an audio file and plays it through the first available player
-(`paplay`, `canberra-gtk-play`, `ffplay`, `aplay`). If no file can be found
-or played, it falls back to ASCII BEL (`\x07`).
+The LCC+ `sound` trap plays one of 7 sound effects (slots **0–6**). It resolves
+the selected slot to an audio file and plays it through the first available
+player (`paplay`, `canberra-gtk-play`, `ffplay`, `aplay`). If no file can be
+found or played, it falls back to ASCII BEL (`\x07`).
+
+### Operand forms: `sound NUM` (immediate) vs `sound rN` (register)
+
+`sound` takes exactly one operand, and — just like the base ISA's
+immediate/register operand pair (`add dr, sr1, imm5` vs `add dr, sr1, sr2`) —
+that operand is either an **immediate** literal or a **register**:
+
+| Form | Written as | Slot played | Use when |
+|------|------------|-------------|----------|
+| **Immediate** | `sound NUM` | the literal `NUM`, baked into the instruction at assemble time (range-checked 0–6) | the sound is fixed and known when you write the code |
+| **Register** | `sound rN`  | the **runtime value** currently held in register `rN` | the sound is chosen dynamically while the program runs |
+
+The two look alike but are *not* the same instruction. `sound 0` **always**
+plays slot 0; `sound r0` plays whatever slot number `r0` happens to hold when
+the trap executes. Under the hood the immediate form sets a literal-flag bit, so
+the interpreter reads the slot straight from the instruction's `sr` field rather
+than dereferencing the register — `slotIndex = literalFlag ? sr : reg[sr]`.
+
+> **Prefer the aliases for fixed sounds.** For a sound you know at write time,
+> the no-operand aliases (`ding`, `doink`, `beep`, `ping`, `popsound`,
+> `softbeep`, `bop`) are the most readable, ambiguity-free form — `ding` says
+> what it does where `sound 0` makes you consult the slot table. Reserve the
+> register form `sound rN` for dynamic/game audio where the slot is computed at
+> runtime, and reach for the bare literal `sound NUM` only when neither an alias
+> nor a register fits.
 
 ### Default sound table
 

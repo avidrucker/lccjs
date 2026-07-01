@@ -63,8 +63,8 @@ The LCC+js demos showcase the capabilities of the LCC+js toolchain as a real-tim
 
 12. **`sound` Trap Showcase** (`sounds.ap`)
 
-    - **Description:** Plays all seven configured LCC+ sound slots with literal `sound 0` through `sound 6` (with a 1-second `sleep` between each), then shows register-driven playback with `sound r1` after loading `r1` with `6`.
-    - **Highlights:** Demonstrates the single sound-producing trap and its slot mapping: `0` ding, `1` doink, `2` beep, `3` ping, `4` popsound, `5` softbeep, `6` bop. By default each slot uses bundled project WAV defaults; set `SOUND_FILES_FROM_SYSTEM=1` to prefer `.env`/OS filesystem sounds before falling back to the bundled WAVs and then ASCII BEL.
+    - **Description:** Deliberately exercises both halves of `sound`'s immediate/register operand pair (see [`lccplus-isa.md` § Sounds](../docs/lccplus-isa.md#operand-forms-sound-num-immediate-vs-sound-rn-register)): the **immediate** form `sound 0` through `sound 6` (with a 1-second `sleep` between each), then the **register** form `sound r1` after loading `r1` with `6`.
+    - **Highlights:** Demonstrates the single sound-producing trap and its slot mapping: `0` ding, `1` doink, `2` beep, `3` ping, `4` popsound, `5` softbeep, `6` bop. This demo keeps the bare literals on purpose to show the operand forms; for a *fixed* sound in real code, prefer the readable no-operand aliases (see the `beep`/`ding` showcases below). By default each slot uses bundled project WAV defaults; set `SOUND_FILES_FROM_SYSTEM=1` to prefer `.env`/OS filesystem sounds before falling back to the bundled WAVs and then ASCII BEL.
 
 13. **`beep` Alias Showcase** (`beep.ap`)
 
