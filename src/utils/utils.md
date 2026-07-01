@@ -7,6 +7,11 @@ These utilities fall into two groups:
 - architectural support used directly by `src/core`
 - standalone analysis/debugging helpers for developers
 
+> This file is the **per-module** reference. For the **concern-by-concern** view
+> — how these modules (plus shared mechanisms like the pure-seam boundary and the
+> core↔plus seam) fit together as the project's cross-cutting concerns — see
+> [`docs/cross-cutting-concerns.md`](../../docs/cross-cutting-concerns.md).
+
 ## Shared Architectural Utilities
 
 ### `errors.js`
@@ -73,6 +78,57 @@ Current behavior:
 
 This cwd-based behavior matches the current oracle LCC behavior.
 
+### `cliExit.js`
+
+Shared CLI exit/error scaffolding for the **wrapper** side of the pure-seam
+boundary: `isTestMode`, `fatalExit`, `cliErrorExit`, `cliWrappedErrorExit`.
+
+Purpose:
+
+- keep the exit contract consistent across assembler, interpreter, linker, lcc,
+  ilcc, and the plus subclasses (edit it in one place, not eight)
+- under Jest, `isTestMode` flips `fatalExit` from `process.exit` to a thrown
+  Error so the test harness survives
+
+### `errors.js` companion — the diagnostics surface
+
+Three pure, I/O-free data/lookup modules render the toolchain's errors:
+
+### `explanations.js`
+
+The `--explain` catalog: student-friendly explanations keyed by a stable
+`explainKey` set at the throw site (not by matching rendered message text).
+Pure data + lookup. (#1096–#1100)
+
+### `errorIds.js`
+
+The append-only error-ID registries (`ASM_ERROR_IDS` / `INT_ERROR_IDS` /
+`LNK_ERROR_IDS`; ids like `asm-NNN`), keyed by normalized message and surfaced
+under `--show-err-id`. A published API — never renumber or reuse a retired id; a
+coverage-guard test asserts every assembler error literal resolves here. (#1553, #1480)
+
+### `suggest.js`
+
+`levenshtein` + `suggestClosest` — the nearest valid token within an edit-distance
+bound, used for "Did you mean?" suffixes on errors like "Bad label".
+
+### `flagDiagnostics.js`
+
+Per-flag warnings for CLI flags LCCjs knowingly handles differently from the
+oracle (e.g. `-f` is a no-op). Full rationale lives in
+[`docs/parity_deviations.md`](../../docs/parity_deviations.md). (#1371)
+
+### `labelUtils.js`
+
+`isValidLabelDefinition` — mirrors `assembler.js`'s label-validation rules so
+other callers can test a line without the full assembler. Keep in lockstep with
+the assembler grammar (#870).
+
+### `formatter.js`
+
+`formatLccSource` — normalizes LCC assembly source (labels to column 0, indented
+bodies, trailing-whitespace stripped). Backs the playground formatter.
+
 ## Standalone Inspection Utilities
 
 ### `hexDisplay.js`
@@ -104,15 +160,18 @@ The current architectural goal is:
 
 In practice, `src/utils` now holds the shared pieces for:
 
-- typed errors
+- typed errors + wrapper-side CLI exit scaffolding
+- the error diagnostics surface (`--explain`, error ids, "did you mean?", flag deviations)
 - file artifact handling
 - report generation
 - `name.nnn` handling
+- shared assembler helpers (label validation, source formatting)
 
 This separation keeps the wrapper/core boundary easier to maintain and test.
 
 ## Related Docs
 
 - [README.md](../../README.md)
+- [docs/cross-cutting-concerns.md](../../docs/cross-cutting-concerns.md) — concern-by-concern companion to this file
 - [src/core/core.md](../../src/core/core.md)
 - [docs/core-behavior-matrix.md](../../docs/core-behavior-matrix.md)

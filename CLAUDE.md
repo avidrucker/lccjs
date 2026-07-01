@@ -54,7 +54,7 @@ The core modules are being refactored toward a deliberate boundary, and new code
 - **Pure in-memory APIs throw typed errors** (`src/utils/errors.js`) and return data — no `console.*`, no `process.exit`, no file I/O. Examples: `assembleSource(...)`, `executeBuffer(...)`, `parseObjectModuleBuffer(...)`. These are the testable seams.
 - **CLI/wrapper paths own** console output, exit codes, and file reads/writes.
 
-Maturity varies: `assembler.js` and `interpreter.js` have real pure seams; `linker.js` is mid-transition (still wrapper-heavy); `lcc.js` stays intentionally orchestration-only (option parsing, choosing assemble/link/run, report orchestration) and is **not** meant to become a library surface. Shared concerns — report generation (`.lst`/`.bst`), artifact naming, hex display — live in `src/utils/`, not in the core modules.
+Maturity varies: `assembler.js` and `interpreter.js` have real pure seams; `linker.js` is mid-transition (still wrapper-heavy); `lcc.js` stays intentionally orchestration-only (option parsing, choosing assemble/link/run, report orchestration) and is **not** meant to become a library surface. Shared concerns — report generation (`.lst`/`.bst`), artifact naming, hex display — live in `src/utils/`, not in the core modules. The project's cross-cutting concerns (these shared utils plus woven mechanisms like the pure-seam boundary, the core↔plus seam, and shared trap encoding) are inventoried concern-by-concern in **[`docs/cross-cutting-concerns.md`](./docs/cross-cutting-concerns.md)** (per-module reference: [`src/utils/utils.md`](./src/utils/utils.md)).
 
 `src/interactive/` holds the `-i` stepping debugger (`ilcc.js`/`iinterpreter.js`), a separate execution path from the batch interpreter.
 
