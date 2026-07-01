@@ -335,6 +335,7 @@ class LCC {
     console.log('   -v / --verbose: verbose output (assembler, interpreter, and linker)');
     console.log('   --explain: append a student-friendly explanation to known errors');
     console.log('   --show-err-id: show a unique, citable error ID (e.g. asm-014) inline; off by default, combinable with --explain');
+    console.log('        (full error-ID catalog + stability policy: docs/error-ids.md)');
     console.log('   --sounds-on: enable LCC+ sound mnemonics (ding/doink/beep/...) in core LCC (BEL fallback if no audio player)');
     console.log('   -nostats: suppress .lst/.bst report generation');
     console.log('   --max-steps N (or -ms<N>): set execution step cap (default 500000; use -1 for unlimited)');

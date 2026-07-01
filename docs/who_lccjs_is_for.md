@@ -125,6 +125,10 @@ inspectable.
    already organizes example programs by textbook chapter.
 4. Review the common-challenges list below so you can anticipate where students
    get stuck.
+5. Cite specific diagnostics in your rubric using **stable error IDs** — see the
+   [error-ID catalog](./error-ids.md). Have students run with `--explain
+   --show-err-id` for a student-friendly explanation plus a citable ID (e.g.
+   `asm-013`) that stays valid across releases.
 
 ### Common challenges for first-time learners
 
