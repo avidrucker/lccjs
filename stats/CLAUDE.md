@@ -58,6 +58,28 @@ Commit notebooks **with their embedded outputs and plots** so they render on Git
 (the day-N analysis notebooks are committed this way on purpose). Don't strip outputs.
 Re-running a notebook before committing keeps the rendered version honest.
 
+## Refreshing a weekly notebook
+
+The `week-NN-analysis.ipynb` files are **window-filtered and committed** — "copy last
+week's notebook and re-run it" is *not* the same as "analyze all the data." Three footguns
+bit the week-04 pass (#1519) and a naive re-run will silently repeat them:
+
+1. **The date `CEILING` is hardcoded — edit it.** The load cell pins the window with a literal
+   like `CEILING = '2026-06-14'` (a settled week-end from the notebook you copied). Re-executing
+   keeps the *old* cutoff, so new weeks silently never appear. Grep the load cell for the ceiling
+   and bump it (e.g. `CEILING → '2026-06-29'`) before you trust anything downstream.
+2. **`nbconvert --execute` can exit 0 while a cell raised — scan cells, don't trust the exit
+   code.** `jupyter nbconvert --execute --inplace` returned **0 while a cell threw a `TypeError`**;
+   the traceback was in stdout but the exit code was clean and the inplace file was left stale.
+   Verify a run by scanning the executed notebook for error outputs
+   (`output_type == 'error'`), not by checking `$?`.
+3. **Inherited analysis code breaks at scale.** A §8 line — `sorted(err_df['hst_day'].unique())` —
+   worked at **138** error rows and threw `TypeError` (mixed NaN/str) at **390**. Code you copied
+   carries latent type assumptions that only fail once the dataset grows; expect and re-test the
+   inherited cells against the larger window.
+
+Source: #1519 / the 2026-06-29 BANANA TIL in [`../docs/learnings/`](../docs/learnings/).
+
 ## Logging velocity rows from analysis work
 
 If your analysis work is itself a logged puzzle, `npm run velocity:log` has gotchas the
