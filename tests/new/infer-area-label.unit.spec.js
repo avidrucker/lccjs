@@ -24,6 +24,12 @@ describe('inferArea — real recent issue titles infer the right lane', () => {
     ['textbook demo-034 restructuring may have dropped its teaching intent', 'area:education'],
     ['decomplect the interpreter god-object via a pure seam boundary', 'area:architecture'],
     ['SPIKE (ARC): assembler.js state-grouping/god-object — decomposition or defer', 'area:architecture'],
+    // #1427 backtest regressions: the ADR / symbol-anchoring glossary campaign —
+    // architecture-labeled tickets dense with toolchain nouns (assembler.md / etc.)
+    // that used to misfire to area:toolchain. The ADR/re-anchor/symbol-anchored
+    // tokens now out-score the toolchain nouns. (Real titles: #1381, #1358.)
+    ['WRITER: re-anchor assembler.md §(a) state-field entries to symbols (ADR 0001)', 'area:architecture'],
+    ['ARCHITECT: adopt symbol-anchored Source: refs in docs/glossary/ (ADR)', 'area:architecture'],
   ];
 
   test.each(CASES)('%s → %s', (title, expected) => {

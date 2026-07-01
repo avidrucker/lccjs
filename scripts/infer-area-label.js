@@ -42,6 +42,12 @@ const AREA_RULES = [
   ['area:architecture', [
     /decomplect/i, /state[- ]grouping/i, /god[- ]object/i, /\bDDD\b/,
     /\bseams?\b/i, /domain language/i, /module decompos/i, /\bdecompositions?\b/i,
+    // #1427 backtest: the largest architecture miss-cluster was the ADR /
+    // symbol-anchoring glossary campaign — architecture-labeled tickets whose
+    // text is full of toolchain nouns (assembler.md/interpreter.md/linker.md).
+    // These three high-precision tokens recover it without false-firing on real
+    // toolchain work (measured: +10 exact / −12 wrong-lane over a 390-issue corpus).
+    /\bADR\b/, /re-anchor/i, /symbol-anchored/i,
   ]],
   ['area:process', [
     /\bskills?\b/i, /\bRULES\b/, /velocity/i, /\bclaims?\b/i, /\bclose\.js\b/i,
