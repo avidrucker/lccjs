@@ -1,3 +1,5 @@
+_Audience: contributors, assembly enthusiasts · Tier: reference_
+
 Below is a high-level overview of what **lccplus.js** brings to the table compared to **lcc.js**, focusing on how it works, what it does and does not do, and some implications of its design.
 
 ---

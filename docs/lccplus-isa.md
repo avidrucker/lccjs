@@ -1,5 +1,7 @@
 # LCC+ Instruction Set Addendum
 
+_Audience: students/learners, assembly enthusiasts, educators/teachers · Tier: reference, public_
+
 This document summarizes the **additions and differences** between the original
 LCC instruction set and the **LCC+** extension (see `src/plus/` and `plusdemos/`).
 

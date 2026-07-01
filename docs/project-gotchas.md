@@ -1,5 +1,7 @@
 # Project Gotchas
 
+_Audience: AI agents, contributors · Tier: recommended_
+
 Non-obvious foot-guns specific to developing in or with the lccjs codebase. For ISA-level assembly surprises (wrong encoding, runtime traps, range limits) see [`docs/pitfalls.md`](./pitfalls.md). For workflow and tooling preferences see [`docs/do-this-not-that.md`](./do-this-not-that.md).
 
 ---

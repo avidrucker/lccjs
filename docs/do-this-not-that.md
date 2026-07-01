@@ -1,5 +1,7 @@
 # Do This, Not That
 
+_Audience: AI agents, contributors · Tier: recommended_
+
 Evergreen agent-facing preferences for common tool and command choices in this repo. Each entry names a concrete pattern, the alternative to avoid, and a one-line rationale.
 
 **Scope:** workflow and tooling preferences — not assembly-level surprises (those belong in [`pitfalls.md`](./pitfalls.md)) and not per-session lessons (those belong in [`docs/learnings/`](./learnings/)). This doc is the *distillation* of those, not a duplicate. When a TIL lesson generalises, promote it here.

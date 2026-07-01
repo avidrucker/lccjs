@@ -1,5 +1,7 @@
 # LCC Orchestrator Module
 
+_Audience: contributors · Tier: reference_
+
 `src/cli/lcc.js` is the top-level CLI orchestrator for the standard LCC.js toolchain. It coordinates assembly, linking, execution, and report generation based on the input file type.
 
 ## Role

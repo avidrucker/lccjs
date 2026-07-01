@@ -1,5 +1,7 @@
 # Agent Patterns & Anti-Patterns
 
+_Audience: AI agents, contributors · Tier: recommended_
+
 Working-practice wisdom for AI agents in this repo: **patterns that have worked well for us, and anti-patterns that have bitten us** — each with a concrete example and a one-line "why." Scan this before starting work; it is meant to be browsable, not exhaustive.
 
 **Scope:** *how to approach work* at a working-practice altitude — not specific tool/command choices (those live in [`do-this-not-that.md`](./do-this-not-that.md)), not multi-agent orchestration failures (those live in [`research/orchestration-failure-modes.md`](./research/orchestration-failure-modes.md)), and not raw per-session lessons (those live in [`learnings/`](./learnings/)). This doc is the *distillation* of `learnings/` into a paired pattern↔anti-pattern reference, not a duplicate. When a TIL lesson generalises, promote it here — the same promotion model `do-this-not-that.md` uses.

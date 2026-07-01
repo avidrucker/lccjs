@@ -1,5 +1,7 @@
 # Dynamic memory in LCC assembly
 
+_Audience: students/learners, assembly enthusiasts · Tier: reference, public_
+
 A standalone reference for how `malloc` and `free` work in LCC(js) assembly —
 what those concepts mean in C, how the primitives map to the 16-bit ISA, and the
 specific implementation used in `plusdemos/gameSnake.ap`.

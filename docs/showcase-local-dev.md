@@ -1,5 +1,7 @@
 # Showcase / Playground — local dev & pre-deploy verification
 
+_Audience: contributors · Tier: reference_
+
 The live showcase (https://avidrucker.github.io/lccjs/showcase/) is the CM6
 editor "Playground". CM6 editor features depend on **runtime** behaviour — the
 editor bundle wiring (`window.LccEditor`), Lezer/highlight tag identity, `basicSetup`

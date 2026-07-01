@@ -1,5 +1,7 @@
 # LCC Assembly Pitfalls
 
+_Audience: students/learners, assembly enthusiasts · Tier: recommended, public_
+
 The canonical, in-repo catalog of the surprises that bite people writing LCC
 assembly for the LCC.js toolchain — especially first-timers. Most of these
 **assemble (or run) without an obvious error** and then misbehave, which is

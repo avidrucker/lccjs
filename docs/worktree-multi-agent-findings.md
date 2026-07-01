@@ -1,5 +1,7 @@
 # Multi-agent worktree workflow — findings
 
+_Audience: AI agents, contributors · Tier: reference_
+
 Status: **findings / retro.** The fix is an open puzzle — see
 [#188](https://github.com/avidrucker/lccjs/issues/188).
 

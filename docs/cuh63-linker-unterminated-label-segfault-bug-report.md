@@ -1,5 +1,7 @@
 # Segfault in cuh63 6.3: the linker crashes on a `.o` header label with no NUL terminator
 
+_Audience: assembly enthusiasts, contributors · Tier: reference_
+
 **Author:** Avi Drucker
 **Date filed:** 2026-06-16
 **Distribution under inspection:** `cuh63.zip` (file mtimes 2025-01-09)

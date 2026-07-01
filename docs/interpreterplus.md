@@ -1,3 +1,5 @@
+_Audience: contributors, assembly enthusiasts · Tier: reference_
+
 **LCC+js Interpreter: Additions, Core Features, and New Capabilities**
 
 The **LCC+js interpretation** extends the standard LCC.js interpreter (`interpreter.js`) with additional functionality aimed at real-time, interactive applications, particularly game-like programs. Below is an overview of how the **`interpreterplus.js`** differs from the standard interpreter, what new features it supports, and how these changes enable richer assembly-based experiences.

@@ -1,5 +1,7 @@
 # Segfault in cuh63 6.3: the `-d` debugger crashes on a bare `c` command (no operands)
 
+_Audience: assembly enthusiasts, contributors · Tier: reference_
+
 **Author:** Avi Drucker (avidrucker@gmail.com)
 **Date filed:** 2026-06-15
 **Distribution under inspection:** `cuh63.zip` (file mtimes 2025-01-09)

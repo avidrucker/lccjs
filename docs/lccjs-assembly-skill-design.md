@@ -1,5 +1,7 @@
 # Design: `lccjs-assembly` Claude skill (scoping spike for #115)
 
+_Audience: AI agents, contributors · Tier: reference_
+
 **Status:** design complete — ready for build (#116) and validation (#117).
 **Scope boundary:** base LCC ISA only. LCC+ (`.lccplus`, extra traps/instructions) is
 explicitly deferred to a later skill or a later section.

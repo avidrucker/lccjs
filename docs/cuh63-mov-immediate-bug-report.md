@@ -1,5 +1,7 @@
 # Possible regression in cuh63 6.3: `mov` accepts a narrower immediate range than `mvi`
 
+_Audience: assembly enthusiasts, contributors · Tier: reference_
+
 **Author:** Avi Drucker (avi.drucker@dataico.com)
 **Date filed:** 2026-05-25
 **Distribution under inspection:** `cuh63.zip` (file mtimes 2025-01-09)

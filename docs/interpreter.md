@@ -1,5 +1,7 @@
 # Interpreter Module
 
+_Audience: contributors, assembly enthusiasts · Tier: reference_
+
 `src/core/interpreter.js` is the LCC.js interpreter for `.e` executables. It supports both direct CLI execution and reusable in-memory execution.
 
 ## Public Roles

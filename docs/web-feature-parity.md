@@ -1,5 +1,7 @@
 # lccjs Web Feature Parity — ILCC Dashboard
 
+_Audience: contributors · Tier: reference_
+
 **Last verified:** 2026-06-05 (FIG, code inspection)  
 **Detailed audit:** `docs/research/ilcc-dashboard-feature-audit.md` (#700)  
 **Tracker:** #714

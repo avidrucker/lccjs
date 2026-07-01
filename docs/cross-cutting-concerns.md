@@ -1,5 +1,7 @@
 # Cross-Cutting Concerns
 
+_Audience: contributors, AI agents · Tier: reference_
+
 A **cross-cutting concern** is an aspect that spans the toolchain — assembler,
 interpreter, linker, and the LCC+ subclasses — rather than living in a single
 module. This doc inventories them in one place so a newcomer (human or agent)

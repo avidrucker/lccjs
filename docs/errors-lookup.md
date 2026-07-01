@@ -1,5 +1,7 @@
 # Error Type Lookup — Concrete Scenarios to Vocabulary Codes
 
+_Audience: AI agents, contributors · Tier: reference_
+
 **Companion to:** [`docs/errors-schema.md`](./errors-schema.md) (authoritative vocabulary) · [`~/.claude/skills/log-error/SKILL.md`](~/.claude/skills/log-error/SKILL.md) (usage protocol)
 
 This doc expands each `error_type` code with concrete scenarios, expected message patterns, and disambiguation rules. It is a **reader-friendly layer** — if this doc and `docs/errors-schema.md` ever conflict, the schema doc wins.

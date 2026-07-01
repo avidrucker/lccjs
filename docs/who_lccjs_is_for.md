@@ -1,5 +1,7 @@
 # Who LCC.js Is For
 
+_Audience: students/learners, assembly enthusiasts, educators/teachers · Tier: required, public_
+
 A quick way to find your starting point. LCC.js is an educational
 assembler + linker + interpreter for the Low-Cost Computer (LCC) — so its
 audience ranges from someone writing their first `mov` instruction to someone

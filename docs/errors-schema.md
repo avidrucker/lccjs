@@ -1,5 +1,7 @@
 # Errors Log Schema
 
+_Audience: AI agents, contributors · Tier: reference_
+
 ## Canonical store
 
 **`~/.lccjs/lccjs.db`** — SQLite database, local-only, not git-tracked.  

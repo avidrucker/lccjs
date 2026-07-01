@@ -1,5 +1,7 @@
 # Debugger command & flag provenance registry
 
+_Audience: contributors, assembly enthusiasts · Tier: reference_
+
 **Status:** authoritative living reference (created for #1341). Update whenever a debugger command or
 CLI flag is added, renamed, or re-provenanced. The data-driven registry in code (#1342) is generated
 to match these rulings; the coverage tracker (#1343) closes the "proving test?" gaps.

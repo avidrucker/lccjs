@@ -1,5 +1,7 @@
 # Common Workflows
 
+_Audience: contributors, AI agents · Tier: recommended_
+
 A home for the project's recurring **operational** processes — the "when do I
 actually run X, and what happens automatically?" questions that otherwise have to
 be reconstructed from scattered scripts, hooks, and CI config.

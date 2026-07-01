@@ -1,5 +1,7 @@
 # Core Behavior Matrix
 
+_Audience: contributors, AI agents · Tier: reference_
+
 This document records the current behavior contract for the `src/core` modules.
 
 It is intentionally descriptive, not aspirational. Its purpose is to separate:

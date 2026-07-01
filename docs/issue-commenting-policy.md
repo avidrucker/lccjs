@@ -1,5 +1,7 @@
 # Issue Commenting Policy
 
+_Audience: AI agents, contributors · Tier: recommended_
+
 Governs when agents may, must, and must not post GitHub issue comments or open new issues.
 
 Canonical reference — link here from workflow docs and skills. See also: `docs/claude_workflow.md` "close sequence" (required closing comment) and "While continuing" (correcting issue bodies).

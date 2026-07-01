@@ -1,5 +1,7 @@
 # **Introduction to LCC Assembly Programming**
 
+_Audience: students/learners, educators/teachers · Tier: recommended, public_
+
 Welcome to this tutorial on LCC assembly programming! This guide is designed to help you learn how to write assembly programs for the Low-Cost Computer (LCC) architecture step by step. We'll start with basic concepts like moving data into registers and printing values, and gradually progress to more advanced topics such as labels, directives, input/output operations, control structures, and working with the stack.
 
 By the end of this tutorial, you'll have a solid understanding of how to write and execute simple assembly programs using LCC assembly language.

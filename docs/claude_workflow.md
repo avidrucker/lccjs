@@ -1,5 +1,7 @@
 # Claude Workflow — what an AI agent does for each puzzle
 
+_Audience: AI agents, contributors · Tier: required_
+
 **Why this file exists (vs. `CLAUDE.md`):** `CLAUDE.md` is the lean, always-in-context
 orientation loaded every session — it points here but deliberately does *not* duplicate
 the protocol. This doc is the full, on-demand reference for the project's

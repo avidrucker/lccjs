@@ -1,5 +1,7 @@
 # Parity Deviations: LCC.js vs cuh63 6.3 OG LCC
 
+_Audience: assembly enthusiasts, contributors · Tier: reference, public_
+
 Centralized record of every known behavioral difference between LCC.js and the
 cuh63 6.3 `lcc` binary (the reference oracle). Each entry states the deviation,
 its rationale, and points back to the source location.

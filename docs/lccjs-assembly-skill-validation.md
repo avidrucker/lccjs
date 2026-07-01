@@ -1,5 +1,7 @@
 # Validation: `lccjs-assembly` Claude skill
 
+_Audience: AI agents, contributors · Tier: reference_
+
 First-pass validation of the skill built across #137 / #138 / #139 / #140
 (tracker #116). Closes #117.
 

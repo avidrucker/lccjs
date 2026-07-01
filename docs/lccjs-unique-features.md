@@ -1,5 +1,7 @@
 # What LCC.js Gives You Beyond the Original
 
+_Audience: students/learners, assembly enthusiasts, educators/teachers · Tier: reference, public_
+
 LCC.js is a from-scratch JavaScript reimplementation of Prof. Dos Reis's LCC
 toolchain (the `cuh63` `lcc` binary, referred to here as **OG LCC**). It assembles,
 links, and runs the same 16-bit educational ISA, and a large part of the project

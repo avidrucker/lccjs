@@ -1,5 +1,7 @@
 # Project Status & Parity Notes
 
+_Audience: contributors, assembly enthusiasts · Tier: reference_
+
 ## Current Status
 
 Implemented and stable:

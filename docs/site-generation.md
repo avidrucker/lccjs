@@ -1,5 +1,7 @@
 # How the docs site & playground/showcase are generated
 
+_Audience: contributors · Tier: reference_
+
 A high-level map of how `lccjs` turns repo content into the deployed GitHub Pages
 site at **https://avidrucker.github.io/lccjs/** — and how the in-browser
 playground is assembled. This is the *story*, not an API reference; each section

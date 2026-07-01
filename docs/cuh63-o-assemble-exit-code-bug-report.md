@@ -1,5 +1,7 @@
 # Exit-code error in cuh63 6.3: `lcc` exits 1 on a successful `.o` (object-module) assemble
 
+_Audience: assembly enthusiasts, contributors · Tier: reference_
+
 **Author:** Avi Drucker (avidrucker@gmail.com)
 **Date filed:** 2026-06-02
 **Distribution under inspection:** `cuh63.zip` (file mtimes 2025-01-09)

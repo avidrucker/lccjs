@@ -1,5 +1,7 @@
 # No-comma negative-operand family in cuh63 6.3: silent miscompile on `baser,offset6` instructions + hard reject on `imm5`/`imm9` instructions
 
+_Audience: assembly enthusiasts, contributors · Tier: reference_
+
 **Author:** Avi Drucker (avidrucker@gmail.com)
 **Date filed:** 2026-06-02
 **Distribution under inspection:** `cuh63.zip` (file mtimes 2025-01-09)

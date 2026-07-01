@@ -1,5 +1,7 @@
 # LCC.js — project initiatives
 
+_Audience: contributors, AI agents · Tier: reference_
+
 What LCC.js is, what's being built, where it's headed — and who benefits. This is the
 **audience-facing** companion to two existing docs: the terse feature checklist in
 [`../ROADMAP.md`](../ROADMAP.md) and the internal prioritization catalogue in

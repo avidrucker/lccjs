@@ -1,5 +1,7 @@
 # LCC Instruction Set Summary
 
+_Audience: students/learners, assembly enthusiasts, educators/teachers · Tier: reference, public_
+
 Reference for the LCC (Little Computer) instruction set from
 *C and C++ Under the Hood* by Anthony J. Dos Reis.
 

@@ -1,5 +1,7 @@
 # Artifact Summary
 
+_Audience: AI agents, contributors · Tier: reference_
+
 What this project produces, how, and why — organized by category.
 
 **Two tiers:** generated/derived artifacts get a full row each; authored documentation families get a pattern-level row (one entry per family, not per file).

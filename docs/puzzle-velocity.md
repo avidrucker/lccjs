@@ -1,5 +1,7 @@
 # Puzzle Velocity — Data & Explainer
 
+_Audience: AI agents, contributors · Tier: reference_
+
 Tracks estimated vs actual time per puzzle / ticket so we can calibrate
 forward-looking estimates over time.
 

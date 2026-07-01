@@ -1,5 +1,7 @@
 # Skill portability across providers
 
+_Audience: AI agents, contributors · Tier: reference_
+
 How to move an agent skill between providers (Claude Code, Codex, …) without
 guessing. The trick is to stop thinking in pairwise comparisons — which go stale
 the moment a third tool appears — and think **hub-and-spoke**: a shared core that

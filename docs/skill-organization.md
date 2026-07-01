@@ -1,5 +1,7 @@
 # Skill organization across repos and providers
 
+_Audience: AI agents, contributors · Tier: reference_
+
 Where skills should *live* so they stay discoverable and don't drift as they
 multiply across providers (Claude Code, Codex, …) and repos. The companion doc
 [`skill-portability.md`](./skill-portability.md) covers how to *translate* a skill

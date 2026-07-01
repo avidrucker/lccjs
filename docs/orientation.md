@@ -1,5 +1,7 @@
 # LCCjs Orientation
 
+_Audience: contributors · Tier: required_
+
 Two-minute orientation for new contributors: what the repo contains, how its components relate, and which command to reach for.
 
 ---

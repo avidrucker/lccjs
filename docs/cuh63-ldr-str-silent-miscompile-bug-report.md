@@ -1,5 +1,7 @@
 # Silent miscompile in cuh63 6.3: `ldr`/`str` with space-separated operands drops negative `offset6`
 
+_Audience: assembly enthusiasts, contributors · Tier: reference_
+
 **Author:** Avi Drucker (avidrucker@gmail.com)
 **Date filed:** 2026-05-26
 **Distribution under inspection:** `cuh63.zip` (file mtimes 2025-01-09)

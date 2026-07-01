@@ -1,3 +1,5 @@
+_Audience: contributors, assembly enthusiasts · Tier: reference_
+
 **LCC+js Assembly: Additions, Core Features, and What They Enable**
 
 The **LCC.js** assembler (`assembler.js`) provides a traditional two-pass assembly process for a 16-bit architecture, handling standard directives (`.start`, `.globl`, `.extern`, `.word`, etc.) and mnemonics (e.g., `add`, `sub`, `ld`, `st`, `mov`). It produces `.e` or `.o` files suitable for execution or linking within the LCC.js ecosystem.

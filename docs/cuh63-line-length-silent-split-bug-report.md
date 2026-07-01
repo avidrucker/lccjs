@@ -1,5 +1,7 @@
 # Silent source-line split in cuh63 6.3: lines longer than the input buffer are cut in two and the overflow is parsed as source
 
+_Audience: assembly enthusiasts, contributors · Tier: reference_
+
 **Author:** Avi Drucker (avidrucker@gmail.com)
 **Date filed:** 2026-06-01
 **Distribution under inspection:** `cuh63.zip` (file mtimes 2025-01-09)

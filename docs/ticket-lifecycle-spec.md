@@ -1,5 +1,7 @@
 # lccjs ticket-lifecycle spec — the authoritative end-to-end phase contract
 
+_Audience: AI agents, contributors · Tier: reference_
+
 > **Status:** authoritative for the **lccjs** side of the cross-repo parity pair
 > (lccjs#1487 ↔ pmtools#92). Derived **only** from this repo's own code/scripts
 > (the independence rule — see below). The pmtools column of the reconciliation

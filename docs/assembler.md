@@ -1,5 +1,7 @@
 # Assembler Module
 
+_Audience: contributors, assembly enthusiasts · Tier: reference_
+
 `src/core/assembler.js` is the LCC.js assembler. It serves two roles:
 
 - a CLI/file-oriented wrapper for `.a`, `.bin`, and `.hex` inputs

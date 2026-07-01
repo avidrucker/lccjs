@@ -1,5 +1,7 @@
 # Skill Inventory
 
+_Audience: AI agents, contributors · Tier: recommended_
+
 This doc lists every Claude Code skill used in this project, what it does, and when to invoke it. Skills live globally at `~/.claude/skills/`.
 
 > **Cross-provider skills:** to move a skill between Claude Code, Codex, and other

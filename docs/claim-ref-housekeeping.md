@@ -1,5 +1,7 @@
 # Claim-ref housekeeping (`refs/claims/issue-N`)
 
+_Audience: AI agents, contributors · Tier: reference_
+
 When `npm run claim` warns about a **stale claim ref** and hands you a
 `git push origin :refs/claims/issue-N` command, this doc explains what that ref is,
 why it stranded, whether it's safe to sweep, and the one way to get it wrong.

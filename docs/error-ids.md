@@ -1,5 +1,7 @@
 # Error-ID catalog, stability policy & prefix registry
 
+_Audience: contributors, AI agents · Tier: reference_
+
 Every diagnostic LCC.js can emit has (or is being given) a **unique, citable, stable
 error ID** of the form `<prefix>-NNN` — e.g. `asm-014`, `int-004`, `lnk-011`. IDs let a
 learner, teacher, or bug report name an exact condition (`"I hit int-004"`) instead of

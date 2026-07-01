@@ -1,5 +1,7 @@
 # Linker Module
 
+_Audience: contributors, assembly enthusiasts · Tier: reference_
+
 `src/core/linker.js` combines one or more `.o` object modules into a single `.e` executable.
 
 The linker is currently more wrapper-oriented than the assembler and interpreter, but it now has the start of a reusable pure seam.

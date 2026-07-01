@@ -1,5 +1,7 @@
 # Programmatic API
 
+_Audience: contributors, assembly enthusiasts · Tier: reference_
+
 LCC.js exposes reusable in-memory APIs for every stage of the toolchain.
 The CLI wrappers (`lcc.js`, `assembler.js`, `interpreter.js`, `linker.js`) are thin shells built on top of these APIs.
 

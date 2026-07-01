@@ -1,5 +1,7 @@
 # Design — agent identity on worktree branches
 
+_Audience: AI agents, contributors · Tier: reference_
+
 Tracker: [#179](https://github.com/avidrucker/lccjs/issues/179)
 
 ## Problem

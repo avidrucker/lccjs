@@ -1,5 +1,7 @@
 # Puzzle lifecycle — how a `@todo` and a GitHub issue relate here
 
+_Audience: AI agents, contributors · Tier: reference_
+
 This is the plain, end-to-end answer to two questions:
 
 1. How does a puzzle become a GitHub issue in this repo?

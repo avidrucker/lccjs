@@ -1,5 +1,7 @@
 # Oracle Setup
 
+_Audience: contributors · Tier: reference_
+
 The `*.oracle.e2e.spec.js` suites (and `npm run test:oracle`) drive the
 original LCC ("the oracle") and diff its output against LCC.js. They are
 skipped if the oracle is not configured, so you can run `npm test` without

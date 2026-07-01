@@ -1,5 +1,7 @@
 # Issue title convention
 
+_Audience: AI agents, contributors · Tier: recommended_
+
 Every GitHub issue title must begin with an uppercase role word followed by a colon and a space:
 
 ```

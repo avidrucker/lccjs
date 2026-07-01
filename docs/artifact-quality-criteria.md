@@ -1,5 +1,7 @@
 # Artifact Quality Criteria
 
+_Audience: AI agents, contributors · Tier: reference_
+
 Applies to any artifact: docs, tickets, issues, bug reports, design proposals, status updates, etc.
 
 > **Origin:** Claude web app session (imported #840). **Leverage decision:** #841.
