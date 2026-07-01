@@ -13,7 +13,7 @@ const os   = require('os');
 const path = require('path');
 const {
   computeIce, finalScore, sortRows, rankRows, easeFromEhrs,
-  parseCsv, encodeField, deriveAutoScore,
+  parseCsv, encodeField, deriveAutoScore, isEpicOrTracker,
 } = require('../../scripts/ice-score.js');
 
 const lbl = (...names) => names.map(name => ({ name }));
@@ -32,6 +32,23 @@ describe('computeIce', () => {
   test('rounds to 4 decimal places', () => {
     // Math.round(x*10000)/10000 caps precision (a safety net for non-discrete inputs).
     expect(computeIce(1 / 3, 1, 1)).toBe(0.3333);
+  });
+});
+
+describe('isEpicOrTracker (auto-sweep exclusion, #1566)', () => {
+  test('true for epic-labeled issues', () => {
+    expect(isEpicOrTracker(lbl('area:process', 'epic'))).toBe(true);
+  });
+  test('true for tracker-labeled issues', () => {
+    expect(isEpicOrTracker(lbl('area:toolchain', 'tracker'))).toBe(true);
+  });
+  test('false for ordinary units of work', () => {
+    expect(isEpicOrTracker(lbl('bug', 'severity:high'))).toBe(false);
+    expect(isEpicOrTracker(lbl('area:process'))).toBe(false);
+  });
+  test('empty / undefined labels → false', () => {
+    expect(isEpicOrTracker([])).toBe(false);
+    expect(isEpicOrTracker(undefined)).toBe(false);
   });
 });
 

@@ -321,6 +321,16 @@ function detectActionable(labels) {
   return 'Y';
 }
 
+// #1566: epics / trackers / umbrellas are NOT units of work — they collect child
+// issues and do no distinct work of their own, so they must never carry an ICE
+// score (a scored tracker pollutes the bug→blocker→ICE ranking; e.g. #1456 surfaced
+// as `critical, ICE 8.0`). The --auto sweep filters these out so scores don't accrue
+// on them. Pure + exported for unit testing.
+function isEpicOrTracker(labels) {
+  const names = (labels || []).map(l => l.name);
+  return names.includes('epic') || names.includes('tracker');
+}
+
 function detectSeverityHint(labels) {
   const names = (labels || []).map(l => l.name);
   if (names.includes('severity:critical')) return { hint: 'severity:critical → I=3', def: 3 };
@@ -701,7 +711,12 @@ async function main() {
     // so the table never silently goes stale. Marked provisional=1 for human review.
     const openIssues = fetchOpenIssues();
     if (!openIssues) die('gh unavailable — cannot fetch open issues for --auto sweep.');
-    const targets = openIssues.filter(i => !scored.has(i.number));
+    // #1566: never score epics/trackers — they are not units of work.
+    const skipped = openIssues.filter(i => !scored.has(i.number) && isEpicOrTracker(i.labels));
+    const targets = openIssues.filter(i => !scored.has(i.number) && !isEpicOrTracker(i.labels));
+    if (skipped.length) {
+      log(`Auto sweep: skipped ${skipped.length} epic/tracker issue(s) (not units of work): ${skipped.map(i => '#' + i.number).join(' ')}`);
+    }
     for (const issue of targets) {
       const { I, C, E } = deriveAutoScore(issue.labels);
       workRows.push({
@@ -796,6 +811,7 @@ module.exports = {
   rankRows,
   easeFromEhrs,
   deriveAutoScore,
+  isEpicOrTracker,
   parseRecords,
   parseCsv,
   encodeField,
