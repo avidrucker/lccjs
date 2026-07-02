@@ -22,14 +22,21 @@ LCC instruction set and the **LCC+** extension (see `src/plus/` and `plusdemos/`
 - Uses a pseudo-random number generator based on a seeded Linear Congruential Generator (LCG) + XOR shift.
 - Seed the RNG with `srand` (see trap instructions below).
 
-> **`rand` is the only new machine instruction added by LCC+.** No other new opcodes exist. All other mnemonics are inherited unchanged from base LCC.
+> **What LCC+ adds, by encoding class:**
+>
+> - **New top-level opcode:** _none._ `rand` reuses the base **EXT** opcode (`0xA000`); every LCC+ trap reuses the base **TRAP** opcode (`0xF000`).
+> - **New extended sub-opcode (eopcode):** `rand` only — `EOP_RAND = 0x0E`, slotting above the base eopcodes `0x00`–`0x0D` under the pre-existing EXT opcode. `rand` is therefore the **only** new instruction encoded in the opcode/eopcode field, and it is **not** inherited (base LCC has no `rand`).
+> - **New trap vectors:** _every other LCC+ mnemonic_ — the trap mnemonics in [§ New Trap Instructions](#new-trap-instructions) (`clear`, `sleep`, `nbain`, `cursor`, `srand`, `millis`, `resetc`, `sound` + its slot aliases, `who`/`whodis`, `boop`). These are **LCC+ additions, not inherited from base LCC.**
+> - **Inherited unchanged:** _only_ the base-LCC instructions, traps, and directives documented in [lcc-isa.md](./lcc-isa.md).
+>
+> The headline "`rand` is the only new **machine instruction**" is defensible only under the narrow reading _"non-trap, eopcode-encoded instruction"_ — i.e. `rand` is the only addition that is not a trap. The broader claim that all other mnemonics are inherited is **false**: the trap mnemonics above are LCC+-specific.
 
 ---
 
 ## New Trap Instructions
 
-LCC+ extension trap vectors occupy the **high end** of the 8-bit trap space (`0xF7`–`0xFF`) so
-core traps can grow upward from `0x0E` without collision.
+LCC+ extension trap vectors occupy the **high end** of the 8-bit trap space (`0xF5`–`0xFF`) so
+core traps can grow upward from `0x0F` (the first vector above base `bp` = `0x0E`) without collision.
 
 | Mnemonic | Trap Vector | Flags Set | Description |
 | --- | --- | --- | --- |
@@ -48,7 +55,7 @@ core traps can grow upward from `0x0E` without collision.
 **Note on `bp`:** Trap vector `0x000E` is supported as in LCC, but enhanced in LCC+ to
 allow "press any key to resume" functionality.
 
-> **These are the complete set of LCC+ trap additions (11 mnemonics across 10 distinct vectors; `whodis` aliases `who`).** The no-operand sound-slot mnemonics (`ding`, `doink`, `beep`, `ping`, `popsound`, `softbeep`, `bop`) are aliases that encode to the `sound` trap and are documented in [§ Sounds](#sounds). The occupied range is `0xF5`–`0xFF` (`0xF7` is currently unused). There is no `fprintf`, `printf`, `sprintf`, `scanf`, `puts`, or any other C-library-style trap. Any trap mnemonic not listed above or in [lcc-isa.md](./lcc-isa.md) does not exist.
+> **These are the complete set of LCC+ trap additions (11 mnemonics across 10 distinct vectors; `whodis` aliases `who`).** The no-operand sound-slot mnemonics (`ding`, `doink`, `beep`, `ping`, `popsound`, `softbeep`, `bop`) are aliases that encode to the `sound` trap and are documented in [§ Sounds](#sounds). The occupied range is `0xF5`–`0xFF` (`0xF7` is currently unused). One caveat on exclusivity: the `sound` trap vector `0x00F8` and the sound subsystem now live in **core** and are reachable from base LCC under the `--sounds-on` flag (#1503/#1504); the `sound`/alias *mnemonics*, however, are still assembled only by LCC+. There is no `fprintf`, `printf`, `sprintf`, `scanf`, `puts`, or any other C-library-style trap. Any trap mnemonic not listed above or in [lcc-isa.md](./lcc-isa.md) does not exist.
 
 ### Register operands are caller-chosen
 
