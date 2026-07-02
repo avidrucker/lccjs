@@ -55,6 +55,9 @@ puzzle, plus a comment header line. Empty fields mean "not tracked".
 | `SPIKE` | bounded ≤60m investigation to scope/refresh an epic before writing puzzles (per `yegor-spikes`) |
 | `REVIEW` | ratification / sign-off on an artifact someone else produced — distinct from RESEARCH (probing) and ARC (deciding) |
 | `COMBO` | a task that genuinely spanned 2+ roles; the notes name which (used over a forced single tag) |
+| `CHORE` | housekeeping / mechanical maintenance — no feature or test-behavior change (gitignore edits, file moves/archiving, config sync, codifying an existing rule) |
+
+> **Source of truth:** the enforced role set is `VALID_ROLES` in [`scripts/velocity-log.js`](../scripts/velocity-log.js) (`velocity:log` hard-fails an unknown role). This table must list all of them — keep the two in sync when either changes.
 
 ## The two estimates
 
