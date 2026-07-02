@@ -10,6 +10,14 @@ between providers; this doc covers *layout and single-source-of-truth*.
 > **Last checked:** 2026-06-17, for the lccjs repo. As of #1439 the target below is
 > implemented: lccjs ships **no** repo-local skills; each skill lives in one
 > per-runtime source-of-truth repo, symlinked into that runtime's discovery path.
+>
+> **Updated #1585 (2026-07-01):** the two *ISA-domain* skills — `lccjs-assembly`
+> and `lccplus-assembly` — are the exception. They encode the LCC / LCC+ ISA and
+> make no sense outside this repo, so per the **repo-local** principle in "The two
+> questions" below they now live **committed in lccjs** under `.agents/skills/`,
+> installed into `~/.claude/skills/` by `scripts/install-skills.sh`. This is a
+> scoped, principled carve-out from the blanket #1439 centralization — not a
+> reversal of it: every *generic* skill still lives in its `*-config` repo.
 
 ---
 
@@ -44,6 +52,15 @@ Each `~/.<runtime>/skills/<name>` is a **symlink** to the one on-disk copy in th
 matching `*-config` repo, so editing the source updates the runtime in place. The
 dotfiles `claude-skills` / `codex-skills` / `hermes` sections clone the repos and run
 their installers.
+
+> **Exception — repo-local ISA-domain skills (#1585).** `lccjs-assembly` and
+> `lccplus-assembly` do **not** follow the table above: they live committed in
+> **this repo** at `.agents/skills/<name>/` and are surfaced into `~/.claude/skills/`
+> by **`scripts/install-skills.sh`** (the same per-skill symlink mechanism, sourced
+> from lccjs instead of `claude-config`). They ship with lccjs so any lccjs user
+> gets them by cloning the repo and running the installer. Their source of truth is
+> `lccjs/.agents/skills/`; the `claude-config` copies were removed. Only these two
+> ISA-coupled skills are repo-local — everything generic stays in its `*-config` repo.
 
 > **Codex discovery correction (#1439).** Earlier revisions of this doc said Codex
 > reads `.agents/skills/`. The installed Codex CLI (v0.139.0) does **not** — verified
@@ -101,7 +118,13 @@ runtime's discovery directory a **link** to it, never a hand-maintained second c
 ~/.claude/skills/<name>  → symlink → claude-config/skills/<name>
 ~/.codex/skills/<name>   → symlink → codex-config/skills/<name>
 ~/.hermes/skills/<name>  → symlink → hermes-config/skills/<name>
-lccjs/                   — ships NO skills (no .agents/skills, no .claude/skills)
+
+# Exception (#1585): the two ISA-domain skills are repo-local to lccjs:
+lccjs/.agents/skills/lccjs-assembly/SKILL.md    ← Claude source of truth (in-repo)
+lccjs/.agents/skills/lccplus-assembly/SKILL.md  ← Claude source of truth (in-repo)
+~/.claude/skills/lccjs-assembly   → symlink → lccjs/.agents/skills/lccjs-assembly
+~/.claude/skills/lccplus-assembly → symlink → lccjs/.agents/skills/lccplus-assembly
+# installed by lccjs/scripts/install-skills.sh
 ```
 
 `yegor-pm` and the yegor-* family come from their own upstream (`yegor-pm-skills`),

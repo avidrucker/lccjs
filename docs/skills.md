@@ -2,7 +2,13 @@
 
 _Audience: AI agents, contributors · Tier: recommended_
 
-This doc lists every Claude Code skill used in this project, what it does, and when to invoke it. Skills live globally at `~/.claude/skills/`.
+This doc lists every Claude Code skill used in this project, what it does, and when to invoke it. Most skills live globally at `~/.claude/skills/` (sourced from the `*-config` repos).
+
+> **Repo-local exception (#1585):** the two ISA-domain skills below — `lccjs-assembly`
+> and `lccplus-assembly` — ship **with this repo** under `.agents/skills/`, because
+> they encode the LCC/LCC+ ISA and are useless elsewhere. Install (or re-point) their
+> `~/.claude/skills/` symlinks with **`bash scripts/install-skills.sh`**. See
+> [`skill-organization.md`](./skill-organization.md) for the layout and rationale.
 
 > **Cross-provider skills:** to move a skill between Claude Code, Codex, and other
 > providers, see [`skill-portability.md`](./skill-portability.md) (the shared
