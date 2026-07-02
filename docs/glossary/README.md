@@ -15,6 +15,22 @@ detection, etc.).
 | [`linker.md`](./linker.md) | `src/core/linker.js` | Multi-module linking: per-link state tables, the link pipeline, external / local reference fix-ups, and executable serialization |
 | [`stats-analysis.md`](./stats-analysis.md) | `stats/*.ipynb` | Non-parametric statistics used in the velocity notebooks: c_ratio, sign test, bootstrap CI, Spearman ρ, Kruskal-Wallis, Mann-Whitney U, and the underpowered qualifier |
 
+## Acronym glossaries
+
+Quick **expansion** tables for the acronyms/abbreviations used across the project,
+split by vocabulary. These are lookup tables (`Acronym | Expansion | project meaning`),
+not the `###`-entry concept format used by the per-module glossaries above. (#1580)
+
+| File | Covers |
+|---|---|
+| [`domain.md`](./domain.md) | LCC / assembly acronyms — LCC, ISA, OG, PC, sr/dr, … |
+| [`process.md`](./process.md) | workflow / PM acronyms & role tags — **AC** (acceptance criteria, ≠ **ARC** = architect), ICE, SSOT, ADR, TIL, PDD/BDD (→ yegor-pm for the method) |
+| [`tech.md`](./tech.md) | tooling / engineering acronyms — **CM6** (CodeMirror 6), **TOCTOU** (time-of-check to time-of-use), CLI, CI, TTY, DDD, … |
+
+> Methodology *concepts* (PDD, BDD, spike, epic, velocity, architect mode, …) remain
+> defined in the canonical **yegor-pm `GLOSSARY.md`** (see below); `process.md` only
+> expands their acronyms and links there — it does not vendor the definitions.
+
 ## Entry convention
 
 Each term entry follows this shape:

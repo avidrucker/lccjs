@@ -119,7 +119,7 @@ Human personas (L / E / C / T) track [`who_lccjs_is_for.md`](./who_lccjs_is_for.
 | Directory | Files | Tier(s) | Audience(s) | Notes |
 |-----------|-------|---------|-------------|-------|
 | `docs/guides/` | 4 | Public | L E T | deployed |
-| `docs/glossary/` | 5 | Reference · Public | L E T | deployed |
+| `docs/glossary/` | 8 | Reference · Public | L E T | deployed. Per-module concept glossaries + acronym glossaries `domain.md` (L E T C) / `process.md` (AI C) / `tech.md` (C AI) — #1580 |
 | `docs/cuh63/` | 15 | Reference · (curated) Public | E C | oracle bug reports |
 | `docs/research/` | 133 | Reference | AI C | internal spikes; **#1123 recommends curating ~10–15 for Public** |
 | `docs/learnings/` | 173 | Reference | AI C | agent TILs; **#1123 recommends curating ~5–15 for Public** |
