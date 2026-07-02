@@ -85,6 +85,7 @@ Human personas (L / E / C / T) track [`who_lccjs_is_for.md`](./who_lccjs_is_for.
 | `docs/lccplus.md` | Reference | C E |
 | `docs/core-behavior-matrix.md` | Reference | C AI |
 | `docs/cross-cutting-concerns.md` | Reference | C AI |
+| `docs/banned-ai-words.md` | Reference | AI C |
 | `docs/api.md` | Reference | C E |
 | `docs/oracle-setup.md` | Reference | C |
 | `docs/showcase-local-dev.md` | Reference | C |
