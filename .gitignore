@@ -84,3 +84,7 @@ dist/lcc-injector.js
 dist/lcc-injector.js.LICENSE.txt
 dist/editor.bundle.js
 dist/editor.bundle.js.LICENSE.txt
+
+# verify-claims ledger — a working epistemic record, not a deliverable.
+# What graduates out of it is a committed findings doc or an issue.
+claims-data/
